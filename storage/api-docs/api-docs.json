@@ -1,0 +1,396 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Mon API",
+        "description": "Documentation de l'API avec Swagger",
+        "contact": {
+            "email": "contact@exemple.com"
+        },
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/register": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Enregistrer un nouvel utilisateur",
+                "operationId": "8a56853624e025573120a09a4c75d468",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "first_name",
+                                    "last_name",
+                                    "email",
+                                    "phone",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": "John"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john.doe@example.com"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+123456789"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "secret123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "secret123"
+                                    },
+                                    "role_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Inscription réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "first_name": {
+                                                    "type": "string",
+                                                    "example": "John"
+                                                },
+                                                "last_name": {
+                                                    "type": "string",
+                                                    "example": "Doe"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "john.doe@example.com"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "+123456789"
+                                                },
+                                                "role_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "example": "eyJ0eXAiOiJKV1QiLC..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Données invalides"
+                    }
+                }
+            }
+        },
+        "/api/login": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Connexion d'un utilisateur",
+                "operationId": "a3b306d14572d1f4bd6c064b3233e7b8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "login",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "login": {
+                                        "type": "string",
+                                        "example": "john.doe@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "secret123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Connexion réussie (sans 2FA)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "first_name": {
+                                                    "type": "string",
+                                                    "example": "John"
+                                                },
+                                                "last_name": {
+                                                    "type": "string",
+                                                    "example": "Doe"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "john.doe@example.com"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "+123456789"
+                                                },
+                                                "role_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "example": "eyJ0eXAiOiJKV1QiLC..."
+                                        },
+                                        "token_expiration": {
+                                            "type": "string",
+                                            "example": "2025-04-17 10:45:00"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Connexion avec OTP requis",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "OTP requis"
+                                        },
+                                        "user_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "first_name": {
+                                            "type": "string",
+                                            "example": "John"
+                                        },
+                                        "last_name": {
+                                            "type": "string",
+                                            "example": "Doe"
+                                        },
+                                        "phone": {
+                                            "type": "string",
+                                            "example": "+123456789"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Identifiants invalides",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Invalid credentials"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/verify-otp": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Vérification du code OTP pour l'authentification à deux facteurs",
+                "operationId": "7809ddcd47cab2525ccd43d1c2031bfd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "login",
+                                    "otp"
+                                ],
+                                "properties": {
+                                    "login": {
+                                        "type": "string",
+                                        "example": "john.doe@example.com"
+                                    },
+                                    "otp": {
+                                        "type": "string",
+                                        "example": "123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP valide, authentification réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "first_name": {
+                                                    "type": "string",
+                                                    "example": "John"
+                                                },
+                                                "last_name": {
+                                                    "type": "string",
+                                                    "example": "Doe"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "john.doe@example.com"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "+123456789"
+                                                },
+                                                "role_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "example": "eyJ0eXAiOiJKV1QiLC..."
+                                        },
+                                        "token_expiration": {
+                                            "type": "string",
+                                            "example": "2025-04-17 10:45:00"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "OTP invalide ou expiré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Invalid or expired OTP"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Utilisateur introuvable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "User not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "List all users",
+                "operationId": "c457726701591d1183b53aa71fc13441",
+                "responses": {
+                    "200": {
+                        "description": "List of users"
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Authentification",
+            "description": "Authentification"
+        },
+        {
+            "name": "Users",
+            "description": "Users"
+        }
+    ]
+}
