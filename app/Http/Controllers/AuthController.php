@@ -130,7 +130,7 @@ class AuthController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=401,
+     *         response=404,
      *         description="Utilisateur inactif",
      *         @OA\JsonContent(
      *             @OA\Property(property="error", type="string", example="User is inactive")

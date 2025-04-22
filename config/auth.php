@@ -40,6 +40,11 @@ return [
             'driver' => 'jwt',
             'provider' => 'users',
         ],
+        // AJOUTE ÇA :
+        'sanctum' => [
+            'driver' => 'sanctum',
+            'provider' => 'users',
+        ],
     ],
 
 
