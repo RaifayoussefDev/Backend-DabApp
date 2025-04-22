@@ -9,16 +9,16 @@
         "version": "1.0.0"
     },
     "paths": {
-        "/api/cards": {
+        "/api/BankCards": {
             "get": {
                 "tags": [
-                    "Cards"
+                    "BankCards"
                 ],
-                "summary": "Get all cards",
-                "operationId": "e35184e8a68a0379ee92df6444996c8a",
+                "summary": "Get all BankCards",
+                "operationId": "0b32b0f2fbfd372e1ee98c4866236b9b",
                 "responses": {
                     "200": {
-                        "description": "List of cards"
+                        "description": "List of BankCards"
                     }
                 },
                 "security": [
@@ -29,10 +29,10 @@
             },
             "post": {
                 "tags": [
-                    "Cards"
+                    "BankCards"
                 ],
-                "summary": "Create a new card",
-                "operationId": "30893cb105bd4004d3e8fed563ae7b25",
+                "summary": "Create a new BankCard",
+                "operationId": "f272cc83398a79925ee62436c8378cca",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -40,14 +40,14 @@
                             "schema": {
                                 "required": [
                                     "name",
-                                    "card_type_id"
+                                    "BankCard_type_id"
                                 ],
                                 "properties": {
                                     "name": {
                                         "type": "string",
-                                        "example": "VIP Card"
+                                        "example": "VIP BankCard"
                                     },
-                                    "card_type_id": {
+                                    "BankCard_type_id": {
                                         "type": "integer",
                                         "example": 1
                                     }
@@ -59,7 +59,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Card created"
+                        "description": "BankCard created"
                     }
                 },
                 "security": [
@@ -69,13 +69,13 @@
                 ]
             }
         },
-        "/api/cards/{id}": {
+        "/api/BankCards/{id}": {
             "get": {
                 "tags": [
-                    "Cards"
+                    "BankCards"
                 ],
-                "summary": "Get card by ID",
-                "operationId": "4900dbd1ec696dece55cb26826b7543d",
+                "summary": "Get BankCard by ID",
+                "operationId": "b1e2803392f6d2aa97e42cb8d35c08d1",
                 "parameters": [
                     {
                         "name": "id",
@@ -88,10 +88,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Card details"
+                        "description": "BankCard details"
                     },
                     "404": {
-                        "description": "Card not found"
+                        "description": "BankCard not found"
                     }
                 },
                 "security": [
@@ -102,10 +102,10 @@
             },
             "put": {
                 "tags": [
-                    "Cards"
+                    "BankCards"
                 ],
-                "summary": "Update card",
-                "operationId": "40b3067ac3710d72a3b42f475bcd9dd8",
+                "summary": "Update BankCard",
+                "operationId": "f1e146366c60c0808ce49a1bd7b6aee7",
                 "parameters": [
                     {
                         "name": "id",
@@ -123,9 +123,9 @@
                                 "properties": {
                                     "name": {
                                         "type": "string",
-                                        "example": "New VIP Card"
+                                        "example": "New VIP BankCard"
                                     },
-                                    "card_type_id": {
+                                    "BankCard_type_id": {
                                         "type": "integer",
                                         "example": 1
                                     }
@@ -137,7 +137,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Card updated"
+                        "description": "BankCard updated"
                     }
                 },
                 "security": [
@@ -148,10 +148,10 @@
             },
             "delete": {
                 "tags": [
-                    "Cards"
+                    "BankCards"
                 ],
-                "summary": "Delete card",
-                "operationId": "2821848181a7a483b6a19c96da1b5c38",
+                "summary": "Delete BankCard",
+                "operationId": "f4b1d0caec4e7d987aa3253a5e103947",
                 "parameters": [
                     {
                         "name": "id",
@@ -164,7 +164,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Card deleted"
+                        "description": "BankCard deleted"
                     }
                 },
                 "security": [
@@ -988,8 +988,8 @@
     },
     "tags": [
         {
-            "name": "Cards",
-            "description": "Cards"
+            "name": "BankCards",
+            "description": "BankCards"
         },
         {
             "name": "Card Types",
