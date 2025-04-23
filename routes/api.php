@@ -24,7 +24,7 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('users', UserController::class);
 
     // Cards
-    Route::apiResource('cards', CardController::class);
+    Route::apiResource('BankCards', CardController::class);
 
     // Card Types
     Route::apiResource('card-types', CardTypeController::class);

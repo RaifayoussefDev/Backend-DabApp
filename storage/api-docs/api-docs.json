@@ -31,7 +31,7 @@
                 "tags": [
                     "BankCards"
                 ],
-                "summary": "Create a new BankCard",
+                "summary": "Créer une nouvelle carte bancaire",
                 "operationId": "f272cc83398a79925ee62436c8378cca",
                 "requestBody": {
                     "required": true,
@@ -39,17 +39,34 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "name",
-                                    "BankCard_type_id"
+                                    "user_id",
+                                    "card_type_id"
                                 ],
                                 "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "VIP BankCard"
+                                    "user_id": {
+                                        "type": "integer",
+                                        "example": 12
                                     },
-                                    "BankCard_type_id": {
+                                    "card_type_id": {
                                         "type": "integer",
                                         "example": 1
+                                    },
+                                    "card_number": {
+                                        "type": "string",
+                                        "example": "1234 5678 9012 3456"
+                                    },
+                                    "card_holder_name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "expiration_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-08-31"
+                                    },
+                                    "cvv": {
+                                        "type": "string",
+                                        "example": "123"
                                     }
                                 },
                                 "type": "object"
@@ -59,7 +76,10 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "BankCard created"
+                        "description": "Carte bancaire créée avec succès"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
                     }
                 },
                 "security": [

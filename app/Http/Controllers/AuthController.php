@@ -298,9 +298,16 @@ class AuthController extends Controller
 
 
 
-    public function me()
+
+    public function me(Request $request)
     {
-        return response()->json(auth()->user());
+        // Get the currently authenticated user along with their bank cards
+        $user = $request->user(); // This will fetch the authenticated user
+        $userWithCards = User::with('bankCards')->find($user->id); // Eager load bankCards relationship
+
+        return response()->json([
+            'user' => $userWithCards
+        ]);
     }
 
     public function logout()

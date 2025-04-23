@@ -36,7 +36,10 @@ class User extends Authenticatable implements JWTSubject
     ];
 
     protected $hidden = [
-        'password', 'remember_token', 'token', 'token_expiration',
+        'password',
+        'remember_token',
+        'token',
+        'token_expiration',
     ];
 
     public function getJWTIdentifier()
@@ -47,5 +50,10 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    public function bankCards()
+    {
+        return $this->hasMany(BankCard::class);
     }
 }
