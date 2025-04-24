@@ -12,10 +12,10 @@ return new class extends Migration
     public function up()
     {
         Schema::create('bank_cards', function (Blueprint $table) {
-            $table->engine = 'InnoDB'; // ✅ Important pour les clés étrangères
+            $table->engine = 'InnoDB';
 
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // 
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); //
             $table->string('card_number')->nullable(); // Crypté
             $table->string('card_holder_name')->nullable();
             $table->date('expiration_date')->nullable(); // format: YYYY-MM-DD
