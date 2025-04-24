@@ -10,22 +10,21 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up()
-{
-    Schema::create('bank_cards', function (Blueprint $table) {
-        $table->id();
-        $table->unsignedBigInteger('user_id');
-        $table->string('card_number')->nullable(); // Crypté
-        $table->string('card_holder_name')->nullable();
-        $table->date('expiration_date')->nullable(); // format: YYYY-MM-DD
-        $table->string('cvv')->nullable(); // Chiffré
-        $table->unsignedBigInteger('card_type_id');
-        $table->boolean('is_default')->default(false);
-        $table->timestamps();
+    {
+        Schema::create('bank_cards', function (Blueprint $table) {
+            $table->engine = 'InnoDB'; // ✅ Important pour les clés étrangères
 
-        $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-        $table->foreign('card_type_id')->references('id')->on('card_types')->onDelete('restrict');
-    });
-}
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // ✅ plus propre et sûr
+            $table->string('card_number')->nullable(); // Crypté
+            $table->string('card_holder_name')->nullable();
+            $table->date('expiration_date')->nullable(); // format: YYYY-MM-DD
+            $table->string('cvv')->nullable(); // Chiffré
+            $table->foreignId('card_type_id')->constrained('card_types')->onDelete('restrict'); // ✅ plus clair
+            $table->boolean('is_default')->default(false);
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.
