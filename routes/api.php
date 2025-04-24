@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CardTypeController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ListingAuctionController;
 use Illuminate\Http\Request;
 
 
@@ -28,4 +29,9 @@ Route::middleware('auth:api')->group(function () {
 
     // Card Types
     Route::apiResource('card-types', CardTypeController::class);
+
+
 });
+// Route::middleware('auth:sanctum')->post('/listings-auctions', [ListingAuctionController::class, 'store']);
+
+Route::post('listings-auctions',[ListingAuctionController::class,'store']);
