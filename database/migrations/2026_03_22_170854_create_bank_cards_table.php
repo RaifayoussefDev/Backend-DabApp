@@ -13,18 +13,17 @@ return new class extends Migration
     {
         Schema::create('bank_cards', function (Blueprint $table) {
             $table->engine = 'InnoDB';
-
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); //
-            $table->string('card_number')->nullable(); // Crypté
-            $table->string('card_holder_name')->nullable();
-            $table->date('expiration_date')->nullable(); // format: YYYY-MM-DD
-            $table->string('cvv')->nullable(); // Chiffré
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('card_type_id')->constrained('card_types')->onDelete('restrict');
+            $table->string('card_number')->nullable();
+            $table->string('card_holder_name')->nullable();
+            $table->date('expiration_date')->nullable();
+            $table->string('cvv')->nullable();
             $table->boolean('is_default')->default(false);
             $table->timestamps();
-
         });
+
     }
 
     /**
