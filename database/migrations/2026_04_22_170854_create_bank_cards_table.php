@@ -23,6 +23,7 @@ return new class extends Migration
             $table->foreignId('card_type_id')->constrained('card_types')->onDelete('restrict'); // ✅ plus clair
             $table->boolean('is_default')->default(false);
             $table->timestamps();
+            
         });
     }
 
