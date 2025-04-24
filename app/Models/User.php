@@ -56,4 +56,24 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->hasMany(BankCard::class);
     }
+
+    public function wishlists()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
+    public function listings()
+    {
+        return $this->hasMany(Listing::class, 'seller_id');
+    }
+
+    public function auctionHistoriesAsSeller()
+    {
+        return $this->hasMany(AuctionHistory::class, 'seller_id');
+    }
+
+    public function auctionHistoriesAsBuyer()
+    {
+        return $this->hasMany(AuctionHistory::class, 'buyer_id');
+    }
 }
