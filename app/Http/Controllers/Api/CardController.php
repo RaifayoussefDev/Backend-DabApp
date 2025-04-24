@@ -43,48 +43,52 @@ class CardController extends Controller
      *     @OA\Response(response=422, description="Erreur de validation")
      * )
      */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'card_number' => 'nullable|string|max:255',
+            'card_holder_name' => 'nullable|string|max:255',
+            'expiration_date' => 'nullable|date',
+            'cvv' => 'nullable|string|max:4',
+            'card_type_id' => 'required|exists:card_types,id',
+        ]);
 
-     public function store(Request $request)
-     {
-         $validated = $request->validate([
-             'user_id' => 'required|exists:users,id',
-             'card_number' => 'nullable|string|max:255',
-             'card_holder_name' => 'nullable|string|max:255',
-             'expiration_date' => 'nullable|date',
-             'cvv' => 'nullable|string|max:4',
-             'card_type_id' => 'required|exists:card_types,id',
-         ]);
+        // Check if a card with the same user_id and card_number already exists
+        if (!empty($validated['card_number'])) {
+            $cardExists = BankCard::where('user_id', $validated['user_id'])
+                ->where('card_number', $validated['card_number'])
+                ->exists();
 
-         // Check if a card with the same user_id and card_number already exists
-         if (!empty($validated['card_number'])) {
-             $cardExists = BankCard::where('user_id', $validated['user_id'])
-                 ->where('card_number', $validated['card_number'])
-                 ->exists();
+            if ($cardExists) {
+                return response()->json([
+                    'message' => 'This card already exists for the specified user.'
+                ], 409);
+            }
+        }
 
-             if ($cardExists) {
-                 return response()->json([
-                     'message' => 'This card already exists for the specified user.'
-                 ], 409); // 409 = Conflict
-             }
-         }
+        // Chiffrer le CVV s'il est présent
+        if (!empty($validated['cvv'])) {
+            $validated['cvv'] = encrypt($validated['cvv']);
+        }
 
-         // Determine if this card should be marked as default
-         $hasCard = BankCard::where('user_id', $validated['user_id'])->exists();
-         $validated['is_default'] = !$hasCard;
+        // Déterminer si cette carte est la première → donc par défaut
+        $hasCard = BankCard::where('user_id', $validated['user_id'])->exists();
+        $validated['is_default'] = !$hasCard;
 
-         try {
-             $bankCard = BankCard::create($validated);
-             return response()->json([
-                 'message' => 'Bank card successfully created.',
-                 'data' => $bankCard
-             ], 201);
-         } catch (\Exception $e) {
-             return response()->json([
-                 'message' => 'An error occurred while creating the bank card.',
-                 'error' => $e->getMessage()
-             ], 500);
-         }
-     }
+        try {
+            $bankCard = BankCard::create($validated);
+            return response()->json([
+                'message' => 'Bank card successfully created.',
+                'data' => $bankCard
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while creating the bank card.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 
 

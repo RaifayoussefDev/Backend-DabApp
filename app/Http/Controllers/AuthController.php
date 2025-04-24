@@ -192,7 +192,7 @@ class AuthController extends Controller
                 'last_name' => $user->last_name,
                 'phone' => $user->phone,
                 'requiresOTP' => $user->two_factor_enabled,
-                'email' => $user-> email
+                'email' => $user->email
             ], 202); // Accepted
         }
 
@@ -296,26 +296,110 @@ class AuthController extends Controller
     }
 
 
-
+    /**
+     * @OA\Get(
+     *     path="/api/me",
+     *     summary="Récupérer les informations de l'utilisateur authentifié",
+     *     tags={"Authentification"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Informations de l'utilisateur récupérées avec succès",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="user", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="first_name", type="string", example="John"),
+     *                 @OA\Property(property="last_name", type="string", example="Doe"),
+     *                 @OA\Property(property="email", type="string", example="john.doe@example.com"),
+     *                 @OA\Property(property="phone", type="string", example="+123456789"),
+     *                 @OA\Property(property="role_id", type="integer", example=2),
+     *                 @OA\Property(property="bank_cards", type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="card_number", type="string", example="1234567890123456"),
+     *                         @OA\Property(property="expiry_date", type="string", example="12/24")
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Utilisateur non authentifié",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Unauthorized")
+     *         )
+     *     )
+     * )
+     */
 
 
     public function me(Request $request)
     {
-        // Get the currently authenticated user along with their bank cards
-        $user = $request->user(); // This will fetch the authenticated user
-        $userWithCards = User::with('bankCards')->find($user->id); // Eager load bankCards relationship
+        // Récupérer l'utilisateur authentifié avec ses cartes bancaires
+        $user = $request->user();
+        $userWithCards = User::with('bankCards')->find($user->id);
+
+        // Déchiffrer les CVV des cartes bancaires
+        foreach ($userWithCards->bankCards as $card) {
+            if (!empty($card->cvv)) {
+                try {
+                    $card->cvv = decrypt($card->cvv);
+                } catch (\Exception $e) {
+                    $card->cvv = null; // en cas d'erreur de déchiffrement
+                }
+            }
+        }
 
         return response()->json([
             'user' => $userWithCards
         ]);
     }
-
+    /**
+     * @OA\Post(
+     *     path="/api/logout",
+     *     summary="Déconnexion de l'utilisateur",
+     *     tags={"Authentification"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Déconnexion réussie",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Déconnexion réussie")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur"
+     *     )
+     * )
+     */
     public function logout()
     {
         auth()->logout();
         return response()->json(['message' => 'Successfully logged out']);
     }
-
+    /**
+     * @OA\Post(
+     *     path="/api/refresh",
+     *     summary="Rafraîchir le token JWT",
+     *     tags={"Authentification"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Token rafraîchi avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLC...")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Token invalide ou expiré",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Token expired or invalid")
+     *         )
+     *     )
+     * )
+     */
     public function refresh()
     {
         return response()->json([
