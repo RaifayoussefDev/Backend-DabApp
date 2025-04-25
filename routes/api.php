@@ -1,13 +1,10 @@
 <?php
-
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CardTypeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ListingAuctionController;
-
-
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -29,8 +26,27 @@ Route::middleware('auth:api')->group(function () {
     // Card Types
     Route::apiResource('card-types', CardTypeController::class);
 
+    // Listings CRUD
+    Route::prefix('listings')->controller(ListingAuctionController::class)->group(function () {
+        Route::get('/', 'listingsIndex');
+        Route::post('/', 'listingsStore');
+        Route::get('/{id}', 'listingsShow');
+        Route::put('/{id}', 'listingsUpdate');
+        Route::delete('/{id}', 'listingsDestroy');
+        Route::get('/my', 'myListings');
+    });
+
+    // Create listing with auction
+    Route::post('/listing-with-auction', [ListingAuctionController::class, 'store']);
+
+    // Auctions CRUD
+    Route::prefix('auctions')->controller(ListingAuctionController::class)->group(function () {
+        Route::get('/', 'auctionsIndex');
+        Route::post('/', 'auctionsStore');
+        Route::get('/{id}', 'auctionsShow');
+        Route::put('/{id}', 'auctionsUpdate');
+        Route::delete('/{id}', 'auctionsDestroy');
+        Route::get('/my', 'myAuctions');
+    });
 
 });
-// Route::middleware('auth:sanctum')->post('/listings-auctions', [ListingAuctionController::class, 'store']);
-
-Route::post('listings-auctions',[ListingAuctionController::class,'store']);

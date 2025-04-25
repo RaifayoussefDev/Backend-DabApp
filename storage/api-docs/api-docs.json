@@ -1505,6 +1505,372 @@
                 }
             }
         },
+        "/api/listings": {
+            "get": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Get all listings",
+                "operationId": "47bedbd707c405025561ee50e3b0d97e",
+                "responses": {
+                    "200": {
+                        "description": "List of listings"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Create a listing",
+                "operationId": "95de6b4e618a96470df35bb0aa48ee88",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "price",
+                                    "price_type",
+                                    "seller_id",
+                                    "product_state_id"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "price": {
+                                        "type": "number"
+                                    },
+                                    "price_type": {
+                                        "type": "string"
+                                    },
+                                    "seller_id": {
+                                        "type": "integer"
+                                    },
+                                    "product_state_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Listing created"
+                    }
+                }
+            }
+        },
+        "/api/listings/with-auction": {
+            "post": {
+                "tags": [
+                    "Listings",
+                    "Auctions"
+                ],
+                "summary": "Create a listing with an auction",
+                "operationId": "f524338e2c64c979b06b5390d8e50b70",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "listing": {
+                                        "properties": {
+                                            "title": {
+                                                "type": "string"
+                                            },
+                                            "price": {
+                                                "type": "number"
+                                            },
+                                            "price_type": {
+                                                "type": "string"
+                                            },
+                                            "seller_id": {
+                                                "type": "integer"
+                                            },
+                                            "product_state_id": {
+                                                "type": "integer"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "auction": {
+                                        "properties": {
+                                            "bid_amount": {
+                                                "type": "number"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Listing and auction created"
+                    }
+                }
+            }
+        },
+        "/api/listings/{id}": {
+            "get": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Get a listing by ID",
+                "operationId": "24e8a8d3c25a7cdc41d8b36c4ddf08bf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Listing found"
+                    },
+                    "404": {
+                        "description": "Listing not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Update a listing",
+                "operationId": "0b14b8a0be40759598fd1dec68db67fc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Listing updated"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Delete a listing",
+                "operationId": "3b047682b59ee9c6aea8af24b85f02ba",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Listing deleted"
+                    }
+                }
+            }
+        },
+        "/api/my-listings": {
+            "get": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Get my listings",
+                "operationId": "2184b01541d9ebda2e0835086d14e21b",
+                "responses": {
+                    "200": {
+                        "description": "User listings"
+                    }
+                }
+            }
+        },
+        "/api/auctions": {
+            "get": {
+                "tags": [
+                    "Auctions"
+                ],
+                "summary": "Get all auctions",
+                "operationId": "86526f5a29ee91c0932f6ced952bc86a",
+                "responses": {
+                    "200": {
+                        "description": "List of auctions"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Auctions"
+                ],
+                "summary": "Create a new auction",
+                "operationId": "a58b0e546fe2d1a378894a1be19a377a",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "listing_id",
+                                    "seller_id",
+                                    "buyer_id",
+                                    "bid_amount",
+                                    "bid_date"
+                                ],
+                                "properties": {
+                                    "listing_id": {
+                                        "type": "integer"
+                                    },
+                                    "seller_id": {
+                                        "type": "integer"
+                                    },
+                                    "buyer_id": {
+                                        "type": "integer"
+                                    },
+                                    "bid_amount": {
+                                        "type": "number"
+                                    },
+                                    "bid_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "validated": {
+                                        "type": "boolean"
+                                    },
+                                    "validated_at": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "validator_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Auction created"
+                    }
+                }
+            }
+        },
+        "/api/auctions/{id}": {
+            "get": {
+                "tags": [
+                    "Auctions"
+                ],
+                "summary": "Get auction by ID",
+                "operationId": "51e1e8e8d36efb8e9d677887c55193e3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Auction found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Auctions"
+                ],
+                "summary": "Update an auction",
+                "operationId": "0da544854840a714c0ef81b759f61dfd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Auction updated"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Auctions"
+                ],
+                "summary": "Delete an auction",
+                "operationId": "b06f86cb3287c8d2d38a85ef6167c508",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Auction deleted"
+                    }
+                }
+            }
+        },
+        "/api/my-auctions": {
+            "get": {
+                "tags": [
+                    "Auctions"
+                ],
+                "summary": "Get my auctions",
+                "operationId": "ffd06d7ffabc423ebb38056e1528dc55",
+                "responses": {
+                    "200": {
+                        "description": "User auctions"
+                    }
+                }
+            }
+        },
         "/api/users": {
             "get": {
                 "tags": [
@@ -1806,6 +2172,14 @@
         {
             "name": "Colors",
             "description": "Colors"
+        },
+        {
+            "name": "Listings",
+            "description": "Listings"
+        },
+        {
+            "name": "Auctions",
+            "description": "Auctions"
         },
         {
             "name": "Users",
