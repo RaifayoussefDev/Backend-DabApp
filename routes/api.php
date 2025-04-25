@@ -1,12 +1,11 @@
 <?php
 
-use App\Http\Controllers\Api\CardController;
-use App\Http\Controllers\Api\CardTypeController;
-use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\CardController;
+use App\Http\Controllers\CardTypeController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ListingAuctionController;
-use Illuminate\Http\Request;
 
 
 
