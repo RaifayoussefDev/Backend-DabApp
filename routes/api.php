@@ -1,10 +1,17 @@
 <?php
+
+use App\Http\Controllers\ListingController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CardTypeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ListingAuctionController;
+use App\Http\Controllers\MotorcycleBrandController;
+use App\Http\Controllers\MotorcycleController;
+use App\Http\Controllers\MotorcycleModelController;
+use App\Http\Controllers\MotorcycleTypeController;
+use App\Http\Controllers\MotorcycleYearController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -27,14 +34,14 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('card-types', CardTypeController::class);
 
     // Listings CRUD
-    Route::prefix('listings')->controller(ListingAuctionController::class)->group(function () {
-        Route::get('/', 'listingsIndex');
-        Route::post('/', 'listingsStore');
-        Route::get('/{id}', 'listingsShow');
-        Route::put('/{id}', 'listingsUpdate');
-        Route::delete('/{id}', 'listingsDestroy');
-        Route::get('/my', 'myListings');
-    });
+    // Route::prefix('listings')->controller(ListingAuctionController::class)->group(function () {
+    //     Route::get('/', 'listingsIndex');
+    //     Route::post('/', 'listingsStore');
+    //     Route::get('/{id}', 'listingsShow');
+    //     Route::put('/{id}', 'listingsUpdate');
+    //     Route::delete('/{id}', 'listingsDestroy');
+    //     Route::get('/my', 'myListings');
+    // });
 
     // Create listing with auction
     Route::post('/listing-with-auction', [ListingAuctionController::class, 'store']);
@@ -50,3 +57,14 @@ Route::middleware('auth:api')->group(function () {
     });
 
 });
+Route::apiResource('roles', App\Http\Controllers\RoleController::class);
+Route::apiResource('motorcycle-types', MotorcycleTypeController::class);
+Route::apiResource('motorcycle-brands', MotorcycleBrandController::class);
+Route::apiResource('motorcycle-models', MotorcycleModelController::class);
+Route::apiResource('motorcycle-years', MotorcycleYearController::class);
+Route::apiResource('motorcycles', MotorcycleController::class);
+
+Route::post('/listings', [ListingController::class, 'store']);
+
+
+

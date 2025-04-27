@@ -21,16 +21,22 @@ class Listing extends Model
         'status',
         'auction_enabled',
         'minimum_bid',
-        'product_state_id',
-        'finish_id',
-        'color_id',
         'allow_submission',
-        'listing_type_id'
+        'listing_type_id',
     ];
 
     public function auctions()
     {
         return $this->hasMany(AuctionHistory::class);
+    }
+
+    public function motorcycle()
+    {
+        return $this->hasOne(Motorcycle::class);
+    }
+    public function seller()
+    {
+        return $this->belongsTo(User::class, 'seller_id');
     }
     public function wishlistedBy()
     {

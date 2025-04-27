@@ -34,7 +34,7 @@ return new class extends Migration
             $table->foreignId('role_id')->constrained('roles')->onDelete('cascade');
             $table->string('language')->default('en');
             $table->string('timezone')->nullable();
-            $table->boolean('two_factor_enabled')->default(false);
+            $table->boolean('two_factor_enabled')->default(true);
             $table->foreignId('country_id')->nullable()->constrained('countries')->onDelete('set null');
 
         });

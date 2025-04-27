@@ -296,95 +296,95 @@ class AuthController extends Controller
     }
 
 
-   /**
- * @OA\Get(
- *     path="/api/me",
- *     summary="Récupérer les informations de l'utilisateur authentifié",
- *     tags={"Authentification"},
- *     security={{"bearerAuth": {}}},
- *     @OA\Response(
- *         response=200,
- *         description="Informations de l'utilisateur récupérées avec succès",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="user", type="object",
- *                 @OA\Property(property="id", type="integer", example=1),
- *                 @OA\Property(property="first_name", type="string", example="John"),
- *                 @OA\Property(property="last_name", type="string", example="Doe"),
- *                 @OA\Property(property="email", type="string", example="john.doe@example.com"),
- *                 @OA\Property(property="phone", type="string", example="+123456789"),
- *                 @OA\Property(property="role_id", type="integer", example=2),
- *
- *                 @OA\Property(property="bank_cards", type="array",
- *                     @OA\Items(
- *                         type="object",
- *                         @OA\Property(property="card_number", type="string", example="1234567890123456"),
- *                         @OA\Property(property="expiry_date", type="string", example="12/24"),
- *                         @OA\Property(property="cvv", type="string", example="123")
- *                     )
- *                 ),
- *
- *                 @OA\Property(property="wishlists", type="array",
- *                     @OA\Items(
- *                         type="object",
- *                         @OA\Property(property="id", type="integer", example=1),
- *                         @OA\Property(property="listing_id", type="integer", example=12),
- *                         @OA\Property(property="created_at", type="string", format="date-time", example="2025-04-24T11:33:12"),
- *                         @OA\Property(property="listing", type="object",
- *                             @OA\Property(property="id", type="integer", example=12),
- *                             @OA\Property(property="title", type="string", example="Yamaha R6 2020"),
- *                             @OA\Property(property="price", type="number", format="float", example=68000)
- *                         )
- *                     )
- *                 ),
- *
- *                 @OA\Property(property="listings", type="array",
- *                     @OA\Items(
- *                         type="object",
- *                         @OA\Property(property="id", type="integer", example=18),
- *                         @OA\Property(property="title", type="string", example="Honda CBR 600RR"),
- *                         @OA\Property(property="price", type="number", format="float", example=72000),
- *                         @OA\Property(property="status", type="string", example="active")
- *                     )
- *                 ),
- *
- *                 @OA\Property(property="auction_histories_as_seller", type="array",
- *                     @OA\Items(
- *                         type="object",
- *                         @OA\Property(property="id", type="integer", example=5),
- *                         @OA\Property(property="bid_amount", type="number", format="float", example=60000),
- *                         @OA\Property(property="bid_date", type="string", format="date-time", example="2025-04-23T10:45:00"),
- *                         @OA\Property(property="listing", type="object",
- *                             @OA\Property(property="id", type="integer", example=18),
- *                             @OA\Property(property="title", type="string", example="Honda CBR 600RR")
- *                         )
- *                     )
- *                 ),
- *
- *                 @OA\Property(property="auction_histories_as_buyer", type="array",
- *                     @OA\Items(
- *                         type="object",
- *                         @OA\Property(property="id", type="integer", example=9),
- *                         @OA\Property(property="bid_amount", type="number", format="float", example=65000),
- *                         @OA\Property(property="bid_date", type="string", format="date-time", example="2025-04-23T14:15:00"),
- *                         @OA\Property(property="listing", type="object",
- *                             @OA\Property(property="id", type="integer", example=21),
- *                             @OA\Property(property="title", type="string", example="Kawasaki Ninja 400")
- *                         )
- *                     )
- *                 )
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=401,
- *         description="Utilisateur non authentifié",
- *         @OA\JsonContent(
- *             @OA\Property(property="error", type="string", example="Unauthorized")
- *         )
- *     )
- * )
- */
+    /**
+     * @OA\Get(
+     *     path="/api/me",
+     *     summary="Récupérer les informations de l'utilisateur authentifié",
+     *     tags={"Authentification"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Informations de l'utilisateur récupérées avec succès",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="user", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="first_name", type="string", example="John"),
+     *                 @OA\Property(property="last_name", type="string", example="Doe"),
+     *                 @OA\Property(property="email", type="string", example="john.doe@example.com"),
+     *                 @OA\Property(property="phone", type="string", example="+123456789"),
+     *                 @OA\Property(property="role_id", type="integer", example=2),
+     *
+     *                 @OA\Property(property="bank_cards", type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="card_number", type="string", example="1234567890123456"),
+     *                         @OA\Property(property="expiry_date", type="string", example="12/24"),
+     *                         @OA\Property(property="cvv", type="string", example="123")
+     *                     )
+     *                 ),
+     *
+     *                 @OA\Property(property="wishlists", type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="listing_id", type="integer", example=12),
+     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2025-04-24T11:33:12"),
+     *                         @OA\Property(property="listing", type="object",
+     *                             @OA\Property(property="id", type="integer", example=12),
+     *                             @OA\Property(property="title", type="string", example="Yamaha R6 2020"),
+     *                             @OA\Property(property="price", type="number", format="float", example=68000)
+     *                         )
+     *                     )
+     *                 ),
+     *
+     *                 @OA\Property(property="listings", type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=18),
+     *                         @OA\Property(property="title", type="string", example="Honda CBR 600RR"),
+     *                         @OA\Property(property="price", type="number", format="float", example=72000),
+     *                         @OA\Property(property="status", type="string", example="active")
+     *                     )
+     *                 ),
+     *
+     *                 @OA\Property(property="auction_histories_as_seller", type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=5),
+     *                         @OA\Property(property="bid_amount", type="number", format="float", example=60000),
+     *                         @OA\Property(property="bid_date", type="string", format="date-time", example="2025-04-23T10:45:00"),
+     *                         @OA\Property(property="listing", type="object",
+     *                             @OA\Property(property="id", type="integer", example=18),
+     *                             @OA\Property(property="title", type="string", example="Honda CBR 600RR")
+     *                         )
+     *                     )
+     *                 ),
+     *
+     *                 @OA\Property(property="auction_histories_as_buyer", type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=9),
+     *                         @OA\Property(property="bid_amount", type="number", format="float", example=65000),
+     *                         @OA\Property(property="bid_date", type="string", format="date-time", example="2025-04-23T14:15:00"),
+     *                         @OA\Property(property="listing", type="object",
+     *                             @OA\Property(property="id", type="integer", example=21),
+     *                             @OA\Property(property="title", type="string", example="Kawasaki Ninja 400")
+     *                         )
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Utilisateur non authentifié",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Unauthorized")
+     *         )
+     *     )
+     * )
+     */
 
     public function me(Request $request)
     {
@@ -393,9 +393,16 @@ class AuthController extends Controller
         $userWithData = User::with([
             'bankCards',
             'wishlists.listing',
-            'listings', // Annonces créées par l'utilisateur
+
+            'listings.motorcycle',
+            'listings.motorcycle.brand',
+            'listings.motorcycle.model',
+            'listings.motorcycle.year',
+            'listings.motorcycle.type',
             'auctionHistoriesAsSeller.listing',
-            'auctionHistoriesAsBuyer.listing'
+            'auctionHistoriesAsBuyer.listing',
+            'auctionHistoriesAsSeller.listing',
+            'auctionHistoriesAsBuyer.listing',
         ])->find($user->id);
 
         // Déchiffrer les CVV

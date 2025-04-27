@@ -1871,6 +1871,923 @@
                 }
             }
         },
+        "/api/motorcycle-brands": {
+            "get": {
+                "tags": [
+                    "Motorcycle Brands"
+                ],
+                "summary": "Get all motorcycle brands",
+                "operationId": "ecf4810f772f5ef0f46e563ff8ea5a3d",
+                "responses": {
+                    "200": {
+                        "description": "List of motorcycle brands"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Motorcycle Brands"
+                ],
+                "summary": "Create a new motorcycle brand",
+                "operationId": "ca62f9a53aae429317a0d555db0db234",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Honda"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Motorcycle brand created"
+                    }
+                }
+            }
+        },
+        "/api/motorcycle-brands/{id}": {
+            "get": {
+                "tags": [
+                    "Motorcycle Brands"
+                ],
+                "summary": "Get a motorcycle brand by ID",
+                "operationId": "4353d4620781aea0f89414d16ba72e0f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle brand data"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Motorcycle Brands"
+                ],
+                "summary": "Update a motorcycle brand",
+                "operationId": "07d7155dc636ccf7569dd392a5d4e404",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Yamaha"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle brand updated"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Motorcycle Brands"
+                ],
+                "summary": "Delete a motorcycle brand",
+                "operationId": "bb9a49f49175528d85d778649c2fc2f5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Deleted"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
+        },
+        "/api/motorcycles": {
+            "get": {
+                "tags": [
+                    "Motorcycles"
+                ],
+                "summary": "Get all motorcycles",
+                "operationId": "c0f4e4f3a808887d946e4cc85a622b96",
+                "responses": {
+                    "200": {
+                        "description": "List of motorcycles"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Motorcycles"
+                ],
+                "summary": "Create a new motorcycle",
+                "operationId": "94a6589d128340e0e630959bfce11074",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "brand_id",
+                                    "model_id",
+                                    "year_id",
+                                    "color"
+                                ],
+                                "properties": {
+                                    "brand_id": {
+                                        "type": "integer"
+                                    },
+                                    "model_id": {
+                                        "type": "integer"
+                                    },
+                                    "year_id": {
+                                        "type": "integer"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "example": "Red"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Motorcycle created"
+                    }
+                }
+            }
+        },
+        "/api/motorcycles/{id}": {
+            "get": {
+                "tags": [
+                    "Motorcycles"
+                ],
+                "summary": "Get a motorcycle by ID",
+                "operationId": "edbfbe97c12800775c8e6f5479e9fbff",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle data"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Motorcycles"
+                ],
+                "summary": "Update a motorcycle",
+                "operationId": "51d631f35a9d36781f427b8dee84618e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "brand_id",
+                                    "model_id",
+                                    "year_id",
+                                    "color"
+                                ],
+                                "properties": {
+                                    "brand_id": {
+                                        "type": "integer"
+                                    },
+                                    "model_id": {
+                                        "type": "integer"
+                                    },
+                                    "year_id": {
+                                        "type": "integer"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "example": "Black"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle updated"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Motorcycles"
+                ],
+                "summary": "Delete a motorcycle",
+                "operationId": "380bb8e8e4e201f4304b027a4c56adcc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Deleted"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
+        },
+        "/api/motorcycle-models": {
+            "get": {
+                "tags": [
+                    "Motorcycle Models"
+                ],
+                "summary": "Get all motorcycle models",
+                "operationId": "9cf26095369c0a1f24ccdc59eb5e8e8f",
+                "responses": {
+                    "200": {
+                        "description": "List of motorcycle models"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Motorcycle Models"
+                ],
+                "summary": "Create a new motorcycle model",
+                "operationId": "348e2a1f71de4990c263a894b77438d4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "brand_id",
+                                    "name",
+                                    "type_id"
+                                ],
+                                "properties": {
+                                    "brand_id": {
+                                        "type": "integer"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "CBR600RR"
+                                    },
+                                    "type_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Motorcycle model created"
+                    }
+                }
+            }
+        },
+        "/api/motorcycle-models/{id}": {
+            "get": {
+                "tags": [
+                    "Motorcycle Models"
+                ],
+                "summary": "Get a motorcycle model by ID",
+                "operationId": "46db16be3a19f6d3906d8c279c984480",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle model data"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Motorcycle Models"
+                ],
+                "summary": "Update a motorcycle model",
+                "operationId": "b8d3d0d6c6d3dafb99f779cc7ee53fd7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "brand_id",
+                                    "name",
+                                    "type_id"
+                                ],
+                                "properties": {
+                                    "brand_id": {
+                                        "type": "integer"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "MT-07"
+                                    },
+                                    "type_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle model updated"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Motorcycle Models"
+                ],
+                "summary": "Delete a motorcycle model",
+                "operationId": "66a3f0979775886a398e833255b2b2e3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Deleted"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
+        },
+        "/api/motorcycle-types": {
+            "get": {
+                "tags": [
+                    "Motorcycle Types"
+                ],
+                "summary": "Get all motorcycle types",
+                "operationId": "297a51041d61f5f3f541a47f0193a7cc",
+                "responses": {
+                    "200": {
+                        "description": "List of motorcycle types"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Motorcycle Types"
+                ],
+                "summary": "Create a new motorcycle type",
+                "operationId": "7ad0d99989baeb77ed42f540f0f9180d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Sport"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Motorcycle type created"
+                    }
+                }
+            }
+        },
+        "/api/motorcycle-types/{id}": {
+            "get": {
+                "tags": [
+                    "Motorcycle Types"
+                ],
+                "summary": "Get a motorcycle type by ID",
+                "operationId": "b0d8d440778b00f40145cac0d48582cf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle type data"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Motorcycle Types"
+                ],
+                "summary": "Update a motorcycle type",
+                "operationId": "5271c1e7521208c1d4922ca3050335d5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Cruiser"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle type updated"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Motorcycle Types"
+                ],
+                "summary": "Delete a motorcycle type",
+                "operationId": "f7228e3cb76ec733860fd962dd073913",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Deleted"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
+        },
+        "/api/motorcycle-years": {
+            "get": {
+                "tags": [
+                    "Motorcycle Years"
+                ],
+                "summary": "Get all motorcycle years",
+                "operationId": "341e8e6f23ee659e345ec02d77ffb7e9",
+                "responses": {
+                    "200": {
+                        "description": "List of motorcycle years"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Motorcycle Years"
+                ],
+                "summary": "Create a new motorcycle year",
+                "operationId": "7a8fb72eb322da9dd6050001bae9202c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "year"
+                                ],
+                                "properties": {
+                                    "year": {
+                                        "type": "integer",
+                                        "example": 2024
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Motorcycle year created"
+                    }
+                }
+            }
+        },
+        "/api/motorcycle-years/{id}": {
+            "get": {
+                "tags": [
+                    "Motorcycle Years"
+                ],
+                "summary": "Get a motorcycle year by ID",
+                "operationId": "9c6d31e9a81d04ae7368a2383d43aaf8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle year data"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Motorcycle Years"
+                ],
+                "summary": "Update a motorcycle year",
+                "operationId": "66699870e0fd7df9d075334cf3f5b8d1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "year"
+                                ],
+                                "properties": {
+                                    "year": {
+                                        "type": "integer",
+                                        "example": 2025
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle year updated"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Motorcycle Years"
+                ],
+                "summary": "Delete a motorcycle year",
+                "operationId": "5568e4b4440ea6a005c2cce8c74bfdce",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Deleted"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
+        },
+        "/api/roles": {
+            "get": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Get all roles",
+                "operationId": "77e3636d8592997ce9d6d27b50857a69",
+                "responses": {
+                    "200": {
+                        "description": "List of roles",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "admin"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Create a new role",
+                "operationId": "4a563842fbfcad237f63da43065fca3d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "manager"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Role created"
+                    }
+                }
+            }
+        },
+        "/api/roles/{id}": {
+            "get": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Get a role by ID",
+                "operationId": "7fb0667a295b7678a30353aa11739683",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Role found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "admin"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Role not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Update a role",
+                "operationId": "786d6990093a8eb3a56931f19a827e43",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "admin_updated"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Role updated"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Delete a role",
+                "operationId": "8285c46981c60ad600aa4077307aec04",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Role deleted"
+                    }
+                }
+            }
+        },
         "/api/users": {
             "get": {
                 "tags": [
@@ -2154,6 +3071,21 @@
     },
     "tags": [
         {
+            "name": "Motorcycle Brands"
+        },
+        {
+            "name": "Motorcycles"
+        },
+        {
+            "name": "Motorcycle Models"
+        },
+        {
+            "name": "Motorcycle Types"
+        },
+        {
+            "name": "Motorcycle Years"
+        },
+        {
             "name": "Authentification",
             "description": "Authentification"
         },
@@ -2180,6 +3112,10 @@
         {
             "name": "Auctions",
             "description": "Auctions"
+        },
+        {
+            "name": "Roles",
+            "description": "Roles"
         },
         {
             "name": "Users",
