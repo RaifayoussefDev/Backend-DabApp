@@ -684,6 +684,78 @@
                 }
             }
         },
+        "/api/user/update": {
+            "put": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Mettre à jour le profil de l'utilisateur",
+                "operationId": "89ec70688080b1a0c14c7f4fcb01c1f4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": "John"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john.doe@example.com"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+123456789"
+                                    },
+                                    "birthday": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "1990-05-15"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profil mis à jour",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Profile updated successfully"
+                                        },
+                                        "user": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Données invalides"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/BankCards": {
             "get": {
                 "tags": [
@@ -2003,8 +2075,8 @@
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "Deleted"
+                    "200": {
+                        "description": "Motorcycle brand deleted successfully"
                     },
                     "404": {
                         "description": "Not Found"
@@ -2226,6 +2298,9 @@
                 "responses": {
                     "201": {
                         "description": "Motorcycle model created"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 }
             }
@@ -2343,7 +2418,7 @@
                 "operationId": "297a51041d61f5f3f541a47f0193a7cc",
                 "responses": {
                     "200": {
-                        "description": "List of motorcycle types"
+                        "description": "List of motorcycle types or no data"
                     }
                 }
             },
@@ -2374,7 +2449,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Motorcycle type created"
+                        "description": "Motorcycle type created successfully"
                     }
                 }
             }
@@ -2442,7 +2517,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Motorcycle type updated"
+                        "description": "Motorcycle type updated successfully"
                     },
                     "404": {
                         "description": "Not Found"
@@ -2466,8 +2541,8 @@
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "Deleted"
+                    "200": {
+                        "description": "Motorcycle type deleted successfully"
                     },
                     "404": {
                         "description": "Not Found"
