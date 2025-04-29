@@ -531,7 +531,7 @@ class AuthController extends Controller
      *     summary="Enable or disable two-factor authentication",
      *     description="Toggles two-factor auth for the authenticated user",
      *     operationId="toggleTwoFactor",
-     *     tags={"User"},
+     *     tags={"Authentification"},
      *     security={{"sanctum":{}}},
      *     @OA\Response(
      *         response=200,
