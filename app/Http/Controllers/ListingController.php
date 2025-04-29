@@ -13,7 +13,6 @@ class ListingController extends Controller
 {
     public function store(Request $request)
     {
-        // On fait tout dans une transaction DB pour éviter les erreurs
         DB::beginTransaction();
 
         try {
@@ -33,18 +32,17 @@ class ListingController extends Controller
                 'listing_type_id' => $request->listing_type_id,
             ]);
 
-            // 2. Si auction_enabled = true, on crée une première Auction History
+            // 2. Créer une AuctionHistory si nécessaire
             if ($listing->auction_enabled) {
                 AuctionHistory::create([
                     'listing_id' => $listing->id,
-                    'seller_id' => $listing->seller_id, // Utiliser seller_id du listing
+                    'seller_id' => $listing->seller_id,
                     'bid_amount' => $listing->minimum_bid,
                 ]);
             }
 
-            // 3. Si category_id == 1, on ajoute la moto
+            // 3. Créer la moto si category_id == 1
             if ($listing->category_id == 1) {
-                // Vérification de la présence de toutes les données nécessaires avant l'insertion
                 $motorcycle = Motorcycle::create([
                     'listing_id' => $listing->id,
                     'brand_id' => $request->brand_id,
@@ -61,17 +59,20 @@ class ListingController extends Controller
                     'transmission' => $request->transmission,
                 ]);
 
-                // Retourne une réponse de succès
+                // ✅ COMMIT ICI
+                DB::commit();
+
                 return response()->json([
                     'message' => 'Motorcycle added successfully',
                     'data' => $motorcycle,
-                ], 201); // Code HTTP 201 pour une ressource créée avec succès
+                ], 201);
             } else {
-                // Retourne une erreur 422 si category_id n'est pas égal à 1
+                DB::rollBack();
                 return response()->json([
                     'message' => 'Invalid category_id. Only category 1 is allowed for motorcycles.',
-                ], 422); // Code HTTP 422 pour une erreur de validation
+                ], 422);
             }
+
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -80,4 +81,5 @@ class ListingController extends Controller
             ], 500);
         }
     }
+
 }
