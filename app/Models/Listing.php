@@ -42,4 +42,37 @@ class Listing extends Model
     {
         return $this->hasMany(Wishlist::class);
     }
+    public function images()
+    {
+        return $this->hasMany(ListingImage::class);
+    }
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
+    }
+    public function listingType()
+    {
+        return $this->belongsTo(ListingType::class);
+    }
+    public function motorcycleBrand()
+    {
+        return $this->belongsTo(MotorcycleBrand::class, 'brand_id');
+    }
+    public function motorcycleModel()
+    {
+        return $this->belongsTo(MotorcycleModel::class, 'model_id');
+    }
+    public function motorcycleYear()
+    {
+        return $this->belongsTo(MotorcycleYear::class, 'year_id');
+    }
+    public function motorcycleType()
+    {
+        return $this->belongsTo(MotorcycleType::class, 'type_id');
+    }
+
 }

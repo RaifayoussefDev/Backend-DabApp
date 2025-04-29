@@ -31,6 +31,14 @@ class ListingController extends Controller
                 'allow_submission' => $request->allow_submission ?? false,
                 'listing_type_id' => $request->listing_type_id,
             ]);
+            if ($request->has('images') && is_array($request->images)) {
+                foreach ($request->images as $imageUrl) {
+                    $listing->images()->create([
+                        'image_url' => $imageUrl
+                    ]);
+                }
+            }
+
 
             // 2. Créer une AuctionHistory si nécessaire
             if ($listing->auction_enabled) {

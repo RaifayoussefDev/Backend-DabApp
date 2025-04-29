@@ -399,6 +399,7 @@ class AuthController extends Controller
             'listings.motorcycle.model',
             'listings.motorcycle.year',
             'listings.motorcycle.type',
+            'listings.images',
             'auctionHistoriesAsSeller.listing',
             'auctionHistoriesAsBuyer.listing',
             'auctionHistoriesAsSeller.listing',
