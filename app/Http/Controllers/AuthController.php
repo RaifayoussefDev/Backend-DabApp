@@ -393,7 +393,7 @@ class AuthController extends Controller
         $userWithData = User::with([
             'bankCards',
             'wishlists.listing',
-
+            'wishlists.listing.images',
             'listings.motorcycle',
             'listings.motorcycle.brand',
             'listings.motorcycle.model',
