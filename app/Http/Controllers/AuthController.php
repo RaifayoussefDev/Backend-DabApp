@@ -472,4 +472,57 @@ class AuthController extends Controller
             'token' => auth()->refresh()
         ]);
     }
+    /**
+     * @OA\Put(
+     *     path="/api/user/update",
+     *     summary="Mettre à jour le profil de l'utilisateur",
+     *     tags={"Authentification"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="first_name", type="string", example="John"),
+     *             @OA\Property(property="last_name", type="string", example="Doe"),
+     *             @OA\Property(property="email", type="string", format="email", example="john.doe@example.com"),
+     *             @OA\Property(property="phone", type="string", example="+123456789"),
+     *             @OA\Property(property="birthday", type="string", format="date", example="1990-05-15")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Profil mis à jour",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Profile updated successfully"),
+     *             @OA\Property(property="user", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Données invalides"
+     *     )
+     * )
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = auth()->user();
+
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'nullable|string|max:255',
+            'last_name'  => 'nullable|string|max:255',
+            'email'      => 'nullable|email|unique:users,email,' . $user->id,
+            'phone'      => 'nullable|string|unique:users,phone,' . $user->id,
+            'birthday'   => 'nullable|date',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $user->update($request->only('first_name', 'last_name', 'email', 'phone', 'birthday'));
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => $user
+        ]);
+    }
 }
