@@ -756,6 +756,46 @@
                 ]
             }
         },
+        "/api/user/two-factor-toggle": {
+            "put": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Enable or disable two-factor authentication",
+                "description": "Toggles two-factor auth for the authenticated user",
+                "operationId": "toggleTwoFactor",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Two-factor authentication enabled."
+                                        },
+                                        "two_factor_enabled": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/BankCards": {
             "get": {
                 "tags": [
