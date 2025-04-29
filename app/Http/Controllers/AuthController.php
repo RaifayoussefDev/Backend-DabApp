@@ -525,4 +525,39 @@ class AuthController extends Controller
             'user' => $user
         ]);
     }
+    /**
+     * @OA\Put(
+     *     path="/api/user/two-factor-toggle",
+     *     summary="Enable or disable two-factor authentication",
+     *     description="Toggles two-factor auth for the authenticated user",
+     *     operationId="toggleTwoFactor",
+     *     tags={"User"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Two-factor authentication enabled."),
+     *             @OA\Property(property="two_factor_enabled", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     )
+     * )
+     */
+
+    public function toggleTwoFactor(Request $request)
+    {
+        $user = $request->user();
+
+        $user->two_factor_enabled = !$user->two_factor_enabled;
+        $user->save();
+
+        return response()->json([
+            'message' => 'Two-factor authentication ' . ($user->two_factor_enabled ? 'enabled' : 'disabled') . '.',
+            'two_factor_enabled' => $user->two_factor_enabled,
+        ]);
+    }
 }
