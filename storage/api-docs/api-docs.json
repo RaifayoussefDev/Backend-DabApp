@@ -3182,6 +3182,163 @@
                     }
                 ]
             }
+        },
+        "/api/wishlists": {
+            "get": {
+                "tags": [
+                    "Wishlist"
+                ],
+                "summary": "Get all wishlists",
+                "operationId": "978401ca2ca07b592255725cd25a443d",
+                "responses": {
+                    "200": {
+                        "description": "List of wishlists"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Wishlist"
+                ],
+                "summary": "Add listing to wishlist (auth required)",
+                "operationId": "4bdf63de7775026077073b1069c45f64",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "listing_id"
+                                ],
+                                "properties": {
+                                    "listing_id": {
+                                        "type": "integer",
+                                        "example": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Added to wishlist"
+                    },
+                    "409": {
+                        "description": "Already in wishlist"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/wishlists/{id}": {
+            "get": {
+                "tags": [
+                    "Wishlist"
+                ],
+                "summary": "Get a wishlist by ID",
+                "operationId": "b3cf1f24ca007a63db3f93f3e5e824d1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Wishlist details"
+                    },
+                    "404": {
+                        "description": "Wishlist not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Wishlist"
+                ],
+                "summary": "Update a wishlist",
+                "operationId": "d716f58b19d41444916708b6e9eac2c2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "user_id": {
+                                        "type": "integer"
+                                    },
+                                    "listing_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Wishlist updated"
+                    }
+                }
+            }
+        },
+        "/api/wishlists/{listing_id}": {
+            "delete": {
+                "tags": [
+                    "Wishlist"
+                ],
+                "summary": "Remove listing from wishlist (auth required)",
+                "operationId": "d9775cef34325e32f1d6dc67aa11e4ac",
+                "parameters": [
+                    {
+                        "name": "listing_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Removed from wishlist"
+                    },
+                    "404": {
+                        "description": "Wishlist item not found"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "tags": [
@@ -3199,6 +3356,10 @@
         },
         {
             "name": "Motorcycle Years"
+        },
+        {
+            "name": "Wishlist",
+            "description": "Operations related to wishlists"
         },
         {
             "name": "Authentification",

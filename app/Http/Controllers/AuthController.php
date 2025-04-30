@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Notifications\SendOtpNotification;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -184,6 +185,9 @@ class AuthController extends Controller
                     'updated_at' => now(),
                 ]
             );
+
+            // // ✅ Envoi de l'email
+            // $user->notify(new SendOtpNotification($otp));
 
             return response()->json([
                 'message' => 'OTP required',

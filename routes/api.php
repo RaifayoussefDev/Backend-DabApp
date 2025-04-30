@@ -12,6 +12,7 @@ use App\Http\Controllers\MotorcycleController;
 use App\Http\Controllers\MotorcycleModelController;
 use App\Http\Controllers\MotorcycleTypeController;
 use App\Http\Controllers\MotorcycleYearController;
+use App\Http\Controllers\WishlistController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -59,6 +60,9 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/my', 'myAuctions');
     });
 
+        Route::post('/wishlists', [WishlistController::class, 'store']);
+        Route::delete('/wishlists/{listing_id}', [WishlistController::class, 'destroy']);
+
 });
 Route::apiResource('roles', App\Http\Controllers\RoleController::class);
 Route::apiResource('motorcycle-types', MotorcycleTypeController::class);
@@ -68,6 +72,6 @@ Route::apiResource('motorcycle-years', MotorcycleYearController::class);
 Route::apiResource('motorcycles', MotorcycleController::class);
 
 Route::post('/listings', [ListingController::class, 'store']);
-
+// Route::apiResource('wishlists', WishlistController::class);
 
 
