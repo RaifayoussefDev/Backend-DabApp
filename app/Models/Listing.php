@@ -75,4 +75,8 @@ class Listing extends Model
         return $this->belongsTo(MotorcycleType::class, 'type_id');
     }
 
+    public function city(){
+        return $this->belongsTo(City::class);
+    }
+
 }

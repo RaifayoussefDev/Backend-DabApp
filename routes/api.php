@@ -63,6 +63,9 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/wishlists', [WishlistController::class, 'store']);
         Route::delete('/wishlists/{listing_id}', [WishlistController::class, 'destroy']);
 
+        Route::get('/listings/country/{country_id}', [ListingController::class, 'getByCountry']);
+
+
 });
 Route::apiResource('roles', App\Http\Controllers\RoleController::class);
 Route::apiResource('motorcycle-types', MotorcycleTypeController::class);

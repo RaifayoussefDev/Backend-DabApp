@@ -9,6 +9,8 @@ use App\Models\AuctionHistory;
 use App\Models\Motorcycle;
 use Illuminate\Support\Facades\DB;
 
+use Illuminate\Support\Facades\Auth;
+
 class ListingController extends Controller
 {
     public function store(Request $request)
@@ -80,7 +82,6 @@ class ListingController extends Controller
                     'message' => 'Invalid category_id. Only category 1 is allowed for motorcycles.',
                 ], 422);
             }
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -90,4 +91,38 @@ class ListingController extends Controller
         }
     }
 
+
+
+    public function getByCountry($country_id)
+    {
+        $user = Auth::user();
+
+        $listings = Listing::with(['images', 'city', 'country'])
+            ->where('country_id', $country_id)
+            ->get()
+            ->map(function ($listing) use ($user) {
+                $isInWishlist = false;
+
+                if ($user) {
+                    $isInWishlist = DB::table('wishlists')
+                        ->where('user_id', $user->id)
+                        ->where('listing_id', $listing->id)
+                        ->exists();
+                }
+
+                return [
+                    'id' => $listing->id,
+                    'title' => $listing->title,
+                    'description' => $listing->description,
+                    'price' => $listing->price,
+                    'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
+                    'city' => $listing->city ? $listing->city->name : null,
+                    'country' => $listing->country ? $listing->country->name : null,
+                    'images' => $listing->images->pluck('image_url'),
+                    'wishlist' => $isInWishlist,
+                ];
+            });
+
+        return response()->json($listings);
+    }
 }
