@@ -186,8 +186,7 @@ class AuthController extends Controller
                 ]
             );
 
-            // // ✅ Envoi de l'email
-            // $user->notify(new SendOtpNotification($otp));
+            $user->notify(new SendOtpNotification($otp));
 
             return response()->json([
                 'message' => 'OTP required',

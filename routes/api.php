@@ -60,12 +60,18 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/my', 'myAuctions');
     });
 
-        Route::post('/wishlists', [WishlistController::class, 'store']);
-        Route::delete('/wishlists/{listing_id}', [WishlistController::class, 'destroy']);
+    Route::post('/wishlists', [WishlistController::class, 'store']);
+    Route::delete('/wishlists/{listing_id}', [WishlistController::class, 'destroy']);
 
-        Route::get('/listings/country/{country_id}', [ListingController::class, 'getByCountry']);
+    Route::get('/listings/country/{country_id}', [ListingController::class, 'getByCountry']);
+    Route::get('/listings/by-category/{category_id}', [ListingController::class, 'getByCategory']);
+    Route::get('/listings/by-city/{city_id}', [ListingController::class, 'getByCity']);
 
+    Route::get('/listings/filter', [ListingController::class, 'filter']);
+    Route::get('/listings/recent/city/{city_id}', [ListingController::class, 'getLastByCity']);
 
+    Route::get('/listings/{id}', [ListingController::class, 'getById']);
+    Route::get('/listings', [ListingController::class, 'getAll']);
 });
 Route::apiResource('roles', App\Http\Controllers\RoleController::class);
 Route::apiResource('motorcycle-types', MotorcycleTypeController::class);
@@ -76,5 +82,3 @@ Route::apiResource('motorcycles', MotorcycleController::class);
 
 Route::post('/listings', [ListingController::class, 'store']);
 // Route::apiResource('wishlists', WishlistController::class);
-
-
