@@ -3,7 +3,9 @@
 <table class="footer" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation">
 <tr>
 <td class="content-cell" align="center">
-{{ Illuminate\Mail\Markdown::parse($slot) }}
+<p style="font-size: 12px; color: #b0b0b0;">
+    © {{ date('Y') }} DabApp. All rights reserved.
+</p>
 </td>
 </tr>
 </table>
