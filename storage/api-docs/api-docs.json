@@ -1137,6 +1137,58 @@
                 ]
             }
         },
+        "/api/my-cards/{id}/set-default": {
+            "patch": {
+                "tags": [
+                    "BankCards"
+                ],
+                "summary": "Set a card as default for the user",
+                "operationId": "0acd3375ae2edd2e99577c30bf812e59",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Card ID to set as default",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Card set as default successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Card set as default successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/BankCard"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Not authorized to update this card"
+                    },
+                    "404": {
+                        "description": "Card not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/card-types": {
             "get": {
                 "tags": [
