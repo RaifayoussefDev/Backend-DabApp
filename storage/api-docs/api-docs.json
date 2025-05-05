@@ -801,11 +801,40 @@
                 "tags": [
                     "BankCards"
                 ],
-                "summary": "Get all BankCards",
+                "summary": "Get all BankCards (Admin only)",
                 "operationId": "e68c29d4d26f557a17b9e095146a4f0d",
                 "responses": {
                     "200": {
                         "description": "List of BankCards"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/my-cards": {
+            "get": {
+                "tags": [
+                    "BankCards"
+                ],
+                "summary": "Get authenticated user's cards",
+                "operationId": "af74c31afb9229905aa329697bf611f3",
+                "responses": {
+                    "200": {
+                        "description": "List of user's bank cards",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/BankCard"
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -818,22 +847,17 @@
                 "tags": [
                     "BankCards"
                 ],
-                "summary": "Créer une nouvelle carte bancaire",
-                "operationId": "69051217fec04a0542796120ec649ba0",
+                "summary": "Add a new card for authenticated user",
+                "operationId": "fec5900e84eda158df67dad987d7fe10",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "user_id",
                                     "card_type_id"
                                 ],
                                 "properties": {
-                                    "user_id": {
-                                        "type": "integer",
-                                        "example": 12
-                                    },
                                     "card_type_id": {
                                         "type": "integer",
                                         "example": 1
@@ -863,10 +887,142 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Carte bancaire créée avec succès"
+                        "description": "Card added successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BankCard"
+                                }
+                            }
+                        }
                     },
                     "422": {
-                        "description": "Erreur de validation"
+                        "description": "Validation error"
+                    },
+                    "409": {
+                        "description": "Card already exists"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/my-cards/{id}": {
+            "put": {
+                "tags": [
+                    "BankCards"
+                ],
+                "summary": "Update user's card",
+                "operationId": "b08e8c3ae4447a9673d44c8b293d7434",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Card ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "card_holder_name": {
+                                        "type": "string",
+                                        "example": "John Doe Updated"
+                                    },
+                                    "expiration_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2027-08-31"
+                                    },
+                                    "cvv": {
+                                        "type": "string",
+                                        "example": "456"
+                                    },
+                                    "is_default": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Card updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BankCard"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Not authorized to update this card"
+                    },
+                    "404": {
+                        "description": "Card not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "BankCards"
+                ],
+                "summary": "Delete user's card",
+                "operationId": "5f1c13a1fb9c7989240d1b0ab2460f9b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Card ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Card deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Card deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Not authorized to delete this card"
+                    },
+                    "404": {
+                        "description": "Card not found"
                     }
                 },
                 "security": [
@@ -911,7 +1067,7 @@
                 "tags": [
                     "BankCards"
                 ],
-                "summary": "Update BankCard",
+                "summary": "Update BankCard (Admin only)",
                 "operationId": "a65401dfc863d5335f41b711641ef234",
                 "parameters": [
                     {
@@ -957,7 +1113,7 @@
                 "tags": [
                     "BankCards"
                 ],
-                "summary": "Delete BankCard",
+                "summary": "Delete BankCard (Admin only)",
                 "operationId": "e391e402ce09c1cefda6e83740716372",
                 "parameters": [
                     {
@@ -3338,6 +3494,65 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "BankCard": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "card_number": {
+                        "type": "string",
+                        "example": "**** **** **** 1234"
+                    },
+                    "card_holder_name": {
+                        "type": "string",
+                        "example": "John Doe"
+                    },
+                    "expiration_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-12-31"
+                    },
+                    "cvv": {
+                        "type": "string",
+                        "example": "***"
+                    },
+                    "card_type_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "is_default": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "BankCardType": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Visa"
+                            },
+                            "description": {
+                                "type": "string",
+                                "example": "Standard Visa Card"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
             }
         }
     },

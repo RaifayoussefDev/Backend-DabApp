@@ -394,7 +394,6 @@ class AuthController extends Controller
         $user = $request->user();
 
         $userWithData = User::with([
-            'bankCards',
             'wishlists.listing',
             'wishlists.listing.images',
             'listings.motorcycle',
@@ -407,6 +406,7 @@ class AuthController extends Controller
             'auctionHistoriesAsBuyer.listing',
             'auctionHistoriesAsSeller.listing',
             'auctionHistoriesAsBuyer.listing',
+            'bankCards',
         ])->find($user->id);
 
         // Déchiffrer les CVV

@@ -14,6 +14,7 @@ use App\Http\Controllers\MotorcycleTypeController;
 use App\Http\Controllers\MotorcycleYearController;
 use App\Http\Controllers\WishlistController;
 
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
@@ -72,6 +73,16 @@ Route::middleware('auth:api')->group(function () {
 
     Route::get('/listings/{id}', [ListingController::class, 'getById']);
     Route::get('/listings', [ListingController::class, 'getAll']);
+
+     // Existing admin routes
+     Route::apiResource('BankCards', CardController::class);
+
+     // New user-specific routes
+     Route::get('my-cards', [CardController::class, 'myCards']);
+     Route::post('my-cards', [CardController::class, 'addMyCard']);
+     Route::put('my-cards/{id}', [CardController::class, 'editMyCard']);
+     Route::delete('my-cards/{id}', [CardController::class, 'deleteMyCard']);
+
 });
 Route::apiResource('roles', App\Http\Controllers\RoleController::class);
 Route::apiResource('motorcycle-types', MotorcycleTypeController::class);
