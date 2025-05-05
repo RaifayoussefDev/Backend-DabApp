@@ -80,7 +80,7 @@ class CardController extends Controller
      *             @OA\Property(property="card_type_id", type="integer", example=1),
      *             @OA\Property(property="card_number", type="string", example="1234 5678 9012 3456"),
      *             @OA\Property(property="card_holder_name", type="string", example="John Doe"),
-     *             @OA\Property(property="expiration_date", type="string", format="date", example="2026-08-31"),
+     *             @OA\Property(property="expiration_date", type="string", example="12/25")
      *             @OA\Property(property="cvv", type="string", example="123")
      *         )
      *     ),
@@ -100,7 +100,11 @@ class CardController extends Controller
         $validated = $request->validate([
             'card_number' => 'nullable|string|max:255',
             'card_holder_name' => 'nullable|string|max:255',
-            'expiration_date' => 'nullable|date',
+            'expiration_date' => [
+                'nullable',
+                'string',
+                'regex:/^(0[1-9]|1[0-2])\/?([0-9]{2})$/'
+            ],
             'cvv' => 'nullable|string|max:4',
             'card_type_id' => 'required|exists:card_types,id',
         ]);
@@ -108,6 +112,13 @@ class CardController extends Controller
         // Add user_id to validated data
         $validated['user_id'] = $user->id;
 
+        // Format expiration date consistently (MM/YY)
+        if (!empty($validated['expiration_date'])) {
+            $validated['expiration_date'] = preg_replace('/[^0-9]/', '', $validated['expiration_date']);
+            $validated['expiration_date'] = substr($validated['expiration_date'], 0, 2) . '/' . substr($validated['expiration_date'], 2, 2);
+        }
+
+        // Rest of the method remains the same...
         // Check if card already exists
         if (!empty($validated['card_number'])) {
             $cardExists = BankCard::where('user_id', $user->id)
@@ -161,7 +172,7 @@ class CardController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             @OA\Property(property="card_holder_name", type="string", example="John Doe Updated"),
-     *             @OA\Property(property="expiration_date", type="string", format="date", example="2027-08-31"),
+     *              @OA\Property(property="expiration_date", type="string", example="12/25"),
      *             @OA\Property(property="cvv", type="string", example="456"),
      *             @OA\Property(property="is_default", type="boolean", example=true)
      *         )
@@ -191,11 +202,22 @@ class CardController extends Controller
 
         $validated = $request->validate([
             'card_holder_name' => 'sometimes|string|max:255',
-            'expiration_date' => 'sometimes|date',
+            'expiration_date' => [
+                'sometimes',
+                'string',
+                'regex:/^(0[1-9]|1[0-2])\/?([0-9]{2})$/'
+            ],
             'cvv' => 'sometimes|string|max:4',
             'is_default' => 'sometimes|boolean',
         ]);
 
+        // Format expiration date consistently (MM/YY)
+        if (!empty($validated['expiration_date'])) {
+            $validated['expiration_date'] = preg_replace('/[^0-9]/', '', $validated['expiration_date']);
+            $validated['expiration_date'] = substr($validated['expiration_date'], 0, 2) . '/' . substr($validated['expiration_date'], 2, 2);
+        }
+
+        // Rest of the method remains the same...
         // Encrypt CVV if present
         if (!empty($validated['cvv'])) {
             $validated['cvv'] = encrypt($validated['cvv']);
