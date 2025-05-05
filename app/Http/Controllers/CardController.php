@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\BankCard;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
 /**
  * @OA\Schema(
  *     schema="BankCard",
@@ -326,5 +328,54 @@ class CardController extends Controller
     {
         BankCard::findOrFail($id)->delete();
         return response()->json(['message' => 'BankCard deleted']);
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/my-cards/{id}/set-default",
+     *     summary="Set a card as default for the user",
+     *     tags={"BankCards"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Card ID to set as default",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Card set as default successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Card set as default successfully"),
+     *             @OA\Property(property="data", ref="#/components/schemas/BankCard")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Not authorized to update this card"),
+     *     @OA\Response(response=404, description="Card not found")
+     * )
+     */
+    public function setAsDefault($id)
+    {
+        $user = Auth::user();
+
+        // Find the card and verify it belongs to the user
+        $card = BankCard::where('user_id', $user->id)->findOrFail($id);
+
+        // Start transaction to ensure data consistency
+        DB::transaction(function () use ($user, $card) {
+            // Set all other cards to not default
+            BankCard::where('user_id', $user->id)
+                ->where('id', '!=', $card->id)
+                ->update(['is_default' => false]);
+
+            // Set this card as default
+            $card->update(['is_default' => true]);
+        });
+
+        return response()->json([
+            'message' => 'Card set as default successfully',
+            'data' => $card->fresh() // Return the updated card
+        ]);
     }
 }

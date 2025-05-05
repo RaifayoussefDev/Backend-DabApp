@@ -83,6 +83,9 @@ Route::middleware('auth:api')->group(function () {
      Route::put('my-cards/{id}', [CardController::class, 'editMyCard']);
      Route::delete('my-cards/{id}', [CardController::class, 'deleteMyCard']);
 
+     Route::patch('my-cards/{id}/set-default', [CardController::class, 'setAsDefault']);
+
+
 });
 Route::apiResource('roles', App\Http\Controllers\RoleController::class);
 Route::apiResource('motorcycle-types', MotorcycleTypeController::class);

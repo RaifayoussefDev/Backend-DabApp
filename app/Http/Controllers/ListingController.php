@@ -8,6 +8,7 @@ use App\Models\Listing;
 use App\Models\AuctionHistory;
 use App\Models\LicensePlate;
 use App\Models\Motorcycle;
+use App\Models\SparePart;
 use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Auth;
@@ -79,7 +80,25 @@ class ListingController extends Controller
                 ], 201);
             }
 
-            // 5. If category_id == 3 ➤ insert LicensePlate
+            // 5. If category_id == 2 ➤ insert SparePart
+            elseif ($listing->category_id == 2) {
+                $sparePart = SparePart::create([
+                    'listing_id' => $listing->id,
+                    'brand_id' => $request->brand_id,
+                    'model_id' => $request->model_id,
+                    'year_id' => $request->year_id,
+                    'condition' => $request->condition, // 'new' or 'used'
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'message' => 'Spare part added successfully',
+                    'data' => $sparePart,
+                ], 201);
+            }
+
+            // 6. If category_id == 3 ➤ insert LicensePlate
             elseif ($listing->category_id == 3) {
                 $licensePlate = LicensePlate::create([
                     'listing_id' => $listing->id,
@@ -98,11 +117,11 @@ class ListingController extends Controller
                 ], 201);
             }
 
-            // 6. Invalid category
+            // 7. Invalid category
             else {
                 DB::rollBack();
                 return response()->json([
-                    'message' => 'Invalid category_id. Only category 1 or 3 is allowed.',
+                    'message' => 'Invalid category_id. Only categories 1, 2, or 3 are allowed.',
                 ], 422);
             }
         } catch (\Exception $e) {
@@ -113,7 +132,6 @@ class ListingController extends Controller
             ], 500);
         }
     }
-
 
     public function getByCountry($country_id)
     {
@@ -451,5 +469,5 @@ class ListingController extends Controller
             'data' => $data,
         ]);
     }
-}
 
+}
