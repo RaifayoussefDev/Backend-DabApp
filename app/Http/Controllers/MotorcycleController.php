@@ -3,7 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Motorcycle;
+use App\Models\MotorcycleBrand;
+use App\Models\MotorcycleModel;
+use App\Models\MotorcycleType;
+use App\Models\MotorcycleYear;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 /**
  * @OA\Tag(name="Motorcycles")
@@ -149,5 +155,45 @@ class MotorcycleController extends Controller
         $motorcycle->delete();
 
         return response()->json(null, 204);
+    }
+
+
+    public function importMotorcycles(Request $request)
+    {
+        if (!$request->hasFile('file')) {
+            return response()->json(['error' => 'No file uploaded'], 400);
+        }
+
+        $file = $request->file('file');
+        $handle = fopen($file->getRealPath(), 'r');
+        $header = fgetcsv($handle); // skip header
+
+        while (($row = fgetcsv($handle, 1000, ',')) !== false) {
+            [$typeName, $brandName, $modelName, $yearValue] = $row;
+
+            // 1. Insert or get type
+            $type = MotorcycleType::firstOrCreate(['name' => $typeName]);
+
+            // 2. Insert or get brand
+            $brand = MotorcycleBrand::firstOrCreate(['name' => $brandName]);
+
+            // 3. Insert or get model
+            $model = MotorcycleModel::firstOrCreate([
+                'name' => $modelName,
+            ], [
+                'brand_id' => $brand->id,
+                'type_id' => $type->id
+            ]);
+
+            // 4. Insert year if not exists
+            MotorcycleYear::firstOrCreate([
+                'model_id' => $model->id,
+                'year' => (int)$yearValue
+            ]);
+        }
+
+        fclose($handle);
+
+        return response()->json(['message' => 'Motorcycles imported successfully']);
     }
 }

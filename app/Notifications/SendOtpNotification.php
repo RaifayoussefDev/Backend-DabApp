@@ -25,10 +25,11 @@ class SendOtpNotification extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-            ->subject('Votre code OTP')
-            ->greeting('Bonjour ' . $notifiable->first_name . ',')
-            ->line('Votre code OTP est : **' . $this->otp . '**')
-            ->line('Il expire dans 5 minutes.')
-            ->line('Si vous n’avez pas demandé ce code, veuillez ignorer cet e-mail.');
+            ->subject('Your OTP Code')
+            ->greeting('Hello ' . $notifiable->first_name . ',')
+            ->line('Your OTP code is: **' . $this->otp . '**')
+            ->line('It will expire in 5 minutes.')
+            ->line('If you did not request this code, please ignore this email.');
     }
+
 }

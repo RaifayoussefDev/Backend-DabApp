@@ -81,4 +81,8 @@ Route::apiResource('motorcycle-years', MotorcycleYearController::class);
 Route::apiResource('motorcycles', MotorcycleController::class);
 
 Route::post('/listings', [ListingController::class, 'store']);
+
+Route::post('/motorcycles/import', [MotorcycleController::class, 'importMotorcycles']);
+
+
 // Route::apiResource('wishlists', WishlistController::class);
