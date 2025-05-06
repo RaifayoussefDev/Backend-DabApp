@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\MotorcycleImportController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CardTypeController;
@@ -102,3 +103,4 @@ Route::post('/motorcycles/import', [MotorcycleController::class, 'importMotorcyc
 Route::get('/motorcycle/filter', [MotorcycleFilterController::class, 'filter']);
 
 // Route::apiResource('wishlists', WishlistController::class);
+Route::post('/motorcycles/import', [MotorcycleImportController::class, 'import']);

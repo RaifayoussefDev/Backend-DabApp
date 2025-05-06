@@ -20,7 +20,6 @@ class BankCard extends Model
 
     protected $casts = [
         'is_default' => 'boolean',
-        'expiration_date' => 'date',
     ];
 
     public function user()

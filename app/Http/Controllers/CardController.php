@@ -80,7 +80,12 @@ class CardController extends Controller
      *             @OA\Property(property="card_type_id", type="integer", example=1),
      *             @OA\Property(property="card_number", type="string", example="1234 5678 9012 3456"),
      *             @OA\Property(property="card_holder_name", type="string", example="John Doe"),
-     *             @OA\Property(property="expiration_date", type="string", example="12/25"),
+     *             @OA\Property(
+     *                 property="expiration_date",
+     *                 type="string",
+     *                 example="12/25",
+     *                 description="Format: MM/YY"
+     *             ),
      *             @OA\Property(property="cvv", type="string", example="123")
      *         )
      *     ),
@@ -101,6 +106,7 @@ class CardController extends Controller
     {
         $user = Auth::user();
 
+        // Validate the request data
         $validated = $request->validate([
             'card_type_id' => 'required|exists:card_types,id',
             'card_number' => 'nullable|string|max:255',
@@ -108,41 +114,71 @@ class CardController extends Controller
             'expiration_date' => [
                 'nullable',
                 'string',
-                'regex:/^(0[1-9]|1[0-2])\/?([0-9]{2})$/'
+                'regex:/^(0[1-9]|1[0-2])\/\d{2}$/', // Match MM/YY format
+                function ($attribute, $value, $fail) {
+                    // Check if expiration month is between 01 and 12
+                    $parts = explode('/', $value);
+                    $month = (int)$parts[0];
+                    $year = (int)$parts[1];
+
+                    // Reject if the month is not valid (greater than 12)
+                    if ($month < 1 || $month > 12) {
+                        return $fail('The expiration month must be between 01 and 12.');
+                    }
+
+                    // Check if the year is realistic (you can change this range based on your requirements)
+                    if ($year < 23) { // Accept only years greater than or equal to '23 (2023)'
+                        return $fail('The expiration year must be valid and in the future.');
+                    }
+                }
             ],
             'cvv' => 'nullable|string|max:4',
         ]);
 
+        // Assign the user_id to the validated data
         $validated['user_id'] = $user->id;
 
-        // Normalize expiration date format to MM/YY
-        if (!empty($validated['expiration_date'])) {
-            $validated['expiration_date'] = preg_replace('/[^0-9]/', '', $validated['expiration_date']);
-            $validated['expiration_date'] = substr($validated['expiration_date'], 0, 2) . '/' . substr($validated['expiration_date'], 2, 2);
-        }
-
-        // Check for duplicate card
+        // Check if the card already exists
         if (!empty($validated['card_number'])) {
-            $cardExists = BankCard::where('user_id', $user->id)
+            $exists = BankCard::where('user_id', $user->id)
                 ->where('card_number', $validated['card_number'])
                 ->exists();
 
-            if ($cardExists) {
+            if ($exists) {
                 return response()->json([
                     'message' => 'This card already exists for your account.'
                 ], 409);
             }
+
+            // Detect the card type
+            $cardNumber = preg_replace('/\s+/', '', $validated['card_number']);
+            $cardType = null;
+
+            if (preg_match('/^4[0-9]{12}(?:[0-9]{3})?$/', $cardNumber)) {
+                $cardType = 'visa';
+            } elseif (preg_match('/^5[1-5][0-9]{14}$/', $cardNumber)) {
+                $cardType = 'mastercard';
+            } elseif (preg_match('/^6(?:011|5[0-9]{2})[0-9]{12}$/', $cardNumber)) {
+                $cardType = 'applepay';
+            }
+
+            if (!in_array($cardType, ['visa', 'mastercard', 'applepay'])) {
+                return response()->json([
+                    'message' => 'Unsupported card type. Only Visa, MasterCard, and Apple Pay are allowed.'
+                ], 422);
+            }
         }
 
-        // Encrypt CVV if present
+        // Encrypt the CVV
         if (!empty($validated['cvv'])) {
             $validated['cvv'] = encrypt($validated['cvv']);
         }
 
-        // Set as default if it's the first card
+        // Set as default card if this is the first one
         $validated['is_default'] = !BankCard::where('user_id', $user->id)->exists();
 
         try {
+            // Insert the data into the bank_cards table
             $bankCard = BankCard::create($validated);
 
             return response()->json([
@@ -156,6 +192,10 @@ class CardController extends Controller
             ], 500);
         }
     }
+
+
+
+
 
 
     /**
