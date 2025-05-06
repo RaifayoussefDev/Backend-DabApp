@@ -847,7 +847,7 @@
                 "tags": [
                     "BankCards"
                 ],
-                "summary": "Add a new card for authenticated user",
+                "summary": "Add a new card for the authenticated user",
                 "operationId": "fec5900e84eda158df67dad987d7fe10",
                 "requestBody": {
                     "required": true,
@@ -872,8 +872,7 @@
                                     },
                                     "expiration_date": {
                                         "type": "string",
-                                        "format": "date",
-                                        "example": "2026-08-31"
+                                        "example": "12/25"
                                     },
                                     "cvv": {
                                         "type": "string",
@@ -891,16 +890,28 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/BankCard"
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bank card successfully added."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/BankCard"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
                     },
+                    "409": {
+                        "description": "Card already exists"
+                    },
                     "422": {
                         "description": "Validation error"
                     },
-                    "409": {
-                        "description": "Card already exists"
+                    "500": {
+                        "description": "Internal server error"
                     }
                 },
                 "security": [
@@ -940,8 +951,7 @@
                                     },
                                     "expiration_date": {
                                         "type": "string",
-                                        "format": "date",
-                                        "example": "2027-08-31"
+                                        "example": "12/25"
                                     },
                                     "cvv": {
                                         "type": "string",
@@ -2493,6 +2503,92 @@
                     },
                     "404": {
                         "description": "Not Found"
+                    }
+                }
+            }
+        },
+        "/api/motorcycle/filter": {
+            "get": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Filter motorcycles by brand, model, year, or type",
+                "description": "Returns filtered motorcycle brands, models, years, and types. If no query parameters are provided, returns all.",
+                "operationId": "c274bcf7ca88c37d9bb4d690cc456e04",
+                "parameters": [
+                    {
+                        "name": "brand_id",
+                        "in": "query",
+                        "description": "Filter by brand ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "model_id",
+                        "in": "query",
+                        "description": "Filter by model ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "year",
+                        "in": "query",
+                        "description": "Filter by year",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type_id",
+                        "in": "query",
+                        "description": "Filter by type ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "brands": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "models": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "years": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "integer"
+                                            }
+                                        },
+                                        "types": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }

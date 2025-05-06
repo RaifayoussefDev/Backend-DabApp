@@ -9,6 +9,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ListingAuctionController;
 use App\Http\Controllers\MotorcycleBrandController;
 use App\Http\Controllers\MotorcycleController;
+use App\Http\Controllers\MotorcycleFilterController;
 use App\Http\Controllers\MotorcycleModelController;
 use App\Http\Controllers\MotorcycleTypeController;
 use App\Http\Controllers\MotorcycleYearController;
@@ -98,5 +99,6 @@ Route::post('/listings', [ListingController::class, 'store']);
 
 Route::post('/motorcycles/import', [MotorcycleController::class, 'importMotorcycles']);
 
+Route::get('/motorcycle/filter', [MotorcycleFilterController::class, 'filter']);
 
 // Route::apiResource('wishlists', WishlistController::class);

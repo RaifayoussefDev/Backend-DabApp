@@ -70,7 +70,7 @@ class CardController extends Controller
     /**
      * @OA\Post(
      *     path="/api/my-cards",
-     *     summary="Add a new card for authenticated user",
+     *     summary="Add a new card for the authenticated user",
      *     tags={"BankCards"},
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
@@ -80,17 +80,21 @@ class CardController extends Controller
      *             @OA\Property(property="card_type_id", type="integer", example=1),
      *             @OA\Property(property="card_number", type="string", example="1234 5678 9012 3456"),
      *             @OA\Property(property="card_holder_name", type="string", example="John Doe"),
-     *             @OA\Property(property="expiration_date", type="string", example="12/25")
+     *             @OA\Property(property="expiration_date", type="string", example="12/25"),
      *             @OA\Property(property="cvv", type="string", example="123")
      *         )
      *     ),
      *     @OA\Response(
      *         response=201,
      *         description="Card added successfully",
-     *         @OA\JsonContent(ref="#/components/schemas/BankCard")
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Bank card successfully added."),
+     *             @OA\Property(property="data", ref="#/components/schemas/BankCard")
+     *         )
      *     ),
+     *     @OA\Response(response=409, description="Card already exists"),
      *     @OA\Response(response=422, description="Validation error"),
-     *     @OA\Response(response=409, description="Card already exists")
+     *     @OA\Response(response=500, description="Internal server error")
      * )
      */
     public function addMyCard(Request $request)
@@ -98,6 +102,7 @@ class CardController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
+            'card_type_id' => 'required|exists:card_types,id',
             'card_number' => 'nullable|string|max:255',
             'card_holder_name' => 'nullable|string|max:255',
             'expiration_date' => [
@@ -106,20 +111,17 @@ class CardController extends Controller
                 'regex:/^(0[1-9]|1[0-2])\/?([0-9]{2})$/'
             ],
             'cvv' => 'nullable|string|max:4',
-            'card_type_id' => 'required|exists:card_types,id',
         ]);
 
-        // Add user_id to validated data
         $validated['user_id'] = $user->id;
 
-        // Format expiration date consistently (MM/YY)
+        // Normalize expiration date format to MM/YY
         if (!empty($validated['expiration_date'])) {
             $validated['expiration_date'] = preg_replace('/[^0-9]/', '', $validated['expiration_date']);
             $validated['expiration_date'] = substr($validated['expiration_date'], 0, 2) . '/' . substr($validated['expiration_date'], 2, 2);
         }
 
-        // Rest of the method remains the same...
-        // Check if card already exists
+        // Check for duplicate card
         if (!empty($validated['card_number'])) {
             $cardExists = BankCard::where('user_id', $user->id)
                 ->where('card_number', $validated['card_number'])
@@ -137,12 +139,12 @@ class CardController extends Controller
             $validated['cvv'] = encrypt($validated['cvv']);
         }
 
-        // Set as default if first card
-        $hasCard = BankCard::where('user_id', $user->id)->exists();
-        $validated['is_default'] = !$hasCard;
+        // Set as default if it's the first card
+        $validated['is_default'] = !BankCard::where('user_id', $user->id)->exists();
 
         try {
             $bankCard = BankCard::create($validated);
+
             return response()->json([
                 'message' => 'Bank card successfully added.',
                 'data' => $bankCard
@@ -154,6 +156,7 @@ class CardController extends Controller
             ], 500);
         }
     }
+
 
     /**
      * @OA\Put(
