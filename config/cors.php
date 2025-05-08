@@ -18,7 +18,8 @@ return [
     'allowed_methods' => ['*'],  // Allow all HTTP methods (GET, POST, etc.)
 
     'allowed_origins' => [
-        'https://dabapp.co',  // Specify the trusted origin(s)
+        'https://dabapp.co',
+        'http://localhost:4200'  // Specify the trusted origin(s)
     ], 
 
     'allowed_headers' => ['*'],  // Allow all headers
