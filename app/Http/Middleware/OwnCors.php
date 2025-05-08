@@ -21,6 +21,7 @@ class OwnCors
             $headers['Access-Control-Allow-Origin'] = $origin;
             $headers['Access-Control-Allow-Credentials'] = 'true';
         }
+        
 
         if ($request->getMethod() === 'OPTIONS') {
             return response('OK', 200)->withHeaders($headers);

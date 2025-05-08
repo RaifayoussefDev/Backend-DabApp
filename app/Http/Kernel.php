@@ -7,15 +7,15 @@ use Illuminate\Foundation\Http\Kernel as HttpKernel;
 class Kernel extends HttpKernel
 {
     /**
-     * Les middlewares globaux de l'application.
+     * The application's global HTTP middleware stack.
      *
-     * Ces middlewares sont exécutés pendant chaque requête à l'application.
+     * These middleware are run during every request to your application.
      *
      * @var array
      */
     protected $middleware = [
         \App\Http\Middleware\TrustProxies::class,
-        \Fruitcake\Cors\HandleCors::class, // Pour gérer CORS si tu utilises Fruitcake
+        \Fruitcake\Cors\HandleCors::class, // Correct usage of CORS middleware
         \Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode::class,
         \Illuminate\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\LoadEnvironmentVariables::class,
@@ -25,9 +25,9 @@ class Kernel extends HttpKernel
     ];
 
     /**
-     * Les groupes de middlewares de l'application.
+     * The application's route middleware groups.
      *
-     * Ces middlewares peuvent être assignés à des groupes de routes.
+     * These middleware may be assigned to groups of routes.
      *
      * @var array
      */
@@ -47,9 +47,9 @@ class Kernel extends HttpKernel
     ];
 
     /**
-     * Les middlewares de route de l'application.
+     * The application's route middleware.
      *
-     * Ces middlewares peuvent être assignés à des routes spécifiques.
+     * These middleware may be assigned to specific routes.
      *
      * @var array
      */
@@ -64,6 +64,6 @@ class Kernel extends HttpKernel
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-        'cors' => \App\Http\Middleware\OwnCors::class,  // Ajoute ici ton middleware OwnCors
+        'cors' => \App\Http\Middleware\OwnCors::class,  // If you have a custom CORS middleware, ensure it's correctly placed here
     ];
 }
