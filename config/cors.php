@@ -28,5 +28,5 @@ return [
 
     'max_age' => 0,  // Pre-flight request cache for 0 seconds
 
-    'supports_credentials' => false,  // Disable sending credentials (cookies, HTTP authentication)
+    'supports_credentials' => true,  // Disable sending credentials (cookies, HTTP authentication)
 ];
