@@ -9,12 +9,18 @@ class OwnCors
 {
     public function handle(Request $request, Closure $next): Response
     {
+        $origin = $request->headers->get('Origin');
+        $allowedOrigins = ['https://dabapp.co/', 'http://localhost:4200'];
+
         $headers = [
-            'Access-Control-Allow-Origin'      => '*',
             'Access-Control-Allow-Methods'     => 'GET, POST, PUT, DELETE, OPTIONS',
             'Access-Control-Allow-Headers'     => 'Origin, Content-Type, Accept, Authorization, X-Requested-With, X-Auth-Token',
-            'Access-Control-Allow-Credentials' => 'true',
         ];
+
+        if (in_array($origin, $allowedOrigins)) {
+            $headers['Access-Control-Allow-Origin'] = $origin;
+            $headers['Access-Control-Allow-Credentials'] = 'true';
+        }
 
         if ($request->getMethod() === 'OPTIONS') {
             return response('OK', 200)->withHeaders($headers);
