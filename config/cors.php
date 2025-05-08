@@ -19,7 +19,8 @@ return [
 
     'allowed_origins' => [
         'https://dabapp.co',
-        'http://localhost:4200'  // Specify the trusted origin(s)
+        'http://localhost:4200',
+        'http://192.168.11.184:5500'  // Specify the trusted origin(s)
     ], 
 
     'allowed_headers' => ['*'],  // Allow all headers
