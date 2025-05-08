@@ -1,4 +1,4 @@
-<?php
+<?php 
 namespace App\Http\Middleware;
 
 use Closure;
@@ -10,7 +10,7 @@ class OwnCors
     public function handle(Request $request, Closure $next): Response
     {
         $origin = $request->headers->get('Origin');
-        $allowedOrigins = ['https://dabapp.co/', 'http://localhost:4200'];
+        $allowedOrigins = ['https://dabapp.co', 'http://localhost:4200'];
 
         $headers = [
             'Access-Control-Allow-Methods'     => 'GET, POST, PUT, DELETE, OPTIONS',
