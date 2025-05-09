@@ -22,7 +22,8 @@ class OwnCors
             'https://dabapp.co',
             'http://localhost:4200',
             'http://localhost:8000', // Ajout pour le développement
-            'http://127.0.0.1:8000'  // Alternative à localhost
+            'http://127.0.0.1:8000',  // Alternative à localhost
+            'https://be.dabapp.co/'
         ];
 
         // Headers CORS de base
@@ -41,7 +42,7 @@ class OwnCors
         }
 
         // Gestion des credentials si nécessaire
-        if ($request->headers->get('Authorization') || 
+        if ($request->headers->get('Authorization') ||
             $request->cookies->has('XSRF-TOKEN')) {
             $headers['Access-Control-Allow-Credentials'] = 'true';
         }
