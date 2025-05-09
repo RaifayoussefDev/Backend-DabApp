@@ -62,7 +62,7 @@ class AuthController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
             'phone' => 'required|string|unique:users',
-            'password' => 'required|string|min:6|confirmed', // password_confirmation obligatoire
+            'password' => 'required|string|min:6|confirmed',
         ]);
 
         if ($validator->fails()) {
@@ -75,13 +75,19 @@ class AuthController extends Controller
             'email'      => $request->email,
             'phone'      => $request->phone,
             'password'   => Hash::make($request->password),
-            'role_id' => $request->role_id
+            'role_id'    => $request->role_id
         ]);
 
         $token = JWTAuth::fromUser($user);
+        $tokenExpiration = now()->addMinutes(5);
 
-        return response()->json(compact('user', 'token'));
+        return response()->json([
+            'user' => $user,
+            'token' => $token,
+            'expires_at' => $tokenExpiration->toDateTimeString()
+        ]);
     }
+
 
     /**
      * @OA\Post(
@@ -171,7 +177,7 @@ class AuthController extends Controller
 
         // Generate JWT token
         $token = JWTAuth::fromUser($user);
-        $tokenExpiration = now()->addHour();
+        $tokenExpiration = now()->addMinutes(5);
 
         // If 2FA is enabled for the user
         if ($user->two_factor_enabled) {
@@ -286,7 +292,7 @@ class AuthController extends Controller
 
         // Authentifier l'utilisateur
         $token = JWTAuth::fromUser($user);
-        $tokenExpiration = now()->addHour();
+        $tokenExpiration = now()->addMinutes(5);
 
         $user->token_expiration = $tokenExpiration;
         $user->save();
@@ -472,12 +478,17 @@ class AuthController extends Controller
      */
     public function refresh()
     {
+        $token = auth()->refresh();
+        $tokenExpiration = now()->addMinutes(5);
+    
         return response()->json([
-            'token' => auth()->refresh()
+            'token' => $token,
+            'expires_at' => $tokenExpiration->toDateTimeString()
         ]);
     }
+    
     /**
-     * @OA\Put(
+     * @OA\Put( 
      *     path="/api/user/update",
      *     summary="Mettre à jour le profil de l'utilisateur",
      *     tags={"Authentification"},
