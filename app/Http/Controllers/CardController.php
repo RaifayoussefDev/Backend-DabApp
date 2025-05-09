@@ -65,6 +65,8 @@ class CardController extends Controller
     {
         $user = Auth::user();
         return response()->json(BankCard::with('cardType')->where('user_id', $user->id)->get());
+
+        
     }
 
     /**
