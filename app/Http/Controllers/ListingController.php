@@ -15,17 +15,137 @@ use Illuminate\Support\Facades\Auth;
 
 class ListingController extends Controller
 {
+    /**
+     * @OA\Post(
+     *     path="/api/listings/motorcycles",
+     *     summary="Create a new motorcycle listing",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"title", "description", "price", "category_id", "brand_id", "model_id", "year_id"},
+     *             @OA\Property(property="title", type="string", example="Yamaha MT-07 à vendre"),
+     *             @OA\Property(property="description", type="string", example="Moto en très bon état"),
+     *             @OA\Property(property="price", type="number", format="float", example=5500),
+     *             @OA\Property(property="category_id", type="integer", example=1),
+     *             @OA\Property(property="brand_id", type="integer", example=2),
+     *             @OA\Property(property="model_id", type="integer", example=3),
+     *             @OA\Property(property="year_id", type="integer", example=2021),
+     *             @OA\Property(property="type_id", type="integer", example=1),
+     *             @OA\Property(property="engine", type="string", example="700cc"),
+     *             @OA\Property(property="mileage", type="integer", example=15000),
+     *             @OA\Property(property="body_condition", type="string", example="Très bon"),
+     *             @OA\Property(property="modified", type="boolean", example=false),
+     *             @OA\Property(property="insurance", type="boolean", example=true),
+     *             @OA\Property(property="general_condition", type="string", example="Excellent"),
+     *             @OA\Property(property="vehicle_care", type="string", example="Toujours entretenue chez Yamaha"),
+     *             @OA\Property(property="transmission", type="string", example="Manuelle"),
+     *             @OA\Property(property="images", type="array", @OA\Items(type="string", example="https://url/image.jpg"))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Motorcycle listing created"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Invalid category_id"
+     *     )
+     * )
+     *
+     * @OA\Post(
+     *     path="/api/listings/spareparts",
+     *     summary="Create a new spare part listing",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"title", "description", "price", "category_id", "brand_id", "model_id", "year_id", "condition"},
+     *             @OA\Property(property="title", type="string", example="Disque de frein"),
+     *             @OA\Property(property="description", type="string", example="Disque avant compatible MT-07"),
+     *             @OA\Property(property="price", type="number", format="float", example=120),
+     *             @OA\Property(property="category_id", type="integer", example=2),
+     *             @OA\Property(property="brand_id", type="integer", example=4),
+     *             @OA\Property(property="model_id", type="integer", example=10),
+     *             @OA\Property(property="year_id", type="integer", example=2020),
+     *             @OA\Property(property="condition", type="string", example="used"),
+     *             @OA\Property(property="images", type="array", @OA\Items(type="string", example="https://url/image.jpg"))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Spare part listing created"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Invalid category_id"
+     *     )
+     * )
+     *
+     * @OA\Post(
+     *     path="/api/listings/licenseplates",
+     *     summary="Create a new license plate listing",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"title", "description", "price", "category_id", "characters", "type_id", "color_id", "digits_count"},
+     *             @OA\Property(property="title", type="string", example="Plaque 123ABC75"),
+     *             @OA\Property(property="description", type="string", example="Plaque ancienne d’Île-de-France"),
+     *             @OA\Property(property="price", type="number", format="float", example=300),
+     *             @OA\Property(property="category_id", type="integer", example=3),
+     *             @OA\Property(property="characters", type="string", example="123ABC75"),
+     *             @OA\Property(property="type_id", type="integer", example=1),
+     *             @OA\Property(property="color_id", type="integer", example=2),
+     *             @OA\Property(property="digits_count", type="integer", example=7),
+     *             @OA\Property(property="images", type="array", @OA\Items(type="string", example="https://url/image.jpg"))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="License plate listing created"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Invalid category_id"
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         DB::beginTransaction();
 
         try {
+            // Get the authenticated user's ID
+            $sellerId = Auth::id();
+
+            if (!$sellerId) {
+                return response()->json([
+                    'message' => 'Unauthorized. User must be logged in to create a listing.',
+                ], 401);
+            }
+
             // 1. Create the listing
             $listing = Listing::create([
                 'title' => $request->title,
                 'description' => $request->description,
                 'price' => $request->price,
-                'seller_id' => $request->seller_id,
+                'seller_id' => $sellerId, // Use authenticated user's ID
                 'category_id' => $request->category_id,
                 'country_id' => $request->country_id,
                 'city_id' => $request->city_id,
@@ -388,6 +508,7 @@ class ListingController extends Controller
         return response()->json($data);
     }
 
+
     public function getAll(Request $request)
     {
         $user = Auth::user();
@@ -469,5 +590,4 @@ class ListingController extends Controller
             'data' => $data,
         ]);
     }
-
 }

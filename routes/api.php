@@ -86,6 +86,8 @@ Route::middleware('auth:api')->group(function () {
      Route::delete('my-cards/{id}', [CardController::class, 'deleteMyCard']);
 
      Route::patch('my-cards/{id}/set-default', [CardController::class, 'setAsDefault']);
+     
+     Route::post('/listings', [ListingController::class, 'store']);
 
 
 });
@@ -96,7 +98,6 @@ Route::apiResource('motorcycle-models', MotorcycleModelController::class);
 Route::apiResource('motorcycle-years', MotorcycleYearController::class);
 Route::apiResource('motorcycles', MotorcycleController::class);
 
-Route::post('/listings', [ListingController::class, 'store']);
 
 Route::post('/motorcycles/import', [MotorcycleController::class, 'importMotorcycles']);
 

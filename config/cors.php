@@ -20,14 +20,10 @@ return [
     'allowed_origins' => [
         'https://dabapp.co',
         'http://localhost:4200',
-<<<<<<< HEAD
         'http://192.168.11.184:5500',  // Specify the trusted origin(s)
         'http://localhost:5500',
         'http://192.168.11.186:4200'
     ], 
-=======
-    ],
->>>>>>> 10c78591c5400e764e83c06b1d796360964dc7b6
 
     'allowed_headers' => ['*'],  // Allow all headers
 
@@ -35,5 +31,5 @@ return [
 
     'max_age' => 0,  // Pre-flight request cache for 0 seconds
 
-    'supports_credentials' => true,
+    'supports_credentials' => true,  // Disable sending credentials (cookies, HTTP authentication)
 ];
