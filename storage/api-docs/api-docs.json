@@ -2461,10 +2461,9 @@
         "/api/motorcycle/filter": {
             "get": {
                 "tags": [
-                    "Listings"
+                    "Motorcycle"
                 ],
-                "summary": "Filter motorcycles by brand, model, year, or type",
-                "description": "Returns filtered motorcycle brands, models, years, and types. If no query parameters are provided, returns all.",
+                "summary": "Filter motorcycles by brand, model, or year",
                 "operationId": "c274bcf7ca88c37d9bb4d690cc456e04",
                 "parameters": [
                     {
@@ -2473,7 +2472,8 @@
                         "description": "Filter by brand ID",
                         "required": false,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 1
                         }
                     },
                     {
@@ -2482,7 +2482,8 @@
                         "description": "Filter by model ID",
                         "required": false,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 2
                         }
                     },
                     {
@@ -2491,49 +2492,106 @@
                         "description": "Filter by year",
                         "required": false,
                         "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "type_id",
-                        "in": "query",
-                        "description": "Filter by type ID",
-                        "required": false,
-                        "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 2022
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful response",
+                        "description": "Successful filtering",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "brands": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object"
-                                            }
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
                                         },
-                                        "models": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object"
-                                            }
-                                        },
-                                        "years": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "integer"
-                                            }
-                                        },
-                                        "types": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object"
-                                            }
+                                        "data": {
+                                            "properties": {
+                                                "brands": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Honda"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "models": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "CBR500R"
+                                                            },
+                                                            "brand_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "brand_name": {
+                                                                "type": "string",
+                                                                "example": "Honda"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "years": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 3
+                                                            },
+                                                            "year": {
+                                                                "type": "integer",
+                                                                "example": 2022
+                                                            },
+                                                            "model_id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "model_name": {
+                                                                "type": "string",
+                                                                "example": "CBR500R"
+                                                            },
+                                                            "brand_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "brand_name": {
+                                                                "type": "string",
+                                                                "example": "Honda"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -3698,6 +3756,10 @@
         {
             "name": "Listings",
             "description": "Listings"
+        },
+        {
+            "name": "Motorcycle",
+            "description": "Motorcycle"
         },
         {
             "name": "Roles",
