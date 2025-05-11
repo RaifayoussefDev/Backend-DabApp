@@ -27,6 +27,8 @@ return new class extends Migration
             $table->boolean('allow_submission')->default(false);
             $table->unsignedBigInteger('listing_type_id');
 
+            $table->enum('contacting_channel', ['phone', 'whatsapp'])->nullable();
+            $table->enum('seller_type', ['middleman', 'owner'])->nullable();
             // Foreign Keys
             $table->foreign('seller_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');

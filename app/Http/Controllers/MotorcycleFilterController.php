@@ -10,101 +10,118 @@ use App\Models\MotorcycleYear;
 
 class MotorcycleFilterController extends Controller
 {
-
     /**
-     * @OA\Get(
-     *     path="/api/motorcycle/filter",
-     *     tags={"Listings"},
-     *     summary="Filter motorcycles by brand, model, year, or type",
-     *     description="Returns filtered motorcycle brands, models, years, and types. If no query parameters are provided, returns all.",
-     *     @OA\Parameter(
-     *         name="brand_id",
-     *         in="query",
-     *         description="Filter by brand ID",
-     *         required=false,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Parameter(
-     *         name="model_id",
-     *         in="query",
-     *         description="Filter by model ID",
-     *         required=false,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Parameter(
-     *         name="year",
-     *         in="query",
-     *         description="Filter by year",
-     *         required=false,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Parameter(
-     *         name="type_id",
-     *         in="query",
-     *         description="Filter by type ID",
-     *         required=false,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successful response",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="brands", type="array", @OA\Items(type="object")),
-     *             @OA\Property(property="models", type="array", @OA\Items(type="object")),
-     *             @OA\Property(property="years", type="array", @OA\Items(type="integer")),
-     *             @OA\Property(property="types", type="array", @OA\Items(type="object"))
-     *         )
-     *     )
-     * )
+     * Filter motorcycles with combined model/year format
      */
-
     public function filter(Request $request)
     {
+        $request->validate([
+            'brand_id' => 'nullable|integer|exists:motorcycle_brands,id',
+            'model_id' => 'nullable|integer|exists:motorcycle_models,id',
+            'year' => 'nullable|integer',
+        ]);
+    
         $brandId = $request->input('brand_id');
         $modelId = $request->input('model_id');
         $year = $request->input('year');
-        $typeId = $request->input('type_id');
-
-        $brands = MotorcycleBrand::query();
-        $models = MotorcycleModel::query();
-        $years = MotorcycleYear::query();
-        $types = MotorcycleType::query();
-
-        // If any filter is applied
-        if ($brandId || $modelId || $year || $typeId) {
-            if ($brandId) {
-                $models = $models->where('brand_id', $brandId);
-            }
-
-            if ($modelId) {
-                $models = $models->where('id', $modelId);
-            }
-
-            if ($typeId) {
-                $models = $models->where('type_id', $typeId);
-            }
-
-            $modelIds = $models->pluck('id');
-
-            $brands = $brandId
-                ? MotorcycleBrand::where('id', $brandId)
-                : MotorcycleBrand::whereIn('id', MotorcycleModel::whereIn('id', $modelIds)->pluck('brand_id'));
-
-            $types = $typeId
-                ? MotorcycleType::where('id', $typeId)
-                : MotorcycleType::whereIn('id', MotorcycleModel::whereIn('id', $modelIds)->pluck('type_id'));
-
-            $years = $year
-                ? MotorcycleYear::where('year', $year)->whereIn('model_id', $modelIds)
-                : MotorcycleYear::whereIn('model_id', $modelIds);
+    
+        // Get base queries
+        $brands = MotorcycleBrand::all();
+    
+        $modelsQuery = MotorcycleModel::with('brand');
+        $yearsQuery = MotorcycleYear::with('model.brand');
+    
+        // Apply filters
+        if ($brandId) {
+            $modelsQuery->where('brand_id', $brandId);
+            $yearsQuery->whereHas('model', fn($q) => $q->where('brand_id', $brandId));
         }
-
-        // Return filtered or all
+    
+        if ($modelId) {
+            $modelsQuery->where('id', $modelId);
+            $yearsQuery->where('model_id', $modelId);
+        }
+    
+        if ($year) {
+            $yearsQuery->where('year', $year);
+        }
+    
+        // Fetch models and remove duplicate combinations
+        $models = $modelsQuery->get()->unique('id')->map(function ($model) {
+            return [
+                'id' => $model->id,
+                'name' => $model->name,
+                'brand_id' => $model->brand_id,
+                'brand_name' => $model->brand->name
+            ];
+        });
+    
+        $years = $yearsQuery->get()->unique(fn ($item) => $item->year . '-' . $item->model_id)->map(function ($year) {
+            return [
+                'id' => $year->id,
+                'year' => $year->year,
+                'model_id' => $year->model_id,
+                'model_name' => $year->model->name,
+                'brand_id' => $year->model->brand_id,
+                'brand_name' => $year->model->brand->name
+            ];
+        });
+    
         return response()->json([
-            'brands' => $brands->get(),
-            'models' => $models->get(),
-            'years' => $years->pluck('year')->unique()->values(),
-            'types' => $types->get(),
+            'success' => true,
+            'data' => [
+                'brands' => $brands,
+                'models' => $models,
+                'years' => $years,
+            ]
+        ]);
+    }
+    
+    /**
+     * Get all models with years by brand
+     */
+    public function getByBrand($brandId)
+    {
+        $modelsWithYears = MotorcycleYear::whereHas('model', function ($q) use ($brandId) {
+            $q->where('brand_id', $brandId);
+        })
+            ->with('model.brand', 'model.type')
+            ->get()
+            ->map(function ($year) {
+                return [
+                    'id' => $year->id,
+                    'display' => $year->model->name . ' / ' . $year->year,
+                    'model_id' => $year->model_id,
+                    'year_id' => $year->id,
+                    'model_name' => $year->model->name,
+                    'brand_name' => $year->model->brand->name,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $modelsWithYears
+        ]);
+    }
+
+    /**
+     * Get brand and model details by year ID
+     */
+    public function getByYear($yearId)
+    {
+        $year = MotorcycleYear::with('model.brand')
+            ->findOrFail($yearId);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'year_id' => $year->id,
+                'year' => $year->year,
+                'model_id' => $year->model_id,
+                'model_name' => $year->model->name,
+                'brand_id' => $year->model->brand_id,
+                'brand_name' => $year->model->brand->name,
+            ]
         ]);
     }
 }

@@ -28,6 +28,8 @@ class ListingController extends Controller
      *             @OA\Property(property="title", type="string", example="Yamaha MT-07 à vendre"),
      *             @OA\Property(property="description", type="string", example="Moto en très bon état"),
      *             @OA\Property(property="price", type="number", format="float", example=5500),
+     *             @OA\Property(property="contacting_channel", type="string", example="phone"),
+     *             @OA\Property(property="seller_type", type="string", example="owner"),
      *             @OA\Property(property="category_id", type="integer", example=1),
      *             @OA\Property(property="brand_id", type="integer", example=2),
      *             @OA\Property(property="model_id", type="integer", example=3),
@@ -69,6 +71,8 @@ class ListingController extends Controller
      *             required={"title", "description", "price", "category_id", "brand_id", "model_id", "year_id", "condition"},
      *             @OA\Property(property="title", type="string", example="Disque de frein"),
      *             @OA\Property(property="description", type="string", example="Disque avant compatible MT-07"),
+     *            @OA\Property(property="contacting_channel", type="string", example="whatsapp"),
+     *            @OA\Property(property="seller_type", type="string", example="middleman"),
      *             @OA\Property(property="price", type="number", format="float", example=120),
      *             @OA\Property(property="category_id", type="integer", example=2),
      *             @OA\Property(property="brand_id", type="integer", example=4),
@@ -103,6 +107,8 @@ class ListingController extends Controller
      *             required={"title", "description", "price", "category_id", "characters", "type_id", "color_id", "digits_count"},
      *             @OA\Property(property="title", type="string", example="Plaque 123ABC75"),
      *             @OA\Property(property="description", type="string", example="Plaque ancienne d’Île-de-France"),
+     *            @OA\Property(property="contacting_channel", type="string", example="whatsapp"),
+     *           @OA\Property(property="seller_type", type="string", example="middleman"),
      *             @OA\Property(property="price", type="number", format="float", example=300),
      *             @OA\Property(property="category_id", type="integer", example=3),
      *             @OA\Property(property="characters", type="string", example="123ABC75"),
@@ -110,6 +116,7 @@ class ListingController extends Controller
      *             @OA\Property(property="color_id", type="integer", example=2),
      *             @OA\Property(property="digits_count", type="integer", example=7),
      *             @OA\Property(property="images", type="array", @OA\Items(type="string", example="https://url/image.jpg"))
+     * 
      *         )
      *     ),
      *     @OA\Response(
@@ -154,6 +161,9 @@ class ListingController extends Controller
                 'minimum_bid' => $request->minimum_bid,
                 'allow_submission' => $request->allow_submission ?? false,
                 'listing_type_id' => $request->listing_type_id,
+                'contacting_channel' => $request->contacting_channel,
+                'seller_type' => $request->seller_type,
+                'created_at' => now(),
             ]);
 
             // 2. Add images if provided

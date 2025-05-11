@@ -103,5 +103,8 @@ Route::post('/motorcycles/import', [MotorcycleController::class, 'importMotorcyc
 
 Route::get('/motorcycle/filter', [MotorcycleFilterController::class, 'filter']);
 
+Route::get('/motorcycle/brand/{brandId}', [MotorcycleFilterController::class, 'getByBrand']);
+Route::get('/motorcycle/year/{yearId}', [MotorcycleFilterController::class, 'getByYear']);
+
 // Route::apiResource('wishlists', WishlistController::class);
 Route::post('/motorcycles/import', [MotorcycleImportController::class, 'import']);

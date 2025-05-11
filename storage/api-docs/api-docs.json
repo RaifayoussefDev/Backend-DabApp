@@ -1871,6 +1871,14 @@
                                         "format": "float",
                                         "example": 5500
                                     },
+                                    "contacting_channel": {
+                                        "type": "string",
+                                        "example": "phone"
+                                    },
+                                    "seller_type": {
+                                        "type": "string",
+                                        "example": "owner"
+                                    },
                                     "category_id": {
                                         "type": "integer",
                                         "example": 1
@@ -1985,6 +1993,14 @@
                                         "type": "string",
                                         "example": "Disque avant compatible MT-07"
                                     },
+                                    "contacting_channel": {
+                                        "type": "string",
+                                        "example": "whatsapp"
+                                    },
+                                    "seller_type": {
+                                        "type": "string",
+                                        "example": "middleman"
+                                    },
                                     "price": {
                                         "type": "number",
                                         "format": "float",
@@ -2071,6 +2087,14 @@
                                     "description": {
                                         "type": "string",
                                         "example": "Plaque ancienne d’Île-de-France"
+                                    },
+                                    "contacting_channel": {
+                                        "type": "string",
+                                        "example": "whatsapp"
+                                    },
+                                    "seller_type": {
+                                        "type": "string",
+                                        "example": "middleman"
                                     },
                                     "price": {
                                         "type": "number",
