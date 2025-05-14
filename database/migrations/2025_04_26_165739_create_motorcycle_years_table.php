@@ -16,35 +16,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Récupérer les modèles par nom (assure-toi qu'ils existent)
-        $models = DB::table('motorcycle_models')->pluck('id', 'name');
-
-        DB::table('motorcycle_years')->insert([
-            [
-                'model_id' => $models['CBR600RR'] ?? 1,
-                'year' => 2015,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'model_id' => $models['CBR600RR'] ?? 1,
-                'year' => 2016,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'model_id' => $models['Ninja 400'] ?? 2,
-                'year' => 2018,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'model_id' => $models['MT-07'] ?? 3,
-                'year' => 2020,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+        // Load initial data from SQL file
+        $path = database_path('sql/motorcycle_years.sql');
+        DB::unprepared(file_get_contents($path));
     }
 
     public function down(): void

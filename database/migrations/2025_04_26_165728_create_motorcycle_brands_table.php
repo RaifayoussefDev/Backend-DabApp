@@ -15,14 +15,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Insertion des valeurs initiales
-        DB::table('motorcycle_brands')->insert([
-            ['name' => 'Honda', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Yamaha', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Suzuki', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Kawasaki', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Ducati', 'created_at' => now(), 'updated_at' => now()],
-        ]);
+        // Load initial data from SQL file
+        $path = database_path('sql/motorcycle_brands.sql');
+        DB::unprepared(file_get_contents($path));
     }
     public function down(): void
     {

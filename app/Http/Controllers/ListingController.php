@@ -9,119 +9,66 @@ use App\Models\AuctionHistory;
 use App\Models\LicensePlate;
 use App\Models\Motorcycle;
 use App\Models\SparePart;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Auth;
+use Str;
 
 class ListingController extends Controller
 {
-    /**
+     /**
      * @OA\Post(
-     *     path="/api/listings/motorcycles",
-     *     summary="Create a new motorcycle listing",
+     *     path="/api/listings",
+     *     summary="Create a new listing",
      *     tags={"Listings"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
+     *         description="Listing data with category-specific fields",
      *         @OA\JsonContent(
-     *             required={"title", "description", "price", "category_id", "brand_id", "model_id", "year_id"},
-     *             @OA\Property(property="title", type="string", example="Yamaha MT-07 à vendre"),
-     *             @OA\Property(property="description", type="string", example="Moto en très bon état"),
-     *             @OA\Property(property="price", type="number", format="float", example=5500),
+     *             required={"title", "description", "price", "category_id"},
+     *             @OA\Property(property="title", type="string", example="Sample Listing"),
+     *             @OA\Property(property="description", type="string", example="Detailed description"),
+     *             @OA\Property(property="price", type="number", format="float", example=1000),
+     *             @OA\Property(property="category_id", type="integer", description="1=Motorcycle, 2=SparePart, 3=LicensePlate", example=1),
+     *             @OA\Property(property="country_id", type="integer", example=1),
+     *             @OA\Property(property="city_id", type="integer", example=1),
+     *             @OA\Property(property="auction_enabled", type="boolean", example=false),
+     *             @OA\Property(property="minimum_bid", type="number", format="float", example=null),
+     *             @OA\Property(property="allow_submission", type="boolean", example=false),
+     *             @OA\Property(property="listing_type_id", type="integer", example=1),
      *             @OA\Property(property="contacting_channel", type="string", example="phone"),
      *             @OA\Property(property="seller_type", type="string", example="owner"),
-     *             @OA\Property(property="category_id", type="integer", example=1),
-     *             @OA\Property(property="brand_id", type="integer", example=2),
-     *             @OA\Property(property="model_id", type="integer", example=3),
-     *             @OA\Property(property="year_id", type="integer", example=2021),
-     *             @OA\Property(property="type_id", type="integer", example=1),
-     *             @OA\Property(property="engine", type="string", example="700cc"),
-     *             @OA\Property(property="mileage", type="integer", example=15000),
-     *             @OA\Property(property="body_condition", type="string", example="Très bon"),
-     *             @OA\Property(property="modified", type="boolean", example=false),
-     *             @OA\Property(property="insurance", type="boolean", example=true),
-     *             @OA\Property(property="general_condition", type="string", example="Excellent"),
-     *             @OA\Property(property="vehicle_care", type="string", example="Toujours entretenue chez Yamaha"),
-     *             @OA\Property(property="transmission", type="string", example="Manuelle"),
-     *             @OA\Property(property="images", type="array", @OA\Items(type="string", example="https://url/image.jpg"))
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Motorcycle listing created"
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthorized"
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Invalid category_id"
-     *     )
-     * )
+     *             @OA\Property(property="images", type="array", @OA\Items(type="string", format="binary")),
      *
-     * @OA\Post(
-     *     path="/api/listings/spareparts",
-     *     summary="Create a new spare part listing",
-     *     tags={"Listings"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"title", "description", "price", "category_id", "brand_id", "model_id", "year_id", "condition"},
-     *             @OA\Property(property="title", type="string", example="Disque de frein"),
-     *             @OA\Property(property="description", type="string", example="Disque avant compatible MT-07"),
-     *            @OA\Property(property="contacting_channel", type="string", example="whatsapp"),
-     *            @OA\Property(property="seller_type", type="string", example="middleman"),
-     *             @OA\Property(property="price", type="number", format="float", example=120),
-     *             @OA\Property(property="category_id", type="integer", example=2),
-     *             @OA\Property(property="brand_id", type="integer", example=4),
-     *             @OA\Property(property="model_id", type="integer", example=10),
-     *             @OA\Property(property="year_id", type="integer", example=2020),
-     *             @OA\Property(property="condition", type="string", example="used"),
-     *             @OA\Property(property="images", type="array", @OA\Items(type="string", example="https://url/image.jpg"))
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Spare part listing created"
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthorized"
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Invalid category_id"
-     *     )
-     * )
+     *             @OA\Property(property="brand_id", type="integer", example=1, description="Required for Motorcycle/SparePart"),
+     *             @OA\Property(property="model_id", type="integer", example=1, description="Required for Motorcycle/SparePart"),
+     *             @OA\Property(property="year_id", type="integer", example=2020, description="Required for Motorcycle/SparePart"),
+     *             @OA\Property(property="type_id", type="integer", example=1, description="For Motorcycle"),
+     *             @OA\Property(property="engine", type="string", example="700cc", description="For Motorcycle"),
+     *             @OA\Property(property="mileage", type="integer", example=15000, description="For Motorcycle"),
+     *             @OA\Property(property="body_condition", type="string", example="Good", description="For Motorcycle"),
+     *             @OA\Property(property="modified", type="boolean", example=false, description="For Motorcycle"),
+     *             @OA\Property(property="insurance", type="boolean", example=true, description="For Motorcycle"),
+     *             @OA\Property(property="general_condition", type="string", example="Excellent", description="For Motorcycle"),
+     *             @OA\Property(property="vehicle_care", type="string", example="Regular maintenance", description="For Motorcycle"),
+     *             @OA\Property(property="transmission", type="string", example="Manual", description="For Motorcycle"),
      *
-     * @OA\Post(
-     *     path="/api/listings/licenseplates",
-     *     summary="Create a new license plate listing",
-     *     tags={"Listings"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"title", "description", "price", "category_id", "characters", "type_id", "color_id", "digits_count"},
-     *             @OA\Property(property="title", type="string", example="Plaque 123ABC75"),
-     *             @OA\Property(property="description", type="string", example="Plaque ancienne d’Île-de-France"),
-     *            @OA\Property(property="contacting_channel", type="string", example="whatsapp"),
-     *           @OA\Property(property="seller_type", type="string", example="middleman"),
-     *             @OA\Property(property="price", type="number", format="float", example=300),
-     *             @OA\Property(property="category_id", type="integer", example=3),
-     *             @OA\Property(property="characters", type="string", example="123ABC75"),
-     *             @OA\Property(property="type_id", type="integer", example=1),
-     *             @OA\Property(property="color_id", type="integer", example=2),
-     *             @OA\Property(property="digits_count", type="integer", example=7),
-     *             @OA\Property(property="images", type="array", @OA\Items(type="string", example="https://url/image.jpg"))
-     * 
+     *             @OA\Property(property="condition", type="string", example="used", description="For SparePart"),
+     *
+     *             @OA\Property(property="characters", type="string", example="ABC123", description="For LicensePlate"),
+     *             @OA\Property(property="digits_count", type="integer", example=6, description="For LicensePlate"),
+     *             @OA\Property(property="color_id", type="integer", example=1, description="For LicensePlate")
      *         )
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="License plate listing created"
+     *         description="Listing created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="object")
+     *         )
      *     ),
      *     @OA\Response(
      *         response=401,
@@ -129,7 +76,7 @@ class ListingController extends Controller
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Invalid category_id"
+     *         description="Validation error"
      *     )
      * )
      */
@@ -138,7 +85,6 @@ class ListingController extends Controller
         DB::beginTransaction();
 
         try {
-            // Get the authenticated user's ID
             $sellerId = Auth::id();
 
             if (!$sellerId) {
@@ -147,12 +93,12 @@ class ListingController extends Controller
                 ], 401);
             }
 
-            // 1. Create the listing
+            // Create the listing
             $listing = Listing::create([
                 'title' => $request->title,
                 'description' => $request->description,
                 'price' => $request->price,
-                'seller_id' => $sellerId, // Use authenticated user's ID
+                'seller_id' => $sellerId,
                 'category_id' => $request->category_id,
                 'country_id' => $request->country_id,
                 'city_id' => $request->city_id,
@@ -166,16 +112,16 @@ class ListingController extends Controller
                 'created_at' => now(),
             ]);
 
-            // 2. Add images if provided
-            if ($request->has('images') && is_array($request->images)) {
-                foreach ($request->images as $imageUrl) {
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $path = $image->store('listings', 'public'); // stocke dans storage/app/public/listings
                     $listing->images()->create([
-                        'image_url' => $imageUrl
+                        'image_url' => 'storage/' . $path
                     ]);
                 }
             }
 
-            // 3. Create AuctionHistory if needed
+            // Auction logic
             if ($listing->auction_enabled) {
                 AuctionHistory::create([
                     'listing_id' => $listing->id,
@@ -184,7 +130,7 @@ class ListingController extends Controller
                 ]);
             }
 
-            // 4. If category_id == 1 ➤ insert Motorcycle
+            // Category-specific logic
             if ($listing->category_id == 1) {
                 $motorcycle = Motorcycle::create([
                     'listing_id' => $listing->id,
@@ -208,16 +154,13 @@ class ListingController extends Controller
                     'message' => 'Motorcycle added successfully',
                     'data' => $motorcycle,
                 ], 201);
-            }
-
-            // 5. If category_id == 2 ➤ insert SparePart
-            elseif ($listing->category_id == 2) {
+            } elseif ($listing->category_id == 2) {
                 $sparePart = SparePart::create([
                     'listing_id' => $listing->id,
                     'brand_id' => $request->brand_id,
                     'model_id' => $request->model_id,
                     'year_id' => $request->year_id,
-                    'condition' => $request->condition, // 'new' or 'used'
+                    'condition' => $request->condition,
                 ]);
 
                 DB::commit();
@@ -226,10 +169,7 @@ class ListingController extends Controller
                     'message' => 'Spare part added successfully',
                     'data' => $sparePart,
                 ], 201);
-            }
-
-            // 6. If category_id == 3 ➤ insert LicensePlate
-            elseif ($listing->category_id == 3) {
+            } elseif ($listing->category_id == 3) {
                 $licensePlate = LicensePlate::create([
                     'listing_id' => $listing->id,
                     'characters' => $request->characters,
@@ -245,10 +185,7 @@ class ListingController extends Controller
                     'message' => 'License plate added successfully',
                     'data' => $licensePlate,
                 ], 201);
-            }
-
-            // 7. Invalid category
-            else {
+            } else {
                 DB::rollBack();
                 return response()->json([
                     'message' => 'Invalid category_id. Only categories 1, 2, or 3 are allowed.',
@@ -263,6 +200,38 @@ class ListingController extends Controller
         }
     }
 
+      /**
+     * @OA\Get(
+     *     path="/api/listings/country/{country_id}",
+     *     summary="Get listings by country",
+     *     tags={"Listings"},
+     *     @OA\Parameter(
+     *         name="country_id",
+     *         in="path",
+     *         required=true,
+     *         description="Country ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of listings",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="title", type="string"),
+     *                 @OA\Property(property="description", type="string"),
+     *                 @OA\Property(property="price", type="number"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="city", type="string"),
+     *                 @OA\Property(property="country", type="string"),
+     *                 @OA\Property(property="images", type="array", @OA\Items(type="string")),
+     *                 @OA\Property(property="wishlist", type="boolean")
+     *             )
+     *         )
+     *     )
+     * )
+     */
     public function getByCountry($country_id)
     {
         $user = Auth::user();
@@ -295,7 +264,38 @@ class ListingController extends Controller
 
         return response()->json($listings);
     }
-
+ /**
+     * @OA\Get(
+     *     path="/api/listings/category/{category_id}",
+     *     summary="Get listings by category",
+     *     tags={"Listings"},
+     *     @OA\Parameter(
+     *         name="category_id",
+     *         in="path",
+     *         required=true,
+     *         description="Category ID (1=Motorcycle, 2=SparePart, 3=LicensePlate)",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of listings",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="title", type="string"),
+     *                 @OA\Property(property="description", type="string"),
+     *                 @OA\Property(property="price", type="number"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="city", type="string"),
+     *                 @OA\Property(property="country", type="string"),
+     *                 @OA\Property(property="images", type="array", @OA\Items(type="string")),
+     *                 @OA\Property(property="wishlist", type="boolean")
+     *             )
+     *         )
+     *     )
+     * )
+     */
     public function getByCategory($category_id)
     {
         $user = Auth::user();
@@ -328,7 +328,38 @@ class ListingController extends Controller
 
         return response()->json($listings);
     }
-
+ /**
+     * @OA\Get(
+     *     path="/api/listings/city/{city_id}",
+     *     summary="Get listings by city",
+     *     tags={"Listings"},
+     *     @OA\Parameter(
+     *         name="city_id",
+     *         in="path",
+     *         required=true,
+     *         description="City ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of listings",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="title", type="string"),
+     *                 @OA\Property(property="description", type="string"),
+     *                 @OA\Property(property="price", type="number"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="city", type="string"),
+     *                 @OA\Property(property="country", type="string"),
+     *                 @OA\Property(property="images", type="array", @OA\Items(type="string")),
+     *                 @OA\Property(property="wishlist", type="boolean")
+     *             )
+     *         )
+     *     )
+     * )
+     */
 
     public function getByCity($city_id)
     {
@@ -362,7 +393,52 @@ class ListingController extends Controller
 
         return response()->json($listings);
     }
-
+ /**
+     * @OA\Get(
+     *     path="/api/listings/filter",
+     *     summary="Filter listings",
+     *     tags={"Listings"},
+     *     @OA\Parameter(
+     *         name="city_id",
+     *         in="query",
+     *         required=false,
+     *         description="City ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="country_id",
+     *         in="query",
+     *         required=false,
+     *         description="Country ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="category_id",
+     *         in="query",
+     *         required=false,
+     *         description="Category ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Filtered listings",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="title", type="string"),
+     *                 @OA\Property(property="description", type="string"),
+     *                 @OA\Property(property="price", type="number"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="city", type="string"),
+     *                 @OA\Property(property="country", type="string"),
+     *                 @OA\Property(property="images", type="array", @OA\Items(type="string")),
+     *                 @OA\Property(property="wishlist", type="boolean")
+     *             )
+     *         )
+     *     )
+     * )
+     */
     public function filter(Request $request)
     {
         $user = Auth::user();
@@ -406,7 +482,38 @@ class ListingController extends Controller
 
         return response()->json($listings);
     }
-
+ /**
+     * @OA\Get(
+     *     path="/api/listings/latest/{city_id}",
+     *     summary="Get latest listings by city",
+     *     tags={"Listings"},
+     *     @OA\Parameter(
+     *         name="city_id",
+     *         in="path",
+     *         required=true,
+     *         description="City ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Latest 10 listings",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="title", type="string"),
+     *                 @OA\Property(property="description", type="string"),
+     *                 @OA\Property(property="price", type="number"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="city", type="string"),
+     *                 @OA\Property(property="country", type="string"),
+     *                 @OA\Property(property="images", type="array", @OA\Items(type="string")),
+     *                 @OA\Property(property="wishlist", type="boolean")
+     *             )
+     *         )
+     *     )
+     * )
+     */
     public function getLastByCity($city_id)
     {
         $user = Auth::user();
@@ -442,7 +549,67 @@ class ListingController extends Controller
         return response()->json($listings);
     }
 
-
+  /**
+     * @OA\Get(
+     *     path="/api/listings/{id}",
+     *     summary="Get listing by ID",
+     *     tags={"Listings"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Listing ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Listing details",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="integer"),
+     *             @OA\Property(property="title", type="string"),
+     *             @OA\Property(property="description", type="string"),
+     *             @OA\Property(property="price", type="number"),
+     *             @OA\Property(property="created_at", type="string", format="date-time"),
+     *             @OA\Property(property="city", type="string"),
+     *             @OA\Property(property="country", type="string"),
+     *             @OA\Property(property="images", type="array", @OA\Items(type="string")),
+     *             @OA\Property(property="wishlist", type="boolean"),
+     *             @OA\Property(property="category_id", type="integer"),
+     *             @OA\Property(
+     *                 property="motorcycle",
+     *                 type="object",
+     *                 nullable=true,
+     *                 @OA\Property(property="engine", type="string"),
+     *                 @OA\Property(property="mileage", type="integer"),
+     *                 @OA\Property(property="body_condition", type="string"),
+     *                 @OA\Property(property="modified", type="boolean"),
+     *                 @OA\Property(property="insurance", type="boolean"),
+     *                 @OA\Property(property="general_condition", type="string"),
+     *                 @OA\Property(property="vehicle_care", type="string"),
+     *                 @OA\Property(property="transmission", type="string"),
+     *                 @OA\Property(property="brand", type="string"),
+     *                 @OA\Property(property="model", type="string"),
+     *                 @OA\Property(property="year", type="integer"),
+     *                 @OA\Property(property="type", type="string")
+     *             ),
+     *             @OA\Property(
+     *                 property="license_plate",
+     *                 type="object",
+     *                 nullable=true,
+     *                 @OA\Property(property="characters", type="string"),
+     *                 @OA\Property(property="digits_count", type="integer"),
+     *                 @OA\Property(property="country_id", type="integer"),
+     *                 @OA\Property(property="type", type="string"),
+     *                 @OA\Property(property="color", type="string")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Listing not found"
+     *     )
+     * )
+     */
     public function getById($id)
     {
         $user = Auth::user();
@@ -517,7 +684,63 @@ class ListingController extends Controller
 
         return response()->json($data);
     }
-
+  /**
+     * @OA\Get(
+     *     path="/api/listings",
+     *     summary="Get all listings with pagination",
+     *     tags={"Listings"},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         required=false,
+     *         description="Page number",
+     *         @OA\Schema(type="integer", default=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         required=false,
+     *         description="Items per page",
+     *         @OA\Schema(type="integer", default=10)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Paginated list of listings",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="current_page", type="integer"),
+     *             @OA\Property(property="last_page", type="integer"),
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="per_page", type="integer"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer"),
+     *                     @OA\Property(property="title", type="string"),
+     *                     @OA\Property(property="description", type="string"),
+     *                     @OA\Property(property="price", type="number"),
+     *                     @OA\Property(property="created_at", type="string", format="date-time"),
+     *                     @OA\Property(property="city", type="string"),
+     *                     @OA\Property(property="country", type="string"),
+     *                     @OA\Property(property="images", type="array", @OA\Items(type="string")),
+     *                     @OA\Property(property="wishlist", type="boolean"),
+     *                     @OA\Property(property="category_id", type="integer"),
+     *                     @OA\Property(
+     *                         property="motorcycle",
+     *                         type="object",
+     *                         nullable=true
+     *                     ),
+     *                     @OA\Property(
+     *                         property="license_plate",
+     *                         type="object",
+     *                         nullable=true
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
 
     public function getAll(Request $request)
     {

@@ -11,16 +11,14 @@ return new class extends Migration
     {
         Schema::create('motorcycle_types', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique(); // Sport, Touring, etc.
+            $table->string('name')->unique();
             $table->timestamps();
         });
 
-        DB::table('motorcycle_types')->insert([
-            ['name' => 'Sport', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Touring', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Naked', 'created_at' => now(), 'updated_at' => now()],
-        ]);
+        $path = database_path('sql/motorcycle_types.sql');
+        DB::unprepared(file_get_contents($path));
     }
+
 
 
     public function down(): void
