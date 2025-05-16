@@ -866,4 +866,80 @@ class ListingController extends Controller
             'data' => $data,
         ]);
     }
+
+
+    /**
+ * @OA\Get(
+ *     path="/api/my-listing",
+ *     summary="Récupérer les annonces de l'utilisateur connecté avec les détails selon la catégorie",
+ *     tags={"Listings"},
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des annonces de l'utilisateur",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(type="object")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Unauthorized"
+ *     )
+ * )
+ */
+public function my_listing()
+{
+    $user = Auth::user();
+
+    if (!$user) {
+        return response()->json(['message' => 'Unauthorized'], 401);
+    }
+
+    $listings = Listing::where('seller_id', $user->id)
+        ->with([
+            'images',
+            'country',
+            'city',
+            'listingType',
+            'motorcycle',       // relation hasOne
+            'sparePart.motorcycleAssociations.brand',
+            'sparePart.motorcycleAssociations.model',
+            'sparePart.motorcycleAssociations.year',
+            'licensePlate'
+        ])
+        ->orderByDesc('created_at')
+        ->get()
+        ->map(function ($listing) {
+            $data = [
+                'id' => $listing->id,
+                'title' => $listing->title,
+                'description' => $listing->description,
+                'price' => $listing->price,
+                'category_id' => $listing->category_id,
+                'status' => $listing->status,
+                'created_at' => $listing->created_at,
+                'images' => $listing->images,
+                'country' => $listing->country,
+                'city' => $listing->city,
+                'listing_type' => $listing->listingType,
+            ];
+
+            // Ajouter les détails spécifiques à la catégorie
+            if ($listing->category_id == 1 && $listing->motorcycle) {
+                $data['details'] = $listing->motorcycle;
+            } elseif ($listing->category_id == 2 && $listing->sparePart) {
+                $data['details'] = $listing->sparePart;
+            } elseif ($listing->category_id == 3 && $listing->licensePlate) {
+                $data['details'] = $listing->licensePlate;
+            } else {
+                $data['details'] = null;
+            }
+
+            return $data;
+        });
+
+    return response()->json($listings, 200);
+}
+
 }

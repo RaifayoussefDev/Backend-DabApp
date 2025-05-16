@@ -86,8 +86,10 @@ Route::middleware('auth:api')->group(function () {
      Route::delete('my-cards/{id}', [CardController::class, 'deleteMyCard']);
 
      Route::patch('my-cards/{id}/set-default', [CardController::class, 'setAsDefault']);
-     
+
      Route::post('/listings', [ListingController::class, 'store']);
+     Route::get('/my-listing', [ListingController::class, 'my_listing']);
+
 
 
 });

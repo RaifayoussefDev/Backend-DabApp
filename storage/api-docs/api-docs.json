@@ -2764,6 +2764,38 @@
                 }
             }
         },
+        "/api/my-listing": {
+            "get": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Récupérer les annonces de l'utilisateur connecté avec les détails selon la catégorie",
+                "operationId": "c45df03a980317ef861e77628c045275",
+                "responses": {
+                    "200": {
+                        "description": "Liste des annonces de l'utilisateur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/motorcycle-brands": {
             "get": {
                 "tags": [

@@ -75,8 +75,18 @@ class Listing extends Model
         return $this->belongsTo(MotorcycleType::class, 'type_id');
     }
 
-    public function city(){
+    public function city()
+    {
         return $this->belongsTo(City::class);
     }
 
+    public function sparePart()
+    {
+        return $this->hasOne(SparePart::class);
+    }
+
+    public function licensePlate()
+    {
+        return $this->hasOne(LicensePlate::class);
+    }
 }
