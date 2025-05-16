@@ -8,6 +8,7 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ListingAuctionController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MotorcycleBrandController;
 use App\Http\Controllers\MotorcycleController;
 use App\Http\Controllers\MotorcycleFilterController;
@@ -110,3 +111,15 @@ Route::get('/motorcycle/year/{yearId}', [MotorcycleFilterController::class, 'get
 
 // Route::apiResource('wishlists', WishlistController::class);
 Route::post('/motorcycles/import', [MotorcycleImportController::class, 'import']);
+
+Route::get('/locations', [LocationController::class, 'index']);
+
+// Countries CRUD
+Route::post('/countries', [LocationController::class, 'storeCountry']);
+Route::put('/countries/{id}', [LocationController::class, 'updateCountry']);
+Route::delete('/countries/{id}', [LocationController::class, 'destroyCountry']);
+
+// Cities CRUD
+Route::post('/cities', [LocationController::class, 'storeCity']);
+Route::put('/cities/{id}', [LocationController::class, 'updateCity']);
+Route::delete('/cities/{id}', [LocationController::class, 'destroyCity']);
