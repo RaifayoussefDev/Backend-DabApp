@@ -14,6 +14,10 @@ class LicensePlate extends Model
         'type_id',
         'color_id',
         'digits_count',
+        'first_letter',
+        'second_letter',
+        'third_letter',
+        'numbers',
     ];
 
     public function listing(): BelongsTo

@@ -8,6 +8,7 @@ use App\Models\Listing;
 use App\Models\AuctionHistory;
 use App\Models\LicensePlate;
 use App\Models\Motorcycle;
+use App\Models\MotorcycleModel;
 use App\Models\SparePart;
 use App\Models\SparePartMotorcycle;
 use Illuminate\Support\Facades\Storage;
@@ -18,101 +19,101 @@ use Str;
 
 class ListingController extends Controller
 {
-/**
- * @OA\Post(
- *     path="/api/listings",
- *     summary="Créer une annonce",
- *     tags={"Listings"},
- *     security={{"bearerAuth":{}}},
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             oneOf={
- *                 @OA\Schema(
- *                     required={"title", "description", "price", "category_id", "brand_id", "model_id", "year_id"},
- *                     @OA\Property(property="category_id", type="integer", example=1),
- *                     @OA\Property(property="title", type="string", example="Yamaha MT-07"),
- *                     @OA\Property(property="description", type="string", example="Moto bien entretenue"),
- *                     @OA\Property(property="price", type="number", format="float", example=5000),
- *                     @OA\Property(property="country_id", type="integer", example=1),
- *                     @OA\Property(property="city_id", type="integer", example=10),
- *                     @OA\Property(property="auction_enabled", type="boolean", example=false),
- *                     @OA\Property(property="minimum_bid", type="number", example=null),
- *                     @OA\Property(property="allow_submission", type="boolean", example=false),
- *                     @OA\Property(property="listing_type_id", type="integer", example=1),
- *                     @OA\Property(property="contacting_channel", type="string", example="phone"),
- *                     @OA\Property(property="seller_type", type="string", example="owner"),
- *                     @OA\Property(property="images", type="array", @OA\Items(type="string", format="binary")),
- *                     @OA\Property(property="brand_id", type="integer", example=1),
- *                     @OA\Property(property="model_id", type="integer", example=2),
- *                     @OA\Property(property="year_id", type="integer", example=2020),
- *                     @OA\Property(property="type_id", type="integer", example=3),
- *                     @OA\Property(property="engine", type="string", example="700cc"),
- *                     @OA\Property(property="mileage", type="integer", example=15000),
- *                     @OA\Property(property="body_condition", type="string", example="Good"),
- *                     @OA\Property(property="modified", type="boolean", example=false),
- *                     @OA\Property(property="insurance", type="boolean", example=true),
- *                     @OA\Property(property="general_condition", type="string", example="Excellent"),
- *                     @OA\Property(property="vehicle_care", type="string", example="Regular maintenance"),
- *                     @OA\Property(property="transmission", type="string", example="Manual")
- *                 ),
- *                 @OA\Schema(
- *                     required={"title", "description", "price", "category_id", "condition"},
- *                     @OA\Property(property="category_id", type="integer", example=2),
- *                     @OA\Property(property="title", type="string", example="Pneu arrière"),
- *                     @OA\Property(property="description", type="string", example="Pneu en bon état"),
- *                     @OA\Property(property="price", type="number", format="float", example=200),
- *                     @OA\Property(property="country_id", type="integer", example=1),
- *                     @OA\Property(property="city_id", type="integer", example=5),
- *                     @OA\Property(property="auction_enabled", type="boolean", example=false),
- *                     @OA\Property(property="minimum_bid", type="number", example=null),
- *                     @OA\Property(property="allow_submission", type="boolean", example=false),
- *                     @OA\Property(property="listing_type_id", type="integer", example=2),
- *                     @OA\Property(property="contacting_channel", type="string", example="email"),
- *                     @OA\Property(property="seller_type", type="string", example="dealer"),
- *                     @OA\Property(property="images", type="array", @OA\Items(type="string", format="binary")),
- *                     @OA\Property(property="condition", type="string", example="used"),
- *                     @OA\Property(
- *                         property="motorcycles",
- *                         type="array",
- *                         @OA\Items(
- *                             type="object",
- *                             required={"brand_id", "model_id", "year_id"},
- *                             @OA\Property(property="brand_id", type="integer", example=1),
- *                             @OA\Property(property="model_id", type="integer", example=2),
- *                             @OA\Property(property="year_id", type="integer", example=2020)
- *                         )
- *                     )
- *                 ),
- *                 @OA\Schema(
- *                     required={"title", "description", "price", "category_id", "characters", "digits_count", "color_id"},
- *                     @OA\Property(property="category_id", type="integer", example=3),
- *                     @OA\Property(property="title", type="string", example="Plaque personnalisée"),
- *                     @OA\Property(property="description", type="string", example="Plaque ABC123 rouge"),
- *                     @OA\Property(property="price", type="number", format="float", example=800),
- *                     @OA\Property(property="country_id", type="integer", example=1),
- *                     @OA\Property(property="city_id", type="integer", example=8),
- *                     @OA\Property(property="auction_enabled", type="boolean", example=true),
- *                     @OA\Property(property="minimum_bid", type="number", example=500),
- *                     @OA\Property(property="allow_submission", type="boolean", example=true),
- *                     @OA\Property(property="listing_type_id", type="integer", example=3),
- *                     @OA\Property(property="contacting_channel", type="string", example="whatsapp"),
- *                     @OA\Property(property="seller_type", type="string", example="owner"),
- *                     @OA\Property(property="images", type="array", @OA\Items(type="string", format="binary")),
- *                     @OA\Property(property="characters", type="string", example="ABC123"),
- *                     @OA\Property(property="digits_count", type="integer", example=6),
- *                     @OA\Property(property="color_id", type="integer", example=1),
- *                     @OA\Property(property="type_id", type="integer", example=1)
- *                 )
- *             }
- *         )
- *     ),
- *     @OA\Response(
- *         response=201,
- *         description="Annonce créée avec succès"
- *     )
- * )
- */
+    /**
+     * @OA\Post(
+     *     path="/api/listings",
+     *     summary="Créer une annonce",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             oneOf={
+     *                 @OA\Schema(
+     *                     required={"title", "description", "price", "category_id", "brand_id", "model_id", "year_id"},
+     *                     @OA\Property(property="category_id", type="integer", example=1),
+     *                     @OA\Property(property="title", type="string", example="Yamaha MT-07"),
+     *                     @OA\Property(property="description", type="string", example="Moto bien entretenue"),
+     *                     @OA\Property(property="price", type="number", format="float", example=5000),
+     *                     @OA\Property(property="country_id", type="integer", example=1),
+     *                     @OA\Property(property="city_id", type="integer", example=10),
+     *                     @OA\Property(property="auction_enabled", type="boolean", example=false),
+     *                     @OA\Property(property="minimum_bid", type="number", example=null),
+     *                     @OA\Property(property="allow_submission", type="boolean", example=false),
+     *                     @OA\Property(property="listing_type_id", type="integer", example=1),
+     *                     @OA\Property(property="contacting_channel", type="string", example="phone"),
+     *                     @OA\Property(property="seller_type", type="string", example="owner"),
+     *                     @OA\Property(property="images", type="array", @OA\Items(type="string", format="binary")),
+     *                     @OA\Property(property="brand_id", type="integer", example=1),
+     *                     @OA\Property(property="model_id", type="integer", example=2),
+     *                     @OA\Property(property="year_id", type="integer", example=2020),
+     *                     @OA\Property(property="type_id", type="integer", example=3),
+     *                     @OA\Property(property="engine", type="string", example="700cc"),
+     *                     @OA\Property(property="mileage", type="integer", example=15000),
+     *                     @OA\Property(property="body_condition", type="string", example="Good"),
+     *                     @OA\Property(property="modified", type="boolean", example=false),
+     *                     @OA\Property(property="insurance", type="boolean", example=true),
+     *                     @OA\Property(property="general_condition", type="string", example="Excellent"),
+     *                     @OA\Property(property="vehicle_care", type="string", example="Regular maintenance"),
+     *                     @OA\Property(property="transmission", type="string", example="Manual")
+     *                 ),
+     *                 @OA\Schema(
+     *                     required={"title", "description", "price", "category_id", "condition"},
+     *                     @OA\Property(property="category_id", type="integer", example=2),
+     *                     @OA\Property(property="title", type="string", example="Pneu arrière"),
+     *                     @OA\Property(property="description", type="string", example="Pneu en bon état"),
+     *                     @OA\Property(property="price", type="number", format="float", example=200),
+     *                     @OA\Property(property="country_id", type="integer", example=1),
+     *                     @OA\Property(property="city_id", type="integer", example=5),
+     *                     @OA\Property(property="auction_enabled", type="boolean", example=false),
+     *                     @OA\Property(property="minimum_bid", type="number", example=null),
+     *                     @OA\Property(property="allow_submission", type="boolean", example=false),
+     *                     @OA\Property(property="listing_type_id", type="integer", example=2),
+     *                     @OA\Property(property="contacting_channel", type="string", example="email"),
+     *                     @OA\Property(property="seller_type", type="string", example="dealer"),
+     *                     @OA\Property(property="images", type="array", @OA\Items(type="string", format="binary")),
+     *                     @OA\Property(property="condition", type="string", example="used"),
+     *                     @OA\Property(
+     *                         property="motorcycles",
+     *                         type="array",
+     *                         @OA\Items(
+     *                             type="object",
+     *                             required={"brand_id", "model_id", "year_id"},
+     *                             @OA\Property(property="brand_id", type="integer", example=1),
+     *                             @OA\Property(property="model_id", type="integer", example=2),
+     *                             @OA\Property(property="year_id", type="integer", example=2020)
+     *                         )
+     *                     )
+     *                 ),
+     *                 @OA\Schema(
+     *                     required={"title", "description", "price", "category_id", "characters", "digits_count", "color_id"},
+     *                     @OA\Property(property="category_id", type="integer", example=3),
+     *                     @OA\Property(property="title", type="string", example="Plaque personnalisée"),
+     *                     @OA\Property(property="description", type="string", example="Plaque ABC123 rouge"),
+     *                     @OA\Property(property="price", type="number", format="float", example=800),
+     *                     @OA\Property(property="country_id", type="integer", example=1),
+     *                     @OA\Property(property="city_id", type="integer", example=8),
+     *                     @OA\Property(property="auction_enabled", type="boolean", example=true),
+     *                     @OA\Property(property="minimum_bid", type="number", example=500),
+     *                     @OA\Property(property="allow_submission", type="boolean", example=true),
+     *                     @OA\Property(property="listing_type_id", type="integer", example=3),
+     *                     @OA\Property(property="contacting_channel", type="string", example="whatsapp"),
+     *                     @OA\Property(property="seller_type", type="string", example="owner"),
+     *                     @OA\Property(property="images", type="array", @OA\Items(type="string", format="binary")),
+     *                     @OA\Property(property="characters", type="string", example="ABC123"),
+     *                     @OA\Property(property="digits_count", type="integer", example=6),
+     *                     @OA\Property(property="color_id", type="integer", example=1),
+     *                     @OA\Property(property="type_id", type="integer", example=1)
+     *                 )
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Annonce créée avec succès"
+     *     )
+     * )
+     */
 
     public function store(Request $request)
     {
@@ -166,12 +167,22 @@ class ListingController extends Controller
 
             // Category-specific logic
             if ($listing->category_id == 1) {
+                // Récupérer le type_id depuis le model_id
+                $model = MotorcycleModel::find($request->model_id);
+
+                if (!$model) {
+                    DB::rollBack();
+                    return response()->json([
+                        'message' => 'Invalid model_id: Model not found.',
+                    ], 422);
+                }
+
                 $motorcycle = Motorcycle::create([
                     'listing_id' => $listing->id,
                     'brand_id' => $request->brand_id,
                     'model_id' => $request->model_id,
                     'year_id' => $request->year_id,
-                    'type_id' => $request->type_id,
+                    'type_id' => $model->type_id, // ici on récupère depuis le model
                     'engine' => $request->engine,
                     'mileage' => $request->mileage,
                     'body_condition' => $request->body_condition,
@@ -213,14 +224,35 @@ class ListingController extends Controller
                     'data' => $sparePart->load('motorcycleAssociations.brand', 'motorcycleAssociations.model', 'motorcycleAssociations.year'),
                 ], 201);
             } elseif ($listing->category_id == 3) {
-                $licensePlate = LicensePlate::create([
+                // Vérifier si le type est 1
+                $typeId = $request->type_id;
+
+                $licensePlateData = [
                     'listing_id' => $listing->id,
-                    'characters' => $request->characters,
                     'country_id' => $request->country_id,
-                    'type_id' => $request->type_id,
-                    'color_id' => $request->color_id,
+                    'type_id' => $typeId,
                     'digits_count' => $request->digits_count,
-                ]);
+                    'city_id' => $request->city_id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+
+                if ($typeId == 1) {
+                    // Cas normal : on utilise les lettres
+
+                    $licensePlateData['first_letter'] = $request->first_letter;
+                    $licensePlateData['second_letter'] = $request->second_letter;
+                    $licensePlateData['third_letter'] = $request->third_letter;
+                    $licensePlateData['numbers'] = $request->numbers;
+                } else {
+                    // Cas spécial : type == 1 -> lettres nulles
+                    $licensePlateData['first_letter'] = null;
+                    $licensePlateData['second_letter'] = null;
+                    $licensePlateData['third_letter'] = null;
+                    $licensePlateData['numbers'] = $request->numbers;
+                }
+
+                $licensePlate = LicensePlate::create($licensePlateData);
 
                 DB::commit();
 
@@ -243,7 +275,7 @@ class ListingController extends Controller
         }
     }
 
-      /**
+    /**
      * @OA\Get(
      *     path="/api/listings/country/{country_id}",
      *     summary="Get listings by country",
@@ -307,7 +339,7 @@ class ListingController extends Controller
 
         return response()->json($listings);
     }
- /**
+    /**
      * @OA\Get(
      *     path="/api/listings/category/{category_id}",
      *     summary="Get listings by category",
@@ -371,7 +403,7 @@ class ListingController extends Controller
 
         return response()->json($listings);
     }
- /**
+    /**
      * @OA\Get(
      *     path="/api/listings/city/{city_id}",
      *     summary="Get listings by city",
@@ -436,7 +468,7 @@ class ListingController extends Controller
 
         return response()->json($listings);
     }
- /**
+    /**
      * @OA\Get(
      *     path="/api/listings/filter",
      *     summary="Filter listings",
@@ -525,7 +557,7 @@ class ListingController extends Controller
 
         return response()->json($listings);
     }
- /**
+    /**
      * @OA\Get(
      *     path="/api/listings/latest/{city_id}",
      *     summary="Get latest listings by city",
@@ -592,7 +624,7 @@ class ListingController extends Controller
         return response()->json($listings);
     }
 
-  /**
+    /**
      * @OA\Get(
      *     path="/api/listings/{id}",
      *     summary="Get listing by ID",
@@ -727,7 +759,7 @@ class ListingController extends Controller
 
         return response()->json($data);
     }
-  /**
+    /**
      * @OA\Get(
      *     path="/api/listings",
      *     summary="Get all listings with pagination",
@@ -869,77 +901,76 @@ class ListingController extends Controller
 
 
     /**
- * @OA\Get(
- *     path="/api/my-listing",
- *     summary="Récupérer les annonces de l'utilisateur connecté avec les détails selon la catégorie",
- *     tags={"Listings"},
- *     security={{"bearerAuth":{}}},
- *     @OA\Response(
- *         response=200,
- *         description="Liste des annonces de l'utilisateur",
- *         @OA\JsonContent(
- *             type="array",
- *             @OA\Items(type="object")
- *         )
- *     ),
- *     @OA\Response(
- *         response=401,
- *         description="Unauthorized"
- *     )
- * )
- */
-public function my_listing()
-{
-    $user = Auth::user();
+     * @OA\Get(
+     *     path="/api/my-listing",
+     *     summary="Récupérer les annonces de l'utilisateur connecté avec les détails selon la catégorie",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Liste des annonces de l'utilisateur",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     )
+     * )
+     */
+    public function my_listing()
+    {
+        $user = Auth::user();
 
-    if (!$user) {
-        return response()->json(['message' => 'Unauthorized'], 401);
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $listings = Listing::where('seller_id', $user->id)
+            ->with([
+                'images',
+                'country',
+                'city',
+                'listingType',
+                'motorcycle',       // relation hasOne
+                'sparePart.motorcycleAssociations.brand',
+                'sparePart.motorcycleAssociations.model',
+                'sparePart.motorcycleAssociations.year',
+                'licensePlate'
+            ])
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function ($listing) {
+                $data = [
+                    'id' => $listing->id,
+                    'title' => $listing->title,
+                    'description' => $listing->description,
+                    'price' => $listing->price,
+                    'category_id' => $listing->category_id,
+                    'status' => $listing->status,
+                    'created_at' => $listing->created_at,
+                    'images' => $listing->images,
+                    'country' => $listing->country,
+                    'city' => $listing->city,
+                    'listing_type' => $listing->listingType,
+                ];
+
+                // Ajouter les détails spécifiques à la catégorie
+                if ($listing->category_id == 1 && $listing->motorcycle) {
+                    $data['details'] = $listing->motorcycle;
+                } elseif ($listing->category_id == 2 && $listing->sparePart) {
+                    $data['details'] = $listing->sparePart;
+                } elseif ($listing->category_id == 3 && $listing->licensePlate) {
+                    $data['details'] = $listing->licensePlate;
+                } else {
+                    $data['details'] = null;
+                }
+
+                return $data;
+            });
+
+        return response()->json($listings, 200);
     }
-
-    $listings = Listing::where('seller_id', $user->id)
-        ->with([
-            'images',
-            'country',
-            'city',
-            'listingType',
-            'motorcycle',       // relation hasOne
-            'sparePart.motorcycleAssociations.brand',
-            'sparePart.motorcycleAssociations.model',
-            'sparePart.motorcycleAssociations.year',
-            'licensePlate'
-        ])
-        ->orderByDesc('created_at')
-        ->get()
-        ->map(function ($listing) {
-            $data = [
-                'id' => $listing->id,
-                'title' => $listing->title,
-                'description' => $listing->description,
-                'price' => $listing->price,
-                'category_id' => $listing->category_id,
-                'status' => $listing->status,
-                'created_at' => $listing->created_at,
-                'images' => $listing->images,
-                'country' => $listing->country,
-                'city' => $listing->city,
-                'listing_type' => $listing->listingType,
-            ];
-
-            // Ajouter les détails spécifiques à la catégorie
-            if ($listing->category_id == 1 && $listing->motorcycle) {
-                $data['details'] = $listing->motorcycle;
-            } elseif ($listing->category_id == 2 && $listing->sparePart) {
-                $data['details'] = $listing->sparePart;
-            } elseif ($listing->category_id == 3 && $listing->licensePlate) {
-                $data['details'] = $listing->licensePlate;
-            } else {
-                $data['details'] = null;
-            }
-
-            return $data;
-        });
-
-    return response()->json($listings, 200);
-}
-
 }

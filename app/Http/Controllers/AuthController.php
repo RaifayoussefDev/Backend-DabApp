@@ -79,7 +79,7 @@ class AuthController extends Controller
         ]);
 
         $token = JWTAuth::fromUser($user);
-        $tokenExpiration = now()->addMinutes(5);
+        $tokenExpiration= now()->addMonth();
 
         return response()->json([
             'user' => $user,
@@ -177,7 +177,7 @@ class AuthController extends Controller
 
         // Generate JWT token
         $token = JWTAuth::fromUser($user);
-        $tokenExpiration = now()->addMinutes(5);
+        $tokenExpiration= now()->addMonth();
 
         // If 2FA is enabled for the user
         if ($user->two_factor_enabled) {
@@ -292,7 +292,7 @@ class AuthController extends Controller
 
         // Authentifier l'utilisateur
         $token = JWTAuth::fromUser($user);
-        $tokenExpiration = now()->addMinutes(5);
+        $tokenExpiration= now()->addMonth();
 
         $user->token_expiration = $tokenExpiration;
         $user->save();
@@ -479,16 +479,16 @@ class AuthController extends Controller
     public function refresh()
     {
         $token = auth()->refresh();
-        $tokenExpiration = now()->addMinutes(5);
-    
+        $tokenExpiration= now()->addMonth();
+
         return response()->json([
             'token' => $token,
             'expires_at' => $tokenExpiration->toDateTimeString()
         ]);
     }
-    
+
     /**
-     * @OA\Put( 
+     * @OA\Put(
      *     path="/api/user/update",
      *     summary="Mettre à jour le profil de l'utilisateur",
      *     tags={"Authentification"},
