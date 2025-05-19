@@ -7,6 +7,7 @@ use App\Http\Controllers\CardTypeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BikePartBrandController;
 use App\Http\Controllers\ListingAuctionController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MotorcycleBrandController;
@@ -123,3 +124,6 @@ Route::delete('/countries/{id}', [LocationController::class, 'destroyCountry']);
 Route::post('/cities', [LocationController::class, 'storeCity']);
 Route::put('/cities/{id}', [LocationController::class, 'updateCity']);
 Route::delete('/cities/{id}', [LocationController::class, 'destroyCity']);
+
+Route::apiResource('bike-part-brands', BikePartBrandController::class);
+
