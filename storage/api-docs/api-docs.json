@@ -796,6 +796,299 @@
                 ]
             }
         },
+        "/api/bike-part-brands": {
+            "get": {
+                "tags": [
+                    "Bike Part Brands"
+                ],
+                "summary": "Get all bike part brands",
+                "operationId": "4084f52f749b5a8426f5a064b8ad12e2",
+                "responses": {
+                    "200": {
+                        "description": "List of brands"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Bike Part Brands"
+                ],
+                "summary": "Create a new bike part brand",
+                "operationId": "5f93afc5f40009b6070036ceb59f3904",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Shimano"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Brand created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/bike-part-brands/{id}": {
+            "get": {
+                "tags": [
+                    "Bike Part Brands"
+                ],
+                "summary": "Get a specific bike part brand",
+                "operationId": "80864c6c3152868f81b11f4991a88aab",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Brand found"
+                    },
+                    "404": {
+                        "description": "Brand not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Bike Part Brands"
+                ],
+                "summary": "Update a bike part brand",
+                "operationId": "a89634c7797aa73912d79d3dd125d851",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Updated Brand"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Brand updated successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Bike Part Brands"
+                ],
+                "summary": "Delete a bike part brand",
+                "operationId": "0150a8926c28e698c8a0969f815d2c20",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Brand deleted successfully"
+                    },
+                    "404": {
+                        "description": "Brand not found"
+                    }
+                }
+            }
+        },
+        "/api/bike-part-categories": {
+            "get": {
+                "tags": [
+                    "Bike Part Categories"
+                ],
+                "summary": "Get all bike part categories",
+                "description": "Display a listing of the resource.\nswagger",
+                "operationId": "e1b0407e79465a85a6c11a7b1f0533cf",
+                "responses": {
+                    "200": {
+                        "description": "List of categories"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Bike Part Categories"
+                ],
+                "summary": "Create a new bike part category",
+                "description": "Store a newly created resource in storage.\nswagger",
+                "operationId": "a9032b26435e6aef60f3fb730e26cce0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Oil"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Category created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/bike-part-categories/{id}": {
+            "get": {
+                "tags": [
+                    "Bike Part Categories"
+                ],
+                "summary": "Get a specific bike part category",
+                "description": "Display the specified resource.\nswagger",
+                "operationId": "f6625fb70785abbd9fed45b5798e41b7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category found"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Bike Part Categories"
+                ],
+                "summary": "Update a bike part category",
+                "description": "Update the specified resource in storage.\nswagger",
+                "operationId": "892574b696b8b4d5facbd063b0480496",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Oil"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Category updated successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Bike Part Categories"
+                ],
+                "summary": "Delete a bike part category",
+                "description": "Remove the specified resource from storage.\nswagger",
+                "operationId": "5667b4358ec294aec2da9ca0d93507ac",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category deleted successfully"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    }
+                }
+            }
+        },
         "/api/BankCards": {
             "get": {
                 "tags": [
@@ -4743,6 +5036,10 @@
     },
     "tags": [
         {
+            "name": "Bike Part Brands",
+            "description": "API Endpoints for managing bike part brands"
+        },
+        {
             "name": "Motorcycle Brands"
         },
         {
@@ -4764,6 +5061,10 @@
         {
             "name": "Authentification",
             "description": "Authentification"
+        },
+        {
+            "name": "Bike Part Categories",
+            "description": "Bike Part Categories"
         },
         {
             "name": "BankCards",

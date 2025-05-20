@@ -9,6 +9,7 @@ use App\Models\AuctionHistory;
 use App\Models\LicensePlate;
 use App\Models\Motorcycle;
 use App\Models\MotorcycleModel;
+use App\Models\PricingRulesMotorcycle;
 use App\Models\SparePart;
 use App\Models\SparePartMotorcycle;
 use Illuminate\Support\Facades\Storage;
@@ -203,6 +204,8 @@ class ListingController extends Controller
                 $sparePart = SparePart::create([
                     'listing_id' => $listing->id,
                     'condition' => $request->condition,
+                    'bike_part_brand_id' => $request->bike_part_brand_id,
+                    'bike_part_category_id' => $request->bike_part_category_id,
                 ]);
 
                 // Ajouter les associations moto
@@ -972,5 +975,49 @@ class ListingController extends Controller
             });
 
         return response()->json($listings, 200);
+    }
+
+
+
+
+    public function getPriceByCategoryAndBrand(Request $request)
+    {
+        $categoryId = $request->input('category_id');
+        $brandId = $request->input('brand_id');
+
+        // if ($categoryId != 1 || !$brandId) {
+        //     return response()->json([
+        //         'message' => 'Invalid category_id or brand_id'
+        //     ], 400);
+        // }
+
+        // Récupérer tous les modèles de la marque
+        $motorcycleModels = MotorcycleModel::where('brand_id', $brandId)->get();
+
+        if ($motorcycleModels->isEmpty()) {
+            return response()->json([
+                'message' => 'No motorcycle models found for this brand'
+            ], 404);
+        }
+
+        // Récupérer tous les type_ids distincts
+        $typeIds = $motorcycleModels->pluck('type_id')->unique();
+
+        // Récupérer les règles de prix pour ces types
+        $pricingRules = PricingRulesMotorcycle::whereIn('motorcycle_type_id', $typeIds)->get();
+
+        // Si tu veux la moyenne, la liste, ou juste le premier prix, adapte ici
+        // Par exemple, on retourne tous les prix par type:
+        $prices = $pricingRules->map(function ($rule) {
+            return [
+                'motorcycle_type_id' => $rule->motorcycle_type_id,
+                'price' => $rule->price,
+            ];
+        });
+
+        return response()->json([
+            'brand_id' => $brandId,
+            'prices' => $prices,
+        ]);
     }
 }

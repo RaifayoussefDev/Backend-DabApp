@@ -8,6 +8,7 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BikePartBrandController;
+use App\Http\Controllers\BikePartCategoryController;
 use App\Http\Controllers\ListingAuctionController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MotorcycleBrandController;
@@ -92,6 +93,7 @@ Route::middleware('auth:api')->group(function () {
      Route::post('/listings', [ListingController::class, 'store']);
      Route::get('/my-listing', [ListingController::class, 'my_listing']);
 
+     Route::get('price', [ListingController::class, 'getPriceByCategoryAndBrand']);
 
 
 });
@@ -126,4 +128,9 @@ Route::put('/cities/{id}', [LocationController::class, 'updateCity']);
 Route::delete('/cities/{id}', [LocationController::class, 'destroyCity']);
 
 Route::apiResource('bike-part-brands', BikePartBrandController::class);
+
+Route::apiResource('bike-part-categories', BikePartCategoryController::class);
+
+Route::get('/listings/search-by-model', [ListingController::class, 'searchByCategoryAndModel']);
+
 

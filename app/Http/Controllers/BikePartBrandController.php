@@ -2,15 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\BikePartBrand;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
+/**
+ * @OA\Tag(
+ *     name="Bike Part Brands",
+ *     description="API Endpoints for managing bike part brands"
+ * )
+ */
 class BikePartBrandController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * @OA\Get(
+     *     path="/api/bike-part-brands",
+     *     tags={"Bike Part Brands"},
+     *     summary="Get all bike part brands",
+     *     @OA\Response(response=200, description="List of brands")
+     * )
      */
     public function index()
     {
@@ -20,7 +30,20 @@ class BikePartBrandController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * @OA\Post(
+     *     path="/api/bike-part-brands",
+     *     tags={"Bike Part Brands"},
+     *     summary="Create a new bike part brand",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="Shimano")
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Brand created successfully"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
      */
     public function store(Request $request)
     {
@@ -37,7 +60,19 @@ class BikePartBrandController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * @OA\Get(
+     *     path="/api/bike-part-brands/{id}",
+     *     tags={"Bike Part Brands"},
+     *     summary="Get a specific bike part brand",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response=200, description="Brand found"),
+     *     @OA\Response(response=404, description="Brand not found")
+     * )
      */
     public function show(BikePartBrand $bikePartBrand)
     {
@@ -47,12 +82,31 @@ class BikePartBrandController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * @OA\Put(
+     *     path="/api/bike-part-brands/{id}",
+     *     tags={"Bike Part Brands"},
+     *     summary="Update a bike part brand",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="Updated Brand")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Brand updated successfully"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
      */
     public function update(Request $request, BikePartBrand $bikePartBrand)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:bike_part_brands,name,'.$bikePartBrand->id,
+            'name' => 'required|string|max:255|unique:bike_part_brands,name,' . $bikePartBrand->id,
         ]);
 
         $bikePartBrand->update($validated);
@@ -64,19 +118,29 @@ class BikePartBrandController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * @OA\Delete(
+     *     path="/api/bike-part-brands/{id}",
+     *     tags={"Bike Part Brands"},
+     *     summary="Delete a bike part brand",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response=200, description="Brand deleted successfully"),
+     *     @OA\Response(response=404, description="Brand not found")
+     * )
      */
     public function destroy(BikePartBrand $bikePartBrand)
     {
-        // Sauvegarder les données avant suppression si besoin
         $deletedData = $bikePartBrand->toArray();
-        
         $bikePartBrand->delete();
-    
+
         return response()->json([
             'message' => 'Brand deleted successfully',
-            'deleted_data' => $deletedData, // Optionnel : données supprimées
-            'remaining_count' => BikePartBrand::count() // Optionnel : compte restant
+            'deleted_data' => $deletedData,
+            'remaining_count' => BikePartBrand::count()
         ]);
     }
 }
