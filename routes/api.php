@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BikePartBrandController;
 use App\Http\Controllers\BikePartCategoryController;
+use App\Http\Controllers\CurrencyExchangeRateController;
 use App\Http\Controllers\ListingAuctionController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MotorcycleBrandController;
@@ -93,7 +94,11 @@ Route::middleware('auth:api')->group(function () {
      Route::post('/listings', [ListingController::class, 'store']);
      Route::get('/my-listing', [ListingController::class, 'my_listing']);
 
-     Route::get('price', [ListingController::class, 'getPriceByModelId']);
+     Route::get('pricing', [ListingController::class, 'getPriceByModelId']);
+
+
+     Route::apiResource('currency-rates', CurrencyExchangeRateController::class);
+
 
 
 });
@@ -132,5 +137,8 @@ Route::apiResource('bike-part-brands', BikePartBrandController::class);
 Route::apiResource('bike-part-categories', BikePartCategoryController::class);
 
 Route::get('/listings/search-by-model', [ListingController::class, 'searchByCategoryAndModel']);
+
+
+Route::apiResource('currency-rates', CurrencyExchangeRateController::class);
 
 

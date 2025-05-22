@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Listing;
 use App\Models\AuctionHistory;
+use App\Models\CurrencyExchangeRate;
 use App\Models\LicensePlate;
 use App\Models\Motorcycle;
 use App\Models\MotorcycleModel;
@@ -980,64 +981,117 @@ class ListingController extends Controller
     }
 
 
+    /**
+     * @OA\Get(
+     *     path="/api/pricing",
+     *     summary="Get price by model ID",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="model_id",
+     *         in="query",
+     *         required=true,
+     *         description="Model ID"
+     *     ),
+     *     @OA\Parameter(
+     *         name="category_id",
+     *         in="query",
+     *         required=true,
+     *         description="Category ID"
+     *     ),
+     *     @OA\Parameter(
+     *         name="country_id",
+     *         in="query",
+     *         required=true,
+     *         description="Country ID"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Price details"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Not found"
+     *     )
+     * )
+     */
 
 
     public function getPriceByModelId(Request $request)
     {
         $modelId = $request->input('model_id');
         $categoryId = $request->input('category_id');
-    
+        $countryId = $request->input('country_id'); // <-- reçoit le pays de l'utilisateur
+
+        // Vérifie que le pays est valide
+        $currency = CurrencyExchangeRate::where('country_id', $countryId)->first();
+
+        if (!$currency) {
+            return response()->json([
+                'message' => 'No exchange rate found for this country'
+            ], 404);
+        }
+
+        $exchangeRate = $currency->exchange_rate;
+        $currencySymbol = $currency->currency_symbol;
+
         if ($categoryId == 1 && $modelId) {
-            // Handle category 1 logic (motorcycles)
             $model = MotorcycleModel::find($modelId);
-    
+
             if (!$model) {
                 return response()->json([
                     'message' => 'No motorcycle model found with this ID'
                 ], 404);
             }
-    
+
             $typeId = $model->type_id;
-    
+
             $pricingRule = PricingRulesMotorcycle::where('motorcycle_type_id', $typeId)->first();
-    
+
             if (!$pricingRule) {
                 return response()->json([
                     'message' => 'No pricing rule found for this motorcycle type'
                 ], 404);
             }
-    
+
+            $priceConverted = round($pricingRule->price * $exchangeRate, 2);
+
             return response()->json([
                 'model_id' => $modelId,
                 'motorcycle_type_id' => $typeId,
-                'price' => $pricingRule->price,
+                'price_sar' => $pricingRule->price,
+                'converted_price' => $priceConverted,
+                'currency_symbol' => $currencySymbol
             ]);
         }
-    
-        // ✅ New block for category 2 (Spareparts)
+
         elseif ($categoryId == 2 && $modelId) {
             $pricingRule = PricingRulesSparepart::where('bike_part_category_id', $modelId)->first();
-    
+
             if (!$pricingRule) {
                 return response()->json([
                     'message' => 'No pricing rule found for this bike part category'
                 ], 404);
             }
-    
+
+            $priceConverted = round($pricingRule->price * $exchangeRate, 2);
+
             return response()->json([
                 'bike_part_category_id' => $modelId,
-                'price' => $pricingRule->price,
+                'price_sar' => $pricingRule->price,
+                'converted_price' => $priceConverted,
+                'currency_symbol' => $currencySymbol
             ]);
         }
-    
-        // Invalid input
+
         else {
             return response()->json([
                 'message' => 'Invalid category_id or model_id'
             ], 422);
         }
     }
-    
-    
-    
+
+
+
+
 }

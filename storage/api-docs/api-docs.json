@@ -3089,6 +3089,48 @@
                 ]
             }
         },
+        "/api/pricing": {
+            "get": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Get price by model ID",
+                "operationId": "e446d6e3b1cbe8818ae9407bb62572dd",
+                "parameters": [
+                    {
+                        "name": "model_id",
+                        "in": "query",
+                        "description": "Model ID",
+                        "required": true
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Category ID",
+                        "required": true
+                    },
+                    {
+                        "name": "country_id",
+                        "in": "query",
+                        "description": "Country ID",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Price details"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/locations": {
             "get": {
                 "tags": [
