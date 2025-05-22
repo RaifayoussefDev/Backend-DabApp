@@ -93,7 +93,7 @@ Route::middleware('auth:api')->group(function () {
      Route::post('/listings', [ListingController::class, 'store']);
      Route::get('/my-listing', [ListingController::class, 'my_listing']);
 
-     Route::get('price', [ListingController::class, 'getPriceByCategoryAndBrand']);
+     Route::get('price', [ListingController::class, 'getPriceByModelId']);
 
 
 });

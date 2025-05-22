@@ -10,8 +10,10 @@ use App\Models\LicensePlate;
 use App\Models\Motorcycle;
 use App\Models\MotorcycleModel;
 use App\Models\PricingRulesMotorcycle;
+use App\Models\PricingRulesSparepart;
 use App\Models\SparePart;
 use App\Models\SparePartMotorcycle;
+use CreatePricingRulesSparepartTable;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 
@@ -980,44 +982,62 @@ class ListingController extends Controller
 
 
 
-    public function getPriceByCategoryAndBrand(Request $request)
+    public function getPriceByModelId(Request $request)
     {
+        $modelId = $request->input('model_id');
         $categoryId = $request->input('category_id');
-        $brandId = $request->input('brand_id');
-
-        // if ($categoryId != 1 || !$brandId) {
-        //     return response()->json([
-        //         'message' => 'Invalid category_id or brand_id'
-        //     ], 400);
-        // }
-
-        // Récupérer tous les modèles de la marque
-        $motorcycleModels = MotorcycleModel::where('brand_id', $brandId)->get();
-
-        if ($motorcycleModels->isEmpty()) {
+    
+        if ($categoryId == 1 && $modelId) {
+            // Handle category 1 logic (motorcycles)
+            $model = MotorcycleModel::find($modelId);
+    
+            if (!$model) {
+                return response()->json([
+                    'message' => 'No motorcycle model found with this ID'
+                ], 404);
+            }
+    
+            $typeId = $model->type_id;
+    
+            $pricingRule = PricingRulesMotorcycle::where('motorcycle_type_id', $typeId)->first();
+    
+            if (!$pricingRule) {
+                return response()->json([
+                    'message' => 'No pricing rule found for this motorcycle type'
+                ], 404);
+            }
+    
             return response()->json([
-                'message' => 'No motorcycle models found for this brand'
-            ], 404);
+                'model_id' => $modelId,
+                'motorcycle_type_id' => $typeId,
+                'price' => $pricingRule->price,
+            ]);
         }
-
-        // Récupérer tous les type_ids distincts
-        $typeIds = $motorcycleModels->pluck('type_id')->unique();
-
-        // Récupérer les règles de prix pour ces types
-        $pricingRules = PricingRulesMotorcycle::whereIn('motorcycle_type_id', $typeIds)->get();
-
-        // Si tu veux la moyenne, la liste, ou juste le premier prix, adapte ici
-        // Par exemple, on retourne tous les prix par type:
-        $prices = $pricingRules->map(function ($rule) {
-            return [
-                'motorcycle_type_id' => $rule->motorcycle_type_id,
-                'price' => $rule->price,
-            ];
-        });
-
-        return response()->json([
-            'brand_id' => $brandId,
-            'prices' => $prices,
-        ]);
+    
+        // ✅ New block for category 2 (Spareparts)
+        elseif ($categoryId == 2 && $modelId) {
+            $pricingRule = PricingRulesSparepart::where('bike_part_category_id', $modelId)->first();
+    
+            if (!$pricingRule) {
+                return response()->json([
+                    'message' => 'No pricing rule found for this bike part category'
+                ], 404);
+            }
+    
+            return response()->json([
+                'bike_part_category_id' => $modelId,
+                'price' => $pricingRule->price,
+            ]);
+        }
+    
+        // Invalid input
+        else {
+            return response()->json([
+                'message' => 'Invalid category_id or model_id'
+            ], 422);
+        }
     }
+    
+    
+    
 }
