@@ -24,17 +24,17 @@ return new class extends Migration
         });
         DB::table('currency_exchange_rates')->insert([
             [
-                'country_id' => 1, // Saudi (assure-toi que l'id correspond bien)
+                'country_id' => 1, 
                 'currency_code' => 'SAR',
-                'currency_symbol' => '﷼',
-                'exchange_rate' => 1, // Suppose SAR est la devise de référence
+                'currency_symbol' => 'SAR',
+                'exchange_rate' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'country_id' => 2, // Emarat
                 'currency_code' => 'AED',
-                'currency_symbol' => 'د.إ',
+                'currency_symbol' => 'AED',
                 'exchange_rate' => 0.98,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -42,8 +42,8 @@ return new class extends Migration
             [
                 'country_id' => 3, // Kuwait
                 'currency_code' => 'KWD',
-                'currency_symbol' => 'د.ك',
-                'exchange_rate' => 0.082, // valeur approximative SAR -> KWD
+                'currency_symbol' => 'KWD',
+                'exchange_rate' => 0.082,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]

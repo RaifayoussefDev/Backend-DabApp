@@ -14,9 +14,9 @@ class PlateTypesTableSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('plate_types')->insert([
-            ['country_id' => 1, 'name' => 'number and alphabet'],
-            ['country_id' => 1, 'name' => 'number only'],
-        ]);
+        // DB::table('plate_types')->insert([
+        //     ['country_id' => 1, 'name' => 'number and alphabet'],
+        //     ['country_id' => 1, 'name' => 'number only'],
+        // ]);
     }
 }

@@ -2529,9 +2529,17 @@
                                                     "format": "binary"
                                                 }
                                             },
-                                            "characters": {
+                                            "first_letter": {
                                                 "type": "string",
-                                                "example": "ABC123"
+                                                "example": "A"
+                                            },
+                                            "second_letter": {
+                                                "type": "string",
+                                                "example": "B"
+                                            },
+                                            "third_letter": {
+                                                "type": "string",
+                                                "example": "C"
                                             },
                                             "digits_count": {
                                                 "type": "integer",

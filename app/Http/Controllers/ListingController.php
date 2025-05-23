@@ -104,7 +104,9 @@ class ListingController extends Controller
      *                     @OA\Property(property="contacting_channel", type="string", example="whatsapp"),
      *                     @OA\Property(property="seller_type", type="string", example="owner"),
      *                     @OA\Property(property="images", type="array", @OA\Items(type="string", format="binary")),
-     *                     @OA\Property(property="characters", type="string", example="ABC123"),
+     *                     @OA\Property(property="first_letter", type="string", example="A"),
+     *                    @OA\Property(property="second_letter", type="string", example="B"),
+     *                    @OA\Property(property="third_letter", type="string", example="C"),
      *                     @OA\Property(property="digits_count", type="integer", example=6),
      *                     @OA\Property(property="color_id", type="integer", example=1),
      *                     @OA\Property(property="type_id", type="integer", example=1)

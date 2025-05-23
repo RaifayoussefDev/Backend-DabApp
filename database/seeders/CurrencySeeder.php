@@ -9,10 +9,12 @@ class CurrencySeeder extends Seeder
     public function run(): void
     {
         CurrencyExchangeRate::insert([
-            ['code' => 'SAR', 'symbol' => 'ر.س', 'conversion_rate' => 3.75, 'created_at' => now(), 'updated_at' => now()],
-            ['code' => 'AED', 'symbol' => 'د.إ', 'conversion_rate' => 3.67, 'created_at' => now(), 'updated_at' => now()],
-            ['code' => 'KWD', 'symbol' => 'د.ك', 'conversion_rate' => 0.31, 'created_at' => now(), 'updated_at' => now()],
+            ['code' => 'SAR', 'symbol' => 'SAR', 'conversion_rate' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['code' => 'AED', 'symbol' => 'AED', 'conversion_rate' => 0.98, 'created_at' => now(), 'updated_at' => now()],
+            ['code' => 'KWD', 'symbol' => 'KWD', 'conversion_rate' => 0.082, 'created_at' => now(), 'updated_at' => now()],
+            ['code' => 'MAD', 'symbol' => 'MAD', 'conversion_rate' => 2.46, 'created_at' => now(), 'updated_at' => now()],
         ]);
+        
     }
 }
 

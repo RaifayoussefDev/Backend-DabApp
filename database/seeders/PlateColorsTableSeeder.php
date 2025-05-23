@@ -11,10 +11,10 @@ class PlateColorsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('plate_colors')->insert([
-            ['type_id' => 1, 'name' => 'green'],
-            ['type_id' => 1, 'name' => 'orange'],
-            ['type_id' => 1, 'name' => 'violet'],
-        ]);
+        // DB::table('plate_colors')->insert([
+        //     ['type_id' => 1, 'name' => 'green'],
+        //     ['type_id' => 1, 'name' => 'orange'],
+        //     ['type_id' => 1, 'name' => 'violet'],
+        // ]);
     }
 }

@@ -18,6 +18,7 @@ use App\Http\Controllers\MotorcycleFilterController;
 use App\Http\Controllers\MotorcycleModelController;
 use App\Http\Controllers\MotorcycleTypeController;
 use App\Http\Controllers\MotorcycleYearController;
+use App\Http\Controllers\PromoCodeController;
 use App\Http\Controllers\WishlistController;
 
 
@@ -99,6 +100,7 @@ Route::middleware('auth:api')->group(function () {
 
      Route::apiResource('currency-rates', CurrencyExchangeRateController::class);
 
+     Route::post('promo/check', [PromoCodeController::class, 'checkPromo']);
 
 
 });
