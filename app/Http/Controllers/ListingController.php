@@ -153,6 +153,14 @@ class ListingController extends Controller
                 'created_at' => now(),
             ]);
 
+            // if ($request->hasFile('images')) {
+            //     foreach ($request->file('images') as $image) {
+            //         $path = $image->store('listings', 'public'); // stocke dans storage/app/public/listings
+            //         $listing->images()->create([
+            //             'image_url' => 'storage/' . $path
+            //         ]);
+            //     }
+            // }
             if ($request->has('images')) {
                 foreach ($request->images as $imageUrl) {
                     $listing->images()->create([
@@ -160,7 +168,6 @@ class ListingController extends Controller
                     ]);
                 }
             }
-
             // Auction logic
             if ($listing->auction_enabled) {
                 AuctionHistory::create([
@@ -233,36 +240,35 @@ class ListingController extends Controller
             } elseif ($listing->category_id == 3) {
                 // Vérifier si le type est 1
                 $typeId = $request->type_id;
-
+            
                 $licensePlateData = [
                     'listing_id' => $listing->id,
-                    'country_id' => $request->country_id,
+                    'country_id' => $request->country_id_lp, // Utilisez country_id_lp pour la plaque
                     'type_id' => $typeId,
                     'digits_count' => $request->digits_count,
-                    'city_id' => $request->city_id,
+                    'city_id' => $request->city_id_lp ?? $request->city_id, // Utilisez city_id_lp si fourni, sinon city_id du listing
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
-
+            
                 if ($typeId == 1) {
                     // Cas normal : on utilise les lettres
-
                     $licensePlateData['first_letter'] = $request->first_letter;
                     $licensePlateData['second_letter'] = $request->second_letter;
                     $licensePlateData['third_letter'] = $request->third_letter;
                     $licensePlateData['numbers'] = $request->numbers;
                 } else {
-                    // Cas spécial : type == 1 -> lettres nulles
+                    // Cas spécial : type != 1 -> lettres nulles
                     $licensePlateData['first_letter'] = null;
                     $licensePlateData['second_letter'] = null;
                     $licensePlateData['third_letter'] = null;
                     $licensePlateData['numbers'] = $request->numbers;
                 }
-
+            
                 $licensePlate = LicensePlate::create($licensePlateData);
-
+            
                 DB::commit();
-
+            
                 return response()->json([
                     'message' => 'License plate added successfully',
                     'data' => $licensePlate,

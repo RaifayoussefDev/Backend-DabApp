@@ -18,6 +18,7 @@ class LicensePlate extends Model
         'second_letter',
         'third_letter',
         'numbers',
+        'city_id',
     ];
 
     public function listing(): BelongsTo
@@ -39,4 +40,9 @@ class LicensePlate extends Model
     {
         return $this->belongsTo(PlateColor::class, 'color_id');
     }
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
+    }
+
 }
