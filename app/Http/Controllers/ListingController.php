@@ -153,11 +153,10 @@ class ListingController extends Controller
                 'created_at' => now(),
             ]);
 
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $image) {
-                    $path = $image->store('listings', 'public'); // stocke dans storage/app/public/listings
+            if ($request->has('images')) {
+                foreach ($request->images as $imageUrl) {
                     $listing->images()->create([
-                        'image_url' => 'storage/' . $path
+                        'image_url' => $imageUrl
                     ]);
                 }
             }
