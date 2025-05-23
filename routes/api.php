@@ -10,6 +10,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BikePartBrandController;
 use App\Http\Controllers\BikePartCategoryController;
 use App\Http\Controllers\CurrencyExchangeRateController;
+use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\ListingAuctionController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MotorcycleBrandController;
@@ -101,6 +102,9 @@ Route::middleware('auth:api')->group(function () {
      Route::apiResource('currency-rates', CurrencyExchangeRateController::class);
 
      Route::post('promo/check', [PromoCodeController::class, 'checkPromo']);
+
+     Route::post('/upload-image', [ImageUploadController::class, 'upload']);
+
 
 
 });
