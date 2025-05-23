@@ -4505,6 +4505,163 @@
                 }
             }
         },
+        "/api/check-promo": {
+            "post": {
+                "tags": [
+                    "Promo Codes"
+                ],
+                "summary": "Check promo code validity and calculate discount",
+                "description": "Validates a promo code and calculates the new price after applying the discount.",
+                "operationId": "checkPromo",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "code",
+                                    "total_price"
+                                ],
+                                "properties": {
+                                    "code": {
+                                        "type": "string",
+                                        "example": "WELCOME10"
+                                    },
+                                    "total_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 100
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Promo code is valid and discount applied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "old_price": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 100
+                                        },
+                                        "new_price": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 80
+                                        },
+                                        "discount": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 20
+                                        },
+                                        "discount_type": {
+                                            "type": "string",
+                                            "example": "percentage"
+                                        },
+                                        "discount_value": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 20
+                                        },
+                                        "description": {
+                                            "type": "string",
+                                            "example": "20% off on your next purchase"
+                                        },
+                                        "usage_count": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "total_usage_count": {
+                                            "type": "integer",
+                                            "example": 10
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Promo code is not valid (time, price, usage limit)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Promo code is not valid at this time."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Promo code not found or inactive",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Promo code not found or inactive."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The code field is required."
+                                                    }
+                                                },
+                                                "total_price": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The total price must be at least 0."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/roles": {
             "get": {
                 "tags": [
@@ -5237,6 +5394,10 @@
         {
             "name": "Motorcycle",
             "description": "Motorcycle"
+        },
+        {
+            "name": "Promo Codes",
+            "description": "Promo Codes"
         },
         {
             "name": "Roles",
