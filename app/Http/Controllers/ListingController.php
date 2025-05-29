@@ -15,6 +15,8 @@ use App\Models\PricingRulesMotorcycle;
 use App\Models\PricingRulesSparepart;
 use App\Models\SparePart;
 use App\Models\SparePartMotorcycle;
+use App\Models\Submission;
+use App\Models\SubmissionOption;
 use CreatePricingRulesLicencePlateTable;
 use CreatePricingRulesSparepartTable;
 use Illuminate\Support\Facades\Storage;
@@ -178,25 +180,37 @@ class ListingController extends Controller
                     'bid_amount' => $listing->minimum_bid,
                 ]);
             }
+            // Ajouter une SOOM si les soumissions sont autorisées et l'enchère activée
+            if ($listing->auction_enabled && $listing->allow_submission) {
+                
 
+                Submission::create([
+                    'listing_id' => $listing->id,
+                    'user_id' => $sellerId,
+                    'amount' => $listing->minimum_bid,
+                    'submission_date' => now(),
+                    'status' => 'pending',
+                    'min_soom' => $listing->minimum_bid,
+                ]);
+            }
             // Category-specific logic
             if ($listing->category_id == 1) {
                 // Récupérer le type_id depuis le model_id
                 $model = MotorcycleModel::find($request->model_id);
-
+            
                 if (!$model) {
                     DB::rollBack();
                     return response()->json([
                         'message' => 'Invalid model_id: Model not found.',
                     ], 422);
                 }
-
+            
                 $motorcycle = Motorcycle::create([
                     'listing_id' => $listing->id,
                     'brand_id' => $request->brand_id,
                     'model_id' => $request->model_id,
                     'year_id' => $request->year_id,
-                    'type_id' => $model->type_id, // ici on récupère depuis le model
+                    'type_id' => $model->type_id,
                     'engine' => $request->engine,
                     'mileage' => $request->mileage,
                     'body_condition' => $request->body_condition,
@@ -206,14 +220,14 @@ class ListingController extends Controller
                     'vehicle_care' => $request->vehicle_care,
                     'transmission' => $request->transmission,
                 ]);
-
+            
                 DB::commit();
-
+            
                 return response()->json([
                     'message' => 'Motorcycle added successfully',
                     'data' => $motorcycle,
                 ], 201);
-            } elseif ($listing->category_id == 2) {
+            }elseif ($listing->category_id == 2) {
                 $sparePart = SparePart::create([
                     'listing_id' => $listing->id,
                     'condition' => $request->condition,
@@ -242,7 +256,7 @@ class ListingController extends Controller
             } elseif ($listing->category_id == 3) {
                 // Vérifier si le type est 1
                 $typeId = $request->type_id;
-            
+
                 $licensePlateData = [
                     'listing_id' => $listing->id,
                     'country_id' => $request->country_id_lp, // Utilisez country_id_lp pour la plaque
@@ -252,7 +266,7 @@ class ListingController extends Controller
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
-            
+
                 if ($typeId == 1) {
                     // Cas normal : on utilise les lettres
                     $licensePlateData['first_letter'] = $request->first_letter;
@@ -266,11 +280,11 @@ class ListingController extends Controller
                     $licensePlateData['third_letter'] = null;
                     $licensePlateData['numbers'] = $request->numbers;
                 }
-            
+
                 $licensePlate = LicensePlate::create($licensePlateData);
-            
+
                 DB::commit();
-            
+
                 return response()->json([
                     'message' => 'License plate added successfully',
                     'data' => $licensePlate,
@@ -1026,85 +1040,83 @@ class ListingController extends Controller
      */
 
 
-     public function getPriceByModelId(Request $request)
-     {
-         $modelId = $request->input('model_id');
-         $categoryId = $request->input('category_id');
-         $countryId = $request->input('country_id');
-     
-         $currency = CurrencyExchangeRate::where('country_id', $countryId)->first();
-     
-         if (!$currency) {
-             return response()->json([
-                 'message' => 'No exchange rate found for this country'
-             ], 404);
-         }
-     
-         $exchangeRate = $currency->exchange_rate;
-         $currencySymbol = $currency->currency_symbol;
-     
-         if ($categoryId == 1 && $modelId) {
-             $model = MotorcycleModel::find($modelId);
-     
-             if (!$model) {
-                 return response()->json([
-                     'message' => 'No motorcycle model found with this ID'
-                 ], 404);
-             }
-     
-             $typeId = $model->type_id;
-     
-             $pricingRule = PricingRulesMotorcycle::where('motorcycle_type_id', $typeId)->first();
-     
-             if (!$pricingRule) {
-                 return response()->json([
-                     'message' => 'No pricing rule found for this motorcycle type'
-                 ], 404);
-             }
-     
-             $priceConverted = round($pricingRule->price * $exchangeRate, 2);
-     
-             return response()->json([
-                 'model_id' => $modelId,
-                 'motorcycle_type_id' => $typeId,
-                 'price_sar' => $pricingRule->price,
-                 'converted_price' => $priceConverted,
-                 'currency_symbol' => $currencySymbol
-             ]);
-         }
-     
-         elseif ($categoryId == 2 && $modelId) {
-             $pricingRule = PricingRulesSparepart::where('bike_part_category_id', $modelId)->first();
-     
-             if (!$pricingRule) {
-                 return response()->json([
-                     'message' => 'No pricing rule found for this bike part category'
-                 ], 404);
-             }
-     
-             $priceConverted = round($pricingRule->price * $exchangeRate, 2);
-     
-             return response()->json([
-                 'bike_part_category_id' => $modelId,
-                 'price_sar' => $pricingRule->price,
-                 'converted_price' => $priceConverted,
-                 'currency_symbol' => $currencySymbol
-             ]);
-         }
-     
-         // 👇 Ajout pour category_id == 3 (plaque)
-         elseif ($categoryId == 3) {
+    public function getPriceByModelId(Request $request)
+    {
+        $modelId = $request->input('model_id');
+        $categoryId = $request->input('category_id');
+        $countryId = $request->input('country_id');
+
+        $currency = CurrencyExchangeRate::where('country_id', $countryId)->first();
+
+        if (!$currency) {
+            return response()->json([
+                'message' => 'No exchange rate found for this country'
+            ], 404);
+        }
+
+        $exchangeRate = $currency->exchange_rate;
+        $currencySymbol = $currency->currency_symbol;
+
+        if ($categoryId == 1 && $modelId) {
+            $model = MotorcycleModel::find($modelId);
+
+            if (!$model) {
+                return response()->json([
+                    'message' => 'No motorcycle model found with this ID'
+                ], 404);
+            }
+
+            $typeId = $model->type_id;
+
+            $pricingRule = PricingRulesMotorcycle::where('motorcycle_type_id', $typeId)->first();
+
+            if (!$pricingRule) {
+                return response()->json([
+                    'message' => 'No pricing rule found for this motorcycle type'
+                ], 404);
+            }
+
+            $priceConverted = round($pricingRule->price * $exchangeRate, 2);
+
+            return response()->json([
+                'model_id' => $modelId,
+                'motorcycle_type_id' => $typeId,
+                'price_sar' => $pricingRule->price,
+                'converted_price' => $priceConverted,
+                'currency_symbol' => $currencySymbol
+            ]);
+        } elseif ($categoryId == 2 && $modelId) {
+            $pricingRule = PricingRulesSparepart::where('bike_part_category_id', $modelId)->first();
+
+            if (!$pricingRule) {
+                return response()->json([
+                    'message' => 'No pricing rule found for this bike part category'
+                ], 404);
+            }
+
+            $priceConverted = round($pricingRule->price * $exchangeRate, 2);
+
+            return response()->json([
+                'bike_part_category_id' => $modelId,
+                'price_sar' => $pricingRule->price,
+                'converted_price' => $priceConverted,
+                'currency_symbol' => $currencySymbol
+            ]);
+        }
+
+        // 👇 Ajout pour category_id == 3 (plaque)
+        elseif ($categoryId == 3) {
             // Just fetch the first pricing rule from the table
             $pricingRule = PricingRulesLicencePlate::first();
-        
+
             if (!$pricingRule) {
                 return response()->json([
                     'message' => 'No pricing rule found for licence plates'
                 ], 404);
             }
-        
+
             $priceConverted = round($pricingRule->price * $exchangeRate, 2);
-        
+
             return response()->json([
                 'licence_plate_rule_id' => $pricingRule->id,
                 'price_sar' => $pricingRule->price,
@@ -1112,10 +1124,5 @@ class ListingController extends Controller
                 'currency_symbol' => $currencySymbol
             ]);
         }
-        
-     }
-     
-
-
-
+    }
 }
