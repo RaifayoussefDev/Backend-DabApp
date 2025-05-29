@@ -3229,6 +3229,140 @@
                 ]
             }
         },
+        "/api/motorcycle-brands/listing-count": {
+            "get": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Get motorcycle brands with listing count",
+                "operationId": "d9f8f2cd6763ceb51457d6ce5fed8372",
+                "responses": {
+                    "200": {
+                        "description": "List of motorcycle brands with their listing counts",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "listings_count": {
+                                                "type": "integer"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/categories/{categoryId}/price-range": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get price range for a specific category",
+                "description": "Retrieve minimum and maximum prices for listings in a specific category",
+                "operationId": "9d0c2313a78a00f1e15527063f450cce",
+                "parameters": [
+                    {
+                        "name": "categoryId",
+                        "in": "path",
+                        "description": "Category ID (1=Motorcycle, 2=SparePart, 3=LicensePlate)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                1,
+                                2,
+                                3
+                            ],
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Price range retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Price range retrieved successfully"
+                                        },
+                                        "category_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "min_price": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 5000
+                                        },
+                                        "max_price": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 25000
+                                        },
+                                        "total_listings": {
+                                            "type": "integer",
+                                            "example": 45
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid category ID",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid category_id. Only categories 1, 2, or 3 are allowed."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to retrieve price range"
+                                        },
+                                        "details": {
+                                            "type": "string",
+                                            "example": "Database connection failed"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/locations": {
             "get": {
                 "tags": [

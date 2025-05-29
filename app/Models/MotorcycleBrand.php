@@ -10,4 +10,9 @@ class MotorcycleBrand extends Model
     use HasFactory;
 
     protected $fillable = ['name'];
+
+    public function motorcycles()
+    {
+        return $this->hasMany(Motorcycle::class);
+    }
 }

@@ -147,4 +147,9 @@ Route::get('/listings/search-by-model', [ListingController::class, 'searchByCate
 
 Route::apiResource('currency-rates', CurrencyExchangeRateController::class);
 
+Route::get('/brands/listings-count', [ListingController::class, 'getBrandsWithListingCount']);
+Route::get('categories/{categoryId}/price-range', [ListingController::class, 'getPriceRangeByCategory'])
+->where('categoryId', '[1-3]'); // Limite aux catégories 1, 2, 3
+
+
 

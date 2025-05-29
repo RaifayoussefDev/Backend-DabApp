@@ -9,6 +9,7 @@ use App\Models\AuctionHistory;
 use App\Models\CurrencyExchangeRate;
 use App\Models\LicensePlate;
 use App\Models\Motorcycle;
+use App\Models\MotorcycleBrand;
 use App\Models\MotorcycleModel;
 use App\Models\PricingRulesLicencePlate;
 use App\Models\PricingRulesMotorcycle;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Str;
 
 class ListingController extends Controller
@@ -182,7 +184,7 @@ class ListingController extends Controller
             }
             // Ajouter une SOOM si les soumissions sont autorisées et l'enchère activée
             if ($listing->auction_enabled && $listing->allow_submission) {
-                
+
 
                 Submission::create([
                     'listing_id' => $listing->id,
@@ -197,14 +199,14 @@ class ListingController extends Controller
             if ($listing->category_id == 1) {
                 // Récupérer le type_id depuis le model_id
                 $model = MotorcycleModel::find($request->model_id);
-            
+
                 if (!$model) {
                     DB::rollBack();
                     return response()->json([
                         'message' => 'Invalid model_id: Model not found.',
                     ], 422);
                 }
-            
+
                 $motorcycle = Motorcycle::create([
                     'listing_id' => $listing->id,
                     'brand_id' => $request->brand_id,
@@ -220,14 +222,14 @@ class ListingController extends Controller
                     'vehicle_care' => $request->vehicle_care,
                     'transmission' => $request->transmission,
                 ]);
-            
+
                 DB::commit();
-            
+
                 return response()->json([
                     'message' => 'Motorcycle added successfully',
                     'data' => $motorcycle,
                 ], 201);
-            }elseif ($listing->category_id == 2) {
+            } elseif ($listing->category_id == 2) {
                 $sparePart = SparePart::create([
                     'listing_id' => $listing->id,
                     'condition' => $request->condition,
@@ -1124,5 +1126,140 @@ class ListingController extends Controller
                 'currency_symbol' => $currencySymbol
             ]);
         }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/motorcycle-brands/listing-count",
+     *     summary="Get motorcycle brands with listing count",
+     *     tags={"Listings"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of motorcycle brands with their listing counts",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="name", type="string"),
+     *                 @OA\Property(property="listings_count", type="integer")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+
+    public function getBrandsWithListingCount()
+    {
+        $motorcycle_brands = MotorcycleBrand::select('motorcycle_brands.id', 'motorcycle_brands.name')
+            ->leftJoin('motorcycles', 'motorcycle_brands.id', '=', 'motorcycles.brand_id')
+            ->leftJoin('listings', 'motorcycles.listing_id', '=', 'listings.id')
+            ->groupBy('motorcycle_brands.id', 'motorcycle_brands.name')
+            ->selectRaw('COUNT(listings.id) as listings_count')
+            ->get();
+
+        return response()->json([
+            'motorcycle_brands' => $motorcycle_brands
+        ]);
+    }
+
+
+
+    /**
+     * @OA\Get(
+     *     path="/api/categories/{categoryId}/price-range",
+     *     summary="Get price range for a specific category",
+     *     description="Retrieve minimum and maximum prices for listings in a specific category",
+     *     tags={"Categories"},
+     *     @OA\Parameter(
+     *         name="categoryId",
+     *         in="path",
+     *         required=true,
+     *         description="Category ID (1=Motorcycle, 2=SparePart, 3=LicensePlate)",
+     *         @OA\Schema(
+     *             type="integer",
+     *             enum={1, 2, 3},
+     *             example=1
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Price range retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Price range retrieved successfully"),
+     *             @OA\Property(property="category_id", type="integer", example=1),
+     *             @OA\Property(property="min_price", type="number", format="float", example=5000.00),
+     *             @OA\Property(property="max_price", type="number", format="float", example=25000.00),
+     *             @OA\Property(property="total_listings", type="integer", example=45)
+     *         )
+     *     ),
+     *     
+     *     @OA\Response(
+     *         response=422,
+     *         description="Invalid category ID",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Invalid category_id. Only categories 1, 2, or 3 are allowed.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Failed to retrieve price range"),
+     *             @OA\Property(property="details", type="string", example="Database connection failed")
+     *         )
+     *     )
+     * )
+     */
+    public function getPriceRangeByCategory($categoryId)
+    {
+        try {
+            // Vérifier si la catégorie existe et est valide
+            if (!in_array($categoryId, [1, 2, 3])) {
+                return response()->json([
+                    'message' => 'Invalid category_id. Only categories 1, 2, or 3 are allowed.',
+                ], 422);
+            }
+
+            // Récupérer les prix min et max pour la catégorie spécifiée
+            $priceRange = Listing::where('category_id', $categoryId)
+                ->where('status', 'active') // Seulement les listings actifs
+                ->selectRaw('MIN(price) as min_price, MAX(price) as max_price, COUNT(*) as total_listings')
+                ->first();
+
+            // Vérifier s'il y a des listings pour cette catégorie
+            if ($priceRange->total_listings == 0) {
+                return response()->json([
+                    'message' => 'No active listings found for this category.',
+                    'category_id' => $categoryId,
+                    'min_price' => null,
+                    'max_price' => null,
+                    'total_listings' => 0
+                ], 200);
+            }
+
+            return response()->json([
+                'message' => 'Price range retrieved successfully',
+                'category_id' => $categoryId,
+                'min_price' => (float) $priceRange->min_price,
+                'max_price' => (float) $priceRange->max_price,
+                'total_listings' => $priceRange->total_listings
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to retrieve price range',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function getCategoryName($categoryId)
+    {
+        $categories = [
+            1 => 'Motorcycles',
+            2 => 'Spare Parts',
+            3 => 'License Plates'
+        ];
+
+        return $categories[$categoryId] ?? 'Unknown';
     }
 }
