@@ -44,18 +44,30 @@ class FilterController extends Controller
             }
         });
 
-        // Charger la relation motorcycle pour les résultats
-        $motorcycles = $query->with('motorcycle')->get();
+        // Récupérer les résultats avec seulement les champs nécessaires et la première image
+        $motorcycles = $query->select('id', 'title', 'description', 'price')
+            ->with(['images' => function($query) {
+                $query->select('listing_id', 'image_url')->limit(1);
+            }])
+            ->get()
+            ->map(function ($listing) {
+                return [
+                    'id' => $listing->id,
+                    'title' => $listing->title,
+                    'description' => $listing->description,
+                    'price' => $listing->price,
+                    'image' => $listing->images->first()->image_url ?? null,
+                ];
+            });
 
         return response()->json([
             'motorcycles' => $motorcycles,
         ]);
     }
 
-
     public function filterSpareParts(Request $request)
     {
-        $query = Listing::with('sparePart')->where('category_id', 2);
+        $query = Listing::where('category_id', 2);
 
         if ($request->filled('min_price')) {
             $query->where('price', '>=', (float)$request->min_price);
@@ -83,12 +95,28 @@ class FilterController extends Controller
             });
         }
 
-        return response()->json($query->get());
+        // Récupérer les résultats avec seulement les champs nécessaires et la première image
+        $spareParts = $query->select('id', 'title', 'description', 'price')
+            ->with(['images' => function($query) {
+                $query->select('listing_id', 'image_url')->limit(1);
+            }])
+            ->get()
+            ->map(function ($listing) {
+                return [
+                    'id' => $listing->id,
+                    'title' => $listing->title,
+                    'description' => $listing->description,
+                    'price' => $listing->price,
+                    'image' => $listing->images->first()->image_url ?? null,
+                ];
+            });
+
+        return response()->json($spareParts);
     }
 
     public function filterLicensePlates(Request $request)
     {
-        $query = Listing::with('licensePlate')->where('category_id', 3);
+        $query = Listing::where('category_id', 3);
 
         if ($request->filled('min_price')) {
             $query->where('price', '>=', (float)$request->min_price);
@@ -110,6 +138,22 @@ class FilterController extends Controller
             });
         }
 
-        return response()->json($query->get());
+        // Récupérer les résultats avec seulement les champs nécessaires et la première image
+        $licensePlates = $query->select('id', 'title', 'description', 'price')
+            ->with(['images' => function($query) {
+                $query->select('listing_id', 'image_url')->limit(1);
+            }])
+            ->get()
+            ->map(function ($listing) {
+                return [
+                    'id' => $listing->id,
+                    'title' => $listing->title,
+                    'description' => $listing->description,
+                    'price' => $listing->price,
+                    'image' => $listing->images->first()->image_url ?? null,
+                ];
+            });
+
+        return response()->json($licensePlates);
     }
 }
