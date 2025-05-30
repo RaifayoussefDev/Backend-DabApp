@@ -156,3 +156,6 @@ Route::get('categories/{categoryId}/price-range', [ListingController::class, 'ge
     Route::get('/filter/motorcycles', [FilterController::class, 'filterMotorcycles']);
     Route::get('/filter/spare-parts', [FilterController::class, 'filterSpareParts']);
     Route::get('/filter/license-plates', [FilterController::class, 'filterLicensePlates']);
+
+    Route::get('/bike-part-categories', [ListingController::class, 'getBikePartCategoriesWithListingCount']);
+Route::get('/bike-part-brands', [ListingController::class, 'getBikePartBrandsWithListingCount']);

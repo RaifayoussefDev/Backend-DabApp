@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Listing;
 use App\Models\AuctionHistory;
+use App\Models\BikePartBrand;
+use App\Models\BikePartCategory;
 use App\Models\CurrencyExchangeRate;
 use App\Models\LicensePlate;
 use App\Models\Motorcycle;
@@ -1261,5 +1263,35 @@ class ListingController extends Controller
         ];
 
         return $categories[$categoryId] ?? 'Unknown';
+    }
+
+
+
+    public function getBikePartCategoriesWithListingCount()
+    {
+        $bike_part_categories = BikePartCategory::select('bike_part_categories.id', 'bike_part_categories.name')
+            ->leftJoin('spare_parts', 'bike_part_categories.id', '=', 'spare_parts.bike_part_category_id')
+            ->leftJoin('listings', 'spare_parts.listing_id', '=', 'listings.id')
+            ->groupBy('bike_part_categories.id', 'bike_part_categories.name')
+            ->selectRaw('COUNT(listings.id) as listings_count')
+            ->get();
+
+        return response()->json([
+            'bike_part_categories' => $bike_part_categories
+        ]);
+    }
+
+    public function getBikePartBrandsWithListingCount()
+    {
+        $bike_part_brands = BikePartBrand::select('bike_part_brands.id', 'bike_part_brands.name')
+            ->leftJoin('spare_parts', 'bike_part_brands.id', '=', 'spare_parts.bike_part_brand_id')
+            ->leftJoin('listings', 'spare_parts.listing_id', '=', 'listings.id')
+            ->groupBy('bike_part_brands.id', 'bike_part_brands.name')
+            ->selectRaw('COUNT(listings.id) as listings_count')
+            ->get();
+
+        return response()->json([
+            'bike_part_brands' => $bike_part_brands
+        ]);
     }
 }
