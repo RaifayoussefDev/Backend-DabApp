@@ -90,12 +90,12 @@ class FilterController extends Controller
     {
         $query = Listing::with('licensePlate')->where('category_id', 3);
 
-        if ($request->filled('price_min')) {
-            $query->where('price', '>=', $request->price_min);
+        if ($request->filled('min_price')) {
+            $query->where('price', '>=', (float)$request->min_price);
         }
-
-        if ($request->filled('price_max')) {
-            $query->where('price', '<=', $request->price_max);
+        
+        if ($request->filled('max_price')) {
+            $query->where('price', '<=', (float)$request->max_price);
         }
 
         if ($request->filled('countries')) {
