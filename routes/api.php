@@ -10,6 +10,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BikePartBrandController;
 use App\Http\Controllers\BikePartCategoryController;
 use App\Http\Controllers\CurrencyExchangeRateController;
+use App\Http\Controllers\FilterController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\ListingAuctionController;
 use App\Http\Controllers\LocationController;
@@ -82,28 +83,28 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/listings/{id}', [ListingController::class, 'getById']);
     Route::get('/listings', [ListingController::class, 'getAll']);
 
-     // Existing admin routes
-     Route::apiResource('BankCards', CardController::class);
+    // Existing admin routes
+    Route::apiResource('BankCards', CardController::class);
 
-     // New user-specific routes
-     Route::get('my-cards', [CardController::class, 'myCards']);
-     Route::post('my-cards', [CardController::class, 'addMyCard']);
-     Route::put('my-cards/{id}', [CardController::class, 'editMyCard']);
-     Route::delete('my-cards/{id}', [CardController::class, 'deleteMyCard']);
+    // New user-specific routes
+    Route::get('my-cards', [CardController::class, 'myCards']);
+    Route::post('my-cards', [CardController::class, 'addMyCard']);
+    Route::put('my-cards/{id}', [CardController::class, 'editMyCard']);
+    Route::delete('my-cards/{id}', [CardController::class, 'deleteMyCard']);
 
-     Route::patch('my-cards/{id}/set-default', [CardController::class, 'setAsDefault']);
+    Route::patch('my-cards/{id}/set-default', [CardController::class, 'setAsDefault']);
 
-     Route::post('/listings', [ListingController::class, 'store']);
-     Route::get('/my-listing', [ListingController::class, 'my_listing']);
+    Route::post('/listings', [ListingController::class, 'store']);
+    Route::get('/my-listing', [ListingController::class, 'my_listing']);
 
-     Route::get('pricing', [ListingController::class, 'getPriceByModelId']);
+    Route::get('pricing', [ListingController::class, 'getPriceByModelId']);
 
 
-     Route::apiResource('currency-rates', CurrencyExchangeRateController::class);
+    Route::apiResource('currency-rates', CurrencyExchangeRateController::class);
 
-     Route::post('promo/check', [PromoCodeController::class, 'checkPromo']);
+    Route::post('promo/check', [PromoCodeController::class, 'checkPromo']);
 
-     Route::post('/upload-image', [ImageUploadController::class, 'upload']);
+    Route::post('/upload-image', [ImageUploadController::class, 'upload']);
 
 
 
@@ -149,7 +150,9 @@ Route::apiResource('currency-rates', CurrencyExchangeRateController::class);
 
 Route::get('/brands/listings-count', [ListingController::class, 'getBrandsWithListingCount']);
 Route::get('categories/{categoryId}/price-range', [ListingController::class, 'getPriceRangeByCategory'])
-->where('categoryId', '[1-3]'); // Limite aux catégories 1, 2, 3
+    ->where('categoryId', '[1-3]'); // Limite aux catégories 1, 2, 3
 
 
-
+    Route::get('/filter/motorcycles', [FilterController::class, 'filterMotorcycles']);
+    Route::get('/filter/spare-parts', [FilterController::class, 'filterSpareParts']);
+    Route::get('/filter/license-plates', [FilterController::class, 'filterLicensePlates']);
