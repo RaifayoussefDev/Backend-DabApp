@@ -3229,13 +3229,13 @@
                 ]
             }
         },
-        "/api/motorcycle-brands/listing-count": {
+        "/api/brands/listings-count": {
             "get": {
                 "tags": [
                     "Listings"
                 ],
                 "summary": "Get motorcycle brands with listing count",
-                "operationId": "d9f8f2cd6763ceb51457d6ce5fed8372",
+                "operationId": "9419470fe1e851c9dec9829e9203b752",
                 "responses": {
                     "200": {
                         "description": "List of motorcycle brands with their listing counts",

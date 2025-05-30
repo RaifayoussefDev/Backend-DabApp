@@ -1130,7 +1130,7 @@ class ListingController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/motorcycle-brands/listing-count",
+     *     path="/api/brands/listings-count",
      *     summary="Get motorcycle brands with listing count",
      *     tags={"Listings"},
      *     @OA\Response(
