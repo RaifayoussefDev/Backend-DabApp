@@ -74,13 +74,11 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/wishlists/{listing_id}', [WishlistController::class, 'destroy']);
 
     Route::get('/listings/country/{country_id}', [ListingController::class, 'getByCountry']);
-    Route::get('/listings/by-category/{category_id}', [ListingController::class, 'getByCategory']);
     Route::get('/listings/by-city/{city_id}', [ListingController::class, 'getByCity']);
 
     Route::get('/listings/filter', [ListingController::class, 'filter']);
     Route::get('/listings/recent/city/{city_id}', [ListingController::class, 'getLastByCity']);
 
-    Route::get('/listings/{id}', [ListingController::class, 'getById']);
     Route::get('/listings', [ListingController::class, 'getAll']);
 
     // Existing admin routes
@@ -109,6 +107,10 @@ Route::middleware('auth:api')->group(function () {
 
 
 });
+Route::get('/listings/{id}', [ListingController::class, 'getById']);
+
+Route::get('/listings/by-category/{category_id}', [ListingController::class, 'getByCategory']);
+
 Route::apiResource('roles', App\Http\Controllers\RoleController::class);
 Route::apiResource('motorcycle-types', MotorcycleTypeController::class);
 Route::apiResource('motorcycle-brands', MotorcycleBrandController::class);
@@ -151,11 +153,8 @@ Route::apiResource('currency-rates', CurrencyExchangeRateController::class);
 Route::get('/brands/listings-count', [ListingController::class, 'getBrandsWithListingCount']);
 Route::get('categories/{categoryId}/price-range', [ListingController::class, 'getPriceRangeByCategory'])
     ->where('categoryId', '[1-3]'); // Limite aux catégories 1, 2, 3
-
-
-    Route::get('/filter/motorcycles', [FilterController::class, 'filterMotorcycles']);
-    Route::get('/filter/spare-parts', [FilterController::class, 'filterSpareParts']);
-    Route::get('/filter/license-plates', [FilterController::class, 'filterLicensePlates']);
-
-    Route::get('/bike-part-categories', [ListingController::class, 'getBikePartCategoriesWithListingCount']);
+Route::get('/filter/motorcycles', [FilterController::class, 'filterMotorcycles']);
+Route::get('/filter/spare-parts', [FilterController::class, 'filterSpareParts']);
+Route::get('/filter/license-plates', [FilterController::class, 'filterLicensePlates']);
+Route::get('/bike-part-categories', [ListingController::class, 'getBikePartCategoriesWithListingCount']);
 Route::get('/bike-part-brands', [ListingController::class, 'getBikePartBrandsWithListingCount']);

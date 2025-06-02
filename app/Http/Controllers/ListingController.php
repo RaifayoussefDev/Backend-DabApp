@@ -722,7 +722,7 @@ class ListingController extends Controller
     {
         $user = Auth::user();
 
-        $listing = Listing::with(['images', 'city', 'country'])->find($id);
+        $listing = Listing::with(['images', 'city', 'country', 'seller'])->find($id);
 
         if (!$listing) {
             return response()->json(['message' => 'Listing not found'], 404);
@@ -740,14 +740,50 @@ class ListingController extends Controller
             'id' => $listing->id,
             'title' => $listing->title,
             'description' => $listing->description,
-            'price' => $listing->price,
             'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
             'city' => $listing->city?->name,
             'country' => $listing->country?->name,
             'images' => $listing->images->pluck('image_url'),
             'wishlist' => $isInWishlist,
             'category_id' => $listing->category_id,
+            'allow_submission' => $listing->allow_submission,
         ];
+
+        // Ajouter le prix seulement si allow_submission est false
+        if (!($listing->allow_submission == true || $listing->allow_submission == 1)) {
+            $data['price'] = $listing->price;
+        }
+
+        // Vérifier si allow_submission est true/1
+        if ($listing->allow_submission == true || $listing->allow_submission == 1) {
+            // Récupérer les informations de la table submission
+            $submission = DB::table('submissions')
+                ->where('listing_id', $listing->id)
+                ->first();
+
+            if ($submission) {
+                $data['submission'] = [
+                    'id' => $submission->id,
+                    'user_id' => $submission->user_id,
+                    'amount' => $submission->amount,
+                    'submission_date' => $submission->submission_date,
+                    'status' => $submission->status,
+                    'min_soom' => $submission->min_soom,
+                ];
+            }
+            // Ne pas inclure les informations du vendeur
+        } else {
+            // Afficher les informations du vendeur normalement
+            $data['seller'] = [
+                'id' => $listing->seller?->id,
+                'name' => $listing->seller?->first_name . ' ' . $listing->seller?->last_name,
+                'email' => $listing->seller?->email,
+                'phone' => $listing->seller?->phone,
+                'address' => $listing->seller?->address,
+                'profile_image' => $listing->seller?->profile_image,
+                'member_since' => $listing->seller?->created_at->format('Y-m-d H:i:s'),
+            ];
+        }
 
         // If Motorcycle
         if ($listing->category_id == 1) {
@@ -769,6 +805,28 @@ class ListingController extends Controller
                     'model' => $motorcycle->model?->name,
                     'year' => $motorcycle->year?->year,
                     'type' => $motorcycle->type?->name,
+                ];
+            }
+        }
+
+        // If Spare Part
+        if ($listing->category_id == 2) {
+            $sparePart = SparePart::with(['bikePartBrand', 'bikePartCategory', 'motorcycleAssociations.brand', 'motorcycleAssociations.model', 'motorcycleAssociations.year'])
+                ->where('listing_id', $listing->id)
+                ->first();
+
+            if ($sparePart) {
+                $data['spare_part'] = [
+                    'condition' => $sparePart->condition,
+                    'bike_part_brand' => $sparePart->bikePartBrand?->name,
+                    'bike_part_category' => $sparePart->bikePartCategory?->name,
+                    'motorcycle_associations' => $sparePart->motorcycleAssociations->map(function ($association) {
+                        return [
+                            'brand' => $association->brand?->name,
+                            'model' => $association->model?->name,
+                            'year' => $association->year?->year,
+                        ];
+                    }),
                 ];
             }
         }
@@ -1194,7 +1252,7 @@ class ListingController extends Controller
      *             @OA\Property(property="total_listings", type="integer", example=45)
      *         )
      *     ),
-     *     
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Invalid category ID",
