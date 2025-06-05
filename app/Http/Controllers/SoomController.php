@@ -1,0 +1,477 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Listing;
+use App\Models\Submission;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+
+/**
+ * @OA\Schema(
+ *     schema="Submission",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(property="listing_id", type="integer"),
+ *     @OA\Property(property="user_id", type="integer"),
+ *     @OA\Property(property="amount", type="number", format="float"),
+ *     @OA\Property(property="submission_date", type="string", format="date-time"),
+ *     @OA\Property(property="status", type="string", enum={"pending", "accepted", "rejected"}),
+ *     @OA\Property(property="min_soom", type="number", format="float"),
+ *     @OA\Property(
+ *         property="user",
+ *         type="object",
+ *         @OA\Property(property="id", type="integer"),
+ *         @OA\Property(property="first_name", type="string"),
+ *         @OA\Property(property="last_name", type="string"),
+ *         @OA\Property(property="email", type="string", format="email")
+ *     ),
+ *     @OA\Property(
+ *         property="listing",
+ *         type="object",
+ *         @OA\Property(property="id", type="integer"),
+ *         @OA\Property(property="title", type="string"),
+ *         @OA\Property(property="description", type="string")
+ *     )
+ * )
+ */
+class SoomController extends Controller
+{
+    /**
+     * Créer une nouvelle soumission SOOM
+     * @OA\Post(
+     *     path="/api/listings/{listingId}/soom",
+     *     summary="Create a new SOOM submission",
+     *     tags={"Soom"},
+     *     @OA\Parameter(
+     *         name="listingId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer"),
+     *         description="ID of the listing to submit a SOOM for"
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="amount", type="number", format="float", description="Amount of the SOOM submission")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="SOOM created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="SOOM created successfully"),
+     *             @OA\Property(property="data", type="object", ref="#/components/schemas/Submission"),
+     *             @OA\Property(property="previous_highest", type="number", format="float", description="Previous highest SOOM amount")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=403, description="Forbidden"),
+     *     @OA\Response(response=404, description="Listing not found"),
+     *     @OA\Response(response=422, description="Validation failed")
+     * )
+     */
+    public function createSoom(Request $request, $listingId)
+    {
+        $validator = Validator::make($request->all(), [
+            'amount' => 'required|numeric|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $userId = Auth::id();
+
+            if (!$userId) {
+                return response()->json([
+                    'message' => 'Unauthorized. User must be logged in.',
+                ], 401);
+            }
+
+            // Vérifier que le listing existe et permet les soumissions
+            $listing = Listing::find($listingId);
+
+            if (!$listing) {
+                return response()->json([
+                    'message' => 'Listing not found.',
+                ], 404);
+            }
+
+            if (!$listing->allow_submission) {
+                return response()->json([
+                    'message' => 'Submissions are not allowed for this listing.',
+                ], 403);
+            }
+
+            // Vérifier que l'utilisateur n'est pas le vendeur
+            if ($listing->seller_id == $userId) {
+                return response()->json([
+                    'message' => 'Sellers cannot submit SOOMs on their own listings.',
+                ], 403);
+            }
+
+            // Obtenir la dernière soumission pour ce listing
+            $lastSubmission = Submission::where('listing_id', $listingId)
+                ->orderBy('amount', 'desc')
+                ->first();
+
+            $minAmount = $listing->minimum_bid ?? 0;
+
+            // Si il y a déjà des soumissions, la nouvelle doit être supérieure
+            if ($lastSubmission) {
+                $minAmount = $lastSubmission->amount + 1; // Au moins 1 unité de plus
+            }
+
+            if ($request->amount < $minAmount) {
+                return response()->json([
+                    'message' => "The SOOM amount must be at least {$minAmount}.",
+                    'minimum_required' => $minAmount,
+                    'current_highest' => $lastSubmission ? $lastSubmission->amount : null
+                ], 422);
+            }
+
+            // Créer la nouvelle soumission
+            $submission = Submission::create([
+                'listing_id' => $listingId,
+                'user_id' => $userId,
+                'amount' => $request->amount,
+                'submission_date' => now(),
+                'status' => 'pending',
+                'min_soom' => $minAmount,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'SOOM created successfully',
+                'data' => $submission->load('user'),
+                'previous_highest' => $lastSubmission ? $lastSubmission->amount : null
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Failed to create SOOM',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtenir toutes les soumissions pour un listing
+     * @OA\Get(
+     *     path="/api/listings/{listingId}/sooms",
+     *     summary="Get all SOOM submissions for a listing",
+     *     tags={"Soom"},
+     *     @OA\Parameter(
+     *         name="listingId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer"),
+     *         description="ID of the listing to get SOOMs for"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Submissions retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Submissions retrieved successfully"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Submission")),
+     *             @OA\Property(property="total_submissions", type="integer", example=5),
+     *             @OA\Property(property="highest_amount", type="number", format="float", example=150.00)
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Listing not found")
+     * )
+     */
+    public function getListingSooms($listingId)
+    {
+        $listing = Listing::find($listingId);
+
+        if (!$listing) {
+            return response()->json([
+                'message' => 'Listing not found.',
+            ], 404);
+        }
+
+        $submissions = Submission::where('listing_id', $listingId)
+            ->with('user:id,first_name,last_name,email')
+            ->orderBy('amount', 'desc')
+            ->get();
+
+        return response()->json([
+            'message' => 'Submissions retrieved successfully',
+            'data' => $submissions,
+            'total_submissions' => $submissions->count(),
+            'highest_amount' => $submissions->first()?->amount ?? 0
+        ]);
+    }
+
+    /**
+     * Obtenir le montant minimum requis pour un nouveau SOOM
+     * @OA\Get(
+     *     path="/api/listings/{listingId}/minimum-soom",
+     *     summary="Get minimum SOOM amount required for a listing",
+     *     tags={"Soom"},
+     *     @OA\Parameter(
+     *         name="listingId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer"),
+     *         description="ID of the listing"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Minimum amount retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="minimum_amount", type="number", format="float"),
+     *             @OA\Property(property="current_highest", type="number", format="float"),
+     *             @OA\Property(property="listing_minimum_bid", type="number", format="float")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Listing not found"),
+     *     @OA\Response(response=403, description="Submissions not allowed")
+     * )
+     */
+    public function getMinimumSoomAmount($listingId)
+    {
+        $listing = Listing::find($listingId);
+
+        if (!$listing) {
+            return response()->json([
+                'message' => 'Listing not found.',
+            ], 404);
+        }
+
+        if (!$listing->allow_submission) {
+            return response()->json([
+                'message' => 'Submissions are not allowed for this listing.',
+            ], 403);
+        }
+
+        $lastSubmission = Submission::where('listing_id', $listingId)
+            ->orderBy('amount', 'desc')
+            ->first();
+
+        $minAmount = $listing->minimum_bid ?? 0;
+
+        if ($lastSubmission) {
+            $minAmount = $lastSubmission->amount + 1;
+        }
+
+        return response()->json([
+            'minimum_amount' => $minAmount,
+            'current_highest' => $lastSubmission ? $lastSubmission->amount : null,
+            'listing_minimum_bid' => $listing->minimum_bid
+        ]);
+    }
+
+    /**
+     * Accepter un SOOM (pour le vendeur)
+     * @OA\Patch(
+     *     path="/api/submissions/{submissionId}/accept",
+     *     summary="Accept a SOOM submission (seller only)",
+     *     tags={"Soom"},
+     *     @OA\Parameter(
+     *         name="submissionId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer"),
+     *         description="ID of the submission to accept"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="SOOM accepted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="SOOM accepted successfully"),
+     *             @OA\Property(property="data", type="object", ref="#/components/schemas/Submission")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=403, description="Forbidden - Only seller can accept"),
+     *     @OA\Response(response=404, description="Submission not found")
+     * )
+     */
+    public function acceptSoom($submissionId)
+    {
+        DB::beginTransaction();
+
+        try {
+            $userId = Auth::id();
+
+            if (!$userId) {
+                return response()->json([
+                    'message' => 'Unauthorized. User must be logged in.',
+                ], 401);
+            }
+
+            $submission = Submission::with('listing')->find($submissionId);
+
+            if (!$submission) {
+                return response()->json([
+                    'message' => 'Submission not found.',
+                ], 404);
+            }
+
+            // Vérifier que l'utilisateur est le vendeur du listing
+            if ($submission->listing->seller_id != $userId) {
+                return response()->json([
+                    'message' => 'Only the seller can accept SOOMs for this listing.',
+                ], 403);
+            }
+
+            // Vérifier que le SOOM n'est pas déjà accepté
+            if ($submission->status === 'accepted') {
+                return response()->json([
+                    'message' => 'This SOOM has already been accepted.',
+                ], 422);
+            }
+
+            // Accepter ce SOOM
+            $submission->update(['status' => 'accepted']);
+
+            // Rejeter tous les autres SOOMs pour ce listing
+            Submission::where('listing_id', $submission->listing_id)
+                ->where('id', '!=', $submissionId)
+                ->where('status', 'pending')
+                ->update(['status' => 'rejected']);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'SOOM accepted successfully',
+                'data' => $submission->load(['user:id,first_name,last_name,email', 'listing'])
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Failed to accept SOOM',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtenir tous les SOOMs reçus sur mes listings (pour le vendeur)
+     * @OA\Get(
+     *     path="/api/my-listings-sooms",
+     *     summary="Get all SOOMs received on my listings",
+     *     tags={"Soom"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="SOOMs retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="SOOMs retrieved successfully"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Submission")),
+     *             @OA\Property(property="stats", type="object",
+     *                 @OA\Property(property="total_sooms", type="integer"),
+     *                 @OA\Property(property="pending_sooms", type="integer"),
+     *                 @OA\Property(property="accepted_sooms", type="integer"),
+     *                 @OA\Property(property="rejected_sooms", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function getMyListingsSooms()
+    {
+        $userId = Auth::id();
+
+        if (!$userId) {
+            return response()->json([
+                'message' => 'Unauthorized. User must be logged in.',
+            ], 401);
+        }
+
+        // Récupérer tous les SOOMs sur mes listings
+        $sooms = Submission::whereHas('listing', function ($query) use ($userId) {
+                $query->where('seller_id', $userId);
+            })
+            ->with([
+                'user:id,first_name,last_name,email',
+                'listing:id,title,description,seller_id'
+            ])
+            ->orderBy('submission_date', 'desc')
+            ->get();
+
+        // Statistiques
+        $stats = [
+            'total_sooms' => $sooms->count(),
+            'pending_sooms' => $sooms->where('status', 'pending')->count(),
+            'accepted_sooms' => $sooms->where('status', 'accepted')->count(),
+            'rejected_sooms' => $sooms->where('status', 'rejected')->count(),
+        ];
+
+        return response()->json([
+            'message' => 'SOOMs retrieved successfully',
+            'data' => $sooms,
+            'stats' => $stats
+        ]);
+    }
+
+    /**
+     * Obtenir tous mes SOOMs envoyés (pour l'acheteur)
+     * @OA\Get(
+     *     path="/api/my-sooms",
+     *     summary="Get all my submitted SOOMs",
+     *     tags={"Soom"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="My SOOMs retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="My SOOMs retrieved successfully"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Submission")),
+     *             @OA\Property(property="stats", type="object",
+     *                 @OA\Property(property="total_sooms", type="integer"),
+     *                 @OA\Property(property="pending_sooms", type="integer"),
+     *                 @OA\Property(property="accepted_sooms", type="integer"),
+     *                 @OA\Property(property="rejected_sooms", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function getMySooms()
+    {
+        $userId = Auth::id();
+
+        if (!$userId) {
+            return response()->json([
+                'message' => 'Unauthorized. User must be logged in.',
+            ], 401);
+        }
+
+        // Récupérer tous mes SOOMs envoyés
+        $sooms = Submission::where('user_id', $userId)
+            ->with([
+                'listing:id,title,description,seller_id',
+                'listing.seller:id,first_name,last_name,email'
+            ])
+            ->orderBy('submission_date', 'desc')
+            ->get();
+
+        // Statistiques
+        $stats = [
+            'total_sooms' => $sooms->count(),
+            'pending_sooms' => $sooms->where('status', 'pending')->count(),
+            'accepted_sooms' => $sooms->where('status', 'accepted')->count(),
+            'rejected_sooms' => $sooms->where('status', 'rejected')->count(),
+        ];
+
+        return response()->json([
+            'message' => 'My SOOMs retrieved successfully',
+            'data' => $sooms,
+            'stats' => $stats
+        ]);
+    }
+}

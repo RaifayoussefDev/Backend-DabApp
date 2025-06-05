@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('response')->default('pending'); // pending, accepted, rejected
             $table->timestamp('created_at')->useCurrent();
         });
-        
+
     }
 
     /**

@@ -21,6 +21,7 @@ use App\Http\Controllers\MotorcycleModelController;
 use App\Http\Controllers\MotorcycleTypeController;
 use App\Http\Controllers\MotorcycleYearController;
 use App\Http\Controllers\PromoCodeController;
+use App\Http\Controllers\SoomController;
 use App\Http\Controllers\WishlistController;
 
 
@@ -104,8 +105,23 @@ Route::middleware('auth:api')->group(function () {
 
     Route::post('/upload-image', [ImageUploadController::class, 'upload']);
 
+    // Créer un SOOM sur un listing (Acheteur)
+    Route::post('/listings/{listingId}/soom', [SoomController::class, 'createSoom']);
 
+    // Obtenir tous les SOOMs d'un listing (Public)
+    Route::get('/listings/{listingId}/sooms', [SoomController::class, 'getListingSooms']);
 
+    // Obtenir le montant minimum requis pour un SOOM (Public)
+    Route::get('/listings/{listingId}/minimum-soom', [SoomController::class, 'getMinimumSoomAmount']);
+
+    // Accepter un SOOM (Vendeur uniquement)
+    Route::patch('/submissions/{submissionId}/accept', [SoomController::class, 'acceptSoom']);
+
+    // Obtenir tous les SOOMs reçus sur mes listings (Vendeur)
+    Route::get('/my-listings-sooms', [SoomController::class, 'getMyListingsSooms']);
+ 
+    // Obtenir tous mes SOOMs envoyés (Acheteur)
+    Route::get('/my-sooms', [SoomController::class, 'getMySooms']);
 });
 Route::get('/listings/{id}', [ListingController::class, 'getById']);
 
