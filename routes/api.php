@@ -119,9 +119,15 @@ Route::middleware('auth:api')->group(function () {
 
     // Obtenir tous les SOOMs reçus sur mes listings (Vendeur)
     Route::get('/my-listings-sooms', [SoomController::class, 'getMyListingsSooms']);
- 
+
     // Obtenir tous mes SOOMs envoyés (Acheteur)
     Route::get('/my-sooms', [SoomController::class, 'getMySooms']);
+
+    // Annuler un SOOM
+    Route::delete('submissions/{submissionId}/cancel', [SoomController::class, 'cancelSoom'])->middleware('auth:sanctum');
+
+    // Modifier un SOOM
+    Route::put('submissions/{submissionId}/edit', [SoomController::class, 'editSoom'])->middleware('auth:sanctum');
 });
 Route::get('/listings/{id}', [ListingController::class, 'getById']);
 

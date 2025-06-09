@@ -474,4 +474,229 @@ class SoomController extends Controller
             'stats' => $stats
         ]);
     }
+
+
+
+    /**
+     * Annuler un SOOM (pour l'acheteur)
+     * @OA\Delete(
+     *     path="/api/submissions/{submissionId}/cancel",
+     *     summary="Cancel a SOOM submission (buyer only)",
+     *     tags={"Soom"},
+     *     @OA\Parameter(
+     *         name="submissionId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer"),
+     *         description="ID of the submission to cancel"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="SOOM cancelled successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="SOOM cancelled successfully"),
+     *             @OA\Property(property="data", type="object", ref="#/components/schemas/Submission")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=403, description="Forbidden - Only the submitter can cancel or SOOM already processed"),
+     *     @OA\Response(response=404, description="Submission not found")
+     * )
+     */
+    public function cancelSoom($submissionId)
+    {
+        DB::beginTransaction();
+
+        try {
+            $userId = Auth::id();
+
+            if (!$userId) {
+                return response()->json([
+                    'message' => 'Unauthorized. User must be logged in.',
+                ], 401);
+            }
+
+            $submission = Submission::with('listing')->find($submissionId);
+
+            if (!$submission) {
+                return response()->json([
+                    'message' => 'Submission not found.',
+                ], 404);
+            }
+
+            // Vérifier que l'utilisateur est celui qui a soumis le SOOM
+            if ($submission->user_id != $userId) {
+                return response()->json([
+                    'message' => 'You can only cancel your own SOOM submissions.',
+                ], 403);
+            }
+
+            // Vérifier que le SOOM est encore en attente
+            if ($submission->status !== 'pending') {
+                return response()->json([
+                    'message' => 'You can only cancel pending SOOM submissions.',
+                    'current_status' => $submission->status
+                ], 403);
+            }
+
+            // Supprimer le SOOM
+            $submission->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'SOOM cancelled successfully',
+                'data' => $submission
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Failed to cancel SOOM',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Modifier un SOOM (pour l'acheteur)
+     * @OA\Put(
+     *     path="/api/submissions/{submissionId}/edit",
+     *     summary="Edit a SOOM submission (buyer only)",
+     *     tags={"Soom"},
+     *     @OA\Parameter(
+     *         name="submissionId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer"),
+     *         description="ID of the submission to edit"
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="amount", type="number", format="float", description="New amount for the SOOM submission")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="SOOM updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="SOOM updated successfully"),
+     *             @OA\Property(property="data", type="object", ref="#/components/schemas/Submission"),
+     *             @OA\Property(property="previous_amount", type="number", format="float", description="Previous SOOM amount"),
+     *             @OA\Property(property="current_highest", type="number", format="float", description="Current highest SOOM amount after update")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=403, description="Forbidden - Only the submitter can edit or SOOM already processed"),
+     *     @OA\Response(response=404, description="Submission not found"),
+     *     @OA\Response(response=422, description="Validation failed or amount too low")
+     * )
+     */
+    public function editSoom(Request $request, $submissionId)
+    {
+        $validator = Validator::make($request->all(), [
+            'amount' => 'required|numeric|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $userId = Auth::id();
+
+            if (!$userId) {
+                return response()->json([
+                    'message' => 'Unauthorized. User must be logged in.',
+                ], 401);
+            }
+
+            $submission = Submission::with('listing')->find($submissionId);
+
+            if (!$submission) {
+                return response()->json([
+                    'message' => 'Submission not found.',
+                ], 404);
+            }
+
+            // Vérifier que l'utilisateur est celui qui a soumis le SOOM
+            if ($submission->user_id != $userId) {
+                return response()->json([
+                    'message' => 'You can only edit your own SOOM submissions.',
+                ], 403);
+            }
+
+            // Vérifier que le SOOM est encore en attente
+            if ($submission->status !== 'pending') {
+                return response()->json([
+                    'message' => 'You can only edit pending SOOM submissions.',
+                    'current_status' => $submission->status
+                ], 403);
+            }
+
+            // Vérifier que les soumissions sont toujours autorisées
+            if (!$submission->listing->allow_submission) {
+                return response()->json([
+                    'message' => 'Submissions are no longer allowed for this listing.',
+                ], 403);
+            }
+
+            $previousAmount = $submission->amount;
+
+            // Obtenir le montant minimum requis (en excluant cette soumission)
+            $highestOtherSubmission = Submission::where('listing_id', $submission->listing_id)
+                ->where('id', '!=', $submissionId)
+                ->orderBy('amount', 'desc')
+                ->first();
+
+            $minAmount = $submission->listing->minimum_bid ?? 0;
+
+            // Si il y a d'autres soumissions plus élevées, la nouvelle doit être supérieure
+            if ($highestOtherSubmission) {
+                $minAmount = max($minAmount, $highestOtherSubmission->amount + 1);
+            }
+
+            if ($request->amount < $minAmount) {
+                return response()->json([
+                    'message' => "The SOOM amount must be at least {$minAmount}.",
+                    'minimum_required' => $minAmount,
+                    'current_highest_other' => $highestOtherSubmission ? $highestOtherSubmission->amount : null,
+                    'your_current_amount' => $previousAmount
+                ], 422);
+            }
+
+            // Mettre à jour la soumission
+            $submission->update([
+                'amount' => $request->amount,
+                'submission_date' => now(), // Mettre à jour la date de soumission
+                'min_soom' => $minAmount,
+            ]);
+
+            // Obtenir le montant le plus élevé actuel pour la réponse
+            $currentHighest = Submission::where('listing_id', $submission->listing_id)
+                ->orderBy('amount', 'desc')
+                ->first();
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'SOOM updated successfully',
+                'data' => $submission->load('user'),
+                'previous_amount' => $previousAmount,
+                'current_highest' => $currentHighest->amount
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Failed to update SOOM',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
