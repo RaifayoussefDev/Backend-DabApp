@@ -4,6 +4,7 @@ use App\Http\Controllers\MotorcycleImportController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CardTypeController;
+use App\Http\Controllers\PlateFormatController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\BikePartCategoryController;
 use App\Http\Controllers\CurrencyExchangeRateController;
 use App\Http\Controllers\FilterController;
 use App\Http\Controllers\ImageUploadController;
+use App\Http\Controllers\LicensePlateController;
 use App\Http\Controllers\ListingAuctionController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MotorcycleBrandController;
@@ -128,6 +130,8 @@ Route::middleware('auth:api')->group(function () {
 
     // Modifier un SOOM
     Route::put('submissions/{submissionId}/edit', [SoomController::class, 'editSoom'])->middleware('auth:sanctum');
+
+    Route::get('/listings/{listingId}/last-soom', [SoomController::class, 'getLastSoom']);
 });
 Route::get('/listings/{id}', [ListingController::class, 'getById']);
 
@@ -180,3 +184,8 @@ Route::get('/filter/spare-parts', [FilterController::class, 'filterSpareParts'])
 Route::get('/filter/license-plates', [FilterController::class, 'filterLicensePlates']);
 Route::get('/bike-part-categories', [ListingController::class, 'getBikePartCategoriesWithListingCount']);
 Route::get('/bike-part-brands', [ListingController::class, 'getBikePartBrandsWithListingCount']);
+
+Route::post('/plate-formats', [PlateFormatController::class, 'store']);
+
+// routes/api.php
+Route::post('/license-plates', [LicensePlateController::class, 'store']);

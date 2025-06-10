@@ -8,12 +8,27 @@ use Illuminate\Http\Request;
 
 class LicensePlateController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function store(Request $request)
     {
-        //
+        $request->validate([
+            'listing_id' => 'required|exists:listings,id',
+            'characters' => 'required|string|unique:license_plates,characters',
+            'country_id' => 'required|exists:countries,id',
+            'city_id' => 'required|exists:cities,id',
+            'type_id' => 'required|exists:plate_types,id',
+             'digits_count' => 'required|integer',
+            'first_letter' => 'nullable|string|max:1',
+            'second_letter' => 'nullable|string|max:1',
+            'third_letter' => 'nullable|string|max:1',
+            'numbers' => 'required|string'
+        ]);
+
+        $plate = LicensePlate::create($request->all());
+
+        return response()->json([
+            'message' => 'License plate created successfully',
+            'data' => $plate
+        ], 201);
     }
 
     /**
@@ -24,13 +39,6 @@ class LicensePlateController extends Controller
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
 
     /**
      * Display the specified resource.

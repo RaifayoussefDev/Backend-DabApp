@@ -699,4 +699,80 @@ class SoomController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Obtenir la dernière soumission SOOM pour un listing
+     * @OA\Get(
+     *     path="/api/listings/{listingId}/last-soom",
+     *     summary="Get the last SOOM submission for a listing",
+     *     tags={"Soom"},
+     *     @OA\Parameter(
+     *         name="listingId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer"),
+     *         description="ID of the listing to get the last SOOM for"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Last SOOM retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Last SOOM retrieved successfully"),
+     *             @OA\Property(property="data", type="object", ref="#/components/schemas/Submission"),
+     *             @OA\Property(property="has_sooms", type="boolean", description="Whether the listing has any SOOMs"),
+     *             @OA\Property(property="total_sooms_count", type="integer", description="Total number of SOOMs for this listing")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="No SOOMs found for this listing",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="No SOOMs found for this listing"),
+     *             @OA\Property(property="data", type="null"),
+     *             @OA\Property(property="has_sooms", type="boolean", example=false),
+     *             @OA\Property(property="total_sooms_count", type="integer", example=0)
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Listing not found")
+     * )
+     */
+    public function getLastSoom($listingId)
+    {
+        // Vérifier que le listing existe
+        $listing = Listing::find($listingId);
+
+        if (!$listing) {
+            return response()->json([
+                'message' => 'Listing not found.',
+            ], 404);
+        }
+
+        // Obtenir le nombre total de SOOMs pour ce listing
+        $totalSoomsCount = Submission::where('listing_id', $listingId)->count();
+
+        // Obtenir la dernière soumission (la plus récente par date)
+        $lastSubmission = Submission::where('listing_id', $listingId)
+            ->with([
+                'user:id,first_name,last_name,email',
+                'listing:id,title,description,seller_id'
+            ])
+            ->orderBy('submission_date', 'desc')
+            ->first();
+
+        if (!$lastSubmission) {
+            return response()->json([
+                'message' => 'No SOOMs found for this listing',
+                'data' => null,
+                'has_sooms' => false,
+                'total_sooms_count' => 0
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Last SOOM retrieved successfully',
+            'data' => $lastSubmission,
+            'has_sooms' => true,
+            'total_sooms_count' => $totalSoomsCount
+        ]);
+    }
 }
