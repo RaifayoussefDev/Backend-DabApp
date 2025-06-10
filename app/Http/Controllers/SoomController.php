@@ -724,7 +724,7 @@ class SoomController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=200,
+     *         response=400,
      *         description="No SOOMs found for this listing",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="No SOOMs found for this listing"),

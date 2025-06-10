@@ -5445,6 +5445,86 @@
                 }
             }
         },
+        "/api/listings/{listingId}/last-soom": {
+            "get": {
+                "tags": [
+                    "Soom"
+                ],
+                "summary": "Get the last SOOM submission for a listing",
+                "description": "Obtenir la dernière soumission SOOM pour un listing",
+                "operationId": "1e3dde82a739af7f9f13bd961a2b10d3",
+                "parameters": [
+                    {
+                        "name": "listingId",
+                        "in": "path",
+                        "description": "ID of the listing to get the last SOOM for",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Last SOOM retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Last SOOM retrieved successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Submission"
+                                        },
+                                        "has_sooms": {
+                                            "description": "Whether the listing has any SOOMs",
+                                            "type": "boolean"
+                                        },
+                                        "total_sooms_count": {
+                                            "description": "Total number of SOOMs for this listing",
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "No SOOMs found for this listing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No SOOMs found for this listing"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        },
+                                        "has_sooms": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "total_sooms_count": {
+                                            "type": "integer",
+                                            "example": 0
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Listing not found"
+                    }
+                }
+            }
+        },
         "/api/users": {
             "get": {
                 "tags": [
