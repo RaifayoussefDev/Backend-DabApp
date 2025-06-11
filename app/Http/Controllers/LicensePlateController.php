@@ -16,7 +16,7 @@ class LicensePlateController extends Controller
             'country_id' => 'required|exists:countries,id',
             'city_id' => 'required|exists:cities,id',
             'type_id' => 'required|exists:plate_types,id',
-             'digits_count' => 'required|integer',
+            'digits_count' => 'required|integer',
             'first_letter' => 'nullable|string|max:1',
             'second_letter' => 'nullable|string|max:1',
             'third_letter' => 'nullable|string|max:1',
@@ -30,6 +30,32 @@ class LicensePlateController extends Controller
             'data' => $plate
         ], 201);
     }
+
+    public function showFormatted($id)
+    {
+        $plate = LicensePlate::with(['format.fields', 'fieldValues'])->findOrFail($id);
+
+        $fields = $plate->format->fields->sortBy('display_order');
+        $values = $plate->fieldValues->keyBy('plate_format_field_id');
+
+        $result = [];
+
+        foreach ($fields as $field) {
+            $value = $values[$field->id]->field_value ?? '';
+            $result[] = [
+                'field' => $field->field_name,
+                'value' => $value,
+                'position' => $field->position->name ?? '',
+            ];
+        }
+
+        return response()->json([
+            'plate_id' => $plate->id,
+            'country' => $plate->country->name,
+            'formatted_fields' => $result,
+        ]);
+    }
+
 
     /**
      * Show the form for creating a new resource.

@@ -45,4 +45,15 @@ class LicensePlate extends Model
         return $this->belongsTo(City::class);
     }
 
+    public function format()
+    {
+        return $this->belongsTo(PlateFormat::class, 'plate_format_id');
+    }
+
+    public function fieldValues()
+    {
+        return $this->hasMany(PlateFormatField::class);
+    }
+
+
 }

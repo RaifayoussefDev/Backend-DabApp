@@ -394,8 +394,8 @@ class SoomController extends Controller
 
         // Récupérer tous les SOOMs sur mes listings
         $sooms = Submission::whereHas('listing', function ($query) use ($userId) {
-                $query->where('seller_id', $userId);
-            })
+            $query->where('seller_id', $userId);
+        })
             ->with([
                 'user:id,first_name,last_name,email',
                 'listing:id,title,description,seller_id'
@@ -715,22 +715,22 @@ class SoomController extends Controller
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Last SOOM retrieved successfully",
+     *         description="SOOM data retrieved successfully",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Last SOOM retrieved successfully"),
-     *             @OA\Property(property="data", type="object", ref="#/components/schemas/Submission"),
-     *             @OA\Property(property="has_sooms", type="boolean", description="Whether the listing has any SOOMs"),
-     *             @OA\Property(property="total_sooms_count", type="integer", description="Total number of SOOMs for this listing")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="No SOOMs found for this listing",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No SOOMs found for this listing"),
-     *             @OA\Property(property="data", type="null"),
-     *             @OA\Property(property="has_sooms", type="boolean", example=false),
-     *             @OA\Property(property="total_sooms_count", type="integer", example=0)
+     *             oneOf={
+     *                 @OA\Schema(
+     *                     @OA\Property(property="message", type="string", example="Last SOOM retrieved successfully"),
+     *                     @OA\Property(property="data", type="object", ref="#/components/schemas/Submission"),
+     *                     @OA\Property(property="has_sooms", type="boolean", example=true),
+     *                     @OA\Property(property="total_sooms_count", type="integer", example=5)
+     *                 ),
+     *                 @OA\Schema(
+     *                     @OA\Property(property="message", type="string", example="No SOOMs found for this listing"),
+     *                     @OA\Property(property="data", type="null"),
+     *                     @OA\Property(property="has_sooms", type="boolean", example=false),
+     *                     @OA\Property(property="total_sooms_count", type="integer", example=0)
+     *                 )
+     *             }
      *         )
      *     ),
      *     @OA\Response(response=404, description="Listing not found")
@@ -765,14 +765,18 @@ class SoomController extends Controller
                 'data' => null,
                 'has_sooms' => false,
                 'total_sooms_count' => 0
-            ]);
+            ], 200); // Code 200 au lieu de 400
         }
+
+        // Formater les montants comme float
+        $lastSubmission->amount = (float) $lastSubmission->amount;
+        $lastSubmission->min_soom = (float) $lastSubmission->min_soom;
 
         return response()->json([
             'message' => 'Last SOOM retrieved successfully',
             'data' => $lastSubmission,
             'has_sooms' => true,
             'total_sooms_count' => $totalSoomsCount
-        ]);
+        ], 200);
     }
 }

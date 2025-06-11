@@ -189,3 +189,7 @@ Route::post('/plate-formats', [PlateFormatController::class, 'store']);
 
 // routes/api.php
 Route::post('/license-plates', [LicensePlateController::class, 'store']);
+
+
+Route::get('/license-plates/{id}/formatted', [LicensePlateController::class, 'showFormatted']);
+
