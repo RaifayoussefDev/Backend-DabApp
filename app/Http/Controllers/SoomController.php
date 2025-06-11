@@ -770,7 +770,7 @@ class SoomController extends Controller
 
         // Formater les montants comme float
         $lastSubmission->amount = (float) $lastSubmission->amount;
-        $lastSubmission->min_soom = (float) $lastSubmission->min_soom;
+        $lastSubmission->min_soom = (float) $lastSubmission->min_soom + 1;
 
         return response()->json([
             'message' => 'Last SOOM retrieved successfully',
