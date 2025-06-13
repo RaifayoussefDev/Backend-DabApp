@@ -11,9 +11,10 @@ class PlateFormat extends Model
         'width_mm', 'height_mm', 'description'
     ];
 
+
     public function fields()
     {
-        return $this->hasMany(PlateFormatField::class);
+        return $this->hasMany(PlateFormatField::class, 'plate_format_id');
     }
 
     public function city()

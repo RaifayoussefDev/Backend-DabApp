@@ -33,7 +33,7 @@ class LicensePlateController extends Controller
 
     public function showFormatted($id)
     {
-        $plate = LicensePlate::with(['format.fields', 'fieldValues'])->findOrFail($id);
+        $plate = LicensePlate::with(['format.fields.position', 'fieldValues'])->findOrFail($id);
 
         $fields = $plate->format->fields->sortBy('display_order');
         $values = $plate->fieldValues->keyBy('plate_format_field_id');
@@ -45,7 +45,7 @@ class LicensePlateController extends Controller
             $result[] = [
                 'field' => $field->field_name,
                 'value' => $value,
-                'position' => $field->position->name ?? '',
+                'position' => $field->position ? $field->position->name : '',
             ];
         }
 

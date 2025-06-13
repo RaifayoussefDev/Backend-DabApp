@@ -119,6 +119,8 @@ Route::middleware('auth:api')->group(function () {
     // Accepter un SOOM (Vendeur uniquement)
     Route::patch('/submissions/{submissionId}/accept', [SoomController::class, 'acceptSoom']);
 
+    Route::patch('/submissions/{submissionId}/reject', [SoomController::class, 'rejectSoom']);
+
     // Obtenir tous les SOOMs reçus sur mes listings (Vendeur)
     Route::get('/my-listings-sooms', [SoomController::class, 'getMyListingsSooms']);
 

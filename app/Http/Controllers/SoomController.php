@@ -359,6 +359,107 @@ class SoomController extends Controller
         }
     }
 
+
+    /**
+     * Rejeter un SOOM (pour le vendeur)
+     * @OA\Patch(
+     *     path="/api/submissions/{submissionId}/reject",
+     *     summary="Reject a SOOM submission (seller only)",
+     *     tags={"Soom"},
+     *     @OA\Parameter(
+     *         name="submissionId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer"),
+     *         description="ID of the submission to reject"
+     *     ),
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="reason", type="string", description="Optional reason for rejection")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="SOOM rejected successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="SOOM rejected successfully"),
+     *             @OA\Property(property="data", type="object", ref="#/components/schemas/Submission")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=403, description="Forbidden - Only seller can reject"),
+     *     @OA\Response(response=404, description="Submission not found")
+     * )
+     */
+    public function rejectSoom(Request $request, $submissionId)
+    {
+        DB::beginTransaction();
+
+        try {
+            $userId = Auth::id();
+
+            if (!$userId) {
+                return response()->json([
+                    'message' => 'Unauthorized. User must be logged in.',
+                ], 401);
+            }
+
+            $submission = Submission::with('listing')->find($submissionId);
+
+            if (!$submission) {
+                return response()->json([
+                    'message' => 'Submission not found.',
+                ], 404);
+            }
+
+            // Vérifier que l'utilisateur est le vendeur du listing
+            if ($submission->listing->seller_id != $userId) {
+                return response()->json([
+                    'message' => 'Only the seller can reject SOOMs for this listing.',
+                ], 403);
+            }
+
+            // Vérifier que le SOOM n'est pas déjà rejeté
+            if ($submission->status === 'rejected') {
+                return response()->json([
+                    'message' => 'This SOOM has already been rejected.',
+                ], 422);
+            }
+
+            // Vérifier que le SOOM n'est pas déjà accepté
+            if ($submission->status === 'accepted') {
+                return response()->json([
+                    'message' => 'Cannot reject an already accepted SOOM.',
+                ], 422);
+            }
+
+            // Préparer les données de mise à jour
+            $updateData = ['status' => 'rejected'];
+
+            // Ajouter la raison de rejet si fournie
+            if ($request->has('reason') && !empty($request->reason)) {
+                $updateData['rejection_reason'] = $request->reason;
+            }
+
+            // Rejeter ce SOOM
+            $submission->update($updateData);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'SOOM rejected successfully',
+                'data' => $submission->load(['user:id,first_name,last_name,email', 'listing'])
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Failed to reject SOOM',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     /**
      * Obtenir tous les SOOMs reçus sur mes listings (pour le vendeur)
      * @OA\Get(
