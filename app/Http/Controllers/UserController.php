@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
+use App\Mail\UserCreatedMail;
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
@@ -85,6 +87,10 @@ class UserController extends Controller
         $validated['password'] = Hash::make($generatedPassword);
 
         $user = User::create($validated);
+
+        // Send email to user
+        Mail::to($user->email)->send(new UserCreatedMail($user, $generatedPassword));
+
 
         return response()->json([
             'message' => 'User created successfully',
@@ -241,7 +247,7 @@ class UserController extends Controller
 
     /**
      * Deactivate user - set is_active = 0
-     * 
+     *
      */
     public function deactivateUser($id)
     {
