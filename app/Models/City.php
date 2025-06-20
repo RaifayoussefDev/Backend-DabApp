@@ -25,4 +25,17 @@ class City extends Model
     {
         return $this->hasMany(Listing::class);
     }
+
+    public function plateFormats()
+    {
+        return $this->hasMany(PlateFormat::class);
+    }
+
+    /**
+     * Relation avec les formats de plaques actifs uniquement
+     */
+    public function activePlateFormats()
+    {
+        return $this->hasMany(PlateFormat::class)->where('is_active', true);
+    }
 }

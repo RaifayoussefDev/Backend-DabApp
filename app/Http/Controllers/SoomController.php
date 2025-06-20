@@ -394,7 +394,7 @@ class SoomController extends Controller
 public function rejectSoom(Request $request, $submissionId)
 {
     DB::beginTransaction();
-
+  
     try {
         $userId = Auth::id();
 

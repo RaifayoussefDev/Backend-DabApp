@@ -195,3 +195,19 @@ Route::post('/license-plates', [LicensePlateController::class, 'store']);
 
 Route::get('/license-plates/{id}/formatted', [LicensePlateController::class, 'showFormatted']);
 
+
+
+
+
+// Récupérer les formats de plaques par ville
+Route::get('/cities/{cityId}/plate-formats', [LicensePlateController::class, 'getFormatsByCity']);
+
+// Alternative avec plus de détails sur la ville
+Route::get('/cities/{cityId}/plate-formats/details', [LicensePlateController::class, 'getFormatsByCityWithDetails']);
+
+// Récupérer tous les formats par pays (groupés par ville)
+Route::get('/countries/{countryId}/plate-formats', [LicensePlateController::class, 'getFormatsByCountry']);
+
+// Route existante (pour référence)
+Route::get('/license-plates/{id}/formatted', [LicensePlateController::class, 'showFormatted']);
+
