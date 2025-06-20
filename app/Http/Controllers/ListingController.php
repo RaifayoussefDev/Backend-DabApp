@@ -129,184 +129,195 @@ class ListingController extends Controller
      * )
      */
 
-    public function store(Request $request)
-    {
-        DB::beginTransaction();
+     public function store(Request $request)
+     {
+         DB::beginTransaction();
 
-        try {
-            $sellerId = Auth::id();
+         try {
+             $sellerId = Auth::id();
 
-            if (!$sellerId) {
-                return response()->json([
-                    'message' => 'Unauthorized. User must be logged in to create a listing.',
-                ], 401);
-            }
+             if (!$sellerId) {
+                 return response()->json([
+                     'message' => 'Unauthorized. User must be logged in to create a listing.',
+                 ], 401);
+             }
 
-            // Create the listing
-            $listing = Listing::create([
-                'title' => $request->title,
-                'description' => $request->description,
-                'price' => $request->price,
-                'seller_id' => $sellerId,
-                'category_id' => $request->category_id,
-                'country_id' => $request->country_id,
-                'city_id' => $request->city_id,
-                'status' => 'active',
-                'auction_enabled' => $request->auction_enabled ?? false,
-                'minimum_bid' => $request->minimum_bid,
-                'allow_submission' => $request->allow_submission ?? false,
-                'listing_type_id' => $request->listing_type_id,
-                'contacting_channel' => $request->contacting_channel,
-                'seller_type' => $request->seller_type,
-                'created_at' => now(),
-            ]);
+             // Create the listing
+             $listing = Listing::create([
+                 'title' => $request->title,
+                 'description' => $request->description,
+                 'price' => $request->price,
+                 'seller_id' => $sellerId, // ✅ Correct: référence au vendeur
+                 'category_id' => $request->category_id,
+                 'country_id' => $request->country_id,
+                 'city_id' => $request->city_id,
+                 'status' => 'active',
+                 'auction_enabled' => $request->auction_enabled ?? false,
+                 'minimum_bid' => $request->minimum_bid,
+                 'allow_submission' => $request->allow_submission ?? false,
+                 'listing_type_id' => $request->listing_type_id,
+                 'contacting_channel' => $request->contacting_channel,
+                 'seller_type' => $request->seller_type,
+                 'created_at' => now(),
+             ]);
 
-            // if ($request->hasFile('images')) {
-            //     foreach ($request->file('images') as $image) {
-            //         $path = $image->store('listings', 'public'); // stocke dans storage/app/public/listings
-            //         $listing->images()->create([
-            //             'image_url' => 'storage/' . $path
-            //         ]);
-            //     }
-            // }
-            if ($request->has('images')) {
-                foreach ($request->images as $imageUrl) {
-                    $listing->images()->create([
-                        'image_url' => $imageUrl
-                    ]);
-                }
-            }
-            // Auction logic
-            if ($listing->auction_enabled) {
-                AuctionHistory::create([
-                    'listing_id' => $listing->id,
-                    'seller_id' => $listing->seller_id,
-                    'bid_amount' => $listing->minimum_bid,
-                ]);
-            }
-            // Ajouter une SOOM si les soumissions sont autorisées et l'enchère activée
-            if ($listing->auction_enabled && $listing->allow_submission) {
+             // Handle images
+             if ($request->has('images')) {
+                 foreach ($request->images as $imageUrl) {
+                     $listing->images()->create([
+                         'image_url' => $imageUrl
+                     ]);
+                 }
+             }
 
+             // ✅ FIXED: Auction logic - Create auction_history with proper fields
+             if ($listing->auction_enabled) {
+                 AuctionHistory::create([
+                     'listing_id' => $listing->id,
+                     'seller_id' => $sellerId, // ✅ Correct: seller_id from authenticated user
+                     'buyer_id' => null, // ✅ No buyer yet
+                     'bid_amount' => $listing->minimum_bid, // ✅ Assuming you have this field
+                     'bid_date' => now(), // ✅ Current timestamp
+                     'validated' => false, // ✅ Not validated initially
+                     'created_at' => now(),
+                     'updated_at' => now(),
+                 ]);
+             }
 
-                Submission::create([
-                    'listing_id' => $listing->id,
-                    'user_id' => $sellerId,
-                    'amount' => $listing->minimum_bid,
-                    'submission_date' => now(),
-                    'status' => 'pending',
-                    'min_soom' => $listing->minimum_bid,
-                ]);
-            }
-            // Category-specific logic
-            if ($listing->category_id == 1) {
-                // Récupérer le type_id depuis le model_id
-                $model = MotorcycleModel::find($request->model_id);
+             // ✅ FIXED: Submission logic - proper user_id reference
+             if ($listing->auction_enabled && $listing->allow_submission) {
+                 Submission::create([
+                     'listing_id' => $listing->id,
+                     'user_id' => $sellerId, // ✅ Correct: user who created the listing
+                     'amount' => $listing->minimum_bid,
+                     'submission_date' => now(),
+                     'status' => 'pending',
+                     'min_soom' => $listing->minimum_bid,
+                 ]);
+             }
 
-                if (!$model) {
-                    DB::rollBack();
-                    return response()->json([
-                        'message' => 'Invalid model_id: Model not found.',
-                    ], 422);
-                }
+             // Category-specific logic
+             if ($listing->category_id == 1) {
+                 // Motorcycle logic
+                 $model = MotorcycleModel::find($request->model_id);
 
-                $motorcycle = Motorcycle::create([
-                    'listing_id' => $listing->id,
-                    'brand_id' => $request->brand_id,
-                    'model_id' => $request->model_id,
-                    'year_id' => $request->year_id,
-                    'type_id' => $model->type_id,
-                    'engine' => $request->engine,
-                    'mileage' => $request->mileage,
-                    'body_condition' => $request->body_condition,
-                    'modified' => $request->has('modified') ? $request->modified : false,
-                    'insurance' => $request->has('insurance') ? $request->insurance : false,
-                    'general_condition' => $request->general_condition,
-                    'vehicle_care' => $request->vehicle_care,
-                    'transmission' => $request->transmission,
-                ]);
+                 if (!$model) {
+                     DB::rollBack();
+                     return response()->json([
+                         'message' => 'Invalid model_id: Model not found.',
+                     ], 422);
+                 }
 
-                DB::commit();
+                 $motorcycle = Motorcycle::create([
+                     'listing_id' => $listing->id,
+                     'brand_id' => $request->brand_id,
+                     'model_id' => $request->model_id,
+                     'year_id' => $request->year_id,
+                     'type_id' => $model->type_id,
+                     'engine' => $request->engine,
+                     'mileage' => $request->mileage,
+                     'body_condition' => $request->body_condition,
+                     'modified' => $request->has('modified') ? $request->modified : false,
+                     'insurance' => $request->has('insurance') ? $request->insurance : false,
+                     'general_condition' => $request->general_condition,
+                     'vehicle_care' => $request->vehicle_care,
+                     'transmission' => $request->transmission,
+                 ]);
 
-                return response()->json([
-                    'message' => 'Motorcycle added successfully',
-                    'data' => $motorcycle,
-                ], 201);
-            } elseif ($listing->category_id == 2) {
-                $sparePart = SparePart::create([
-                    'listing_id' => $listing->id,
-                    'condition' => $request->condition,
-                    'bike_part_brand_id' => $request->bike_part_brand_id,
-                    'bike_part_category_id' => $request->bike_part_category_id,
-                ]);
+                 DB::commit();
 
-                // Ajouter les associations moto
-                if ($request->has('motorcycles')) {
-                    foreach ($request->motorcycles as $moto) {
-                        SparePartMotorcycle::create([
-                            'spare_part_id' => $sparePart->id,
-                            'brand_id' => $moto['brand_id'],
-                            'model_id' => $moto['model_id'],
-                            'year_id' => $moto['year_id'],
-                        ]);
-                    }
-                }
+                 return response()->json([
+                     'message' => 'Motorcycle listing created successfully',
+                     'data' => [
+                         'listing' => $listing,
+                         'motorcycle' => $motorcycle,
+                     ]
+                 ], 201);
 
-                DB::commit();
+             } elseif ($listing->category_id == 2) {
+                 // Spare parts logic
+                 $sparePart = SparePart::create([
+                     'listing_id' => $listing->id,
+                     'condition' => $request->condition,
+                     'bike_part_brand_id' => $request->bike_part_brand_id,
+                     'bike_part_category_id' => $request->bike_part_category_id,
+                 ]);
 
-                return response()->json([
-                    'message' => 'Spare part added successfully',
-                    'data' => $sparePart->load('motorcycleAssociations.brand', 'motorcycleAssociations.model', 'motorcycleAssociations.year'),
-                ], 201);
-            } elseif ($listing->category_id == 3) {
-                // Vérifier si le type est 1
-                $typeId = $request->type_id;
+                 // Add motorcycle associations
+                 if ($request->has('motorcycles')) {
+                     foreach ($request->motorcycles as $moto) {
+                         SparePartMotorcycle::create([
+                             'spare_part_id' => $sparePart->id,
+                             'brand_id' => $moto['brand_id'],
+                             'model_id' => $moto['model_id'],
+                             'year_id' => $moto['year_id'],
+                         ]);
+                     }
+                 }
 
-                $licensePlateData = [
-                    'listing_id' => $listing->id,
-                    'country_id' => $request->country_id_lp, // Utilisez country_id_lp pour la plaque
-                    'type_id' => $typeId,
-                    'digits_count' => $request->digits_count,
-                    'city_id' => $request->city_id_lp ?? $request->city_id, // Utilisez city_id_lp si fourni, sinon city_id du listing
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
+                 DB::commit();
 
-                if ($typeId == 1) {
-                    // Cas normal : on utilise les lettres
-                    $licensePlateData['first_letter'] = $request->first_letter;
-                    $licensePlateData['second_letter'] = $request->second_letter;
-                    $licensePlateData['third_letter'] = $request->third_letter;
-                    $licensePlateData['numbers'] = $request->numbers;
-                } else {
-                    // Cas spécial : type != 1 -> lettres nulles
-                    $licensePlateData['first_letter'] = null;
-                    $licensePlateData['second_letter'] = null;
-                    $licensePlateData['third_letter'] = null;
-                    $licensePlateData['numbers'] = $request->numbers;
-                }
+                 return response()->json([
+                     'message' => 'Spare part listing created successfully',
+                     'data' => [
+                         'listing' => $listing,
+                         'spare_part' => $sparePart->load('motorcycleAssociations.brand', 'motorcycleAssociations.model', 'motorcycleAssociations.year'),
+                     ]
+                 ], 201);
 
-                $licensePlate = LicensePlate::create($licensePlateData);
+             } elseif ($listing->category_id == 3) {
+                 // License plate logic
+                 $typeId = $request->type_id;
 
-                DB::commit();
+                 $licensePlateData = [
+                     'listing_id' => $listing->id,
+                     'country_id' => $request->country_id_lp,
+                     'type_id' => $typeId,
+                     'digits_count' => $request->digits_count,
+                     'city_id' => $request->city_id_lp ?? $request->city_id,
+                     'created_at' => now(),
+                     'updated_at' => now(),
+                 ];
 
-                return response()->json([
-                    'message' => 'License plate added successfully',
-                    'data' => $licensePlate,
-                ], 201);
-            } else {
-                DB::rollBack();
-                return response()->json([
-                    'message' => 'Invalid category_id. Only categories 1, 2, or 3 are allowed.',
-                ], 422);
-            }
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'error' => 'Failed to create listing',
-                'details' => $e->getMessage()
-            ], 500);
-        }
-    }
+                 if ($typeId == 1) {
+                     $licensePlateData['first_letter'] = $request->first_letter;
+                     $licensePlateData['second_letter'] = $request->second_letter;
+                     $licensePlateData['third_letter'] = $request->third_letter;
+                     $licensePlateData['numbers'] = $request->numbers;
+                 } else {
+                     $licensePlateData['first_letter'] = null;
+                     $licensePlateData['second_letter'] = null;
+                     $licensePlateData['third_letter'] = null;
+                     $licensePlateData['numbers'] = $request->numbers;
+                 }
+
+                 $licensePlate = LicensePlate::create($licensePlateData);
+
+                 DB::commit();
+
+                 return response()->json([
+                     'message' => 'License plate listing created successfully',
+                     'data' => [
+                         'listing' => $listing,
+                         'license_plate' => $licensePlate,
+                     ]
+                 ], 201);
+
+             } else {
+                 DB::rollBack();
+                 return response()->json([
+                     'message' => 'Invalid category_id. Only categories 1, 2, or 3 are allowed.',
+                 ], 422);
+             }
+
+         } catch (\Exception $e) {
+             DB::rollBack();
+             return response()->json([
+                 'error' => 'Failed to create listing',
+                 'details' => $e->getMessage()
+             ], 500);
+         }
+     }
 
     /**
      * @OA\Get(
