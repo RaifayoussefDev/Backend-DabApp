@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -222,5 +223,38 @@ class UserController extends Controller
         $user = User::findOrFail($id);
         $user->delete(); // uses softDeletes
         return response()->json(['message' => 'User deleted successfully']);
+    }
+    public function activateUser($id)
+    {
+        $user = User::findOrFail($id);
+
+        $user->update([
+            'is_active' => 1
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'User activated successfully',
+            'data' => $user
+        ]);
+    }
+
+    /**
+     * Deactivate user - set is_active = 0
+     * 
+     */
+    public function deactivateUser($id)
+    {
+        $user = User::findOrFail($id);
+
+        $user->update([
+            'is_active' => 0
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'User deactivated successfully',
+            'data' => $user
+        ]);
     }
 }

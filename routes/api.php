@@ -134,6 +134,11 @@ Route::middleware('auth:api')->group(function () {
     Route::put('submissions/{submissionId}/edit', [SoomController::class, 'editSoom'])->middleware('auth:sanctum');
 
     Route::get('/listings/{listingId}/last-soom', [SoomController::class, 'getLastSoom']);
+
+
+    Route::patch('/users/{id}/activate', [UserController::class, 'activateUser']);
+    Route::patch('/users/{id}/deactivate', [UserController::class, 'deactivateUser']);
+
 });
 Route::get('/listings/{id}', [ListingController::class, 'getById']);
 
@@ -210,4 +215,3 @@ Route::get('/countries/{countryId}/plate-formats', [LicensePlateController::clas
 
 // Route existante (pour référence)
 Route::get('/license-plates/{id}/formatted', [LicensePlateController::class, 'showFormatted']);
-
