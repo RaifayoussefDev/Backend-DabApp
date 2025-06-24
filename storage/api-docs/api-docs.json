@@ -2219,450 +2219,6 @@
                 }
             }
         },
-        "/api/listings": {
-            "get": {
-                "tags": [
-                    "Listings"
-                ],
-                "summary": "Get all listings with pagination",
-                "operationId": "8f9a3e0af2ef4de078f651d773cbefbb",
-                "parameters": [
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "description": "Page number",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "default": 1
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "description": "Items per page",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "default": 10
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Paginated list of listings",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "current_page": {
-                                            "type": "integer"
-                                        },
-                                        "last_page": {
-                                            "type": "integer"
-                                        },
-                                        "total": {
-                                            "type": "integer"
-                                        },
-                                        "per_page": {
-                                            "type": "integer"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer"
-                                                    },
-                                                    "title": {
-                                                        "type": "string"
-                                                    },
-                                                    "description": {
-                                                        "type": "string"
-                                                    },
-                                                    "price": {
-                                                        "type": "number"
-                                                    },
-                                                    "created_at": {
-                                                        "type": "string",
-                                                        "format": "date-time"
-                                                    },
-                                                    "city": {
-                                                        "type": "string"
-                                                    },
-                                                    "country": {
-                                                        "type": "string"
-                                                    },
-                                                    "images": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "wishlist": {
-                                                        "type": "boolean"
-                                                    },
-                                                    "category_id": {
-                                                        "type": "integer"
-                                                    },
-                                                    "motorcycle": {
-                                                        "type": "object",
-                                                        "nullable": true
-                                                    },
-                                                    "license_plate": {
-                                                        "type": "object",
-                                                        "nullable": true
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "Listings"
-                ],
-                "summary": "Créer une annonce",
-                "operationId": "cd50eb59f7c33efe74713b3a8eef96c7",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "oneOf": [
-                                    {
-                                        "required": [
-                                            "title",
-                                            "description",
-                                            "price",
-                                            "category_id",
-                                            "brand_id",
-                                            "model_id",
-                                            "year_id"
-                                        ],
-                                        "properties": {
-                                            "category_id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "title": {
-                                                "type": "string",
-                                                "example": "Yamaha MT-07"
-                                            },
-                                            "description": {
-                                                "type": "string",
-                                                "example": "Moto bien entretenue"
-                                            },
-                                            "price": {
-                                                "type": "number",
-                                                "format": "float",
-                                                "example": 5000
-                                            },
-                                            "country_id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "city_id": {
-                                                "type": "integer",
-                                                "example": 10
-                                            },
-                                            "auction_enabled": {
-                                                "type": "boolean",
-                                                "example": false
-                                            },
-                                            "minimum_bid": {
-                                                "type": "number",
-                                                "example": null
-                                            },
-                                            "allow_submission": {
-                                                "type": "boolean",
-                                                "example": false
-                                            },
-                                            "listing_type_id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "contacting_channel": {
-                                                "type": "string",
-                                                "example": "phone"
-                                            },
-                                            "seller_type": {
-                                                "type": "string",
-                                                "example": "owner"
-                                            },
-                                            "images": {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "string",
-                                                    "format": "binary"
-                                                }
-                                            },
-                                            "brand_id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "model_id": {
-                                                "type": "integer",
-                                                "example": 2
-                                            },
-                                            "year_id": {
-                                                "type": "integer",
-                                                "example": 2020
-                                            },
-                                            "type_id": {
-                                                "type": "integer",
-                                                "example": 3
-                                            },
-                                            "engine": {
-                                                "type": "string",
-                                                "example": "700cc"
-                                            },
-                                            "mileage": {
-                                                "type": "integer",
-                                                "example": 15000
-                                            },
-                                            "body_condition": {
-                                                "type": "string",
-                                                "example": "Good"
-                                            },
-                                            "modified": {
-                                                "type": "boolean",
-                                                "example": false
-                                            },
-                                            "insurance": {
-                                                "type": "boolean",
-                                                "example": true
-                                            },
-                                            "general_condition": {
-                                                "type": "string",
-                                                "example": "Excellent"
-                                            },
-                                            "vehicle_care": {
-                                                "type": "string",
-                                                "example": "Regular maintenance"
-                                            },
-                                            "transmission": {
-                                                "type": "string",
-                                                "example": "Manual"
-                                            }
-                                        },
-                                        "type": "object"
-                                    },
-                                    {
-                                        "required": [
-                                            "title",
-                                            "description",
-                                            "price",
-                                            "category_id",
-                                            "condition"
-                                        ],
-                                        "properties": {
-                                            "category_id": {
-                                                "type": "integer",
-                                                "example": 2
-                                            },
-                                            "title": {
-                                                "type": "string",
-                                                "example": "Pneu arrière"
-                                            },
-                                            "description": {
-                                                "type": "string",
-                                                "example": "Pneu en bon état"
-                                            },
-                                            "price": {
-                                                "type": "number",
-                                                "format": "float",
-                                                "example": 200
-                                            },
-                                            "country_id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "city_id": {
-                                                "type": "integer",
-                                                "example": 5
-                                            },
-                                            "auction_enabled": {
-                                                "type": "boolean",
-                                                "example": false
-                                            },
-                                            "minimum_bid": {
-                                                "type": "number",
-                                                "example": null
-                                            },
-                                            "allow_submission": {
-                                                "type": "boolean",
-                                                "example": false
-                                            },
-                                            "listing_type_id": {
-                                                "type": "integer",
-                                                "example": 2
-                                            },
-                                            "contacting_channel": {
-                                                "type": "string",
-                                                "example": "email"
-                                            },
-                                            "seller_type": {
-                                                "type": "string",
-                                                "example": "dealer"
-                                            },
-                                            "images": {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "string",
-                                                    "format": "binary"
-                                                }
-                                            },
-                                            "condition": {
-                                                "type": "string",
-                                                "example": "used"
-                                            },
-                                            "motorcycles": {
-                                                "type": "array",
-                                                "items": {
-                                                    "required": [
-                                                        "brand_id",
-                                                        "model_id",
-                                                        "year_id"
-                                                    ],
-                                                    "properties": {
-                                                        "brand_id": {
-                                                            "type": "integer",
-                                                            "example": 1
-                                                        },
-                                                        "model_id": {
-                                                            "type": "integer",
-                                                            "example": 2
-                                                        },
-                                                        "year_id": {
-                                                            "type": "integer",
-                                                            "example": 2020
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                }
-                                            }
-                                        },
-                                        "type": "object"
-                                    },
-                                    {
-                                        "required": [
-                                            "title",
-                                            "description",
-                                            "price",
-                                            "category_id",
-                                            "characters",
-                                            "digits_count",
-                                            "color_id"
-                                        ],
-                                        "properties": {
-                                            "category_id": {
-                                                "type": "integer",
-                                                "example": 3
-                                            },
-                                            "title": {
-                                                "type": "string",
-                                                "example": "Plaque personnalisée"
-                                            },
-                                            "description": {
-                                                "type": "string",
-                                                "example": "Plaque ABC123 rouge"
-                                            },
-                                            "price": {
-                                                "type": "number",
-                                                "format": "float",
-                                                "example": 800
-                                            },
-                                            "country_id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "city_id": {
-                                                "type": "integer",
-                                                "example": 8
-                                            },
-                                            "auction_enabled": {
-                                                "type": "boolean",
-                                                "example": true
-                                            },
-                                            "minimum_bid": {
-                                                "type": "number",
-                                                "example": 500
-                                            },
-                                            "allow_submission": {
-                                                "type": "boolean",
-                                                "example": true
-                                            },
-                                            "listing_type_id": {
-                                                "type": "integer",
-                                                "example": 3
-                                            },
-                                            "contacting_channel": {
-                                                "type": "string",
-                                                "example": "whatsapp"
-                                            },
-                                            "seller_type": {
-                                                "type": "string",
-                                                "example": "owner"
-                                            },
-                                            "images": {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "string",
-                                                    "format": "binary"
-                                                }
-                                            },
-                                            "first_letter": {
-                                                "type": "string",
-                                                "example": "A"
-                                            },
-                                            "second_letter": {
-                                                "type": "string",
-                                                "example": "B"
-                                            },
-                                            "third_letter": {
-                                                "type": "string",
-                                                "example": "C"
-                                            },
-                                            "digits_count": {
-                                                "type": "integer",
-                                                "example": 6
-                                            },
-                                            "color_id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "type_id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            }
-                                        },
-                                        "type": "object"
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Annonce créée avec succès"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/api/listings/country/{country_id}": {
             "get": {
                 "tags": [
@@ -3151,6 +2707,113 @@
                     },
                     "404": {
                         "description": "Listing not found"
+                    }
+                }
+            }
+        },
+        "/api/listings": {
+            "get": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Get all listings with pagination",
+                "operationId": "8f9a3e0af2ef4de078f651d773cbefbb",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated list of listings",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "title": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "price": {
+                                                        "type": "number"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "city": {
+                                                        "type": "string"
+                                                    },
+                                                    "country": {
+                                                        "type": "string"
+                                                    },
+                                                    "images": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "wishlist": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "category_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "motorcycle": {
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    },
+                                                    "license_plate": {
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -6080,6 +5743,31 @@
                             }
                         },
                         "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "LicensePlate": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "listing_id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "plate_format_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "country_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "city_id": {
+                        "type": "integer",
+                        "example": 5
                     }
                 },
                 "type": "object"

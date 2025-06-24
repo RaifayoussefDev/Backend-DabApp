@@ -1,25 +1,21 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LicensePlate extends Model
 {
     protected $fillable = [
         'listing_id',
-        'characters',
         'country_id',
         'type_id',
         'color_id',
-        'digits_count',
-        'first_letter',
-        'second_letter',
-        'third_letter',
-        'numbers',
         'city_id',
+        'plate_format_id',
     ];
+
 
     public function listing(): BelongsTo
     {
@@ -40,20 +36,20 @@ class LicensePlate extends Model
     {
         return $this->belongsTo(PlateColor::class, 'color_id');
     }
+
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);
     }
 
-    public function format()
+    public function format(): BelongsTo
     {
         return $this->belongsTo(PlateFormat::class, 'plate_format_id');
     }
 
-    public function fieldValues()
+    public function fieldValues(): HasMany
     {
-        return $this->hasMany(PlateFormatField::class);
+        return $this->hasMany(LicensePlateValue::class);
     }
-
-
 }
+

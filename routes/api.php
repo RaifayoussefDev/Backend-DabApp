@@ -199,6 +199,8 @@ Route::post('/license-plates', [LicensePlateController::class, 'store']);
 
 
 Route::get('/license-plates/{id}/formatted', [LicensePlateController::class, 'showFormatted']);
+Route::get('/license-plates', [LicensePlateController::class, 'index']);
+Route::get('/license-plates/{id}', [LicensePlateController::class, 'show']);
 
 
 
