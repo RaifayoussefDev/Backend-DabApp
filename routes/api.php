@@ -217,3 +217,4 @@ Route::get('/countries/{countryId}/plate-formats', [LicensePlateController::clas
 
 // Route existante (pour référence)
 Route::get('/license-plates/{id}/formatted', [LicensePlateController::class, 'showFormatted']);
+    
