@@ -35,349 +35,129 @@ class ListingController extends Controller
     /**
  * @OA\Post(
  *     path="/api/listings/motorcycle",
- *     summary="Créer une annonce moto",
- *     description="Endpoint pour créer une nouvelle annonce de moto",
- *     tags={"Listings - Motorcycles"},
+ *     summary="Créer une annonce de moto",
+ *     tags={"Listings"},
  *     security={{"bearerAuth":{}}},
  *     @OA\RequestBody(
  *         required=true,
- *         description="Données de l'annonce moto",
- *         @OA\MediaType(
- *             mediaType="application/json",
- *             @OA\Schema(
- *                 required={"title", "description", "price", "category_id", "brand_id", "model_id", "year_id"},
- *                 @OA\Property(property="category_id", type="integer", example=1, description="ID de la catégorie (1 pour moto)"),
- *                 @OA\Property(property="title", type="string", maxLength=255, example="Yamaha MT-07 2020"),
- *                 @OA\Property(property="description", type="string", example="Moto bien entretenue, révisée récemment"),
- *                 @OA\Property(property="price", type="number", format="float", example=5000.00),
- *                 @OA\Property(property="brand_id", type="integer", example=1, description="ID de la marque"),
- *                 @OA\Property(property="model_id", type="integer", example=2, description="ID du modèle"),
- *                 @OA\Property(property="year_id", type="integer", example=2020, description="Année de fabrication"),
- *                 @OA\Property(property="country_id", type="integer", example=1, description="ID du pays"),
- *                 @OA\Property(property="city_id", type="integer", example=10, description="ID de la ville"),
- *                 @OA\Property(property="engine", type="string", example="689cc", description="Cylindrée du moteur"),
- *                 @OA\Property(property="mileage", type="integer", example=15000, description="Kilométrage"),
- *                 @OA\Property(property="body_condition", type="string", enum={"excellent", "good", "fair", "poor"}, example="good", description="État de la carrosserie"),
- *                 @OA\Property(property="modified", type="boolean", example=false, description="Moto modifiée"),
- *                 @OA\Property(property="insurance", type="boolean", example=true, description="Assurance active"),
- *                 @OA\Property(property="general_condition", type="string", enum={"excellent", "good", "fair", "poor"}, example="good", description="État général"),
- *                 @OA\Property(property="vehicle_care", type="string", example="Entretien régulier chez concessionnaire", description="Historique d'entretien"),
- *                 @OA\Property(property="transmission", type="string", enum={"manual", "automatic", "semi-automatic"}, example="manual", description="Type de transmission"),
- *                 @OA\Property(property="auction_enabled", type="boolean", example=false, description="Activer les enchères"),
- *                 @OA\Property(property="minimum_bid", type="number", format="float", example=4500.00, description="Enchère minimum (si auction_enabled=true)"),
- *                 @OA\Property(property="allow_submission", type="boolean", example=false, description="Autoriser les soumissions"),
- *                 @OA\Property(property="listing_type_id", type="integer", example=1, description="Type d'annonce"),
- *                 @OA\Property(property="contacting_channel", type="string", example="phone", description="Canal de contact préféré"),
- *                 @OA\Property(property="seller_type", type="string", enum={"individual", "dealer"}, example="individual", description="Type de vendeur"),
- *                 @OA\Property(
- *                     property="images",
- *                     type="array",
- *                     description="URLs des images de la moto",
- *                     @OA\Items(type="string", format="url", example="https://example.com/image1.jpg")
- *                 )
- *             )
+ *         @OA\JsonContent(
+ *             required={"title", "description", "price", "category_id", "brand_id", "model_id", "year_id"},
+ *             @OA\Property(property="category_id", type="integer", example=1, description="Doit être 1 pour moto"),
+ *             @OA\Property(property="title", type="string", example="Yamaha MT-07"),
+ *             @OA\Property(property="description", type="string", example="Moto bien entretenue"),
+ *             @OA\Property(property="price", type="number", format="float", example=5000),
+ *             @OA\Property(property="country_id", type="integer", example=1),
+ *             @OA\Property(property="city_id", type="integer", example=10),
+ *             @OA\Property(property="auction_enabled", type="boolean", example=false),
+ *             @OA\Property(property="minimum_bid", type="number", example=null),
+ *             @OA\Property(property="allow_submission", type="boolean", example=false),
+ *             @OA\Property(property="listing_type_id", type="integer", example=1),
+ *             @OA\Property(property="contacting_channel", type="string", example="phone"),
+ *             @OA\Property(property="seller_type", type="string", example="owner"),
+ *             @OA\Property(property="images", type="array", @OA\Items(type="string", format="binary")),
+ *             @OA\Property(property="brand_id", type="integer", example=1),
+ *             @OA\Property(property="model_id", type="integer", example=2),
+ *             @OA\Property(property="year_id", type="integer", example=2020),
+ *             @OA\Property(property="type_id", type="integer", example=3),
+ *             @OA\Property(property="engine", type="string", example="700cc"),
+ *             @OA\Property(property="mileage", type="integer", example=15000),
+ *             @OA\Property(property="body_condition", type="string", example="Good"),
+ *             @OA\Property(property="modified", type="boolean", example=false),
+ *             @OA\Property(property="insurance", type="boolean", example=true),
+ *             @OA\Property(property="general_condition", type="string", example="Excellent"),
+ *             @OA\Property(property="vehicle_care", type="string", example="Regular maintenance"),
+ *             @OA\Property(property="transmission", type="string", example="Manual")
  *         )
  *     ),
  *     @OA\Response(
  *         response=201,
- *         description="Annonce moto créée avec succès",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Motorcycle listing created successfully"),
- *             @OA\Property(
- *                 property="data",
- *                 type="object",
- *                 @OA\Property(property="listing", ref="#/components/schemas/Listing"),
- *                 @OA\Property(property="motorcycle", ref="#/components/schemas/Motorcycle")
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=401,
- *         description="Non autorisé",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Unauthorized. User must be logged in to create a listing.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=422,
- *         description="Erreur de validation",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Invalid model_id: Model not found."),
- *             @OA\Property(property="errors", type="object")
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Erreur serveur",
- *         @OA\JsonContent(
- *             @OA\Property(property="error", type="string", example="Failed to create listing"),
- *             @OA\Property(property="details", type="string")
- *         )
+ *         description="Annonce de moto créée avec succès"
  *     )
  * )
- */
-
-/**
+ *
  * @OA\Post(
- *     path="/api/listings/spare-parts",
- *     summary="Créer une annonce pièce détachée",
- *     description="Endpoint pour créer une nouvelle annonce de pièce détachée",
- *     tags={"Listings - Spare Parts"},
+ *     path="/api/listings/spare-part",
+ *     summary="Créer une annonce de pièce détachée",
+ *     tags={"Listings"},
  *     security={{"bearerAuth":{}}},
  *     @OA\RequestBody(
  *         required=true,
- *         description="Données de l'annonce pièce détachée",
- *         @OA\MediaType(
- *             mediaType="application/json",
- *             @OA\Schema(
- *                 required={"title", "description", "price", "category_id", "condition"},
- *                 @OA\Property(property="category_id", type="integer", example=2, description="ID de la catégorie (2 pour pièces détachées)"),
- *                 @OA\Property(property="title", type="string", maxLength=255, example="Freins avant Yamaha MT-07"),
- *                 @OA\Property(property="description", type="string", example="Freins avant d'origine, peu utilisés"),
- *                 @OA\Property(property="price", type="number", format="float", example=150.00),
- *                 @OA\Property(property="condition", type="string", enum={"new", "used", "refurbished"}, example="used", description="État de la pièce"),
- *                 @OA\Property(property="country_id", type="integer", example=1, description="ID du pays"),
- *                 @OA\Property(property="city_id", type="integer", example=10, description="ID de la ville"),
- *                 @OA\Property(property="bike_part_brand_id", type="integer", example=5, description="ID de la marque de la pièce"),
- *                 @OA\Property(property="bike_part_category_id", type="integer", example=3, description="ID de la catégorie de pièce"),
- *                 @OA\Property(property="auction_enabled", type="boolean", example=false, description="Activer les enchères"),
- *                 @OA\Property(property="minimum_bid", type="number", format="float", example=100.00, description="Enchère minimum (si auction_enabled=true)"),
- *                 @OA\Property(property="allow_submission", type="boolean", example=false, description="Autoriser les soumissions"),
- *                 @OA\Property(property="listing_type_id", type="integer", example=1, description="Type d'annonce"),
- *                 @OA\Property(property="contacting_channel", type="string", example="whatsapp", description="Canal de contact préféré"),
- *                 @OA\Property(property="seller_type", type="string", enum={"individual", "dealer"}, example="individual", description="Type de vendeur"),
- *                 @OA\Property(
- *                     property="motorcycles",
- *                     type="array",
- *                     description="Motos compatibles avec cette pièce",
- *                     @OA\Items(
- *                         type="object",
- *                         required={"brand_id", "model_id", "year_id"},
- *                         @OA\Property(property="brand_id", type="integer", example=1, description="ID de la marque moto"),
- *                         @OA\Property(property="model_id", type="integer", example=2, description="ID du modèle moto"),
- *                         @OA\Property(property="year_id", type="integer", example=2020, description="Année moto")
- *                     )
- *                 ),
- *                 @OA\Property(
- *                     property="images",
- *                     type="array",
- *                     description="URLs des images de la pièce",
- *                     @OA\Items(type="string", format="url", example="https://example.com/spare-part1.jpg")
+ *         @OA\JsonContent(
+ *             required={"title", "description", "price", "category_id", "condition"},
+ *             @OA\Property(property="category_id", type="integer", example=2, description="Doit être 2 pour pièce détachée"),
+ *             @OA\Property(property="title", type="string", example="Pneu arrière"),
+ *             @OA\Property(property="description", type="string", example="Pneu en bon état"),
+ *             @OA\Property(property="price", type="number", format="float", example=200),
+ *             @OA\Property(property="country_id", type="integer", example=1),
+ *             @OA\Property(property="city_id", type="integer", example=5),
+ *             @OA\Property(property="auction_enabled", type="boolean", example=false),
+ *             @OA\Property(property="minimum_bid", type="number", example=null),
+ *             @OA\Property(property="allow_submission", type="boolean", example=false),
+ *             @OA\Property(property="listing_type_id", type="integer", example=2),
+ *             @OA\Property(property="contacting_channel", type="string", example="email"),
+ *             @OA\Property(property="seller_type", type="string", example="dealer"),
+ *             @OA\Property(property="images", type="array", @OA\Items(type="string", format="binary")),
+ *             @OA\Property(property="condition", type="string", example="used"),
+ *             @OA\Property(
+ *                 property="motorcycles",
+ *                 type="array",
+ *                 @OA\Items(
+ *                     type="object",
+ *                     required={"brand_id", "model_id", "year_id"},
+ *                     @OA\Property(property="brand_id", type="integer", example=1),
+ *                     @OA\Property(property="model_id", type="integer", example=2),
+ *                     @OA\Property(property="year_id", type="integer", example=2020)
  *                 )
  *             )
  *         )
  *     ),
  *     @OA\Response(
  *         response=201,
- *         description="Annonce pièce détachée créée avec succès",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Spare part listing created successfully"),
- *             @OA\Property(
- *                 property="data",
- *                 type="object",
- *                 @OA\Property(property="listing", ref="#/components/schemas/Listing"),
- *                 @OA\Property(property="spare_part", ref="#/components/schemas/SparePart")
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=401,
- *         description="Non autorisé",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Unauthorized. User must be logged in to create a listing.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=422,
- *         description="Erreur de validation",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Les données fournies sont invalides"),
- *             @OA\Property(property="errors", type="object")
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Erreur serveur",
- *         @OA\JsonContent(
- *             @OA\Property(property="error", type="string", example="Failed to create listing"),
- *             @OA\Property(property="details", type="string")
- *         )
+ *         description="Annonce de pièce détachée créée avec succès"
  *     )
  * )
- */
-
-/**
+ *
  * @OA\Post(
- *     path="/api/listings/license-plates",
- *     summary="Créer une annonce plaque d'immatriculation",
- *     description="Endpoint pour créer une nouvelle annonce de plaque d'immatriculation avec format dynamique",
- *     tags={"Listings - License Plates"},
+ *     path="/api/listings/license-plate",
+ *     summary="Créer une annonce de plaque d'immatriculation",
+ *     tags={"Listings"},
  *     security={{"bearerAuth":{}}},
  *     @OA\RequestBody(
  *         required=true,
- *         description="Données de l'annonce plaque d'immatriculation",
- *         @OA\MediaType(
- *             mediaType="application/json",
- *             @OA\Schema(
- *                 required={"title", "description", "price", "category_id", "plate_format_id", "country_id_lp", "fields"},
- *                 @OA\Property(property="category_id", type="integer", example=3, description="ID de la catégorie (3 pour plaques)"),
- *                 @OA\Property(property="title", type="string", maxLength=255, example="Plaque VIP 12345"),
- *                 @OA\Property(property="description", type="string", example="Belle plaque avec numéros consécutifs"),
- *                 @OA\Property(property="price", type="number", format="float", example=2500.00),
- *                 @OA\Property(property="country_id", type="integer", example=1, description="ID du pays (annonce)"),
- *                 @OA\Property(property="city_id", type="integer", example=10, description="ID de la ville (annonce)"),
- *                 @OA\Property(property="plate_format_id", type="integer", example=1, description="ID du format de plaque"),
- *                 @OA\Property(property="country_id_lp", type="integer", example=1, description="ID du pays de la plaque"),
- *                 @OA\Property(property="city_id_lp", type="integer", example=5, description="ID de la ville de la plaque (optionnel)"),
- *                 @OA\Property(property="auction_enabled", type="boolean", example=false, description="Activer les enchères"),
- *                 @OA\Property(property="minimum_bid", type="number", format="float", example=2000.00, description="Enchère minimum (si auction_enabled=true)"),
- *                 @OA\Property(property="allow_submission", type="boolean", example=false, description="Autoriser les soumissions"),
- *                 @OA\Property(property="listing_type_id", type="integer", example=1, description="Type d'annonce"),
- *                 @OA\Property(property="contacting_channel", type="string", example="phone", description="Canal de contact préféré"),
- *                 @OA\Property(property="seller_type", type="string", enum={"individual", "dealer"}, example="individual", description="Type de vendeur"),
- *                 @OA\Property(
- *                     property="fields",
- *                     type="array",
- *                     description="Champs dynamiques selon le format de plaque",
- *                     minItems=1,
- *                     @OA\Items(
- *                         type="object",
- *                         required={"field_id", "value"},
- *                         @OA\Property(property="field_id", type="integer", example=1, description="ID du champ du format"),
- *                         @OA\Property(property="value", type="string", maxLength=255, example="12345", description="Valeur du champ")
- *                     ),
- *                     example={
- *                         {"field_id": 1, "value": "12345"},
- *                         {"field_id": 2, "value": "ABC"},
- *                         {"field_id": 3, "value": "MA"}
- *                     }
- *                 ),
- *                 @OA\Property(
- *                     property="images",
- *                     type="array",
- *                     description="URLs des images de la plaque",
- *                     @OA\Items(type="string", format="url", example="https://example.com/plate1.jpg")
+ *         @OA\JsonContent(
+ *             required={"title", "description", "price", "category_id", "plate_format_id", "country_id_lp", "fields"},
+ *             @OA\Property(property="category_id", type="integer", example=3, description="Doit être 3 pour plaque"),
+ *             @OA\Property(property="title", type="string", example="Plaque personnalisée"),
+ *             @OA\Property(property="description", type="string", example="Plaque ABC123 rouge"),
+ *             @OA\Property(property="price", type="number", format="float", example=800),
+ *             @OA\Property(property="country_id", type="integer", example=1),
+ *             @OA\Property(property="city_id", type="integer", example=8),
+ *             @OA\Property(property="auction_enabled", type="boolean", example=true),
+ *             @OA\Property(property="minimum_bid", type="number", example=500),
+ *             @OA\Property(property="allow_submission", type="boolean", example=true),
+ *             @OA\Property(property="listing_type_id", type="integer", example=3),
+ *             @OA\Property(property="contacting_channel", type="string", example="whatsapp"),
+ *             @OA\Property(property="seller_type", type="string", example="owner"),
+ *             @OA\Property(property="images", type="array", @OA\Items(type="string", format="binary")),
+ *             @OA\Property(property="plate_format_id", type="integer", example=1),
+ *             @OA\Property(property="country_id_lp", type="integer", example=1),
+ *             @OA\Property(property="city_id_lp", type="integer", example=1),
+ *             @OA\Property(
+ *                 property="fields",
+ *                 type="array",
+ *                 @OA\Items(
+ *                     type="object",
+ *                     required={"field_id", "value"},
+ *                     @OA\Property(property="field_id", type="integer", example=1),
+ *                     @OA\Property(property="value", type="string", example="ABC123")
  *                 )
  *             )
  *         )
  *     ),
  *     @OA\Response(
  *         response=201,
- *         description="Annonce plaque d'immatriculation créée avec succès",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="License plate listing created successfully"),
- *             @OA\Property(
- *                 property="data",
- *                 type="object",
- *                 @OA\Property(property="listing", ref="#/components/schemas/Listing"),
- *                 @OA\Property(property="license_plate", ref="#/components/schemas/LicensePlate")
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=401,
- *         description="Non autorisé",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Unauthorized. User must be logged in to create a listing.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=422,
- *         description="Erreur de validation",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Validation error"),
- *             @OA\Property(
- *                 property="errors",
- *                 type="object",
- *                 example={
- *                     "plate_format_id": {"The selected plate format id is invalid."},
- *                     "fields.0.field_id": {"The selected fields.0.field id is invalid."},
- *                     "fields.1.value": {"The fields.1.value field is required."}
- *                 }
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Erreur serveur",
- *         @OA\JsonContent(
- *             @OA\Property(property="error", type="string", example="Failed to create listing"),
- *             @OA\Property(property="details", type="string")
- *         )
+ *         description="Annonce de plaque d'immatriculation créée avec succès"
  *     )
- * )
- */
-
-/**
- * Schémas de données pour les réponses
- */
-
-/**
- * @OA\Schema(
- *     schema="Listing",
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="title", type="string", example="Yamaha MT-07 2020"),
- *     @OA\Property(property="description", type="string", example="Moto bien entretenue"),
- *     @OA\Property(property="price", type="number", format="float", example=5000.00),
- *     @OA\Property(property="seller_id", type="integer", example=123),
- *     @OA\Property(property="category_id", type="integer", example=1),
- *     @OA\Property(property="country_id", type="integer", example=1),
- *     @OA\Property(property="city_id", type="integer", example=10),
- *     @OA\Property(property="status", type="string", example="active"),
- *     @OA\Property(property="auction_enabled", type="boolean", example=false),
- *     @OA\Property(property="minimum_bid", type="number", format="float", example=4500.00),
- *     @OA\Property(property="allow_submission", type="boolean", example=false),
- *     @OA\Property(property="listing_type_id", type="integer", example=1),
- *     @OA\Property(property="contacting_channel", type="string", example="phone"),
- *     @OA\Property(property="seller_type", type="string", example="individual"),
- *     @OA\Property(property="created_at", type="string", format="date-time"),
- *     @OA\Property(property="updated_at", type="string", format="date-time")
- * )
- */
-
-/**
- * @OA\Schema(
- *     schema="Motorcycle",
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="listing_id", type="integer", example=1),
- *     @OA\Property(property="brand_id", type="integer", example=1),
- *     @OA\Property(property="model_id", type="integer", example=2),
- *     @OA\Property(property="year_id", type="integer", example=2020),
- *     @OA\Property(property="type_id", type="integer", example=1),
- *     @OA\Property(property="engine", type="string", example="689cc"),
- *     @OA\Property(property="mileage", type="integer", example=15000),
- *     @OA\Property(property="body_condition", type="string", example="good"),
- *     @OA\Property(property="modified", type="boolean", example=false),
- *     @OA\Property(property="insurance", type="boolean", example=true),
- *     @OA\Property(property="general_condition", type="string", example="good"),
- *     @OA\Property(property="vehicle_care", type="string", example="Entretien régulier"),
- *     @OA\Property(property="transmission", type="string", example="manual")
- * )
- */
-
-/**
- * @OA\Schema(
- *     schema="SparePart",
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="listing_id", type="integer", example=2),
- *     @OA\Property(property="condition", type="string", example="used"),
- *     @OA\Property(property="bike_part_brand_id", type="integer", example=5),
- *     @OA\Property(property="bike_part_category_id", type="integer", example=3)
- * )
- */
-
-/**
- * @OA\Schema(
- *     schema="LicensePlate",
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="listing_id", type="integer", example=3),
- *     @OA\Property(property="plate_format_id", type="integer", example=1),
- *     @OA\Property(property="country_id", type="integer", example=1),
- *     @OA\Property(property="city_id", type="integer", example=5)
  * )
  */
 

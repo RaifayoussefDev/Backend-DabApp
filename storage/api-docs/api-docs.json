@@ -2219,6 +2219,930 @@
                 }
             }
         },
+        "/api/license-plates": {
+            "get": {
+                "tags": [
+                    "License Plates"
+                ],
+                "summary": "Get all license plates",
+                "description": "Retrieve a list of all license plates with their related data",
+                "operationId": "17f8fcb33c12ef3bcfa787325a5b56d7",
+                "responses": {
+                    "200": {
+                        "description": "List of license plates retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "license_plates": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "listing_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "country_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "city_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "plate_format_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "city": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Paris"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "format": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Standard Format"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "field_values": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "field_value": {
+                                                                    "type": "string",
+                                                                    "example": "ABC123"
+                                                                },
+                                                                "format_field": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "field_name": {
+                                                                            "type": "string",
+                                                                            "example": "Number"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "License Plates"
+                ],
+                "summary": "Create a new license plate",
+                "description": "Creates a new license plate with associated field values",
+                "operationId": "f826ff53cd0009627bea89feeadf1275",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "listing_id",
+                                    "country_id",
+                                    "city_id",
+                                    "plate_format_id",
+                                    "fields"
+                                ],
+                                "properties": {
+                                    "listing_id": {
+                                        "description": "ID of the listing",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "country_id": {
+                                        "description": "ID of the country",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "city_id": {
+                                        "description": "ID of the city",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "plate_format_id": {
+                                        "description": "ID of the plate format",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "fields": {
+                                        "description": "Array of field values",
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "field_id": {
+                                                    "description": "ID of the format field",
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "value": {
+                                                    "description": "Value for the field",
+                                                    "type": "string",
+                                                    "example": "ABC123"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "License plate created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "License plate created successfully"
+                                        },
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "errors": {
+                                            "description": "Validation errors",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "description": "Error message",
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/license-plates/{id}": {
+            "get": {
+                "tags": [
+                    "License Plates"
+                ],
+                "summary": "Get a specific license plate",
+                "description": "Retrieve a specific license plate by ID with its related data",
+                "operationId": "a3b07dd2f4ad5fb27642435eab0a7bca",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "License plate ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "License plate retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "license_plate": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "listing_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "country_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "city_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "plate_format_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "city": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Paris"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "format": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Standard Format"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "field_values": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "field_value": {
+                                                                "type": "string",
+                                                                "example": "ABC123"
+                                                            },
+                                                            "format_field": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "field_name": {
+                                                                        "type": "string",
+                                                                        "example": "Number"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "License plate not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No query results for model"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cities/{cityId}/plate-formats/details": {
+            "get": {
+                "tags": [
+                    "License Plates"
+                ],
+                "summary": "Get plate formats by city with details",
+                "description": "Retrieve all plate formats for a specific city with detailed field information",
+                "operationId": "533d0edacc234e51c994ede55bfcc95d",
+                "parameters": [
+                    {
+                        "name": "cityId",
+                        "in": "path",
+                        "description": "City ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Plate formats retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "city": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Paris"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "formats": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Standard Format"
+                                                    },
+                                                    "country": {
+                                                        "type": "string",
+                                                        "example": "France"
+                                                    },
+                                                    "background_color": {
+                                                        "type": "string",
+                                                        "example": "#FFFFFF"
+                                                    },
+                                                    "text_color": {
+                                                        "type": "string",
+                                                        "example": "#000000"
+                                                    },
+                                                    "width_mm": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 520
+                                                    },
+                                                    "height_mm": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 110
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Standard French license plate"
+                                                    },
+                                                    "fields_count": {
+                                                        "type": "integer",
+                                                        "example": 3
+                                                    },
+                                                    "fields": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "field_name": {
+                                                                    "type": "string",
+                                                                    "example": "Letters"
+                                                                },
+                                                                "position": {
+                                                                    "type": "string",
+                                                                    "example": "left"
+                                                                },
+                                                                "character_type": {
+                                                                    "type": "string",
+                                                                    "example": "alphabetic"
+                                                                },
+                                                                "writing_system": {
+                                                                    "type": "string",
+                                                                    "example": "latin"
+                                                                },
+                                                                "min_length": {
+                                                                    "type": "integer",
+                                                                    "example": 2
+                                                                },
+                                                                "max_length": {
+                                                                    "type": "integer",
+                                                                    "example": 3
+                                                                },
+                                                                "is_required": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                },
+                                                                "validation_pattern": {
+                                                                    "type": "string",
+                                                                    "example": "^[A-Z]{2,3}$"
+                                                                },
+                                                                "font_size": {
+                                                                    "type": "integer",
+                                                                    "example": 12
+                                                                },
+                                                                "is_bold": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                },
+                                                                "display_order": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "City not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No query results for model"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/listings/motorcycle": {
+            "post": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Créer une annonce de moto",
+                "operationId": "82e466deecdfc7f046318f30b8399c74",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "description",
+                                    "price",
+                                    "category_id",
+                                    "brand_id",
+                                    "model_id",
+                                    "year_id"
+                                ],
+                                "properties": {
+                                    "category_id": {
+                                        "description": "Doit être 1 pour moto",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Yamaha MT-07"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Moto bien entretenue"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 5000
+                                    },
+                                    "country_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "auction_enabled": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "minimum_bid": {
+                                        "type": "number",
+                                        "example": null
+                                    },
+                                    "allow_submission": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "listing_type_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "contacting_channel": {
+                                        "type": "string",
+                                        "example": "phone"
+                                    },
+                                    "seller_type": {
+                                        "type": "string",
+                                        "example": "owner"
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    },
+                                    "brand_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "model_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "year_id": {
+                                        "type": "integer",
+                                        "example": 2020
+                                    },
+                                    "type_id": {
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "engine": {
+                                        "type": "string",
+                                        "example": "700cc"
+                                    },
+                                    "mileage": {
+                                        "type": "integer",
+                                        "example": 15000
+                                    },
+                                    "body_condition": {
+                                        "type": "string",
+                                        "example": "Good"
+                                    },
+                                    "modified": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "insurance": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "general_condition": {
+                                        "type": "string",
+                                        "example": "Excellent"
+                                    },
+                                    "vehicle_care": {
+                                        "type": "string",
+                                        "example": "Regular maintenance"
+                                    },
+                                    "transmission": {
+                                        "type": "string",
+                                        "example": "Manual"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Annonce de moto créée avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/listings/spare-part": {
+            "post": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Créer une annonce de pièce détachée",
+                "operationId": "e7bd91a7a7d7d7e0ab2c539cc2348a62",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "description",
+                                    "price",
+                                    "category_id",
+                                    "condition"
+                                ],
+                                "properties": {
+                                    "category_id": {
+                                        "description": "Doit être 2 pour pièce détachée",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Pneu arrière"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Pneu en bon état"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 200
+                                    },
+                                    "country_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 5
+                                    },
+                                    "auction_enabled": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "minimum_bid": {
+                                        "type": "number",
+                                        "example": null
+                                    },
+                                    "allow_submission": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "listing_type_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "contacting_channel": {
+                                        "type": "string",
+                                        "example": "email"
+                                    },
+                                    "seller_type": {
+                                        "type": "string",
+                                        "example": "dealer"
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    },
+                                    "condition": {
+                                        "type": "string",
+                                        "example": "used"
+                                    },
+                                    "motorcycles": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "brand_id",
+                                                "model_id",
+                                                "year_id"
+                                            ],
+                                            "properties": {
+                                                "brand_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "model_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "year_id": {
+                                                    "type": "integer",
+                                                    "example": 2020
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Annonce de pièce détachée créée avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/listings/license-plate": {
+            "post": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Créer une annonce de plaque d'immatriculation",
+                "operationId": "fd028dfaaee30bf948a3880d3acb1632",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "description",
+                                    "price",
+                                    "category_id",
+                                    "plate_format_id",
+                                    "country_id_lp",
+                                    "fields"
+                                ],
+                                "properties": {
+                                    "category_id": {
+                                        "description": "Doit être 3 pour plaque",
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Plaque personnalisée"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Plaque ABC123 rouge"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 800
+                                    },
+                                    "country_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 8
+                                    },
+                                    "auction_enabled": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "minimum_bid": {
+                                        "type": "number",
+                                        "example": 500
+                                    },
+                                    "allow_submission": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "listing_type_id": {
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "contacting_channel": {
+                                        "type": "string",
+                                        "example": "whatsapp"
+                                    },
+                                    "seller_type": {
+                                        "type": "string",
+                                        "example": "owner"
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    },
+                                    "plate_format_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "country_id_lp": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "city_id_lp": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "fields": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "field_id",
+                                                "value"
+                                            ],
+                                            "properties": {
+                                                "field_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "value": {
+                                                    "type": "string",
+                                                    "example": "ABC123"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Annonce de plaque d'immatriculation créée avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/listings/country/{country_id}": {
             "get": {
                 "tags": [
@@ -5747,31 +6671,6 @@
                 },
                 "type": "object"
             },
-            "LicensePlate": {
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "listing_id": {
-                        "type": "integer",
-                        "example": 3
-                    },
-                    "plate_format_id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "country_id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "city_id": {
-                        "type": "integer",
-                        "example": 5
-                    }
-                },
-                "type": "object"
-            },
             "Submission": {
                 "properties": {
                     "id": {
@@ -5844,6 +6743,10 @@
         {
             "name": "Bike Part Brands",
             "description": "API Endpoints for managing bike part brands"
+        },
+        {
+            "name": "License Plates",
+            "description": "API endpoints for managing license plates"
         },
         {
             "name": "Motorcycle Brands"

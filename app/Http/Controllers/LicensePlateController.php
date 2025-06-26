@@ -3,16 +3,71 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\City;
 use App\Models\LicensePlate;
 use App\Models\LicensePlateValue;
+use App\Models\City;
 use App\Models\PlateFormat;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
+/**
+ * @OA\Tag(
+ *     name="License Plates",
+ *     description="API endpoints for managing license plates"
+ * )
+ */
 class LicensePlateController extends Controller
 {
+    /**
+     * @OA\Post(
+     *     path="/api/license-plates",
+     *     tags={"License Plates"},
+     *     summary="Create a new license plate",
+     *     description="Creates a new license plate with associated field values",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"listing_id", "country_id", "city_id", "plate_format_id", "fields"},
+     *             @OA\Property(property="listing_id", type="integer", example=1, description="ID of the listing"),
+     *             @OA\Property(property="country_id", type="integer", example=1, description="ID of the country"),
+     *             @OA\Property(property="city_id", type="integer", example=1, description="ID of the city"),
+     *             @OA\Property(property="plate_format_id", type="integer", example=1, description="ID of the plate format"),
+     *             @OA\Property(
+     *                 property="fields",
+     *                 type="array",
+     *                 description="Array of field values",
+     *                 @OA\Items(
+     *                     @OA\Property(property="field_id", type="integer", example=1, description="ID of the format field"),
+     *                     @OA\Property(property="value", type="string", example="ABC123", description="Value for the field")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="License plate created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="License plate created successfully"),
+     *             @OA\Property(property="id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="errors", type="object", description="Validation errors")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", description="Error message")
+     *         )
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -54,6 +109,57 @@ class LicensePlateController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/license-plates",
+     *     tags={"License Plates"},
+     *     summary="Get all license plates",
+     *     description="Retrieve a list of all license plates with their related data",
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of license plates retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="license_plates",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="listing_id", type="integer", example=1),
+     *                     @OA\Property(property="country_id", type="integer", example=1),
+     *                     @OA\Property(property="city_id", type="integer", example=1),
+     *                     @OA\Property(property="plate_format_id", type="integer", example=1),
+     *                     @OA\Property(
+     *                         property="city",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="name", type="string", example="Paris")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="format",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="name", type="string", example="Standard Format")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="field_values",
+     *                         type="array",
+     *                         @OA\Items(
+     *                             @OA\Property(property="id", type="integer", example=1),
+     *                             @OA\Property(property="field_value", type="string", example="ABC123"),
+     *                             @OA\Property(
+     *                                 property="format_field",
+     *                                 type="object",
+     *                                 @OA\Property(property="id", type="integer", example=1),
+     *                                 @OA\Property(property="field_name", type="string", example="Number")
+     *                             )
+     *                         )
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
     public function index()
     {
         $plates = LicensePlate::with([
@@ -67,6 +173,69 @@ class LicensePlateController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/license-plates/{id}",
+     *     tags={"License Plates"},
+     *     summary="Get a specific license plate",
+     *     description="Retrieve a specific license plate by ID with its related data",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="License plate ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="License plate retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="license_plate",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="listing_id", type="integer", example=1),
+     *                 @OA\Property(property="country_id", type="integer", example=1),
+     *                 @OA\Property(property="city_id", type="integer", example=1),
+     *                 @OA\Property(property="plate_format_id", type="integer", example=1),
+     *                 @OA\Property(
+     *                     property="city",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Paris")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="format",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Standard Format")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="field_values",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="field_value", type="string", example="ABC123"),
+     *                         @OA\Property(
+     *                             property="format_field",
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=1),
+     *                             @OA\Property(property="field_name", type="string", example="Number")
+     *                         )
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="License plate not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="No query results for model")
+     *         )
+     *     )
+     * )
+     */
     public function show($id)
     {
         $plate = LicensePlate::with([
@@ -80,6 +249,73 @@ class LicensePlateController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/cities/{cityId}/plate-formats/details",
+     *     tags={"License Plates"},
+     *     summary="Get plate formats by city with details",
+     *     description="Retrieve all plate formats for a specific city with detailed field information",
+     *     @OA\Parameter(
+     *         name="cityId",
+     *         in="path",
+     *         required=true,
+     *         description="City ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Plate formats retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="city",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="Paris")
+     *             ),
+     *             @OA\Property(
+     *                 property="formats",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Standard Format"),
+     *                     @OA\Property(property="country", type="string", example="France"),
+     *                     @OA\Property(property="background_color", type="string", example="#FFFFFF"),
+     *                     @OA\Property(property="text_color", type="string", example="#000000"),
+     *                     @OA\Property(property="width_mm", type="number", format="float", example=520.0),
+     *                     @OA\Property(property="height_mm", type="number", format="float", example=110.0),
+     *                     @OA\Property(property="description", type="string", example="Standard French license plate"),
+     *                     @OA\Property(property="fields_count", type="integer", example=3),
+     *                     @OA\Property(
+     *                         property="fields",
+     *                         type="array",
+     *                         @OA\Items(
+     *                             @OA\Property(property="id", type="integer", example=1),
+     *                             @OA\Property(property="field_name", type="string", example="Letters"),
+     *                             @OA\Property(property="position", type="string", example="left"),
+     *                             @OA\Property(property="character_type", type="string", example="alphabetic"),
+     *                             @OA\Property(property="writing_system", type="string", example="latin"),
+     *                             @OA\Property(property="min_length", type="integer", example=2),
+     *                             @OA\Property(property="max_length", type="integer", example=3),
+     *                             @OA\Property(property="is_required", type="boolean", example=true),
+     *                             @OA\Property(property="validation_pattern", type="string", example="^[A-Z]{2,3}$"),
+     *                             @OA\Property(property="font_size", type="integer", example=12),
+     *                             @OA\Property(property="is_bold", type="boolean", example=true),
+     *                             @OA\Property(property="display_order", type="integer", example=1)
+     *                         )
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="City not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="No query results for model")
+     *         )
+     *     )
+     * )
+     */
     public function getFormatsByCityWithDetails($cityId)
     {
         // Récupérer la ville
