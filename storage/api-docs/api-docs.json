@@ -5226,6 +5226,147 @@
                 }
             }
         },
+        "/api/plate-formats": {
+            "post": {
+                "tags": [
+                    "Plate Formats"
+                ],
+                "summary": "Créer un nouveau format de plaque",
+                "operationId": "96c0503d8d665eea176686c34eb611a6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "country_id",
+                                    "fields"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Ajman Motorcycle Plate"
+                                    },
+                                    "country_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 13,
+                                        "nullable": true
+                                    },
+                                    "background_color": {
+                                        "type": "string",
+                                        "example": "#FFFFFF"
+                                    },
+                                    "text_color": {
+                                        "type": "string",
+                                        "example": "#000000"
+                                    },
+                                    "width_mm": {
+                                        "type": "integer",
+                                        "example": 250
+                                    },
+                                    "height_mm": {
+                                        "type": "integer",
+                                        "example": 130
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Plaque moto Ajman réelle : chiffres (1‑5) en haut centre, lettre latine en bas centre"
+                                    },
+                                    "fields": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "field_name",
+                                                "position",
+                                                "character_type",
+                                                "writing_system"
+                                            ],
+                                            "properties": {
+                                                "field_name": {
+                                                    "type": "string",
+                                                    "example": "number"
+                                                },
+                                                "position": {
+                                                    "type": "string",
+                                                    "example": "top-center"
+                                                },
+                                                "character_type": {
+                                                    "type": "string",
+                                                    "example": "digit"
+                                                },
+                                                "writing_system": {
+                                                    "type": "string",
+                                                    "example": "latin"
+                                                },
+                                                "min_length": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "max_length": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "font_size": {
+                                                    "type": "integer",
+                                                    "example": 14
+                                                },
+                                                "is_bold": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_required": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "display_order": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "validation_pattern": {
+                                                    "type": "string",
+                                                    "example": "^[0-9]+$"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Format créé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Format créé avec succès"
+                                        },
+                                        "format": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
         "/api/check-promo": {
             "post": {
                 "tags": [
@@ -6806,6 +6947,10 @@
         {
             "name": "Motorcycle",
             "description": "Motorcycle"
+        },
+        {
+            "name": "Plate Formats",
+            "description": "Plate Formats"
         },
         {
             "name": "Promo Codes",

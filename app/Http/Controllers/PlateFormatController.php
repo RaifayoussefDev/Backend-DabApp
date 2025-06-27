@@ -8,6 +8,58 @@ use Illuminate\Http\Request;
 
 class PlateFormatController extends Controller
 {
+        /**
+     * @OA\Post(
+     *     path="/api/plate-formats",
+     *     summary="Créer un nouveau format de plaque",
+     *     tags={"Plate Formats"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name", "country_id", "fields"},
+     *             @OA\Property(property="name", type="string", example="Ajman Motorcycle Plate"),
+     *             @OA\Property(property="country_id", type="integer", example=1),
+     *             @OA\Property(property="city_id", type="integer", nullable=true, example=13),
+     *             @OA\Property(property="background_color", type="string", example="#FFFFFF"),
+     *             @OA\Property(property="text_color", type="string", example="#000000"),
+     *             @OA\Property(property="width_mm", type="integer", example=250),
+     *             @OA\Property(property="height_mm", type="integer", example=130),
+     *             @OA\Property(property="description", type="string", example="Plaque moto Ajman réelle : chiffres (1‑5) en haut centre, lettre latine en bas centre"),
+     *             @OA\Property(
+     *                 property="fields",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     required={"field_name", "position", "character_type", "writing_system"},
+     *                     @OA\Property(property="field_name", type="string", example="number"),
+     *                     @OA\Property(property="position", type="string", example="top-center"),
+     *                     @OA\Property(property="character_type", type="string", example="digit"),
+     *                     @OA\Property(property="writing_system", type="string", example="latin"),
+     *                     @OA\Property(property="min_length", type="integer", example=1),
+     *                     @OA\Property(property="max_length", type="integer", example=5),
+     *                     @OA\Property(property="font_size", type="integer", example=14),
+     *                     @OA\Property(property="is_bold", type="boolean", example=true),
+     *                     @OA\Property(property="is_required", type="boolean", example=true),
+     *                     @OA\Property(property="display_order", type="integer", example=1),
+     *                     @OA\Property(property="validation_pattern", type="string", example="^[0-9]+$")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Format créé avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Format créé avec succès"),
+     *             @OA\Property(property="format", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erreur de validation"
+     *     )
+     * )
+     */
+
     public function store(Request $request)
     {
         $data = $request->validate([
