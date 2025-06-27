@@ -536,31 +536,115 @@ class ListingController extends Controller
     {
         $user = Auth::user();
 
-        $listings = Listing::with(['images', 'city', 'country'])
-            ->where('category_id', $category_id)
-            ->get()
-            ->map(function ($listing) use ($user) {
-                $isInWishlist = false;
+        $listings = Listing::with([
+            'images',
+            'city',
+            'country',
+            'motorcycle.brand',
+            'motorcycle.model',
+            'motorcycle.year',
+            'sparePart.bikePartBrand',
+            'sparePart.bikePartCategory',
+            'sparePart.motorcycleAssociations.brand',
+            'sparePart.motorcycleAssociations.model',
+            'sparePart.motorcycleAssociations.year',
+            'licensePlate.format',
+            'licensePlate.city',
+            'licensePlate.fieldValues.formatField'
+        ])
+        ->where('category_id', $category_id)
+        ->get()
+        ->map(function ($listing) use ($user) {
+            $isInWishlist = false;
 
-                if ($user) {
-                    $isInWishlist = DB::table('wishlists')
-                        ->where('user_id', $user->id)
-                        ->where('listing_id', $listing->id)
-                        ->exists();
-                }
+            if ($user) {
+                $isInWishlist = DB::table('wishlists')
+                    ->where('user_id', $user->id)
+                    ->where('listing_id', $listing->id)
+                    ->exists();
+            }
 
-                return [
-                    'id' => $listing->id,
-                    'title' => $listing->title,
-                    'description' => $listing->description,
-                    'price' => $listing->price,
-                    'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
-                    'city' => $listing->city?->name,
-                    'country' => $listing->country?->name,
-                    'images' => $listing->images->pluck('image_url'),
-                    'wishlist' => $isInWishlist,
+            // Base listing data
+            $listingData = [
+                'id' => $listing->id,
+                'title' => $listing->title,
+                'description' => $listing->description,
+                'price' => $listing->price,
+                'category_id' => $listing->category_id,
+                'auction_enabled' => $listing->auction_enabled,
+                'minimum_bid' => $listing->minimum_bid,
+                'allow_submission' => $listing->allow_submission,
+                'listing_type_id' => $listing->listing_type_id,
+                'contacting_channel' => $listing->contacting_channel,
+                'seller_type' => $listing->seller_type,
+                'status' => $listing->status,
+                'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
+                'city' => $listing->city?->name,
+                'country' => $listing->country?->name,
+                'images' => $listing->images->pluck('image_url'),
+                'wishlist' => $isInWishlist,
+            ];
+
+            // Category-specific data
+            if ($listing->category_id == 1 && $listing->motorcycle) {
+                // Motorcycle data
+                $listingData['motorcycle'] = [
+                    'brand' => $listing->motorcycle->brand?->name,
+                    'model' => $listing->motorcycle->model?->name,
+                    'year' => $listing->motorcycle->year?->year,
+                    'engine' => $listing->motorcycle->engine,
+                    'mileage' => $listing->motorcycle->mileage,
+                    'body_condition' => $listing->motorcycle->body_condition,
+                    'modified' => $listing->motorcycle->modified,
+                    'insurance' => $listing->motorcycle->insurance,
+                    'general_condition' => $listing->motorcycle->general_condition,
+                    'vehicle_care' => $listing->motorcycle->vehicle_care,
+                    'transmission' => $listing->motorcycle->transmission,
                 ];
-            });
+            } elseif ($listing->category_id == 2 && $listing->sparePart) {
+                // Spare part data
+                $listingData['spare_part'] = [
+                    'condition' => $listing->sparePart->condition,
+                    'brand' => $listing->sparePart->bikePartBrand?->name,
+                    'category' => $listing->sparePart->bikePartCategory?->name,
+                    'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
+                        return [
+                            'brand' => $association->brand?->name,
+                            'model' => $association->model?->name,
+                            'year' => $association->year?->year,
+                        ];
+                    }),
+                ];
+            } elseif ($listing->category_id == 3 && $listing->licensePlate) {
+                // License plate data with format and field values
+                $licensePlate = $listing->licensePlate;
+
+                $listingData['license_plate'] = [
+                    'plate_format' => [
+                        'id' => $licensePlate->format?->id,
+                        'name' => $licensePlate->format?->name,
+                        'pattern' => $licensePlate->format?->pattern,
+                        'country' => $licensePlate->format?->country,
+                    ],
+                    'city' => $licensePlate->city?->name,
+                    'country_id' => $licensePlate->country_id,
+                    'fields' => $licensePlate->fieldValues->map(function ($fieldValue) {
+                        return [
+                            'field_id' => $fieldValue->formatField?->id,
+                            'field_name' => $fieldValue->formatField?->field_name,
+                            'field_type' => $fieldValue->formatField?->field_type,
+                            'field_label' => $fieldValue->formatField?->field_label,
+                            'is_required' => $fieldValue->formatField?->is_required,
+                            'max_length' => $fieldValue->formatField?->max_length,
+                            'validation_pattern' => $fieldValue->formatField?->validation_pattern,
+                            'value' => $fieldValue->field_value,
+                        ];
+                    })->toArray(),
+                ];
+            }
+
+            return $listingData;
+        });
 
         return response()->json($listings);
     }
@@ -850,7 +934,23 @@ class ListingController extends Controller
     {
         $user = Auth::user();
 
-        $listing = Listing::with(['images', 'city', 'country', 'seller'])->find($id);
+        $listing = Listing::with([
+            'images',
+            'city',
+            'country',
+            'seller',
+            'motorcycle.brand',
+            'motorcycle.model',
+            'motorcycle.year',
+            'sparePart.bikePartBrand',
+            'sparePart.bikePartCategory',
+            'sparePart.motorcycleAssociations.brand',
+            'sparePart.motorcycleAssociations.model',
+            'sparePart.motorcycleAssociations.year',
+            'licensePlate.format',
+            'licensePlate.city',
+            'licensePlate.fieldValues.formatField'
+        ])->find($id);
 
         if (!$listing) {
             return response()->json(['message' => 'Listing not found'], 404);
@@ -875,6 +975,12 @@ class ListingController extends Controller
             'wishlist' => $isInWishlist,
             'category_id' => $listing->category_id,
             'allow_submission' => $listing->allow_submission,
+            'auction_enabled' => $listing->auction_enabled,
+            'minimum_bid' => $listing->minimum_bid,
+            'listing_type_id' => $listing->listing_type_id,
+            'contacting_channel' => $listing->contacting_channel,
+            'seller_type' => $listing->seller_type,
+            'status' => $listing->status,
         ];
 
         // Ajouter le prix seulement si allow_submission est false
@@ -913,67 +1019,62 @@ class ListingController extends Controller
             ];
         }
 
-        // If Motorcycle
-        if ($listing->category_id == 1) {
-            $motorcycle = Motorcycle::with(['brand', 'model', 'year', 'type'])
-                ->where('listing_id', $listing->id)
-                ->first();
+        // Category-specific data
+        if ($listing->category_id == 1 && $listing->motorcycle) {
+            // Motorcycle data
+            $data['motorcycle'] = [
+                'brand' => $listing->motorcycle->brand?->name,
+                'model' => $listing->motorcycle->model?->name,
+                'year' => $listing->motorcycle->year?->year,
+                'engine' => $listing->motorcycle->engine,
+                'mileage' => $listing->motorcycle->mileage,
+                'body_condition' => $listing->motorcycle->body_condition,
+                'modified' => $listing->motorcycle->modified,
+                'insurance' => $listing->motorcycle->insurance,
+                'general_condition' => $listing->motorcycle->general_condition,
+                'vehicle_care' => $listing->motorcycle->vehicle_care,
+                'transmission' => $listing->motorcycle->transmission,
+            ];
+        } elseif ($listing->category_id == 2 && $listing->sparePart) {
+            // Spare part data
+            $data['spare_part'] = [
+                'condition' => $listing->sparePart->condition,
+                'brand' => $listing->sparePart->bikePartBrand?->name,
+                'category' => $listing->sparePart->bikePartCategory?->name,
+                'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
+                    return [
+                        'brand' => $association->brand?->name,
+                        'model' => $association->model?->name,
+                        'year' => $association->year?->year,
+                    ];
+                }),
+            ];
+        } elseif ($listing->category_id == 3 && $listing->licensePlate) {
+            // License plate data with format and field values
+            $licensePlate = $listing->licensePlate;
 
-            if ($motorcycle) {
-                $data['motorcycle'] = [
-                    'engine' => $motorcycle->engine,
-                    'mileage' => $motorcycle->mileage,
-                    'body_condition' => $motorcycle->body_condition,
-                    'modified' => $motorcycle->modified,
-                    'insurance' => $motorcycle->insurance,
-                    'general_condition' => $motorcycle->general_condition,
-                    'vehicle_care' => $motorcycle->vehicle_care,
-                    'transmission' => $motorcycle->transmission,
-                    'brand' => $motorcycle->brand?->name,
-                    'model' => $motorcycle->model?->name,
-                    'year' => $motorcycle->year?->year,
-                    'type' => $motorcycle->type?->name,
-                ];
-            }
-        }
-
-        // If Spare Part
-        if ($listing->category_id == 2) {
-            $sparePart = SparePart::with(['bikePartBrand', 'bikePartCategory', 'motorcycleAssociations.brand', 'motorcycleAssociations.model', 'motorcycleAssociations.year'])
-                ->where('listing_id', $listing->id)
-                ->first();
-
-            if ($sparePart) {
-                $data['spare_part'] = [
-                    'condition' => $sparePart->condition,
-                    'bike_part_brand' => $sparePart->bikePartBrand?->name,
-                    'bike_part_category' => $sparePart->bikePartCategory?->name,
-                    'motorcycle_associations' => $sparePart->motorcycleAssociations->map(function ($association) {
-                        return [
-                            'brand' => $association->brand?->name,
-                            'model' => $association->model?->name,
-                            'year' => $association->year?->year,
-                        ];
-                    }),
-                ];
-            }
-        }
-
-        // If License Plate
-        if ($listing->category_id == 3) {
-            $plate = LicensePlate::with(['type', 'color'])
-                ->where('listing_id', $listing->id)
-                ->first();
-
-            if ($plate) {
-                $data['license_plate'] = [
-                    'characters' => $plate->characters,
-                    'digits_count' => $plate->digits_count,
-                    'country_id' => $plate->country_id,
-                    'type' => $plate->type?->name,
-                    'color' => $plate->color?->name,
-                ];
-            }
+            $data['license_plate'] = [
+                'plate_format' => [
+                    'id' => $licensePlate->format?->id,
+                    'name' => $licensePlate->format?->name,
+                    'pattern' => $licensePlate->format?->pattern,
+                    'country' => $licensePlate->format?->country,
+                ],
+                'city' => $licensePlate->city?->name,
+                'country_id' => $licensePlate->country_id,
+                'fields' => $licensePlate->fieldValues->map(function ($fieldValue) {
+                    return [
+                        'field_id' => $fieldValue->formatField?->id,
+                        'field_name' => $fieldValue->formatField?->field_name,
+                        'field_type' => $fieldValue->formatField?->field_type,
+                        'field_label' => $fieldValue->formatField?->field_label,
+                        'is_required' => $fieldValue->formatField?->is_required,
+                        'max_length' => $fieldValue->formatField?->max_length,
+                        'validation_pattern' => $fieldValue->formatField?->validation_pattern,
+                        'value' => $fieldValue->field_value,
+                    ];
+                })->toArray(),
+            ];
         }
 
         return response()->json($data);
