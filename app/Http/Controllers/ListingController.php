@@ -632,6 +632,7 @@ class ListingController extends Controller
                         return [
                             'field_id' => $fieldValue->formatField?->id,
                             'field_name' => $fieldValue->formatField?->field_name,
+                            'field_position' => $fieldValue->formatField?->position,
                             'field_type' => $fieldValue->formatField?->field_type,
                             'field_label' => $fieldValue->formatField?->field_label,
                             'is_required' => $fieldValue->formatField?->is_required,
