@@ -103,7 +103,7 @@ class PlateFormatController extends Controller
 
          if ($existingFormat) {
              return response()->json([
-                 'message' => 'Format already exists for this city with this name.',
+                 'message' => 'Format already exists for this city.',
                  'existing_format' => $existingFormat->load('fields')
              ], 409); // HTTP 409 Conflict
          }
