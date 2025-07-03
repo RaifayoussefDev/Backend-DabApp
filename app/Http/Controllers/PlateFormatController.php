@@ -99,7 +99,6 @@ class PlateFormatController extends Controller
 
          // 🚫 Vérifie si un format existe déjà pour cette ville (et éventuellement ce nom)
          $existingFormat = PlateFormat::where('city_id', $data['city_id'])
-             ->where('name', $data['name'])
              ->first();
 
          if ($existingFormat) {
