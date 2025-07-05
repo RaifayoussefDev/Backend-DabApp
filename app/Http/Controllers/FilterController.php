@@ -446,14 +446,20 @@ class FilterController extends Controller
             ->get()
             ->map(function ($listing) {
                 $plate = $listing->licensePlate;
-                $fields = [];
 
+                $fields = [];
                 if ($plate && $plate->fieldValues) {
                     foreach ($plate->fieldValues as $fv) {
                         $fields[] = [
+                            'field_id' => $fv->formatField->id ?? null,
                             'field_name' => $fv->formatField->field_name ?? null,
-                            'value' => $fv->field_value,
+                            'field_position' => $fv->formatField->field_position ?? null,
+                            'field_type' => $fv->formatField->field_type ?? null,
+                            'field_label' => $fv->formatField->field_label ?? null,
                             'is_required' => $fv->formatField->is_required ?? false,
+                            'max_length' => $fv->formatField->max_length ?? null,
+                            'validation_pattern' => $fv->formatField->validation_pattern ?? null,
+                            'value' => $fv->field_value,
                         ];
                     }
                 }
@@ -463,23 +469,39 @@ class FilterController extends Controller
                     'title' => $listing->title,
                     'description' => $listing->description,
                     'price' => $listing->price,
+                    'category_id' => $listing->category_id,
+                    'auction_enabled' => $listing->auction_enabled,
+                    'minimum_bid' => $listing->minimum_bid,
+                    'allow_submission' => $listing->allow_submission,
+                    'listing_type_id' => $listing->listing_type_id,
+                    'contacting_channel' => $listing->contacting_channel,
+                    'seller_type' => $listing->seller_type,
                     'status' => $listing->status,
                     'created_at' => $listing->created_at,
-                    'image' => $listing->images->first()->image_url ?? null,
-                    // Pays et ville du listing
-                    'listing_country' => $listing->country ? $listing->country->only('id', 'name', 'code') : null,
-                    'listing_city' => $listing->city ? $listing->city->only('id', 'name') : null,
-                    // Informations de la plaque d'immatriculation
+                    'city' => $listing->city?->name,
+                    'country' => $listing->country ? $listing->country->only('id', 'name', 'code') : null,
+                    'images' => $listing->images->map(fn($img) => $img->image_url)->toArray(),
+                    'wishlist' => false, // Placeholder – replace with real logic if needed
                     'license_plate' => [
-                        'id' => $plate->id ?? null,
-                        'format' => $plate && $plate->format ? $plate->format->only('id', 'name', 'description') : null,
-                        // Pays et ville de la plaque
-                        'plate_country' => $plate && $plate->country ? $plate->country->only('id', 'name', 'code') : null,
-                        'plate_city' => $plate && $plate->city ? $plate->city->only('id', 'name') : null,
+                        'plate_format' => $plate && $plate->format ? [
+                            'id' => $plate->format->id,
+                            'name' => $plate->format->name,
+                            'pattern' => $plate->format->pattern ?? null,
+                            'country' => $plate->country ? [
+                                'id' => $plate->country->id,
+                                'name' => $plate->country->name,
+                                'code' => $plate->country->code,
+                                'created_at' => $plate->country->created_at,
+                                'updated_at' => $plate->country->updated_at,
+                            ] : null,
+                        ] : null,
+                        'city' => $plate->city?->name,
+                        'country_id' => $plate->country_id,
                         'fields' => $fields,
                     ],
                 ];
             });
+
 
         return response()->json([
             'success' => true,
