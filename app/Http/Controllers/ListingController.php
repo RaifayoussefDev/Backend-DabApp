@@ -1582,4 +1582,6 @@ class ListingController extends Controller
             'bike_part_brands' => $bike_part_brands
         ]);
     }
+
+    
 }

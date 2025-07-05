@@ -2129,6 +2129,446 @@
                 }
             }
         },
+        "/api/filter/motorcycles": {
+            "get": {
+                "tags": [
+                    "Filters"
+                ],
+                "summary": "Filter motorcycles",
+                "description": "Filter motorcycles by price, brand, and condition",
+                "operationId": "filterMotorcycles",
+                "parameters": [
+                    {
+                        "name": "min_price",
+                        "in": "query",
+                        "description": "Minimum price filter",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float",
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "max_price",
+                        "in": "query",
+                        "description": "Maximum price filter",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float",
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "brands[]",
+                        "in": "query",
+                        "description": "Array of brand IDs to filter",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "condition",
+                        "in": "query",
+                        "description": "Motorcycle condition",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "new",
+                                "used",
+                                "excellent",
+                                "good",
+                                "fair",
+                                "poor"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "motorcycles": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "Honda CBR600RR"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Excellent condition motorcycle"
+                                                    },
+                                                    "price": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 8500
+                                                    },
+                                                    "image": {
+                                                        "type": "string",
+                                                        "format": "url",
+                                                        "example": "https://example.com/image.jpg",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/api/filter/spare-parts": {
+            "get": {
+                "tags": [
+                    "Filters"
+                ],
+                "summary": "Filter spare parts",
+                "description": "Filter spare parts by price, brand, category, and condition",
+                "operationId": "filterSpareParts",
+                "parameters": [
+                    {
+                        "name": "min_price",
+                        "in": "query",
+                        "description": "Minimum price filter",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float",
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "max_price",
+                        "in": "query",
+                        "description": "Maximum price filter",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float",
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "bike_part_brands[]",
+                        "in": "query",
+                        "description": "Array of bike part brand IDs to filter",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "bike_part_categories[]",
+                        "in": "query",
+                        "description": "Array of bike part category IDs to filter",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "condition",
+                        "in": "query",
+                        "description": "Spare part condition",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "new",
+                                "used",
+                                "excellent",
+                                "good",
+                                "fair",
+                                "poor"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "title": {
+                                                "type": "string",
+                                                "example": "Brake Pads Set"
+                                            },
+                                            "description": {
+                                                "type": "string",
+                                                "example": "High quality brake pads"
+                                            },
+                                            "price": {
+                                                "type": "number",
+                                                "format": "float",
+                                                "example": 45.99
+                                            },
+                                            "image": {
+                                                "type": "string",
+                                                "format": "url",
+                                                "example": "https://example.com/image.jpg",
+                                                "nullable": true
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/api/filter-license-plates": {
+            "get": {
+                "tags": [
+                    "Filters"
+                ],
+                "summary": "Filter license plates",
+                "description": "Filter license plates by price, country, city, format, and custom fields",
+                "operationId": "filterLicensePlates",
+                "parameters": [
+                    {
+                        "name": "min_price",
+                        "in": "query",
+                        "description": "Minimum price",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "max_price",
+                        "in": "query",
+                        "description": "Maximum price",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "listing_countries[]",
+                        "in": "query",
+                        "description": "Filter by listing countries",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "listing_cities[]",
+                        "in": "query",
+                        "description": "Filter by listing cities",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "plate_countries[]",
+                        "in": "query",
+                        "description": "Filter by plate countries",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "plate_cities[]",
+                        "in": "query",
+                        "description": "Filter by plate cities",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "plate_formats[]",
+                        "in": "query",
+                        "description": "Filter by plate format IDs",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "digits_counts[]",
+                        "in": "query",
+                        "description": "Filter by digit counts",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Filtered license plates",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 10
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/api/filter-options-license-plates": {
+            "get": {
+                "tags": [
+                    "Filters"
+                ],
+                "summary": "Get license plate filter options",
+                "description": "Returns available filter options (countries, cities, formats, fields, price range) for license plates",
+                "operationId": "getLicensePlateFilterOptions",
+                "responses": {
+                    "200": {
+                        "description": "Filter options retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "filter_options": {
+                                            "properties": {
+                                                "countries": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "cities": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "plate_formats": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "format_fields": {
+                                                    "type": "object"
+                                                },
+                                                "price_range": {
+                                                    "properties": {
+                                                        "min": {
+                                                            "type": "number",
+                                                            "example": 100
+                                                        },
+                                                        "max": {
+                                                            "type": "number",
+                                                            "example": 5000
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
         "/api/upload": {
             "post": {
                 "tags": [
@@ -6884,6 +7324,10 @@
         {
             "name": "Bike Part Brands",
             "description": "API Endpoints for managing bike part brands"
+        },
+        {
+            "name": "Filters",
+            "description": "API endpoints for filtering listings"
         },
         {
             "name": "License Plates",

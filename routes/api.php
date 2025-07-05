@@ -14,6 +14,7 @@ use App\Http\Controllers\CurrencyExchangeRateController;
 use App\Http\Controllers\FilterController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\LicensePlateController;
+use App\Http\Controllers\LicensePlateFilterController;
 use App\Http\Controllers\ListingAuctionController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MotorcycleBrandController;
@@ -188,7 +189,7 @@ Route::get('categories/{categoryId}/price-range', [ListingController::class, 'ge
     ->where('categoryId', '[1-3]'); // Limite aux catégories 1, 2, 3
 Route::get('/filter/motorcycles', [FilterController::class, 'filterMotorcycles']);
 Route::get('/filter/spare-parts', [FilterController::class, 'filterSpareParts']);
-Route::get('/filter/license-plates', [FilterController::class, 'filterLicensePlates']);
+// Route::get('/filter/license-plates', [FilterController::class, 'filterLicensePlates']);
 Route::get('/bike-part-categories', [ListingController::class, 'getBikePartCategoriesWithListingCount']);
 Route::get('/bike-part-brands', [ListingController::class, 'getBikePartBrandsWithListingCount']);
 
@@ -217,3 +218,7 @@ Route::get('/countries/{countryId}/plate-formats', [LicensePlateController::clas
 
 // Route existante (pour référence)
 Route::get('/license-plates/{id}/formatted', [LicensePlateController::class, 'showFormatted']);
+
+
+Route::get('filter-options-license-plates', [FilterController::class, 'getLicensePlateFilterOptions']);
+Route::get('filter-license-plates', [FilterController::class, 'filterLicensePlates']);
