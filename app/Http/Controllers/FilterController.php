@@ -364,6 +364,7 @@ class FilterController extends Controller
     {
         $query = Listing::where('category_id', 3);
 
+        // Filtres de prix
         if ($request->filled('min_price')) {
             $query->where('price', '>=', (float) $request->min_price);
         }
@@ -372,7 +373,7 @@ class FilterController extends Controller
             $query->where('price', '<=', (float) $request->max_price);
         }
 
-        // Filtres pour le pays et la ville du listing
+        // Filtres listing (ville/pays)
         if ($request->filled('listing_countries')) {
             $query->whereIn('country_id', $request->listing_countries);
         }
@@ -381,38 +382,32 @@ class FilterController extends Controller
             $query->whereIn('city_id', $request->listing_cities);
         }
 
-        // Filtres pour le pays et la ville de la plaque
+        // Filtres plaque (ville/pays)
         if ($request->filled('plate_countries')) {
-            $query->whereHas('licensePlate', function ($q) use ($request) {
-                $q->whereIn('country_id', $request->plate_countries);
-            });
+            $query->whereHas('licensePlate', fn($q) => $q->whereIn('country_id', $request->plate_countries));
         }
 
         if ($request->filled('plate_cities')) {
-            $query->whereHas('licensePlate', function ($q) use ($request) {
-                $q->whereIn('city_id', $request->plate_cities);
-            });
+            $query->whereHas('licensePlate', fn($q) => $q->whereIn('city_id', $request->plate_cities));
         }
 
-        // Filtres combinés (pour compatibilité avec l'ancien code)
+        // Compatibilité anciens filtres
         if ($request->filled('countries')) {
-            $query->whereHas('licensePlate', function ($q) use ($request) {
-                $q->whereIn('country_id', $request->countries);
-            });
+            $query->whereHas('licensePlate', fn($q) => $q->whereIn('country_id', $request->countries));
         }
 
         if ($request->filled('cities')) {
-            $query->whereHas('licensePlate', function ($q) use ($request) {
-                $q->whereIn('city_id', $request->cities);
-            });
+            $query->whereHas('licensePlate', fn($q) => $q->whereIn('city_id', $request->cities));
         }
 
+        // Format de plaque
         if ($request->filled('plate_formats')) {
-            $query->whereHas('licensePlate', function ($q) use ($request) {
-                $q->whereIn('plate_format_id', $request->plate_formats);
-            });
+            $query->whereHas('licensePlate', fn($q) => $q->whereIn('plate_format_id', $request->plate_formats));
         }
 
+        // Nombre de chiffres
+
+        // Champs personnalisés
         if ($request->filled('field_filters')) {
             foreach ($request->field_filters as $filter) {
                 if (isset($filter['field_id'], $filter['value'])) {
@@ -424,24 +419,19 @@ class FilterController extends Controller
             }
         }
 
-        if ($request->filled('digits_counts')) {
-            $query->whereHas('licensePlate', function ($q) use ($request) {
-                $q->whereIn('digits_count', $request->digits_counts);
-            });
-        }
-
-        $results = $query->with([
+        // Charger les relations nécessaires
+        $listings = $query->with([
             'images:id,listing_id,image_url',
-            'country:id,name,code', // Pays du listing
-            'city:id,name', // Ville du listing
+            'country:id,name,code,created_at,updated_at',
+            'city:id,name',
             'licensePlate:id,listing_id,plate_format_id,country_id,city_id',
-            'licensePlate.format:id,name,description',
-            'licensePlate.country:id,name,code', // Pays de la plaque
-            'licensePlate.city:id,name', // Ville de la plaque
+            'licensePlate.city:id,name',
+            'licensePlate.country:id,name,code,created_at,updated_at',
+            'licensePlate.format:id,name,country_id',
+            'licensePlate.format.country:id,name,code,created_at,updated_at',
             'licensePlate.fieldValues:id,license_plate_id,plate_format_field_id,field_value',
-            'licensePlate.fieldValues.formatField:id,field_name,is_required'
+            'licensePlate.fieldValues.formatField:id,field_name,position,is_required,max_length'
         ])
-            ->select('id', 'title', 'description', 'price', 'country_id', 'city_id', 'created_at', 'status')
             ->latest()
             ->get()
             ->map(function ($listing) {
@@ -453,12 +443,9 @@ class FilterController extends Controller
                         $fields[] = [
                             'field_id' => $fv->formatField->id ?? null,
                             'field_name' => $fv->formatField->field_name ?? null,
-                            'field_position' => $fv->formatField->field_position ?? null,
-                            'field_type' => $fv->formatField->field_type ?? null,
-                            'field_label' => $fv->formatField->field_label ?? null,
+                            'field_position' => $fv->formatField->position ?? null,
                             'is_required' => $fv->formatField->is_required ?? false,
                             'max_length' => $fv->formatField->max_length ?? null,
-                            'validation_pattern' => $fv->formatField->validation_pattern ?? null,
                             'value' => $fv->field_value,
                         ];
                     }
@@ -477,38 +464,37 @@ class FilterController extends Controller
                     'contacting_channel' => $listing->contacting_channel,
                     'seller_type' => $listing->seller_type,
                     'status' => $listing->status,
-                    'created_at' => $listing->created_at,
+                    'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
                     'city' => $listing->city?->name,
-                    'country' => $listing->country ? $listing->country->only('id', 'name', 'code') : null,
-                    'images' => $listing->images->map(fn($img) => $img->image_url)->toArray(),
-                    'wishlist' => false, // Placeholder – replace with real logic if needed
-                    'license_plate' => [
-                        'plate_format' => $plate && $plate->format ? [
+                    'country' => $listing->country?->name,
+                    'images' => $listing->images->pluck('image_url')->toArray(),
+                    'wishlist' => false,
+                    'license_plate' => $plate ? [
+                        'plate_format' => $plate->format ? [
                             'id' => $plate->format->id,
                             'name' => $plate->format->name,
-                            'pattern' => $plate->format->pattern ?? null,
-                            'country' => $plate->country ? [
-                                'id' => $plate->country->id,
-                                'name' => $plate->country->name,
-                                'code' => $plate->country->code,
-                                'created_at' => $plate->country->created_at,
-                                'updated_at' => $plate->country->updated_at,
+                            'country' => $plate->format->country ? [
+                                'id' => $plate->format->country->id,
+                                'name' => $plate->format->country->name,
+                                'code' => $plate->format->country->code,
+                                'created_at' => $plate->format->country->created_at,
+                                'updated_at' => $plate->format->country->updated_at,
                             ] : null,
                         ] : null,
                         'city' => $plate->city?->name,
                         'country_id' => $plate->country_id,
                         'fields' => $fields,
-                    ],
+                    ] : null,
                 ];
             });
 
-
         return response()->json([
             'success' => true,
-            'data' => $results,
-            'total' => $results->count(),
+            'data' => $listings,
+            'total' => $listings->count(),
         ]);
     }
+
     /**
      * @OA\Get(
      *     path="/api/filter-options-license-plates",
