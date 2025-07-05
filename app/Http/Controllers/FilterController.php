@@ -282,53 +282,53 @@ class FilterController extends Controller
 
         return response()->json($spareParts);
     }
-
     /**
      * @OA\Get(
      *     path="/api/filter-license-plates",
      *     summary="Filter license plates",
-     *     description="Filter license plates by price, country, city, format, and custom fields",
+     *     description="Filter license plates by price, country, city, format, digits, and custom fields",
      *     operationId="filterLicensePlates",
      *     tags={"Filters"},
+     *
      *     @OA\Parameter(
      *         name="min_price",
      *         in="query",
-     *         description="Minimum price",
+     *         description="Minimum price filter",
      *         required=false,
      *         @OA\Schema(type="number", format="float")
      *     ),
      *     @OA\Parameter(
      *         name="max_price",
      *         in="query",
-     *         description="Maximum price",
+     *         description="Maximum price filter",
      *         required=false,
      *         @OA\Schema(type="number", format="float")
      *     ),
      *     @OA\Parameter(
      *         name="listing_countries[]",
      *         in="query",
-     *         description="Filter by listing countries",
+     *         description="Filter by listing countries (array of country IDs)",
      *         required=false,
      *         @OA\Schema(type="array", @OA\Items(type="integer"))
      *     ),
      *     @OA\Parameter(
      *         name="listing_cities[]",
      *         in="query",
-     *         description="Filter by listing cities",
+     *         description="Filter by listing cities (array of city IDs)",
      *         required=false,
      *         @OA\Schema(type="array", @OA\Items(type="integer"))
      *     ),
      *     @OA\Parameter(
      *         name="plate_countries[]",
      *         in="query",
-     *         description="Filter by plate countries",
+     *         description="Filter by license plate countries (array of country IDs)",
      *         required=false,
      *         @OA\Schema(type="array", @OA\Items(type="integer"))
      *     ),
      *     @OA\Parameter(
      *         name="plate_cities[]",
      *         in="query",
-     *         description="Filter by plate cities",
+     *         description="Filter by license plate cities (array of city IDs)",
      *         required=false,
      *         @OA\Schema(type="array", @OA\Items(type="integer"))
      *     ),
@@ -342,23 +342,84 @@ class FilterController extends Controller
      *     @OA\Parameter(
      *         name="digits_counts[]",
      *         in="query",
-     *         description="Filter by digit counts",
+     *         description="Filter by digit counts on the license plate",
      *         required=false,
      *         @OA\Schema(type="array", @OA\Items(type="integer"))
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Filtered license plates",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
-     *             @OA\Property(property="total", type="integer", example=10)
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=106),
+     *                     @OA\Property(property="title", type="string", example="Test plate title"),
+     *                     @OA\Property(property="description", type="string", example="Plate description"),
+     *                     @OA\Property(property="price", type="number", format="float", example=900.00),
+     *                     @OA\Property(property="category_id", type="integer", example=3),
+     *                     @OA\Property(property="auction_enabled", type="boolean", example=true),
+     *                     @OA\Property(property="minimum_bid", type="number", format="float", example=900.00),
+     *                     @OA\Property(property="allow_submission", type="boolean", example=true),
+     *                     @OA\Property(property="listing_type_id", type="integer", example=1),
+     *                     @OA\Property(property="contacting_channel", type="string", nullable=true),
+     *                     @OA\Property(property="seller_type", type="string", nullable=true),
+     *                     @OA\Property(property="status", type="string", example="active"),
+     *                     @OA\Property(property="created_at", type="string", format="date-time"),
+     *                     @OA\Property(property="city", type="string", example="Dubai"),
+     *                     @OA\Property(property="country", type="string", example="UAE"),
+     *                     @OA\Property(property="images", type="array", @OA\Items(type="string", example="https://domain.com/image.jpg")),
+     *                     @OA\Property(property="wishlist", type="boolean", example=false),
+     *                     @OA\Property(
+     *                         property="license_plate",
+     *                         type="object",
+     *                         @OA\Property(
+     *                             property="plate_format",
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=14),
+     *                             @OA\Property(property="name", type="string", example="UAE Plate"),
+     *                             @OA\Property(property="country",
+     *                                 type="object",
+     *                                 @OA\Property(property="id", type="integer", example=2),
+     *                                 @OA\Property(property="name", type="string", example="EMARAT"),
+     *                                 @OA\Property(property="code", type="string", example="AE"),
+     *                                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *                             )
+     *                         ),
+     *                         @OA\Property(property="city", type="string", example="Dubai"),
+     *                         @OA\Property(property="country_id", type="integer", example=2),
+     *                         @OA\Property(
+     *                             property="fields",
+     *                             type="array",
+     *                             @OA\Items(
+     *                                 type="object",
+     *                                 @OA\Property(property="field_id", type="integer", example=33),
+     *                                 @OA\Property(property="field_name", type="string", example="number in english"),
+     *                                 @OA\Property(property="field_position", type="string", example="left-center"),
+     *                                 @OA\Property(property="is_required", type="boolean", example=true),
+     *                                 @OA\Property(property="max_length", type="integer", example=3),
+     *                                 @OA\Property(property="value", type="string", example="123")
+     *                             )
+     *                         )
+     *                     )
+     *                 )
+     *             ),
+     *             @OA\Property(property="total", type="integer", example=1)
      *         )
      *     ),
-     *     @OA\Response(response=500, description="Internal server error")
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error"
+     *     )
      * )
      */
+
 
     public function filterLicensePlates(Request $request)
     {
