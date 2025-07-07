@@ -98,7 +98,7 @@ class FilterController extends Controller
         $query = Listing::query();
 
         // On ne veut que les listings de catégorie 1 (motos)
-        $query->where('category_id', 1);
+        $query->where('category_id', 1)->where('status', 'published');
 
         // Filtre prix entre min_price et max_price sur la table listings
         $minPrice = $request->input('min_price');
@@ -236,7 +236,7 @@ class FilterController extends Controller
      */
     public function filterSpareParts(Request $request)
     {
-        $query = Listing::where('category_id', 2);
+        $query = Listing::where('category_id', 2)->where('status', 'published');
 
         if ($request->filled('min_price')) {
             $query->where('price', '>=', (float)$request->min_price);
@@ -423,7 +423,7 @@ class FilterController extends Controller
 
     public function filterLicensePlates(Request $request)
     {
-        $query = Listing::where('category_id', 3);
+        $query = Listing::where('category_id', 3)->where('status', 'published');
 
         // Filtres de prix
         if ($request->filled('min_price')) {
