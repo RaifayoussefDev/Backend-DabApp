@@ -1504,7 +1504,7 @@ class ListingController extends Controller
 
             // Récupérer les prix min et max pour la catégorie spécifiée
             $priceRange = Listing::where('category_id', $categoryId)
-                ->where('status', 'active') // Seulement les listings actifs
+                ->where('status', 'published') // Seulement les listings actifs
                 ->selectRaw('MIN(price) as min_price, MAX(price) as max_price, COUNT(*) as total_listings')
                 ->first();
 
