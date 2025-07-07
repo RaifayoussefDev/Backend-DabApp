@@ -33,194 +33,208 @@ use Str;
 class ListingController extends Controller
 {
     /**
- * @OA\Post(
- *     path="/api/listings/motorcycle",
- *     summary="Créer une annonce de moto",
- *     tags={"Listings"},
- *     security={{"bearerAuth":{}}},
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             required={"title", "description", "price", "category_id", "brand_id", "model_id", "year_id"},
- *             @OA\Property(property="category_id", type="integer", example=1, description="Doit être 1 pour moto"),
- *             @OA\Property(property="title", type="string", example="Yamaha MT-07"),
- *             @OA\Property(property="description", type="string", example="Moto bien entretenue"),
- *             @OA\Property(property="price", type="number", format="float", example=5000),
- *             @OA\Property(property="country_id", type="integer", example=1),
- *             @OA\Property(property="city_id", type="integer", example=10),
- *             @OA\Property(property="auction_enabled", type="boolean", example=false),
- *             @OA\Property(property="minimum_bid", type="number", example=null),
- *             @OA\Property(property="allow_submission", type="boolean", example=false),
- *             @OA\Property(property="listing_type_id", type="integer", example=1),
- *             @OA\Property(property="contacting_channel", type="string", example="phone"),
- *             @OA\Property(property="seller_type", type="string", example="owner"),
- *             @OA\Property(property="images", type="array", @OA\Items(type="string", format="binary")),
- *             @OA\Property(property="brand_id", type="integer", example=1),
- *             @OA\Property(property="model_id", type="integer", example=2),
- *             @OA\Property(property="year_id", type="integer", example=2020),
- *             @OA\Property(property="type_id", type="integer", example=3),
- *             @OA\Property(property="engine", type="string", example="700cc"),
- *             @OA\Property(property="mileage", type="integer", example=15000),
- *             @OA\Property(property="body_condition", type="string", example="Good"),
- *             @OA\Property(property="modified", type="boolean", example=false),
- *             @OA\Property(property="insurance", type="boolean", example=true),
- *             @OA\Property(property="general_condition", type="string", example="Excellent"),
- *             @OA\Property(property="vehicle_care", type="string", example="Regular maintenance"),
- *             @OA\Property(property="transmission", type="string", example="Manual")
- *         )
- *     ),
- *     @OA\Response(
- *         response=201,
- *         description="Annonce de moto créée avec succès"
- *     )
- * )
- *
- * @OA\Post(
- *     path="/api/listings/spare-part",
- *     summary="Créer une annonce de pièce détachée",
- *     tags={"Listings"},
- *     security={{"bearerAuth":{}}},
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             required={"title", "description", "price", "category_id", "condition"},
- *             @OA\Property(property="category_id", type="integer", example=2, description="Doit être 2 pour pièce détachée"),
- *             @OA\Property(property="title", type="string", example="Pneu arrière"),
- *             @OA\Property(property="description", type="string", example="Pneu en bon état"),
- *             @OA\Property(property="price", type="number", format="float", example=200),
- *             @OA\Property(property="country_id", type="integer", example=1),
- *             @OA\Property(property="city_id", type="integer", example=5),
- *             @OA\Property(property="auction_enabled", type="boolean", example=false),
- *             @OA\Property(property="minimum_bid", type="number", example=null),
- *             @OA\Property(property="allow_submission", type="boolean", example=false),
- *             @OA\Property(property="listing_type_id", type="integer", example=2),
- *             @OA\Property(property="contacting_channel", type="string", example="email"),
- *             @OA\Property(property="seller_type", type="string", example="dealer"),
- *             @OA\Property(property="images", type="array", @OA\Items(type="string", format="binary")),
- *             @OA\Property(property="condition", type="string", example="used"),
- *             @OA\Property(
- *                 property="motorcycles",
- *                 type="array",
- *                 @OA\Items(
- *                     type="object",
- *                     required={"brand_id", "model_id", "year_id"},
- *                     @OA\Property(property="brand_id", type="integer", example=1),
- *                     @OA\Property(property="model_id", type="integer", example=2),
- *                     @OA\Property(property="year_id", type="integer", example=2020)
- *                 )
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=201,
- *         description="Annonce de pièce détachée créée avec succès"
- *     )
- * )
- *
- * @OA\Post(
- *     path="/api/listings/license-plate",
- *     summary="Créer une annonce de plaque d'immatriculation",
- *     tags={"Listings"},
- *     security={{"bearerAuth":{}}},
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             required={"title", "description", "price", "category_id", "plate_format_id", "country_id_lp", "fields"},
- *             @OA\Property(property="category_id", type="integer", example=3, description="Doit être 3 pour plaque"),
- *             @OA\Property(property="title", type="string", example="Plaque personnalisée"),
- *             @OA\Property(property="description", type="string", example="Plaque ABC123 rouge"),
- *             @OA\Property(property="price", type="number", format="float", example=800),
- *             @OA\Property(property="country_id", type="integer", example=1),
- *             @OA\Property(property="city_id", type="integer", example=8),
- *             @OA\Property(property="auction_enabled", type="boolean", example=true),
- *             @OA\Property(property="minimum_bid", type="number", example=500),
- *             @OA\Property(property="allow_submission", type="boolean", example=true),
- *             @OA\Property(property="listing_type_id", type="integer", example=3),
- *             @OA\Property(property="contacting_channel", type="string", example="whatsapp"),
- *             @OA\Property(property="seller_type", type="string", example="owner"),
- *             @OA\Property(property="images", type="array", @OA\Items(type="string", format="binary")),
- *             @OA\Property(property="plate_format_id", type="integer", example=1),
- *             @OA\Property(property="country_id_lp", type="integer", example=1),
- *             @OA\Property(property="city_id_lp", type="integer", example=1),
- *             @OA\Property(
- *                 property="fields",
- *                 type="array",
- *                 @OA\Items(
- *                     type="object",
- *                     required={"field_id", "value"},
- *                     @OA\Property(property="field_id", type="integer", example=1),
- *                     @OA\Property(property="value", type="string", example="ABC123")
- *                 )
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=201,
- *         description="Annonce de plaque d'immatriculation créée avec succès"
- *     )
- * )
- */
-
+     * @OA\Post(
+     *     path="/api/listings/motorcycle",
+     *     summary="Créer ou mettre à jour une annonce de moto (multi-étapes)",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="step", type="integer", example=1, description="Étape actuelle (1, 2 ou 3)"),
+     *             @OA\Property(property="listing_id", type="integer", example=42, description="Obligatoire à partir de l'étape 2"),
+     *             @OA\Property(property="category_id", type="integer", example=1),
+     *             @OA\Property(property="title", type="string", example="Yamaha MT-07"),
+     *             @OA\Property(property="description", type="string", example="Moto bien entretenue"),
+     *             @OA\Property(property="price", type="number", format="float", example=5000),
+     *             @OA\Property(property="country_id", type="integer", example=1),
+     *             @OA\Property(property="city_id", type="integer", example=10),
+     *             @OA\Property(property="auction_enabled", type="boolean", example=true),
+     *             @OA\Property(property="minimum_bid", type="number", example=4000),
+     *             @OA\Property(property="allow_submission", type="boolean", example=true),
+     *             @OA\Property(property="listing_type_id", type="integer", example=1),
+     *             @OA\Property(property="contacting_channel", type="string", example="phone"),
+     *             @OA\Property(property="seller_type", type="string", example="owner"),
+     *             @OA\Property(property="images", type="array", @OA\Items(type="string")),
+     *             @OA\Property(property="brand_id", type="integer", example=1),
+     *             @OA\Property(property="model_id", type="integer", example=2),
+     *             @OA\Property(property="year_id", type="integer", example=2020),
+     *             @OA\Property(property="engine", type="string", example="700cc"),
+     *             @OA\Property(property="mileage", type="integer", example=15000),
+     *             @OA\Property(property="body_condition", type="string", example="Bon état"),
+     *             @OA\Property(property="modified", type="boolean", example=false),
+     *             @OA\Property(property="insurance", type="boolean", example=true),
+     *             @OA\Property(property="general_condition", type="string", example="Excellent"),
+     *             @OA\Property(property="vehicle_care", type="string", example="Toujours au garage"),
+     *             @OA\Property(property="transmission", type="string", example="Manuelle")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Annonce moto enregistrée ou mise à jour avec succès"
+     *     )
+     * )
+     *
+     * @OA\Post(
+     *     path="/api/listings/spare-part",
+     *     summary="Créer ou mettre à jour une annonce de pièce détachée (multi-étapes)",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="step", type="integer", example=1),
+     *             @OA\Property(property="listing_id", type="integer", example=45),
+     *             @OA\Property(property="category_id", type="integer", example=2),
+     *             @OA\Property(property="title", type="string", example="Pneu arrière"),
+     *             @OA\Property(property="description", type="string", example="Pneu en bon état"),
+     *             @OA\Property(property="price", type="number", example=200),
+     *             @OA\Property(property="country_id", type="integer", example=1),
+     *             @OA\Property(property="city_id", type="integer", example=5),
+     *             @OA\Property(property="auction_enabled", type="boolean", example=false),
+     *             @OA\Property(property="minimum_bid", type="number", example=null),
+     *             @OA\Property(property="allow_submission", type="boolean", example=false),
+     *             @OA\Property(property="listing_type_id", type="integer", example=2),
+     *             @OA\Property(property="contacting_channel", type="string", example="email"),
+     *             @OA\Property(property="seller_type", type="string", example="dealer"),
+     *             @OA\Property(property="images", type="array", @OA\Items(type="string")),
+     *             @OA\Property(property="condition", type="string", example="used"),
+     *             @OA\Property(
+     *                 property="motorcycles",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="brand_id", type="integer", example=1),
+     *                     @OA\Property(property="model_id", type="integer", example=2),
+     *                     @OA\Property(property="year_id", type="integer", example=2020)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Annonce pièce détachée enregistrée ou mise à jour avec succès"
+     *     )
+     * )
+     *
+     * @OA\Post(
+     *     path="/api/listings/license-plate",
+     *     summary="Créer ou mettre à jour une annonce de plaque d'immatriculation (multi-étapes)",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="step", type="integer", example=1),
+     *             @OA\Property(property="listing_id", type="integer", example=46),
+     *             @OA\Property(property="category_id", type="integer", example=3),
+     *             @OA\Property(property="title", type="string", example="Plaque personnalisée"),
+     *             @OA\Property(property="description", type="string", example="Plaque ABC123 rouge"),
+     *             @OA\Property(property="price", type="number", example=800),
+     *             @OA\Property(property="country_id", type="integer", example=1),
+     *             @OA\Property(property="city_id", type="integer", example=8),
+     *             @OA\Property(property="auction_enabled", type="boolean", example=true),
+     *             @OA\Property(property="minimum_bid", type="number", example=500),
+     *             @OA\Property(property="allow_submission", type="boolean", example=true),
+     *             @OA\Property(property="listing_type_id", type="integer", example=3),
+     *             @OA\Property(property="contacting_channel", type="string", example="whatsapp"),
+     *             @OA\Property(property="seller_type", type="string", example="owner"),
+     *             @OA\Property(property="images", type="array", @OA\Items(type="string")),
+     *             @OA\Property(property="plate_format_id", type="integer", example=1),
+     *             @OA\Property(property="country_id_lp", type="integer", example=1),
+     *             @OA\Property(property="city_id_lp", type="integer", example=1),
+     *             @OA\Property(
+     *                 property="fields",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="field_id", type="integer", example=1),
+     *                     @OA\Property(property="value", type="string", example="ABC123")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Annonce plaque immatriculation enregistrée ou mise à jour avec succès"
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         DB::beginTransaction();
 
         try {
             $sellerId = Auth::id();
-
             if (!$sellerId) {
-                return response()->json([
-                    'message' => 'Unauthorized. User must be logged in to create a listing.',
-                ], 401);
+                return response()->json(['message' => 'Unauthorized'], 401);
             }
 
-            // Create the listing
-            $listing = Listing::create([
-                'title' => $request->title,
-                'description' => $request->description,
-                'price' => $request->price,
-                'seller_id' => $sellerId, // ✅ Correct: référence au vendeur
-                'category_id' => $request->category_id,
-                'country_id' => $request->country_id,
-                'city_id' => $request->city_id,
-                'status' => 'active',
-                'auction_enabled' => $request->auction_enabled ?? false,
-                'minimum_bid' => $request->minimum_bid,
-                'allow_submission' => $request->allow_submission ?? false,
-                'listing_type_id' => $request->listing_type_id,
-                'contacting_channel' => $request->contacting_channel,
-                'seller_type' => $request->seller_type,
-                'created_at' => now(),
-            ]);
+            $step = $request->step ?? 1;
+            $listing = null;
+
+            if ($request->listing_id) {
+                $listing = Listing::find($request->listing_id);
+                if (!$listing || $listing->seller_id !== $sellerId) {
+                    return response()->json(['message' => 'Listing not found or access denied'], 403);
+                }
+            }
+
+            if (!$listing) {
+                $listing = Listing::create([
+                    'seller_id' => $sellerId,
+                    'status' => 'draft',
+                    'step' => $step,
+                    'created_at' => now(),
+                ]);
+            }
+
+            // Update basic fields if present
+            $listing->fill(array_filter($request->only([
+                'title',
+                'description',
+                'price',
+                'category_id',
+                'country_id',
+                'city_id',
+                'auction_enabled',
+                'minimum_bid',
+                'allow_submission',
+                'listing_type_id',
+                'contacting_channel',
+                'seller_type'
+            ])));
+
+            $listing->step = max($listing->step, $step);
+            $listing->save();
 
             // Handle images
             if ($request->has('images')) {
                 foreach ($request->images as $imageUrl) {
-                    $listing->images()->create([
-                        'image_url' => $imageUrl
-                    ]);
+                    $listing->images()->updateOrCreate(
+                        ['image_url' => $imageUrl],
+                        ['image_url' => $imageUrl]
+                    );
                 }
             }
 
-            // ✅ FIXED: Auction logic - Create auction_history with proper fields
-            if ($listing->auction_enabled) {
+            // Auction history
+            if ($listing->auction_enabled && !AuctionHistory::where('listing_id', $listing->id)->exists()) {
                 AuctionHistory::create([
                     'listing_id' => $listing->id,
-                    'seller_id' => $sellerId, // ✅ Correct: seller_id from authenticated user
-                    'buyer_id' => null, // ✅ No buyer yet
-                    'bid_amount' => $listing->minimum_bid, // ✅ Assuming you have this field
-                    'bid_date' => now(), // ✅ Current timestamp
-                    'validated' => false, // ✅ Not validated initially
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'seller_id' => $sellerId,
+                    'buyer_id' => null,
+                    'bid_amount' => $listing->minimum_bid,
+                    'bid_date' => now(),
+                    'validated' => false,
                 ]);
             }
 
-            // ✅ FIXED: Submission logic - proper user_id reference
-            if ($listing->auction_enabled && $listing->allow_submission) {
+            // Submission
+            if ($listing->auction_enabled && $listing->allow_submission && !Submission::where('listing_id', $listing->id)->exists()) {
                 Submission::create([
                     'listing_id' => $listing->id,
-                    'user_id' => $sellerId, // ✅ Correct: user who created the listing
+                    'user_id' => $sellerId,
                     'amount' => $listing->minimum_bid,
                     'submission_date' => now(),
                     'status' => 'pending',
@@ -229,74 +243,54 @@ class ListingController extends Controller
             }
 
             // Category-specific logic
-            if ($listing->category_id == 1) {
-                // Motorcycle logic
+            if ($request->category_id == 1 && $request->filled('model_id')) {
                 $model = MotorcycleModel::find($request->model_id);
-
                 if (!$model) {
                     DB::rollBack();
-                    return response()->json([
-                        'message' => 'Invalid model_id: Model not found.',
-                    ], 422);
+                    return response()->json(['message' => 'Invalid model_id'], 422);
                 }
 
-                $motorcycle = Motorcycle::create([
-                    'listing_id' => $listing->id,
-                    'brand_id' => $request->brand_id,
-                    'model_id' => $request->model_id,
-                    'year_id' => $request->year_id,
-                    'type_id' => $model->type_id,
-                    'engine' => $request->engine,
-                    'mileage' => $request->mileage,
-                    'body_condition' => $request->body_condition,
-                    'modified' => $request->has('modified') ? $request->modified : false,
-                    'insurance' => $request->has('insurance') ? $request->insurance : false,
-                    'general_condition' => $request->general_condition,
-                    'vehicle_care' => $request->vehicle_care,
-                    'transmission' => $request->transmission,
-                ]);
-
-                DB::commit();
-
-                return response()->json([
-                    'message' => 'Motorcycle listing created successfully',
-                    'data' => [
-                        'listing' => $listing,
-                        'motorcycle' => $motorcycle,
+                Motorcycle::updateOrCreate(
+                    ['listing_id' => $listing->id],
+                    [
+                        'brand_id' => $request->brand_id,
+                        'model_id' => $request->model_id,
+                        'year_id' => $request->year_id,
+                        'type_id' => $model->type_id,
+                        'engine' => $request->engine,
+                        'mileage' => $request->mileage,
+                        'body_condition' => $request->body_condition,
+                        'modified' => $request->modified ?? false,
+                        'insurance' => $request->insurance ?? false,
+                        'general_condition' => $request->general_condition,
+                        'vehicle_care' => $request->vehicle_care,
+                        'transmission' => $request->transmission,
                     ]
-                ], 201);
-            } elseif ($listing->category_id == 2) {
-                // Spare parts logic
-                $sparePart = SparePart::create([
-                    'listing_id' => $listing->id,
-                    'condition' => $request->condition,
-                    'bike_part_brand_id' => $request->bike_part_brand_id,
-                    'bike_part_category_id' => $request->bike_part_category_id,
-                ]);
+                );
+            } elseif ($request->category_id == 2 && $request->filled('condition')) {
+                $sparePart = SparePart::updateOrCreate(
+                    ['listing_id' => $listing->id],
+                    [
+                        'condition' => $request->condition,
+                        'bike_part_brand_id' => $request->bike_part_brand_id,
+                        'bike_part_category_id' => $request->bike_part_category_id,
+                    ]
+                );
 
-                // Add motorcycle associations
                 if ($request->has('motorcycles')) {
                     foreach ($request->motorcycles as $moto) {
-                        SparePartMotorcycle::create([
-                            'spare_part_id' => $sparePart->id,
-                            'brand_id' => $moto['brand_id'],
-                            'model_id' => $moto['model_id'],
-                            'year_id' => $moto['year_id'],
-                        ]);
+                        SparePartMotorcycle::updateOrCreate(
+                            [
+                                'spare_part_id' => $sparePart->id,
+                                'brand_id' => $moto['brand_id'],
+                                'model_id' => $moto['model_id'],
+                                'year_id' => $moto['year_id'],
+                            ],
+                            []
+                        );
                     }
                 }
-
-                DB::commit();
-
-                return response()->json([
-                    'message' => 'Spare part listing created successfully',
-                    'data' => [
-                        'listing' => $listing,
-                        'spare_part' => $sparePart->load('motorcycleAssociations.brand', 'motorcycleAssociations.model', 'motorcycleAssociations.year'),
-                    ]
-                ], 201);
-            } elseif ($listing->category_id == 3) {
-                // License plate logic (dynamique)
+            } elseif ($request->category_id == 3 && $request->filled('plate_format_id')) {
                 $validated = Validator::make($request->all(), [
                     'plate_format_id' => 'required|exists:plate_formats,id',
                     'country_id_lp' => 'required|exists:countries,id',
@@ -308,51 +302,47 @@ class ListingController extends Controller
 
                 if ($validated->fails()) {
                     DB::rollBack();
-                    return response()->json([
-                        'message' => 'Validation error',
-                        'errors' => $validated->errors()
-                    ], 422);
+                    return response()->json(['message' => 'Validation error', 'errors' => $validated->errors()], 422);
                 }
 
-                // Create license plate
-                $licensePlate = LicensePlate::create([
-                    'listing_id' => $listing->id,
-                    'plate_format_id' => $request->plate_format_id,
-                    'country_id' => $request->country_id_lp,
-                    'city_id' => $request->city_id_lp ?? $request->city_id,
-                ]);
+                $licensePlate = LicensePlate::updateOrCreate(
+                    ['listing_id' => $listing->id],
+                    [
+                        'plate_format_id' => $request->plate_format_id,
+                        'country_id' => $request->country_id_lp,
+                        'city_id' => $request->city_id_lp ?? $request->city_id,
+                    ]
+                );
 
                 foreach ($request->fields as $field) {
-                    LicensePlateValue::create([
-                        'license_plate_id' => $licensePlate->id,
-                        'plate_format_field_id' => $field['field_id'],
-                        'field_value' => $field['value'],
-                    ]);
+                    LicensePlateValue::updateOrCreate(
+                        [
+                            'license_plate_id' => $licensePlate->id,
+                            'plate_format_field_id' => $field['field_id'],
+                        ],
+                        ['field_value' => $field['value']]
+                    );
                 }
-
-                DB::commit();
-
-                return response()->json([
-                    'message' => 'License plate listing created successfully',
-                    'data' => [
-                        'listing' => $listing,
-                        'license_plate' => $licensePlate->load('fieldValues.formatField', 'format', 'city'),
-                    ]
-                ], 201);
-            } else {
-                DB::rollBack();
-                return response()->json([
-                    'message' => 'Invalid category_id. Only categories 1, 2, or 3 are allowed.',
-                ], 422);
             }
+
+            if ($step == 3) {
+                $listing->update(['status' => 'published']);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => $step == 3 ? 'Listing published successfully' : 'Listing saved as draft',
+                'listing_id' => $listing->id,
+                'data' => $listing->fresh()->load('images'),
+            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'error' => 'Failed to create listing',
-                'details' => $e->getMessage()
-            ], 500);
+            return response()->json(['error' => 'Failed to process listing', 'details' => $e->getMessage()], 500);
         }
     }
+
+
 
     /**
      * @OA\Get(
@@ -389,6 +379,7 @@ class ListingController extends Controller
     public function getByCountry($country_id)
     {
         $user = Auth::user();
+
         $listings = Listing::with([
             'images',
             'city',
@@ -406,6 +397,7 @@ class ListingController extends Controller
             'licensePlate.fieldValues.formatField'
         ])
         ->where('country_id', $country_id)
+        ->where('status', 'published') // ✅ afficher uniquement les annonces publiées
         ->get()
         ->map(function ($listing) use ($user) {
             $isInWishlist = false;
@@ -416,7 +408,6 @@ class ListingController extends Controller
                     ->exists();
             }
 
-            // Base listing data
             $listingData = [
                 'id' => $listing->id,
                 'title' => $listing->title,
@@ -437,13 +428,11 @@ class ListingController extends Controller
                 'wishlist' => $isInWishlist,
             ];
 
-            // Category-specific data
             if ($listing->category_id == 1 && $listing->motorcycle) {
-                // Motorcycle data
                 $listingData['motorcycle'] = [
-                    'brand' => $listing->motorcycle->brand ? $listing->motorcycle->brand->name : null,
-                    'model' => $listing->motorcycle->model ? $listing->motorcycle->model->name : null,
-                    'year' => $listing->motorcycle->year ? $listing->motorcycle->year->year : null,
+                    'brand' => $listing->motorcycle->brand->name ?? null,
+                    'model' => $listing->motorcycle->model->name ?? null,
+                    'year' => $listing->motorcycle->year->year ?? null,
                     'engine' => $listing->motorcycle->engine,
                     'mileage' => $listing->motorcycle->mileage,
                     'body_condition' => $listing->motorcycle->body_condition,
@@ -454,41 +443,38 @@ class ListingController extends Controller
                     'transmission' => $listing->motorcycle->transmission,
                 ];
             } elseif ($listing->category_id == 2 && $listing->sparePart) {
-                // Spare part data
                 $listingData['spare_part'] = [
                     'condition' => $listing->sparePart->condition,
-                    'brand' => $listing->sparePart->brand ? $listing->sparePart->brand->name : null,
-                    'category' => $listing->sparePart->bikePartCategory ? $listing->sparePart->bikePartCategory->name : null,
+                    'brand' => $listing->sparePart->brand->name ?? null,
+                    'category' => $listing->sparePart->bikePartCategory->name ?? null,
                     'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
                         return [
-                            'brand' => $association->brand ? $association->brand->name : null,
-                            'model' => $association->model ? $association->model->name : null,
-                            'year' => $association->year ? $association->year->year : null,
+                            'brand' => $association->brand->name ?? null,
+                            'model' => $association->model->name ?? null,
+                            'year' => $association->year->year ?? null,
                         ];
                     }),
                 ];
             } elseif ($listing->category_id == 3 && $listing->licensePlate) {
-                // License plate data with format and field values
                 $licensePlate = $listing->licensePlate;
-
                 $listingData['license_plate'] = [
                     'plate_format' => [
-                        'id' => $licensePlate->format ? $licensePlate->format->id : null,
-                        'name' => $licensePlate->format ? $licensePlate->format->name : null,
-                        'pattern' => $licensePlate->format ? $licensePlate->format->pattern : null,
-                        'country' => $licensePlate->format ? $licensePlate->format->country : null,
+                        'id' => $licensePlate->format->id ?? null,
+                        'name' => $licensePlate->format->name ?? null,
+                        'pattern' => $licensePlate->format->pattern ?? null,
+                        'country' => $licensePlate->format->country ?? null,
                     ],
-                    'city' => $licensePlate->city ? $licensePlate->city->name : null,
+                    'city' => $licensePlate->city->name ?? null,
                     'country_id' => $licensePlate->country_id,
                     'fields' => $licensePlate->fieldValues->map(function ($fieldValue) {
                         return [
-                            'field_id' => $fieldValue->formatField ? $fieldValue->formatField->id : null,
-                            'field_name' => $fieldValue->formatField ? $fieldValue->formatField->field_name : null,
-                            'field_type' => $fieldValue->formatField ? $fieldValue->formatField->field_type : null,
-                            'field_label' => $fieldValue->formatField ? $fieldValue->formatField->field_label : null,
-                            'is_required' => $fieldValue->formatField ? $fieldValue->formatField->is_required : null,
-                            'max_length' => $fieldValue->formatField ? $fieldValue->formatField->max_length : null,
-                            'validation_pattern' => $fieldValue->formatField ? $fieldValue->formatField->validation_pattern : null,
+                            'field_id' => $fieldValue->formatField->id ?? null,
+                            'field_name' => $fieldValue->formatField->field_name ?? null,
+                            'field_type' => $fieldValue->formatField->field_type ?? null,
+                            'field_label' => $fieldValue->formatField->field_label ?? null,
+                            'is_required' => $fieldValue->formatField->is_required ?? null,
+                            'max_length' => $fieldValue->formatField->max_length ?? null,
+                            'validation_pattern' => $fieldValue->formatField->validation_pattern ?? null,
                             'value' => $fieldValue->field_value,
                         ];
                     })->toArray(),
@@ -500,6 +486,7 @@ class ListingController extends Controller
 
         return response()->json($listings);
     }
+
     /**
      * @OA\Get(
      *     path="/api/listings/category/{category_id}",
@@ -552,100 +539,101 @@ class ListingController extends Controller
             'licensePlate.city',
             'licensePlate.fieldValues.formatField'
         ])
-        ->where('category_id', $category_id)
-        ->get()
-        ->map(function ($listing) use ($user) {
-            $isInWishlist = false;
+            ->where('category_id', $category_id)
+            ->where('status', 'published')
+            ->get()
+            ->map(function ($listing) use ($user) {
+                $isInWishlist = false;
 
-            if ($user) {
-                $isInWishlist = DB::table('wishlists')
-                    ->where('user_id', $user->id)
-                    ->where('listing_id', $listing->id)
-                    ->exists();
-            }
+                if ($user) {
+                    $isInWishlist = DB::table('wishlists')
+                        ->where('user_id', $user->id)
+                        ->where('listing_id', $listing->id)
+                        ->exists();
+                }
 
-            // Base listing data
-            $listingData = [
-                'id' => $listing->id,
-                'title' => $listing->title,
-                'description' => $listing->description,
-                'price' => $listing->price,
-                'category_id' => $listing->category_id,
-                'auction_enabled' => $listing->auction_enabled,
-                'minimum_bid' => $listing->minimum_bid,
-                'allow_submission' => $listing->allow_submission,
-                'listing_type_id' => $listing->listing_type_id,
-                'contacting_channel' => $listing->contacting_channel,
-                'seller_type' => $listing->seller_type,
-                'status' => $listing->status,
-                'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
-                'city' => $listing->city?->name,
-                'country' => $listing->country?->name,
-                'images' => $listing->images->pluck('image_url'),
-                'wishlist' => $isInWishlist,
-            ];
-
-            // Category-specific data
-            if ($listing->category_id == 1 && $listing->motorcycle) {
-                // Motorcycle data
-                $listingData['motorcycle'] = [
-                    'brand' => $listing->motorcycle->brand?->name,
-                    'model' => $listing->motorcycle->model?->name,
-                    'year' => $listing->motorcycle->year?->year,
-                    'engine' => $listing->motorcycle->engine,
-                    'mileage' => $listing->motorcycle->mileage,
-                    'body_condition' => $listing->motorcycle->body_condition,
-                    'modified' => $listing->motorcycle->modified,
-                    'insurance' => $listing->motorcycle->insurance,
-                    'general_condition' => $listing->motorcycle->general_condition,
-                    'vehicle_care' => $listing->motorcycle->vehicle_care,
-                    'transmission' => $listing->motorcycle->transmission,
+                // Base listing data
+                $listingData = [
+                    'id' => $listing->id,
+                    'title' => $listing->title,
+                    'description' => $listing->description,
+                    'price' => $listing->price,
+                    'category_id' => $listing->category_id,
+                    'auction_enabled' => $listing->auction_enabled,
+                    'minimum_bid' => $listing->minimum_bid,
+                    'allow_submission' => $listing->allow_submission,
+                    'listing_type_id' => $listing->listing_type_id,
+                    'contacting_channel' => $listing->contacting_channel,
+                    'seller_type' => $listing->seller_type,
+                    'status' => $listing->status,
+                    'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
+                    'city' => $listing->city?->name,
+                    'country' => $listing->country?->name,
+                    'images' => $listing->images->pluck('image_url'),
+                    'wishlist' => $isInWishlist,
                 ];
-            } elseif ($listing->category_id == 2 && $listing->sparePart) {
-                // Spare part data
-                $listingData['spare_part'] = [
-                    'condition' => $listing->sparePart->condition,
-                    'brand' => $listing->sparePart->bikePartBrand?->name,
-                    'category' => $listing->sparePart->bikePartCategory?->name,
-                    'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
-                        return [
-                            'brand' => $association->brand?->name,
-                            'model' => $association->model?->name,
-                            'year' => $association->year?->year,
-                        ];
-                    }),
-                ];
-            } elseif ($listing->category_id == 3 && $listing->licensePlate) {
-                // License plate data with format and field values
-                $licensePlate = $listing->licensePlate;
 
-                $listingData['license_plate'] = [
-                    'plate_format' => [
-                        'id' => $licensePlate->format?->id,
-                        'name' => $licensePlate->format?->name,
-                        'pattern' => $licensePlate->format?->pattern,
-                        'country' => $licensePlate->format?->country,
-                    ],
-                    'city' => $licensePlate->city?->name,
-                    'country_id' => $licensePlate->country_id,
-                    'fields' => $licensePlate->fieldValues->map(function ($fieldValue) {
-                        return [
-                            'field_id' => $fieldValue->formatField?->id,
-                            'field_name' => $fieldValue->formatField?->field_name,
-                            'field_position' => $fieldValue->formatField?->position,
-                            'field_type' => $fieldValue->formatField?->field_type,
-                            'field_label' => $fieldValue->formatField?->field_label,
-                            'is_required' => $fieldValue->formatField?->is_required,
-                            'max_length' => $fieldValue->formatField?->max_length,
-                            'validation_pattern' => $fieldValue->formatField?->validation_pattern,
-                            'value' => $fieldValue->field_value,
-                        ];
-                    })->toArray(),
-                ];
-            }
+                // Category-specific data
+                if ($listing->category_id == 1 && $listing->motorcycle) {
+                    // Motorcycle data
+                    $listingData['motorcycle'] = [
+                        'brand' => $listing->motorcycle->brand?->name,
+                        'model' => $listing->motorcycle->model?->name,
+                        'year' => $listing->motorcycle->year?->year,
+                        'engine' => $listing->motorcycle->engine,
+                        'mileage' => $listing->motorcycle->mileage,
+                        'body_condition' => $listing->motorcycle->body_condition,
+                        'modified' => $listing->motorcycle->modified,
+                        'insurance' => $listing->motorcycle->insurance,
+                        'general_condition' => $listing->motorcycle->general_condition,
+                        'vehicle_care' => $listing->motorcycle->vehicle_care,
+                        'transmission' => $listing->motorcycle->transmission,
+                    ];
+                } elseif ($listing->category_id == 2 && $listing->sparePart) {
+                    // Spare part data
+                    $listingData['spare_part'] = [
+                        'condition' => $listing->sparePart->condition,
+                        'brand' => $listing->sparePart->bikePartBrand?->name,
+                        'category' => $listing->sparePart->bikePartCategory?->name,
+                        'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
+                            return [
+                                'brand' => $association->brand?->name,
+                                'model' => $association->model?->name,
+                                'year' => $association->year?->year,
+                            ];
+                        }),
+                    ];
+                } elseif ($listing->category_id == 3 && $listing->licensePlate) {
+                    // License plate data with format and field values
+                    $licensePlate = $listing->licensePlate;
 
-            return $listingData;
-        });
+                    $listingData['license_plate'] = [
+                        'plate_format' => [
+                            'id' => $licensePlate->format?->id,
+                            'name' => $licensePlate->format?->name,
+                            'pattern' => $licensePlate->format?->pattern,
+                            'country' => $licensePlate->format?->country,
+                        ],
+                        'city' => $licensePlate->city?->name,
+                        'country_id' => $licensePlate->country_id,
+                        'fields' => $licensePlate->fieldValues->map(function ($fieldValue) {
+                            return [
+                                'field_id' => $fieldValue->formatField?->id,
+                                'field_name' => $fieldValue->formatField?->field_name,
+                                'field_position' => $fieldValue->formatField?->position,
+                                'field_type' => $fieldValue->formatField?->field_type,
+                                'field_label' => $fieldValue->formatField?->field_label,
+                                'is_required' => $fieldValue->formatField?->is_required,
+                                'max_length' => $fieldValue->formatField?->max_length,
+                                'validation_pattern' => $fieldValue->formatField?->validation_pattern,
+                                'value' => $fieldValue->field_value,
+                            ];
+                        })->toArray(),
+                    ];
+                }
+
+                return $listingData;
+            });
 
         return response()->json($listings);
     }
@@ -688,6 +676,8 @@ class ListingController extends Controller
 
         $listings = Listing::with(['images', 'city', 'country'])
             ->where('city_id', $city_id)
+            ->where('status', 'published')
+
             ->get()
             ->map(function ($listing) use ($user) {
                 $isInWishlist = false;
@@ -764,7 +754,8 @@ class ListingController extends Controller
     {
         $user = Auth::user();
 
-        $query = Listing::with(['images', 'city', 'country']);
+        $query = Listing::with(['images', 'city', 'country'])
+            ->where('status', 'published'); // ✅ afficher seulement les annonces publiées
 
         if ($request->filled('city_id')) {
             $query->where('city_id', $request->city_id);
@@ -803,6 +794,7 @@ class ListingController extends Controller
 
         return response()->json($listings);
     }
+
     /**
      * @OA\Get(
      *     path="/api/listings/latest/{city_id}",
@@ -840,7 +832,7 @@ class ListingController extends Controller
         $user = Auth::user();
 
         $listings = Listing::with(['images', 'city', 'country'])
-            ->where('city_id', $city_id)
+            ->where('city_id', $city_id)->where('status', 'published')
             ->orderBy('created_at', 'desc')
             ->take(10)
             ->get()
@@ -951,7 +943,7 @@ class ListingController extends Controller
             'licensePlate.format',
             'licensePlate.city',
             'licensePlate.fieldValues.formatField'
-        ])->find($id);
+        ])->find($id)->where('status', 'published');
 
         if (!$listing) {
             return response()->json(['message' => 'Listing not found'], 404);
@@ -1143,7 +1135,7 @@ class ListingController extends Controller
         $user = Auth::user();
         $perPage = 10;
 
-        $listings = Listing::with(['images', 'city', 'country'])
+        $listings = Listing::with(['images', 'city', 'country'])->where('status', 'published')
             ->paginate($perPage);
 
         $data = $listings->map(function ($listing) use ($user) {
@@ -1582,6 +1574,4 @@ class ListingController extends Controller
             'bike_part_brands' => $bike_part_brands
         ]);
     }
-
-    
 }

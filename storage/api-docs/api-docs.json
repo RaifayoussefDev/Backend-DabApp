@@ -3348,25 +3348,25 @@
                 "tags": [
                     "Listings"
                 ],
-                "summary": "Créer une annonce de moto",
+                "summary": "Créer ou mettre à jour une annonce de moto (multi-étapes)",
                 "operationId": "82e466deecdfc7f046318f30b8399c74",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "title",
-                                    "description",
-                                    "price",
-                                    "category_id",
-                                    "brand_id",
-                                    "model_id",
-                                    "year_id"
-                                ],
                                 "properties": {
+                                    "step": {
+                                        "description": "Étape actuelle (1, 2 ou 3)",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "listing_id": {
+                                        "description": "Obligatoire à partir de l'étape 2",
+                                        "type": "integer",
+                                        "example": 42
+                                    },
                                     "category_id": {
-                                        "description": "Doit être 1 pour moto",
                                         "type": "integer",
                                         "example": 1
                                     },
@@ -3393,15 +3393,15 @@
                                     },
                                     "auction_enabled": {
                                         "type": "boolean",
-                                        "example": false
+                                        "example": true
                                     },
                                     "minimum_bid": {
                                         "type": "number",
-                                        "example": null
+                                        "example": 4000
                                     },
                                     "allow_submission": {
                                         "type": "boolean",
-                                        "example": false
+                                        "example": true
                                     },
                                     "listing_type_id": {
                                         "type": "integer",
@@ -3418,8 +3418,7 @@
                                     "images": {
                                         "type": "array",
                                         "items": {
-                                            "type": "string",
-                                            "format": "binary"
+                                            "type": "string"
                                         }
                                     },
                                     "brand_id": {
@@ -3434,10 +3433,6 @@
                                         "type": "integer",
                                         "example": 2020
                                     },
-                                    "type_id": {
-                                        "type": "integer",
-                                        "example": 3
-                                    },
                                     "engine": {
                                         "type": "string",
                                         "example": "700cc"
@@ -3448,7 +3443,7 @@
                                     },
                                     "body_condition": {
                                         "type": "string",
-                                        "example": "Good"
+                                        "example": "Bon état"
                                     },
                                     "modified": {
                                         "type": "boolean",
@@ -3464,11 +3459,11 @@
                                     },
                                     "vehicle_care": {
                                         "type": "string",
-                                        "example": "Regular maintenance"
+                                        "example": "Toujours au garage"
                                     },
                                     "transmission": {
                                         "type": "string",
-                                        "example": "Manual"
+                                        "example": "Manuelle"
                                     }
                                 },
                                 "type": "object"
@@ -3478,7 +3473,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Annonce de moto créée avec succès"
+                        "description": "Annonce moto enregistrée ou mise à jour avec succès"
                     }
                 },
                 "security": [
@@ -3493,23 +3488,23 @@
                 "tags": [
                     "Listings"
                 ],
-                "summary": "Créer une annonce de pièce détachée",
+                "summary": "Créer ou mettre à jour une annonce de pièce détachée (multi-étapes)",
                 "operationId": "e7bd91a7a7d7d7e0ab2c539cc2348a62",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "title",
-                                    "description",
-                                    "price",
-                                    "category_id",
-                                    "condition"
-                                ],
                                 "properties": {
+                                    "step": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "listing_id": {
+                                        "type": "integer",
+                                        "example": 45
+                                    },
                                     "category_id": {
-                                        "description": "Doit être 2 pour pièce détachée",
                                         "type": "integer",
                                         "example": 2
                                     },
@@ -3523,7 +3518,6 @@
                                     },
                                     "price": {
                                         "type": "number",
-                                        "format": "float",
                                         "example": 200
                                     },
                                     "country_id": {
@@ -3561,8 +3555,7 @@
                                     "images": {
                                         "type": "array",
                                         "items": {
-                                            "type": "string",
-                                            "format": "binary"
+                                            "type": "string"
                                         }
                                     },
                                     "condition": {
@@ -3572,11 +3565,6 @@
                                     "motorcycles": {
                                         "type": "array",
                                         "items": {
-                                            "required": [
-                                                "brand_id",
-                                                "model_id",
-                                                "year_id"
-                                            ],
                                             "properties": {
                                                 "brand_id": {
                                                     "type": "integer",
@@ -3602,7 +3590,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Annonce de pièce détachée créée avec succès"
+                        "description": "Annonce pièce détachée enregistrée ou mise à jour avec succès"
                     }
                 },
                 "security": [
@@ -3617,25 +3605,23 @@
                 "tags": [
                     "Listings"
                 ],
-                "summary": "Créer une annonce de plaque d'immatriculation",
+                "summary": "Créer ou mettre à jour une annonce de plaque d'immatriculation (multi-étapes)",
                 "operationId": "fd028dfaaee30bf948a3880d3acb1632",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "title",
-                                    "description",
-                                    "price",
-                                    "category_id",
-                                    "plate_format_id",
-                                    "country_id_lp",
-                                    "fields"
-                                ],
                                 "properties": {
+                                    "step": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "listing_id": {
+                                        "type": "integer",
+                                        "example": 46
+                                    },
                                     "category_id": {
-                                        "description": "Doit être 3 pour plaque",
                                         "type": "integer",
                                         "example": 3
                                     },
@@ -3649,7 +3635,6 @@
                                     },
                                     "price": {
                                         "type": "number",
-                                        "format": "float",
                                         "example": 800
                                     },
                                     "country_id": {
@@ -3687,8 +3672,7 @@
                                     "images": {
                                         "type": "array",
                                         "items": {
-                                            "type": "string",
-                                            "format": "binary"
+                                            "type": "string"
                                         }
                                     },
                                     "plate_format_id": {
@@ -3706,10 +3690,6 @@
                                     "fields": {
                                         "type": "array",
                                         "items": {
-                                            "required": [
-                                                "field_id",
-                                                "value"
-                                            ],
                                             "properties": {
                                                 "field_id": {
                                                     "type": "integer",
@@ -3731,7 +3711,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Annonce de plaque d'immatriculation créée avec succès"
+                        "description": "Annonce plaque immatriculation enregistrée ou mise à jour avec succès"
                     }
                 },
                 "security": [

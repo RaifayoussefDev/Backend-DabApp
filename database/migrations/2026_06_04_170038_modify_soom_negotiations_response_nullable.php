@@ -22,9 +22,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('soom_negotiations', function (Blueprint $table) {
-            // Remettre la colonne comme non-nullable si besoin
-            $table->string('response')->nullable(false)->change();
-        });
+        // Schema::table('soom_negotiations', function (Blueprint $table) {
+        //     // Remettre la colonne comme non-nullable si besoin
+        //     $table->string('response')->nullable(false)->change();
+        // });
     }
 };
