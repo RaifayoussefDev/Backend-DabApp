@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use Illuminate\Support\Str;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -28,7 +29,7 @@ use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Str;
+
 
 class ListingController extends Controller
 {
@@ -1050,6 +1051,66 @@ class ListingController extends Controller
 
         return response()->json($data);
     }
+
+    public function getDebugInfo($id)
+    {
+        $user = Auth::user();
+        $listing = Listing::find($id);
+        
+        $debugInfo = [
+            'authenticated_user' => $user ? [
+                'id' => $user->id,
+                'email' => $user->email,
+                'name' => $user->first_name . ' ' . $user->last_name,
+            ] : null,
+            'listing' => $listing ? [
+                'id' => $listing->id,
+                'title' => $listing->title,
+                'status' => $listing->status,
+            ] : null,
+        ];
+        
+        if ($user && $listing) {
+            // Construire la requête
+            $query = DB::table('wishlists')
+                ->where('user_id', $user->id)
+                ->where('listing_id', $listing->id);
+            
+            $sql = $query->toSql();
+            $bindings = $query->getBindings();
+            
+            $debugInfo['sql_query'] = $sql;
+            $debugInfo['bindings'] = $bindings;
+            
+            // Exécuter la requête
+            $wishlistExists = $query->exists();
+            $wishlistData = $query->get();
+            
+            $debugInfo['wishlist_check'] = [
+                'exists' => $wishlistExists,
+                'data' => $wishlistData->toArray(),
+                'count' => $wishlistData->count(),
+            ];
+            
+            // Toutes les wishlists pour cet utilisateur
+            $allWishlists = DB::table('wishlists')
+                ->where('user_id', $user->id)
+                ->get();
+                
+            $debugInfo['all_user_wishlists'] = $allWishlists->toArray();
+            
+            // Toutes les wishlists pour ce listing
+            $allListingWishlists = DB::table('wishlists')
+                ->where('listing_id', $listing->id)
+                ->get();
+                
+            $debugInfo['all_listing_wishlists'] = $allListingWishlists->toArray();
+        }
+        
+        return response()->json($debugInfo, 200);
+    }
+
+   
 
     /**
      * @OA\Get(

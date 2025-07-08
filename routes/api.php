@@ -144,8 +144,11 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('/users/{id}/activate', [UserController::class, 'activateUser']);
     Route::patch('/users/{id}/deactivate', [UserController::class, 'deactivateUser']);
 
+    Route::get('/debug-wishlist/{id}', [ListingController::class, 'getDebugInfo']);
+
+
+    Route::get('/listings/{id}', [ListingController::class, 'getById']);
 });
-Route::get('/listings/{id}', [ListingController::class, 'getById']);
 
 Route::get('/listings/by-category/{category_id}', [ListingController::class, 'getByCategory']);
 
@@ -226,3 +229,5 @@ Route::get('/license-plates/{id}/formatted', [LicensePlateController::class, 'sh
 
 Route::get('filter-options-license-plates', [FilterController::class, 'getLicensePlateFilterOptions']);
 Route::get('filter-license-plates', [FilterController::class, 'filterLicensePlates']);
+
+
