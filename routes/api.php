@@ -85,6 +85,10 @@ Route::middleware('auth:api')->group(function () {
 
     Route::get('/listings', [ListingController::class, 'getAll']);
 
+    Route::get('/listings/draft', [ListingController::class, 'getDraftListings']);
+    Route::get('/listings/draft/{id}', [ListingController::class, 'getDraftListingById']);
+
+
     // Existing admin routes
     Route::apiResource('BankCards', CardController::class);
 

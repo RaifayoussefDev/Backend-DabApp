@@ -69,4 +69,8 @@ class SparePart extends Model
     {
         return $this->hasMany(SparePartMotorcycle::class);
     }
+    public function motorcycles()
+{
+    return $this->hasMany(SparePartMotorcycle::class, 'spare_part_id');
+}
 }

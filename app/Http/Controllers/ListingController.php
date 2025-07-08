@@ -396,93 +396,93 @@ class ListingController extends Controller
             'licensePlate.city',
             'licensePlate.fieldValues.formatField'
         ])
-        ->where('country_id', $country_id)
-        ->where('status', 'published') // ✅ afficher uniquement les annonces publiées
-        ->get()
-        ->map(function ($listing) use ($user) {
-            $isInWishlist = false;
-            if ($user) {
-                $isInWishlist = DB::table('wishlists')
-                    ->where('user_id', $user->id)
-                    ->where('listing_id', $listing->id)
-                    ->exists();
-            }
+            ->where('country_id', $country_id)
+            ->where('status', 'published') // ✅ afficher uniquement les annonces publiées
+            ->get()
+            ->map(function ($listing) use ($user) {
+                $isInWishlist = false;
+                if ($user) {
+                    $isInWishlist = DB::table('wishlists')
+                        ->where('user_id', $user->id)
+                        ->where('listing_id', $listing->id)
+                        ->exists();
+                }
 
-            $listingData = [
-                'id' => $listing->id,
-                'title' => $listing->title,
-                'description' => $listing->description,
-                'price' => $listing->price,
-                'category_id' => $listing->category_id,
-                'auction_enabled' => $listing->auction_enabled,
-                'minimum_bid' => $listing->minimum_bid,
-                'allow_submission' => $listing->allow_submission,
-                'listing_type_id' => $listing->listing_type_id,
-                'contacting_channel' => $listing->contacting_channel,
-                'seller_type' => $listing->seller_type,
-                'status' => $listing->status,
-                'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
-                'city' => $listing->city ? $listing->city->name : null,
-                'country' => $listing->country ? $listing->country->name : null,
-                'images' => $listing->images->pluck('image_url'),
-                'wishlist' => $isInWishlist,
-            ];
+                $listingData = [
+                    'id' => $listing->id,
+                    'title' => $listing->title,
+                    'description' => $listing->description,
+                    'price' => $listing->price,
+                    'category_id' => $listing->category_id,
+                    'auction_enabled' => $listing->auction_enabled,
+                    'minimum_bid' => $listing->minimum_bid,
+                    'allow_submission' => $listing->allow_submission,
+                    'listing_type_id' => $listing->listing_type_id,
+                    'contacting_channel' => $listing->contacting_channel,
+                    'seller_type' => $listing->seller_type,
+                    'status' => $listing->status,
+                    'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
+                    'city' => $listing->city ? $listing->city->name : null,
+                    'country' => $listing->country ? $listing->country->name : null,
+                    'images' => $listing->images->pluck('image_url'),
+                    'wishlist' => $isInWishlist,
+                ];
 
-            if ($listing->category_id == 1 && $listing->motorcycle) {
-                $listingData['motorcycle'] = [
-                    'brand' => $listing->motorcycle->brand->name ?? null,
-                    'model' => $listing->motorcycle->model->name ?? null,
-                    'year' => $listing->motorcycle->year->year ?? null,
-                    'engine' => $listing->motorcycle->engine,
-                    'mileage' => $listing->motorcycle->mileage,
-                    'body_condition' => $listing->motorcycle->body_condition,
-                    'modified' => $listing->motorcycle->modified,
-                    'insurance' => $listing->motorcycle->insurance,
-                    'general_condition' => $listing->motorcycle->general_condition,
-                    'vehicle_care' => $listing->motorcycle->vehicle_care,
-                    'transmission' => $listing->motorcycle->transmission,
-                ];
-            } elseif ($listing->category_id == 2 && $listing->sparePart) {
-                $listingData['spare_part'] = [
-                    'condition' => $listing->sparePart->condition,
-                    'brand' => $listing->sparePart->brand->name ?? null,
-                    'category' => $listing->sparePart->bikePartCategory->name ?? null,
-                    'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
-                        return [
-                            'brand' => $association->brand->name ?? null,
-                            'model' => $association->model->name ?? null,
-                            'year' => $association->year->year ?? null,
-                        ];
-                    }),
-                ];
-            } elseif ($listing->category_id == 3 && $listing->licensePlate) {
-                $licensePlate = $listing->licensePlate;
-                $listingData['license_plate'] = [
-                    'plate_format' => [
-                        'id' => $licensePlate->format->id ?? null,
-                        'name' => $licensePlate->format->name ?? null,
-                        'pattern' => $licensePlate->format->pattern ?? null,
-                        'country' => $licensePlate->format->country ?? null,
-                    ],
-                    'city' => $licensePlate->city->name ?? null,
-                    'country_id' => $licensePlate->country_id,
-                    'fields' => $licensePlate->fieldValues->map(function ($fieldValue) {
-                        return [
-                            'field_id' => $fieldValue->formatField->id ?? null,
-                            'field_name' => $fieldValue->formatField->field_name ?? null,
-                            'field_type' => $fieldValue->formatField->field_type ?? null,
-                            'field_label' => $fieldValue->formatField->field_label ?? null,
-                            'is_required' => $fieldValue->formatField->is_required ?? null,
-                            'max_length' => $fieldValue->formatField->max_length ?? null,
-                            'validation_pattern' => $fieldValue->formatField->validation_pattern ?? null,
-                            'value' => $fieldValue->field_value,
-                        ];
-                    })->toArray(),
-                ];
-            }
+                if ($listing->category_id == 1 && $listing->motorcycle) {
+                    $listingData['motorcycle'] = [
+                        'brand' => $listing->motorcycle->brand->name ?? null,
+                        'model' => $listing->motorcycle->model->name ?? null,
+                        'year' => $listing->motorcycle->year->year ?? null,
+                        'engine' => $listing->motorcycle->engine,
+                        'mileage' => $listing->motorcycle->mileage,
+                        'body_condition' => $listing->motorcycle->body_condition,
+                        'modified' => $listing->motorcycle->modified,
+                        'insurance' => $listing->motorcycle->insurance,
+                        'general_condition' => $listing->motorcycle->general_condition,
+                        'vehicle_care' => $listing->motorcycle->vehicle_care,
+                        'transmission' => $listing->motorcycle->transmission,
+                    ];
+                } elseif ($listing->category_id == 2 && $listing->sparePart) {
+                    $listingData['spare_part'] = [
+                        'condition' => $listing->sparePart->condition,
+                        'brand' => $listing->sparePart->brand->name ?? null,
+                        'category' => $listing->sparePart->bikePartCategory->name ?? null,
+                        'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
+                            return [
+                                'brand' => $association->brand->name ?? null,
+                                'model' => $association->model->name ?? null,
+                                'year' => $association->year->year ?? null,
+                            ];
+                        }),
+                    ];
+                } elseif ($listing->category_id == 3 && $listing->licensePlate) {
+                    $licensePlate = $listing->licensePlate;
+                    $listingData['license_plate'] = [
+                        'plate_format' => [
+                            'id' => $licensePlate->format->id ?? null,
+                            'name' => $licensePlate->format->name ?? null,
+                            'pattern' => $licensePlate->format->pattern ?? null,
+                            'country' => $licensePlate->format->country ?? null,
+                        ],
+                        'city' => $licensePlate->city->name ?? null,
+                        'country_id' => $licensePlate->country_id,
+                        'fields' => $licensePlate->fieldValues->map(function ($fieldValue) {
+                            return [
+                                'field_id' => $fieldValue->formatField->id ?? null,
+                                'field_name' => $fieldValue->formatField->field_name ?? null,
+                                'field_type' => $fieldValue->formatField->field_type ?? null,
+                                'field_label' => $fieldValue->formatField->field_label ?? null,
+                                'is_required' => $fieldValue->formatField->is_required ?? null,
+                                'max_length' => $fieldValue->formatField->max_length ?? null,
+                                'validation_pattern' => $fieldValue->formatField->validation_pattern ?? null,
+                                'value' => $fieldValue->field_value,
+                            ];
+                        })->toArray(),
+                    ];
+                }
 
-            return $listingData;
-        });
+                return $listingData;
+            });
 
         return response()->json($listings);
     }
@@ -1573,5 +1573,211 @@ class ListingController extends Controller
         return response()->json([
             'bike_part_brands' => $bike_part_brands
         ]);
+    }
+
+    /**
+     *swagger get
+     * @OA\Get(
+     *     path="/api/listings/draft",
+     *     summary="Get draft listings for the authenticated seller",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Draft listings fetched successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Draft listings fetched successfully"),
+     *             @OA\Property(property="data", type="array", @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="title", type="string"),
+     *                 @OA\Property(property="description", type="string"),
+     *                 @OA\Property(property="price", type="number"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="city", type="string"),
+     *                 @OA\Property(property="country", type="string"),
+     *                 @OA\Property(property="images", type="array", @OA\Items(type="string")),
+     *                 @OA\Property(property="category_id", type="integer"),
+     *                 @OA\Property(property="motorcycle", type="object", nullable=true),
+     *                 @OA\Property(property="sparePart", type="object", nullable=true),
+     *                 @OA\Property(property="licensePlate", type="object", nullable=true)
+     *             ))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Failed to fetch draft listings"),
+     *             @OA\Property(property="details", type="string", example="Database connection failed")
+     *         )
+     *     )
+     * )
+
+     */
+    public function getDraftListings()
+    {
+        try {
+            $sellerId = Auth::id();
+            if (!$sellerId) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            $draftListings = Listing::with([
+                'images',
+                'category',
+                'country',
+                'city',
+                'motorcycle.brand',
+                'motorcycle.model',
+                'motorcycle.year',
+                'motorcycle.type',
+                'sparePart.bikePartBrand',
+                'sparePart.bikePartCategory',
+                'sparePart.motorcycles.brand',
+                'sparePart.motorcycles.model',
+                'sparePart.motorcycles.year',
+                'licensePlate.format',
+                'licensePlate.country',
+                'licensePlate.city',
+                'licensePlate.values.field',
+            ])
+                ->where('seller_id', $sellerId)
+                ->where('status', 'draft')
+                ->get();
+
+            return response()->json([
+                'message' => 'Draft listings fetched successfully',
+                'data' => $draftListings
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch draft listings',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Summary of getDraftListingById
+     * swagger get
+     * @OA\Get(
+     *     path="/api/listings/draft/{id}",
+     *     summary="Get a specific draft listing by ID for the authenticated seller",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the draft listing",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Draft listing fetched successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Draft listing fetched successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=123),
+     *                 @OA\Property(property="title", type="string", example="My Listing Title"),
+     *                 @OA\Property(property="description", type="string", example="Description of the listing"),
+     *                 @OA\Property(property="price", type="number", format="float", example=1999.99),
+     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2025-07-08T15:30:00Z"),
+     *
+     *                 @OA\Property(property="city", type="object", nullable=true,
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Casablanca")
+     *                 ),
+     *                 @OA\Property(property="country", type="object", nullable=true,
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Morocco")
+     *                 ),
+     *
+     *                 @OA\Property(property="images", type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=10),
+     *                         @OA\Property(property="image_url", type="string", example="https://example.com/image.jpg")
+     *                     )
+     *                 ),
+     *
+     *                 @OA\Property(property="category_id", type="integer", example=2),
+     *
+     *                 @OA\Property(property="motorcycle", type="object", nullable=true),
+     *                 @OA\Property(property="sparePart", type="object", nullable=true),
+     *                 @OA\Property(property="licensePlate", type="object", nullable=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Draft listing not found or access denied",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Draft listing not found or access denied")
+     *         )
+     *     )
+     * )
+     */
+
+    public function getDraftListingById($id)
+    {
+        try {
+            $sellerId = Auth::id();
+            if (!$sellerId) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            $listing = Listing::with([
+                'images',
+                'category',
+                'country',
+                'city',
+                'motorcycle.brand',
+                'motorcycle.model',
+                'motorcycle.year',
+                'motorcycle.type',
+                'sparePart.bikePartBrand',
+                'sparePart.bikePartCategory',
+                'sparePart.motorcycles.brand',
+                'sparePart.motorcycles.model',
+                'sparePart.motorcycles.year',
+                'licensePlate.format',
+                'licensePlate.country',
+                'licensePlate.city',
+                'licensePlate.values.field',
+            ])
+                ->where('id', $id)
+                ->where('seller_id', $sellerId)
+                ->where('status', 'draft')
+                ->first();
+
+            if (!$listing) {
+                return response()->json(['message' => 'Draft listing not found or access denied'], 404);
+            }
+
+            return response()->json([
+                'message' => 'Draft listing fetched successfully',
+                'data' => $listing,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch draft listing',
+                'details' => $e->getMessage()
+            ], 500);
+        }
     }
 }
