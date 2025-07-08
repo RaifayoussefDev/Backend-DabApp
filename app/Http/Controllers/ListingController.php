@@ -888,33 +888,11 @@ class ListingController extends Controller
      *             @OA\Property(property="images", type="array", @OA\Items(type="string")),
      *             @OA\Property(property="wishlist", type="boolean"),
      *             @OA\Property(property="category_id", type="integer"),
-     *             @OA\Property(
-     *                 property="motorcycle",
-     *                 type="object",
-     *                 nullable=true,
-     *                 @OA\Property(property="engine", type="string"),
-     *                 @OA\Property(property="mileage", type="integer"),
-     *                 @OA\Property(property="body_condition", type="string"),
-     *                 @OA\Property(property="modified", type="boolean"),
-     *                 @OA\Property(property="insurance", type="boolean"),
-     *                 @OA\Property(property="general_condition", type="string"),
-     *                 @OA\Property(property="vehicle_care", type="string"),
-     *                 @OA\Property(property="transmission", type="string"),
-     *                 @OA\Property(property="brand", type="string"),
-     *                 @OA\Property(property="model", type="string"),
-     *                 @OA\Property(property="year", type="integer"),
-     *                 @OA\Property(property="type", type="string")
-     *             ),
-     *             @OA\Property(
-     *                 property="license_plate",
-     *                 type="object",
-     *                 nullable=true,
-     *                 @OA\Property(property="characters", type="string"),
-     *                 @OA\Property(property="digits_count", type="integer"),
-     *                 @OA\Property(property="country_id", type="integer"),
-     *                 @OA\Property(property="type", type="string"),
-     *                 @OA\Property(property="color", type="string")
-     *             )
+     *             @OA\Property(property="submission", type="object", nullable=true),
+     *             @OA\Property(property="seller", type="object", nullable=true),
+     *             @OA\Property(property="motorcycle", type="object", nullable=true),
+     *             @OA\Property(property="spare_part", type="object", nullable=true),
+     *             @OA\Property(property="license_plate", type="object", nullable=true)
      *         )
      *     ),
      *     @OA\Response(
@@ -943,7 +921,9 @@ class ListingController extends Controller
             'licensePlate.format',
             'licensePlate.city',
             'licensePlate.fieldValues.formatField'
-        ])->find($id)->where('status', 'published');
+        ])->where('id', $id)
+            ->where('status', 'published')
+            ->first();
 
         if (!$listing) {
             return response()->json(['message' => 'Listing not found'], 404);
@@ -976,20 +956,17 @@ class ListingController extends Controller
             'status' => $listing->status,
         ];
 
-        // Ajouter le prix seulement si allow_submission est false
-        if (!($listing->allow_submission == true || $listing->allow_submission == 1)) {
+        if (!$listing->allow_submission) {
             $data['price'] = $listing->price;
         }
 
-        // Vérifier si allow_submission est true/1
-        if ($listing->allow_submission == true || $listing->allow_submission == 1) {
-            // Récupérer les informations de la table submission
-            $submission = DB::table('submissions')
+        if ($listing->allow_submission) {
+            $submissions = DB::table('submissions')
                 ->where('listing_id', $listing->id)
-                ->first();
+                ->get();
 
-            if ($submission) {
-                $data['submission'] = [
+            $data['submissions'] = $submissions->map(function ($submission) {
+                return [
                     'id' => $submission->id,
                     'user_id' => $submission->user_id,
                     'amount' => $submission->amount,
@@ -997,10 +974,8 @@ class ListingController extends Controller
                     'status' => $submission->status,
                     'min_soom' => $submission->min_soom,
                 ];
-            }
-            // Ne pas inclure les informations du vendeur
+            });
         } else {
-            // Afficher les informations du vendeur normalement
             $data['seller'] = [
                 'id' => $listing->seller?->id,
                 'name' => $listing->seller?->first_name . ' ' . $listing->seller?->last_name,
@@ -1012,9 +987,8 @@ class ListingController extends Controller
             ];
         }
 
-        // Category-specific data
+        // Motorcycle category
         if ($listing->category_id == 1 && $listing->motorcycle) {
-            // Motorcycle data
             $data['motorcycle'] = [
                 'brand' => $listing->motorcycle->brand?->name,
                 'model' => $listing->motorcycle->model?->name,
@@ -1028,8 +1002,10 @@ class ListingController extends Controller
                 'vehicle_care' => $listing->motorcycle->vehicle_care,
                 'transmission' => $listing->motorcycle->transmission,
             ];
-        } elseif ($listing->category_id == 2 && $listing->sparePart) {
-            // Spare part data
+        }
+
+        // Spare part category
+        if ($listing->category_id == 2 && $listing->sparePart) {
             $data['spare_part'] = [
                 'condition' => $listing->sparePart->condition,
                 'brand' => $listing->sparePart->bikePartBrand?->name,
@@ -1042,8 +1018,10 @@ class ListingController extends Controller
                     ];
                 }),
             ];
-        } elseif ($listing->category_id == 3 && $listing->licensePlate) {
-            // License plate data with format and field values
+        }
+
+        // License plate category
+        if ($listing->category_id == 3 && $listing->licensePlate) {
             $licensePlate = $listing->licensePlate;
 
             $data['license_plate'] = [
@@ -1059,11 +1037,11 @@ class ListingController extends Controller
                     return [
                         'field_id' => $fieldValue->formatField?->id,
                         'field_name' => $fieldValue->formatField?->field_name,
-                        'field_type' => $fieldValue->formatField?->field_type,
-                        'field_label' => $fieldValue->formatField?->field_label,
+                        'position' => $fieldValue->formatField?->position,
+                        'character_type' => $fieldValue->formatField?->character_type,
                         'is_required' => $fieldValue->formatField?->is_required,
+                        'min_length' => $fieldValue->formatField?->min_length,
                         'max_length' => $fieldValue->formatField?->max_length,
-                        'validation_pattern' => $fieldValue->formatField?->validation_pattern,
                         'value' => $fieldValue->field_value,
                     ];
                 })->toArray(),
@@ -1072,6 +1050,7 @@ class ListingController extends Controller
 
         return response()->json($data);
     }
+
     /**
      * @OA\Get(
      *     path="/api/listings",
