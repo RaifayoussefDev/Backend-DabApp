@@ -10,7 +10,11 @@ use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\Exception\Auth\EmailExists;
 
+use Kreait\Firebase\Exception\Auth\InvalidPassword;
+use Kreait\Firebase\Exception\Auth\UserNotFound;
 
 
 class AuthController extends Controller
@@ -55,38 +59,63 @@ class AuthController extends Controller
      * )
      */
 
-    public function register(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
-            'phone' => 'required|string|unique:users',
-            'password' => 'required|string|min:6|confirmed',
-        ]);
+     public function register(Request $request)
+     {
+         $validator = Validator::make($request->all(), [
+             'first_name' => 'required|string|max:255',
+             'last_name' => 'required|string|max:255',
+             'email' => 'required|email|unique:users',
+             'phone' => 'required|string|unique:users',
+             'password' => 'required|string|min:6|confirmed',
+         ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
+         if ($validator->fails()) {
+             return response()->json($validator->errors(), 422);
+         }
 
-        $user = User::create([
-            'first_name' => $request->first_name,
-            'last_name'  => $request->last_name,
-            'email'      => $request->email,
-            'phone'      => $request->phone,
-            'password'   => Hash::make($request->password),
-            'role_id'    => $request->role_id
-        ]);
+         // 🔥 Créer l’utilisateur dans Firebase
+         try {
+             $auth = (new Factory)
+                 ->withServiceAccount(storage_path('app/firebase/firebase_credentials.json'))
+                 ->createAuth();
 
-        $token = JWTAuth::fromUser($user);
-        $tokenExpiration= now()->addMonth();
+             $firebaseUser = $auth->createUser([
+                 'email' => $request->email,
+                 'password' => $request->password,
+                 'displayName' => $request->first_name . ' ' . $request->last_name,
+             ]);
+         } catch (EmailExists $e) {
+             return response()->json(['error' => 'Cet email existe déjà sur Firebase'], 409);
+         } catch (\Throwable $e) {
+             return response()->json(['error' => 'Erreur Firebase : ' . $e->getMessage()], 500);
+         }
 
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-            'expires_at' => $tokenExpiration->toDateTimeString()
-        ]);
-    }
+         // ✅ Créer l’utilisateur dans ta BDD
+         $user = User::create([
+             'first_name' => $request->first_name,
+             'last_name'  => $request->last_name,
+             'email'      => $request->email,
+             'phone'      => $request->phone,
+             'password'   => Hash::make($request->password),
+             'role_id'    => $request->role_id,
+             'verified'   => false, // ou true si email_verified de Firebase
+             'is_active'  => true,
+             'is_online'  => false,
+             'language'   => 'fr',
+             'timezone'   => 'Africa/Casablanca',
+             'two_factor_enabled' => false,
+             'country_id' => null,
+         ]);
+
+         $token = JWTAuth::fromUser($user);
+         $tokenExpiration = now()->addMonth();
+
+         return response()->json([
+             'user' => $user,
+             'token' => $token,
+             'expires_at' => $tokenExpiration->toDateTimeString()
+         ]);
+     }
 
 
     /**
@@ -147,71 +176,89 @@ class AuthController extends Controller
      */
 
 
-    public function login(Request $request)
-    {
-        $request->validate([
-            'login' => 'required|string',
-            'password' => 'required|string'
-        ]);
+     public function login(Request $request)
+     {
+         $request->validate([
+             'login' => 'required|string',
+             'password' => 'required|string'
+         ]);
 
-        $login = $request->input('login');
-        $password = $request->input('password');
+         $login = $request->input('login');
+         $password = $request->input('password');
 
-        // Check if login is email or phone
-        $user = filter_var($login, FILTER_VALIDATE_EMAIL)
-            ? User::where('email', $login)->first()
-            : User::where('phone', $login)->first();
+         // 🔥 Auth Firebase
+         $auth = (new Factory)
+             ->withServiceAccount(storage_path('app/firebase/firebase_credentials.json'))
+             ->createAuth();
 
-        if (!$user || !Hash::check($password, $user->password)) {
-            return response()->json(['error' => 'Invalid credentials'], 401);
-        }
+         try {
+             // Essaye de se connecter avec Firebase
+             $signInResult = $auth->signInWithEmailAndPassword($login, $password);
 
-        // Verify if user is active
-        if (!$user->is_active) {
-            return response()->json(['error' => 'User is inactive'], 401);
-        }
+             // Récupérer les infos Firebase
+             $firebaseUser = $auth->getUserByEmail($login);
 
-        // Update is_online in the users table (not in authentication table)
-        $user->is_online = 1; // Set user as online
-        $user->save();
+         } catch (UserNotFound $e) {
+             return response()->json(['error' => 'Utilisateur introuvable dans Firebase'], 404);
+         } catch (InvalidPassword $e) {
+             return response()->json(['error' => 'Mot de passe invalide'], 401);
+         } catch (\Throwable $e) {
+             return response()->json(['error' => 'Erreur Firebase: ' . $e->getMessage()], 500);
+         }
 
-        // Generate JWT token
-        $token = JWTAuth::fromUser($user);
-        $tokenExpiration= now()->addMonth();
+         // 🎯 L’utilisateur existe dans Firebase, on vérifie dans notre base Laravel
+         $user = User::where('email', $login)->first();
 
-        // If 2FA is enabled for the user
-        if ($user->two_factor_enabled) {
-            $otp = rand(1000, 9999);
-            DB::table('otps')->updateOrInsert(
-                ['user_id' => $user->id],
-                [
-                    'code' => $otp,
-                    'expires_at' => now()->addMinutes(5),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
-            );
+         if (!$user) {
+             return response()->json(['error' => 'Utilisateur introuvable dans la base Laravel'], 404);
+         }
 
-            $user->notify(new SendOtpNotification($otp));
+         if (!$user->is_active) {
+             return response()->json(['error' => 'Utilisateur inactif'], 403);
+         }
 
-            return response()->json([
-                'message' => 'OTP required',
-                'user_id' => $user->id,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
-                'phone' => $user->phone,
-                'requiresOTP' => $user->two_factor_enabled,
-                'email' => $user->email
-            ], 202); // Accepted
-        }
+         // 🟢 Marquer comme connecté
+         $user->is_online = 1;
+         $user->last_login = now();
+         $user->save();
 
-        // If no 2FA, return the JWT token and its expiration
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-            'token_expiration' => $tokenExpiration
-        ]);
-    }
+         // 🔐 Générer le token JWT Laravel
+         $token = JWTAuth::fromUser($user);
+         $tokenExpiration = now()->addMonth();
+
+         // 🔐 Si 2FA activé → OTP
+         if ($user->two_factor_enabled) {
+             $otp = rand(1000, 9999);
+             DB::table('otps')->updateOrInsert(
+                 ['user_id' => $user->id],
+                 [
+                     'code' => $otp,
+                     'expires_at' => now()->addMinutes(5),
+                     'created_at' => now(),
+                     'updated_at' => now(),
+                 ]
+             );
+
+             $user->notify(new SendOtpNotification($otp));
+
+             return response()->json([
+                 'message' => 'OTP required',
+                 'user_id' => $user->id,
+                 'first_name' => $user->first_name,
+                 'last_name' => $user->last_name,
+                 'phone' => $user->phone,
+                 'requiresOTP' => true,
+                 'email' => $user->email
+             ], 202); // Accepted
+         }
+
+         // ✅ Sinon retour du token
+         return response()->json([
+             'user' => $user,
+             'token' => $token,
+             'token_expiration' => $tokenExpiration
+         ]);
+     }
 
 
 

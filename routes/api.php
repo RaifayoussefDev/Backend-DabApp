@@ -12,6 +12,7 @@ use App\Http\Controllers\BikePartBrandController;
 use App\Http\Controllers\BikePartCategoryController;
 use App\Http\Controllers\CurrencyExchangeRateController;
 use App\Http\Controllers\FilterController;
+use App\Http\Controllers\FirebaseAuthController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\LicensePlateController;
 use App\Http\Controllers\LicensePlateFilterController;
@@ -231,3 +232,4 @@ Route::get('filter-options-license-plates', [FilterController::class, 'getLicens
 Route::get('filter-license-plates', [FilterController::class, 'filterLicensePlates']);
 
 
+Route::post('/firebase-login', [FirebaseAuthController::class, 'loginWithFirebase']);
