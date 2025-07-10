@@ -3,15 +3,8 @@
 /public/build
 /public/hot
 /public/storage
-
 /storage/*.key
 /storage/pail
-/storage/*
-!/storage/app/
-/storage/app/*
-!/storage/app/firebase/
-/storage/app/firebase/*
-
 /vendor
 .env
 .env.backup
