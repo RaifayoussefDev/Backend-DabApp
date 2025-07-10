@@ -25,5 +25,5 @@ Route::prefix('motorcycles')->group(function () {
     Route::get('/{id}', [MotorcycleController::class, 'show'])->name('motorcycles.show');
 });
 
-Route::view('/test-google-login', 'auth.google-test');
+Route::view('/test-google-login', 'Auth.google-test');
 
