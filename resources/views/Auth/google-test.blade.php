@@ -10,7 +10,10 @@
 <body>
     <h2>Connexion avec Google via Firebase</h2>
     <button onclick="signInWithGoogle()">Connexion Google</button>
-
+<?php
+echo date('Y-m-d H:i:s');
+echo "<br>";
+;?>
     <pre id="result" style="margin-top:20px; background:#f4f4f4; padding:10px;"></pre>
 
     <script>
