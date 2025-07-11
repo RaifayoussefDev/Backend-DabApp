@@ -43,19 +43,18 @@ class FirebaseAuthController extends Controller
             // 👤 Si utilisateur inexistant → le créer
             if (!$user) {
                 $user = User::create([
-
                     'first_name' => explode(' ', $name)[0],
                     'last_name' => explode(' ', $name)[1] ?? '',
                     'email' => $email,
                     'password' => bcrypt(uniqid()),    // mot de passe aléatoire (non utilisé)
                     'is_active' => true,
                     'verified' => true,
-                    'role_id' => 1,
+                    'role_id' => 1, // Rôle utilisateur par défaut
                     'is_online' => true,
                     'last_login' => now(),
                     'language' => 'fr',
                     'timezone' => 'Africa/Casablanca',
-                    'two_factor_enabled' => false // facultatif ici car on ignore le 2FA pour Google
+                    'two_factor_enabled' => false
                 ]);
             } else {
                 // 🔄 Sinon, mettre à jour login info
@@ -79,5 +78,4 @@ class FirebaseAuthController extends Controller
             ], 401);
         }
     }
-
 }

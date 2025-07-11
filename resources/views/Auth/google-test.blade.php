@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <title>Test Google Firebase Login</title>
@@ -7,13 +8,18 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
+
 <body>
+    <?php
+    // Dans votre contrôleur Laravel
+    $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
+    $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
+
+        echo $country ."-".$continent; // Afficher contenu français
+; ?>
     <h2>Connexion avec Google via Firebase</h2>
     <button onclick="signInWithGoogle()">Connexion Google</button>
-<?php
-echo date('Y-m-d H:i:s');
-echo "<br>";
-;?>
+
     <pre id="result" style="margin-top:20px; background:#f4f4f4; padding:10px;"></pre>
 
     <script>
@@ -42,7 +48,9 @@ echo "<br>";
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + idToken
                     },
-                    body: JSON.stringify({ idToken })
+                    body: JSON.stringify({
+                        idToken
+                    })
                 });
 
                 const data = await response.json();
@@ -55,4 +63,5 @@ echo "<br>";
         }
     </script>
 </body>
+
 </html>
