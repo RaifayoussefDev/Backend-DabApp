@@ -37,7 +37,7 @@ Route::middleware('auth:api')->group(function () {
 
     // Auth management
     Route::get('/me', [AuthController::class, 'me']);
-    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:api');
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::put('/user/update', [AuthController::class, 'updateProfile']);
     Route::put('/user/two-factor-toggle', [AuthController::class, 'toggleTwoFactor']);

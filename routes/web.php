@@ -26,4 +26,3 @@ Route::prefix('motorcycles')->group(function () {
 });
 
 Route::view('/test-google-login', 'auth.google-test');
-
