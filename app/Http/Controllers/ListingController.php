@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use Illuminate\Support\Str;
 
 use App\Http\Controllers\Controller;
@@ -1056,7 +1057,7 @@ class ListingController extends Controller
     {
         $user = Auth::user();
         $listing = Listing::find($id);
-        
+
         $debugInfo = [
             'authenticated_user' => $user ? [
                 'id' => $user->id,
@@ -1069,48 +1070,48 @@ class ListingController extends Controller
                 'status' => $listing->status,
             ] : null,
         ];
-        
+
         if ($user && $listing) {
             // Construire la requête
             $query = DB::table('wishlists')
                 ->where('user_id', $user->id)
                 ->where('listing_id', $listing->id);
-            
+
             $sql = $query->toSql();
             $bindings = $query->getBindings();
-            
+
             $debugInfo['sql_query'] = $sql;
             $debugInfo['bindings'] = $bindings;
-            
+
             // Exécuter la requête
             $wishlistExists = $query->exists();
             $wishlistData = $query->get();
-            
+
             $debugInfo['wishlist_check'] = [
                 'exists' => $wishlistExists,
                 'data' => $wishlistData->toArray(),
                 'count' => $wishlistData->count(),
             ];
-            
+
             // Toutes les wishlists pour cet utilisateur
             $allWishlists = DB::table('wishlists')
                 ->where('user_id', $user->id)
                 ->get();
-                
+
             $debugInfo['all_user_wishlists'] = $allWishlists->toArray();
-            
+
             // Toutes les wishlists pour ce listing
             $allListingWishlists = DB::table('wishlists')
                 ->where('listing_id', $listing->id)
                 ->get();
-                
+
             $debugInfo['all_listing_wishlists'] = $allListingWishlists->toArray();
         }
-        
+
         return response()->json($debugInfo, 200);
     }
 
-   
+
 
     /**
      * @OA\Get(
@@ -1816,6 +1817,76 @@ class ListingController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to fetch draft listing',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/listings/draft/{id}",
+     *     summary="Delete a single draft listing by ID",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the draft listing to delete",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Draft listing deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Draft listing deleted successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Listing not found or not a draft",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Draft listing not found or unauthorized")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Failed to delete listing"),
+     *             @OA\Property(property="details", type="string", example="Database error")
+     *         )
+     *     )
+     * )
+     */
+    public function deleteDraftListingById($id)
+    {
+        try {
+            $userId = Auth::id();
+
+            $listing = Listing::where('id', $id)
+                ->where('seller_id', $userId)
+                ->where('status', 'draft')
+                ->first();
+
+            if (!$listing) {
+                return response()->json([
+                    'message' => 'Draft listing not found or unauthorized'
+                ], 404);
+            }
+
+            // Supprimer les auction_histories liés
+            AuctionHistory::where('listing_id', $listing->id)->delete();
+
+            // Supprimer le listing
+            $listing->delete();
+
+            return response()->json([
+                'message' => 'Draft listing deleted successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to delete listing',
                 'details' => $e->getMessage()
             ], 500);
         }

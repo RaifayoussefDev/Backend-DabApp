@@ -4138,66 +4138,23 @@
                                         "category_id": {
                                             "type": "integer"
                                         },
+                                        "submission": {
+                                            "type": "object",
+                                            "nullable": true
+                                        },
+                                        "seller": {
+                                            "type": "object",
+                                            "nullable": true
+                                        },
                                         "motorcycle": {
-                                            "properties": {
-                                                "engine": {
-                                                    "type": "string"
-                                                },
-                                                "mileage": {
-                                                    "type": "integer"
-                                                },
-                                                "body_condition": {
-                                                    "type": "string"
-                                                },
-                                                "modified": {
-                                                    "type": "boolean"
-                                                },
-                                                "insurance": {
-                                                    "type": "boolean"
-                                                },
-                                                "general_condition": {
-                                                    "type": "string"
-                                                },
-                                                "vehicle_care": {
-                                                    "type": "string"
-                                                },
-                                                "transmission": {
-                                                    "type": "string"
-                                                },
-                                                "brand": {
-                                                    "type": "string"
-                                                },
-                                                "model": {
-                                                    "type": "string"
-                                                },
-                                                "year": {
-                                                    "type": "integer"
-                                                },
-                                                "type": {
-                                                    "type": "string"
-                                                }
-                                            },
+                                            "type": "object",
+                                            "nullable": true
+                                        },
+                                        "spare_part": {
                                             "type": "object",
                                             "nullable": true
                                         },
                                         "license_plate": {
-                                            "properties": {
-                                                "characters": {
-                                                    "type": "string"
-                                                },
-                                                "digits_count": {
-                                                    "type": "integer"
-                                                },
-                                                "country_id": {
-                                                    "type": "integer"
-                                                },
-                                                "type": {
-                                                    "type": "string"
-                                                },
-                                                "color": {
-                                                    "type": "string"
-                                                }
-                                            },
                                             "type": "object",
                                             "nullable": true
                                         }
@@ -4796,6 +4753,83 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Draft listing not found or access denied"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Delete a single draft listing by ID",
+                "operationId": "aee3d907166fde42e5f542a24089da94",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID of the draft listing to delete",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Draft listing deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Draft listing deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Listing not found or not a draft",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Draft listing not found or unauthorized"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to delete listing"
+                                        },
+                                        "details": {
+                                            "type": "string",
+                                            "example": "Database error"
                                         }
                                     },
                                     "type": "object"

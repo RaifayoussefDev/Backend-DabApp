@@ -88,6 +88,7 @@ Route::middleware('auth:api')->group(function () {
 
     Route::get('/listings/draft', [ListingController::class, 'getDraftListings']);
     Route::get('/listings/draft/{id}', [ListingController::class, 'getDraftListingById']);
+    Route::delete('/listings/draft/{id}', [ListingController::class, 'deleteDraftListingById'])->middleware('auth:api');
 
 
     // Existing admin routes
