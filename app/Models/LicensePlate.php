@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -51,5 +52,9 @@ class LicensePlate extends Model
     {
         return $this->hasMany(LicensePlateValue::class);
     }
-}
 
+    public function LicensePlateValue()
+    {
+        return $this->hasMany(LicensePlateValue::class, 'license_plate_id'); // Ajuste les noms si nécessaire
+    }
+}
