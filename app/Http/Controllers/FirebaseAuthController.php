@@ -1,6 +1,8 @@
 <?php
+
 namespace App\Http\Controllers;
 
+use App\Models\Authentication;
 use Illuminate\Http\Request;
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Auth;
@@ -66,6 +68,17 @@ class FirebaseAuthController extends Controller
             // 🔐 Génère le token JWT Laravel
             $token = JWTAuth::fromUser($user);
             $tokenExpiration = now()->addMonth();
+
+            // --- Traçage de la connexion ---
+            Authentication::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'token' => $token,
+                    'token_expiration' => $tokenExpiration,
+                    'is_online' => true,
+                    'connection_date' => now(),
+                ]
+            );
 
             return response()->json([
                 'user' => $user,

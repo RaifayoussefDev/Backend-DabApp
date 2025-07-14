@@ -23,6 +23,8 @@ class Listing extends Model
         'minimum_bid',
         'allow_submission',
         'listing_type_id',
+        'contacting_channel',   // <== Doit être ici
+        'seller_type', 
     ];
 
     public function auctions()
