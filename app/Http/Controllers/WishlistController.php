@@ -57,7 +57,7 @@ class WishlistController extends Controller
                         'country',
                         'city',
                         'seller' => function($q) {
-                            $q->select('id', 'nom', 'prenom', 'email', 'phone');
+                            $q->select('id', 'first_name', 'last_name', 'email', 'phone');
                         },
                         'motorcycle.brand',
                         'motorcycle.model',
