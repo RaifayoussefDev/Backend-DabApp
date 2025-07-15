@@ -14,17 +14,89 @@ use Illuminate\Http\Request;
  */
 class WishlistController extends Controller
 {
-    /**
+   /**
      * @OA\Get(
      *     path="/api/wishlists",
      *     tags={"Wishlist"},
-     *     summary="Get all wishlists",
-     *     @OA\Response(response=200, description="List of wishlists")
+     *     summary="Get user's wishlist (auth required)",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=10)
+     *     ),
+     *     @OA\Response(response=200, description="Wishlist retrieved successfully"),
+     *     @OA\Response(response=401, description="Unauthorized")
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
-        return Wishlist::with(['user', 'listing'])->get();
+        try {
+            $userId = Auth::id();
+            if (!$userId) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            $perPage = $request->get('per_page', 10);
+            $perPage = min($perPage, 50); // Limit to 50 items per page
+
+            $wishlists = Wishlist::with([
+                'listing' => function($query) {
+                    $query->where('status', 'published')->with([
+                        'images',
+                        'category',
+                        'country',
+                        'city',
+                        'seller' => function($q) {
+                            $q->select('id', 'name', 'avatar');
+                        },
+                        'motorcycle.brand',
+                        'motorcycle.model',
+                        'motorcycle.year',
+                        'sparePart.bikePartBrand',
+                        'sparePart.bikePartCategory',
+                        'licensePlate.format',
+                        'licensePlate.country',
+                        'licensePlate.city',
+                        'licensePlate.fieldValues.plateFormatField'
+                    ]);
+                }
+            ])
+            ->where('user_id', $userId)
+            ->whereHas('listing', function($query) {
+                $query->where('status', 'published');
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+
+            return response()->json([
+                'message' => 'Wishlist retrieved successfully',
+                'data' => $wishlists->items(),
+                'pagination' => [
+                    'current_page' => $wishlists->currentPage(),
+                    'last_page' => $wishlists->lastPage(),
+                    'per_page' => $wishlists->perPage(),
+                    'total' => $wishlists->total(),
+                    'from' => $wishlists->firstItem(),
+                    'to' => $wishlists->lastItem()
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to retrieve wishlist',
+                'details' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

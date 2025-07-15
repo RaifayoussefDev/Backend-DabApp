@@ -7497,13 +7497,43 @@
                 "tags": [
                     "Wishlist"
                 ],
-                "summary": "Get all wishlists",
+                "summary": "Get user's wishlist (auth required)",
                 "operationId": "978401ca2ca07b592255725cd25a443d",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "List of wishlists"
+                        "description": "Wishlist retrieved successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "post": {
                 "tags": [
