@@ -18,13 +18,9 @@ class LicensePlateValue extends Model
         return $this->belongsTo(LicensePlate::class);
     }
 
-    public function formatField(): BelongsTo
+    public function plateFormatField(): BelongsTo
     {
-        return $this->belongsTo(PlateFormatField::class, 'plate_format_field_id');
+        return $this->belongsTo(PlateFormatField::class);
     }
 
-    public function field(): BelongsTo
-    {
-        return $this->belongsTo(PlateFormatField::class); // or whatever your field model is called
-    }
 }
