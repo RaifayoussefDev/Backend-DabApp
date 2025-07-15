@@ -1687,8 +1687,8 @@ class ListingController extends Controller
                 'licensePlate.format',
                 'licensePlate.country',
                 'licensePlate.city',
-                'licensePlate.values.field',
-            ])
+                'licensePlate.fieldValues.field',  // ✅ Changed from 'values' to 'fieldValues'
+                ])
                 ->where('seller_id', $sellerId)
                 ->where('status', 'draft')
                 ->get();
