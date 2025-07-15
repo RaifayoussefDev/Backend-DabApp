@@ -24,10 +24,4 @@ Route::prefix('motorcycles')->group(function () {
     Route::post('/import', [MotorcycleController::class, 'import'])->name('motorcycles.import');
     Route::get('/{id}', [MotorcycleController::class, 'show'])->name('motorcycles.show');
 });
-
-<<<<<<< HEAD
 Route::view('/test-google-login', 'Auth.google-test');
-
-=======
-Route::view('/test-google-login', 'Auth.google-test');
->>>>>>> 6b027dd7a22976c023bb459a5224e8fb3c0275c1

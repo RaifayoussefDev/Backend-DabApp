@@ -13,6 +13,7 @@ use App\Http\Controllers\BikePartCategoryController;
 use App\Http\Controllers\CurrencyExchangeRateController;
 use App\Http\Controllers\FilterController;
 use App\Http\Controllers\FirebaseAuthController;
+use App\Http\Controllers\FirebasePhoneAuthController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\LicensePlateController;
 use App\Http\Controllers\LicensePlateFilterController;
@@ -234,3 +235,8 @@ Route::get('filter-license-plates', [FilterController::class, 'filterLicensePlat
 
 
 Route::post('/firebase-login', [FirebaseAuthController::class, 'loginWithFirebase']);
+
+// Route::post('/firebase-login', [FirebasePhoneAuthController::class, 'loginWithFirebase']);
+Route::post('/firebase-phone-login', [FirebasePhoneAuthController::class, 'loginWithFirebasePhone']);
+Route::post('/check-user-exists', [FirebasePhoneAuthController::class, 'checkUserExists']);
+Route::post('/login-existing-user', [FirebasePhoneAuthController::class, 'loginExistingUser']);
