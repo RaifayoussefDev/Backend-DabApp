@@ -1669,7 +1669,7 @@ class ListingController extends Controller
             if (!$sellerId) {
                 return response()->json(['message' => 'Unauthorized'], 401);
             }
-
+    
             $draftListings = Listing::with([
                 'images',
                 'category',
@@ -1687,12 +1687,12 @@ class ListingController extends Controller
                 'licensePlate.format',
                 'licensePlate.country',
                 'licensePlate.city',
-                'licensePlate.fieldValues.field',  // ✅ Changed from 'values' to 'fieldValues'
-                ])
+                'licensePlate.fieldValues.plateFormatField', // ✅ Changé ici
+            ])
                 ->where('seller_id', $sellerId)
                 ->where('status', 'draft')
                 ->get();
-
+    
             return response()->json([
                 'message' => 'Draft listings fetched successfully',
                 'data' => $draftListings
