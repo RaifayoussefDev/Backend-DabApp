@@ -36,22 +36,34 @@ class FirebaseAuthController extends Controller
             $firebaseUid = $verifiedIdToken->claims()->get('sub');
             $firebaseUser = $auth->getUser($firebaseUid);
 
-            $email = $firebaseUser->email;
-            $name = $firebaseUser->displayName ?? 'Utilisateur Google';
+            $email = $firebaseUser->email ?? null;
+            $phone = $firebaseUser->phoneNumber ?? null;
+            $name = $firebaseUser->displayName ?? 'Utilisateur';
 
-            // 🎯 Vérifie si utilisateur Laravel existe déjà
-            $user = User::where('email', $email)->first();
+            // 🔁 Générer un email fictif si absent (obligatoire pour unicité)
+            if (!$email && $phone) {
+                $email = str_replace(['+', ' '], '', $phone) . '@phone.firebase';
+            }
 
-            // 👤 Si utilisateur inexistant → le créer
+            // 🧩 Découper le nom complet
+            $nameParts = explode(' ', $name);
+            $firstName = $nameParts[0] ?? 'Utilisateur';
+            $lastName = $nameParts[1] ?? '';
+
+            // 🎯 Recherche utilisateur : par email s’il existe, sinon par phone
+            $user = User::where('email', $email)->orWhere('phone', $phone)->first();
+
+            // 👤 Créer l'utilisateur s'il n'existe pas
             if (!$user) {
                 $user = User::create([
-                    'first_name' => explode(' ', $name)[0],
-                    'last_name' => explode(' ', $name)[1] ?? '',
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
                     'email' => $email,
-                    'password' => bcrypt(uniqid()),    // mot de passe aléatoire (non utilisé)
+                    'phone' => $phone,
+                    'password' => bcrypt(uniqid()), // mot de passe fictif
                     'is_active' => true,
                     'verified' => true,
-                    'role_id' => 1, // Rôle utilisateur par défaut
+                    'role_id' => 1,
                     'is_online' => true,
                     'last_login' => now(),
                     'language' => 'fr',
@@ -59,17 +71,22 @@ class FirebaseAuthController extends Controller
                     'two_factor_enabled' => false
                 ]);
             } else {
-                // 🔄 Sinon, mettre à jour login info
+                // 🔄 Mise à jour si déjà existant
                 $user->is_online = true;
                 $user->last_login = now();
+
+                if (!$user->phone && $phone) {
+                    $user->phone = $phone;
+                }
+
                 $user->save();
             }
 
-            // 🔐 Génère le token JWT Laravel
+            // 🔐 Générer le token JWT Laravel
             $token = JWTAuth::fromUser($user);
             $tokenExpiration = now()->addMonth();
 
-            // --- Traçage de la connexion ---
+            // 📌 Traçage de la connexion
             Authentication::updateOrCreate(
                 ['user_id' => $user->id],
                 [
@@ -80,7 +97,7 @@ class FirebaseAuthController extends Controller
                 ]
             );
 
-            return response()->json([
+            return response()->json([   
                 'user' => $user,
                 'token' => $token,
                 'token_expiration' => $tokenExpiration

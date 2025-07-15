@@ -105,6 +105,21 @@
 
         #recaptcha-container {
             margin: 20px 0;
+            min-height: 78px;
+        }
+
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .recaptcha-info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 14px;
+            color: #1976d2;
         }
     </style>
 </head>
@@ -126,7 +141,12 @@
                 <label for="phoneNumber">Numéro de téléphone :</label>
                 <input type="tel" id="phoneNumber" placeholder="+212612345678" value="+212">
             </div>
-            <button onclick="sendOTP()">Envoyer le code SMS</button>
+            
+            <div class="recaptcha-info">
+                ℹ️ La vérification reCAPTCHA sera effectuée automatiquement lors de l'envoi du SMS.
+            </div>
+            
+            <button id="sendSmsBtn" onclick="sendOTP()">Envoyer le code SMS</button>
             <button onclick="signInWithGoogle()" class="google-btn">Connexion Google</button>
         </div>
 
@@ -166,9 +186,10 @@
             apiKey: "AIzaSyCPGsHiy6Eq2J8bnHi2xo9rx-1nIXM-p-o",
             authDomain: "dabapp-3d853.firebaseapp.com",
             projectId: "dabapp-3d853",
-            storageBucket: "dabapp-3d853.appspot.com",
+            storageBucket: "dabapp-3d853.firebasestorage.app",
             messagingSenderId: "988124060172",
-            appId: "1:988124060172:web:xxxxxxxxxxxxxx"
+            appId: "1:988124060172:web:6a7b2aeb937a44fa196c29",
+            measurementId: "G-RELFGL4QX8"
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -178,49 +199,72 @@
         let recaptchaInitialized = false;
 
         function initRecaptcha() {
-            if (!recaptchaInitialized) {
-                recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-                    'size': 'invisible',
-                    'callback': (response) => {
-                        console.log('reCAPTCHA résolu', response);
-                    },
-                    'expired-callback': () => {
-                        console.warn('reCAPTCHA expiré');
-                        recaptchaVerifier.clear();
-                        recaptchaInitialized = false;
-                        initRecaptcha();
-                    },
-                    'error-callback': (err) => {
-                        console.error('Erreur reCAPTCHA:', err);
-                    }
-                });
+            return new Promise((resolve, reject) => {
+                if (recaptchaInitialized) {
+                    resolve();
+                    return;
+                }
 
-                recaptchaVerifier.render().then((widgetId) => {
-                    window.recaptchaWidgetId = widgetId;
-                    recaptchaInitialized = true;
-                    console.log('reCAPTCHA initialisé avec widgetId:', widgetId);
-                });
-            }
+                try {
+                    // Nettoyer l'ancien container
+                    const container = document.getElementById('recaptcha-container');
+                    container.innerHTML = '';
+
+                    recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+                        'size': 'normal', // Changé de 'invisible' à 'normal' pour plus de fiabilité
+                        'callback': (response) => {
+                            console.log('reCAPTCHA résolu:', response);
+                            resolve();
+                        },
+                        'expired-callback': () => {
+                            console.warn('reCAPTCHA expiré');
+                            recaptchaInitialized = false;
+                            showError('reCAPTCHA expiré. Veuillez recharger la page.');
+                            reject(new Error('reCAPTCHA expiré'));
+                        },
+                        'error-callback': (error) => {
+                            console.error('Erreur reCAPTCHA:', error);
+                            recaptchaInitialized = false;
+                            showError('Erreur reCAPTCHA. Veuillez recharger la page.');
+                            reject(error);
+                        }
+                    });
+
+                    recaptchaVerifier.render().then((widgetId) => {
+                        window.recaptchaWidgetId = widgetId;
+                        recaptchaInitialized = true;
+                        console.log('reCAPTCHA initialisé avec widgetId:', widgetId);
+                        resolve();
+                    }).catch(reject);
+
+                } catch (error) {
+                    console.error('Erreur initialisation reCAPTCHA:', error);
+                    reject(error);
+                }
+            });
         }
 
         async function sendOTP() {
             const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const sendBtn = document.getElementById('sendSmsBtn');
 
             if (!phoneNumber || phoneNumber.length < 10) {
                 showError('Veuillez saisir un numéro de téléphone valide');
                 return;
             }
 
+            // Désactiver le bouton
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Initialisation...';
+            
             try {
-                if (!recaptchaInitialized) {
-                    initRecaptcha();
-                    await new Promise(res => setTimeout(res, 1000));
-                } else if (typeof grecaptcha !== 'undefined' && window.recaptchaWidgetId !== undefined) {
-                    grecaptcha.reset(window.recaptchaWidgetId);
-                }
-
+                // Initialiser reCAPTCHA
+                await initRecaptcha();
+                
+                sendBtn.textContent = 'Envoi en cours...';
                 showSuccess('Envoi du code SMS en cours...');
 
+                // Envoyer le SMS
                 confirmationResult = await firebase.auth().signInWithPhoneNumber(phoneNumber, recaptchaVerifier);
 
                 showSuccess('Code SMS envoyé avec succès !');
@@ -228,22 +272,43 @@
 
             } catch (error) {
                 console.error('Erreur envoi SMS:', error);
+                
                 let message = 'Erreur lors de l\'envoi du SMS: ';
-
-                if (error.code === 'auth/invalid-app-credential') {
-                    message += 'Le token reCAPTCHA est invalide ou expiré. Veuillez recharger la page.';
-                } else if (error.code === 'auth/too-many-requests') {
-                    message += 'Trop de tentatives. Veuillez patienter un moment.';
-                } else {
-                    message += error.message;
+                
+                switch (error.code) {
+                    case 'auth/invalid-phone-number':
+                        message += 'Numéro de téléphone invalide. Vérifiez le format (+212XXXXXXXXX)';
+                        break;
+                    case 'auth/too-many-requests':
+                        message += 'Trop de tentatives. Veuillez patienter quelques minutes.';
+                        break;
+                    case 'auth/captcha-check-failed':
+                        message += 'Échec de la vérification reCAPTCHA. Veuillez recharger la page.';
+                        break;
+                    case 'auth/invalid-app-credential':
+                        message += 'Problème de configuration. Veuillez contacter le support.';
+                        break;
+                    default:
+                        message += error.message;
                 }
 
                 showError(message);
-
+                
+                // Réinitialiser reCAPTCHA
                 if (recaptchaVerifier) {
                     recaptchaVerifier.clear();
                     recaptchaInitialized = false;
                 }
+                
+                // Réinitialiser après 3 secondes
+                setTimeout(() => {
+                    initRecaptcha().catch(console.error);
+                }, 3000);
+
+            } finally {
+                // Réactiver le bouton
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Envoyer le code SMS';
             }
         }
 
@@ -256,6 +321,8 @@
             }
 
             try {
+                showSuccess('Vérification du code...');
+                
                 const result = await confirmationResult.confirm(code);
                 const user = result.user;
 
@@ -270,7 +337,15 @@
 
             } catch (error) {
                 console.error('Erreur vérification:', error);
-                showError('Code incorrect. Veuillez réessayer.');
+                
+                let message = 'Code incorrect. Veuillez réessayer.';
+                if (error.code === 'auth/invalid-verification-code') {
+                    message = 'Code de vérification invalide.';
+                } else if (error.code === 'auth/code-expired') {
+                    message = 'Code expiré. Veuillez demander un nouveau code.';
+                }
+                
+                showError(message);
             }
         }
 
@@ -386,6 +461,10 @@
             document.getElementById(stepId).classList.add('active');
         }
 
+        function goBack() {
+            showStep('step1');
+        }
+
         function showError(message) {
             const existingError = document.querySelector('.error');
             if (existingError) existingError.remove();
@@ -406,7 +485,13 @@
             document.querySelector('.auth-container').appendChild(successDiv);
         }
 
-        window.addEventListener('load', initRecaptcha);
+        // Initialisation au chargement
+        window.addEventListener('load', () => {
+            initRecaptcha().catch(error => {
+                console.error('Erreur initialisation reCAPTCHA:', error);
+                showError('Erreur de chargement. Veuillez recharger la page.');
+            });
+        });
     </script>
 
 </body>
