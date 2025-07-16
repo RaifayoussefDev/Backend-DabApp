@@ -202,15 +202,12 @@ class AuthController extends Controller
          $user->save();
      
          // ✅ Extract country & continent from proxy headers
-         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY_NAME'] ?? 'Unknown';
-         $countryCode = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown'; 
+         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
          $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
      
          // 🔐 Add country and continent to JWT
          $token = JWTAuth::claims([
              'country' => $country,
-                 'country_code' => $countryCode,
-
              'continent' => $continent,
          ])->fromUser($user);
      
@@ -257,7 +254,6 @@ class AuthController extends Controller
              'token' => $token,
              'token_expiration' => $tokenExpiration,
              'country' => $country,
-             'country_code' => $countryCode,
              'continent' => $continent
          ]);
      }
