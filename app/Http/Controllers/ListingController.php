@@ -539,6 +539,7 @@ class ListingController extends Controller
             'sparePart.motorcycleAssociations.year',
             'licensePlate.format',
             'licensePlate.city',
+            'licensePlate.country', // ✅ Added country relationship for license plates
             'licensePlate.fieldValues.formatField'
         ])
             ->where('category_id', $category_id)
@@ -617,6 +618,7 @@ class ListingController extends Controller
                             'country' => $licensePlate->format?->country,
                         ],
                         'city' => $licensePlate->city?->name,
+                        'country' => $licensePlate->country?->name, // ✅ Added country name
                         'country_id' => $licensePlate->country_id,
                         'fields' => $licensePlate->fieldValues->map(function ($fieldValue) {
                             return [
@@ -1616,277 +1618,277 @@ class ListingController extends Controller
         ]);
     }
 
-/**
- *swagger get
- * @OA\Get(
- *     path="/api/listings/draft",
- *     summary="Get draft listings for the authenticated seller",
- *     tags={"Listings"},
- *     security={{"bearerAuth":{}}},
- *     @OA\Response(
- *         response=200,
- *         description="Draft listings fetched successfully",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Draft listings fetched successfully"),
- *             @OA\Property(property="data", type="array", @OA\Items(
- *                 @OA\Property(property="id", type="integer"),
- *                 @OA\Property(property="title", type="string"),
- *                 @OA\Property(property="description", type="string"),
- *                 @OA\Property(property="price", type="number"),
- *                 @OA\Property(property="created_at", type="string", format="date-time"),
- *                 @OA\Property(property="city", type="string"),
- *                 @OA\Property(property="country", type="string"),
- *                 @OA\Property(property="images", type="array", @OA\Items(type="string")),
- *                 @OA\Property(property="category_id", type="integer"),
- *                 @OA\Property(property="motorcycle", type="object", nullable=true),
- *                 @OA\Property(property="sparePart", type="object", nullable=true),
- *                 @OA\Property(property="licensePlate", type="object", nullable=true)
- *             ))
- *         )
- *     ),
- *     @OA\Response(
- *         response=401,
- *         description="Unauthorized",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Unauthorized")
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Internal server error",
- *         @OA\JsonContent(
- *             @OA\Property(property="error", type="string", example="Failed to fetch draft listings"),
- *             @OA\Property(property="details", type="string", example="Database connection failed")
- *         )
- *     )
- * )
- */
-public function getDraftListings()
-{
-    try {
-        $sellerId = Auth::id();
-        if (!$sellerId) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
+    /**
+     *swagger get
+     * @OA\Get(
+     *     path="/api/listings/draft",
+     *     summary="Get draft listings for the authenticated seller",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Draft listings fetched successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Draft listings fetched successfully"),
+     *             @OA\Property(property="data", type="array", @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="title", type="string"),
+     *                 @OA\Property(property="description", type="string"),
+     *                 @OA\Property(property="price", type="number"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="city", type="string"),
+     *                 @OA\Property(property="country", type="string"),
+     *                 @OA\Property(property="images", type="array", @OA\Items(type="string")),
+     *                 @OA\Property(property="category_id", type="integer"),
+     *                 @OA\Property(property="motorcycle", type="object", nullable=true),
+     *                 @OA\Property(property="sparePart", type="object", nullable=true),
+     *                 @OA\Property(property="licensePlate", type="object", nullable=true)
+     *             ))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Failed to fetch draft listings"),
+     *             @OA\Property(property="details", type="string", example="Database connection failed")
+     *         )
+     *     )
+     * )
+     */
+    public function getDraftListings()
+    {
+        try {
+            $sellerId = Auth::id();
+            if (!$sellerId) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
 
-        $draftListings = Listing::with([
-            'images',
-            'category',
-            'country',
-            'city',
-            'motorcycle.brand',
-            'motorcycle.model',
-            'motorcycle.year',
-            'motorcycle.type',
-            'sparePart.bikePartBrand',
-            'sparePart.bikePartCategory',
-            'sparePart.motorcycles.brand',
-            'sparePart.motorcycles.model',
-            'sparePart.motorcycles.year',
-            'licensePlate.format',
-            'licensePlate.country',
-            'licensePlate.city',
-            'licensePlate.fieldValues.formatField', // ✅ Fixed: using formatField relationship
-        ])
-            ->where('seller_id', $sellerId)
-            ->where('status', 'draft')
-            ->get();
+            $draftListings = Listing::with([
+                'images',
+                'category',
+                'country',
+                'city',
+                'motorcycle.brand',
+                'motorcycle.model',
+                'motorcycle.year',
+                'motorcycle.type',
+                'sparePart.bikePartBrand',
+                'sparePart.bikePartCategory',
+                'sparePart.motorcycles.brand',
+                'sparePart.motorcycles.model',
+                'sparePart.motorcycles.year',
+                'licensePlate.format',
+                'licensePlate.country',
+                'licensePlate.city',
+                'licensePlate.fieldValues.formatField', // ✅ Fixed: using formatField relationship
+            ])
+                ->where('seller_id', $sellerId)
+                ->where('status', 'draft')
+                ->get();
 
-        return response()->json([
-            'message' => 'Draft listings fetched successfully',
-            'data' => $draftListings
-        ], 200);
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => 'Failed to fetch draft listings',
-            'details' => $e->getMessage()
-        ], 500);
-    }
-}
-
-/**
- * Summary of getDraftListingById
- * swagger get
- * @OA\Get(
- *     path="/api/listings/draft/{id}",
- *     summary="Get a specific draft listing by ID for the authenticated seller",
- *     tags={"Listings"},
- *     security={{"bearerAuth":{}}},
- *     @OA\Parameter(
- *         name="id",
- *         in="path",
- *         required=true,
- *         description="ID of the draft listing",
- *         @OA\Schema(type="integer")
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Draft listing fetched successfully",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Draft listing fetched successfully"),
- *             @OA\Property(property="data", type="object",
- *                 @OA\Property(property="id", type="integer", example=123),
- *                 @OA\Property(property="title", type="string", example="My Listing Title"),
- *                 @OA\Property(property="description", type="string", example="Description of the listing"),
- *                 @OA\Property(property="price", type="number", format="float", example=1999.99),
- *                 @OA\Property(property="created_at", type="string", format="date-time", example="2025-07-08T15:30:00Z"),
- *
- *                 @OA\Property(property="city", type="object", nullable=true,
- *                     @OA\Property(property="id", type="integer", example=1),
- *                     @OA\Property(property="name", type="string", example="Casablanca")
- *                 ),
- *                 @OA\Property(property="country", type="object", nullable=true,
- *                     @OA\Property(property="id", type="integer", example=1),
- *                     @OA\Property(property="name", type="string", example="Morocco")
- *                 ),
- *
- *                 @OA\Property(property="images", type="array",
- *                     @OA\Items(
- *                         type="object",
- *                         @OA\Property(property="id", type="integer", example=10),
- *                         @OA\Property(property="image_url", type="string", example="https://example.com/image.jpg")
- *                     )
- *                 ),
- *
- *                 @OA\Property(property="category_id", type="integer", example=2),
- *
- *                 @OA\Property(property="motorcycle", type="object", nullable=true),
- *                 @OA\Property(property="sparePart", type="object", nullable=true),
- *                 @OA\Property(property="licensePlate", type="object", nullable=true)
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=401,
- *         description="Unauthorized",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Unauthorized")
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="Draft listing not found or access denied",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Draft listing not found or access denied")
- *         )
- *     )
- * )
- */
-public function getDraftListingById($id)
-{
-    try {
-        $sellerId = Auth::id();
-        if (!$sellerId) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $listing = Listing::with([
-            'images',
-            'category',
-            'country',
-            'city',
-            'motorcycle.brand',
-            'motorcycle.model',
-            'motorcycle.year',
-            'motorcycle.type',
-            'sparePart.bikePartBrand',
-            'sparePart.bikePartCategory',
-            'sparePart.motorcycles.brand',
-            'sparePart.motorcycles.model',
-            'sparePart.motorcycles.year',
-            'licensePlate.format',
-            'licensePlate.country',
-            'licensePlate.city',
-            'licensePlate.fieldValues.formatField', // ✅ Fixed: using formatField relationship
-        ])
-            ->where('id', $id)
-            ->where('seller_id', $sellerId)
-            ->where('status', 'draft')
-            ->first();
-
-        if (!$listing) {
-            return response()->json(['message' => 'Draft listing not found or access denied'], 404);
-        }
-
-        return response()->json([
-            'message' => 'Draft listing fetched successfully',
-            'data' => $listing,
-        ], 200);
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => 'Failed to fetch draft listing',
-            'details' => $e->getMessage()
-        ], 500);
-    }
-}
-
-/**
- * @OA\Delete(
- *     path="/api/listings/draft/{id}",
- *     summary="Delete a single draft listing by ID",
- *     tags={"Listings"},
- *     security={{"bearerAuth":{}}},
- *     @OA\Parameter(
- *         name="id",
- *         in="path",
- *         required=true,
- *         description="ID of the draft listing to delete",
- *         @OA\Schema(type="integer")
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Draft listing deleted successfully",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Draft listing deleted successfully")
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="Listing not found or not a draft",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Draft listing not found or unauthorized")
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Internal server error",
- *         @OA\JsonContent(
- *             @OA\Property(property="error", type="string", example="Failed to delete listing"),
- *             @OA\Property(property="details", type="string", example="Database error")
- *         )
- *     )
- * )
- */
-public function deleteDraftListingById($id)
-{
-    try {
-        $userId = Auth::id();
-
-        $listing = Listing::where('id', $id)
-            ->where('seller_id', $userId)
-            ->where('status', 'draft')
-            ->first();
-
-        if (!$listing) {
             return response()->json([
-                'message' => 'Draft listing not found or unauthorized'
-            ], 404);
+                'message' => 'Draft listings fetched successfully',
+                'data' => $draftListings
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch draft listings',
+                'details' => $e->getMessage()
+            ], 500);
         }
-
-        // Delete related auction_histories
-        AuctionHistory::where('listing_id', $listing->id)->delete();
-
-        // Delete the listing (this will also cascade delete related records if set up properly)
-        $listing->delete();
-
-        return response()->json([
-            'message' => 'Draft listing deleted successfully'
-        ], 200);
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => 'Failed to delete listing',
-            'details' => $e->getMessage()
-        ], 500);
     }
-}
+
+    /**
+     * Summary of getDraftListingById
+     * swagger get
+     * @OA\Get(
+     *     path="/api/listings/draft/{id}",
+     *     summary="Get a specific draft listing by ID for the authenticated seller",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the draft listing",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Draft listing fetched successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Draft listing fetched successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=123),
+     *                 @OA\Property(property="title", type="string", example="My Listing Title"),
+     *                 @OA\Property(property="description", type="string", example="Description of the listing"),
+     *                 @OA\Property(property="price", type="number", format="float", example=1999.99),
+     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2025-07-08T15:30:00Z"),
+     *
+     *                 @OA\Property(property="city", type="object", nullable=true,
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Casablanca")
+     *                 ),
+     *                 @OA\Property(property="country", type="object", nullable=true,
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Morocco")
+     *                 ),
+     *
+     *                 @OA\Property(property="images", type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=10),
+     *                         @OA\Property(property="image_url", type="string", example="https://example.com/image.jpg")
+     *                     )
+     *                 ),
+     *
+     *                 @OA\Property(property="category_id", type="integer", example=2),
+     *
+     *                 @OA\Property(property="motorcycle", type="object", nullable=true),
+     *                 @OA\Property(property="sparePart", type="object", nullable=true),
+     *                 @OA\Property(property="licensePlate", type="object", nullable=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Draft listing not found or access denied",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Draft listing not found or access denied")
+     *         )
+     *     )
+     * )
+     */
+    public function getDraftListingById($id)
+    {
+        try {
+            $sellerId = Auth::id();
+            if (!$sellerId) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            $listing = Listing::with([
+                'images',
+                'category',
+                'country',
+                'city',
+                'motorcycle.brand',
+                'motorcycle.model',
+                'motorcycle.year',
+                'motorcycle.type',
+                'sparePart.bikePartBrand',
+                'sparePart.bikePartCategory',
+                'sparePart.motorcycles.brand',
+                'sparePart.motorcycles.model',
+                'sparePart.motorcycles.year',
+                'licensePlate.format',
+                'licensePlate.country',
+                'licensePlate.city',
+                'licensePlate.fieldValues.formatField', // ✅ Fixed: using formatField relationship
+            ])
+                ->where('id', $id)
+                ->where('seller_id', $sellerId)
+                ->where('status', 'draft')
+                ->first();
+
+            if (!$listing) {
+                return response()->json(['message' => 'Draft listing not found or access denied'], 404);
+            }
+
+            return response()->json([
+                'message' => 'Draft listing fetched successfully',
+                'data' => $listing,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch draft listing',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/listings/draft/{id}",
+     *     summary="Delete a single draft listing by ID",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the draft listing to delete",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Draft listing deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Draft listing deleted successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Listing not found or not a draft",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Draft listing not found or unauthorized")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Failed to delete listing"),
+     *             @OA\Property(property="details", type="string", example="Database error")
+     *         )
+     *     )
+     * )
+     */
+    public function deleteDraftListingById($id)
+    {
+        try {
+            $userId = Auth::id();
+
+            $listing = Listing::where('id', $id)
+                ->where('seller_id', $userId)
+                ->where('status', 'draft')
+                ->first();
+
+            if (!$listing) {
+                return response()->json([
+                    'message' => 'Draft listing not found or unauthorized'
+                ], 404);
+            }
+
+            // Delete related auction_histories
+            AuctionHistory::where('listing_id', $listing->id)->delete();
+
+            // Delete the listing (this will also cascade delete related records if set up properly)
+            $listing->delete();
+
+            return response()->json([
+                'message' => 'Draft listing deleted successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to delete listing',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
