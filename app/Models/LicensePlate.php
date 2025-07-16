@@ -51,6 +51,11 @@ class LicensePlate extends Model
     {
         return $this->hasMany(LicensePlateValue::class);
     }
-    
+
+    public function values(): HasMany
+    {
+        return $this->hasMany(LicensePlateValue::class);
+    }
+
 }
 
