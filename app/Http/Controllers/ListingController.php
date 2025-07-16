@@ -540,7 +540,7 @@ class ListingController extends Controller
             'sparePart.motorcycleAssociations.year',
             'licensePlate.format',
             'licensePlate.city',
-                        'licensePlate.fieldValues.plateFormatField' // Correction du nom de la relation
+            'licensePlate.fieldValues.formatField'
         ])
             ->where('category_id', $category_id)
             ->where('status', 'published');
@@ -627,14 +627,14 @@ class ListingController extends Controller
                         'country_id' => $licensePlate->country_id,
                         'licenceplate' => $licensePlate->fieldValues->map(function ($fieldValue) {
                             return [
-                                'field_id' => $fieldValue->plateFormatField?->id,
-                                'field_name' => $fieldValue->plateFormatField?->field_name,
-                                'field_position' => $fieldValue->plateFormatField?->position,
-                                'field_type' => $fieldValue->plateFormatField?->field_type,
-                                'field_label' => $fieldValue->plateFormatField?->field_label,
-                                'is_required' => $fieldValue->plateFormatField?->is_required,
-                                'max_length' => $fieldValue->plateFormatField?->max_length,
-                                'validation_pattern' => $fieldValue->plateFormatField?->validation_pattern,
+                                'field_id' => $fieldValue->formatField?->id,
+                                'field_name' => $fieldValue->formatField?->field_name,
+                                'field_position' => $fieldValue->formatField?->position,
+                                'field_type' => $fieldValue->formatField?->field_type,
+                                'field_label' => $fieldValue->formatField?->field_label,
+                                'is_required' => $fieldValue->formatField?->is_required,
+                                'max_length' => $fieldValue->formatField?->max_length,
+                                'validation_pattern' => $fieldValue->formatField?->validation_pattern,
                                 'value' => $fieldValue->field_value,
                             ];
                         })->toArray(),
