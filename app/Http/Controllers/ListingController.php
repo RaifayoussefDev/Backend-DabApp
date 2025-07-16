@@ -524,8 +524,9 @@ class ListingController extends Controller
     public function getByCategory($category_id)
     {
         $user = Auth::user();
-
-        $listings = Listing::with([
+        $country_id = request('country_id'); // Récupère le paramètre depuis la requête
+    
+        $query = Listing::with([
             'images',
             'city',
             'country',
@@ -539,21 +540,27 @@ class ListingController extends Controller
             'sparePart.motorcycleAssociations.year',
             'licensePlate.format',
             'licensePlate.city',
-            'licensePlate.fieldValues.formatField'
+                        'licensePlate.fieldValues.plateFormatField' // Correction du nom de la relation
         ])
             ->where('category_id', $category_id)
-            ->where('status', 'published')
-            ->get()
+            ->where('status', 'published');
+    
+        // Ajouter le filtre par pays si fourni
+        if ($country_id) {
+            $query->where('country_id', $country_id);
+        }
+    
+        $listings = $query->get()
             ->map(function ($listing) use ($user) {
                 $isInWishlist = false;
-
+    
                 if ($user) {
                     $isInWishlist = DB::table('wishlists')
                         ->where('user_id', $user->id)
                         ->where('listing_id', $listing->id)
                         ->exists();
                 }
-
+    
                 // Base listing data
                 $listingData = [
                     'id' => $listing->id,
@@ -574,7 +581,7 @@ class ListingController extends Controller
                     'images' => $listing->images->pluck('image_url'),
                     'wishlist' => $isInWishlist,
                 ];
-
+    
                 // Category-specific data
                 if ($listing->category_id == 1 && $listing->motorcycle) {
                     // Motorcycle data
@@ -608,7 +615,7 @@ class ListingController extends Controller
                 } elseif ($listing->category_id == 3 && $listing->licensePlate) {
                     // License plate data with format and field values
                     $licensePlate = $listing->licensePlate;
-
+    
                     $listingData['license_plate'] = [
                         'plate_format' => [
                             'id' => $licensePlate->format?->id,
@@ -618,25 +625,25 @@ class ListingController extends Controller
                         ],
                         'city' => $licensePlate->city?->name,
                         'country_id' => $licensePlate->country_id,
-                        'fields' => $licensePlate->fieldValues->map(function ($fieldValue) {
+                        'licenceplate' => $licensePlate->fieldValues->map(function ($fieldValue) {
                             return [
-                                'field_id' => $fieldValue->formatField?->id,
-                                'field_name' => $fieldValue->formatField?->field_name,
-                                'field_position' => $fieldValue->formatField?->position,
-                                'field_type' => $fieldValue->formatField?->field_type,
-                                'field_label' => $fieldValue->formatField?->field_label,
-                                'is_required' => $fieldValue->formatField?->is_required,
-                                'max_length' => $fieldValue->formatField?->max_length,
-                                'validation_pattern' => $fieldValue->formatField?->validation_pattern,
+                                'field_id' => $fieldValue->plateFormatField?->id,
+                                'field_name' => $fieldValue->plateFormatField?->field_name,
+                                'field_position' => $fieldValue->plateFormatField?->position,
+                                'field_type' => $fieldValue->plateFormatField?->field_type,
+                                'field_label' => $fieldValue->plateFormatField?->field_label,
+                                'is_required' => $fieldValue->plateFormatField?->is_required,
+                                'max_length' => $fieldValue->plateFormatField?->max_length,
+                                'validation_pattern' => $fieldValue->plateFormatField?->validation_pattern,
                                 'value' => $fieldValue->field_value,
                             ];
                         })->toArray(),
                     ];
                 }
-
+    
                 return $listingData;
             });
-
+    
         return response()->json($listings);
     }
     /**
@@ -1662,48 +1669,48 @@ class ListingController extends Controller
      * )
 
      */
-public function getDraftListings()
-{
-    try {
-        $sellerId = Auth::id();
-        if (!$sellerId) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+    public function getDraftListings()
+    {
+        try {
+            $sellerId = Auth::id();
+            if (!$sellerId) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            $draftListings = Listing::with([
+                'images',
+                'category',
+                'country',
+                'city',
+                'motorcycle.brand',
+                'motorcycle.model',
+                'motorcycle.year',
+                'motorcycle.type',
+                'sparePart.bikePartBrand',
+                'sparePart.bikePartCategory',
+                'sparePart.motorcycles.brand',
+                'sparePart.motorcycles.model',
+                'sparePart.motorcycles.year',
+                'licensePlate.format',
+                'licensePlate.country',
+                'licensePlate.city',
+                'licensePlate.fieldValues.plateFormatField', // ✅ Changé ici
+            ])
+                ->where('seller_id', $sellerId)
+                ->where('status', 'draft')
+                ->get();
+
+            return response()->json([
+                'message' => 'Draft listings fetched successfully',
+                'data' => $draftListings
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch draft listings',
+                'details' => $e->getMessage()
+            ], 500);
         }
-
-        $draftListings = Listing::with([
-            'images',
-            'category',
-            'country',
-            'city',
-            'motorcycle.brand',
-            'motorcycle.model',
-            'motorcycle.year',
-            'motorcycle.type',
-            'sparePart.bikePartBrand',
-            'sparePart.bikePartCategory',
-            'sparePart.motorcycles.brand',
-            'sparePart.motorcycles.model',
-            'sparePart.motorcycles.year',
-            'licensePlate.format',
-            'licensePlate.country',
-            'licensePlate.city',
-            'licensePlate.fieldValues.plateFormatField', // ✅ Changé ici
-        ])
-            ->where('seller_id', $sellerId)
-            ->where('status', 'draft')
-            ->get();
-
-        return response()->json([
-            'message' => 'Draft listings fetched successfully',
-            'data' => $draftListings
-        ], 200);
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => 'Failed to fetch draft listings',
-            'details' => $e->getMessage()
-        ], 500);
     }
-}
 
     /**
      * Summary of getDraftListingById
@@ -1799,7 +1806,7 @@ public function getDraftListings()
                 'licensePlate.format',
                 'licensePlate.country',
                 'licensePlate.city',
-                'licensePlate.values.field',
+                'licensePlate.fieldValues.plateFormatField', // ✅ Changé ici
             ])
                 ->where('id', $id)
                 ->where('seller_id', $sellerId)
