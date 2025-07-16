@@ -501,6 +501,13 @@ class ListingController extends Controller
      *         description="Category ID (1=Motorcycle, 2=SparePart, 3=LicensePlate)",
      *         @OA\Schema(type="integer")
      *     ),
+     *     @OA\Parameter(
+     *         name="country",
+     *         in="query",
+     *         required=false,
+     *         description="Filter by country ID",
+     *         @OA\Schema(type="integer")
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="List of listings",
@@ -521,11 +528,12 @@ class ListingController extends Controller
      *     )
      * )
      */
-    public function getByCategory($category_id)
+    public function getByCategory($category_id, Request $request)
     {
         $user = Auth::user();
 
-        $listings = Listing::with([
+        // Build the query with country filter
+        $query = Listing::with([
             'images',
             'city',
             'country',
@@ -543,8 +551,14 @@ class ListingController extends Controller
             'licensePlate.fieldValues.formatField'
         ])
             ->where('category_id', $category_id)
-            ->where('status', 'published')
-            ->get()
+            ->where('status', 'published');
+
+        // Add country filter if provided
+        if ($request->has('country') && $request->country) {
+            $query->where('country_id', $request->country);
+        }
+
+        $listings = $query->get()
             ->map(function ($listing) use ($user) {
                 $isInWishlist = false;
 
