@@ -209,7 +209,7 @@ class AuthController extends Controller
          // 🔐 Add country and continent to JWT
          $token = JWTAuth::claims([
              'country' => $country,
-             'country_code' => $countryCode,
+             'country_code' => 'test',
              'continent' => $continent,
          ])->fromUser($user);
      
