@@ -1662,48 +1662,48 @@ class ListingController extends Controller
      * )
 
      */
-    public function getDraftListings()
-    {
-        try {
-            $sellerId = Auth::id();
-            if (!$sellerId) {
-                return response()->json(['message' => 'Unauthorized'], 401);
-            }
-
-            $draftListings = Listing::with([
-                'images',
-                'category',
-                'country',
-                'city',
-                'motorcycle.brand',
-                'motorcycle.model',
-                'motorcycle.year',
-                'motorcycle.type',
-                'sparePart.bikePartBrand',
-                'sparePart.bikePartCategory',
-                'sparePart.motorcycles.brand',
-                'sparePart.motorcycles.model',
-                'sparePart.motorcycles.year',
-                'licensePlate.format',
-                'licensePlate.country',
-                'licensePlate.city',
-                'licensePlate.fieldValues.plateFormatField', // ✅ Changé ici
-            ])
-                ->where('seller_id', $sellerId)
-                ->where('status', 'draft')
-                ->get();
-
-            return response()->json([
-                'message' => 'Draft listings fetched successfully',
-                'data' => $draftListings
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to fetch draft listings',
-                'details' => $e->getMessage()
-            ], 500);
+public function getDraftListings()
+{
+    try {
+        $sellerId = Auth::id();
+        if (!$sellerId) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
+
+        $draftListings = Listing::with([
+            'images',
+            'category',
+            'country',
+            'city',
+            'motorcycle.brand',
+            'motorcycle.model',
+            'motorcycle.year',
+            'motorcycle.type',
+            'sparePart.bikePartBrand',
+            'sparePart.bikePartCategory',
+            'sparePart.motorcycles.brand',
+            'sparePart.motorcycles.model',
+            'sparePart.motorcycles.year',
+            'licensePlate.format',
+            'licensePlate.country',
+            'licensePlate.city',
+            'licensePlate.fieldValues.plateFormatField', // ✅ Changé ici
+        ])
+            ->where('seller_id', $sellerId)
+            ->where('status', 'draft')
+            ->get();
+
+        return response()->json([
+            'message' => 'Draft listings fetched successfully',
+            'data' => $draftListings
+        ], 200);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Failed to fetch draft listings',
+            'details' => $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * Summary of getDraftListingById
@@ -1799,7 +1799,7 @@ class ListingController extends Controller
                 'licensePlate.format',
                 'licensePlate.country',
                 'licensePlate.city',
-                'licensePlate.fieldValues.plateFormatField', // ✅ Changé ici
+                'licensePlate.values.field',
             ])
                 ->where('id', $id)
                 ->where('seller_id', $sellerId)
