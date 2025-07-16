@@ -202,7 +202,7 @@ class AuthController extends Controller
          $user->save();
      
          // ✅ Extract country & continent from proxy headers
-         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
+         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY_NAME'] ?? 'Unknown';
          $countryCode = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown'; 
          $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
      
