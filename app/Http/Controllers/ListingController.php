@@ -524,8 +524,9 @@ class ListingController extends Controller
     public function getByCategory($category_id)
     {
         $user = Auth::user();
-
-        $listings = Listing::with([
+        $country_id = request('country_id'); // Récupère le paramètre depuis la requête
+    
+        $query = Listing::with([
             'images',
             'city',
             'country',
@@ -542,18 +543,24 @@ class ListingController extends Controller
             'licensePlate.fieldValues.formatField'
         ])
             ->where('category_id', $category_id)
-            ->where('status', 'published')
-            ->get()
+            ->where('status', 'published');
+    
+        // Ajouter le filtre par pays si fourni
+        if ($country_id) {
+            $query->where('country_id', $country_id);
+        }
+    
+        $listings = $query->get()
             ->map(function ($listing) use ($user) {
                 $isInWishlist = false;
-
+    
                 if ($user) {
                     $isInWishlist = DB::table('wishlists')
                         ->where('user_id', $user->id)
                         ->where('listing_id', $listing->id)
                         ->exists();
                 }
-
+    
                 // Base listing data
                 $listingData = [
                     'id' => $listing->id,
@@ -574,7 +581,7 @@ class ListingController extends Controller
                     'images' => $listing->images->pluck('image_url'),
                     'wishlist' => $isInWishlist,
                 ];
-
+    
                 // Category-specific data
                 if ($listing->category_id == 1 && $listing->motorcycle) {
                     // Motorcycle data
@@ -608,7 +615,7 @@ class ListingController extends Controller
                 } elseif ($listing->category_id == 3 && $listing->licensePlate) {
                     // License plate data with format and field values
                     $licensePlate = $listing->licensePlate;
-
+    
                     $listingData['license_plate'] = [
                         'plate_format' => [
                             'id' => $licensePlate->format?->id,
@@ -633,10 +640,10 @@ class ListingController extends Controller
                         })->toArray(),
                     ];
                 }
-
+    
                 return $listingData;
             });
-
+    
         return response()->json($listings);
     }
     /**
