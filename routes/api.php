@@ -235,9 +235,20 @@ Route::get('filter-options-license-plates', [FilterController::class, 'getLicens
 Route::get('filter-license-plates', [FilterController::class, 'filterLicensePlates']);
 
 
-Route::post('/firebase-login', [FirebaseAuthController::class, 'loginWithFirebase']);
-
-// Route::post('/firebase-login', [FirebasePhoneAuthController::class, 'loginWithFirebase']);
-Route::post('/firebase-phone-login', [FirebasePhoneAuthController::class, 'loginWithFirebasePhone']);
-Route::post('/check-user-exists', [FirebasePhoneAuthController::class, 'checkUserExists']);
-Route::post('/login-existing-user', [FirebasePhoneAuthController::class, 'loginExistingUser']);
+Route::prefix('api')->group(function () {
+    
+    // Connexion par téléphone + mot de passe
+    Route::post('/phone-login', [FirebaseAuthController::class, 'loginWithPhone']);
+    
+    // Connexion par Google Firebase
+    Route::post('/firebase-login', [FirebaseAuthController::class, 'loginWithFirebase']);
+    
+    // Routes protégées par JWT
+    Route::middleware('auth:api')->group(function () {
+        // Déconnexion
+        Route::post('/logout', [FirebaseAuthController::class, 'logout']);
+        
+        // Informations utilisateur connecté
+        Route::get('/me', [FirebaseAuthController::class, 'me']);
+    });
+});

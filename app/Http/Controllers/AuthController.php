@@ -177,86 +177,87 @@ class AuthController extends Controller
      */
 
 
-     public function login(Request $request)
-     {
-         $request->validate([
-             'login' => 'required|string',
-             'password' => 'required|string'
-         ]);
-     
-         $login = $request->input('login');
-         $password = $request->input('password');
-     
-         $user = User::where('email', $login)->first();
-     
-         if (!$user || !Hash::check($password, $user->password)) {
-             return response()->json(['error' => 'Invalid credentials'], 401);
-         }
-     
-         if (!$user->is_active) {
-             return response()->json(['error' => 'Utilisateur inactif'], 403);
-         }
-     
-         $user->is_online = 1;
-         $user->last_login = now();
-         $user->save();
-     
-         // ✅ Extract country & continent from proxy headers
-         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
-         $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
-     
-         // 🔐 Add country and continent to JWT
-         $token = JWTAuth::claims([
-             'country' => $country,
-             'continent' => $continent,
-         ])->fromUser($user);
-     
-         $tokenExpiration = now()->addMonth();
-     
-         Authentication::updateOrCreate(
-             ['user_id' => $user->id],
-             [
-                 'token' => $token,
-                 'token_expiration' => $tokenExpiration,
-                 'is_online' => true,
-                 'connection_date' => now(),
-             ]
-         );
-     
-         if ($user->two_factor_enabled) {
-             $otp = rand(1000, 9999);
-             DB::table('otps')->updateOrInsert(
-                 ['user_id' => $user->id],
-                 [
-                     'code' => $otp,
-                     'expires_at' => now()->addMinutes(5),
-                     'created_at' => now(),
-                     'updated_at' => now(),
-                 ]
-             );
-     
-             $user->notify(new SendOtpNotification($otp));
-     
-             return response()->json([
-                 'message' => 'OTP required',
-                 'user_id' => $user->id,
-                 'requiresOTP' => true,
-                 'email' => $user->email,
-                 'first_name' => $user->first_name,
-                 'last_name' => $user->last_name,
-                 'phone' => $user->phone,
-                 'country' => $country
-             ], 202);
-         }
-     
-         return response()->json([
-             'user' => $user,
-             'token' => $token,
-             'token_expiration' => $tokenExpiration,
-             'country' => $country,
-             'continent' => $continent
-         ]);
-     }
+    public function login(Request $request)
+    {
+        $request->validate([
+            'login' => 'required|string',
+            'password' => 'required|string'
+        ]);
+
+        $login = $request->input('login');
+        $password = $request->input('password');
+
+        // 🎯 Recherche de l’utilisateur dans la base Laravel
+        $user = User::where(function ($query) use ($login) {
+            $query->where('email', $login)
+                ->orWhere('phone', $login);
+        })->first();
+        
+        if (!$user) {
+            return response()->json(['error' => 'Utilisateur introuvable'], 404);
+        }
+
+        if (!Hash::check($password, $user->password)) {
+            return response()->json(['error' => 'Mot de passe invalide'], 401);
+        }
+
+        if (!$user->is_active) {
+            return response()->json(['error' => 'Utilisateur inactif'], 403);
+        }
+
+        // 🟢 Marquer comme connecté
+        $user->is_online = 1;
+        $user->last_login = now();
+        $user->save();
+
+        // 🔐 Générer le token JWT Laravel
+        $token = JWTAuth::fromUser($user);
+        $tokenExpiration = now()->addMonth();
+
+        // 📌 Traçage de la connexion
+        Authentication::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'token' => $token,
+                'token_expiration' => $tokenExpiration,
+                'is_online' => true,
+                'connection_date' => now(),
+            ]
+        );
+
+        // 🔐 Si 2FA activé → OTP
+        if ($user->two_factor_enabled) {
+            $otp = rand(1000, 9999);
+            DB::table('otps')->updateOrInsert(
+                ['user_id' => $user->id],
+                [
+                    'code' => $otp,
+                    'expires_at' => now()->addMinutes(5),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+
+            $user->notify(new SendOtpNotification($otp));
+
+            return response()->json([
+                'message' => 'OTP required',
+                'user_id' => $user->id,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'phone' => $user->phone,
+                'requiresOTP' => true,
+                'email' => $user->email
+            ], 202); // Accepted
+        }
+
+        // ✅ Sinon retour du token
+        return response()->json([
+            'user' => $user,
+            'token' => $token,
+            'token_expiration' => $tokenExpiration
+        ]);
+    }
 
 
     /**
@@ -496,22 +497,7 @@ class AuthController extends Controller
      */
     public function logout()
     {
-        $user = auth()->user();
-
-        if ($user) {
-            // Mettre à jour la table authentication : is_online = false
-            Authentication::where('user_id', $user->id)->update([
-                'is_online' => false,
-                'token' => null,
-                'token_expiration' => null,
-                'refresh_token' => null,
-                'refresh_token_expiration' => null,
-                'connection_date' => null,
-            ]);
-        }
-
         auth()->logout();
-
         return response()->json(['message' => 'Successfully logged out']);
     }
     /**
@@ -537,32 +523,11 @@ class AuthController extends Controller
      */
     public function refresh()
     {
-        $user = auth()->user();
-
-        if (!$user) {
-            return response()->json(['error' => 'Utilisateur non authentifié'], 401);
-        }
-
-        // Générer un nouveau token JWT
-        $newToken = auth()->refresh();
+        $token = auth()->refresh();
         $tokenExpiration = now()->addMonth();
 
-        // Mettre à jour la table authentication avec le nouveau token et dates
-        Authentication::updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'token' => $newToken,
-                'token_expiration' => $tokenExpiration,
-                // Si tu as un refresh_token différent, gère-le ici aussi
-                'refresh_token' => $newToken,
-                'refresh_token_expiration' => now()->addMonths(2),
-                'connection_date' => now(),
-                'is_online' => true,
-            ]
-        );
-
         return response()->json([
-            'token' => $newToken,
+            'token' => $token,
             'expires_at' => $tokenExpiration->toDateTimeString()
         ]);
     }
