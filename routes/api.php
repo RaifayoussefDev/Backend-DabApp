@@ -235,7 +235,6 @@ Route::get('filter-options-license-plates', [FilterController::class, 'getLicens
 Route::get('filter-license-plates', [FilterController::class, 'filterLicensePlates']);
 
 
-Route::prefix('api')->group(function () {
     
     // Connexion par téléphone + mot de passe
     Route::post('/phone-login', [FirebaseAuthController::class, 'loginWithPhone']);
@@ -251,4 +250,3 @@ Route::prefix('api')->group(function () {
         // Informations utilisateur connecté
         Route::get('/me', [FirebaseAuthController::class, 'me']);
     });
-});
