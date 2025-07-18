@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Authentication;
 use Illuminate\Http\Request;
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Auth;
@@ -88,4 +89,5 @@ class FirebaseAuthController extends Controller
                 'error' => 'Token Firebase invalide : ' . $e->getMessage()
             ], 401);
         }
+}
 }
