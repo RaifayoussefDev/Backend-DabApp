@@ -53,90 +53,71 @@ class FirebasePhoneAuthController extends Controller
     }
 
     /**
-     * Authentification par téléphone avec Firebase
+     * Authentification par téléphone avec Firebase - UNIQUEMENT pour utilisateurs existants
      */
+    public function loginWithFirebasePhone(Request $request)
+    {
+        $request->validate([
+            'idToken' => 'required|string',
+        ]);
 
-     public function loginWithFirebasePhone(Request $request)
-     {
-         $request->validate([
-             'idToken' => 'required|string',
-             'firstName' => 'required|string|max:255',
-             'lastName' => 'required|string|max:255',
-             'phoneNumber' => 'required|string'
-         ]);
+        $auth = (new Factory)
+            ->withServiceAccount(storage_path('app/firebase/firebase_credentials.json'))
+            ->createAuth();
 
-         $auth = (new Factory)
-             ->withServiceAccount(storage_path('app/firebase/firebase_credentials.json'))
-             ->createAuth();
+        try {
+            // Vérifier le token Firebase
+            $verifiedIdToken = $auth->verifyIdToken($request->idToken);
+            $firebaseUid = $verifiedIdToken->claims()->get('sub');
+            $firebaseUser = $auth->getUser($firebaseUid);
 
-         try {
-             // Vérifier le token Firebase
-             $verifiedIdToken = $auth->verifyIdToken($request->idToken);
-             $firebaseUid = $verifiedIdToken->claims()->get('sub');
-             $firebaseUser = $auth->getUser($firebaseUid);
+            $phoneNumber = $firebaseUser->phoneNumber;
 
-             $phoneNumber = $request->phoneNumber;
-             $firstName = $request->firstName;
-             $lastName = $request->lastName;
+            // Chercher l'utilisateur existant par téléphone
+            $user = User::where('phone', $phoneNumber)->first();
 
-             // Vérifier si l'utilisateur existe déjà
-             $user = User::where('phone', $phoneNumber)->first();
+            if (!$user) {
+                return response()->json([
+                    'error' => 'Utilisateur non trouvé. Seuls les utilisateurs existants peuvent se connecter par téléphone.',
+                    'requiresRegistration' => true
+                ], 404);
+            }
 
-             if (!$user) {
-                 // Créer un nouvel utilisateur
-                 $user = User::create([
-                     'first_name' => $firstName,
-                     'last_name' => $lastName,
-                     'phone' => $phoneNumber,
-                     'email' => $firebaseUser->email ?? null, // Email peut être null pour auth par téléphone
-                     'password' => bcrypt(uniqid()), // Mot de passe aléatoire
-                     'is_active' => true,
-                     'verified' => true, // Vérifié par SMS
-                     'role_id' => 1, // Rôle utilisateur par défaut
-                     'is_online' => true,
-                     'last_login' => now(),
-                     'language' => 'fr',
-                     'timezone' => 'Africa/Casablanca',
-                     'two_factor_enabled' => false
-                 ]);
-             } else {
-                 // Mettre à jour les informations de connexion
-                 $user->update([
-                     'first_name' => $firstName,
-                     'last_name' => $lastName,
-                     'is_online' => true,
-                     'last_login' => now(),
-                 ]);
-             }
+            // Mettre à jour les informations de connexion
+            $user->update([
+                'is_online' => true,
+                'last_login' => now(),
+            ]);
 
-             // Générer le token JWT Laravel
-             $token = JWTAuth::fromUser($user);
-             $tokenExpiration = now()->addMonth();
+            // Générer le token JWT Laravel
+            $token = JWTAuth::fromUser($user);
+            $tokenExpiration = now()->addMonth();
 
-             // Traçage de la connexion
-             Authentication::updateOrCreate(
-                 ['user_id' => $user->id],
-                 [
-                     'token' => $token,
-                     'token_expiration' => $tokenExpiration,
-                     'is_online' => true,
-                     'connection_date' => now(),
-                 ]
-             );
+            // Traçage de la connexion
+            Authentication::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'token' => $token,
+                    'token_expiration' => $tokenExpiration,
+                    'is_online' => true,
+                    'connection_date' => now(),
+                ]
+            );
 
-             return response()->json([
-                 'message' => 'Authentification réussie',
-                 'user' => $user,
-                 'token' => $token,
-                 'token_expiration' => $tokenExpiration
-             ]);
+            return response()->json([
+                'message' => 'Connexion réussie',
+                'user' => $user,
+                'token' => $token,
+                'token_expiration' => $tokenExpiration
+            ]);
 
-         } catch (\Throwable $e) {
-             return response()->json([
-                 'error' => 'Erreur lors de l\'authentification : ' . $e->getMessage()
-             ], 401);
-         }
-     }
+        } catch (\Throwable $e) {
+            return response()->json([
+                'error' => 'Erreur lors de l\'authentification : ' . $e->getMessage()
+            ], 401);
+        }
+    }
+
     /**
      * Connexion utilisateur existant (téléphone ou Google)
      */

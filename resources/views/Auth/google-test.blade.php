@@ -95,6 +95,14 @@
             margin: 10px 0;
         }
 
+        .warning {
+            color: #856404;
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
         .step {
             display: none;
         }
@@ -121,6 +129,20 @@
             font-size: 14px;
             color: #1976d2;
         }
+
+        .important-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        .important-notice h3 {
+            color: #856404;
+            margin-top: 0;
+        }
     </style>
 </head>
 
@@ -133,6 +155,11 @@
 
     <h1>🔐 DabApp - Authentification</h1>
 
+    <div class="important-notice">
+        <h3>⚠️ Important</h3>
+        <p>L'authentification par téléphone est réservée aux utilisateurs existants uniquement. Si vous n'avez pas encore de compte, veuillez vous inscrire via Google ou contacter l'administrateur.</p>
+    </div>
+
     <div class="auth-container">
         <!-- Étape 1: Saisie du numéro de téléphone -->
         <div id="step1" class="step active">
@@ -141,11 +168,11 @@
                 <label for="phoneNumber">Numéro de téléphone :</label>
                 <input type="tel" id="phoneNumber" placeholder="+212612345678" value="+212">
             </div>
-            
+
             <div class="recaptcha-info">
                 ℹ️ La vérification reCAPTCHA sera effectuée automatiquement lors de l'envoi du SMS.
             </div>
-            
+
             <button id="sendSmsBtn" onclick="sendOTP()">Envoyer le code SMS</button>
             <button onclick="signInWithGoogle()" class="google-btn">Connexion Google</button>
         </div>
@@ -159,20 +186,6 @@
             </div>
             <button onclick="verifyOTP()">Vérifier le code</button>
             <button onclick="goBack()">Retour</button>
-        </div>
-
-        <!-- Étape 3: Informations utilisateur -->
-        <div id="step3" class="step">
-            <h2>👤 Informations utilisateur</h2>
-            <div class="form-group">
-                <label for="firstName">Prénom :</label>
-                <input type="text" id="firstName" placeholder="Votre prénom">
-            </div>
-            <div class="form-group">
-                <label for="lastName">Nom :</label>
-                <input type="text" id="lastName" placeholder="Votre nom">
-            </div>
-            <button onclick="completePhoneAuth()">Finaliser l'inscription</button>
         </div>
 
         <!-- Container pour reCAPTCHA -->
@@ -211,7 +224,7 @@
                     container.innerHTML = '';
 
                     recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-                        'size': 'normal', // Changé de 'invisible' à 'normal' pour plus de fiabilité
+                        'size': 'normal',
                         'callback': (response) => {
                             console.log('reCAPTCHA résolu:', response);
                             resolve();
@@ -256,11 +269,11 @@
             // Désactiver le bouton
             sendBtn.disabled = true;
             sendBtn.textContent = 'Initialisation...';
-            
+
             try {
                 // Initialiser reCAPTCHA
                 await initRecaptcha();
-                
+
                 sendBtn.textContent = 'Envoi en cours...';
                 showSuccess('Envoi du code SMS en cours...');
 
@@ -272,9 +285,9 @@
 
             } catch (error) {
                 console.error('Erreur envoi SMS:', error);
-                
+
                 let message = 'Erreur lors de l\'envoi du SMS: ';
-                
+
                 switch (error.code) {
                     case 'auth/invalid-phone-number':
                         message += 'Numéro de téléphone invalide. Vérifiez le format (+212XXXXXXXXX)';
@@ -293,13 +306,13 @@
                 }
 
                 showError(message);
-                
+
                 // Réinitialiser reCAPTCHA
                 if (recaptchaVerifier) {
                     recaptchaVerifier.clear();
                     recaptchaInitialized = false;
                 }
-                
+
                 // Réinitialiser après 3 secondes
                 setTimeout(() => {
                     initRecaptcha().catch(console.error);
@@ -322,72 +335,26 @@
 
             try {
                 showSuccess('Vérification du code...');
-                
+
                 const result = await confirmationResult.confirm(code);
                 const user = result.user;
 
                 const idToken = await user.getIdToken();
-                const backendResponse = await checkUserExists(idToken);
 
-                if (backendResponse.userExists) {
-                    await loginUser(idToken);
-                } else {
-                    showStep('step3');
-                }
+                // Directement tenter la connexion (plus besoin de vérifier l'existence)
+                await loginExistingUser(idToken);
 
             } catch (error) {
                 console.error('Erreur vérification:', error);
-                
+
                 let message = 'Code incorrect. Veuillez réessayer.';
                 if (error.code === 'auth/invalid-verification-code') {
                     message = 'Code de vérification invalide.';
                 } else if (error.code === 'auth/code-expired') {
                     message = 'Code expiré. Veuillez demander un nouveau code.';
                 }
-                
+
                 showError(message);
-            }
-        }
-
-        async function completePhoneAuth() {
-            const firstName = document.getElementById('firstName').value.trim();
-            const lastName = document.getElementById('lastName').value.trim();
-
-            if (!firstName || !lastName) {
-                showError('Veuillez remplir tous les champs');
-                return;
-            }
-
-            try {
-                const user = firebase.auth().currentUser;
-                const idToken = await user.getIdToken();
-
-                const response = await fetch('/api/firebase-phone-login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + idToken
-                    },
-                    body: JSON.stringify({
-                        idToken,
-                        firstName,
-                        lastName,
-                        phoneNumber: user.phoneNumber
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    showSuccess('Inscription réussie !');
-                    document.getElementById("result").innerText = JSON.stringify(data, null, 2);
-                } else {
-                    showError('Erreur: ' + data.error);
-                }
-
-            } catch (error) {
-                console.error('Erreur finalisation:', error);
-                showError('Erreur lors de la finalisation: ' + error.message);
             }
         }
 
@@ -403,6 +370,39 @@
             } catch (error) {
                 console.error("Erreur Firebase:", error);
                 showError("Erreur Google login: " + error.message);
+            }
+        }
+
+        async function loginExistingUser(idToken) {
+            try {
+                const response = await fetch('/api/firebase-phone-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + idToken
+                    },
+                    body: JSON.stringify({
+                        idToken
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('Connexion réussie !');
+                    document.getElementById("result").innerText = JSON.stringify(data, null, 2);
+                } else {
+                    if (data.requiresRegistration) {
+                        showWarning('Ce numéro de téléphone n\'est pas encore enregistré. Veuillez vous inscrire via Google ou contacter l\'administrateur.');
+                        goBack(); // Retour à l'étape 1
+                    } else {
+                        showError('Erreur de connexion: ' + data.error);
+                    }
+                }
+
+            } catch (error) {
+                console.error('Erreur connexion:', error);
+                showError('Erreur lors de la connexion: ' + error.message);
             }
         }
 
@@ -434,28 +434,6 @@
             }
         }
 
-        async function checkUserExists(idToken) {
-            try {
-                const response = await fetch('/api/check-user-exists', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + idToken
-                    },
-                    body: JSON.stringify({
-                        idToken
-                    })
-                });
-
-                return await response.json();
-            } catch (error) {
-                console.error('Erreur vérification utilisateur:', error);
-                return {
-                    userExists: false
-                };
-            }
-        }
-
         function showStep(stepId) {
             document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
             document.getElementById(stepId).classList.add('active');
@@ -466,9 +444,7 @@
         }
 
         function showError(message) {
-            const existingError = document.querySelector('.error');
-            if (existingError) existingError.remove();
-
+            clearMessages();
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error';
             errorDiv.textContent = message;
@@ -476,13 +452,23 @@
         }
 
         function showSuccess(message) {
-            const existingSuccess = document.querySelector('.success');
-            if (existingSuccess) existingSuccess.remove();
-
+            clearMessages();
             const successDiv = document.createElement('div');
             successDiv.className = 'success';
             successDiv.textContent = message;
             document.querySelector('.auth-container').appendChild(successDiv);
+        }
+
+        function showWarning(message) {
+            clearMessages();
+            const warningDiv = document.createElement('div');
+            warningDiv.className = 'warning';
+            warningDiv.textContent = message;
+            document.querySelector('.auth-container').appendChild(warningDiv);
+        }
+
+        function clearMessages() {
+            document.querySelectorAll('.error, .success, .warning').forEach(el => el.remove());
         }
 
         // Initialisation au chargement

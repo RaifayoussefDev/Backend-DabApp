@@ -235,9 +235,7 @@ Route::get('filter-options-license-plates', [FilterController::class, 'getLicens
 Route::get('filter-license-plates', [FilterController::class, 'filterLicensePlates']);
 
 
-Route::post('/firebase-login', [FirebaseAuthController::class, 'loginWithFirebase']);
-
-// Route::post('/firebase-login', [FirebasePhoneAuthController::class, 'loginWithFirebase']);
-Route::post('/firebase-phone-login', [FirebasePhoneAuthController::class, 'loginWithFirebasePhone']);
-Route::post('/check-user-exists', [FirebasePhoneAuthController::class, 'checkUserExists']);
-Route::post('/login-existing-user', [FirebasePhoneAuthController::class, 'loginExistingUser']);
+// Garder uniquement ces routes
+Route::post('/firebase-login', [FirebaseAuthController::class, 'loginWithFirebase']); // Pour Google
+Route::post('/firebase-phone-login', [FirebasePhoneAuthController::class, 'loginWithFirebasePhone']); // Pour téléphone (utilisateurs existants)
+Route::post('/login-existing-user', [FirebasePhoneAuthController::class, 'loginExistingUser']); // Alternative
