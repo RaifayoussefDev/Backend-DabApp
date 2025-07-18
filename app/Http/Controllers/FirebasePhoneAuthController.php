@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Kreait\Firebase\Factory;
 
-class PhonePasswordAuthController extends Controller
+class FirebasePhoneAuthController extends Controller
 {
     /**
      * Authentification avec numéro de téléphone et mot de passe

@@ -239,13 +239,13 @@ Route::get('filter-license-plates', [FilterController::class, 'filterLicensePlat
 // Garder uniquement ces routes
 Route::post('/firebase-login', [FirebaseAuthController::class, 'loginWithFirebase']); // Pour Google
 // Authentification avec numéro et mot de passe
-Route::post('/login-phone-password', [PhonePasswordAuthController::class, 'loginWithPhonePassword']);
+Route::post('/login-phone-password', [FirebasePhoneAuthController::class, 'loginWithPhonePassword']);
 
 // Vérification OTP classique
-Route::post('/verify-otp', [PhonePasswordAuthController::class, 'verifyOTP']);
+Route::post('/verify-otp', [FirebasePhoneAuthController::class, 'verifyOTP']);
 
 // Envoi OTP Firebase (si besoin)
-Route::post('/send-firebase-otp', [PhonePasswordAuthController::class, 'sendFirebaseOTP']);
+Route::post('/send-firebase-otp', [FirebasePhoneAuthController::class, 'sendFirebaseOTP']);
 
 // Finaliser l'authentification Firebase
-Route::post('/complete-firebase-auth', [PhonePasswordAuthController::class, 'completeFirebaseAuth']);
+Route::post('/complete-firebase-auth', [FirebasePhoneAuthController::class, 'completeFirebaseAuth']);
