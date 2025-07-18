@@ -16,6 +16,7 @@ class FirebasePhoneAuthController extends Controller
 {
     /**
      * Authentification avec numéro de téléphone et mot de passe
+     * → Envoie automatiquement un OTP Firebase par SMS
      */
     public function loginWithPhonePassword(Request $request)
     {
@@ -62,42 +63,20 @@ class FirebasePhoneAuthController extends Controller
             ]
         );
 
-        // 🔐 Si 2FA activé → OTP
-        if ($user->two_factor_enabled) {
-            $otp = rand(1000, 9999);
-            DB::table('otps')->updateOrInsert(
-                ['user_id' => $user->id],
-                [
-                    'code' => $otp,
-                    'expires_at' => now()->addMinutes(5),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
-            );
-
-            $user->notify(new SendOtpNotification($otp));
-
-            return response()->json([
-                'message' => 'OTP required',
-                'user_id' => $user->id,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
-                'phone' => $user->phone,
-                'requiresOTP' => true,
-                'email' => $user->email
-            ], 202); // Accepted
-        }
-
-        // ✅ Sinon retour du token
+        // 📱 TOUJOURS envoyer un OTP par SMS via Firebase
         return response()->json([
-            'user' => $user,
-            'token' => $token,
-            'token_expiration' => $tokenExpiration
-        ]);
+            'message' => 'Credentials valid, proceed with SMS verification',
+            'user_id' => $user->id,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'phone' => $user->phone,
+            'requiresFirebaseOTP' => true,
+            'email' => $user->email
+        ], 202);
     }
 
     /**
-     * Vérification de l'OTP après authentification
+     * Vérification de l'OTP après authentification (méthode classique - gardée pour compatibilité)
      */
     public function verifyOTP(Request $request)
     {
@@ -143,66 +122,6 @@ class FirebasePhoneAuthController extends Controller
             'token' => $auth->token,
             'token_expiration' => $auth->token_expiration
         ]);
-    }
-
-    /**
-     * Authentification avec Firebase OTP (pour l'envoi SMS)
-     */
-    public function sendFirebaseOTP(Request $request)
-    {
-        $request->validate([
-            'phone' => 'required|string',
-            'password' => 'required|string'
-        ]);
-
-        $phone = $request->input('phone');
-        $password = $request->input('password');
-
-        // 🎯 Recherche de l'utilisateur par téléphone
-        $user = User::where('phone', $phone)->first();
-
-        if (!$user) {
-            return response()->json(['error' => 'Nom d\'utilisateur ou mot de passe incorrect'], 401);
-        }
-
-        if (!Hash::check($password, $user->password)) {
-            return response()->json(['error' => 'Nom d\'utilisateur ou mot de passe incorrect'], 401);
-        }
-
-        if (!$user->is_active) {
-            return response()->json(['error' => 'Utilisateur inactif'], 403);
-        }
-
-        // 🟢 Marquer comme connecté
-        $user->is_online = 1;
-        $user->last_login = now();
-        $user->save();
-
-        // 🔐 Générer le token JWT Laravel
-        $token = JWTAuth::fromUser($user);
-        $tokenExpiration = now()->addMonth();
-
-        // 📌 Traçage de la connexion
-        Authentication::updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'token' => $token,
-                'token_expiration' => $tokenExpiration,
-                'is_online' => true,
-                'connection_date' => now(),
-            ]
-        );
-
-        // 📱 Toujours envoyer l'OTP par SMS via Firebase
-        return response()->json([
-            'message' => 'Credentials valid, proceed with SMS verification',
-            'user_id' => $user->id,
-            'first_name' => $user->first_name,
-            'last_name' => $user->last_name,
-            'phone' => $user->phone,
-            'requiresFirebaseOTP' => true,
-            'email' => $user->email
-        ], 202);
     }
 
     /**

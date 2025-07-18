@@ -213,43 +213,28 @@
             <button id="loginBtn" onclick="loginWithPassword()">Se connecter</button>
         </div>
 
-        <!-- Étape 2: Vérification OTP (méthode classique) -->
+        <!-- Étape 2: Envoi automatique SMS Firebase -->
         <div id="step2" class="step">
             <div class="step-header">
-                <h2>🔢 Vérification OTP</h2>
-                <p>Saisissez le code à 4 chiffres reçu par SMS</p>
+                <h2>📲 Vérification SMS</h2>
+                <p>Envoi automatique d'un code de vérification par SMS</p>
             </div>
 
             <div class="user-info" id="userInfo"></div>
 
-            <div class="form-group">
-                <label for="otpCode">Code OTP :</label>
-                <input type="text" id="otpCode" placeholder="1234" maxlength="4">
-            </div>
-
-            <button onclick="verifyOTP()">Vérifier le code</button>
-            <button onclick="goBack()" class="secondary-btn">Retour</button>
-        </div>
-
-        <!-- Étape 3: Vérification Firebase OTP (SMS) -->
-        <div id="step3" class="step">
-            <div class="step-header">
-                <h2>📲 Vérification SMS</h2>
-                <p>Nous allons vous envoyer un code de vérification par SMS</p>
-            </div>
-
-            <div class="user-info" id="userInfoFirebase"></div>
-
             <div class="info">
-                ℹ️ Un code de vérification sera envoyé à votre numéro de téléphone
+                ℹ️ Un code de vérification va être envoyé automatiquement à votre numéro de téléphone
             </div>
 
-            <button onclick="sendFirebaseOTP()">Envoyer le code SMS</button>
+            <!-- Container pour reCAPTCHA -->
+            <div id="recaptcha-container"></div>
+
+            <button id="sendSmsBtn" onclick="sendFirebaseOTP()">Envoyer le code SMS</button>
             <button onclick="goBack()" class="secondary-btn">Retour</button>
         </div>
 
-        <!-- Étape 4: Vérification code Firebase -->
-        <div id="step4" class="step">
+        <!-- Étape 3: Vérification code Firebase -->
+        <div id="step3" class="step">
             <div class="step-header">
                 <h2>🔢 Code SMS</h2>
                 <p>Saisissez le code reçu par SMS</p>
@@ -261,11 +246,8 @@
             </div>
 
             <button onclick="verifyFirebaseOTP()">Vérifier le code</button>
-            <button onclick="goToStep('step3')" class="secondary-btn">Retour</button>
+            <button onclick="goToStep('step2')" class="secondary-btn">Renvoyer SMS</button>
         </div>
-
-        <!-- Container pour reCAPTCHA -->
-        <div id="recaptcha-container"></div>
     </div>
 
     <pre id="result"></pre>
@@ -320,13 +302,18 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    if (data.requiresOTP) {
-                        // OTP classique requis
+                    if (data.requiresFirebaseOTP) {
+                        // Firebase OTP requis - passer automatiquement à l'étape SMS
                         currentUser = data;
                         showUserInfo(data);
                         goToStep('step2');
+
+                        // Initialiser reCAPTCHA et envoyer automatiquement le SMS
+                        setTimeout(() => {
+                            sendFirebaseOTP();
+                        }, 1000);
                     } else {
-                        // Connexion directe
+                        // Connexion directe (cas rare)
                         showSuccess('Connexion réussie !');
                         document.getElementById("result").innerText = JSON.stringify(data, null, 2);
                     }
@@ -343,71 +330,43 @@
             }
         }
 
-        // Vérification OTP classique
-        async function verifyOTP() {
-            const otpCode = document.getElementById('otpCode').value.trim();
-
-            if (!otpCode || otpCode.length !== 4) {
-                showError('Veuillez saisir un code à 4 chiffres');
-                return;
-            }
-
-            if (!currentUser) {
-                showError('Session expirée. Veuillez vous reconnecter.');
-                goToStep('step1');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/verify-otp', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_id: currentUser.user_id,
-                        otp: otpCode
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    showSuccess('Authentification réussie !');
-                    document.getElementById("result").innerText = JSON.stringify(data, null, 2);
-                } else {
-                    showError(data.error);
-                }
-
-            } catch (error) {
-                console.error('Erreur vérification OTP:', error);
-                showError('Erreur de vérification: ' + error.message);
-            }
-        }
-
         // Envoi OTP Firebase
         async function sendFirebaseOTP() {
+            const sendBtn = document.getElementById('sendSmsBtn');
+
             if (!currentUser) {
                 showError('Session expirée. Veuillez vous reconnecter.');
                 goToStep('step1');
                 return;
             }
 
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Envoi en cours...';
+
             try {
-                // Initialiser reCAPTCHA
-                await initRecaptcha();
+                // Initialiser reCAPTCHA si pas encore fait
+                if (!recaptchaVerifier) {
+                    await initRecaptcha();
+                }
 
                 showSuccess('Envoi du code SMS...');
 
                 // Envoyer SMS via Firebase
                 confirmationResult = await firebase.auth().signInWithPhoneNumber(currentUser.phone, recaptchaVerifier);
 
-                showSuccess('Code SMS envoyé !');
-                goToStep('step4');
+                showSuccess('Code SMS envoyé avec succès !');
+                goToStep('step3');
 
             } catch (error) {
                 console.error('Erreur envoi SMS:', error);
                 showError('Erreur envoi SMS: ' + error.message);
+
+                // Réinitialiser reCAPTCHA en cas d'erreur
+                recaptchaVerifier = null;
+                document.getElementById('recaptcha-container').innerHTML = '';
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Envoyer le code SMS';
             }
         }
 
@@ -426,6 +385,8 @@
             }
 
             try {
+                showSuccess('Vérification du code...');
+
                 const result = await confirmationResult.confirm(code);
                 const idToken = await result.user.getIdToken();
 
@@ -493,7 +454,6 @@
                 <p><strong>Email:</strong> ${user.email || 'Non renseigné'}</p>
             `;
             document.getElementById('userInfo').innerHTML = userInfoHtml;
-            document.getElementById('userInfoFirebase').innerHTML = userInfoHtml;
         }
 
         // Navigation
@@ -507,6 +467,7 @@
             currentUser = null;
             confirmationResult = null;
             recaptchaVerifier = null;
+            document.getElementById('recaptcha-container').innerHTML = '';
         }
 
         // Messages
@@ -527,11 +488,9 @@
         }
 
         function clearMessages() {
-            document.querySelectorAll('.error, .success, .info').forEach(el => {
-                if (!el.classList.contains('info') || el.textContent.includes('ℹ️')) {
-                    if (!el.textContent.includes('ℹ️')) {
-                        el.remove();
-                    }
+            document.querySelectorAll('.error, .success').forEach(el => {
+                if (!el.textContent.includes('ℹ️')) {
+                    el.remove();
                 }
             });
         }
@@ -543,10 +502,6 @@
 
         document.getElementById('password').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') loginWithPassword();
-        });
-
-        document.getElementById('otpCode').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') verifyOTP();
         });
 
         document.getElementById('firebaseCode').addEventListener('keypress', function(e) {
