@@ -16,7 +16,7 @@ class FirebasePhoneAuthController extends Controller
 {
     /**
      * Authentification avec numéro de téléphone et mot de passe
-     * → Vérifie si 2FA est activé, sinon envoie automatiquement un OTP Firebase par SMS
+     * → Envoie automatiquement un OTP Firebase par SMS
      */
     public function loginWithPhonePassword(Request $request)
     {
@@ -63,33 +63,7 @@ class FirebasePhoneAuthController extends Controller
             ]
         );
 
-        // 🔐 Si 2FA activé → OTP classique
-        if ($user->two_factor_enabled) {
-            $otp = rand(1000, 9999);
-            DB::table('otps')->updateOrInsert(
-                ['user_id' => $user->id],
-                [
-                    'code' => $otp,
-                    'expires_at' => now()->addMinutes(5),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
-            );
-
-            $user->notify(new SendOtpNotification($otp));
-
-            return response()->json([
-                'message' => 'OTP required',
-                'user_id' => $user->id,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
-                'phone' => $user->phone,
-                'requiresOTP' => true,
-                'email' => $user->email
-            ], 202); // Accepted
-        }
-
-        // 📱 Sinon TOUJOURS envoyer un OTP par SMS via Firebase
+        // 📱 TOUJOURS envoyer un OTP par SMS via Firebase
         return response()->json([
             'message' => 'Credentials valid, proceed with SMS verification',
             'user_id' => $user->id,
