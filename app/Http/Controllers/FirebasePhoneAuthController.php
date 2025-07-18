@@ -5,180 +5,252 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Authentication;
+use App\Notifications\SendOtpNotification;
 use Illuminate\Http\Request;
-use Kreait\Firebase\Factory;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Kreait\Firebase\Factory;
 
-class FirebasePhoneAuthController extends Controller
+class PhonePasswordAuthController extends Controller
 {
     /**
-     * Vérifier si un utilisateur existe déjà
+     * Authentification avec numéro de téléphone et mot de passe
      */
-    public function checkUserExists(Request $request)
+    public function loginWithPhonePassword(Request $request)
     {
         $request->validate([
-            'idToken' => 'required|string',
+            'phone' => 'required|string',
+            'password' => 'required|string'
         ]);
 
-        $auth = (new Factory)
-            ->withServiceAccount(storage_path('app/firebase/firebase_credentials.json'))
-            ->createAuth();
+        $phone = $request->input('phone');
+        $password = $request->input('password');
 
-        try {
-            $verifiedIdToken = $auth->verifyIdToken($request->idToken);
-            $firebaseUid = $verifiedIdToken->claims()->get('sub');
-            $firebaseUser = $auth->getUser($firebaseUid);
+        // 🎯 Recherche de l'utilisateur par téléphone
+        $user = User::where('phone', $phone)->first();
 
-            // Vérifier si l'utilisateur existe par téléphone ou email
-            $user = null;
-
-            if ($firebaseUser->phoneNumber) {
-                $user = User::where('phone', $firebaseUser->phoneNumber)->first();
-            }
-
-            if (!$user && $firebaseUser->email) {
-                $user = User::where('email', $firebaseUser->email)->first();
-            }
-
-            return response()->json([
-                'userExists' => $user !== null,
-                'user' => $user ? $user->only(['id', 'first_name', 'last_name', 'email', 'phone']) : null
-            ]);
-
-        } catch (\Throwable $e) {
-            return response()->json([
-                'error' => 'Token Firebase invalide : ' . $e->getMessage()
-            ], 401);
+        if (!$user) {
+            return response()->json(['error' => 'Nom d\'utilisateur ou mot de passe incorrect'], 401);
         }
-    }
 
-    /**
-     * Authentification par téléphone avec Firebase - UNIQUEMENT pour utilisateurs existants
-     */
-    public function loginWithFirebasePhone(Request $request)
-    {
-        $request->validate([
-            'idToken' => 'required|string',
-        ]);
+        if (!Hash::check($password, $user->password)) {
+            return response()->json(['error' => 'Nom d\'utilisateur ou mot de passe incorrect'], 401);
+        }
 
-        $auth = (new Factory)
-            ->withServiceAccount(storage_path('app/firebase/firebase_credentials.json'))
-            ->createAuth();
+        if (!$user->is_active) {
+            return response()->json(['error' => 'Utilisateur inactif'], 403);
+        }
 
-        try {
-            // Vérifier le token Firebase
-            $verifiedIdToken = $auth->verifyIdToken($request->idToken);
-            $firebaseUid = $verifiedIdToken->claims()->get('sub');
-            $firebaseUser = $auth->getUser($firebaseUid);
+        // 🟢 Marquer comme connecté
+        $user->is_online = 1;
+        $user->last_login = now();
+        $user->save();
 
-            $phoneNumber = $firebaseUser->phoneNumber;
+        // 🔐 Générer le token JWT Laravel
+        $token = JWTAuth::fromUser($user);
+        $tokenExpiration = now()->addMonth();
 
-            // Chercher l'utilisateur existant par téléphone
-            $user = User::where('phone', $phoneNumber)->first();
-
-            if (!$user) {
-                return response()->json([
-                    'error' => 'Utilisateur non trouvé. Seuls les utilisateurs existants peuvent se connecter par téléphone.',
-                    'requiresRegistration' => true
-                ], 404);
-            }
-
-            // Mettre à jour les informations de connexion
-            $user->update([
+        // 📌 Traçage de la connexion
+        Authentication::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'token' => $token,
+                'token_expiration' => $tokenExpiration,
                 'is_online' => true,
-                'last_login' => now(),
-            ]);
+                'connection_date' => now(),
+            ]
+        );
 
-            // Générer le token JWT Laravel
-            $token = JWTAuth::fromUser($user);
-            $tokenExpiration = now()->addMonth();
-
-            // Traçage de la connexion
-            Authentication::updateOrCreate(
+        // 🔐 Si 2FA activé → OTP
+        if ($user->two_factor_enabled) {
+            $otp = rand(1000, 9999);
+            DB::table('otps')->updateOrInsert(
                 ['user_id' => $user->id],
                 [
-                    'token' => $token,
-                    'token_expiration' => $tokenExpiration,
-                    'is_online' => true,
-                    'connection_date' => now(),
+                    'code' => $otp,
+                    'expires_at' => now()->addMinutes(5),
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]
             );
 
-            return response()->json([
-                'message' => 'Connexion réussie',
-                'user' => $user,
-                'token' => $token,
-                'token_expiration' => $tokenExpiration
-            ]);
+            $user->notify(new SendOtpNotification($otp));
 
-        } catch (\Throwable $e) {
             return response()->json([
-                'error' => 'Erreur lors de l\'authentification : ' . $e->getMessage()
-            ], 401);
+                'message' => 'OTP required',
+                'user_id' => $user->id,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'phone' => $user->phone,
+                'requiresOTP' => true,
+                'email' => $user->email
+            ], 202); // Accepted
         }
+
+        // ✅ Sinon retour du token
+        return response()->json([
+            'user' => $user,
+            'token' => $token,
+            'token_expiration' => $tokenExpiration
+        ]);
     }
 
     /**
-     * Connexion utilisateur existant (téléphone ou Google)
+     * Vérification de l'OTP après authentification
      */
-    public function loginExistingUser(Request $request)
+    public function verifyOTP(Request $request)
     {
         $request->validate([
+            'user_id' => 'required|integer',
+            'otp' => 'required|string|size:4'
+        ]);
+
+        $userId = $request->input('user_id');
+        $otp = $request->input('otp');
+
+        // Vérifier l'OTP
+        $otpRecord = DB::table('otps')
+            ->where('user_id', $userId)
+            ->where('code', $otp)
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (!$otpRecord) {
+            return response()->json(['error' => 'OTP invalide ou expiré'], 401);
+        }
+
+        // Supprimer l'OTP utilisé
+        DB::table('otps')->where('user_id', $userId)->delete();
+
+        // Récupérer l'utilisateur
+        $user = User::find($userId);
+
+        if (!$user) {
+            return response()->json(['error' => 'Utilisateur non trouvé'], 404);
+        }
+
+        // Récupérer le token depuis la table Authentication
+        $auth = Authentication::where('user_id', $userId)->first();
+
+        if (!$auth) {
+            return response()->json(['error' => 'Session invalide'], 401);
+        }
+
+        return response()->json([
+            'message' => 'Authentification réussie',
+            'user' => $user,
+            'token' => $auth->token,
+            'token_expiration' => $auth->token_expiration
+        ]);
+    }
+
+    /**
+     * Authentification avec Firebase OTP (pour l'envoi SMS)
+     */
+    public function sendFirebaseOTP(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required|string',
+            'password' => 'required|string'
+        ]);
+
+        $phone = $request->input('phone');
+        $password = $request->input('password');
+
+        // 🎯 Recherche de l'utilisateur par téléphone
+        $user = User::where('phone', $phone)->first();
+
+        if (!$user) {
+            return response()->json(['error' => 'Nom d\'utilisateur ou mot de passe incorrect'], 401);
+        }
+
+        if (!Hash::check($password, $user->password)) {
+            return response()->json(['error' => 'Nom d\'utilisateur ou mot de passe incorrect'], 401);
+        }
+
+        if (!$user->is_active) {
+            return response()->json(['error' => 'Utilisateur inactif'], 403);
+        }
+
+        // 🟢 Marquer comme connecté
+        $user->is_online = 1;
+        $user->last_login = now();
+        $user->save();
+
+        // 🔐 Générer le token JWT Laravel
+        $token = JWTAuth::fromUser($user);
+        $tokenExpiration = now()->addMonth();
+
+        // 📌 Traçage de la connexion
+        Authentication::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'token' => $token,
+                'token_expiration' => $tokenExpiration,
+                'is_online' => true,
+                'connection_date' => now(),
+            ]
+        );
+
+        // 📱 Toujours envoyer l'OTP par SMS via Firebase
+        return response()->json([
+            'message' => 'Credentials valid, proceed with SMS verification',
+            'user_id' => $user->id,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'phone' => $user->phone,
+            'requiresFirebaseOTP' => true,
+            'email' => $user->email
+        ], 202);
+    }
+
+    /**
+     * Finaliser l'authentification après vérification Firebase OTP
+     */
+    public function completeFirebaseAuth(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|integer',
             'idToken' => 'required|string',
         ]);
 
+        $userId = $request->input('user_id');
+        $idToken = $request->input('idToken');
+
+        // Vérifier le token Firebase
         $auth = (new Factory)
             ->withServiceAccount(storage_path('app/firebase/firebase_credentials.json'))
             ->createAuth();
 
         try {
-            $verifiedIdToken = $auth->verifyIdToken($request->idToken);
-            $firebaseUid = $verifiedIdToken->claims()->get('sub');
-            $firebaseUser = $auth->getUser($firebaseUid);
+            $verifiedIdToken = $auth->verifyIdToken($idToken);
+            $firebaseUser = $auth->getUser($verifiedIdToken->claims()->get('sub'));
 
-            // Chercher l'utilisateur par téléphone ou email
-            $user = null;
-
-            if ($firebaseUser->phoneNumber) {
-                $user = User::where('phone', $firebaseUser->phoneNumber)->first();
-            }
-
-            if (!$user && $firebaseUser->email) {
-                $user = User::where('email', $firebaseUser->email)->first();
-            }
+            // Récupérer l'utilisateur
+            $user = User::find($userId);
 
             if (!$user) {
-                return response()->json([
-                    'error' => 'Utilisateur non trouvé'
-                ], 404);
+                return response()->json(['error' => 'Utilisateur non trouvé'], 404);
             }
 
-            // Mettre à jour les informations de connexion
-            $user->update([
-                'is_online' => true,
-                'last_login' => now(),
-            ]);
+            // Vérifier que le numéro correspond
+            if ($firebaseUser->phoneNumber !== $user->phone) {
+                return response()->json(['error' => 'Numéro de téléphone non correspondant'], 401);
+            }
 
-            // Générer le token JWT Laravel
-            $token = JWTAuth::fromUser($user);
-            $tokenExpiration = now()->addMonth();
+            // Récupérer le token depuis la table Authentication
+            $authRecord = Authentication::where('user_id', $userId)->first();
 
-            // Traçage de la connexion
-            Authentication::updateOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'token' => $token,
-                    'token_expiration' => $tokenExpiration,
-                    'is_online' => true,
-                    'connection_date' => now(),
-                ]
-            );
+            if (!$authRecord) {
+                return response()->json(['error' => 'Session invalide'], 401);
+            }
 
             return response()->json([
-                'message' => 'Connexion réussie',
+                'message' => 'Authentification réussie',
                 'user' => $user,
-                'token' => $token,
-                'token_expiration' => $tokenExpiration
+                'token' => $authRecord->token,
+                'token_expiration' => $authRecord->token_expiration
             ]);
 
         } catch (\Throwable $e) {

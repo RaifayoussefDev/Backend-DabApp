@@ -25,6 +25,7 @@ use App\Http\Controllers\MotorcycleFilterController;
 use App\Http\Controllers\MotorcycleModelController;
 use App\Http\Controllers\MotorcycleTypeController;
 use App\Http\Controllers\MotorcycleYearController;
+use App\Http\Controllers\PhonePasswordAuthController;
 use App\Http\Controllers\PromoCodeController;
 use App\Http\Controllers\SoomController;
 use App\Http\Controllers\WishlistController;
@@ -237,5 +238,14 @@ Route::get('filter-license-plates', [FilterController::class, 'filterLicensePlat
 
 // Garder uniquement ces routes
 Route::post('/firebase-login', [FirebaseAuthController::class, 'loginWithFirebase']); // Pour Google
-Route::post('/firebase-phone-login', [FirebasePhoneAuthController::class, 'loginWithFirebasePhone']); // Pour téléphone (utilisateurs existants)
-Route::post('/login-existing-user', [FirebasePhoneAuthController::class, 'loginExistingUser']); // Alternative
+// Authentification avec numéro et mot de passe
+Route::post('/login-phone-password', [PhonePasswordAuthController::class, 'loginWithPhonePassword']);
+
+// Vérification OTP classique
+Route::post('/verify-otp', [PhonePasswordAuthController::class, 'verifyOTP']);
+
+// Envoi OTP Firebase (si besoin)
+Route::post('/send-firebase-otp', [PhonePasswordAuthController::class, 'sendFirebaseOTP']);
+
+// Finaliser l'authentification Firebase
+Route::post('/complete-firebase-auth', [PhonePasswordAuthController::class, 'completeFirebaseAuth']);
