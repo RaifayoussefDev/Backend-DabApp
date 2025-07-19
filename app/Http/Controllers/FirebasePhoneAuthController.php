@@ -143,7 +143,7 @@ class FirebasePhoneAuthController extends Controller
         $userId = $request->input('user_id');
         $idToken = $request->input('idToken');
 
-        // Vérifier le token Firebase
+        // Initialiser Firebase Auth
         $auth = (new Factory)
             ->withServiceAccount(storage_path('app/firebase/firebase_credentials.json'))
             ->createAuth();
@@ -171,11 +171,16 @@ class FirebasePhoneAuthController extends Controller
                 return response()->json(['error' => 'Session invalide'], 401);
             }
 
+            // ✅ Ajouter les données de localisation
+            $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
+            $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
+
             return response()->json([
-                'message' => 'Authentification réussie',
                 'user' => $user,
                 'token' => $authRecord->token,
-                'token_expiration' => $authRecord->token_expiration
+                'token_expiration' => $authRecord->token_expiration,
+                'country' => $country,
+                'continent' => $continent
             ]);
         } catch (\Throwable $e) {
             return response()->json([
