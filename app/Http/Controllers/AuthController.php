@@ -177,86 +177,86 @@ class AuthController extends Controller
      */
 
 
-     public function login(Request $request)
-     {
-         $request->validate([
-             'login' => 'required|string',
-             'password' => 'required|string'
-         ]);
-     
-         $login = $request->input('login');
-         $password = $request->input('password');
-     
-         $user = User::where('email', $login)->first();
-     
-         if (!$user || !Hash::check($password, $user->password)) {
-             return response()->json(['error' => 'Invalid credentials'], 401);
-         }
-     
-         if (!$user->is_active) {
-             return response()->json(['error' => 'Utilisateur inactif'], 403);
-         }
-     
-         $user->is_online = 1;
-         $user->last_login = now();
-         $user->save();
-     
-         // ✅ Extract country & continent from proxy headers
-         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
-         $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
-     
-         // 🔐 Add country and continent to JWT
-         $token = JWTAuth::claims([
-             'country' => $country,
-             'continent' => $continent,
-         ])->fromUser($user);
-     
-         $tokenExpiration = now()->addMonth();
-     
-         Authentication::updateOrCreate(
-             ['user_id' => $user->id],
-             [
-                 'token' => $token,
-                 'token_expiration' => $tokenExpiration,
-                 'is_online' => true,
-                 'connection_date' => now(),
-             ]
-         );
-     
-         if ($user->two_factor_enabled) {
-             $otp = rand(1000, 9999);
-             DB::table('otps')->updateOrInsert(
-                 ['user_id' => $user->id],
-                 [
-                     'code' => $otp,
-                     'expires_at' => now()->addMinutes(5),
-                     'created_at' => now(),
-                     'updated_at' => now(),
-                 ]
-             );
-     
-             $user->notify(new SendOtpNotification($otp));
-     
-             return response()->json([
-                 'message' => 'OTP required',
-                 'user_id' => $user->id,
-                 'requiresOTP' => true,
-                 'email' => $user->email,
-                 'first_name' => $user->first_name,
-                 'last_name' => $user->last_name,
-                 'phone' => $user->phone,
-                 'country' => $country
-             ], 202);
-         }
-     
-         return response()->json([
-             'user' => $user,
-             'token' => $token,
-             'token_expiration' => $tokenExpiration,
-             'country' => $country,
-             'continent' => $continent
-         ]);
-     }
+    public function login(Request $request)
+    {
+        $request->validate([
+            'login' => 'required|string',
+            'password' => 'required|string'
+        ]);
+
+        $login = $request->input('login');
+        $password = $request->input('password');
+
+        $user = User::where('email', $login)->first();
+
+        if (!$user || !Hash::check($password, $user->password)) {
+            return response()->json(['error' => 'Invalid credentials'], 401);
+        }
+
+        if (!$user->is_active) {
+            return response()->json(['error' => 'Utilisateur inactif'], 403);
+        }
+
+        $user->is_online = 1;
+        $user->last_login = now();
+        $user->save();
+
+        // ✅ Extract country & continent from proxy headers
+        $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
+        $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
+
+        // 🔐 Add country and continent to JWT
+        $token = JWTAuth::claims([
+            'country' => $country,
+            'continent' => $continent,
+        ])->fromUser($user);
+
+        $tokenExpiration = now()->addMonth();
+
+        Authentication::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'token' => $token,
+                'token_expiration' => $tokenExpiration,
+                'is_online' => true,
+                'connection_date' => now(),
+            ]
+        );
+
+        if ($user->two_factor_enabled) {
+            $otp = rand(1000, 9999);
+            DB::table('otps')->updateOrInsert(
+                ['user_id' => $user->id],
+                [
+                    'code' => $otp,
+                    'expires_at' => now()->addMinutes(5),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+
+            $user->notify(new SendOtpNotification($otp));
+
+            return response()->json([
+                'message' => 'OTP required',
+                'user_id' => $user->id,
+                'requiresOTP' => true,
+                'email' => $user->email,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'phone' => $user->phone,
+                'country' => $country
+            ], 202);
+        }
+
+        return response()->json([
+            'user' => $user,
+            'token' => $token,
+            'token_expiration' => $tokenExpiration,
+            'country' => $country,
+            'continent' => $continent
+        ]);
+    }
 
 
     /**
@@ -334,17 +334,37 @@ class AuthController extends Controller
         // Supprimer l'OTP après usage
         DB::table('otps')->where('id', $otpRecord->id)->delete();
 
-        // Authentifier l'utilisateur
-        $token = JWTAuth::fromUser($user);
+        // ✅ Extract country & continent
+        $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
+        $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
+
+        // Authentifier l'utilisateur avec les claims personnalisés
+        $token = JWTAuth::claims([
+            'country' => $country,
+            'continent' => $continent,
+        ])->fromUser($user);
+
         $tokenExpiration = now()->addMonth();
 
         $user->token_expiration = $tokenExpiration;
         $user->save();
 
+        Authentication::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'token' => $token,
+                'token_expiration' => $tokenExpiration,
+                'is_online' => true,
+                'connection_date' => now(),
+            ]
+        );
+
         return response()->json([
             'user' => $user,
             'token' => $token,
             'token_expiration' => $tokenExpiration,
+            'country' => $country,
+            'continent' => $continent
         ]);
     }
 

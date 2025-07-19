@@ -116,13 +116,19 @@ class FirebasePhoneAuthController extends Controller
             return response()->json(['error' => 'Session invalide'], 401);
         }
 
+        // ✅ Ajouter les données de localisation
+        $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
+        $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
+
         return response()->json([
-            'message' => 'Authentification réussie',
             'user' => $user,
             'token' => $auth->token,
-            'token_expiration' => $auth->token_expiration
+            'token_expiration' => $auth->token_expiration,
+            'country' => $country,
+            'continent' => $continent
         ]);
     }
+
 
     /**
      * Finaliser l'authentification après vérification Firebase OTP
@@ -171,7 +177,6 @@ class FirebasePhoneAuthController extends Controller
                 'token' => $authRecord->token,
                 'token_expiration' => $authRecord->token_expiration
             ]);
-
         } catch (\Throwable $e) {
             return response()->json([
                 'error' => 'Token Firebase invalide : ' . $e->getMessage()
