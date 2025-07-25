@@ -491,7 +491,7 @@ class ListingController extends Controller
 
   /**
  * @OA\Get(
- *     path="/api/listings/category/{category_id}",
+ *     path="/api/listings/by-category/{category_id}",
  *     summary="Get listings by category",
  *     tags={"Listings"},
  *     @OA\Parameter(

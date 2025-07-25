@@ -4083,13 +4083,13 @@
                 }
             }
         },
-        "/api/listings/category/{category_id}": {
+        "/api/listings/by-category/{category_id}": {
             "get": {
                 "tags": [
                     "Listings"
                 ],
                 "summary": "Get listings by category",
-                "operationId": "4f9bae544c11de258830044f0b72fbd4",
+                "operationId": "8e72591327b6671d611c12f535bc1c22",
                 "parameters": [
                     {
                         "name": "category_id",
@@ -4103,10 +4103,10 @@
                     {
                         "name": "country",
                         "in": "query",
-                        "description": "Filter by country ID",
+                        "description": "Filter by country name",
                         "required": false,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -4116,43 +4116,57 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "properties": {
-                                            "id": {
-                                                "type": "integer"
-                                            },
-                                            "title": {
-                                                "type": "string"
-                                            },
-                                            "description": {
-                                                "type": "string"
-                                            },
-                                            "price": {
-                                                "type": "number"
-                                            },
-                                            "created_at": {
-                                                "type": "string",
-                                                "format": "date-time"
-                                            },
-                                            "city": {
-                                                "type": "string"
-                                            },
-                                            "country": {
-                                                "type": "string"
-                                            },
-                                            "images": {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "string"
-                                                }
-                                            },
-                                            "wishlist": {
-                                                "type": "boolean"
-                                            }
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
                                         },
-                                        "type": "object"
-                                    }
+                                        "searched_country": {
+                                            "type": "string"
+                                        },
+                                        "showing_all_countries": {
+                                            "type": "boolean"
+                                        },
+                                        "listings": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "title": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "price": {
+                                                        "type": "number"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "city": {
+                                                        "type": "string"
+                                                    },
+                                                    "country": {
+                                                        "type": "string"
+                                                    },
+                                                    "images": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "wishlist": {
+                                                        "type": "boolean"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
