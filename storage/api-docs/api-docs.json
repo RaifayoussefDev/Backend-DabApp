@@ -2727,6 +2727,300 @@
                 }
             }
         },
+        "/auth/login-with-phone-password": {
+            "post": {
+                "tags": [
+                    "Authentication-firebase"
+                ],
+                "summary": "Login with phone and password",
+                "description": "swagger",
+                "operationId": "78986385e8529188d8704c1f4a7e5d86",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+1234567890"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "your_password_here"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Credentials valid, proceed with SMS verification",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Credentials valid, proceed with SMS verification"
+                                        },
+                                        "user_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "first_name": {
+                                            "type": "string",
+                                            "example": "John"
+                                        },
+                                        "last_name": {
+                                            "type": "string",
+                                            "example": "Doe"
+                                        },
+                                        "phone": {
+                                            "type": "string",
+                                            "example": "+1234567890"
+                                        },
+                                        "requiresFirebaseOTP": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "example": "test@test.com"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Nom d'utilisateur ou mot de passe incorrect"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "User inactive",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Utilisateur inactif"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/verify-otp": {
+            "post": {
+                "tags": [
+                    "Authentication-firebase"
+                ],
+                "summary": "Verify OTP after authentication",
+                "description": "swagger",
+                "operationId": "5d8b6c78289433e6ad7e523e7632f6cc",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "user_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "otp": {
+                                        "type": "string",
+                                        "example": "1234"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP valid, authentication successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "example": "your_jwt_token_here"
+                                        },
+                                        "token_expiration": {
+                                            "type": "string",
+                                            "example": "2023-10-01T00:00:00Z"
+                                        },
+                                        "country": {
+                                            "type": "string",
+                                            "example": "FR"
+                                        },
+                                        "continent": {
+                                            "type": "string",
+                                            "example": "Europe"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Utilisateur non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid session",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Session invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/complete-firebase-auth": {
+            "post": {
+                "tags": [
+                    "Authentication-firebase"
+                ],
+                "summary": "Complete Firebase authentication after OTP verification",
+                "description": "swagger",
+                "operationId": "7d7788bd7fe640e76574706498dc9cf9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "user_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "idToken": {
+                                        "type": "string",
+                                        "example": "your_firebase_id_token_here"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Firebase token valid, authentication successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "example": "your_jwt_token_here"
+                                        },
+                                        "token_expiration": {
+                                            "type": "string",
+                                            "example": "2023-10-01T00:00:00Z"
+                                        },
+                                        "country": {
+                                            "type": "string",
+                                            "example": "FR"
+                                        },
+                                        "continent": {
+                                            "type": "string",
+                                            "example": "Europe"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Utilisateur non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid session or phone number mismatch",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Session invalide ou numéro de téléphone non correspondant"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/upload": {
             "post": {
                 "tags": [
@@ -3802,6 +4096,15 @@
                         "in": "path",
                         "description": "Category ID (1=Motorcycle, 2=SparePart, 3=LicensePlate)",
                         "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "country",
+                        "in": "query",
+                        "description": "Filter by country ID",
+                        "required": false,
                         "schema": {
                             "type": "integer"
                         }
@@ -7802,6 +8105,38 @@
                     }
                 },
                 "type": "object"
+            },
+            "User": {
+                "title": "User",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "John Doe"
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "john@example.com"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+212612345678"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-01-01T00:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-01-01T00:00:00Z"
+                    }
+                },
+                "type": "object"
             }
         }
     },
@@ -7860,6 +8195,10 @@
         {
             "name": "Colors",
             "description": "Colors"
+        },
+        {
+            "name": "Authentication-firebase",
+            "description": "Authentication-firebase"
         },
         {
             "name": "Image Upload",

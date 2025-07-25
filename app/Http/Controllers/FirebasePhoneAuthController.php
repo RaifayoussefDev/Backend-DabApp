@@ -18,6 +18,49 @@ class FirebasePhoneAuthController extends Controller
      * Authentification avec numéro de téléphone et mot de passe
      * → Envoie automatiquement un OTP Firebase par SMS
      */
+    /**
+     * swagger
+     * @OA\Post(
+     *     path="/auth/login-with-phone-password",
+     *     tags={"Authentication-firebase"},
+     *     summary="Login with phone and password",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="phone", type="string", example="+1234567890"),
+     *             @OA\Property(property="password", type="string", example="your_password_here")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=202,
+     *         description="Credentials valid, proceed with SMS verification",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Credentials valid, proceed with SMS verification"),
+     *             @OA\Property(property="user_id", type="integer", example=1),
+     *             @OA\Property(property="first_name", type="string", example="John"),
+     *             @OA\Property(property="last_name", type="string", example="Doe"),
+     *             @OA\Property(property="phone", type="string", example="+1234567890"),
+     *             @OA\Property(property="requiresFirebaseOTP", type="boolean", example=true),
+     *             @OA\Property(property="email", type="string", example="test@test.com")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Invalid credentials",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Nom d'utilisateur ou mot de passe incorrect")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="User inactive",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Utilisateur inactif")
+     *         )
+     *     )
+     * )
+     */
     public function loginWithPhonePassword(Request $request)
     {
         $request->validate([
@@ -78,6 +121,48 @@ class FirebasePhoneAuthController extends Controller
     /**
      * Vérification de l'OTP après authentification (méthode classique - gardée pour compatibilité)
      */
+    /**
+     * swagger
+     * @OA\Post(
+     *     path="/auth/verify-otp",
+     *     tags={"Authentication-firebase"},
+     *     summary="Verify OTP after authentication",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="user_id", type="integer", example=1),
+     *             @OA\Property(property="otp", type="string", example="1234")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OTP valid, authentication successful",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="user", type="object", ref="#/components/schemas/User"),
+     *             @OA\Property(property="token", type="string", example="your_jwt_token_here"),
+     *             @OA\Property(property="token_expiration", type="string", example="2023-10-01T00:00:00Z"),
+     *            @OA\Property(property="country", type="string", example="FR"),
+     *            @OA\Property(property="continent", type="string", example="Europe")
+     *        )
+     *    ),
+     *
+     *   @OA\Response(
+     *       response=404,
+     *      description="User not found",
+     *      @OA\JsonContent(
+     *          @OA\Property(property="error", type="string", example="Utilisateur non trouvé")
+     *     )
+     *  ),
+     *  @OA\Response(
+     *      response=401,
+     *     description="Invalid session",
+     *     @OA\JsonContent(
+     *         @OA\Property(property="error", type="string", example="Session invalide")
+     *    )
+     * )
+     * )
+     * */
     public function verifyOTP(Request $request)
     {
         $request->validate([
@@ -133,6 +218,48 @@ class FirebasePhoneAuthController extends Controller
     /**
      * Finaliser l'authentification après vérification Firebase OTP
      */
+    /**
+     * swagger
+     * @OA\Post(
+     *    path="/auth/complete-firebase-auth",
+     *   tags={"Authentication-firebase"},
+     *   summary="Complete Firebase authentication after OTP verification",
+     *    @OA\RequestBody(
+     *        required=true,
+     *       @OA\JsonContent(
+     *            type="object",
+     *           @OA\Property(property="user_id", type="integer", example=1),
+     *          @OA\Property(property="idToken", type="string", example="your_firebase_id_token_here")
+     *       )
+     *   ),
+     *   @OA\Response(
+     *       response=200,
+     *      description="Firebase token valid, authentication successful",
+     *      @OA\JsonContent(
+     *          @OA\Property(property="user", type="object", ref="#/components/schemas/User"),
+     *         @OA\Property(property="token", type="string", example="your_jwt_token_here"),
+     *       @OA\Property(property="token_expiration", type="string", example="2023-10-01T00:00:00Z"),
+     *        @OA\Property(property="country", type="string", example="FR"),
+     *       @OA\Property(property="continent", type="string", example="Europe")
+     *       )
+     *  ),
+     *  @OA\Response(
+     *      response=404,
+     *     description="User not found",
+     *    @OA\JsonContent(
+     *        @OA\Property(property="error", type="string", example="Utilisateur non trouvé")
+     *   )
+     * ),
+     * @OA\Response(
+     *     response=401,
+     *    description="Invalid session or phone number mismatch",
+     *   @OA\JsonContent(
+     *       @OA\Property(property="error", type="string", example="Session invalide ou numéro de téléphone non correspondant")
+     *  )
+     * )
+     * )
+     * */
+
     public function completeFirebaseAuth(Request $request)
     {
         $request->validate([

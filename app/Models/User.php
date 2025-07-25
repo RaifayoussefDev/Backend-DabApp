@@ -7,7 +7,19 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
-
+/**
+ * @OA\Schema(
+ *     schema="User",
+ *     type="object",
+ *     title="User",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="name", type="string", example="John Doe"),
+ *     @OA\Property(property="email", type="string", example="john@example.com"),
+ *     @OA\Property(property="phone", type="string", example="+212612345678"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", example="2023-01-01T00:00:00Z"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", example="2023-01-01T00:00:00Z")
+ * )
+ */
 class User extends Authenticatable implements JWTSubject
 {
     use HasFactory, SoftDeletes ,Notifiable;
