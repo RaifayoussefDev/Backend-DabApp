@@ -2727,14 +2727,14 @@
                 }
             }
         },
-        "/auth/login-with-phone-password": {
+        "api/login-phone-password": {
             "post": {
                 "tags": [
                     "Authentication-firebase"
                 ],
                 "summary": "Login with phone and password",
                 "description": "swagger",
-                "operationId": "78986385e8529188d8704c1f4a7e5d86",
+                "operationId": "a54f4938cae0e31b8bf7567026defc47",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -2831,14 +2831,14 @@
                 }
             }
         },
-        "/auth/verify-otp": {
+        "api/verify-otp": {
             "post": {
                 "tags": [
                     "Authentication-firebase"
                 ],
                 "summary": "Verify OTP after authentication",
                 "description": "swagger",
-                "operationId": "5d8b6c78289433e6ad7e523e7632f6cc",
+                "operationId": "7672b75b692526d2d4f60b1ef6e58929",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -2926,14 +2926,14 @@
                 }
             }
         },
-        "/auth/complete-firebase-auth": {
+        "api/complete-firebase-auth": {
             "post": {
                 "tags": [
                     "Authentication-firebase"
                 ],
                 "summary": "Complete Firebase authentication after OTP verification",
                 "description": "swagger",
-                "operationId": "7d7788bd7fe640e76574706498dc9cf9",
+                "operationId": "efbb3dd7f3bf9e435c4398f1722798b1",
                 "requestBody": {
                     "required": true,
                     "content": {

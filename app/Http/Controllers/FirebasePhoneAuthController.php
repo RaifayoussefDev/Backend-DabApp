@@ -21,7 +21,7 @@ class FirebasePhoneAuthController extends Controller
     /**
      * swagger
      * @OA\Post(
-     *     path="/auth/login-with-phone-password",
+     *     path="api/login-phone-password",
      *     tags={"Authentication-firebase"},
      *     summary="Login with phone and password",
      *     @OA\RequestBody(
@@ -124,7 +124,7 @@ class FirebasePhoneAuthController extends Controller
     /**
      * swagger
      * @OA\Post(
-     *     path="/auth/verify-otp",
+     *     path="api/verify-otp",
      *     tags={"Authentication-firebase"},
      *     summary="Verify OTP after authentication",
      *     @OA\RequestBody(
@@ -221,7 +221,7 @@ class FirebasePhoneAuthController extends Controller
     /**
      * swagger
      * @OA\Post(
-     *    path="/auth/complete-firebase-auth",
+     *    path="api/complete-firebase-auth",
      *   tags={"Authentication-firebase"},
      *   summary="Complete Firebase authentication after OTP verification",
      *    @OA\RequestBody(
