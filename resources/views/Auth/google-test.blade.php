@@ -272,63 +272,58 @@
 
         // Authentification avec numéro et mot de passe
         async function loginWithPassword() {
-            const phone = document.getElementById('phoneNumber').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const loginBtn = document.getElementById('loginBtn');
+    const phone = document.getElementById('phoneNumber').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const loginBtn = document.getElementById('loginBtn');
 
-            if (!phone || !password) {
-                showError('Veuillez remplir tous les champs');
-                return;
+    if (!phone || !password) {
+        showError('Veuillez remplir tous les champs');
+        return;
+    }
+
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Connexion...';
+
+    try {
+        const response = await fetch('/api/login-phone-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                phone: phone,         // Pas de formatage ici
+                password: password
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            if (data.requiresFirebaseOTP) {
+                currentUser = data;
+                showUserInfo(data);
+                goToStep('step2');
+
+                setTimeout(() => {
+                    sendFirebaseOTP();
+                }, 1000);
+            } else {
+                showSuccess('Connexion réussie !');
+                document.getElementById("result").innerText = JSON.stringify(data, null, 2);
             }
-
-            // Ajouter le préfixe +212 si nécessaire
-            const formattedPhone = phone.startsWith('+212') ? phone : '+212' + phone;
-
-            loginBtn.disabled = true;
-            loginBtn.textContent = 'Connexion...';
-
-            try {
-                const response = await fetch('/api/login-phone-password', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        phone: formattedPhone,
-                        password: password
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    if (data.requiresFirebaseOTP) {
-                        // Firebase OTP requis - passer automatiquement à l'étape SMS
-                        currentUser = data;
-                        showUserInfo(data);
-                        goToStep('step2');
-
-                        // Initialiser reCAPTCHA et envoyer automatiquement le SMS
-                        setTimeout(() => {
-                            sendFirebaseOTP();
-                        }, 1000);
-                    } else {
-                        // Connexion directe (cas rare)
-                        showSuccess('Connexion réussie !');
-                        document.getElementById("result").innerText = JSON.stringify(data, null, 2);
-                    }
-                } else {
-                    showError(data.error);
-                }
-
-            } catch (error) {
-                console.error('Erreur login:', error);
-                showError('Erreur de connexion: ' + error.message);
-            } finally {
-                loginBtn.disabled = false;
-                loginBtn.textContent = 'Se connecter';
-            }
+        } else {
+            showError(data.error);
         }
+
+    } catch (error) {
+        console.error('Erreur login:', error);
+        showError('Erreur de connexion: ' + error.message);
+    } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Se connecter';
+    }
+}
+
 
         // Envoi OTP Firebase
         async function sendFirebaseOTP() {
