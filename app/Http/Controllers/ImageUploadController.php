@@ -82,70 +82,70 @@ class ImageUploadController extends Controller
      * )
      */
     public function upload(Request $request)
-{
-    try {
-        Log::info('Upload request received', ['files_count' => count($request->allFiles())]);
-
-        $request->validate([
-            'images.*' => 'required|image|mimes:jpeg,jpg,png,webp|max:10240'
-        ]);
-
-        if (!$request->hasFile('images')) {
-            return response()->json(['error' => 'No images found in request.'], 400);
-        }
-
-        $paths = [];
-
-        foreach ($request->file('images') as $index => $uploadedFile) {
-            Log::info("Processing image {$index}", [
-                'original_name' => $uploadedFile->getClientOriginalName(),
-                'size' => $uploadedFile->getSize(),
-                'mime_type' => $uploadedFile->getMimeType()
+    {
+        try {
+            Log::info('Upload request received', ['files_count' => count($request->allFiles())]);
+    
+            $request->validate([
+                'images.*' => 'required|image|mimes:jpeg,jpg,png,webp|max:10240'
             ]);
-
-            // Générer un nom de fichier complètement aléatoire
-            $filename = Str::random(20) . '.' . $uploadedFile->getClientOriginalExtension();
-
-            // Traitement et sauvegarde de l'image principale
-            $processedImage = $this->processImage($uploadedFile);
-            $imagePath = $this->saveImage($processedImage, "listings/{$filename}");
-
-            // Création de la miniature (optionnel)
-            $thumbnail = $this->createThumbnail($uploadedFile);
-            $this->saveImage($thumbnail, "listings/thumbnails/thumb_{$filename}");
-
-            $paths[] = asset('storage/' . $imagePath);
-
-            Log::info("Image processed successfully", [
-                'filename' => $filename,
-                'path' => $imagePath
+    
+            if (!$request->hasFile('images')) {
+                return response()->json(['error' => 'No images found in request.'], 400);
+            }
+    
+            $paths = [];
+    
+            foreach ($request->file('images') as $index => $uploadedFile) {
+                Log::info("Processing image {$index}", [
+                    'original_name' => $uploadedFile->getClientOriginalName(),
+                    'size' => $uploadedFile->getSize(),
+                    'mime_type' => $uploadedFile->getMimeType()
+                ]);
+    
+                // Nom de fichier aléatoire
+                $filename = Str::random(20) . '.' . $uploadedFile->getClientOriginalExtension();
+    
+                // Redimensionner l’image (par ex. max largeur 1200px)
+                $processedImage = $this->processImage($uploadedFile); // Tu peux adapter cette méthode pour resize
+    
+                // Sauvegarder dans listings/
+                $imagePath = $this->saveImage($processedImage, "listings/{$filename}");
+    
+                // Ajouter le chemin public
+                $paths[] = asset('storage/' . $imagePath);
+    
+                Log::info("Image saved successfully", [
+                    'filename' => $filename,
+                    'path' => $imagePath
+                ]);
+            }
+    
+            return response()->json([
+                'message' => 'Images uploaded successfully',
+                'paths' => $paths
             ]);
+    
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Validation failed', ['errors' => $e->errors()]);
+            return response()->json([
+                'error' => 'Validation failed',
+                'details' => $e->errors()
+            ], 422);
+    
+        } catch (\Exception $e) {
+            Log::error('Image upload failed', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+    
+            return response()->json([
+                'error' => 'An error occurred while uploading images.',
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
         }
-
-        return response()->json([
-            'message' => 'Images uploaded successfully',
-            'paths' => $paths
-        ]);
-
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        Log::warning('Validation failed', ['errors' => $e->errors()]);
-        return response()->json([
-            'error' => 'Validation failed',
-            'details' => $e->errors()
-        ], 422);
-
-    } catch (\Exception $e) {
-        Log::error('Image upload failed', [
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-
-        return response()->json([
-            'error' => 'An error occurred while uploading images.',
-            'message' => config('app.debug') ? $e->getMessage() : 'Internal server error'
-        ], 500);
     }
-}
+    
 
 
     /**
@@ -156,11 +156,11 @@ class ImageUploadController extends Controller
         // Créer le manager avec le driver GD
         $manager = new ImageManager(new Driver());
         $image = $manager->read($uploadedFile);
-        
+
         // Obtenir les dimensions originales
         $originalWidth = $image->width();
         $originalHeight = $image->height();
-        
+
         Log::info('Original image dimensions', [
             'width' => $originalWidth,
             'height' => $originalHeight
@@ -172,9 +172,9 @@ class ImageUploadController extends Controller
             $ratio = min(self::MAX_WIDTH / $originalWidth, self::MAX_HEIGHT / $originalHeight);
             $newWidth = (int)($originalWidth * $ratio);
             $newHeight = (int)($originalHeight * $ratio);
-            
+
             $image = $image->resize($newWidth, $newHeight);
-            
+
             Log::info('Image resized', [
                 'new_width' => $image->width(),
                 'new_height' => $image->height()
@@ -191,7 +191,7 @@ class ImageUploadController extends Controller
     {
         $manager = new ImageManager(new Driver());
         $thumbnail = $manager->read($uploadedFile);
-        
+
         // Créer une miniature carrée avec crop intelligent
         $thumbnail = $thumbnail->cover(self::THUMBNAIL_SIZE, self::THUMBNAIL_SIZE);
 
@@ -206,7 +206,7 @@ class ImageUploadController extends Controller
         $extension = $uploadedFile->getClientOriginalExtension();
         $originalName = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
         $cleanName = Str::slug($originalName);
-        
+
         return $cleanName . '_' . time() . '_' . Str::random(8) . '.' . $extension;
     }
 
@@ -216,16 +216,16 @@ class ImageUploadController extends Controller
     private function saveImage($image, string $path): string
     {
         $fullPath = storage_path('app/public/' . $path);
-        
+
         // Créer le dossier s'il n'existe pas
         $directory = dirname($fullPath);
         if (!is_dir($directory)) {
             mkdir($directory, 0755, true);
         }
-        
+
         // Sauvegarder l'image avec qualité optimisée
         $extension = pathinfo($path, PATHINFO_EXTENSION);
-        
+
         if (in_array(strtolower($extension), ['jpg', 'jpeg'])) {
             $image->toJpeg(self::QUALITY)->save($fullPath);
         } elseif (strtolower($extension) === 'png') {
@@ -235,7 +235,7 @@ class ImageUploadController extends Controller
         } else {
             $image->save($fullPath);
         }
-        
+
         return $path;
     }
 
@@ -294,13 +294,12 @@ class ImageUploadController extends Controller
             Log::info('Image deleted successfully', ['filename' => $filename]);
 
             return response()->json(['message' => 'Image deleted successfully']);
-
         } catch (\Exception $e) {
             Log::error('Image deletion failed', [
                 'filename' => $filename,
                 'message' => $e->getMessage()
             ]);
-            
+
             return response()->json([
                 'error' => 'An error occurred while deleting the image.'
             ], 500);
