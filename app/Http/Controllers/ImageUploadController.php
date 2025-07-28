@@ -82,77 +82,71 @@ class ImageUploadController extends Controller
      * )
      */
     public function upload(Request $request)
-    {
-        try {
-            Log::info('Upload request received', ['files_count' => count($request->allFiles())]);
+{
+    try {
+        Log::info('Upload request received', ['files_count' => count($request->allFiles())]);
 
-            // Validation
-            $request->validate([
-                'images.*' => 'required|image|mimes:jpeg,jpg,png,webp|max:10240' // Max 10MB par image
-            ]);
+        $request->validate([
+            'images.*' => 'required|image|mimes:jpeg,jpg,png,webp|max:10240'
+        ]);
 
-            if (!$request->hasFile('images')) {
-                return response()->json(['error' => 'No images found in request.'], 400);
-            }
-
-            $images = [];
-
-            foreach ($request->file('images') as $index => $uploadedFile) {
-                Log::info("Processing image {$index}", [
-                    'original_name' => $uploadedFile->getClientOriginalName(),
-                    'size' => $uploadedFile->getSize(),
-                    'mime_type' => $uploadedFile->getMimeType()
-                ]);
-
-                // Générer un nom unique pour le fichier
-                $filename = $this->generateUniqueFilename($uploadedFile);
-                
-                // Traitement de l'image principale
-                $processedImage = $this->processImage($uploadedFile);
-                $imagePath = $this->saveImage($processedImage, "listings/{$filename}");
-                
-                // Création de la miniature
-                $thumbnail = $this->createThumbnail($uploadedFile);
-                $thumbnailPath = $this->saveImage($thumbnail, "listings/thumbnails/thumb_{$filename}");
-
-                $images[] = [
-                    'original' => asset('storage/' . $imagePath),
-                    'thumbnail' => asset('storage/' . $thumbnailPath),
-                    'filename' => $filename
-                ];
-
-                Log::info("Image processed successfully", [
-                    'filename' => $filename,
-                    'original_path' => $imagePath,
-                    'thumbnail_path' => $thumbnailPath
-                ]);
-            }
-
-            return response()->json([
-                'message' => 'Images uploaded successfully',
-                'images' => $images,
-                'count' => count($images)
-            ]);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::warning('Validation failed', ['errors' => $e->errors()]);
-            return response()->json([
-                'error' => 'Validation failed',
-                'details' => $e->errors()
-            ], 422);
-
-        } catch (\Exception $e) {
-            Log::error('Image upload failed', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return response()->json([
-                'error' => 'An error occurred while uploading images.',
-                'message' => config('app.debug') ? $e->getMessage() : 'Internal server error'
-            ], 500);
+        if (!$request->hasFile('images')) {
+            return response()->json(['error' => 'No images found in request.'], 400);
         }
+
+        $paths = [];
+
+        foreach ($request->file('images') as $index => $uploadedFile) {
+            Log::info("Processing image {$index}", [
+                'original_name' => $uploadedFile->getClientOriginalName(),
+                'size' => $uploadedFile->getSize(),
+                'mime_type' => $uploadedFile->getMimeType()
+            ]);
+
+            // Générer un nom de fichier complètement aléatoire
+            $filename = Str::random(20) . '.' . $uploadedFile->getClientOriginalExtension();
+
+            // Traitement et sauvegarde de l'image principale
+            $processedImage = $this->processImage($uploadedFile);
+            $imagePath = $this->saveImage($processedImage, "listings/{$filename}");
+
+            // Création de la miniature (optionnel)
+            $thumbnail = $this->createThumbnail($uploadedFile);
+            $this->saveImage($thumbnail, "listings/thumbnails/thumb_{$filename}");
+
+            $paths[] = asset('storage/' . $imagePath);
+
+            Log::info("Image processed successfully", [
+                'filename' => $filename,
+                'path' => $imagePath
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Images uploaded successfully',
+            'paths' => $paths
+        ]);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        Log::warning('Validation failed', ['errors' => $e->errors()]);
+        return response()->json([
+            'error' => 'Validation failed',
+            'details' => $e->errors()
+        ], 422);
+
+    } catch (\Exception $e) {
+        Log::error('Image upload failed', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'error' => 'An error occurred while uploading images.',
+            'message' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+        ], 500);
     }
+}
+
 
     /**
      * Traite et redimensionne l'image principale
