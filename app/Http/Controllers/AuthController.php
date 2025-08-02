@@ -307,7 +307,7 @@ class AuthController extends Controller
     public function verifyOtp(Request $request)
     {
         $request->validate([
-            'login' => 'required|string', // email ou téléphone
+            'login' => 'required|string', // email ou phone
             'otp' => 'required|string',
         ]);
 
@@ -318,10 +318,6 @@ class AuthController extends Controller
 
         if (!$user) {
             return response()->json(['error' => 'User not found'], 404);
-        }
-
-        if (!$user->is_active) {
-            return response()->json(['error' => 'Utilisateur inactif'], 403);
         }
 
         // Vérifier l'OTP
@@ -338,11 +334,11 @@ class AuthController extends Controller
         // Supprimer l'OTP après usage
         DB::table('otps')->where('id', $otpRecord->id)->delete();
 
-        // ✅ Extraire les infos de localisation
+        // ✅ Extract country & continent
         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
         $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
 
-        // 🔐 Générer le token JWT
+        // Authentifier l'utilisateur avec les claims personnalisés
         $token = JWTAuth::claims([
             'country' => $country,
             'continent' => $continent,
@@ -350,13 +346,9 @@ class AuthController extends Controller
 
         $tokenExpiration = now()->addMonth();
 
-        // 📝 Mettre à jour l'utilisateur
         $user->token_expiration = $tokenExpiration;
-        $user->is_online = true;
-        $user->last_login = now();
         $user->save();
 
-        // 🔄 Mettre à jour ou créer le token dans la table authentications
         Authentication::updateOrCreate(
             ['user_id' => $user->id],
             [
@@ -367,24 +359,14 @@ class AuthController extends Controller
             ]
         );
 
-        // ✅ Retour uniforme
         return response()->json([
-            'user' => [
-                'id' => $user->id,
-                'email' => $user->email,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
-                'phone' => $user->phone,
-                'two_factor_enabled' => $user->two_factor_enabled,
-                'is_active' => $user->is_active,
-            ],
+            'user' => $user,
             'token' => $token,
             'token_expiration' => $tokenExpiration,
             'country' => $country,
             'continent' => $continent
         ]);
     }
-
 
 
     /**

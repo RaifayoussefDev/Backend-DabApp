@@ -242,7 +242,7 @@ Route::post('/firebase-login', [FirebaseAuthController::class, 'loginWithFirebas
 Route::post('/login-phone-password', [FirebasePhoneAuthController::class, 'loginWithPhonePassword']);
 
 // Vérification OTP classique
-Route::post('/verify-otp', [FirebasePhoneAuthController::class, 'verifyOTP']);
+// Route::post('/verify-otp', [FirebasePhoneAuthController::class, 'verifyOTP']);
 
 // Envoi OTP Firebase (si besoin)
 Route::post('/send-firebase-otp', [FirebasePhoneAuthController::class, 'sendFirebaseOTP']);
