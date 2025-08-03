@@ -28,6 +28,7 @@ use App\Http\Controllers\MotorcycleYearController;
 use App\Http\Controllers\PhonePasswordAuthController;
 use App\Http\Controllers\PromoCodeController;
 use App\Http\Controllers\SoomController;
+use App\Http\Controllers\WhatsAppOtpController;
 use App\Http\Controllers\WishlistController;
 
 
@@ -249,3 +250,6 @@ Route::post('/send-firebase-otp', [FirebasePhoneAuthController::class, 'sendFire
 
 // Finaliser l'authentification Firebase
 Route::post('/complete-firebase-auth', [FirebasePhoneAuthController::class, 'completeFirebaseAuth']);
+
+
+Route::post('/send-otp', [WhatsAppOtpController::class, 'sendOtp']);

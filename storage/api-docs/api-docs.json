@@ -3027,7 +3027,7 @@
                     "Image Upload"
                 ],
                 "summary": "Upload multiple images",
-                "description": "Allows users to upload multiple images to the server.",
+                "description": "Allows users to upload multiple images to the server with automatic resizing.",
                 "operationId": "uploadImages",
                 "requestBody": {
                     "required": true,
@@ -3039,7 +3039,7 @@
                                 ],
                                 "properties": {
                                     "images[]": {
-                                        "description": "Multiple image files to upload",
+                                        "description": "Multiple image files to upload (will be automatically resized)",
                                         "type": "array",
                                         "items": {
                                             "type": "string",
@@ -3063,11 +3063,20 @@
                                             "type": "string",
                                             "example": "Images uploaded successfully"
                                         },
-                                        "paths": {
+                                        "images": {
                                             "type": "array",
                                             "items": {
-                                                "type": "string",
-                                                "example": "http://yourdomain.com/storage/listings/image1.jpg"
+                                                "properties": {
+                                                    "original": {
+                                                        "type": "string",
+                                                        "example": "http://yourdomain.com/storage/listings/image1.jpg"
+                                                    },
+                                                    "thumbnail": {
+                                                        "type": "string",
+                                                        "example": "http://yourdomain.com/storage/listings/thumbnails/image1_thumb.jpg"
+                                                    }
+                                                },
+                                                "type": "object"
                                             }
                                         }
                                     },
@@ -3092,6 +3101,22 @@
                             }
                         }
                     },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Invalid image format."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "content": {
@@ -3101,6 +3126,61 @@
                                         "error": {
                                             "type": "string",
                                             "example": "An error occurred while uploading images."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/upload/{filename}": {
+            "delete": {
+                "tags": [
+                    "Image Upload"
+                ],
+                "summary": "Delete an uploaded image",
+                "description": "Delete an uploaded image and its thumbnail",
+                "operationId": "deleteImage",
+                "parameters": [
+                    {
+                        "name": "filename",
+                        "in": "path",
+                        "description": "The filename of the image to delete",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Image deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Image deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Image not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Image not found"
                                         }
                                     },
                                     "type": "object"
@@ -4108,6 +4188,16 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "plate_search",
+                        "in": "query",
+                        "description": "Search in license plate field values (only for category_id=3)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "123"
                     }
                 ],
                 "responses": {
@@ -4125,6 +4215,9 @@
                                         },
                                         "showing_all_countries": {
                                             "type": "boolean"
+                                        },
+                                        "total_listings": {
+                                            "type": "integer"
                                         },
                                         "listings": {
                                             "type": "array",

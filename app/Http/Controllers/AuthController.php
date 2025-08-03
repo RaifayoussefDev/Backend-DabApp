@@ -17,9 +17,15 @@ use Kreait\Firebase\Exception\Auth\EmailExists;
 use Kreait\Firebase\Exception\Auth\InvalidPassword;
 use Kreait\Firebase\Exception\Auth\UserNotFound;
 
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+
 
 class AuthController extends Controller
 {
+    private $whatsappApiUrl = 'https://api.360messenger.com/v2/sendMessage';
+    private $whatsappApiToken = 'dYXcSz0yjWT1jP0vsAb6TNQ6p3epz4xZeYY';
     /**
      * @OA\Post(
      *     path="/api/register",
@@ -225,6 +231,7 @@ class AuthController extends Controller
 
         if ($user->two_factor_enabled) {
             $otp = rand(1000, 9999);
+
             DB::table('otps')->updateOrInsert(
                 ['user_id' => $user->id],
                 [
@@ -235,7 +242,8 @@ class AuthController extends Controller
                 ]
             );
 
-            $user->notify(new SendOtpNotification($otp));
+            // 🚀 Try WhatsApp first, then fallback to email
+            $otpSentVia = $this->sendOtpWithFallback($user, $otp);
 
             return response()->json([
                 'message' => 'OTP required',
@@ -245,7 +253,8 @@ class AuthController extends Controller
                 'first_name' => $user->first_name,
                 'last_name' => $user->last_name,
                 'phone' => $user->phone,
-                'country' => $country
+                'country' => $country,
+                'otp_sent_via' => $otpSentVia // 'whatsapp', 'email', ou 'failed'
             ], 202);
         }
 
@@ -256,6 +265,100 @@ class AuthController extends Controller
             'country' => $country,
             'continent' => $continent
         ]);
+    }
+
+    /**
+     * Send OTP via WhatsApp first, fallback to email if WhatsApp fails
+     */
+    private function sendOtpWithFallback(User $user, $otp)
+    {
+        // First, try WhatsApp if user has phone number
+        if (!empty($user->phone)) {
+            $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
+
+            if ($whatsappSent) {
+                Log::info('OTP sent via WhatsApp', [
+                    'user_id' => $user->id,
+                    'phone' => $user->phone
+                ]);
+                return 'whatsapp';
+            }
+        }
+
+        // Fallback to email
+        try {
+            $user->notify(new SendOtpNotification($otp));
+            Log::info('OTP sent via Email (WhatsApp fallback)', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'reason' => empty($user->phone) ? 'no_phone' : 'whatsapp_failed'
+            ]);
+            return 'email';
+        } catch (\Exception $e) {
+            Log::error('Failed to send OTP via both WhatsApp and Email', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+            return 'failed';
+        }
+    }
+
+    /**
+     * Send OTP via WhatsApp
+     */
+    private function sendWhatsAppOtp($phone, $otp)
+    {
+        try {
+            $phoneNumber = $this->formatPhoneNumber($phone);
+
+            $payload = [
+                'phonenumber' => '+' . $phoneNumber,
+                'text' => "🔐 Votre code OTP est : {$otp}\n\nCe code expire dans 5 minutes.\nNe partagez jamais ce code avec quelqu'un d'autre."
+            ];
+
+            Log::info('Attempting WhatsApp OTP send', [
+                'phone' => $phoneNumber,
+                'formatted_phone' => '+' . $phoneNumber
+            ]);
+
+            $response = Http::timeout(10)->withHeaders([
+                'Authorization' => "Bearer {$this->whatsappApiToken}",
+                'Content-Type' => 'application/json',
+            ])->post($this->whatsappApiUrl, $payload);
+
+            Log::info('WhatsApp API Response', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+
+            return $response->successful();
+        } catch (\Exception $e) {
+            Log::error('WhatsApp OTP send failed', [
+                'phone' => $phone,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Format phone number for Morocco
+     */
+    private function formatPhoneNumber($phone)
+    {
+        // Remove any non-numeric characters
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+
+        // If phone doesn't start with country code, add Morocco's (212)
+        if (!str_starts_with($phone, '212')) {
+            // Remove leading zero if present
+            if (str_starts_with($phone, '0')) {
+                $phone = substr($phone, 1);
+            }
+            $phone = '212' . $phone;
+        }
+
+        return $phone;
     }
 
 

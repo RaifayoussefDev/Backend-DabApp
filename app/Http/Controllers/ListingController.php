@@ -508,6 +508,14 @@ class ListingController extends Controller
      *         description="Filter by country name",
      *         @OA\Schema(type="string")
      *     ),
+     *     @OA\Parameter(
+     *         name="plate_search",
+     *         in="query",
+     *         required=false,
+     *         description="Search in license plate field values (only for category_id=3)",
+     *         @OA\Schema(type="string"),
+     *         example="123"
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="List of listings",
@@ -516,6 +524,7 @@ class ListingController extends Controller
      *             @OA\Property(property="message", type="string"),
      *             @OA\Property(property="searched_country", type="string"),
      *             @OA\Property(property="showing_all_countries", type="boolean"),
+     *             @OA\Property(property="total_listings", type="integer"),
      *             @OA\Property(
      *                 property="listings",
      *                 type="array",
