@@ -2364,13 +2364,13 @@
                 }
             }
         },
-        "/api/filter-license-plates": {
+        "/api/filter/license-plates": {
             "get": {
                 "tags": [
                     "Filters"
                 ],
                 "summary": "Filter license plates",
-                "description": "Filter license plates by price, country, city, format, digits, and custom fields",
+                "description": "Filter license plates by price, country, city, format and plate fields",
                 "operationId": "filterLicensePlates",
                 "parameters": [
                     {
@@ -2380,7 +2380,8 @@
                         "required": false,
                         "schema": {
                             "type": "number",
-                            "format": "float"
+                            "format": "float",
+                            "minimum": 0
                         }
                     },
                     {
@@ -2390,269 +2391,82 @@
                         "required": false,
                         "schema": {
                             "type": "number",
-                            "format": "float"
+                            "format": "float",
+                            "minimum": 0
                         }
                     },
                     {
-                        "name": "listing_countries[]",
+                        "name": "country_id",
                         "in": "query",
-                        "description": "Filter by listing countries (array of country IDs)",
+                        "description": "Filter by country ID",
                         "required": false,
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "integer"
-                            }
+                            "type": "integer"
                         }
                     },
                     {
-                        "name": "listing_cities[]",
+                        "name": "city_id",
                         "in": "query",
-                        "description": "Filter by listing cities (array of city IDs)",
+                        "description": "Filter by city ID",
                         "required": false,
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "integer"
-                            }
+                            "type": "integer"
                         }
                     },
                     {
-                        "name": "plate_countries[]",
+                        "name": "plate_format_id",
                         "in": "query",
-                        "description": "Filter by license plate countries (array of country IDs)",
+                        "description": "Filter by license plate format ID",
                         "required": false,
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "integer"
-                            }
+                            "type": "integer"
                         }
                     },
                     {
-                        "name": "plate_cities[]",
+                        "name": "plate_search",
                         "in": "query",
-                        "description": "Filter by license plate cities (array of city IDs)",
+                        "description": "Search value within license plate fields",
                         "required": false,
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "integer"
-                            }
-                        }
-                    },
-                    {
-                        "name": "plate_formats[]",
-                        "in": "query",
-                        "description": "Filter by plate format IDs",
-                        "required": false,
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "integer"
-                            }
-                        }
-                    },
-                    {
-                        "name": "digits_counts[]",
-                        "in": "query",
-                        "description": "Filter by digit counts on the license plate",
-                        "required": false,
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "integer"
-                            }
+                            "type": "string"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Filtered license plates",
+                        "description": "Successful response",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 106
-                                                    },
-                                                    "title": {
-                                                        "type": "string",
-                                                        "example": "Test plate title"
-                                                    },
-                                                    "description": {
-                                                        "type": "string",
-                                                        "example": "Plate description"
-                                                    },
-                                                    "price": {
-                                                        "type": "number",
-                                                        "format": "float",
-                                                        "example": 900
-                                                    },
-                                                    "category_id": {
-                                                        "type": "integer",
-                                                        "example": 3
-                                                    },
-                                                    "auction_enabled": {
-                                                        "type": "boolean",
-                                                        "example": true
-                                                    },
-                                                    "minimum_bid": {
-                                                        "type": "number",
-                                                        "format": "float",
-                                                        "example": 900
-                                                    },
-                                                    "allow_submission": {
-                                                        "type": "boolean",
-                                                        "example": true
-                                                    },
-                                                    "listing_type_id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "contacting_channel": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    },
-                                                    "seller_type": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    },
-                                                    "status": {
-                                                        "type": "string",
-                                                        "example": "active"
-                                                    },
-                                                    "created_at": {
-                                                        "type": "string",
-                                                        "format": "date-time"
-                                                    },
-                                                    "city": {
-                                                        "type": "string",
-                                                        "example": "Dubai"
-                                                    },
-                                                    "country": {
-                                                        "type": "string",
-                                                        "example": "UAE"
-                                                    },
-                                                    "images": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string",
-                                                            "example": "https://domain.com/image.jpg"
-                                                        }
-                                                    },
-                                                    "wishlist": {
-                                                        "type": "boolean",
-                                                        "example": false
-                                                    },
-                                                    "license_plate": {
-                                                        "properties": {
-                                                            "plate_format": {
-                                                                "properties": {
-                                                                    "id": {
-                                                                        "type": "integer",
-                                                                        "example": 14
-                                                                    },
-                                                                    "name": {
-                                                                        "type": "string",
-                                                                        "example": "UAE Plate"
-                                                                    },
-                                                                    "country": {
-                                                                        "properties": {
-                                                                            "id": {
-                                                                                "type": "integer",
-                                                                                "example": 2
-                                                                            },
-                                                                            "name": {
-                                                                                "type": "string",
-                                                                                "example": "EMARAT"
-                                                                            },
-                                                                            "code": {
-                                                                                "type": "string",
-                                                                                "example": "AE"
-                                                                            },
-                                                                            "created_at": {
-                                                                                "type": "string",
-                                                                                "format": "date-time"
-                                                                            },
-                                                                            "updated_at": {
-                                                                                "type": "string",
-                                                                                "format": "date-time"
-                                                                            }
-                                                                        },
-                                                                        "type": "object"
-                                                                    }
-                                                                },
-                                                                "type": "object"
-                                                            },
-                                                            "city": {
-                                                                "type": "string",
-                                                                "example": "Dubai"
-                                                            },
-                                                            "country_id": {
-                                                                "type": "integer",
-                                                                "example": 2
-                                                            },
-                                                            "fields": {
-                                                                "type": "array",
-                                                                "items": {
-                                                                    "properties": {
-                                                                        "field_id": {
-                                                                            "type": "integer",
-                                                                            "example": 33
-                                                                        },
-                                                                        "field_name": {
-                                                                            "type": "string",
-                                                                            "example": "number in english"
-                                                                        },
-                                                                        "field_position": {
-                                                                            "type": "string",
-                                                                            "example": "left-center"
-                                                                        },
-                                                                        "is_required": {
-                                                                            "type": "boolean",
-                                                                            "example": true
-                                                                        },
-                                                                        "max_length": {
-                                                                            "type": "integer",
-                                                                            "example": 3
-                                                                        },
-                                                                        "value": {
-                                                                            "type": "string",
-                                                                            "example": "123"
-                                                                        }
-                                                                    },
-                                                                    "type": "object"
-                                                                }
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                },
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "title": {
+                                                "type": "string"
+                                            },
+                                            "description": {
+                                                "type": "string"
+                                            },
+                                            "price": {
+                                                "type": "number",
+                                                "format": "float"
+                                            },
+                                            "image": {
+                                                "type": "string",
+                                                "nullable": true
+                                            },
+                                            "license_plate": {
                                                 "type": "object"
                                             }
                                         },
-                                        "total": {
-                                            "type": "integer",
-                                            "example": 1
-                                        }
-                                    },
-                                    "type": "object"
+                                        "type": "object"
+                                    }
                                 }
                             }
                         }
-                    },
-                    "500": {
-                        "description": "Internal Server Error"
                     }
                 }
             }

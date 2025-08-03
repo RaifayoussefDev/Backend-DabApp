@@ -284,148 +284,77 @@ class FilterController extends Controller
     }
     /**
      * @OA\Get(
-     *     path="/api/filter-license-plates",
+     *     path="/api/filter/license-plates",
      *     summary="Filter license plates",
-     *     description="Filter license plates by price, country, city, format, digits, and custom fields",
+     *     description="Filter license plates by price, country, city, format and plate fields",
      *     operationId="filterLicensePlates",
      *     tags={"Filters"},
-     *
      *     @OA\Parameter(
      *         name="min_price",
      *         in="query",
      *         description="Minimum price filter",
      *         required=false,
-     *         @OA\Schema(type="number", format="float")
+     *         @OA\Schema(type="number", format="float", minimum=0)
      *     ),
      *     @OA\Parameter(
      *         name="max_price",
      *         in="query",
      *         description="Maximum price filter",
      *         required=false,
-     *         @OA\Schema(type="number", format="float")
+     *         @OA\Schema(type="number", format="float", minimum=0)
      *     ),
      *     @OA\Parameter(
-     *         name="listing_countries[]",
+     *         name="country_id",
      *         in="query",
-     *         description="Filter by listing countries (array of country IDs)",
+     *         description="Filter by country ID",
      *         required=false,
-     *         @OA\Schema(type="array", @OA\Items(type="integer"))
+     *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Parameter(
-     *         name="listing_cities[]",
+     *         name="city_id",
      *         in="query",
-     *         description="Filter by listing cities (array of city IDs)",
+     *         description="Filter by city ID",
      *         required=false,
-     *         @OA\Schema(type="array", @OA\Items(type="integer"))
+     *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Parameter(
-     *         name="plate_countries[]",
+     *         name="plate_format_id",
      *         in="query",
-     *         description="Filter by license plate countries (array of country IDs)",
+     *         description="Filter by license plate format ID",
      *         required=false,
-     *         @OA\Schema(type="array", @OA\Items(type="integer"))
+     *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Parameter(
-     *         name="plate_cities[]",
+     *         name="plate_search",
      *         in="query",
-     *         description="Filter by license plate cities (array of city IDs)",
+     *         description="Search value within license plate fields",
      *         required=false,
-     *         @OA\Schema(type="array", @OA\Items(type="integer"))
+     *         @OA\Schema(type="string")
      *     ),
-     *     @OA\Parameter(
-     *         name="plate_formats[]",
-     *         in="query",
-     *         description="Filter by plate format IDs",
-     *         required=false,
-     *         @OA\Schema(type="array", @OA\Items(type="integer"))
-     *     ),
-     *     @OA\Parameter(
-     *         name="digits_counts[]",
-     *         in="query",
-     *         description="Filter by digit counts on the license plate",
-     *         required=false,
-     *         @OA\Schema(type="array", @OA\Items(type="integer"))
-     *     ),
-     *
      *     @OA\Response(
      *         response=200,
-     *         description="Filtered license plates",
+     *         description="Successful response",
      *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="array",
-     *                 @OA\Items(
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=106),
-     *                     @OA\Property(property="title", type="string", example="Test plate title"),
-     *                     @OA\Property(property="description", type="string", example="Plate description"),
-     *                     @OA\Property(property="price", type="number", format="float", example=900.00),
-     *                     @OA\Property(property="category_id", type="integer", example=3),
-     *                     @OA\Property(property="auction_enabled", type="boolean", example=true),
-     *                     @OA\Property(property="minimum_bid", type="number", format="float", example=900.00),
-     *                     @OA\Property(property="allow_submission", type="boolean", example=true),
-     *                     @OA\Property(property="listing_type_id", type="integer", example=1),
-     *                     @OA\Property(property="contacting_channel", type="string", nullable=true),
-     *                     @OA\Property(property="seller_type", type="string", nullable=true),
-     *                     @OA\Property(property="status", type="string", example="active"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time"),
-     *                     @OA\Property(property="city", type="string", example="Dubai"),
-     *                     @OA\Property(property="country", type="string", example="UAE"),
-     *                     @OA\Property(property="images", type="array", @OA\Items(type="string", example="https://domain.com/image.jpg")),
-     *                     @OA\Property(property="wishlist", type="boolean", example=false),
-     *                     @OA\Property(
-     *                         property="license_plate",
-     *                         type="object",
-     *                         @OA\Property(
-     *                             property="plate_format",
-     *                             type="object",
-     *                             @OA\Property(property="id", type="integer", example=14),
-     *                             @OA\Property(property="name", type="string", example="UAE Plate"),
-     *                             @OA\Property(property="country",
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=2),
-     *                                 @OA\Property(property="name", type="string", example="EMARAT"),
-     *                                 @OA\Property(property="code", type="string", example="AE"),
-     *                                 @OA\Property(property="created_at", type="string", format="date-time"),
-     *                                 @OA\Property(property="updated_at", type="string", format="date-time")
-     *                             )
-     *                         ),
-     *                         @OA\Property(property="city", type="string", example="Dubai"),
-     *                         @OA\Property(property="country_id", type="integer", example=2),
-     *                         @OA\Property(
-     *                             property="fields",
-     *                             type="array",
-     *                             @OA\Items(
-     *                                 type="object",
-     *                                 @OA\Property(property="field_id", type="integer", example=33),
-     *                                 @OA\Property(property="field_name", type="string", example="number in english"),
-     *                                 @OA\Property(property="field_position", type="string", example="left-center"),
-     *                                 @OA\Property(property="is_required", type="boolean", example=true),
-     *                                 @OA\Property(property="max_length", type="integer", example=3),
-     *                                 @OA\Property(property="value", type="string", example="123")
-     *                             )
-     *                         )
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="total", type="integer", example=1)
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="title", type="string"),
+     *                 @OA\Property(property="description", type="string"),
+     *                 @OA\Property(property="price", type="number", format="float"),
+     *                 @OA\Property(property="image", type="string", nullable=true),
+     *                 @OA\Property(property="license_plate", type="object")
+     *             )
      *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Internal Server Error"
      *     )
      * )
      */
-
-
     public function filterLicensePlates(Request $request)
     {
-        $query = Listing::where('category_id', 3)->where('status', 'published');
+        $query = Listing::query()
+            ->where('category_id', 3)
+            ->where('status', 'published');
 
-        // Filtres de prix
+        // Price filtering
         if ($request->filled('min_price')) {
             $query->where('price', '>=', (float) $request->min_price);
         }
@@ -434,127 +363,68 @@ class FilterController extends Controller
             $query->where('price', '<=', (float) $request->max_price);
         }
 
-        // Filtres listing (ville/pays)
-        if ($request->filled('listing_countries')) {
-            $query->whereIn('country_id', $request->listing_countries);
-        }
-
-        if ($request->filled('listing_cities')) {
-            $query->whereIn('city_id', $request->listing_cities);
-        }
-
-        // Filtres plaque (ville/pays)
-        if ($request->filled('plate_countries')) {
-            $query->whereHas('licensePlate', fn($q) => $q->whereIn('country_id', $request->plate_countries));
-        }
-
-        if ($request->filled('plate_cities')) {
-            $query->whereHas('licensePlate', fn($q) => $q->whereIn('city_id', $request->plate_cities));
-        }
-
-        // Compatibilité anciens filtres
-        if ($request->filled('countries')) {
-            $query->whereHas('licensePlate', fn($q) => $q->whereIn('country_id', $request->countries));
-        }
-
-        if ($request->filled('cities')) {
-            $query->whereHas('licensePlate', fn($q) => $q->whereIn('city_id', $request->cities));
-        }
-
-        // Format de plaque
-        if ($request->filled('plate_formats')) {
-            $query->whereHas('licensePlate', fn($q) => $q->whereIn('plate_format_id', $request->plate_formats));
-        }
-
-        // Nombre de chiffres
-
-        // Champs personnalisés
-        if ($request->filled('field_filters')) {
-            foreach ($request->field_filters as $filter) {
-                if (isset($filter['field_id'], $filter['value'])) {
-                    $query->whereHas('licensePlate.fieldValues', function ($q) use ($filter) {
-                        $q->where('plate_format_field_id', $filter['field_id'])
-                            ->where('field_value', 'LIKE', '%' . $filter['value'] . '%');
-                    });
-                }
+        // License plate relation filters
+        $query->whereHas('licensePlate', function ($q) use ($request) {
+            if ($request->filled('country_id')) {
+                $q->where('country_id', $request->country_id);
             }
-        }
 
-        // Charger les relations nécessaires
-        $listings = $query->with([
-            'images:id,listing_id,image_url',
-            'country:id,name,code,created_at,updated_at',
-            'city:id,name',
-            'licensePlate:id,listing_id,plate_format_id,country_id,city_id',
-            'licensePlate.city:id,name',
-            'licensePlate.country:id,name,code,created_at,updated_at',
-            'licensePlate.format:id,name,country_id',
-            'licensePlate.format.country:id,name,code,created_at,updated_at',
-            'licensePlate.fieldValues:id,license_plate_id,plate_format_field_id,field_value',
-            'licensePlate.fieldValues.formatField:id,field_name,position,is_required,max_length'
-        ])
-            ->latest()
+            if ($request->filled('city_id')) {
+                $q->where('city_id', $request->city_id);
+            }
+
+            if ($request->filled('plate_format_id')) {
+                $q->where('plate_format_id', $request->plate_format_id);
+            }
+
+            if ($request->filled('plate_search')) {
+                $q->whereHas('fieldValues', function ($q2) use ($request) {
+                    $q2->where('field_value', 'like', '%' . $request->plate_search . '%');
+                });
+            }
+        });
+
+        // Select fields and preload image + licensePlate + fieldValues
+        $results = $query->select('id', 'title', 'description', 'price')
+            ->with([
+                'images' => function ($q) {
+                    $q->select('listing_id', 'image_url')->limit(1);
+                },
+                'licensePlate.format',
+                'licensePlate.city',
+                'licensePlate.country',
+                'licensePlate.fieldValues.formatField'
+            ])
             ->get()
             ->map(function ($listing) {
-                $plate = $listing->licensePlate;
-
-                $fields = [];
-                if ($plate && $plate->fieldValues) {
-                    foreach ($plate->fieldValues as $fv) {
-                        $fields[] = [
-                            'field_id' => $fv->formatField->id ?? null,
-                            'field_name' => $fv->formatField->field_name ?? null,
-                            'field_position' => $fv->formatField->position ?? null,
-                            'is_required' => $fv->formatField->is_required ?? false,
-                            'max_length' => $fv->formatField->max_length ?? null,
-                            'value' => $fv->field_value,
-                        ];
-                    }
-                }
-
                 return [
                     'id' => $listing->id,
                     'title' => $listing->title,
                     'description' => $listing->description,
                     'price' => $listing->price,
-                    'category_id' => $listing->category_id,
-                    'auction_enabled' => $listing->auction_enabled,
-                    'minimum_bid' => $listing->minimum_bid,
-                    'allow_submission' => $listing->allow_submission,
-                    'listing_type_id' => $listing->listing_type_id,
-                    'contacting_channel' => $listing->contacting_channel,
-                    'seller_type' => $listing->seller_type,
-                    'status' => $listing->status,
-                    'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
-                    'city' => $listing->city?->name,
-                    'country' => $listing->country?->name,
-                    'images' => $listing->images->pluck('image_url')->toArray(),
-                    'wishlist' => false,
-                    'license_plate' => $plate ? [
-                        'plate_format' => $plate->format ? [
-                            'id' => $plate->format->id,
-                            'name' => $plate->format->name,
-                            'country' => $plate->format->country ? [
-                                'id' => $plate->format->country->id,
-                                'name' => $plate->format->country->name,
-                                'code' => $plate->format->country->code,
-                                'created_at' => $plate->format->country->created_at,
-                                'updated_at' => $plate->format->country->updated_at,
-                            ] : null,
-                        ] : null,
-                        'city' => $plate->city?->name,
-                        'country_id' => $plate->country_id,
-                        'fields' => $fields,
-                    ] : null,
+                    'image' => $listing->images->first()->image_url ?? null,
+                    'license_plate' => [
+                        'format' => $listing->licensePlate?->format?->name,
+                        'city' => $listing->licensePlate?->city?->name,
+                        'country' => $listing->licensePlate?->country?->name,
+                        'fields' => $listing->licensePlate?->fieldValues->map(function ($fieldValue) {
+                            return [
+                                'field_id' => $fieldValue->formatField?->id,
+                                'field_name' => $fieldValue->formatField?->field_name,
+                                'value' => $fieldValue->field_value,
+                            ];
+                        })
+                    ]
                 ];
             });
 
         return response()->json([
             'success' => true,
-            'data' => $listings,
-            'total' => $listings->count(),
+            'results' => $results,
+            'count' => $results->count()
         ]);
     }
+
 
     /**
      * @OA\Get(
