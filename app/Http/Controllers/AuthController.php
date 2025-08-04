@@ -110,7 +110,7 @@ class AuthController extends Controller
             'is_online'  => false,
             'language'   => 'fr',
             'timezone'   => 'Africa/Casablanca',
-            'two_factor_enabled' => false,
+            'two_factor_enabled' => true,
             'country_id' => null,
         ]);
 
