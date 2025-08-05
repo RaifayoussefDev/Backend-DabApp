@@ -253,4 +253,8 @@ Route::post('/complete-firebase-auth', [FirebasePhoneAuthController::class, 'com
 
 
 Route::post('/send-otp', [WhatsAppOtpController::class, 'sendOtp']);
+Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
+Route::post('/resend-otp-email', [AuthController::class, 'resendOtpEmail']); // Email only
+
+
 

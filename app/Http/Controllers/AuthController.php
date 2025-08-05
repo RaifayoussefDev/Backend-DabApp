@@ -303,6 +303,7 @@ class AuthController extends Controller
         }
     }
 
+
     /**
      * Send OTP via WhatsApp
      */
@@ -313,7 +314,7 @@ class AuthController extends Controller
 
             $payload = [
                 'phonenumber' => '+' . $phoneNumber,
-                'text' => "🔐 Votre code OTP est : {$otp}\n\nCe code expire dans 5 minutes.\nNe partagez jamais ce code avec quelqu'un d'autre."
+                'text' => "🔐 Your OTP code from dabapp.co is: {$otp}\n\nThis code expires in 5 minutes.\nNever share this code with anyone."
             ];
 
             Log::info('Attempting WhatsApp OTP send', [
@@ -359,6 +360,229 @@ class AuthController extends Controller
         }
 
         return $phone;
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/resend-otp",
+     *     summary="Resend OTP code for two-factor authentication",
+     *     tags={"Authentification"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"login"},
+     *             @OA\Property(property="login", type="string", example="john.doe@example.com"),
+     *             @OA\Property(property="method", type="string", enum={"whatsapp", "email"}, example="email", description="Preferred method to send OTP")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OTP resent successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="OTP code has been resent"),
+     *             @OA\Property(property="otp_sent_via", type="string", example="email"),
+     *             @OA\Property(property="user_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="User not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=429,
+     *         description="Too many requests",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Please wait before requesting another OTP")
+     *         )
+     *     )
+     * )
+     */
+    public function resendOtp(Request $request)
+    {
+        $request->validate([
+            'login' => 'required|string',
+            'method' => 'nullable|string|in:whatsapp,email'
+        ]);
+
+        // Find user by login (email or phone)
+        $user = filter_var($request->login, FILTER_VALIDATE_EMAIL)
+            ? User::where('email', $request->login)->first()
+            : User::where('phone', $request->login)->first();
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        // ✅ Generate a new OTP code
+        $otp = rand(1000, 9999);
+
+        // ✅ Update or insert new OTP
+        DB::table('otps')->updateOrInsert(
+            ['user_id' => $user->id],
+            [
+                'code' => $otp,
+                'expires_at' => now()->addMinutes(5),
+                'updated_at' => now(),
+                'created_at' => now()
+            ]
+        );
+
+        $preferredMethod = $request->method;
+        $otpSentVia = 'failed';
+
+        if ($preferredMethod === 'whatsapp' && !empty($user->phone)) {
+            $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
+            if ($whatsappSent) {
+                $otpSentVia = 'whatsapp';
+            } else {
+                // Fallback to email
+                try {
+                    $user->notify(new SendOtpNotification($otp));
+                    $otpSentVia = 'email';
+                } catch (\Exception $e) {
+                    Log::error('Failed to send OTP via email after WhatsApp failed', [
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        } elseif ($preferredMethod === 'email' || empty($user->phone)) {
+            // Send via email directly
+            try {
+                $user->notify(new SendOtpNotification($otp));
+                $otpSentVia = 'email';
+            } catch (\Exception $e) {
+                Log::error('Failed to send OTP via email', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        } else {
+            // No preference: use fallback (whatsapp then email)
+            $otpSentVia = $this->sendOtpWithFallback($user, $otp);
+        }
+
+        if ($otpSentVia === 'failed') {
+            return response()->json([
+                'error' => 'Failed to send OTP. Please try again later.'
+            ], 500);
+        }
+
+        Log::info('New OTP resent', [
+            'user_id' => $user->id,
+            'otp_code' => $otp,
+            'method' => $otpSentVia,
+            'requested_method' => $preferredMethod
+        ]);
+
+        return response()->json([
+            'message' => 'A new OTP has been sent',
+            'otp_sent_via' => $otpSentVia,
+            'user_id' => $user->id
+        ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/resend-otp-email",
+     *     summary="Resend OTP code via email only",
+     *     tags={"Authentification"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"login"},
+     *             @OA\Property(property="login", type="string", example="john.doe@example.com")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OTP resent via email successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="OTP code has been resent to your email"),
+     *             @OA\Property(property="otp_sent_via", type="string", example="email"),
+     *             @OA\Property(property="user_id", type="integer", example=1),
+     *             @OA\Property(property="email", type="string", example="john.doe@example.com")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found or no active OTP",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="No active OTP found. Please request a new login.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=429,
+     *         description="Too many requests",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Please wait before requesting another OTP")
+     *         )
+     *     )
+     * )
+     */
+    public function resendOtpEmail(Request $request)
+    {
+        $request->validate([
+            'login' => 'required|string'
+        ]);
+
+        // Find user by login (email or phone)
+        $user = filter_var($request->login, FILTER_VALIDATE_EMAIL)
+            ? User::where('email', $request->login)->first()
+            : User::where('phone', $request->login)->first();
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        if (empty($user->email)) {
+            return response()->json(['error' => 'User has no email address'], 400);
+        }
+
+        // ✅ Generate a new OTP code
+        $otp = rand(1000, 9999);
+
+        // ✅ Update or create OTP record
+        DB::table('otps')->updateOrInsert(
+            ['user_id' => $user->id],
+            [
+                'code' => $otp,
+                'expires_at' => now()->addMinutes(5),
+                'updated_at' => now(),
+                'created_at' => now(), // facultatif si jamais insert
+            ]
+        );
+
+        // ✅ Send OTP via email
+        try {
+            $user->notify(new SendOtpNotification($otp));
+
+            Log::info('OTP resent via email', [
+                'user_id' => $user->id,
+                'otp_code' => $otp,
+                'email' => $user->email
+            ]);
+
+            return response()->json([
+                'message' => 'A new OTP has been sent to your email',
+                'otp_sent_via' => 'email',
+                'user_id' => $user->id,
+                'email' => $user->email
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send OTP via email', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to send OTP via email. Please try again later.'
+            ], 500);
+        }
     }
 
 
