@@ -183,89 +183,97 @@ class AuthController extends Controller
      */
 
 
-    public function login(Request $request)
-    {
-        $request->validate([
-            'login' => 'required|string',
-            'password' => 'required|string'
-        ]);
+     public function login(Request $request)
+     {
+         $request->validate([
+             'login' => 'required|string',
+             'password' => 'required|string'
+         ]);
 
-        $login = $request->input('login');
-        $password = $request->input('password');
+         $login = $request->input('login');
+         $password = $request->input('password');
 
-        $user = User::where('email', $login)->first();
+         $user = User::where('email', $login)->first();
 
-        if (!$user || !Hash::check($password, $user->password)) {
-            return response()->json(['error' => 'Invalid credentials'], 401);
-        }
+         if (!$user || !Hash::check($password, $user->password)) {
+             return response()->json(['error' => 'Invalid credentials'], 401);
+         }
 
-        if (!$user->is_active) {
-            return response()->json(['error' => 'Utilisateur inactif'], 403);
-        }
+         if (!$user->is_active) {
+             return response()->json(['error' => 'Utilisateur inactif'], 403);
+         }
 
-        $user->is_online = 1;
-        $user->last_login = now();
-        $user->save();
+         $user->is_online = 1;
+         $user->last_login = now();
+         $user->save();
 
-        // ✅ Extract country & continent from proxy headers
-        $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
-        $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
+         // ✅ Extract country & continent from proxy headers
+         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
+         $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
 
-        // 🔐 Add country and continent to JWT
-        $token = JWTAuth::claims([
-            'country' => $country,
-            'continent' => $continent,
-        ])->fromUser($user);
+         // 🔐 Add country and continent to JWT
+         $token = JWTAuth::claims([
+             'country' => $country,
+             'continent' => $continent,
+         ])->fromUser($user);
 
-        $tokenExpiration = now()->addMonth();
+         $tokenExpiration = now()->addMonth();
 
-        Authentication::updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'token' => $token,
-                'token_expiration' => $tokenExpiration,
-                'is_online' => true,
-                'connection_date' => now(),
-            ]
-        );
+         Authentication::updateOrCreate(
+             ['user_id' => $user->id],
+             [
+                 'token' => $token,
+                 'token_expiration' => $tokenExpiration,
+                 'is_online' => true,
+                 'connection_date' => now(),
+             ]
+         );
 
-        if ($user->two_factor_enabled) {
-            $otp = rand(1000, 9999);
+         if ($user->two_factor_enabled) {
+             $otp = rand(1000, 9999);
 
-            DB::table('otps')->updateOrInsert(
-                ['user_id' => $user->id],
-                [
-                    'code' => $otp,
-                    'expires_at' => now()->addMinutes(5),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
-            );
+             DB::table('otps')->updateOrInsert(
+                 ['user_id' => $user->id],
+                 [
+                     'code' => $otp,
+                     'expires_at' => now()->addMinutes(5),
+                     'created_at' => now(),
+                     'updated_at' => now(),
+                 ]
+             );
 
-            // 🚀 Try WhatsApp first, then fallback to email
-            $otpSentVia = $this->sendOtpWithFallback($user, $otp);
+             // 🚀 Essayer WhatsApp en premier, puis email en fallback
+             $otpSentVia = $this->sendOtpWithFallback($user, $otp);
 
-            return response()->json([
-                'message' => 'OTP required',
-                'user_id' => $user->id,
-                'requiresOTP' => true,
-                'email' => $user->email,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
-                'phone' => $user->phone,
-                'country' => $country,
-                'otp_sent_via' => $otpSentVia // 'whatsapp', 'email', ou 'failed'
-            ], 202);
-        }
+             // Vérifier si l'envoi a échoué
+             if ($otpSentVia === 'failed') {
+                 return response()->json([
+                     'error' => 'Impossible d\'envoyer le code OTP. Veuillez réessayer plus tard.',
+                     'user_id' => $user->id
+                 ], 500);
+             }
 
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-            'token_expiration' => $tokenExpiration,
-            'country' => $country,
-            'continent' => $continent
-        ]);
-    }
+             return response()->json([
+                 'message' => 'OTP required',
+                 'user_id' => $user->id,
+                 'requiresOTP' => true,
+                 'email' => $user->email,
+                 'first_name' => $user->first_name,
+                 'last_name' => $user->last_name,
+                 'phone' => $user->phone,
+                 'country' => $country,
+                 'otp_sent_via' => $otpSentVia // 'whatsapp', 'email', ou 'failed'
+             ], 202);
+         }
+
+         return response()->json([
+             'user' => $user,
+             'token' => $token,
+             'token_expiration' => $tokenExpiration,
+             'country' => $country,
+             'continent' => $continent
+         ]);
+     }
 
     /**
      * Send OTP via WhatsApp first, fallback to email if WhatsApp fails

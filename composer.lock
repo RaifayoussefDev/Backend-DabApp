@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e38630b0573f8c669a68e3f72cf34739",
+    "content-hash": "bf7e778d7a559ed71f7b187ba0882ebd",
     "packages": [
         {
             "name": "brick/math",
@@ -3893,6 +3893,53 @@
                 }
             ],
             "time": "2025-05-08T08:14:37+00:00"
+        },
+        {
+            "name": "paytabscom/laravel_paytabs",
+            "version": "1.9.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/paytabscom/paytabs-php-laravel-package.git",
+                "reference": "a3b7c8a21e47fd5d529051c21c2048424552e184"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/paytabscom/paytabs-php-laravel-package/zipball/a3b7c8a21e47fd5d529051c21c2048424552e184",
+                "reference": "a3b7c8a21e47fd5d529051c21c2048424552e184",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.0|^8.0"
+            },
+            "type": "composer-package",
+            "autoload": {
+                "psr-4": {
+                    "Paytabscom\\Laravel_paytabs\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Walaa Elsaeed",
+                    "email": "w.elsaeed@paytabs.com"
+                }
+            ],
+            "description": "Official laravel package to implement PayTabs integration with laravel apps",
+            "homepage": "https://site.paytabs.com/en/",
+            "keywords": [
+                "E-comerce",
+                "laravel",
+                "payments",
+                "paytabs"
+            ],
+            "support": {
+                "issues": "https://github.com/paytabscom/paytabs-php-laravel-package/issues",
+                "source": "https://github.com/paytabscom/paytabs-php-laravel-package/tree/V1.9.0"
+            },
+            "time": "2025-02-26T12:00:07+00:00"
         },
         {
             "name": "phpoption/phpoption",
