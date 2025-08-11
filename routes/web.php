@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\MotorcycleController;
+use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -25,3 +26,6 @@ Route::prefix('motorcycles')->group(function () {
     Route::get('/{id}', [MotorcycleController::class, 'show'])->name('motorcycles.show');
 });
 Route::view('/test-google-login', 'Auth.google-test');
+    Route::get('/paytabs/pay', [PaymentController::class, 'createPayment'])->name('paytabs.pay');
+    Route::get('/paytabs/success', [PaymentController::class, 'paymentSuccess'])->name('paytabs.success');
+    Route::get('/paytabs/failure', [PaymentController::class, 'paymentFailure'])->name('paytabs.failure');

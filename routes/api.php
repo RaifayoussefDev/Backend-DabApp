@@ -25,6 +25,7 @@ use App\Http\Controllers\MotorcycleFilterController;
 use App\Http\Controllers\MotorcycleModelController;
 use App\Http\Controllers\MotorcycleTypeController;
 use App\Http\Controllers\MotorcycleYearController;
+use App\Http\Controllers\PayTabsController;
 use App\Http\Controllers\PhonePasswordAuthController;
 use App\Http\Controllers\PromoCodeController;
 use App\Http\Controllers\SoomController;
@@ -258,3 +259,23 @@ Route::post('/resend-otp-email', [AuthController::class, 'resendOtpEmail']); // 
 
 
 
+// Routes protégées par authentification
+Route::middleware(['auth:sanctum'])->group(function () {
+    // Test PayTabs
+    Route::get('/paytabs/test', [PayTabsController::class, 'testConnection']);
+
+    // Paiement pour un listing
+    Route::post('/listings/{listing}/payment', [PayTabsController::class, 'initiatePayment'])
+         ->name('api.listings.payment');
+
+    // Vérifier le statut d'un paiement
+    Route::get('/payments/{payment}/status', [PayTabsController::class, 'checkPaymentStatus'])
+         ->name('api.payments.status');
+});
+
+// Routes publiques pour PayTabs (callbacks)
+Route::post('/paytabs/callback', [PayTabsController::class, 'callback'])
+     ->name('paytabs.callback');
+
+Route::get('/paytabs/return', [PayTabsController::class, 'return'])
+     ->name('paytabs.return');
