@@ -5254,6 +5254,103 @@
                 ]
             }
         },
+        "/api/recent": {
+            "get": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Get last 10 listings (all categories)",
+                "operationId": "10f1b5962dc1fe361541cbef51d839f6",
+                "parameters": [
+                    {
+                        "name": "country",
+                        "in": "query",
+                        "description": "Filter by country name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of recent listings",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "searched_country": {
+                                            "type": "string"
+                                        },
+                                        "showing_all_countries": {
+                                            "type": "boolean"
+                                        },
+                                        "total_listings": {
+                                            "type": "integer"
+                                        },
+                                        "listings": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "title": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "price": {
+                                                        "type": "number"
+                                                    },
+                                                    "category_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "city": {
+                                                        "type": "string"
+                                                    },
+                                                    "country": {
+                                                        "type": "string"
+                                                    },
+                                                    "images": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "motorcycle": {
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    },
+                                                    "spare_part": {
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    },
+                                                    "license_plate": {
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/locations": {
             "get": {
                 "tags": [

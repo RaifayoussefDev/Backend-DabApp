@@ -279,3 +279,6 @@ Route::post('/paytabs/callback', [PayTabsController::class, 'callback'])
 
 Route::get('/paytabs/return', [PayTabsController::class, 'return'])
      ->name('paytabs.return');
+// Dans votre fichier routes/api.php
+// Dans votre fichier routes/api.php
+Route::get('/recent', [ListingController::class, 'getRecentListings']);

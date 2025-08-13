@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Log;
 class AuthController extends Controller
 {
     private $whatsappApiUrl = 'https://api.360messenger.com/v2/sendMessage';
-    private $whatsappApiToken = 'dYXcSz0yjWT1jP0vsAb6TNQ6p3epz4xZeYY';
+    private $whatsappApiToken = 'pkxzQcGle8PEQmloc70XC8wYMLeNMemwGtd';
     /**
      * @OA\Post(
      *     path="/api/register",
@@ -355,18 +355,16 @@ class AuthController extends Controller
      */
     private function formatPhoneNumber($phone)
     {
-        // Remove any non-numeric characters
-        $phone = preg_replace('/[^0-9]/', '', $phone);
+        // Nettoyer le numéro de tous les caractères non numériques sauf le +
+        $phone = preg_replace('/[^\d+]/', '', $phone);
 
-        // If phone doesn't start with country code, add Morocco's (212)
-        if (!str_starts_with($phone, '212')) {
-            // Remove leading zero if present
-            if (str_starts_with($phone, '0')) {
-                $phone = substr($phone, 1);
-            }
-            $phone = '212' . $phone;
+        // Si le numéro commence par +, enlever le +
+        if (str_starts_with($phone, '+')) {
+            $phone = substr($phone, 1);
         }
 
+        // Si le numéro ne commence pas par un code pays, on le retourne tel quel
+        // (l'utilisateur devra fournir un numéro au format international)
         return $phone;
     }
 
