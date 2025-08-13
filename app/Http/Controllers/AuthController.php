@@ -183,97 +183,97 @@ class AuthController extends Controller
      */
 
 
-     public function login(Request $request)
-     {
-         $request->validate([
-             'login' => 'required|string',
-             'password' => 'required|string'
-         ]);
+    public function login(Request $request)
+    {
+        $request->validate([
+            'login' => 'required|string',
+            'password' => 'required|string'
+        ]);
 
-         $login = $request->input('login');
-         $password = $request->input('password');
+        $login = $request->input('login');
+        $password = $request->input('password');
 
-         $user = User::where('email', $login)->first();
+        $user = User::where('email', $login)->first();
 
-         if (!$user || !Hash::check($password, $user->password)) {
-             return response()->json(['error' => 'Invalid credentials'], 401);
-         }
+        if (!$user || !Hash::check($password, $user->password)) {
+            return response()->json(['error' => 'Invalid credentials'], 401);
+        }
 
-         if (!$user->is_active) {
-             return response()->json(['error' => 'Utilisateur inactif'], 403);
-         }
+        if (!$user->is_active) {
+            return response()->json(['error' => 'Utilisateur inactif'], 403);
+        }
 
-         $user->is_online = 1;
-         $user->last_login = now();
-         $user->save();
+        $user->is_online = 1;
+        $user->last_login = now();
+        $user->save();
 
-         // ✅ Extract country & continent from proxy headers
-         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
-         $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
+        // ✅ Extract country & continent from proxy headers
+        $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
+        $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
 
-         // 🔐 Add country and continent to JWT
-         $token = JWTAuth::claims([
-             'country' => $country,
-             'continent' => $continent,
-         ])->fromUser($user);
+        // 🔐 Add country and continent to JWT
+        $token = JWTAuth::claims([
+            'country' => $country,
+            'continent' => $continent,
+        ])->fromUser($user);
 
-         $tokenExpiration = now()->addMonth();
+        $tokenExpiration = now()->addMonth();
 
-         Authentication::updateOrCreate(
-             ['user_id' => $user->id],
-             [
-                 'token' => $token,
-                 'token_expiration' => $tokenExpiration,
-                 'is_online' => true,
-                 'connection_date' => now(),
-             ]
-         );
+        Authentication::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'token' => $token,
+                'token_expiration' => $tokenExpiration,
+                'is_online' => true,
+                'connection_date' => now(),
+            ]
+        );
 
-         if ($user->two_factor_enabled) {
-             $otp = rand(1000, 9999);
+        if ($user->two_factor_enabled) {
+            $otp = rand(1000, 9999);
 
-             DB::table('otps')->updateOrInsert(
-                 ['user_id' => $user->id],
-                 [
-                     'code' => $otp,
-                     'expires_at' => now()->addMinutes(5),
-                     'created_at' => now(),
-                     'updated_at' => now(),
-                 ]
-             );
+            DB::table('otps')->updateOrInsert(
+                ['user_id' => $user->id],
+                [
+                    'code' => $otp,
+                    'expires_at' => now()->addMinutes(5),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
 
-             // 🚀 Essayer WhatsApp en premier, puis email en fallback
-             $otpSentVia = $this->sendOtpWithFallback($user, $otp);
+            // 🚀 Essayer WhatsApp en premier, puis email en fallback
+            $otpSentVia = $this->sendOtpWithFallback($user, $otp);
 
-             // Vérifier si l'envoi a échoué
-             if ($otpSentVia === 'failed') {
-                 return response()->json([
-                     'error' => 'Impossible d\'envoyer le code OTP. Veuillez réessayer plus tard.',
-                     'user_id' => $user->id
-                 ], 500);
-             }
+            // Vérifier si l'envoi a échoué
+            if ($otpSentVia === 'failed') {
+                return response()->json([
+                    'error' => 'Impossible d\'envoyer le code OTP. Veuillez réessayer plus tard.',
+                    'user_id' => $user->id
+                ], 500);
+            }
 
-             return response()->json([
-                 'message' => 'OTP required',
-                 'user_id' => $user->id,
-                 'requiresOTP' => true,
-                 'email' => $user->email,
-                 'first_name' => $user->first_name,
-                 'last_name' => $user->last_name,
-                 'phone' => $user->phone,
-                 'country' => $country,
-                 'otp_sent_via' => $otpSentVia // 'whatsapp', 'email', ou 'failed'
-             ], 202);
-         }
+            return response()->json([
+                'message' => 'OTP required',
+                'user_id' => $user->id,
+                'requiresOTP' => true,
+                'email' => $user->email,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'phone' => $user->phone,
+                'country' => $country,
+                'otp_sent_via' => $otpSentVia // 'whatsapp', 'email', ou 'failed'
+            ], 202);
+        }
 
-         return response()->json([
-             'user' => $user,
-             'token' => $token,
-             'token_expiration' => $tokenExpiration,
-             'country' => $country,
-             'continent' => $continent
-         ]);
-     }
+        return response()->json([
+            'user' => $user,
+            'token' => $token,
+            'token_expiration' => $tokenExpiration,
+            'country' => $country,
+            'continent' => $continent
+        ]);
+    }
 
     /**
      * Send OTP via WhatsApp first, fallback to email if WhatsApp fails
@@ -970,6 +970,453 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Two-factor authentication ' . ($user->two_factor_enabled ? 'enabled' : 'disabled') . '.',
             'two_factor_enabled' => $user->two_factor_enabled,
+        ]);
+    }
+
+    // reset password
+
+    /**
+     * @OA\Post(
+     *     path="/api/forgot-password",
+     *     summary="Send password reset OTP",
+     *     tags={"Authentification"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"login"},
+     *             @OA\Property(property="login", type="string", example="john.doe@example.com"),
+     *             @OA\Property(property="method", type="string", enum={"whatsapp", "email"}, example="email", description="Preferred method to send reset code")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Password reset OTP sent successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Password reset code has been sent"),
+     *             @OA\Property(property="reset_sent_via", type="string", example="email"),
+     *             @OA\Property(property="user_id", type="integer", example=1),
+     *             @OA\Property(property="email", type="string", example="john.doe@example.com")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="User not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="User is inactive",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="User account is inactive")
+     *         )
+     *     )
+     * )
+     */
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'login' => 'required|string',
+            'method' => 'nullable|string|in:whatsapp,email'
+        ]);
+
+        // Find user by login (email or phone)
+        $user = filter_var($request->login, FILTER_VALIDATE_EMAIL)
+            ? User::where('email', $request->login)->first()
+            : User::where('phone', $request->login)->first();
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        if (!$user->is_active) {
+            return response()->json(['error' => 'User account is inactive'], 403);
+        }
+
+        // Generate password reset OTP
+        $resetCode = rand(1000, 9999);
+
+        // Store reset code in password_resets table (create this table if it doesn't exist)
+        DB::table('password_resets')->updateOrInsert(
+            ['user_id' => $user->id],
+            [
+                'code' => $resetCode,
+                'expires_at' => now()->addMinutes(15), // 15 minutes expiry for password reset
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $preferredMethod = $request->method;
+        $resetSentVia = 'failed';
+
+        if ($preferredMethod === 'whatsapp' && !empty($user->phone)) {
+            $whatsappSent = $this->sendWhatsAppPasswordReset($user->phone, $resetCode);
+            if ($whatsappSent) {
+                $resetSentVia = 'whatsapp';
+            } else {
+                // Fallback to email
+                try {
+                    $this->sendPasswordResetEmail($user, $resetCode);
+                    $resetSentVia = 'email';
+                } catch (\Exception $e) {
+                    Log::error('Failed to send password reset via email after WhatsApp failed', [
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        } elseif ($preferredMethod === 'email' || empty($user->phone)) {
+            // Send via email directly
+            try {
+                $this->sendPasswordResetEmail($user, $resetCode);
+                $resetSentVia = 'email';
+            } catch (\Exception $e) {
+                Log::error('Failed to send password reset via email', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        } else {
+            // No preference: use fallback
+            $resetSentVia = $this->sendPasswordResetWithFallback($user, $resetCode);
+        }
+
+        if ($resetSentVia === 'failed') {
+            return response()->json([
+                'error' => 'Failed to send password reset code. Please try again later.'
+            ], 500);
+        }
+
+        Log::info('Password reset code sent', [
+            'user_id' => $user->id,
+            'reset_code' => $resetCode,
+            'method' => $resetSentVia
+        ]);
+
+        return response()->json([
+            'message' => 'Password reset code has been sent',
+            'reset_sent_via' => $resetSentVia,
+            'user_id' => $user->id,
+            'email' => $user->email ?? null
+        ]);
+    }
+
+    /**
+     * Send password reset via WhatsApp first, fallback to email if WhatsApp fails
+     */
+    private function sendPasswordResetWithFallback(User $user, $resetCode)
+    {
+        // First, try WhatsApp if user has phone number
+        if (!empty($user->phone)) {
+            $whatsappSent = $this->sendWhatsAppPasswordReset($user->phone, $resetCode);
+
+            if ($whatsappSent) {
+                Log::info('Password reset sent via WhatsApp', [
+                    'user_id' => $user->id,
+                    'phone' => $user->phone
+                ]);
+                return 'whatsapp';
+            }
+        }
+
+        // Fallback to email
+        try {
+            $this->sendPasswordResetEmail($user, $resetCode);
+            Log::info('Password reset sent via Email (WhatsApp fallback)', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'reason' => empty($user->phone) ? 'no_phone' : 'whatsapp_failed'
+            ]);
+            return 'email';
+        } catch (\Exception $e) {
+            Log::error('Failed to send password reset via both WhatsApp and Email', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+            return 'failed';
+        }
+    }
+
+    /**
+     * Send password reset via WhatsApp
+     */
+    private function sendWhatsAppPasswordReset($phone, $resetCode)
+    {
+        try {
+            $phoneNumber = $this->formatPhoneNumber($phone);
+
+            $payload = [
+                'phonenumber' => '+' . $phoneNumber,
+                'text' => "🔐 Your password reset code from dabapp.co is: {$resetCode}\n\nThis code expires in 15 minutes.\nNever share this code with anyone.\n\nIf you didn't request this, please ignore this message."
+            ];
+
+            Log::info('Attempting WhatsApp password reset send', [
+                'phone' => $phoneNumber,
+                'formatted_phone' => '+' . $phoneNumber
+            ]);
+
+            $response = Http::timeout(10)->withHeaders([
+                'Authorization' => "Bearer {$this->whatsappApiToken}",
+                'Content-Type' => 'application/json',
+            ])->post($this->whatsappApiUrl, $payload);
+
+            Log::info('WhatsApp Password Reset API Response', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+
+            return $response->successful();
+        } catch (\Exception $e) {
+            Log::error('WhatsApp password reset send failed', [
+                'phone' => $phone,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Send password reset via email
+     */
+    private function sendPasswordResetEmail(User $user, $resetCode)
+    {
+        // You can create a specific notification for password reset
+        // For now, using a simple mail approach
+        $user->notify(new \App\Notifications\PasswordResetNotification($resetCode));
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/reset-password",
+     *     summary="Reset password using OTP code",
+     *     tags={"Authentification"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"login", "code", "password", "password_confirmation"},
+     *             @OA\Property(property="login", type="string", example="john.doe@example.com"),
+     *             @OA\Property(property="code", type="string", example="1234"),
+     *             @OA\Property(property="password", type="string", format="password", example="newpassword123"),
+     *             @OA\Property(property="password_confirmation", type="string", format="password", example="newpassword123")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Password reset successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Password has been reset successfully"),
+     *             @OA\Property(property="user", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="email", type="string", example="john.doe@example.com"),
+     *                 @OA\Property(property="first_name", type="string", example="John"),
+     *                 @OA\Property(property="last_name", type="string", example="Doe")
+     *             ),
+     *             @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLC..."),
+     *             @OA\Property(property="token_expiration", type="string", example="2025-04-17 10:45:00")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Invalid or expired reset code",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Invalid or expired reset code")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="User not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="The password confirmation does not match.")
+     *         )
+     *     )
+     * )
+     */
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'login' => 'required|string',
+            'code' => 'required|string',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        // Find user by login (email or phone)
+        $user = filter_var($request->login, FILTER_VALIDATE_EMAIL)
+            ? User::where('email', $request->login)->first()
+            : User::where('phone', $request->login)->first();
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        // Verify reset code
+        $resetRecord = DB::table('password_resets')
+            ->where('user_id', $user->id)
+            ->where('code', $request->code)
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (!$resetRecord) {
+            return response()->json(['error' => 'Invalid or expired reset code'], 401);
+        }
+
+        // Update password
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        // Delete the reset code after successful use
+        DB::table('password_resets')->where('id', $resetRecord->id)->delete();
+
+        // Also update Firebase password if needed
+        try {
+            $auth = (new Factory)
+                ->withServiceAccount(storage_path('app/firebase/firebase_credentials.json'))
+                ->createAuth();
+
+            $auth->updateUser($user->email, [
+                'password' => $request->password,
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Failed to update Firebase password', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+            // Continue anyway, local password is updated
+        }
+
+        // ✅ Extract country & continent
+        $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
+        $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
+
+        // Generate new token for automatic login
+        $token = JWTAuth::claims([
+            'country' => $country,
+            'continent' => $continent,
+        ])->fromUser($user);
+
+        $tokenExpiration = now()->addMonth();
+
+        // Update authentication record
+        Authentication::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'token' => $token,
+                'token_expiration' => $tokenExpiration,
+                'is_online' => true,
+                'connection_date' => now(),
+            ]
+        );
+
+        Log::info('Password reset successfully', [
+            'user_id' => $user->id,
+            'email' => $user->email
+        ]);
+
+        return response()->json([
+            'message' => 'Password has been reset successfully',
+            'user' => $user->only(['id', 'first_name', 'last_name', 'email', 'phone']),
+            'token' => $token,
+            'token_expiration' => $tokenExpiration,
+            'country' => $country,
+            'continent' => $continent
+        ]);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/change-password",
+     *     summary="Change current password",
+     *     tags={"Authentification"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"current_password", "password", "password_confirmation"},
+     *             @OA\Property(property="current_password", type="string", format="password", example="oldpassword123"),
+     *             @OA\Property(property="password", type="string", format="password", example="newpassword123"),
+     *             @OA\Property(property="password_confirmation", type="string", format="password", example="newpassword123")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Password changed successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Password has been changed successfully"),
+     *             @OA\Property(property="user", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="email", type="string", example="john.doe@example.com"),
+     *                 @OA\Property(property="first_name", type="string", example="John"),
+     *                 @OA\Property(property="last_name", type="string", example="Doe")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Current password is incorrect",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Current password is incorrect")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="The password confirmation does not match.")
+     *         )
+     *     )
+     * )
+     */
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $user = $request->user();
+
+        // Verify current password
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json(['error' => 'Current password is incorrect'], 401);
+        }
+
+        // Update password
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        // Also update Firebase password if needed
+        try {
+            $auth = (new Factory)
+                ->withServiceAccount(storage_path('app/firebase/firebase_credentials.json'))
+                ->createAuth();
+
+            $auth->updateUser($user->email, [
+                'password' => $request->password,
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Failed to update Firebase password during change', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+            // Continue anyway, local password is updated
+        }
+
+        Log::info('Password changed successfully', [
+            'user_id' => $user->id,
+            'email' => $user->email
+        ]);
+
+        return response()->json([
+            'message' => 'Password has been changed successfully',
+            'user' => $user->only(['id', 'first_name', 'last_name', 'email', 'phone'])
         ]);
     }
 }

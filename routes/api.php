@@ -282,3 +282,11 @@ Route::get('/paytabs/return', [PayTabsController::class, 'return'])
 // Dans votre fichier routes/api.php
 // Dans votre fichier routes/api.php
 Route::get('/recent', [ListingController::class, 'getRecentListings']);
+// Password reset routes (no authentication required)
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+
+
+// Change password route (authentication required)
+Route::middleware('auth:api')->put('/change-password', [AuthController::class, 'changePassword']);
+
