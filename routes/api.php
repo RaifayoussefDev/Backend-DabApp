@@ -290,3 +290,12 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 // Change password route (authentication required)
 Route::middleware('auth:api')->put('/change-password', [AuthController::class, 'changePassword']);
 
+
+Route::post('/paytabs/create', [PayTabsController::class, 'createPayment'])->name('paytabs.create');
+Route::get('/paytabs/success', [PayTabsController::class, 'paymentSuccess'])->name('paytabs.success');
+Route::get('/paytabs/cancel', [PayTabsController::class, 'paymentCancel'])->name('paytabs.cancel');
+Route::get('/get-country', [AuthController::class, 'getCountry'])->name('get.country');
+
+Route::post('/test-email', [AuthController::class, 'testEmail']);
+
+

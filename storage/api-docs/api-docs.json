@@ -1337,6 +1337,74 @@
                 ]
             }
         },
+        "/api/get-country": {
+            "get": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Récupérer le pays et continent de l'utilisateur",
+                "operationId": "fb0a07b92de42a0fb9bc3bc46d42456e",
+                "responses": {
+                    "200": {
+                        "description": "Informations de localisation récupérées",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "country": {
+                                            "type": "string",
+                                            "example": "MA"
+                                        },
+                                        "continent": {
+                                            "type": "string",
+                                            "example": "AF"
+                                        },
+                                        "ip": {
+                                            "type": "string",
+                                            "example": "196.200.1.1"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/test-email": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Test email sending (dev only)",
+                "operationId": "bdba0fbe8093cbe44f0733ff2c7f53b5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "example": "test@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Test email sent successfully"
+                    }
+                }
+            }
+        },
         "/api/bike-part-brands": {
             "get": {
                 "tags": [

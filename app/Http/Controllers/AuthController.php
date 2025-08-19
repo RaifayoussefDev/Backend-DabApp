@@ -6,6 +6,7 @@ use App\Models\Authentication;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Notifications\SendOtpNotification;
+use App\Notifications\PasswordResetNotification;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -1037,12 +1038,12 @@ class AuthController extends Controller
         // Generate password reset OTP
         $resetCode = rand(1000, 9999);
 
-        // Store reset code in password_resets table (create this table if it doesn't exist)
+        // Store reset code in password_resets table
         DB::table('password_resets')->updateOrInsert(
             ['user_id' => $user->id],
             [
                 'code' => $resetCode,
-                'expires_at' => now()->addMinutes(15), // 15 minutes expiry for password reset
+                'expires_at' => now()->addMinutes(15),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]
@@ -1051,36 +1052,64 @@ class AuthController extends Controller
         $preferredMethod = $request->method;
         $resetSentVia = 'failed';
 
+        // 🔥 CORRECTION: Simplifier la logique d'envoi
         if ($preferredMethod === 'whatsapp' && !empty($user->phone)) {
+            // Try WhatsApp first
             $whatsappSent = $this->sendWhatsAppPasswordReset($user->phone, $resetCode);
             if ($whatsappSent) {
                 $resetSentVia = 'whatsapp';
             } else {
                 // Fallback to email
                 try {
-                    $this->sendPasswordResetEmail($user, $resetCode);
+                    $user->notify(new PasswordResetNotification($resetCode));
                     $resetSentVia = 'email';
+                    Log::info('Password reset sent via email (WhatsApp fallback)', [
+                        'user_id' => $user->id,
+                        'email' => $user->email
+                    ]);
                 } catch (\Exception $e) {
                     Log::error('Failed to send password reset via email after WhatsApp failed', [
                         'user_id' => $user->id,
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
                     ]);
                 }
             }
-        } elseif ($preferredMethod === 'email' || empty($user->phone)) {
-            // Send via email directly
+        } else {
+            // 🔥 CORRECTION: Envoyer directement par email (comme dans OTP)
             try {
-                $this->sendPasswordResetEmail($user, $resetCode);
+                Log::info('Attempting to send password reset email', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'reset_code' => $resetCode
+                ]);
+
+                $user->notify(new PasswordResetNotification($resetCode));
                 $resetSentVia = 'email';
+
+                Log::info('Password reset email sent successfully', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'reset_code' => $resetCode
+                ]);
             } catch (\Exception $e) {
                 Log::error('Failed to send password reset via email', [
                     'user_id' => $user->id,
-                    'error' => $e->getMessage()
+                    'email' => $user->email,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
                 ]);
+
+                // Si email préféré mais WhatsApp disponible, essayer WhatsApp
+                if (!empty($user->phone)) {
+                    Log::info('Trying WhatsApp as fallback for email failure');
+                    $whatsappSent = $this->sendWhatsAppPasswordReset($user->phone, $resetCode);
+                    if ($whatsappSent) {
+                        $resetSentVia = 'whatsapp';
+                        Log::info('Password reset sent via WhatsApp (email fallback)');
+                    }
+                }
             }
-        } else {
-            // No preference: use fallback
-            $resetSentVia = $this->sendPasswordResetWithFallback($user, $resetCode);
         }
 
         if ($resetSentVia === 'failed') {
@@ -1092,7 +1121,8 @@ class AuthController extends Controller
         Log::info('Password reset code sent', [
             'user_id' => $user->id,
             'reset_code' => $resetCode,
-            'method' => $resetSentVia
+            'method' => $resetSentVia,
+            'requested_method' => $preferredMethod
         ]);
 
         return response()->json([
@@ -1103,26 +1133,37 @@ class AuthController extends Controller
         ]);
     }
 
+
     /**
      * Send password reset via WhatsApp first, fallback to email if WhatsApp fails
      */
     private function sendPasswordResetWithFallback(User $user, $resetCode)
     {
+        Log::info('Using fallback method for password reset', [
+            'user_id' => $user->id,
+            'has_phone' => !empty($user->phone),
+            'has_email' => !empty($user->email)
+        ]);
+
         // First, try WhatsApp if user has phone number
         if (!empty($user->phone)) {
+            Log::info('Trying WhatsApp in fallback method');
             $whatsappSent = $this->sendWhatsAppPasswordReset($user->phone, $resetCode);
 
             if ($whatsappSent) {
-                Log::info('Password reset sent via WhatsApp', [
+                Log::info('Password reset sent via WhatsApp (fallback)', [
                     'user_id' => $user->id,
                     'phone' => $user->phone
                 ]);
                 return 'whatsapp';
+            } else {
+                Log::warning('WhatsApp failed in fallback method');
             }
         }
 
         // Fallback to email
         try {
+            Log::info('Trying email in fallback method');
             $this->sendPasswordResetEmail($user, $resetCode);
             Log::info('Password reset sent via Email (WhatsApp fallback)', [
                 'user_id' => $user->id,
@@ -1133,7 +1174,8 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             Log::error('Failed to send password reset via both WhatsApp and Email', [
                 'user_id' => $user->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             return 'failed';
         }
@@ -1182,9 +1224,36 @@ class AuthController extends Controller
      */
     private function sendPasswordResetEmail(User $user, $resetCode)
     {
-        // You can create a specific notification for password reset
-        // For now, using a simple mail approach
-        $user->notify(new \App\Notifications\PasswordResetNotification($resetCode));
+        try {
+            Log::info('Attempting to send password reset email', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'reset_code' => $resetCode
+            ]);
+
+            // Check if user has email
+            if (empty($user->email)) {
+                throw new \Exception('User has no email address');
+            }
+
+            // Send the notification
+            $user->notify(new \App\Notifications\PasswordResetNotification($resetCode));
+
+            Log::info('Password reset email notification sent successfully', [
+                'user_id' => $user->id,
+                'email' => $user->email
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to send password reset email', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
     }
 
     /**
@@ -1418,5 +1487,113 @@ class AuthController extends Controller
             'message' => 'Password has been changed successfully',
             'user' => $user->only(['id', 'first_name', 'last_name', 'email', 'phone'])
         ]);
+    }
+
+
+    /**
+     * @OA\Get(
+     *     path="/api/get-country",
+     *     summary="Récupérer le pays et continent de l'utilisateur",
+     *     tags={"Authentification"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Informations de localisation récupérées",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="country", type="string", example="MA"),
+     *             @OA\Property(property="continent", type="string", example="AF"),
+     *             @OA\Property(property="ip", type="string", example="196.200.1.1")
+     *         )
+     *     )
+     * )
+     */
+    public function getCountry(Request $request)
+    {
+        // ✅ Extract country & continent from proxy headers
+        $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
+        $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
+        $ip = $request->ip();
+
+        // Log pour debug
+        Log::info('Country detection', [
+            'country' => $country,
+            'continent' => $continent,
+            'ip' => $ip,
+            'all_headers' => $request->headers->all()
+        ]);
+
+        return response()->json([
+            'country' => $country,
+            'continent' => $continent,
+            'ip' => $ip
+        ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/test-email",
+     *     summary="Test email sending (dev only)",
+     *     tags={"Authentification"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email"},
+     *             @OA\Property(property="email", type="string", example="test@example.com")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Test email sent successfully"
+     *     )
+     * )
+     */
+    public function testEmail(Request $request)
+    {
+        // 🔥 UNIQUEMENT POUR LE DÉVELOPPEMENT
+        if (!app()->environment('local', 'staging')) {
+            return response()->json(['error' => 'Not available in production'], 403);
+        }
+
+        $request->validate([
+            'email' => 'required|email'
+        ]);
+
+        try {
+            // Créer un utilisateur temporaire pour le test
+            $tempUser = new \stdClass();
+            $tempUser->email = $request->email;
+            $tempUser->first_name = 'Test User';
+
+            // Test avec PasswordResetNotification
+            $resetCode = rand(1000, 9999);
+
+            Log::info('Testing password reset email', [
+                'email' => $request->email,
+                'reset_code' => $resetCode
+            ]);
+
+            // 🔥 CORRECTION: Utiliser l'objet User complet
+            $user = User::where('email', $request->email)->first();
+            if (!$user) {
+                return response()->json(['error' => 'User not found for test'], 404);
+            }
+
+            $user->notify(new PasswordResetNotification($resetCode));
+
+            return response()->json([
+                'message' => 'Test email sent successfully',
+                'email' => $request->email,
+                'reset_code' => $resetCode
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Test email failed', [
+                'email' => $request->email,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to send test email: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Listing;
 use App\Models\AuctionHistory;
+use App\Models\BankCard;
 use App\Models\BikePartBrand;
 use App\Models\BikePartCategory;
 use App\Models\CurrencyExchangeRate;
@@ -16,6 +17,7 @@ use App\Models\LicensePlateValue;
 use App\Models\Motorcycle;
 use App\Models\MotorcycleBrand;
 use App\Models\MotorcycleModel;
+use App\Models\Payment;
 use App\Models\PricingRulesLicencePlate;
 use App\Models\PricingRulesMotorcycle;
 use App\Models\PricingRulesSparepart;
@@ -29,6 +31,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 
 
@@ -172,26 +175,29 @@ class ListingController extends Controller
                 return response()->json(['message' => 'Unauthorized'], 401);
             }
 
-            $step = $request->step ?? 1;
-            $listing = null;
+            // Validation
+            $request->validate([
+                'amount' => 'required|numeric|min:1',
+                'bank_card_id' => 'required|exists:bank_cards,id',
+            ]);
 
-            if ($request->listing_id) {
-                $listing = Listing::find($request->listing_id);
-                if (!$listing || $listing->seller_id !== $sellerId) {
-                    return response()->json(['message' => 'Listing not found or access denied'], 403);
-                }
+            $step = $request->step ?? 1;
+            $listing = $request->listing_id ? Listing::find($request->listing_id) : null;
+
+            if ($listing && $listing->seller_id !== $sellerId) {
+                return response()->json(['message' => 'Listing not found or access denied'], 403);
             }
 
             if (!$listing) {
                 $listing = Listing::create([
                     'seller_id' => $sellerId,
-                    'status' => 'draft',
+                    'status' => 'draft', // ✅ Ne pas publier maintenant
                     'step' => $step,
                     'created_at' => now(),
                 ]);
             }
 
-            // Update basic fields if present
+            // Champs de base
             $listing->fill(array_filter($request->only([
                 'title',
                 'description',
@@ -206,136 +212,94 @@ class ListingController extends Controller
                 'contacting_channel',
                 'seller_type'
             ])));
-
             $listing->step = max($listing->step, $step);
             $listing->save();
 
-            // Handle images
+            // Gestion des images
             if ($request->has('images')) {
                 foreach ($request->images as $imageUrl) {
-                    $listing->images()->updateOrCreate(
-                        ['image_url' => $imageUrl],
-                        ['image_url' => $imageUrl]
-                    );
+                    $listing->images()->updateOrCreate(['image_url' => $imageUrl]);
                 }
             }
 
-            // Auction history
-            if ($listing->auction_enabled && !AuctionHistory::where('listing_id', $listing->id)->exists()) {
-                AuctionHistory::create([
-                    'listing_id' => $listing->id,
-                    'seller_id' => $sellerId,
-                    'buyer_id' => null,
-                    'bid_amount' => $listing->minimum_bid,
-                    'bid_date' => now(),
-                    'validated' => false,
-                ]);
+            // ✅ Créer le paiement
+            $bankCard = BankCard::where('id', $request->bank_card_id)
+                ->where('user_id', $sellerId)
+                ->first();
+
+            if (!$bankCard) {
+                DB::rollBack();
+                return response()->json(['message' => 'Invalid bank card'], 403);
             }
 
-            // Submission
-            if ($listing->auction_enabled && $listing->allow_submission && !Submission::where('listing_id', $listing->id)->exists()) {
-                Submission::create([
-                    'listing_id' => $listing->id,
-                    'user_id' => $sellerId,
-                    'amount' => $listing->minimum_bid,
-                    'submission_date' => now(),
-                    'status' => 'pending',
-                    'min_soom' => $listing->minimum_bid,
-                ]);
+            $payment = Payment::create([
+                'user_id' => $sellerId,
+                'listing_id' => $listing->id,
+                'amount' => $request->amount,
+                'bank_card_id' => $bankCard->id,
+                'payment_status' => 'pending', // ✅ statut initial
+                'cart_id' => 'cart_' . time(),
+            ]);
+
+            // Payload PayTabs
+            $payload = [
+                'profile_id' => (int) config('paytabs.profile_id'),
+                'tran_type' => 'sale',
+                'tran_class' => 'ecom',
+                'cart_id' => $payment->cart_id,
+                'cart_description' => 'Payment for Listing #' . $listing->id,
+                'cart_currency' => config('paytabs.currency'),
+                'cart_amount' => $payment->amount,
+                'customer_details' => [
+                    'name' => Auth::user()->name,
+                    'email' => Auth::user()->email,
+                    'phone' => Auth::user()->phone ?? '000000000',
+                    'street1' => 'N/A',
+                    'city' => 'N/A',
+                    'state' => 'N/A',
+                    'country' => config('paytabs.region'),
+                    'zip' => '00000',
+                    'ip' => $request->ip()
+                ],
+                'callback' => route('paytabs.callback'),
+                'return' => route('paytabs.return'),
+            ];
+
+            $baseUrls = [
+                'ARE' => 'https://secure.paytabs.com/',
+                'SAU' => 'https://secure.paytabs.sa/',
+                'OMN' => 'https://secure-oman.paytabs.com/',
+                'JOR' => 'https://secure-jordan.paytabs.com/',
+                'EGY' => 'https://secure-egypt.paytabs.com/',
+                'GLOBAL' => 'https://secure-global.paytabs.com/'
+            ];
+            $region = config('paytabs.region', 'ARE');
+            $baseUrl = $baseUrls[$region] ?? $baseUrls['ARE'];
+
+            $response = Http::withHeaders([
+                'Authorization' => config('paytabs.server_key'),
+                'Content-Type'  => 'application/json',
+                'Accept'        => 'application/json'
+            ])->post($baseUrl . 'payment/request', $payload);
+
+            if (!$response->successful()) {
+                DB::rollBack();
+                return response()->json(['error' => 'Payment request failed', 'details' => $response->json()], 400);
             }
 
-            // Category-specific logic
-            if ($request->category_id == 1 && $request->filled('model_id')) {
-                $model = MotorcycleModel::find($request->model_id);
-                if (!$model) {
-                    DB::rollBack();
-                    return response()->json(['message' => 'Invalid model_id'], 422);
-                }
-
-                Motorcycle::updateOrCreate(
-                    ['listing_id' => $listing->id],
-                    [
-                        'brand_id' => $request->brand_id,
-                        'model_id' => $request->model_id,
-                        'year_id' => $request->year_id,
-                        'type_id' => $model->type_id,
-                        'engine' => $request->engine,
-                        'mileage' => $request->mileage,
-                        'body_condition' => $request->body_condition,
-                        'modified' => $request->modified ?? false,
-                        'insurance' => $request->insurance ?? false,
-                        'general_condition' => $request->general_condition,
-                        'vehicle_care' => $request->vehicle_care,
-                        'transmission' => $request->transmission,
-                    ]
-                );
-            } elseif ($request->category_id == 2 && $request->filled('condition')) {
-                $sparePart = SparePart::updateOrCreate(
-                    ['listing_id' => $listing->id],
-                    [
-                        'condition' => $request->condition,
-                        'bike_part_brand_id' => $request->bike_part_brand_id,
-                        'bike_part_category_id' => $request->bike_part_category_id,
-                    ]
-                );
-
-                if ($request->has('motorcycles')) {
-                    foreach ($request->motorcycles as $moto) {
-                        SparePartMotorcycle::updateOrCreate(
-                            [
-                                'spare_part_id' => $sparePart->id,
-                                'brand_id' => $moto['brand_id'],
-                                'model_id' => $moto['model_id'],
-                                'year_id' => $moto['year_id'],
-                            ],
-                            []
-                        );
-                    }
-                }
-            } elseif ($request->category_id == 3 && $request->filled('plate_format_id')) {
-                $validated = Validator::make($request->all(), [
-                    'plate_format_id' => 'required|exists:plate_formats,id',
-                    'country_id_lp' => 'required|exists:countries,id',
-                    'city_id_lp' => 'nullable|exists:cities,id',
-                    'fields' => 'required|array|min:1',
-                    'fields.*.field_id' => 'required|exists:plate_format_fields,id',
-                    'fields.*.value' => 'required|string|max:255',
-                ]);
-
-                if ($validated->fails()) {
-                    DB::rollBack();
-                    return response()->json(['message' => 'Validation error', 'errors' => $validated->errors()], 422);
-                }
-
-                $licensePlate = LicensePlate::updateOrCreate(
-                    ['listing_id' => $listing->id],
-                    [
-                        'plate_format_id' => $request->plate_format_id,
-                        'country_id' => $request->country_id_lp,
-                        'city_id' => $request->city_id_lp ?? $request->city_id,
-                    ]
-                );
-
-                foreach ($request->fields as $field) {
-                    LicensePlateValue::updateOrCreate(
-                        [
-                            'license_plate_id' => $licensePlate->id,
-                            'plate_format_field_id' => $field['field_id'],
-                        ],
-                        ['field_value' => $field['value']]
-                    );
-                }
-            }
-
-            if ($step == 3) {
-                $listing->update(['status' => 'published']);
-            }
+            $data = $response->json();
+            $payment->update([
+                'tran_ref' => $data['tran_ref'] ?? null,
+                'payment_status' => 'initiated',
+            ]);
 
             DB::commit();
 
             return response()->json([
-                'message' => $step == 3 ? 'Listing published successfully' : 'Listing saved as draft',
+                'message' => 'Listing saved, waiting for payment',
                 'listing_id' => $listing->id,
+                'payment_id' => $payment->id,
+                'redirect_url' => $data['redirect_url'] ?? null,
                 'data' => $listing->fresh()->load('images'),
             ], 201);
         } catch (\Exception $e) {
@@ -343,7 +307,6 @@ class ListingController extends Controller
             return response()->json(['error' => 'Failed to process listing', 'details' => $e->getMessage()], 500);
         }
     }
-
 
 
     /**
