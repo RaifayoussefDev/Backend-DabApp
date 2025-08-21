@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Log;
 class AuthController extends Controller
 {
     private $whatsappApiUrl = 'https://api.360messenger.com/v2/sendMessage';
-    private $whatsappApiToken = 'pkxzQcGle8PEQmloc70XC8wYMLeNMemwGtd';
+    private $whatsappApiToken = 'pj0y5xb38khWfp0V0qppIxwKelv7tgTg5yx';
     /**
      * @OA\Post(
      *     path="/api/register",
@@ -317,39 +317,40 @@ class AuthController extends Controller
      * Send OTP via WhatsApp
      */
     private function sendWhatsAppOtp($phone, $otp)
-    {
-        try {
-            $phoneNumber = $this->formatPhoneNumber($phone);
+{
+    try {
+        $phoneNumber = $this->formatPhoneNumber($phone);
 
-            $payload = [
-                'phonenumber' => '+' . $phoneNumber,
-                'text' => "🔐 Your OTP code from dabapp.co is: {$otp}\n\nThis code expires in 5 minutes.\nNever share this code with anyone."
-            ];
+        $payload = [
+            'phonenumber' => '+' . $phoneNumber,
+            'text' => "🔐 رمز التحقق الخاص بك من dabapp.co هو: {$otp}\n\n⏳ هذا الرمز صالح لمدة 5 دقائق.\n❌ لا تشاركه مع أي شخص."
+        ];
 
-            Log::info('Attempting WhatsApp OTP send', [
-                'phone' => $phoneNumber,
-                'formatted_phone' => '+' . $phoneNumber
-            ]);
+        Log::info('Attempting WhatsApp OTP send', [
+            'phone' => $phoneNumber,
+            'formatted_phone' => '+' . $phoneNumber
+        ]);
 
-            $response = Http::timeout(10)->withHeaders([
-                'Authorization' => "Bearer {$this->whatsappApiToken}",
-                'Content-Type' => 'application/json',
-            ])->post($this->whatsappApiUrl, $payload);
+        $response = Http::timeout(10)->withHeaders([
+            'Authorization' => "Bearer {$this->whatsappApiToken}",
+            'Content-Type' => 'application/json',
+        ])->post($this->whatsappApiUrl, $payload);
 
-            Log::info('WhatsApp API Response', [
-                'status' => $response->status(),
-                'body' => $response->body()
-            ]);
+        Log::info('WhatsApp API Response', [
+            'status' => $response->status(),
+            'body' => $response->body()
+        ]);
 
-            return $response->successful();
-        } catch (\Exception $e) {
-            Log::error('WhatsApp OTP send failed', [
-                'phone' => $phone,
-                'error' => $e->getMessage()
-            ]);
-            return false;
-        }
+        return $response->successful();
+    } catch (\Exception $e) {
+        Log::error('WhatsApp OTP send failed', [
+            'phone' => $phone,
+            'error' => $e->getMessage()
+        ]);
+        return false;
     }
+}
+
 
     /**
      * Format phone number for Morocco
@@ -1185,39 +1186,40 @@ class AuthController extends Controller
      * Send password reset via WhatsApp
      */
     private function sendWhatsAppPasswordReset($phone, $resetCode)
-    {
-        try {
-            $phoneNumber = $this->formatPhoneNumber($phone);
+{
+    try {
+        $phoneNumber = $this->formatPhoneNumber($phone);
 
-            $payload = [
-                'phonenumber' => '+' . $phoneNumber,
-                'text' => "🔐 Your password reset code from dabapp.co is: {$resetCode}\n\nThis code expires in 15 minutes.\nNever share this code with anyone.\n\nIf you didn't request this, please ignore this message."
-            ];
+        $payload = [
+            'phonenumber' => '+' . $phoneNumber,
+            'text' => "🔐 رمز إعادة تعيين كلمة المرور الخاص بك من dabapp.co هو: {$resetCode}\n\n⏳ هذا الرمز صالح لمدة 15 دقيقة.\n❌ لا تشاركه مع أي شخص.\n\nإذا لم تطلب هذا الرمز، يرجى تجاهل هذه الرسالة."
+        ];
 
-            Log::info('Attempting WhatsApp password reset send', [
-                'phone' => $phoneNumber,
-                'formatted_phone' => '+' . $phoneNumber
-            ]);
+        Log::info('Attempting WhatsApp password reset send', [
+            'phone' => $phoneNumber,
+            'formatted_phone' => '+' . $phoneNumber
+        ]);
 
-            $response = Http::timeout(10)->withHeaders([
-                'Authorization' => "Bearer {$this->whatsappApiToken}",
-                'Content-Type' => 'application/json',
-            ])->post($this->whatsappApiUrl, $payload);
+        $response = Http::timeout(10)->withHeaders([
+            'Authorization' => "Bearer {$this->whatsappApiToken}",
+            'Content-Type' => 'application/json',
+        ])->post($this->whatsappApiUrl, $payload);
 
-            Log::info('WhatsApp Password Reset API Response', [
-                'status' => $response->status(),
-                'body' => $response->body()
-            ]);
+        Log::info('WhatsApp Password Reset API Response', [
+            'status' => $response->status(),
+            'body' => $response->body()
+        ]);
 
-            return $response->successful();
-        } catch (\Exception $e) {
-            Log::error('WhatsApp password reset send failed', [
-                'phone' => $phone,
-                'error' => $e->getMessage()
-            ]);
-            return false;
-        }
+        return $response->successful();
+    } catch (\Exception $e) {
+        Log::error('WhatsApp password reset send failed', [
+            'phone' => $phone,
+            'error' => $e->getMessage()
+        ]);
+        return false;
     }
+}
+
 
     /**
      * Send password reset via email
