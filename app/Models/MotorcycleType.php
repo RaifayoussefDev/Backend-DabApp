@@ -9,5 +9,10 @@ class MotorcycleType extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'description'];
+
+    public function models()
+    {
+        return $this->hasMany(MotorcycleModel::class, 'type_id');
+    }
 }
