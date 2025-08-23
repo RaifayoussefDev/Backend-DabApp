@@ -89,18 +89,20 @@ class PayTabsController extends Controller
             $cartId = 'cart_' . time() . '_' . $listing->id;
             $cartDescription = "Paiement pour l'annonce: " . $listing->title;
 
-            // Créer l'enregistrement de paiement
+            // Créer l'enregistrement de paiement avec les champs corrects
             $payment = Payment::create([
                 'listing_id' => $listing->id,
                 'user_id' => auth()->id() ?? null,
                 'amount' => $request->amount,
-                'currency' => $this->currency,
                 'cart_id' => $cartId,
-                'customer_name' => $request->name,
-                'customer_email' => $request->email,
-                'customer_phone' => $request->phone,
                 'payment_status' => 'pending',
-                'created_at' => now()
+                'verification_data' => [
+                    'customer_name' => $request->name,
+                    'customer_email' => $request->email,
+                    'customer_phone' => $request->phone,
+                    'cart_description' => $cartDescription,
+                    'currency' => $this->currency
+                ]
             ]);
 
             // URLs de callback
@@ -145,7 +147,10 @@ class PayTabsController extends Controller
                 // Mettre à jour le paiement avec les données PayTabs
                 $payment->update([
                     'tran_ref' => $responseData['tran_ref'] ?? null,
-                    'payment_url' => $responseData['redirect_url'] ?? null
+                    'verification_data' => array_merge($payment->verification_data ?? [], [
+                        'payment_url' => $responseData['redirect_url'] ?? null,
+                        'paytabs_response' => $responseData
+                    ])
                 ]);
 
                 Log::info('PayTabs payment created successfully', [
@@ -167,8 +172,7 @@ class PayTabsController extends Controller
                 ]);
 
                 $payment->update([
-                    'payment_status' => 'failed',
-                    'failed_at' => now()
+                    'payment_status' => 'failed'
                 ]);
 
                 return response()->json([
@@ -192,7 +196,6 @@ class PayTabsController extends Controller
 
     /**
      * Callback automatique de PayTabs (webhook)
-     * Cette méthode est appelée automatiquement par PayTabs après le paiement
      */
     public function callback(Request $request)
     {
@@ -202,6 +205,7 @@ class PayTabsController extends Controller
         $cartId = $request->input('cart_id');
         $paymentResult = $request->input('payment_result');
         $responseCode = $request->input('response_code');
+        $responseStatus = $request->input('response_status');
 
         // Trouver le paiement
         $payment = Payment::where('tran_ref', $tranRef)
@@ -209,87 +213,135 @@ class PayTabsController extends Controller
                          ->first();
 
         if (!$payment) {
-            Log::error('Payment not found for tran_ref: ' . $tranRef);
+            Log::error('Payment not found for tran_ref: ' . $tranRef . ', cart_id: ' . $cartId);
             return response()->json(['error' => 'Paiement non trouvé'], 404);
         }
+
+        Log::info("Processing callback for payment #{$payment->id}", [
+            'tran_ref' => $tranRef,
+            'response_status' => $responseStatus,
+            'payment_result' => $paymentResult
+        ]);
 
         // Vérifier le statut du paiement auprès de PayTabs
         $verificationResult = $this->verifyPayment($tranRef);
 
-        if ($verificationResult && $verificationResult['payment_result']['response_status'] === 'A') {
-            // Paiement réussi
-            $payment->update([
-                'payment_status' => 'completed',
-                'response_code' => $responseCode,
-                'payment_result' => $paymentResult,
-                'completed_at' => now()
+        if ($verificationResult) {
+            $verifiedStatus = $verificationResult['payment_result']['response_status'] ?? '';
+            $verifiedMessage = $verificationResult['payment_result']['response_message'] ?? '';
+            $verifiedCode = $verificationResult['payment_result']['response_code'] ?? '';
+
+            Log::info('Payment verification result', [
+                'payment_id' => $payment->id,
+                'verified_status' => $verifiedStatus,
+                'verified_message' => $verifiedMessage
             ]);
 
-            // Publier automatiquement le listing
+            if ($verifiedStatus === 'A') {
+                // Paiement réussi (A = Approved)
+                $payment->update([
+                    'payment_status' => 'completed',
+                    'resp_code' => $verifiedCode,
+                    'resp_message' => $verifiedMessage,
+                    'verification_data' => array_merge($payment->verification_data ?? [], [
+                        'callback_data' => $request->all(),
+                        'verification_result' => $verificationResult,
+                        'completed_at' => now()
+                    ])
+                ]);
+
+                // Publier automatiquement le listing
+                $listing = $payment->listing;
+                if ($listing && $listing->status !== 'published') {
+                    $listing->update([
+                        'status' => 'published',
+                        'published_at' => now()
+                    ]);
+
+                    Log::info("Listing #{$listing->id} published automatically after successful payment");
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Paiement confirmé et listing publié'
+                ]);
+
+            } elseif (in_array($verifiedStatus, ['D', 'F', 'E'])) {
+                // Paiement échoué
+                $payment->update([
+                    'payment_status' => 'failed',
+                    'resp_code' => $verifiedCode,
+                    'resp_message' => $verifiedMessage,
+                    'verification_data' => array_merge($payment->verification_data ?? [], [
+                        'callback_data' => $request->all(),
+                        'verification_result' => $verificationResult,
+                        'failed_at' => now()
+                    ])
+                ]);
+
+                Log::info("Payment failed for listing #{$payment->listing_id}");
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Paiement échoué'
+                ]);
+            }
+        }
+
+        // Fallback: use callback data directly
+        if ($responseStatus === 'A' || strtolower($paymentResult) === 'completed') {
+            $payment->update([
+                'payment_status' => 'completed',
+                'resp_code' => $responseCode,
+                'resp_message' => $paymentResult,
+                'verification_data' => array_merge($payment->verification_data ?? [], [
+                    'callback_data' => $request->all(),
+                    'completed_at' => now()
+                ])
+            ]);
+
+            // Publier le listing
             $listing = $payment->listing;
-            if ($listing) {
+            if ($listing && $listing->status !== 'published') {
                 $listing->update([
                     'status' => 'published',
                     'published_at' => now()
                 ]);
-
-                Log::info("Listing #{$listing->id} publié automatiquement après paiement réussi");
             }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Paiement confirmé et listing publié'
-            ]);
-
+            return response()->json(['success' => true, 'message' => 'Paiement confirmé']);
         } else {
-            // Paiement échoué
             $payment->update([
                 'payment_status' => 'failed',
-                'response_code' => $responseCode,
-                'payment_result' => $paymentResult,
-                'failed_at' => now()
+                'resp_code' => $responseCode,
+                'resp_message' => $paymentResult,
+                'verification_data' => array_merge($payment->verification_data ?? [], [
+                    'callback_data' => $request->all(),
+                    'failed_at' => now()
+                ])
             ]);
 
-            Log::info("Paiement échoué pour le listing #{$payment->listing_id}");
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Paiement échoué'
-            ]);
+            return response()->json(['success' => false, 'message' => 'Paiement échoué']);
         }
     }
 
     /**
-     * API de retour après paiement (utilisé pour rediriger l'utilisateur)
+     * API de retour après paiement
      */
     public function return(Request $request)
     {
-        // Log the incoming request for debugging
         Log::info('PayTabs Return received', [
             'method' => $request->getMethod(),
-            'all_data' => $request->all(),
-            'query_params' => $request->query(),
-            'post_data' => $request->post()
+            'all_data' => $request->all()
         ]);
 
-        // Get transaction reference from either POST or GET data
         $tranRef = $request->input('tran_ref') ?? $request->query('tran_ref');
         $cartId = $request->input('cart_id') ?? $request->query('cart_id');
 
-        // Handle case where parameters might be in different format
-        if (!$tranRef) {
-            $tranRef = $request->input('tranRef') ?? $request->query('tranRef');
-        }
-        if (!$cartId) {
-            $cartId = $request->input('cartId') ?? $request->query('cartId');
-        }
-
         if (!$tranRef && !$cartId) {
             Log::error('PayTabs Return: No transaction reference found', $request->all());
-
             $errorUrl = 'https://dabapp.co/payment/error?reason=missing_ref';
 
-            // For GET requests, redirect directly
             if ($request->isMethod('GET') && !$request->expectsJson()) {
                 return redirect($errorUrl);
             }
@@ -313,7 +365,6 @@ class PayTabsController extends Controller
 
             $errorUrl = 'https://dabapp.co/payment/error?reason=payment_not_found';
 
-            // For GET requests, redirect directly
             if ($request->isMethod('GET') && !$request->expectsJson()) {
                 return redirect($errorUrl);
             }
@@ -325,45 +376,68 @@ class PayTabsController extends Controller
             ], 404);
         }
 
-        // If this is a GET request, we might need to wait for the callback to process
-        if ($request->isMethod('GET')) {
-            // Wait a bit for the callback to be processed
-            sleep(2);
+        // Always verify payment status with PayTabs
+        sleep(3);
 
-            // Verify payment status with PayTabs if not already processed
-            if ($payment->payment_status === 'pending') {
-                $verificationResult = $this->verifyPayment($tranRef);
+        if (in_array($payment->payment_status, ['pending', 'initiated'])) {
+            Log::info("Verifying payment status for tran_ref: {$tranRef}");
 
-                if ($verificationResult && isset($verificationResult['payment_result']['response_status']) && $verificationResult['payment_result']['response_status'] === 'A') {
-                    // Update payment status
+            $verificationResult = $this->verifyPayment($tranRef);
+
+            if ($verificationResult) {
+                $paymentResult = $verificationResult['payment_result'] ?? [];
+                $responseStatus = $paymentResult['response_status'] ?? '';
+
+                if ($responseStatus === 'A') {
+                    // Update payment status to completed
                     $payment->update([
                         'payment_status' => 'completed',
-                        'response_code' => $verificationResult['payment_result']['response_code'] ?? null,
-                        'payment_result' => $verificationResult['payment_result']['response_message'] ?? 'Success',
-                        'completed_at' => now()
+                        'resp_code' => $paymentResult['response_code'] ?? null,
+                        'resp_message' => $paymentResult['response_message'] ?? 'Success',
+                        'verification_data' => array_merge($payment->verification_data ?? [], [
+                            'verification_result' => $verificationResult,
+                            'completed_at' => now()
+                        ])
                     ]);
 
-                    // Publish the listing
+                    // Publish the listing automatically
                     $listing = $payment->listing;
                     if ($listing && $listing->status !== 'published') {
                         $listing->update([
                             'status' => 'published',
                             'published_at' => now()
                         ]);
-                        Log::info("Listing #{$listing->id} published after successful payment verification");
+                        Log::info("Listing #{$listing->id} published automatically after successful payment");
                     }
+
+                    Log::info("Payment #{$payment->id} marked as completed and listing published");
+
+                } elseif (in_array($responseStatus, ['D', 'F', 'E'])) {
+                    $payment->update([
+                        'payment_status' => 'failed',
+                        'resp_code' => $paymentResult['response_code'] ?? null,
+                        'resp_message' => $paymentResult['response_message'] ?? 'Failed',
+                        'verification_data' => array_merge($payment->verification_data ?? [], [
+                            'verification_result' => $verificationResult,
+                            'failed_at' => now()
+                        ])
+                    ]);
+
+                    Log::info("Payment #{$payment->id} marked as failed");
                 }
             }
         }
 
-        // Reload the payment to get the latest status
+        // Reload the payment
         $payment->refresh();
+
+        $currency = $payment->verification_data['currency'] ?? $this->currency;
 
         $responseData = [
             'payment_id' => $payment->id,
             'status' => $payment->payment_status,
             'amount' => $payment->amount,
-            'currency' => $payment->currency,
+            'currency' => $currency,
             'tran_ref' => $payment->tran_ref
         ];
 
@@ -373,7 +447,6 @@ class PayTabsController extends Controller
             $responseData['listing'] = $payment->listing;
             $responseData['redirect_url'] = 'https://dabapp.co/payment/success?payment_id=' . $payment->id;
 
-            // For GET requests, redirect directly
             if ($request->isMethod('GET') && !$request->expectsJson()) {
                 return redirect($responseData['redirect_url']);
             }
@@ -383,7 +456,6 @@ class PayTabsController extends Controller
             $responseData['message'] = 'Le paiement a échoué. Veuillez réessayer.';
             $responseData['redirect_url'] = 'https://dabapp.co/payment/error?payment_id=' . $payment->id;
 
-            // For GET requests, redirect directly
             if ($request->isMethod('GET') && !$request->expectsJson()) {
                 return redirect($responseData['redirect_url']);
             }
@@ -393,7 +465,6 @@ class PayTabsController extends Controller
             $responseData['message'] = 'Votre paiement est en cours de traitement...';
             $responseData['redirect_url'] = 'https://dabapp.co/payment/pending?payment_id=' . $payment->id;
 
-            // For GET requests, redirect directly
             if ($request->isMethod('GET') && !$request->expectsJson()) {
                 return redirect($responseData['redirect_url']);
             }
@@ -431,31 +502,20 @@ class PayTabsController extends Controller
     }
 
     /**
-     * Webhook pour les notifications de statut (optionnel)
+     * Webhook pour les notifications de statut
      */
     public function webhook(Request $request)
     {
-        // Traiter les notifications push de PayTabs si configurées
         Log::info('PayTabs Webhook received', $request->all());
-
-        // Même logique que le callback
         return $this->callback($request);
-    }
-
-    /**
-     * API pour vérifier le statut d'un paiement (correspond à votre route existante)
-     */
-    public function checkPaymentStatus($paymentId)
-    {
-        return $this->getPaymentStatus($paymentId);
     }
 
     /**
      * API pour vérifier le statut d'un paiement
      */
-    private function getPaymentStatus($id)
+    public function checkPaymentStatus($paymentId)
     {
-        $payment = Payment::with('listing')->find($id);
+        $payment = Payment::with('listing')->find($paymentId);
 
         if (!$payment) {
             return response()->json([
@@ -464,17 +524,18 @@ class PayTabsController extends Controller
             ], 404);
         }
 
+        $currency = $payment->verification_data['currency'] ?? $this->currency;
+
         $responseData = [
             'success' => true,
             'payment' => [
                 'id' => $payment->id,
                 'status' => $payment->payment_status,
                 'amount' => $payment->amount,
-                'currency' => $payment->currency,
+                'currency' => $currency,
                 'tran_ref' => $payment->tran_ref,
                 'created_at' => $payment->created_at,
-                'completed_at' => $payment->completed_at,
-                'failed_at' => $payment->failed_at
+                'updated_at' => $payment->updated_at
             ]
         ];
 
@@ -483,7 +544,7 @@ class PayTabsController extends Controller
                 'id' => $payment->listing->id,
                 'title' => $payment->listing->title,
                 'status' => $payment->listing->status,
-                'published_at' => $payment->listing->published_at
+                'published_at' => $payment->listing->published_at ?? null
             ];
         }
 
@@ -491,124 +552,54 @@ class PayTabsController extends Controller
     }
 
     /**
-     * Obtenir les détails d'un paiement
+     * Force success redirect method
      */
-    public function getPaymentDetails($paymentId)
+    public function forceSuccessRedirect(Request $request)
     {
-        $payment = Payment::with(['listing', 'user'])->find($paymentId);
-
-        if (!$payment) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Paiement non trouvé'
-            ], 404);
-        }
-
-        // Vérifier que l'utilisateur peut accéder à ce paiement
-        if (auth()->id() && $payment->user_id !== auth()->id()) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Accès non autorisé'
-            ], 403);
-        }
-
-        return response()->json([
-            'success' => true,
-            'payment' => [
-                'id' => $payment->id,
-                'status' => $payment->payment_status,
-                'amount' => $payment->amount,
-                'currency' => $payment->currency,
-                'tran_ref' => $payment->tran_ref,
-                'cart_id' => $payment->cart_id,
-                'created_at' => $payment->created_at,
-                'completed_at' => $payment->completed_at,
-                'failed_at' => $payment->failed_at,
-                'listing' => $payment->listing ? [
-                    'id' => $payment->listing->id,
-                    'title' => $payment->listing->title,
-                    'status' => $payment->listing->status,
-                    'published_at' => $payment->listing->published_at
-                ] : null,
-                'user' => $payment->user ? [
-                    'id' => $payment->user->id,
-                    'name' => $payment->user->name,
-                    'email' => $payment->user->email
-                ] : null
-            ]
-        ]);
-    }
-
-    /**
-     * Obtenir l'historique des paiements d'un utilisateur
-     */
-    public function getPaymentHistory(Request $request)
-    {
-        $query = Payment::with(['listing'])
-                       ->where('user_id', auth()->id())
-                       ->orderBy('created_at', 'desc');
-
-        // Filtres optionnels
-        if ($request->has('status')) {
-            $query->where('payment_status', $request->status);
-        }
-
-        if ($request->has('listing_id')) {
-            $query->where('listing_id', $request->listing_id);
-        }
-
-        $payments = $query->paginate($request->get('per_page', 15));
-
-        return response()->json([
-            'success' => true,
-            'payments' => $payments->items(),
-            'pagination' => [
-                'current_page' => $payments->currentPage(),
-                'last_page' => $payments->lastPage(),
-                'per_page' => $payments->perPage(),
-                'total' => $payments->total()
-            ]
-        ]);
-    }
-
-    /**
-     * Page de succès (pour compatibilité)
-     */
-    public function paymentSuccess(Request $request)
-    {
+        $paymentId = $request->input('payment_id');
         $tranRef = $request->input('tran_ref');
-        $payment = Payment::where('tran_ref', $tranRef)->first();
 
-        if (!$payment) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Paiement non trouvé'
-            ], 404);
+        if ($paymentId) {
+            $payment = Payment::find($paymentId);
+        } elseif ($tranRef) {
+            $payment = Payment::where('tran_ref', $tranRef)->first();
+        } else {
+            return response()->json(['error' => 'Payment ID or transaction reference required'], 400);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Paiement réussi',
-            'payment' => [
-                'id' => $payment->id,
-                'status' => $payment->payment_status,
-                'amount' => $payment->amount,
-                'currency' => $payment->currency,
-                'listing' => $payment->listing
-            ]
-        ]);
-    }
+        if (!$payment) {
+            return response()->json(['error' => 'Payment not found'], 404);
+        }
 
-    /**
-     * Page d'annulation (pour compatibilité)
-     */
-    public function paymentCancel(Request $request)
-    {
-        return response()->json([
-            'success' => false,
-            'message' => 'Paiement annulé par l\'utilisateur',
-            'data' => $request->all()
-        ]);
+        // Verify payment with PayTabs
+        if ($payment->tran_ref) {
+            $verificationResult = $this->verifyPayment($payment->tran_ref);
+
+            if ($verificationResult && $verificationResult['payment_result']['response_status'] === 'A') {
+                // Update payment and listing
+                $payment->update([
+                    'payment_status' => 'completed',
+                    'verification_data' => array_merge($payment->verification_data ?? [], [
+                        'force_verified_at' => now(),
+                        'verification_result' => $verificationResult
+                    ])
+                ]);
+
+                if ($payment->listing && $payment->listing->status !== 'published') {
+                    $payment->listing->update([
+                        'status' => 'published',
+                        'published_at' => now()
+                    ]);
+                }
+            }
+        }
+
+        // Redirect based on current status
+        if ($payment->payment_status === 'completed') {
+            return redirect('https://dabapp.co/payment/success?payment_id=' . $payment->id);
+        } else {
+            return redirect('https://dabapp.co/payment/pending?payment_id=' . $payment->id);
+        }
     }
 
     /**
@@ -624,7 +615,6 @@ class PayTabsController extends Controller
         }
 
         try {
-            // Test avec une requête basique
             $response = Http::withHeaders([
                 "Authorization" => $this->serverKey,
                 "Content-Type"  => "application/json",
