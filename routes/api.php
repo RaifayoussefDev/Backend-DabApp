@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use App\Http\Controllers\MotorcycleImportController;
 use App\Http\Controllers\ListingController;
@@ -25,7 +25,7 @@ use App\Http\Controllers\MotorcycleFilterController;
 use App\Http\Controllers\MotorcycleModelController;
 use App\Http\Controllers\MotorcycleTypeController;
 use App\Http\Controllers\MotorcycleYearController;
-use App\Http\Controllers\PayTabsController;
+use App\Http\Controllers\PayTabsControllerTest;
 use App\Http\Controllers\PhonePasswordAuthController;
 use App\Http\Controllers\PromoCodeController;
 use App\Http\Controllers\SoomController;
@@ -272,32 +272,32 @@ Route::middleware('auth:api')->put('/change-password', [AuthController::class, '
 // Routes publiques PayTabs (pas d'authentification requise)
 Route::prefix('paytabs')->name('paytabs.')->group(function () {
     // Callback automatique de PayTabs (appelé par leurs serveurs)
-    Route::post('/callback', [PayTabsController::class, 'callback'])->name('callback');
+    Route::post('/callback', [PayTabsControllerTest::class, 'callback'])->name('callback');
 
     // Page de retour après paiement (où l'utilisateur est redirigé)
-    Route::get('/return', [PayTabsController::class, 'return'])->name('return');
+    Route::get('/return', [PayTabsControllerTest::class, 'return'])->name('return');
 
     // Webhook pour notifications push (optionnel)
-    Route::post('/webhook', [PayTabsController::class, 'webhook'])->name('webhook');
+    Route::post('/webhook', [PayTabsControllerTest::class, 'webhook'])->name('webhook');
 
     // Routes de résultat (pour compatibilité avec votre code existant)
-    Route::get('/success', [PayTabsController::class, 'paymentSuccess'])->name('success');
-    Route::get('/cancel', [PayTabsController::class, 'paymentCancel'])->name('cancel');
+    Route::get('/success', [PayTabsControllerTest::class, 'paymentSuccess'])->name('success');
+    Route::get('/cancel', [PayTabsControllerTest::class, 'paymentCancel'])->name('cancel');
 });
 
 // PayTabs public endpoints (NO AUTH required - PayTabs needs to access these)
 Route::prefix('paytabs')->name('paytabs.')->group(function () {
     // PayTabs callback endpoints - MUST be outside auth middleware
-    Route::match(['GET', 'POST'], 'callback', [PayTabsController::class, 'callback'])->name('callback');
-    Route::match(['GET', 'POST'], 'return', [PayTabsController::class, 'return'])->name('return');
-    Route::match(['GET', 'POST'], 'webhook', [PayTabsController::class, 'webhook'])->name('webhook');
+    Route::match(['GET', 'POST'], 'callback', [PayTabsControllerTest::class, 'callback'])->name('callback');
+    Route::match(['GET', 'POST'], 'return', [PayTabsControllerTest::class, 'return'])->name('return');
+    Route::match(['GET', 'POST'], 'webhook', [PayTabsControllerTest::class, 'webhook'])->name('webhook');
 
     // Success/Cancel pages (for compatibility)
-    Route::match(['GET', 'POST'], 'success', [PayTabsController::class, 'paymentSuccess'])->name('success');
-    Route::match(['GET', 'POST'], 'cancel', [PayTabsController::class, 'paymentCancel'])->name('cancel');
+    Route::match(['GET', 'POST'], 'success', [PayTabsControllerTest::class, 'paymentSuccess'])->name('success');
+    Route::match(['GET', 'POST'], 'cancel', [PayTabsControllerTest::class, 'paymentCancel'])->name('cancel');
 
     // Test connection (can be public for testing)
-    Route::get('test', [PayTabsController::class, 'testConnection'])->name('test');
+    Route::get('test', [PayTabsControllerTest::class, 'testConnection'])->name('test');
 });
 
 // Protected routes that require authentication
@@ -306,28 +306,28 @@ Route::middleware(['auth:api'])->group(function () {
     // PayTabs authenticated endpoints
     Route::prefix('paytabs')->name('paytabs.')->group(function () {
         // Créer un paiement (méthode générique)
-        Route::post('create', [PayTabsController::class, 'createPayment'])->name('create');
+        Route::post('create', [PayTabsControllerTest::class, 'createPayment'])->name('create');
     });
 
     // Paiements pour listings spécifiques
     Route::prefix('listings')->name('api.listings.')->group(function () {
         // Initier un paiement pour un listing
-        Route::post('{listing}/payment', [PayTabsController::class, 'initiatePayment'])
+        Route::post('{listing}/payment', [PayTabsControllerTest::class, 'initiatePayment'])
              ->name('payment');
     });
 
     // Gestion des paiements
     Route::prefix('payments')->name('api.payments.')->group(function () {
         // Vérifier le statut d'un paiement
-        Route::get('{payment}/status', [PayTabsController::class, 'checkPaymentStatus'])
+        Route::get('{payment}/status', [PayTabsControllerTest::class, 'checkPaymentStatus'])
              ->name('status');
 
         // Obtenir l'historique des paiements d'un utilisateur
-        Route::get('history', [PayTabsController::class, 'getPaymentHistory'])
+        Route::get('history', [PayTabsControllerTest::class, 'getPaymentHistory'])
              ->name('history');
 
         // Obtenir les détails d'un paiement
-        Route::get('{payment}', [PayTabsController::class, 'getPaymentDetails'])
+        Route::get('{payment}', [PayTabsControllerTest::class, 'getPaymentDetails'])
              ->name('details');
     });
 });

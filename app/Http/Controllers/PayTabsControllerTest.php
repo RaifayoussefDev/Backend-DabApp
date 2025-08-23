@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class PayTabsController extends Controller
+class PayTabsControllerTest extends Controller
 {
     private $baseUrl;
     private $profileId;
