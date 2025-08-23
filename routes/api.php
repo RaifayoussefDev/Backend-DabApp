@@ -259,28 +259,7 @@ Route::post('/resend-otp-email', [AuthController::class, 'resendOtpEmail']); // 
 
 
 
-// Routes protégées par authentification
-Route::middleware(['auth:sanctum'])->group(function () {
-    // Test PayTabs
-    Route::get('/paytabs/test', [PayTabsController::class, 'testConnection']);
 
-    // Paiement pour un listing
-    Route::post('/listings/{listing}/payment', [PayTabsController::class, 'initiatePayment'])
-         ->name('api.listings.payment');
-
-    // Vérifier le statut d'un paiement
-    Route::get('/payments/{payment}/status', [PayTabsController::class, 'checkPaymentStatus'])
-         ->name('api.payments.status');
-});
-
-// Routes publiques pour PayTabs (callbacks)
-Route::post('/paytabs/callback', [PayTabsController::class, 'callback'])
-     ->name('paytabs.callback');
-
-Route::get('/paytabs/return', [PayTabsController::class, 'return'])
-     ->name('paytabs.return');
-// Dans votre fichier routes/api.php
-// Dans votre fichier routes/api.php
 Route::get('/recent', [ListingController::class, 'getRecentListings']);
 // Password reset routes (no authentication required)
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
@@ -290,10 +269,70 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 // Change password route (authentication required)
 Route::middleware('auth:api')->put('/change-password', [AuthController::class, 'changePassword']);
 
+// Routes publiques PayTabs (pas d'authentification requise)
+Route::prefix('paytabs')->name('paytabs.')->group(function () {
+    // Callback automatique de PayTabs (appelé par leurs serveurs)
+    Route::post('/callback', [PayTabsController::class, 'callback'])->name('callback');
 
-Route::post('/paytabs/create', [PayTabsController::class, 'createPayment'])->name('paytabs.create');
-Route::get('/paytabs/success', [PayTabsController::class, 'paymentSuccess'])->name('paytabs.success');
-Route::get('/paytabs/cancel', [PayTabsController::class, 'paymentCancel'])->name('paytabs.cancel');
+    // Page de retour après paiement (où l'utilisateur est redirigé)
+    Route::get('/return', [PayTabsController::class, 'return'])->name('return');
+
+    // Webhook pour notifications push (optionnel)
+    Route::post('/webhook', [PayTabsController::class, 'webhook'])->name('webhook');
+
+    // Routes de résultat (pour compatibilité avec votre code existant)
+    Route::get('/success', [PayTabsController::class, 'paymentSuccess'])->name('success');
+    Route::get('/cancel', [PayTabsController::class, 'paymentCancel'])->name('cancel');
+});
+
+// PayTabs public endpoints (NO AUTH required - PayTabs needs to access these)
+Route::prefix('paytabs')->name('paytabs.')->group(function () {
+    // PayTabs callback endpoints - MUST be outside auth middleware
+    Route::match(['GET', 'POST'], 'callback', [PayTabsController::class, 'callback'])->name('callback');
+    Route::match(['GET', 'POST'], 'return', [PayTabsController::class, 'return'])->name('return');
+    Route::match(['GET', 'POST'], 'webhook', [PayTabsController::class, 'webhook'])->name('webhook');
+
+    // Success/Cancel pages (for compatibility)
+    Route::match(['GET', 'POST'], 'success', [PayTabsController::class, 'paymentSuccess'])->name('success');
+    Route::match(['GET', 'POST'], 'cancel', [PayTabsController::class, 'paymentCancel'])->name('cancel');
+
+    // Test connection (can be public for testing)
+    Route::get('test', [PayTabsController::class, 'testConnection'])->name('test');
+});
+
+// Protected routes that require authentication
+Route::middleware(['auth:api'])->group(function () {
+
+    // PayTabs authenticated endpoints
+    Route::prefix('paytabs')->name('paytabs.')->group(function () {
+        // Créer un paiement (méthode générique)
+        Route::post('create', [PayTabsController::class, 'createPayment'])->name('create');
+    });
+
+    // Paiements pour listings spécifiques
+    Route::prefix('listings')->name('api.listings.')->group(function () {
+        // Initier un paiement pour un listing
+        Route::post('{listing}/payment', [PayTabsController::class, 'initiatePayment'])
+             ->name('payment');
+    });
+
+    // Gestion des paiements
+    Route::prefix('payments')->name('api.payments.')->group(function () {
+        // Vérifier le statut d'un paiement
+        Route::get('{payment}/status', [PayTabsController::class, 'checkPaymentStatus'])
+             ->name('status');
+
+        // Obtenir l'historique des paiements d'un utilisateur
+        Route::get('history', [PayTabsController::class, 'getPaymentHistory'])
+             ->name('history');
+
+        // Obtenir les détails d'un paiement
+        Route::get('{payment}', [PayTabsController::class, 'getPaymentDetails'])
+             ->name('details');
+    });
+});
+
+
 Route::get('/get-country', [AuthController::class, 'getCountry'])->name('get.country');
 
 Route::post('/test-email', [AuthController::class, 'testEmail']);
