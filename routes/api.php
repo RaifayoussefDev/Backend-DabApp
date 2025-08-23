@@ -348,8 +348,6 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('{payment}', [PayTabsController::class, 'getPaymentDetails'])
              ->name('details');
     });
-    Route::get('/paytabs/success', [PayTabsController::class, 'paymentSuccess']);
-
 });
 
 
