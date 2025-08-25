@@ -368,6 +368,7 @@ class AuthController extends Controller
                 'last_name' => $user->last_name,
                 'phone' => $user->phone,
                 'country' => $country,
+                'continent' => $continent,
                 'otp_sent_via' => $otpSentVia
             ], 202);
         }
