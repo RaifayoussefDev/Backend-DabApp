@@ -70,80 +70,95 @@ class AuthController extends Controller
      * )
      */
 
-    public function register(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'last_name'  => 'required|string|max:255',
-            'email'      => 'required|email|unique:users',
-            'phone'      => 'required|string|unique:users',
-            'password'   => 'required|string|min:6|confirmed',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        // 👉 Pays détecté via proxy (si dispo)
-        $countryCode = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? null;
-
-        $countryId = null;
-        $formattedPhone = $request->phone;
-
-        if ($countryCode) {
-            // Chercher si ce pays existe dans ta table countries
-            $country = DB::table('countries')
-                ->select('id', 'name', 'code', 'dial_code')
-                ->where('code', strtoupper($countryCode))
-                ->first();
-
-            if ($country) {
-                // si trouvé → formatter le téléphone avec dial_code
-                $cleanPhone = preg_replace('/\D+/', '', $request->phone);
-
-                if (substr($cleanPhone, 0, 1) === '0') {
-                    $cleanPhone = substr($cleanPhone, 1);
-                }
-
-                $formattedPhone = $country->dial_code . $cleanPhone;
-                $countryId = $country->id;
-            } else {
-                // sinon → juste normaliser sans assigner country_id
-                $cleanPhone = preg_replace('/\D+/', '', $request->phone);
-                $formattedPhone = $cleanPhone;
-                $countryId = null;
-            }
-        }
-
-        // ✅ Créer l’utilisateur dans la DB
-        $user = User::create([
-            'first_name' => $request->first_name,
-            'last_name'  => $request->last_name,
-            'email'      => $request->email,
-            'phone'      => $formattedPhone,
-            'password'   => Hash::make($request->password),
-            'role_id'    => $request->role_id,
-            'verified'   => false,
-            'is_active'  => true,
-            'is_online'  => false,
-            'language'   => 'fr',
-            'timezone'   => 'Africa/Casablanca',
-            'two_factor_enabled' => true,
-            'country_id' => $countryId, // 👉 si trouvé sinon NULL
-        ]);
-
-        // Générer token
-        $token = JWTAuth::fromUser($user);
-        $tokenExpiration = now()->addMonth();
-
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-            'expires_at' => $tokenExpiration->toDateTimeString(),
-            'country' => $countryCode ?? 'Unknown',
-            'country_id' => $countryId
-        ]);
-    }
+     public function register(Request $request)
+     {
+         $validator = Validator::make($request->all(), [
+             'first_name' => 'required|string|max:255',
+             'last_name'  => 'required|string|max:255',
+             'email'      => 'required|email|unique:users',
+             'phone'      => 'required|string|unique:users',
+             'password'   => 'required|string|min:6|confirmed',
+         ]);
+     
+         if ($validator->fails()) {
+             return response()->json($validator->errors(), 422);
+         }
+     
+         $countryCode = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? null;
+     
+         $countryId = null;
+         $formattedPhone = $request->phone;
+     
+         if ($countryCode) {
+             // 🔎 Chercher dans table countries
+             $country = DB::table('countries')
+                 ->select('id', 'name', 'code')
+                 ->where('code', strtoupper($countryCode))
+                 ->first();
+     
+             if ($country) {
+                 $countryId = $country->id;
+     
+                 // 👉 Récupérer dial_code depuis le fichier JSON
+                 $path = storage_path('app/countries.json');
+                 $dialCode = null;
+     
+                 if (file_exists($path)) {
+                     $countriesJson = json_decode(file_get_contents($path), true);
+                     foreach ($countriesJson as $c) {
+                         if (strtoupper($c['code']) === strtoupper($countryCode)) {
+                             $dialCode = $c['dial_code'];
+                             break;
+                         }
+                     }
+                 }
+     
+                 // ✨ Formatter téléphone si dial_code trouvé
+                 $cleanPhone = preg_replace('/\D+/', '', $request->phone);
+                 if (substr($cleanPhone, 0, 1) === '0') {
+                     $cleanPhone = substr($cleanPhone, 1);
+                 }
+     
+                 $formattedPhone = $dialCode
+                     ? $dialCode . $cleanPhone
+                     : $cleanPhone;
+     
+             } else {
+                 // pays pas trouvé → juste nettoyer le numéro
+                 $cleanPhone = preg_replace('/\D+/', '', $request->phone);
+                 $formattedPhone = $cleanPhone;
+                 $countryId = null;
+             }
+         }
+     
+         // ✅ Créer user
+         $user = User::create([
+             'first_name' => $request->first_name,
+             'last_name'  => $request->last_name,
+             'email'      => $request->email,
+             'phone'      => $formattedPhone,
+             'password'   => Hash::make($request->password),
+             'role_id'    => $request->role_id,
+             'verified'   => false,
+             'is_active'  => true,
+             'is_online'  => false,
+             'language'   => 'fr',
+             'timezone'   => 'Africa/Casablanca',
+             'two_factor_enabled' => true,
+             'country_id' => $countryId, // FK ou NULL
+         ]);
+     
+         $token = JWTAuth::fromUser($user);
+         $tokenExpiration = now()->addMonth();
+     
+         return response()->json([
+             'user' => $user,
+             'token' => $token,
+             'expires_at' => $tokenExpiration->toDateTimeString(),
+             'country' => $countryCode ?? 'Unknown',
+             'country_id' => $countryId
+         ]);
+     }
 
 
     /**
