@@ -70,12 +70,6 @@ class AuthController extends Controller
      * )
      */
 
-    use Illuminate\Support\Facades\DB;
-    use Illuminate\Support\Facades\Validator;
-    use Illuminate\Support\Facades\Hash;
-    use Tymon\JWTAuth\Facades\JWTAuth;
-    use App\Models\User;
-
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
