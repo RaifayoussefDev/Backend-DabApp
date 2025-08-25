@@ -311,7 +311,7 @@ class AuthController extends Controller
         $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
 
         // ✅ Mise à jour automatique du téléphone avec indicatif pays
-        if ($country !== 'Unknown') {
+        if ($continent !== 'Unknown') {
             $this->updateUserPhoneWithCountryCode($user, $country);
             // Recharger l'utilisateur pour avoir le numéro mis à jour
             $user->refresh();
