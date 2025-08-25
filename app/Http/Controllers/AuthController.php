@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\CountryHelper;
 use App\Models\Authentication;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -69,64 +70,65 @@ class AuthController extends Controller
      * )
      */
 
-    public function register(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
-            'phone' => 'required|string|unique:users',
-            'password' => 'required|string|min:6|confirmed',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        // 🔥 Créer l’utilisateur dans Firebase
-        try {
-            $auth = (new Factory)
-                ->withServiceAccount(storage_path('app/firebase/firebase_credentials.json'))
-                ->createAuth();
-
-            $firebaseUser = $auth->createUser([
-                'email' => $request->email,
-                'password' => $request->password,
-                'displayName' => $request->first_name . ' ' . $request->last_name,
-            ]);
-        } catch (EmailExists $e) {
-            return response()->json(['error' => 'Cet email existe déjà sur Firebase'], 409);
-        } catch (\Throwable $e) {
-            return response()->json(['error' => 'Erreur Firebase : ' . $e->getMessage()], 500);
-        }
-
-        // ✅ Créer l’utilisateur dans ta BDD
-        $user = User::create([
-            'first_name' => $request->first_name,
-            'last_name'  => $request->last_name,
-            'email'      => $request->email,
-            'phone'      => $request->phone,
-            'password'   => Hash::make($request->password),
-            'role_id'    => $request->role_id,
-            'verified'   => false, // ou true si email_verified de Firebase
-            'is_active'  => true,
-            'is_online'  => false,
-            'language'   => 'fr',
-            'timezone'   => 'Africa/Casablanca',
-            'two_factor_enabled' => true,
-            'country_id' => null,
-        ]);
-
-        $token = JWTAuth::fromUser($user);
-        $tokenExpiration = now()->addMonth();
-
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-            'expires_at' => $tokenExpiration->toDateTimeString()
-        ]);
-    }
-
+     public function register(Request $request)
+     {
+         $validator = Validator::make($request->all(), [
+             'first_name' => 'required|string|max:255',
+             'last_name' => 'required|string|max:255',
+             'email' => 'required|email|unique:users',
+             'phone' => 'required|string|unique:users',
+             'password' => 'required|string|min:6|confirmed',
+         ]);
+     
+         if ($validator->fails()) {
+             return response()->json($validator->errors(), 422);
+         }
+     
+         $countryCode = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
+         $formattedPhone = CountryHelper::formatPhone($request->phone, $countryCode);
+     
+         try {
+             $auth = (new Factory)
+                 ->withServiceAccount(storage_path('app/firebase/firebase_credentials.json'))
+                 ->createAuth();
+     
+             $firebaseUser = $auth->createUser([
+                 'email' => $request->email,
+                 'password' => $request->password,
+                 'displayName' => $request->first_name . ' ' . $request->last_name,
+             ]);
+         } catch (EmailExists $e) {
+             return response()->json(['error' => 'Cet email existe déjà sur Firebase'], 409);
+         } catch (\Throwable $e) {
+             return response()->json(['error' => 'Erreur Firebase : ' . $e->getMessage()], 500);
+         }
+     
+         $user = User::create([
+             'first_name' => $request->first_name,
+             'last_name'  => $request->last_name,
+             'email'      => $request->email,
+             'phone'      => $formattedPhone,
+             'password'   => Hash::make($request->password),
+             'role_id'    => $request->role_id,
+             'verified'   => false,
+             'is_active'  => true,
+             'is_online'  => false,
+             'language'   => 'fr',
+             'timezone'   => 'Africa/Casablanca',
+             'two_factor_enabled' => true,
+             'country_id' => $countryCode,
+         ]);
+     
+         $token = JWTAuth::fromUser($user);
+         $tokenExpiration = now()->addMonth();
+     
+         return response()->json([
+             'user' => $user,
+             'token' => $token,
+             'expires_at' => $tokenExpiration->toDateTimeString(),
+             'country' => $countryCode
+         ]);
+     }
 
     /**
      * @OA\Post(
