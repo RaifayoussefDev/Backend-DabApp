@@ -20,8 +20,6 @@ use Kreait\Firebase\Exception\Auth\UserNotFound;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-
 
 
 
@@ -30,101 +28,7 @@ class AuthController extends Controller
     private $whatsappApiUrl = 'https://api.360messenger.com/v2/sendMessage';
     private $whatsappApiToken = 'pj0y5xb38khWfp0V0qppIxwKelv7tgTg5yx';
 
-    private static $countriesData = null;
-
-    private function getCountriesData()
-    {
-        if (self::$countriesData === null) {
-            try {
-                $jsonContent = Storage::get('countries.json');
-                self::$countriesData = json_decode($jsonContent, true);
-
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    Log::error('Invalid JSON in countries.json: ' . json_last_error_msg());
-                    self::$countriesData = [];
-                }
-            } catch (\Exception $e) {
-                Log::error('Failed to load countries.json: ' . $e->getMessage());
-                self::$countriesData = [];
-            }
-        }
-
-        return self::$countriesData;
-    }
-
-    private function getCountryPhoneCode($countryCode)
-    {
-        $countries = $this->getCountriesData();
-
-        if (isset($countries[$countryCode]) && isset($countries[$countryCode]['phone'][0])) {
-            // Retourner l'indicatif sans le +
-            return ltrim($countries[$countryCode]['phone'][0], '+');
-        }
-
-        return null;
-    }
-
-    private function normalizePhoneNumber($phone, $userCountryCode = null)
-    {
-        if (empty($phone)) {
-            return null;
-        }
-
-        // Nettoyer le numéro
-        $cleanPhone = preg_replace('/[^\d+]/', '', $phone);
-
-        // Si le numéro commence déjà par + et a plus de 10 chiffres, il est probablement international
-        if (str_starts_with($cleanPhone, '+') && strlen($cleanPhone) > 10) {
-            return ltrim($cleanPhone, '+'); // Retourner sans le +
-        }
-
-        // Si le numéro commence par un indicatif international sans +
-        if (strlen($cleanPhone) > 10 && !str_starts_with($cleanPhone, '0')) {
-            return $cleanPhone;
-        }
-
-        // Tentative d'ajout automatique de l'indicatif du pays
-        if ($userCountryCode) {
-            $countryPhoneCode = $this->getCountryPhoneCode($userCountryCode);
-
-            if ($countryPhoneCode) {
-                // Si le numéro commence par 0, le remplacer par l'indicatif
-                if (str_starts_with($cleanPhone, '0')) {
-                    return $countryPhoneCode . substr($cleanPhone, 1);
-                }
-
-                // Si le numéro ne commence pas par l'indicatif du pays, l'ajouter
-                if (!str_starts_with($cleanPhone, $countryPhoneCode)) {
-                    return $countryPhoneCode . $cleanPhone;
-                }
-            }
-        }
-
-        return ltrim($cleanPhone, '+');
-    }
-
-    private function updateUserPhoneWithCountryCode(User $user, $countryCode)
-    {
-        if (empty($user->phone) || empty($countryCode)) {
-            return;
-        }
-
-        $normalizedPhone = $this->normalizePhoneNumber($user->phone, $countryCode);
-
-        if ($normalizedPhone && $normalizedPhone !== ltrim($user->phone, '+')) {
-            $oldPhone = $user->phone;
-            $user->phone = '+' . $normalizedPhone;
-            $user->save();
-
-            Log::info('Phone number updated with country code', [
-                'user_id' => $user->id,
-                'old_phone' => $oldPhone,
-                'new_phone' => $user->phone,
-                'country_code' => $countryCode
-            ]);
-        }
-    }
-
+    
     /**
      * @OA\Post(
      *     path="/api/register",
@@ -310,13 +214,6 @@ class AuthController extends Controller
         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
         $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
 
-        // ✅ Mise à jour automatique du téléphone avec indicatif pays
-        if ($continent !== 'Unknown') {
-            $this->updateUserPhoneWithCountryCode($user, $country);
-            // Recharger l'utilisateur pour avoir le numéro mis à jour
-            $user->refresh();
-        }
-
         // 🔐 Add country and continent to JWT
         $token = JWTAuth::claims([
             'country' => $country,
@@ -349,7 +246,7 @@ class AuthController extends Controller
             );
 
             // 🚀 Essayer WhatsApp en premier, puis email en fallback
-            $otpSentVia = $this->sendOtpWithFallback($user, $otp, $country);
+            $otpSentVia = $this->sendOtpWithFallback($user, $otp);
 
             // Vérifier si l'envoi a échoué
             if ($otpSentVia === 'failed') {
@@ -368,8 +265,7 @@ class AuthController extends Controller
                 'last_name' => $user->last_name,
                 'phone' => $user->phone,
                 'country' => $country,
-                'continent' => $continent,
-                'otp_sent_via' => $otpSentVia
+                'otp_sent_via' => $otpSentVia // 'whatsapp', 'email', ou 'failed'
             ], 202);
         }
 
@@ -385,11 +281,11 @@ class AuthController extends Controller
     /**
      * Send OTP via WhatsApp first, fallback to email if WhatsApp fails
      */
-    private function sendOtpWithFallback(User $user, $otp, $countryCode = null)
+    private function sendOtpWithFallback(User $user, $otp)
     {
         // First, try WhatsApp if user has phone number
         if (!empty($user->phone)) {
-            $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp, $countryCode);
+            $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
 
             if ($whatsappSent) {
                 Log::info('OTP sent via WhatsApp', [
@@ -422,46 +318,40 @@ class AuthController extends Controller
     /**
      * Send OTP via WhatsApp
      */
-    private function sendWhatsAppOtp($phone, $otp, $countryCode = null)
-    {
-        try {
-            $phoneNumber = $this->normalizePhoneNumber($phone, $countryCode);
-            
-            if (empty($phoneNumber)) {
-                Log::error('Invalid phone number after normalization', ['phone' => $phone]);
-                return false;
-            }
+    private function sendWhatsAppOtp($phone, $otp)
+{
+    try {
+        $phoneNumber = $this->formatPhoneNumber($phone);
 
-            $payload = [
-                'phonenumber' => '+' . $phoneNumber,
-                'text' => "🔐 رمز التحقق الخاص بك من dabapp.co هو: {$otp}\n\n⏳ هذا الرمز صالح لمدة 5 دقائق.\n❌ لا تشاركه مع أي شخص."
-            ];
+        $payload = [
+            'phonenumber' => '+' . $phoneNumber,
+            'text' => "🔐 رمز التحقق الخاص بك من dabapp.co هو: {$otp}\n\n⏳ هذا الرمز صالح لمدة 5 دقائق.\n❌ لا تشاركه مع أي شخص."
+        ];
 
-            Log::info('Attempting WhatsApp OTP send', [
-                'original_phone' => $phone,
-                'normalized_phone' => '+' . $phoneNumber,
-                'country_code' => $countryCode
-            ]);
+        Log::info('Attempting WhatsApp OTP send', [
+            'phone' => $phoneNumber,
+            'formatted_phone' => '+' . $phoneNumber
+        ]);
 
-            $response = Http::timeout(10)->withHeaders([
-                'Authorization' => "Bearer {$this->whatsappApiToken}",
-                'Content-Type' => 'application/json',
-            ])->post($this->whatsappApiUrl, $payload);
+        $response = Http::timeout(10)->withHeaders([
+            'Authorization' => "Bearer {$this->whatsappApiToken}",
+            'Content-Type' => 'application/json',
+        ])->post($this->whatsappApiUrl, $payload);
 
-            Log::info('WhatsApp API Response', [
-                'status' => $response->status(),
-                'body' => $response->body()
-            ]);
+        Log::info('WhatsApp API Response', [
+            'status' => $response->status(),
+            'body' => $response->body()
+        ]);
 
-            return $response->successful();
-        } catch (\Exception $e) {
-            Log::error('WhatsApp OTP send failed', [
-                'phone' => $phone,
-                'error' => $e->getMessage()
-            ]);
-            return false;
-        }
+        return $response->successful();
+    } catch (\Exception $e) {
+        Log::error('WhatsApp OTP send failed', [
+            'phone' => $phone,
+            'error' => $e->getMessage()
+        ]);
+        return false;
     }
+}
 
 
     /**
@@ -1135,6 +1025,7 @@ class AuthController extends Controller
             'method' => 'nullable|string|in:whatsapp,email'
         ]);
 
+        // Find user by login (email or phone)
         $user = filter_var($request->login, FILTER_VALIDATE_EMAIL)
             ? User::where('email', $request->login)->first()
             : User::where('phone', $request->login)->first();
@@ -1147,17 +1038,10 @@ class AuthController extends Controller
             return response()->json(['error' => 'User account is inactive'], 403);
         }
 
-        // ✅ Récupérer le code pays
-        $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
-        
-        // ✅ Mise à jour automatique du téléphone si nécessaire
-        if ($country !== 'Unknown') {
-            $this->updateUserPhoneWithCountryCode($user, $country);
-            $user->refresh();
-        }
-
+        // Generate password reset OTP
         $resetCode = rand(1000, 9999);
 
+        // Store reset code in password_resets table
         DB::table('password_resets')->updateOrInsert(
             ['user_id' => $user->id],
             [
@@ -1171,35 +1055,61 @@ class AuthController extends Controller
         $preferredMethod = $request->method;
         $resetSentVia = 'failed';
 
+        // 🔥 CORRECTION: Simplifier la logique d'envoi
         if ($preferredMethod === 'whatsapp' && !empty($user->phone)) {
-            $whatsappSent = $this->sendWhatsAppPasswordReset($user->phone, $resetCode, $country);
+            // Try WhatsApp first
+            $whatsappSent = $this->sendWhatsAppPasswordReset($user->phone, $resetCode);
             if ($whatsappSent) {
                 $resetSentVia = 'whatsapp';
             } else {
+                // Fallback to email
                 try {
                     $user->notify(new PasswordResetNotification($resetCode));
                     $resetSentVia = 'email';
+                    Log::info('Password reset sent via email (WhatsApp fallback)', [
+                        'user_id' => $user->id,
+                        'email' => $user->email
+                    ]);
                 } catch (\Exception $e) {
                     Log::error('Failed to send password reset via email after WhatsApp failed', [
                         'user_id' => $user->id,
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
                     ]);
                 }
             }
         } else {
+            // 🔥 CORRECTION: Envoyer directement par email (comme dans OTP)
             try {
+                Log::info('Attempting to send password reset email', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'reset_code' => $resetCode
+                ]);
+
                 $user->notify(new PasswordResetNotification($resetCode));
                 $resetSentVia = 'email';
+
+                Log::info('Password reset email sent successfully', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'reset_code' => $resetCode
+                ]);
             } catch (\Exception $e) {
                 Log::error('Failed to send password reset via email', [
                     'user_id' => $user->id,
-                    'error' => $e->getMessage()
+                    'email' => $user->email,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
                 ]);
 
+                // Si email préféré mais WhatsApp disponible, essayer WhatsApp
                 if (!empty($user->phone)) {
-                    $whatsappSent = $this->sendWhatsAppPasswordReset($user->phone, $resetCode, $country);
+                    Log::info('Trying WhatsApp as fallback for email failure');
+                    $whatsappSent = $this->sendWhatsAppPasswordReset($user->phone, $resetCode);
                     if ($whatsappSent) {
                         $resetSentVia = 'whatsapp';
+                        Log::info('Password reset sent via WhatsApp (email fallback)');
                     }
                 }
             }
@@ -1210,6 +1120,13 @@ class AuthController extends Controller
                 'error' => 'Failed to send password reset code. Please try again later.'
             ], 500);
         }
+
+        Log::info('Password reset code sent', [
+            'user_id' => $user->id,
+            'reset_code' => $resetCode,
+            'method' => $resetSentVia,
+            'requested_method' => $preferredMethod
+        ]);
 
         return response()->json([
             'message' => 'Password reset code has been sent',
@@ -1270,46 +1187,41 @@ class AuthController extends Controller
     /**
      * Send password reset via WhatsApp
      */
-    private function sendWhatsAppPasswordReset($phone, $resetCode, $countryCode = null)
-    {
-        try {
-            $phoneNumber = $this->normalizePhoneNumber($phone, $countryCode);
-            
-            if (empty($phoneNumber)) {
-                Log::error('Invalid phone number for password reset', ['phone' => $phone]);
-                return false;
-            }
+    private function sendWhatsAppPasswordReset($phone, $resetCode)
+{
+    try {
+        $phoneNumber = $this->formatPhoneNumber($phone);
 
-            $payload = [
-                'phonenumber' => '+' . $phoneNumber,
-                'text' => "🔐 رمز إعادة تعيين كلمة المرور الخاص بك من dabapp.co هو: {$resetCode}\n\n⏳ هذا الرمز صالح لمدة 15 دقيقة.\n❌ لا تشاركه مع أي شخص.\n\nإذا لم تطلب هذا الرمز، يرجى تجاهل هذه الرسالة."
-            ];
+        $payload = [
+            'phonenumber' => '+' . $phoneNumber,
+            'text' => "🔐 رمز إعادة تعيين كلمة المرور الخاص بك من dabapp.co هو: {$resetCode}\n\n⏳ هذا الرمز صالح لمدة 15 دقيقة.\n❌ لا تشاركه مع أي شخص.\n\nإذا لم تطلب هذا الرمز، يرجى تجاهل هذه الرسالة."
+        ];
 
-            Log::info('Attempting WhatsApp password reset send', [
-                'original_phone' => $phone,
-                'normalized_phone' => '+' . $phoneNumber,
-                'country_code' => $countryCode
-            ]);
+        Log::info('Attempting WhatsApp password reset send', [
+            'phone' => $phoneNumber,
+            'formatted_phone' => '+' . $phoneNumber
+        ]);
 
-            $response = Http::timeout(10)->withHeaders([
-                'Authorization' => "Bearer {$this->whatsappApiToken}",
-                'Content-Type' => 'application/json',
-            ])->post($this->whatsappApiUrl, $payload);
+        $response = Http::timeout(10)->withHeaders([
+            'Authorization' => "Bearer {$this->whatsappApiToken}",
+            'Content-Type' => 'application/json',
+        ])->post($this->whatsappApiUrl, $payload);
 
-            Log::info('WhatsApp Password Reset API Response', [
-                'status' => $response->status(),
-                'body' => $response->body()
-            ]);
+        Log::info('WhatsApp Password Reset API Response', [
+            'status' => $response->status(),
+            'body' => $response->body()
+        ]);
 
-            return $response->successful();
-        } catch (\Exception $e) {
-            Log::error('WhatsApp password reset send failed', [
-                'phone' => $phone,
-                'error' => $e->getMessage()
-            ]);
-            return false;
-        }
+        return $response->successful();
+    } catch (\Exception $e) {
+        Log::error('WhatsApp password reset send failed', [
+            'phone' => $phone,
+            'error' => $e->getMessage()
+        ]);
+        return false;
     }
+}
+
 
     /**
      * Send password reset via email
