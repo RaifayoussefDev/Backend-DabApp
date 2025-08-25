@@ -29,7 +29,7 @@ class AuthController extends Controller
     private $whatsappApiUrl = 'https://api.360messenger.com/v2/sendMessage';
     private $whatsappApiToken = 'pj0y5xb38khWfp0V0qppIxwKelv7tgTg5yx';
 
-    
+
     /**
      * @OA\Post(
      *     path="/api/register",
@@ -70,65 +70,87 @@ class AuthController extends Controller
      * )
      */
 
-     public function register(Request $request)
-     {
-         $validator = Validator::make($request->all(), [
-             'first_name' => 'required|string|max:255',
-             'last_name' => 'required|string|max:255',
-             'email' => 'required|email|unique:users',
-             'phone' => 'required|string|unique:users',
-             'password' => 'required|string|min:6|confirmed',
-         ]);
-     
-         if ($validator->fails()) {
-             return response()->json($validator->errors(), 422);
-         }
-     
-         $countryCode = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
-         $formattedPhone = CountryHelper::formatPhone($request->phone, $countryCode);
-     
-         try {
-             $auth = (new Factory)
-                 ->withServiceAccount(storage_path('app/firebase/firebase_credentials.json'))
-                 ->createAuth();
-     
-             $firebaseUser = $auth->createUser([
-                 'email' => $request->email,
-                 'password' => $request->password,
-                 'displayName' => $request->first_name . ' ' . $request->last_name,
-             ]);
-         } catch (EmailExists $e) {
-             return response()->json(['error' => 'Cet email existe déjà sur Firebase'], 409);
-         } catch (\Throwable $e) {
-             return response()->json(['error' => 'Erreur Firebase : ' . $e->getMessage()], 500);
-         }
-     
-         $user = User::create([
-             'first_name' => $request->first_name,
-             'last_name'  => $request->last_name,
-             'email'      => $request->email,
-             'phone'      => $formattedPhone,
-             'password'   => Hash::make($request->password),
-             'role_id'    => $request->role_id,
-             'verified'   => false,
-             'is_active'  => true,
-             'is_online'  => false,
-             'language'   => 'fr',
-             'timezone'   => 'Africa/Casablanca',
-             'two_factor_enabled' => true,
-             'country_id' => $countryCode,
-         ]);
-     
-         $token = JWTAuth::fromUser($user);
-         $tokenExpiration = now()->addMonth();
-     
-         return response()->json([
-             'user' => $user,
-             'token' => $token,
-             'expires_at' => $tokenExpiration->toDateTimeString(),
-             'country' => $countryCode
-         ]);
-     }
+    use Illuminate\Support\Facades\DB;
+    use Illuminate\Support\Facades\Validator;
+    use Illuminate\Support\Facades\Hash;
+    use Tymon\JWTAuth\Facades\JWTAuth;
+    use App\Models\User;
+
+    public function register(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string|max:255',
+            'last_name'  => 'required|string|max:255',
+            'email'      => 'required|email|unique:users',
+            'phone'      => 'required|string|unique:users',
+            'password'   => 'required|string|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        // 👉 Pays détecté via proxy (si dispo)
+        $countryCode = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? null;
+
+        $countryId = null;
+        $formattedPhone = $request->phone;
+
+        if ($countryCode) {
+            // Chercher si ce pays existe dans ta table countries
+            $country = DB::table('countries')
+                ->select('id', 'name', 'code', 'dial_code')
+                ->where('code', strtoupper($countryCode))
+                ->first();
+
+            if ($country) {
+                // si trouvé → formatter le téléphone avec dial_code
+                $cleanPhone = preg_replace('/\D+/', '', $request->phone);
+
+                if (substr($cleanPhone, 0, 1) === '0') {
+                    $cleanPhone = substr($cleanPhone, 1);
+                }
+
+                $formattedPhone = $country->dial_code . $cleanPhone;
+                $countryId = $country->id;
+            } else {
+                // sinon → juste normaliser sans assigner country_id
+                $cleanPhone = preg_replace('/\D+/', '', $request->phone);
+                $formattedPhone = $cleanPhone;
+                $countryId = null;
+            }
+        }
+
+        // ✅ Créer l’utilisateur dans la DB
+        $user = User::create([
+            'first_name' => $request->first_name,
+            'last_name'  => $request->last_name,
+            'email'      => $request->email,
+            'phone'      => $formattedPhone,
+            'password'   => Hash::make($request->password),
+            'role_id'    => $request->role_id,
+            'verified'   => false,
+            'is_active'  => true,
+            'is_online'  => false,
+            'language'   => 'fr',
+            'timezone'   => 'Africa/Casablanca',
+            'two_factor_enabled' => true,
+            'country_id' => $countryId, // 👉 si trouvé sinon NULL
+        ]);
+
+        // Générer token
+        $token = JWTAuth::fromUser($user);
+        $tokenExpiration = now()->addMonth();
+
+        return response()->json([
+            'user' => $user,
+            'token' => $token,
+            'expires_at' => $tokenExpiration->toDateTimeString(),
+            'country' => $countryCode ?? 'Unknown',
+            'country_id' => $countryId
+        ]);
+    }
+
 
     /**
      * @OA\Post(
@@ -321,39 +343,39 @@ class AuthController extends Controller
      * Send OTP via WhatsApp
      */
     private function sendWhatsAppOtp($phone, $otp)
-{
-    try {
-        $phoneNumber = $this->formatPhoneNumber($phone);
+    {
+        try {
+            $phoneNumber = $this->formatPhoneNumber($phone);
 
-        $payload = [
-            'phonenumber' => '+' . $phoneNumber,
-            'text' => "🔐 رمز التحقق الخاص بك من dabapp.co هو: {$otp}\n\n⏳ هذا الرمز صالح لمدة 5 دقائق.\n❌ لا تشاركه مع أي شخص."
-        ];
+            $payload = [
+                'phonenumber' => '+' . $phoneNumber,
+                'text' => "🔐 رمز التحقق الخاص بك من dabapp.co هو: {$otp}\n\n⏳ هذا الرمز صالح لمدة 5 دقائق.\n❌ لا تشاركه مع أي شخص."
+            ];
 
-        Log::info('Attempting WhatsApp OTP send', [
-            'phone' => $phoneNumber,
-            'formatted_phone' => '+' . $phoneNumber
-        ]);
+            Log::info('Attempting WhatsApp OTP send', [
+                'phone' => $phoneNumber,
+                'formatted_phone' => '+' . $phoneNumber
+            ]);
 
-        $response = Http::timeout(10)->withHeaders([
-            'Authorization' => "Bearer {$this->whatsappApiToken}",
-            'Content-Type' => 'application/json',
-        ])->post($this->whatsappApiUrl, $payload);
+            $response = Http::timeout(10)->withHeaders([
+                'Authorization' => "Bearer {$this->whatsappApiToken}",
+                'Content-Type' => 'application/json',
+            ])->post($this->whatsappApiUrl, $payload);
 
-        Log::info('WhatsApp API Response', [
-            'status' => $response->status(),
-            'body' => $response->body()
-        ]);
+            Log::info('WhatsApp API Response', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
 
-        return $response->successful();
-    } catch (\Exception $e) {
-        Log::error('WhatsApp OTP send failed', [
-            'phone' => $phone,
-            'error' => $e->getMessage()
-        ]);
-        return false;
+            return $response->successful();
+        } catch (\Exception $e) {
+            Log::error('WhatsApp OTP send failed', [
+                'phone' => $phone,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
     }
-}
 
 
     /**
@@ -1190,39 +1212,39 @@ class AuthController extends Controller
      * Send password reset via WhatsApp
      */
     private function sendWhatsAppPasswordReset($phone, $resetCode)
-{
-    try {
-        $phoneNumber = $this->formatPhoneNumber($phone);
+    {
+        try {
+            $phoneNumber = $this->formatPhoneNumber($phone);
 
-        $payload = [
-            'phonenumber' => '+' . $phoneNumber,
-            'text' => "🔐 رمز إعادة تعيين كلمة المرور الخاص بك من dabapp.co هو: {$resetCode}\n\n⏳ هذا الرمز صالح لمدة 15 دقيقة.\n❌ لا تشاركه مع أي شخص.\n\nإذا لم تطلب هذا الرمز، يرجى تجاهل هذه الرسالة."
-        ];
+            $payload = [
+                'phonenumber' => '+' . $phoneNumber,
+                'text' => "🔐 رمز إعادة تعيين كلمة المرور الخاص بك من dabapp.co هو: {$resetCode}\n\n⏳ هذا الرمز صالح لمدة 15 دقيقة.\n❌ لا تشاركه مع أي شخص.\n\nإذا لم تطلب هذا الرمز، يرجى تجاهل هذه الرسالة."
+            ];
 
-        Log::info('Attempting WhatsApp password reset send', [
-            'phone' => $phoneNumber,
-            'formatted_phone' => '+' . $phoneNumber
-        ]);
+            Log::info('Attempting WhatsApp password reset send', [
+                'phone' => $phoneNumber,
+                'formatted_phone' => '+' . $phoneNumber
+            ]);
 
-        $response = Http::timeout(10)->withHeaders([
-            'Authorization' => "Bearer {$this->whatsappApiToken}",
-            'Content-Type' => 'application/json',
-        ])->post($this->whatsappApiUrl, $payload);
+            $response = Http::timeout(10)->withHeaders([
+                'Authorization' => "Bearer {$this->whatsappApiToken}",
+                'Content-Type' => 'application/json',
+            ])->post($this->whatsappApiUrl, $payload);
 
-        Log::info('WhatsApp Password Reset API Response', [
-            'status' => $response->status(),
-            'body' => $response->body()
-        ]);
+            Log::info('WhatsApp Password Reset API Response', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
 
-        return $response->successful();
-    } catch (\Exception $e) {
-        Log::error('WhatsApp password reset send failed', [
-            'phone' => $phone,
-            'error' => $e->getMessage()
-        ]);
-        return false;
+            return $response->successful();
+        } catch (\Exception $e) {
+            Log::error('WhatsApp password reset send failed', [
+                'phone' => $phone,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
     }
-}
 
 
     /**
