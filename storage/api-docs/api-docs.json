@@ -6465,48 +6465,189 @@
                 }
             }
         },
-        "/api/motorcycle/filter": {
+        "/api/motorcycle/brands": {
             "get": {
                 "tags": [
                     "Motorcycle"
                 ],
-                "summary": "Filter motorcycles by brand, model, or year",
-                "operationId": "c274bcf7ca88c37d9bb4d690cc456e04",
+                "summary": "Get all motorcycle brands",
+                "operationId": "3af91f5a44ae6c943fdd8df3e034f861",
+                "responses": {
+                    "200": {
+                        "description": "List of brands",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Honda"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/motorcycle/models/{brandId}": {
+            "get": {
+                "tags": [
+                    "Motorcycle"
+                ],
+                "summary": "Get models by brand ID",
+                "operationId": "3d618db6438f249f8e1bf6305db56719",
                 "parameters": [
                     {
-                        "name": "brand_id",
-                        "in": "query",
-                        "description": "Filter by brand ID",
-                        "required": false,
+                        "name": "brandId",
+                        "in": "path",
+                        "description": "Brand ID",
+                        "required": true,
                         "schema": {
                             "type": "integer",
                             "example": 1
-                        }
-                    },
-                    {
-                        "name": "model_id",
-                        "in": "query",
-                        "description": "Filter by model ID",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "example": 2
-                        }
-                    },
-                    {
-                        "name": "year",
-                        "in": "query",
-                        "description": "Filter by year",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "example": 2022
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful filtering",
+                        "description": "List of models for the brand",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "CBR500R"
+                                                    },
+                                                    "brand_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/motorcycle/years/{modelId}": {
+            "get": {
+                "tags": [
+                    "Motorcycle"
+                ],
+                "summary": "Get years by model ID",
+                "operationId": "c4ca5b993dec6ba6a7d552e4d80d831f",
+                "parameters": [
+                    {
+                        "name": "modelId",
+                        "in": "path",
+                        "description": "Model ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of years for the model",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 3
+                                                    },
+                                                    "year": {
+                                                        "type": "integer",
+                                                        "example": 2022
+                                                    },
+                                                    "model_id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/motorcycle/details/{yearId}": {
+            "get": {
+                "tags": [
+                    "Motorcycle"
+                ],
+                "summary": "Get complete details by year ID",
+                "operationId": "f87c963e7d5a91f61e3d648802309668",
+                "parameters": [
+                    {
+                        "name": "yearId",
+                        "in": "path",
+                        "description": "Year ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 3
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Complete motorcycle details",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -6517,85 +6658,29 @@
                                         },
                                         "data": {
                                             "properties": {
-                                                "brands": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 1
-                                                            },
-                                                            "name": {
-                                                                "type": "string",
-                                                                "example": "Honda"
-                                                            },
-                                                            "created_at": {
-                                                                "type": "string",
-                                                                "format": "date-time"
-                                                            },
-                                                            "updated_at": {
-                                                                "type": "string",
-                                                                "format": "date-time"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
+                                                "year_id": {
+                                                    "type": "integer",
+                                                    "example": 3
                                                 },
-                                                "models": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 2
-                                                            },
-                                                            "name": {
-                                                                "type": "string",
-                                                                "example": "CBR500R"
-                                                            },
-                                                            "brand_id": {
-                                                                "type": "integer",
-                                                                "example": 1
-                                                            },
-                                                            "brand_name": {
-                                                                "type": "string",
-                                                                "example": "Honda"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
+                                                "year": {
+                                                    "type": "integer",
+                                                    "example": 2022
                                                 },
-                                                "years": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 3
-                                                            },
-                                                            "year": {
-                                                                "type": "integer",
-                                                                "example": 2022
-                                                            },
-                                                            "model_id": {
-                                                                "type": "integer",
-                                                                "example": 2
-                                                            },
-                                                            "model_name": {
-                                                                "type": "string",
-                                                                "example": "CBR500R"
-                                                            },
-                                                            "brand_id": {
-                                                                "type": "integer",
-                                                                "example": 1
-                                                            },
-                                                            "brand_name": {
-                                                                "type": "string",
-                                                                "example": "Honda"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
+                                                "model_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "model_name": {
+                                                    "type": "string",
+                                                    "example": "CBR500R"
+                                                },
+                                                "brand_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "brand_name": {
+                                                    "type": "string",
+                                                    "example": "Honda"
                                                 }
                                             },
                                             "type": "object"

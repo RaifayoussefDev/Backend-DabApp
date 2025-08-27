@@ -169,7 +169,26 @@ Route::apiResource('motorcycles', MotorcycleController::class);
 
 Route::post('/motorcycles/import', [MotorcycleController::class, 'importMotorcycles']);
 
-Route::get('/motorcycle/filter', [MotorcycleFilterController::class, 'filter']);
+// Motorcycle Filter Routes - Optimized
+Route::prefix('motorcycle')->group(function () {
+    // Étape 1: Charger toutes les marques (rapide, avec cache)
+    Route::get('/brands', [MotorcycleFilterController::class, 'getBrands']);
+    
+    // Étape 2: Charger les modèles d'une marque (appelé quand l'utilisateur sélectionne une marque)
+    Route::get('/models/{brandId}', [MotorcycleFilterController::class, 'getModelsByBrand'])
+        ->where('brandId', '[0-9]+');
+    
+    // Étape 3: Charger les années d'un modèle (appelé quand l'utilisateur sélectionne un modèle)  
+    Route::get('/years/{modelId}', [MotorcycleFilterController::class, 'getYearsByModel'])
+        ->where('modelId', '[0-9]+');
+    
+    // Bonus: Obtenir tous les détails d'une année spécifique
+    Route::get('/details/{yearId}', [MotorcycleFilterController::class, 'getDetailsByYear'])
+        ->where('yearId', '[0-9]+');
+    
+    // Utilitaire pour vider le cache en cas de mise à jour des données
+    Route::post('/clear-cache', [MotorcycleFilterController::class, 'clearCache']);
+});
 
 Route::get('/motorcycle/brand/{brandId}', [MotorcycleFilterController::class, 'getByBrand']);
 Route::get('/motorcycle/year/{yearId}', [MotorcycleFilterController::class, 'getByYear']);

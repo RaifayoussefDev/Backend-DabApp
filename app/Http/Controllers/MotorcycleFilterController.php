@@ -7,187 +7,228 @@ use App\Models\MotorcycleBrand;
 use App\Models\MotorcycleModel;
 use App\Models\MotorcycleType;
 use App\Models\MotorcycleYear;
+use Illuminate\Support\Facades\Cache;
 
 class MotorcycleFilterController extends Controller
 {
     /**
-     * Filter motorcycles with combined model/year format
-     */
-
-    /**
      * @OA\Get(
-     *     path="/api/motorcycle/filter",
-     *     summary="Filter motorcycles by brand, model, or year",
+     *     path="/api/motorcycle/brands",
+     *     summary="Get all motorcycle brands",
      *     tags={"Motorcycle"},
-     *     @OA\Parameter(
-     *         name="brand_id",
-     *         in="query",
-     *         required=false,
-     *         description="Filter by brand ID",
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *     @OA\Parameter(
-     *         name="model_id",
-     *         in="query",
-     *         required=false,
-     *         description="Filter by model ID",
-     *         @OA\Schema(type="integer", example=2)
-     *     ),
-     *     @OA\Parameter(
-     *         name="year",
-     *         in="query",
-     *         required=false,
-     *         description="Filter by year",
-     *         @OA\Schema(type="integer", example=2022)
-     *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Successful filtering",
+     *         description="List of brands",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="brands", type="array",
-     *                     @OA\Items(
-     *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="name", type="string", example="Honda"),
-     *                         @OA\Property(property="created_at", type="string", format="date-time"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time")
-     *                     )
-     *                 ),
-     *                 @OA\Property(property="models", type="array",
-     *                     @OA\Items(
-     *                         @OA\Property(property="id", type="integer", example=2),
-     *                         @OA\Property(property="name", type="string", example="CBR500R"),
-     *                         @OA\Property(property="brand_id", type="integer", example=1),
-     *                         @OA\Property(property="brand_name", type="string", example="Honda")
-     *                     )
-     *                 ),
-     *                 @OA\Property(property="years", type="array",
-     *                     @OA\Items(
-     *                         @OA\Property(property="id", type="integer", example=3),
-     *                         @OA\Property(property="year", type="integer", example=2022),
-     *                         @OA\Property(property="model_id", type="integer", example=2),
-     *                         @OA\Property(property="model_name", type="string", example="CBR500R"),
-     *                         @OA\Property(property="brand_id", type="integer", example=1),
-     *                         @OA\Property(property="brand_name", type="string", example="Honda")
-     *                     )
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Honda")
      *                 )
      *             )
      *         )
      *     )
      * )
      */
-
-    public function filter(Request $request)
+    public function getBrands()
     {
-        $request->validate([
-            'brand_id' => 'nullable|integer|exists:motorcycle_brands,id',
-            'model_id' => 'nullable|integer|exists:motorcycle_models,id',
-            'year' => 'nullable|integer',
-        ]);
-
-        $brandId = $request->input('brand_id');
-        $modelId = $request->input('model_id');
-        $year = $request->input('year');
-
-        // Get base queries
-        $brands = MotorcycleBrand::all();
-
-        $modelsQuery = MotorcycleModel::with('brand');
-        $yearsQuery = MotorcycleYear::with('model.brand');
-
-        // Apply filters
-        if ($brandId) {
-            $modelsQuery->where('brand_id', $brandId);
-            $yearsQuery->whereHas('model', fn($q) => $q->where('brand_id', $brandId));
-        }
-
-        if ($modelId) {
-            $modelsQuery->where('id', $modelId);
-            $yearsQuery->where('model_id', $modelId);
-        }
-
-        if ($year) {
-            $yearsQuery->where('year', $year);
-        }
-
-        // Fetch models and remove duplicate combinations
-        $models = $modelsQuery->get()->unique('id')->map(function ($model) {
-            return [
-                'id' => $model->id,
-                'name' => $model->name,
-                'brand_id' => $model->brand_id,
-                'brand_name' => $model->brand->name
-            ];
-        });
-
-        $years = $yearsQuery->get()->unique(fn($item) => $item->year . '-' . $item->model_id)->map(function ($year) {
-            return [
-                'id' => $year->id,
-                'year' => $year->year,
-                'model_id' => $year->model_id,
-                'model_name' => $year->model->name,
-                'brand_id' => $year->model->brand_id,
-                'brand_name' => $year->model->brand->name
-            ];
+        // Cache pendant 1 heure car les marques changent rarement
+        $brands = Cache::remember('motorcycle_brands', 3600, function () {
+            return MotorcycleBrand::select('id', 'name')
+                ->orderBy('name')
+                ->get();
         });
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'brands' => $brands,
-                'models' => $models,
-                'years' => $years,
-            ]
+            'data' => $brands
         ]);
     }
 
     /**
-     * Get all models with years by brand
+     * @OA\Get(
+     *     path="/api/motorcycle/models/{brandId}",
+     *     summary="Get models by brand ID",
+     *     tags={"Motorcycle"},
+     *     @OA\Parameter(
+     *         name="brandId",
+     *         in="path",
+     *         required=true,
+     *         description="Brand ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of models for the brand",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=2),
+     *                     @OA\Property(property="name", type="string", example="CBR500R"),
+     *                     @OA\Property(property="brand_id", type="integer", example=1)
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
      */
-    public function getByBrand($brandId)
+    public function getModelsByBrand($brandId)
     {
-        $modelsWithYears = MotorcycleYear::whereHas('model', function ($q) use ($brandId) {
-            $q->where('brand_id', $brandId);
-        })
-            ->with('model.brand', 'model.type')
-            ->get()
-            ->map(function ($year) {
-                return [
-                    'id' => $year->id,
-                    'display' => $year->model->name . ' / ' . $year->year,
-                    'model_id' => $year->model_id,
-                    'year_id' => $year->id,
-                    'model_name' => $year->model->name,
-                    'brand_name' => $year->model->brand->name,
-                ];
-            });
+        // Validation rapide
+        if (!MotorcycleBrand::where('id', $brandId)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Brand not found'
+            ], 404);
+        }
+
+        // Cache pendant 30 minutes par marque
+        $models = Cache::remember("motorcycle_models_brand_{$brandId}", 1800, function () use ($brandId) {
+            return MotorcycleModel::select('id', 'name', 'brand_id')
+                ->where('brand_id', $brandId)
+                ->orderBy('name')
+                ->get();
+        });
 
         return response()->json([
             'success' => true,
-            'data' => $modelsWithYears
+            'data' => $models
         ]);
     }
 
     /**
-     * Get brand and model details by year ID
+     * @OA\Get(
+     *     path="/api/motorcycle/years/{modelId}",
+     *     summary="Get years by model ID",
+     *     tags={"Motorcycle"},
+     *     @OA\Parameter(
+     *         name="modelId",
+     *         in="path",
+     *         required=true,
+     *         description="Model ID",
+     *         @OA\Schema(type="integer", example=2)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of years for the model",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=3),
+     *                     @OA\Property(property="year", type="integer", example=2022),
+     *                     @OA\Property(property="model_id", type="integer", example=2)
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
      */
-    public function getByYear($yearId)
+    public function getYearsByModel($modelId)
     {
-        $year = MotorcycleYear::with('model.brand')
-            ->findOrFail($yearId);
+        // Validation rapide
+        if (!MotorcycleModel::where('id', $modelId)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Model not found'
+            ], 404);
+        }
+
+        // Cache pendant 15 minutes par modèle
+        $years = Cache::remember("motorcycle_years_model_{$modelId}", 900, function () use ($modelId) {
+            return MotorcycleYear::select('id', 'year', 'model_id')
+                ->where('model_id', $modelId)
+                ->orderBy('year', 'desc') // Années récentes en premier
+                ->get();
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $years
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/motorcycle/details/{yearId}",
+     *     summary="Get complete details by year ID",
+     *     tags={"Motorcycle"},
+     *     @OA\Parameter(
+     *         name="yearId",
+     *         in="path",
+     *         required=true,
+     *         description="Year ID",
+     *         @OA\Schema(type="integer", example=3)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Complete motorcycle details",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="year_id", type="integer", example=3),
+     *                 @OA\Property(property="year", type="integer", example=2022),
+     *                 @OA\Property(property="model_id", type="integer", example=2),
+     *                 @OA\Property(property="model_name", type="string", example="CBR500R"),
+     *                 @OA\Property(property="brand_id", type="integer", example=1),
+     *                 @OA\Property(property="brand_name", type="string", example="Honda")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function getDetailsByYear($yearId)
+    {
+        // Cache pendant 15 minutes
+        $details = Cache::remember("motorcycle_details_year_{$yearId}", 900, function () use ($yearId) {
+            return MotorcycleYear::select('id', 'year', 'model_id')
+                ->with([
+                    'model:id,name,brand_id',
+                    'model.brand:id,name'
+                ])
+                ->where('id', $yearId)
+                ->first();
+        });
+
+        if (!$details) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Year not found'
+            ], 404);
+        }
 
         return response()->json([
             'success' => true,
             'data' => [
-                'year_id' => $year->id,
-                'year' => $year->year,
-                'model_id' => $year->model_id,
-                'model_name' => $year->model->name,
-                'brand_id' => $year->model->brand_id,
-                'brand_name' => $year->model->brand->name,
+                'year_id' => $details->id,
+                'year' => $details->year,
+                'model_id' => $details->model_id,
+                'model_name' => $details->model->name,
+                'brand_id' => $details->model->brand_id,
+                'brand_name' => $details->model->brand->name,
             ]
+        ]);
+    }
+
+    // Méthode utilitaire pour vider le cache si nécessaire
+    public function clearCache()
+    {
+        Cache::forget('motorcycle_brands');
+        // Pattern pour effacer tous les caches de modèles et années
+        $keys = Cache::getRedis()->keys('laravel_cache:motorcycle_*');
+        foreach ($keys as $key) {
+            Cache::getRedis()->del($key);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Cache cleared'
         ]);
     }
 }
