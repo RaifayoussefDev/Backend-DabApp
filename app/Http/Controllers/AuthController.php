@@ -70,92 +70,65 @@ class AuthController extends Controller
      * )
      */
 
-public function register(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'first_name' => 'required|string|max:255',
-        'last_name'  => 'required|string|max:255',
-        'email'      => 'required|email|unique:users',
-        'phone'      => 'required|string|unique:users',
-        'password'   => 'required|string|min:6|confirmed',
-    ]);
+    public function register(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string|max:255',
+            'last_name'  => 'required|string|max:255',
+            'email'      => 'required|email|unique:users',
+            'phone'      => 'required|string|unique:users',
+            'password'   => 'required|string|min:6|confirmed',
+        ]);
 
-    if ($validator->fails()) {
-        return response()->json($validator->errors(), 422);
-    }
-
-    // 🌍 Get country from proxy headers
-    $countryCode = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'MA'; // Default to Morocco
-
-    // 🔎 Load countries JSON
-    $path = storage_path('app/countries.json');
-    $countriesJson = file_exists($path) ? json_decode(file_get_contents($path), true) : [];
-
-    $countryId = null;
-    $formattedPhone = $request->phone;
-    $country = null;
-
-    // Find country by code in JSON
-    $country = collect($countriesJson)->firstWhere('code', strtoupper($countryCode));
-
-    if ($country) {
-        // Clean the phone number
-        $cleanPhone = preg_replace('/\D+/', '', $request->phone);
-
-        // Check if user already included country code
-        $dialCodeWithoutPlus = ltrim($country['dial_code'], '+');
-
-        // If phone already starts with country code, don't add it again
-        if (str_starts_with($cleanPhone, $dialCodeWithoutPlus)) {
-            $formattedPhone = '+' . $cleanPhone;
-        } else {
-            // Remove leading 0 if present (local format)
-            if (substr($cleanPhone, 0, 1) === '0') {
-                $cleanPhone = substr($cleanPhone, 1);
-            }
-            $formattedPhone = $country['dial_code'] . $cleanPhone;
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
         }
 
-        // Find country ID in database
-        $dbCountry = DB::table('countries')
-            ->select('id')
-            ->where('code', $country['code'])
-            ->first();
+        // 🌍 Get country from proxy headers (returns country NAME like "Saudi Arabia")
+        $countryName = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Morocco'; // Default to Morocco
 
-        $countryId = $dbCountry ? $dbCountry->id : null;
+        // ✅ Use helper to process country and phone by NAME
+        $countryData = \App\Helpers\CountryHelper::processCountryAndPhoneByName($request->phone, $countryName);
+
+        Log::info('Registration with country processing', [
+            'original_phone' => $request->phone,
+            'country_name' => $countryName,
+            'formatted_phone' => $countryData['formatted_phone'],
+            'country_code' => $countryData['country_code'],
+            'country_id' => $countryData['country_id'], // ✅ Can be NULL
+            'exists_in_db' => $countryData['country_id'] ? 'yes' : 'no'
+        ]);
+
+        // ✅ Create user
+        $user = User::create([
+            'first_name' => $request->first_name,
+            'last_name'  => $request->last_name,
+            'email'      => $request->email,
+            'phone'      => $countryData['formatted_phone'],
+            'password'   => Hash::make($request->password),
+            'role_id'    => $request->role_id ?? 1, // Default role if not provided
+            'verified'   => false,
+            'is_active'  => true,
+            'is_online'  => false,
+            'language'   => 'fr',
+            'timezone'   => 'Africa/Casablanca',
+            'two_factor_enabled' => true,
+            'country_id' => $countryData['country_id'], // ✅ NULL if not in DB
+        ]);
+
+        $token = JWTAuth::fromUser($user);
+        $tokenExpiration = now()->addMonth();
+
+        return response()->json([
+            'user' => $user,
+            'token' => $token,
+            'expires_at' => $tokenExpiration->toDateTimeString(),
+            'country' => $countryData['country_name'],
+            'country_code' => $countryData['country_code'],
+            'country_id' => $countryData['country_id'],
+            'formatted_phone' => $countryData['formatted_phone'],
+        ]);
     }
-
-    // ✅ Create user
-    $user = User::create([
-        'first_name' => $request->first_name,
-        'last_name'  => $request->last_name,
-        'email'      => $request->email,
-        'phone'      => $formattedPhone,
-        'password'   => Hash::make($request->password),
-        'role_id'    => $request->role_id,
-        'verified'   => false,
-        'is_active'  => true,
-        'is_online'  => false,
-        'language'   => 'fr',
-        'timezone'   => 'Africa/Casablanca',
-        'two_factor_enabled' => true,
-        'country_id' => $countryId,
-
-    ]);
-
-    $token = JWTAuth::fromUser($user);
-    $tokenExpiration = now()->addMonth();
-
-    return response()->json([
-        'user' => $user,
-        'token' => $token,
-        'expires_at' => $tokenExpiration->toDateTimeString(),
-        'country' => $country ? $country['name'] : 'Unknown',
-        'country_id' => $countryId,
-        'formatted_phone' => $formattedPhone,
-        'continent' => $countryCode
-    ]);
-}
 
 
 
