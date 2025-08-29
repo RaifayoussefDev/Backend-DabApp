@@ -92,10 +92,6 @@
                                         "otp_sent_via": {
                                             "type": "string",
                                             "example": "whatsapp"
-                                        },
-                                        "token": {
-                                            "type": "string",
-                                            "example": "eyJ0eXAiOiJKV1QiLC..."
                                         }
                                     },
                                     "type": "object"

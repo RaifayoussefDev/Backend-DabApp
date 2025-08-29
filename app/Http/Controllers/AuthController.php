@@ -67,7 +67,7 @@ class AuthController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name'  => 'required|string|max:255',
             'email'      => 'required|email|unique:users',
-            'phone'      => 'required|string|unique:users',
+            'phone'      => 'required|string',
             'password'   => 'required|string|min:6|confirmed',
         ]);
 
@@ -80,13 +80,35 @@ class AuthController extends Controller
 
         // Use helper to process country and phone
         $countryData = CountryHelper::processCountryAndPhoneByName($request->phone, $countryName);
+        $formattedPhone = $countryData['formatted_phone'];
 
         Log::info('Registration with country processing', [
             'original_phone' => $request->phone,
             'country_name' => $countryName,
-            'formatted_phone' => $countryData['formatted_phone'],
+            'formatted_phone' => $formattedPhone,
             'country_code' => $countryData['country_code'],
             'country_id' => $countryData['country_id'],
+        ]);
+
+        // Check if the formatted phone number already exists in database
+        $existingUser = User::where('phone', $formattedPhone)->first();
+
+        if ($existingUser) {
+            Log::warning('Phone number already exists in database', [
+                'formatted_phone' => $formattedPhone,
+                'existing_user_id' => $existingUser->id,
+                'existing_user_email' => $existingUser->email
+            ]);
+
+            return response()->json([
+                'error' => 'Phone number already exists',
+                'phone' => $formattedPhone,
+                'message' => 'This phone number is already registered with another account'
+            ], 422);
+        }
+
+        Log::info('Phone number is unique, proceeding with registration', [
+            'formatted_phone' => $formattedPhone
         ]);
 
         // Create user with 2FA enabled by default
@@ -94,7 +116,7 @@ class AuthController extends Controller
             'first_name' => $request->first_name,
             'last_name'  => $request->last_name,
             'email'      => $request->email,
-            'phone'      => $countryData['formatted_phone'],
+            'phone'      => $formattedPhone,
             'password'   => Hash::make($request->password),
             'role_id'    => $request->role_id ?? 1,
             'verified'   => false,
@@ -104,6 +126,12 @@ class AuthController extends Controller
             'timezone'   => 'Africa/Casablanca',
             'two_factor_enabled' => true,
             'country_id' => $countryData['country_id'],
+        ]);
+
+        Log::info('User created successfully', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'phone' => $user->phone
         ]);
 
         // Generate and send OTP
@@ -123,6 +151,12 @@ class AuthController extends Controller
         $otpSentVia = $this->sendOtpWithWhatsAppFirst($user, $otp);
 
         if ($otpSentVia === 'failed') {
+            Log::error('Failed to send OTP during registration', [
+                'user_id' => $user->id,
+                'phone' => $user->phone,
+                'email' => $user->email
+            ]);
+
             return response()->json([
                 'error' => 'Registration successful but failed to send OTP. Please login to resend.',
                 'user_id' => $user->id
@@ -137,7 +171,7 @@ class AuthController extends Controller
             'country' => $countryData['country_name'],
             'country_code' => $countryData['country_code'],
             'country_id' => $countryData['country_id'],
-            'formatted_phone' => $countryData['formatted_phone'],
+            'formatted_phone' => $formattedPhone,
             'otp_sent_via' => $otpSentVia
         ], 202);
     }
@@ -406,7 +440,7 @@ class AuthController extends Controller
         return $phone;
     }
 
- /**
+    /**
      * @OA\Post(
      *     path="/api/resend-otp",
      *     summary="Resend OTP code",
