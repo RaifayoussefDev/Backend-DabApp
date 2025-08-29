@@ -637,33 +637,34 @@ class AuthController extends Controller
             ]
         );
 
-        // Send OTP via email only
-        try {
-            $user->notify(new SendOtpNotification($otp));
+        // Use the same logic as login - force email only by temporarily removing phone
+        $originalPhone = $user->phone;
+        $user->phone = null; // Temporarily remove phone to force email
 
-            Log::info('OTP resent via email', [
-                'user_id' => $user->id,
-                'email' => $user->email
-            ]);
+        $otpSentVia = $this->sendOtpWithWhatsAppFirst($user, $otp);
 
-            return response()->json([
-                'message' => 'A new OTP has been sent to your email',
-                'otp_sent_via' => 'email',
-                'user_id' => $user->id,
-                'email' => $user->email
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to send OTP via email in resendOtpEmail', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+        $user->phone = $originalPhone; // Restore original phone
 
+        if ($otpSentVia === 'failed') {
             return response()->json([
                 'error' => 'Failed to send OTP via email. Please try again later.'
             ], 500);
         }
+
+        if ($otpSentVia !== 'email') {
+            Log::warning('Expected email but got different method', [
+                'user_id' => $user->id,
+                'expected' => 'email',
+                'actual' => $otpSentVia
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'A new OTP has been sent to your email',
+            'otp_sent_via' => 'email', // Always return email since that's what this endpoint is for
+            'user_id' => $user->id,
+            'email' => $user->email
+        ]);
     }
 
     /**
