@@ -284,10 +284,12 @@
                                 ],
                                 "properties": {
                                     "login": {
+                                        "description": "User email or phone number",
                                         "type": "string",
-                                        "example": "john.doe@example.com"
+                                        "example": "john.doe@example.com or +212695388904"
                                     },
                                     "otp": {
+                                        "description": "4-digit OTP code",
                                         "type": "string",
                                         "example": "1234"
                                     }
@@ -299,10 +301,88 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "OTP valid, authentication successful"
+                        "description": "OTP valid, authentication successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "description": "User information",
+                                            "type": "object"
+                                        },
+                                        "token": {
+                                            "description": "JWT authentication token",
+                                            "type": "string"
+                                        },
+                                        "token_expiration": {
+                                            "description": "Token expiration timestamp",
+                                            "type": "string",
+                                            "format": "date-time"
+                                        },
+                                        "country": {
+                                            "type": "string",
+                                            "example": "Morocco"
+                                        },
+                                        "continent": {
+                                            "type": "string",
+                                            "example": "Africa"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Invalid or expired OTP"
+                        "description": "Invalid or expired OTP",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Invalid or expired OTP"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "User not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }

@@ -815,17 +815,42 @@ class AuthController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"login", "otp"},
-     *             @OA\Property(property="login", type="string", example="john.doe@example.com"),
-     *             @OA\Property(property="otp", type="string", example="1234")
+     *             @OA\Property(property="login", type="string", example="john.doe@example.com or +212695388904", description="User email or phone number"),
+     *             @OA\Property(property="otp", type="string", example="1234", description="4-digit OTP code")
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="OTP valid, authentication successful"
+     *         description="OTP valid, authentication successful",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="user", type="object", description="User information"),
+     *             @OA\Property(property="token", type="string", description="JWT authentication token"),
+     *             @OA\Property(property="token_expiration", type="string", format="date-time", description="Token expiration timestamp"),
+     *             @OA\Property(property="country", type="string", example="Morocco"),
+     *             @OA\Property(property="continent", type="string", example="Africa")
+     *         )
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="Invalid or expired OTP"
+     *         description="Invalid or expired OTP",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Invalid or expired OTP")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="User not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(property="errors", type="object")
+     *         )
      *     )
      * )
      */
@@ -833,17 +858,26 @@ class AuthController extends Controller
     {
         $request->validate([
             'login' => 'required|string',
-            'otp' => 'required|string',
+            'otp' => 'required|string|size:4',
         ]);
 
-        // Find user
-        $user = filter_var($request->login, FILTER_VALIDATE_EMAIL)
-            ? User::where('email', $request->login)->first()
-            : User::where('phone', $request->login)->first();
+        // Find user with flexible phone matching
+        $user = $this->findUserByLogin($request->login);
 
         if (!$user) {
+            Log::warning('User not found for OTP verification', [
+                'login' => $request->login,
+                'login_type' => filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone'
+            ]);
             return response()->json(['error' => 'User not found'], 404);
         }
+
+        Log::info('User found for OTP verification', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'login_attempted' => $request->login
+        ]);
 
         // Verify OTP
         $otpRecord = DB::table('otps')
@@ -853,16 +887,29 @@ class AuthController extends Controller
             ->first();
 
         if (!$otpRecord) {
+            Log::warning('Invalid or expired OTP attempt', [
+                'user_id' => $user->id,
+                'otp_provided' => $request->otp,
+                'login' => $request->login
+            ]);
             return response()->json(['error' => 'Invalid or expired OTP'], 401);
         }
 
         // Delete OTP after use
         DB::table('otps')->where('id', $otpRecord->id)->delete();
 
+        Log::info('OTP verified successfully', [
+            'user_id' => $user->id,
+            'email' => $user->email
+        ]);
+
         // Mark user as verified if not already
         if (!$user->verified) {
             $user->verified = true;
             $user->save();
+            Log::info('User marked as verified', [
+                'user_id' => $user->id
+            ]);
         }
 
         // Extract country & continent
@@ -889,6 +936,11 @@ class AuthController extends Controller
                 'connection_date' => now(),
             ]
         );
+
+        Log::info('User authentication completed after OTP verification', [
+            'user_id' => $user->id,
+            'token_expiration' => $tokenExpiration
+        ]);
 
         return response()->json([
             'user' => $user,
