@@ -140,6 +140,7 @@ public function register(Request $request)
         'timezone'   => 'Africa/Casablanca',
         'two_factor_enabled' => true,
         'country_id' => $countryId,
+
     ]);
 
     $token = JWTAuth::fromUser($user);
@@ -152,6 +153,7 @@ public function register(Request $request)
         'country' => $country ? $country['name'] : 'Unknown',
         'country_id' => $countryId,
         'formatted_phone' => $formattedPhone,
+        'continent' => $countryCode
     ]);
 }
 
