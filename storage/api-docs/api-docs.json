@@ -124,7 +124,7 @@
                                 "properties": {
                                     "login": {
                                         "type": "string",
-                                        "example": "john.doe@example.com"
+                                        "example": "john.doe@example.com or +123456789"
                                     },
                                     "password": {
                                         "type": "string",

@@ -185,7 +185,7 @@ class AuthController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"login","password"},
-     *             @OA\Property(property="login", type="string", example="john.doe@example.com"),
+     *             @OA\Property(property="login", type="string", example="john.doe@example.com or +123456789"),
      *             @OA\Property(property="password", type="string", format="password", example="secret123")
      *         )
      *     ),
@@ -224,19 +224,83 @@ class AuthController extends Controller
         $login = $request->input('login');
         $password = $request->input('password');
 
-        $user = User::where('email', $login)->first();
+        // Find user by email or phone
+        $user = null;
+
+        if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
+            // Login is an email
+            $user = User::where('email', $login)->first();
+            Log::info('Login attempt with email', ['email' => $login]);
+        } else {
+            // Login is potentially a phone number - try different formats
+
+            // First, try exact match
+            $user = User::where('phone', $login)->first();
+
+            if (!$user) {
+                // If no exact match, try with country processing
+                $countryName = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Morocco';
+
+                try {
+                    $countryData = CountryHelper::processCountryAndPhoneByName($login, $countryName);
+                    $formattedPhone = $countryData['formatted_phone'];
+
+                    Log::info('Trying login with formatted phone', [
+                        'original' => $login,
+                        'formatted' => $formattedPhone
+                    ]);
+
+                    $user = User::where('phone', $formattedPhone)->first();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to format phone for login', [
+                        'phone' => $login,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            if (!$user) {
+                // Try removing/adding + prefix
+                if (str_starts_with($login, '+')) {
+                    $phoneWithoutPlus = substr($login, 1);
+                    $user = User::where('phone', $phoneWithoutPlus)->first();
+                } else {
+                    $phoneWithPlus = '+' . $login;
+                    $user = User::where('phone', $phoneWithPlus)->first();
+                }
+            }
+
+            Log::info('Login attempt with phone', [
+                'phone' => $login,
+                'user_found' => $user ? true : false
+            ]);
+        }
 
         if (!$user || !Hash::check($password, $user->password)) {
+            Log::warning('Login failed - invalid credentials', [
+                'login' => $login,
+                'user_found' => $user ? true : false
+            ]);
             return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
         if (!$user->is_active) {
+            Log::warning('Login failed - user inactive', [
+                'user_id' => $user->id,
+                'email' => $user->email
+            ]);
             return response()->json(['error' => 'User is inactive'], 403);
         }
 
         $user->is_online = 1;
         $user->last_login = now();
         $user->save();
+
+        Log::info('User logged in successfully', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'login_method' => filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone'
+        ]);
 
         // Extract country & continent from proxy headers
         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
@@ -277,6 +341,12 @@ class AuthController extends Controller
             $otpSentVia = $this->sendOtpWithWhatsAppFirst($user, $otp);
 
             if ($otpSentVia === 'failed') {
+                Log::error('Failed to send OTP during login', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'phone' => $user->phone
+                ]);
+
                 return response()->json([
                     'error' => 'Unable to send OTP code. Please try again later.',
                     'user_id' => $user->id
