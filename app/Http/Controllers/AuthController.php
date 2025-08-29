@@ -511,6 +511,57 @@ class AuthController extends Controller
     }
 
     /**
+     * Find user by login (email or phone) with flexible phone matching
+     */
+    private function findUserByLogin($login)
+    {
+        if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
+            // Login is an email
+            return User::where('email', $login)->first();
+        } else {
+            // Login is potentially a phone number - try different formats
+
+            // First, try exact match
+            $user = User::where('phone', $login)->first();
+
+            if (!$user) {
+                // If no exact match, try with country processing
+                $countryName = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Morocco';
+
+                try {
+                    $countryData = CountryHelper::processCountryAndPhoneByName($login, $countryName);
+                    $formattedPhone = $countryData['formatted_phone'];
+
+                    Log::info('Trying to find user with formatted phone', [
+                        'original' => $login,
+                        'formatted' => $formattedPhone
+                    ]);
+
+                    $user = User::where('phone', $formattedPhone)->first();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to format phone for user search', [
+                        'phone' => $login,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            if (!$user) {
+                // Try removing/adding + prefix
+                if (str_starts_with($login, '+')) {
+                    $phoneWithoutPlus = substr($login, 1);
+                    $user = User::where('phone', $phoneWithoutPlus)->first();
+                } else {
+                    $phoneWithPlus = '+' . $login;
+                    $user = User::where('phone', $phoneWithPlus)->first();
+                }
+            }
+
+            return $user;
+        }
+    }
+
+    /**
      * @OA\Post(
      *     path="/api/resend-otp",
      *     summary="Resend OTP code",
@@ -519,7 +570,7 @@ class AuthController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"login"},
-     *             @OA\Property(property="login", type="string", example="john.doe@example.com"),
+     *             @OA\Property(property="login", type="string", example="john.doe@example.com or +123456789"),
      *             @OA\Property(property="method", type="string", enum={"whatsapp", "email"}, example="email")
      *         )
      *     ),
@@ -546,14 +597,23 @@ class AuthController extends Controller
             ], 429);
         }
 
-        // Find user
-        $user = filter_var($request->login, FILTER_VALIDATE_EMAIL)
-            ? User::where('email', $request->login)->first()
-            : User::where('phone', $request->login)->first();
+        // Find user with flexible phone matching
+        $user = $this->findUserByLogin($request->login);
 
         if (!$user) {
+            Log::warning('User not found for resend OTP', [
+                'login' => $request->login,
+                'login_type' => filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone'
+            ]);
             return response()->json(['error' => 'User not found'], 404);
         }
+
+        Log::info('User found for resend OTP', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'login_attempted' => $request->login
+        ]);
 
         // Generate new OTP
         $otp = rand(1000, 9999);
@@ -653,7 +713,7 @@ class AuthController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"login"},
-     *             @OA\Property(property="login", type="string", example="john.doe@example.com")
+     *             @OA\Property(property="login", type="string", example="john.doe@example.com or +123456789")
      *         )
      *     ),
      *     @OA\Response(
@@ -678,18 +738,27 @@ class AuthController extends Controller
             ], 429);
         }
 
-        // Find user
-        $user = filter_var($request->login, FILTER_VALIDATE_EMAIL)
-            ? User::where('email', $request->login)->first()
-            : User::where('phone', $request->login)->first();
+        // Find user with flexible phone matching
+        $user = $this->findUserByLogin($request->login);
 
         if (!$user) {
+            Log::warning('User not found for resend OTP email', [
+                'login' => $request->login,
+                'login_type' => filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone'
+            ]);
             return response()->json(['error' => 'User not found'], 404);
         }
 
         if (empty($user->email)) {
             return response()->json(['error' => 'User has no email address'], 400);
         }
+
+        Log::info('User found for resend OTP email', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'login_attempted' => $request->login
+        ]);
 
         // Set rate limiting
         Cache::put($cacheKey, now(), 60);

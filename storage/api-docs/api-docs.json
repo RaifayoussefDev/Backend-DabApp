@@ -210,7 +210,7 @@
                                 "properties": {
                                     "login": {
                                         "type": "string",
-                                        "example": "john.doe@example.com"
+                                        "example": "john.doe@example.com or +123456789"
                                     },
                                     "method": {
                                         "type": "string",
@@ -251,7 +251,7 @@
                                 "properties": {
                                     "login": {
                                         "type": "string",
-                                        "example": "john.doe@example.com"
+                                        "example": "john.doe@example.com or +123456789"
                                     }
                                 },
                                 "type": "object"
