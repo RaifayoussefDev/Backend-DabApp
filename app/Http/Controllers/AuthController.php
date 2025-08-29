@@ -52,8 +52,7 @@ class AuthController extends Controller
      *             @OA\Property(property="user", type="object"),
      *             @OA\Property(property="requiresOTP", type="boolean", example=true),
      *             @OA\Property(property="user_id", type="integer", example=1),
-     *             @OA\Property(property="otp_sent_via", type="string", example="whatsapp"),
-     *             @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLC...")
+     *             @OA\Property(property="otp_sent_via", type="string", example="whatsapp")
      *         )
      *     ),
      *     @OA\Response(
@@ -107,28 +106,6 @@ class AuthController extends Controller
             'country_id' => $countryData['country_id'],
         ]);
 
-        // Extract country & continent from proxy headers
-        $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
-        $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
-
-        // Create token with claims
-        $token = JWTAuth::claims([
-            'country' => $country,
-            'continent' => $continent,
-        ])->fromUser($user);
-
-        $tokenExpiration = now()->addMonth();
-
-        Authentication::updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'token' => $token,
-                'token_expiration' => $tokenExpiration,
-                'is_online' => true,
-                'connection_date' => now(),
-            ]
-        );
-
         // Generate and send OTP
         $otp = rand(1000, 9999);
 
@@ -142,8 +119,8 @@ class AuthController extends Controller
             ]
         );
 
-        // Send OTP with fallback
-        $otpSentVia = $this->sendOtpWithFallback($user, $otp);
+        // Send OTP with WhatsApp first, email fallback
+        $otpSentVia = $this->sendOtpWithWhatsAppFirst($user, $otp);
 
         if ($otpSentVia === 'failed') {
             return response()->json([
@@ -161,9 +138,7 @@ class AuthController extends Controller
             'country_code' => $countryData['country_code'],
             'country_id' => $countryData['country_id'],
             'formatted_phone' => $countryData['formatted_phone'],
-            'otp_sent_via' => $otpSentVia,
-            'token' => $token,
-            'expires_at' => $tokenExpiration->toDateTimeString(),
+            'otp_sent_via' => $otpSentVia
         ], 202);
     }
 
@@ -264,8 +239,8 @@ class AuthController extends Controller
                 ]
             );
 
-            // Send OTP with fallback
-            $otpSentVia = $this->sendOtpWithFallback($user, $otp);
+            // Send OTP with WhatsApp first, email fallback
+            $otpSentVia = $this->sendOtpWithWhatsAppFirst($user, $otp);
 
             if ($otpSentVia === 'failed') {
                 return response()->json([
@@ -294,6 +269,49 @@ class AuthController extends Controller
             'country' => $country,
             'continent' => $continent
         ]);
+    }
+
+
+    private function sendOtpWithWhatsAppFirst(User $user, $otp)
+    {
+        // Try WhatsApp first if user has phone number
+        if (!empty($user->phone)) {
+            $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
+
+            if ($whatsappSent) {
+                Log::info('OTP sent via WhatsApp', [
+                    'user_id' => $user->id,
+                    'phone' => $user->phone
+                ]);
+                return 'whatsapp';
+            } else {
+                Log::info('WhatsApp OTP failed, trying email fallback', [
+                    'user_id' => $user->id,
+                    'phone' => $user->phone
+                ]);
+            }
+        }
+
+        // Fallback to email if WhatsApp failed or no phone
+        try {
+            if (empty($user->email)) {
+                throw new \Exception('User has no email address');
+            }
+
+            $user->notify(new SendOtpNotification($otp));
+            Log::info('OTP sent via Email (WhatsApp fallback)', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'reason' => empty($user->phone) ? 'no_phone' : 'whatsapp_failed'
+            ]);
+            return 'email';
+        } catch (\Exception $e) {
+            Log::error('Failed to send OTP via both WhatsApp and Email', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+            return 'failed';
+        }
     }
 
     /**
@@ -388,7 +406,7 @@ class AuthController extends Controller
         return $phone;
     }
 
-    /**
+ /**
      * @OA\Post(
      *     path="/api/resend-otp",
      *     summary="Resend OTP code",
@@ -446,14 +464,14 @@ class AuthController extends Controller
             ]
         );
 
-        $preferredMethod = $request->method;
-        $otpSentVia = 'failed';
-
         // Set rate limiting
         Cache::put($cacheKey, now(), 60);
 
+        $preferredMethod = $request->method;
+        $otpSentVia = 'failed';
+
         if ($preferredMethod === 'whatsapp' && !empty($user->phone)) {
-            // Try WhatsApp first
+            // User specifically requested WhatsApp
             $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
             if ($whatsappSent) {
                 $otpSentVia = 'whatsapp';
@@ -463,6 +481,10 @@ class AuthController extends Controller
                     if (!empty($user->email)) {
                         $user->notify(new SendOtpNotification($otp));
                         $otpSentVia = 'email';
+                        Log::info('Resend OTP via email (WhatsApp fallback)', [
+                            'user_id' => $user->id,
+                            'email' => $user->email
+                        ]);
                     }
                 } catch (\Exception $e) {
                     Log::error('Failed to send OTP via email after WhatsApp failed', [
@@ -472,7 +494,7 @@ class AuthController extends Controller
                 }
             }
         } elseif ($preferredMethod === 'email' && !empty($user->email)) {
-            // Try email first
+            // User specifically requested email
             try {
                 $user->notify(new SendOtpNotification($otp));
                 $otpSentVia = 'email';
@@ -487,12 +509,16 @@ class AuthController extends Controller
                     $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
                     if ($whatsappSent) {
                         $otpSentVia = 'whatsapp';
+                        Log::info('Resend OTP via WhatsApp (email fallback)', [
+                            'user_id' => $user->id,
+                            'phone' => $user->phone
+                        ]);
                     }
                 }
             }
         } else {
-            // Use automatic fallback
-            $otpSentVia = $this->sendOtpWithFallback($user, $otp);
+            // No specific method requested, use WhatsApp first fallback
+            $otpSentVia = $this->sendOtpWithWhatsAppFirst($user, $otp);
         }
 
         if ($otpSentVia === 'failed') {
