@@ -10,25 +10,21 @@ use App\Notifications\SendOtpNotification;
 use App\Notifications\PasswordResetNotification;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Cache;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Exception\Auth\EmailExists;
-
 use Kreait\Firebase\Exception\Auth\InvalidPassword;
 use Kreait\Firebase\Exception\Auth\UserNotFound;
-
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-
-
 
 class AuthController extends Controller
 {
     private $whatsappApiUrl = 'https://api.360messenger.com/v2/sendMessage';
     private $whatsappApiToken = 'pj0y5xb38khWfp0V0qppIxwKelv7tgTg5yx';
-
 
     /**
      * @OA\Post(
@@ -49,27 +45,23 @@ class AuthController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=200,
-     *         description="Inscription réussie",
+     *         response=202,
+     *         description="Registration successful, OTP required",
      *         @OA\JsonContent(
-     *             @OA\Property(property="user", type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="first_name", type="string", example="John"),
-     *                 @OA\Property(property="last_name", type="string", example="Doe"),
-     *                 @OA\Property(property="email", type="string", example="john.doe@example.com"),
-     *                 @OA\Property(property="phone", type="string", example="+123456789"),
-     *                 @OA\Property(property="role_id", type="integer", example=2)
-     *             ),
+     *             @OA\Property(property="message", type="string", example="Registration successful, OTP required for verification"),
+     *             @OA\Property(property="user", type="object"),
+     *             @OA\Property(property="requiresOTP", type="boolean", example=true),
+     *             @OA\Property(property="user_id", type="integer", example=1),
+     *             @OA\Property(property="otp_sent_via", type="string", example="whatsapp"),
      *             @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLC...")
      *         )
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Données invalides"
+     *         description="Validation error"
      *     )
      * )
      */
-
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -84,58 +76,101 @@ class AuthController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        // 🌍 Get country from proxy headers (returns country NAME like "Saudi Arabia")
-        $countryName = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Morocco'; // Default to Morocco
+        // Get country from proxy headers
+        $countryName = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Morocco';
 
-        // ✅ Use helper to process country and phone by NAME
-        $countryData = \App\Helpers\CountryHelper::processCountryAndPhoneByName($request->phone, $countryName);
+        // Use helper to process country and phone
+        $countryData = CountryHelper::processCountryAndPhoneByName($request->phone, $countryName);
 
         Log::info('Registration with country processing', [
             'original_phone' => $request->phone,
             'country_name' => $countryName,
             'formatted_phone' => $countryData['formatted_phone'],
             'country_code' => $countryData['country_code'],
-            'country_id' => $countryData['country_id'], // ✅ Can be NULL
-            'exists_in_db' => $countryData['country_id'] ? 'yes' : 'no'
+            'country_id' => $countryData['country_id'],
         ]);
 
-        // ✅ Create user
+        // Create user with 2FA enabled by default
         $user = User::create([
             'first_name' => $request->first_name,
             'last_name'  => $request->last_name,
             'email'      => $request->email,
             'phone'      => $countryData['formatted_phone'],
             'password'   => Hash::make($request->password),
-            'role_id'    => $request->role_id ?? 1, // Default role if not provided
+            'role_id'    => $request->role_id ?? 1,
             'verified'   => false,
             'is_active'  => true,
             'is_online'  => false,
             'language'   => 'fr',
             'timezone'   => 'Africa/Casablanca',
             'two_factor_enabled' => true,
-            'country_id' => $countryData['country_id'], // ✅ NULL if not in DB
+            'country_id' => $countryData['country_id'],
         ]);
 
-        $token = JWTAuth::fromUser($user);
+        // Extract country & continent from proxy headers
+        $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
+        $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
+
+        // Create token with claims
+        $token = JWTAuth::claims([
+            'country' => $country,
+            'continent' => $continent,
+        ])->fromUser($user);
+
         $tokenExpiration = now()->addMonth();
 
+        Authentication::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'token' => $token,
+                'token_expiration' => $tokenExpiration,
+                'is_online' => true,
+                'connection_date' => now(),
+            ]
+        );
+
+        // Generate and send OTP
+        $otp = rand(1000, 9999);
+
+        DB::table('otps')->updateOrInsert(
+            ['user_id' => $user->id],
+            [
+                'code' => $otp,
+                'expires_at' => now()->addMinutes(5),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        // Send OTP with fallback
+        $otpSentVia = $this->sendOtpWithFallback($user, $otp);
+
+        if ($otpSentVia === 'failed') {
+            return response()->json([
+                'error' => 'Registration successful but failed to send OTP. Please login to resend.',
+                'user_id' => $user->id
+            ], 500);
+        }
+
         return response()->json([
-            'user' => $user,
-            'token' => $token,
-            'expires_at' => $tokenExpiration->toDateTimeString(),
+            'message' => 'Registration successful, OTP required for verification',
+            'user' => $user->only(['id', 'first_name', 'last_name', 'email', 'phone']),
+            'requiresOTP' => true,
+            'user_id' => $user->id,
             'country' => $countryData['country_name'],
             'country_code' => $countryData['country_code'],
             'country_id' => $countryData['country_id'],
             'formatted_phone' => $countryData['formatted_phone'],
-        ]);
+            'otp_sent_via' => $otpSentVia,
+            'token' => $token,
+            'expires_at' => $tokenExpiration->toDateTimeString(),
+        ], 202);
     }
-
-
 
     /**
      * @OA\Post(
      *     path="/api/login",
-     *     summary="Connexion d'un utilisateur",
+     *     summary="User login",
      *     tags={"Authentification"},
      *     @OA\RequestBody(
      *         required=true,
@@ -147,49 +182,29 @@ class AuthController extends Controller
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Connexion réussie (sans 2FA)",
+     *         description="Successful login without 2FA",
      *         @OA\JsonContent(
-     *             @OA\Property(property="user", type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="first_name", type="string", example="John"),
-     *                 @OA\Property(property="last_name", type="string", example="Doe"),
-     *                 @OA\Property(property="email", type="string", example="john.doe@example.com"),
-     *                 @OA\Property(property="phone", type="string", example="+123456789"),
-     *                 @OA\Property(property="role_id", type="integer", example=2)
-     *             ),
-     *             @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLC..."),
-     *             @OA\Property(property="token_expiration", type="string", example="2025-04-17 10:45:00")
+     *             @OA\Property(property="user", type="object"),
+     *             @OA\Property(property="token", type="string"),
+     *             @OA\Property(property="token_expiration", type="string")
      *         )
      *     ),
      *     @OA\Response(
      *         response=202,
-     *         description="Connexion avec OTP requis",
+     *         description="Login with OTP required",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="OTP requis"),
-     *             @OA\Property(property="user_id", type="integer", example=1),
-     *             @OA\Property(property="first_name", type="string", example="John"),
-     *             @OA\Property(property="last_name", type="string", example="Doe"),
-     *             @OA\Property(property="phone", type="string", example="+123456789")
+     *             @OA\Property(property="message", type="string", example="OTP required"),
+     *             @OA\Property(property="requiresOTP", type="boolean", example=true),
+     *             @OA\Property(property="user_id", type="integer"),
+     *             @OA\Property(property="otp_sent_via", type="string", example="whatsapp")
      *         )
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="Identifiants invalides",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="Invalid credentials")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Utilisateur inactif",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="User is inactive")
-     *         )
+     *         description="Invalid credentials"
      *     )
      * )
      */
-
-
     public function login(Request $request)
     {
         $request->validate([
@@ -207,18 +222,18 @@ class AuthController extends Controller
         }
 
         if (!$user->is_active) {
-            return response()->json(['error' => 'Utilisateur inactif'], 403);
+            return response()->json(['error' => 'User is inactive'], 403);
         }
 
         $user->is_online = 1;
         $user->last_login = now();
         $user->save();
 
-        // ✅ Extract country & continent from proxy headers
+        // Extract country & continent from proxy headers
         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
         $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
 
-        // 🔐 Add country and continent to JWT
+        // Create token with claims
         $token = JWTAuth::claims([
             'country' => $country,
             'continent' => $continent,
@@ -249,13 +264,12 @@ class AuthController extends Controller
                 ]
             );
 
-            // 🚀 Essayer WhatsApp en premier, puis email en fallback
+            // Send OTP with fallback
             $otpSentVia = $this->sendOtpWithFallback($user, $otp);
 
-            // Vérifier si l'envoi a échoué
             if ($otpSentVia === 'failed') {
                 return response()->json([
-                    'error' => 'Impossible d\'envoyer le code OTP. Veuillez réessayer plus tard.',
+                    'error' => 'Unable to send OTP code. Please try again later.',
                     'user_id' => $user->id
                 ], 500);
             }
@@ -269,7 +283,7 @@ class AuthController extends Controller
                 'last_name' => $user->last_name,
                 'phone' => $user->phone,
                 'country' => $country,
-                'otp_sent_via' => $otpSentVia // 'whatsapp', 'email', ou 'failed'
+                'otp_sent_via' => $otpSentVia
             ], 202);
         }
 
@@ -287,7 +301,7 @@ class AuthController extends Controller
      */
     private function sendOtpWithFallback(User $user, $otp)
     {
-        // First, try WhatsApp if user has phone number
+        // Try WhatsApp first if user has phone number
         if (!empty($user->phone)) {
             $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
 
@@ -302,6 +316,10 @@ class AuthController extends Controller
 
         // Fallback to email
         try {
+            if (empty($user->email)) {
+                throw new \Exception('User has no email address');
+            }
+
             $user->notify(new SendOtpNotification($otp));
             Log::info('OTP sent via Email (WhatsApp fallback)', [
                 'user_id' => $user->id,
@@ -317,7 +335,6 @@ class AuthController extends Controller
             return 'failed';
         }
     }
-
 
     /**
      * Send OTP via WhatsApp
@@ -357,165 +374,150 @@ class AuthController extends Controller
         }
     }
 
-
     /**
-     * Format phone number for Morocco
+     * Format phone number
      */
     private function formatPhoneNumber($phone)
     {
-        // Nettoyer le numéro de tous les caractères non numériques sauf le +
         $phone = preg_replace('/[^\d+]/', '', $phone);
 
-        // Si le numéro commence par +, enlever le +
         if (str_starts_with($phone, '+')) {
             $phone = substr($phone, 1);
         }
 
-        // Si le numéro ne commence pas par un code pays, on le retourne tel quel
-        // (l'utilisateur devra fournir un numéro au format international)
         return $phone;
     }
 
-/**
- * @OA\Post(
- *     path="/api/resend-otp",
- *     summary="Resend OTP code for two-factor authentication",
- *     tags={"Authentification"},
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             required={"login"},
- *             @OA\Property(property="login", type="string", example="john.doe@example.com"),
- *             @OA\Property(property="method", type="string", enum={"whatsapp", "email"}, example="email", description="Preferred method to send OTP")
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="OTP resent successfully",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="OTP code has been resent"),
- *             @OA\Property(property="otp_sent_via", type="string", example="email"),
- *             @OA\Property(property="user_id", type="integer", example=1)
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="User not found",
- *         @OA\JsonContent(
- *             @OA\Property(property="error", type="string", example="User not found")
- *         )
- *     ),
- *     @OA\Response(
- *         response=429,
- *         description="Too many requests",
- *         @OA\JsonContent(
- *             @OA\Property(property="error", type="string", example="Please wait before requesting another OTP")
- *         )
- *     )
- * )
- */
-public function resendOtp(Request $request)
-{
-    $request->validate([
-        'login' => 'required|string',
-        'method' => 'nullable|string|in:whatsapp,email'
-    ]);
+    /**
+     * @OA\Post(
+     *     path="/api/resend-otp",
+     *     summary="Resend OTP code",
+     *     tags={"Authentification"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"login"},
+     *             @OA\Property(property="login", type="string", example="john.doe@example.com"),
+     *             @OA\Property(property="method", type="string", enum={"whatsapp", "email"}, example="email")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OTP resent successfully"
+     *     )
+     * )
+     */
+    public function resendOtp(Request $request)
+    {
+        $request->validate([
+            'login' => 'required|string',
+            'method' => 'nullable|string|in:whatsapp,email'
+        ]);
 
-    // Check for rate limiting (optional - implement your rate limiting logic here)
-    $cacheKey = 'otp_resend_' . md5($request->login);
-    $lastRequest = Cache::get($cacheKey);
+        // Rate limiting
+        $cacheKey = 'otp_resend_' . md5($request->login);
+        $lastRequest = Cache::get($cacheKey);
 
-    if ($lastRequest && now()->diffInSeconds($lastRequest) < 60) {
-        return response()->json([
-            'error' => 'Please wait before requesting another OTP'
-        ], 429);
-    }
+        if ($lastRequest && now()->diffInSeconds($lastRequest) < 60) {
+            return response()->json([
+                'error' => 'Please wait before requesting another OTP'
+            ], 429);
+        }
 
-    // Find user by login (email or phone)
-    $user = filter_var($request->login, FILTER_VALIDATE_EMAIL)
-        ? User::where('email', $request->login)->first()
-        : User::where('phone', $request->login)->first();
+        // Find user
+        $user = filter_var($request->login, FILTER_VALIDATE_EMAIL)
+            ? User::where('email', $request->login)->first()
+            : User::where('phone', $request->login)->first();
 
-    if (!$user) {
-        return response()->json(['error' => 'User not found'], 404);
-    }
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
 
-    // ✅ Generate a new OTP code
-    $otp = rand(1000, 9999);
+        // Generate new OTP
+        $otp = rand(1000, 9999);
 
-    // ✅ Update or insert new OTP
-    DB::table('otps')->updateOrInsert(
-        ['user_id' => $user->id],
-        [
-            'code' => $otp,
-            'expires_at' => now()->addMinutes(5),
-            'updated_at' => now(),
-            'created_at' => now()
-        ]
-    );
+        DB::table('otps')->updateOrInsert(
+            ['user_id' => $user->id],
+            [
+                'code' => $otp,
+                'expires_at' => now()->addMinutes(5),
+                'updated_at' => now(),
+                'created_at' => now()
+            ]
+        );
 
-    $preferredMethod = $request->method;
-    $otpSentVia = 'failed';
+        $preferredMethod = $request->method;
+        $otpSentVia = 'failed';
 
-    // Set rate limiting cache
-    Cache::put($cacheKey, now(), 60);
+        // Set rate limiting
+        Cache::put($cacheKey, now(), 60);
 
-    if ($preferredMethod === 'whatsapp' && !empty($user->phone)) {
-        $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
-        if ($whatsappSent) {
-            $otpSentVia = 'whatsapp';
-        } else {
-            // Fallback to email if WhatsApp fails
+        if ($preferredMethod === 'whatsapp' && !empty($user->phone)) {
+            // Try WhatsApp first
+            $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
+            if ($whatsappSent) {
+                $otpSentVia = 'whatsapp';
+            } else {
+                // Fallback to email if WhatsApp fails
+                try {
+                    if (!empty($user->email)) {
+                        $user->notify(new SendOtpNotification($otp));
+                        $otpSentVia = 'email';
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to send OTP via email after WhatsApp failed', [
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        } elseif ($preferredMethod === 'email' && !empty($user->email)) {
+            // Try email first
             try {
                 $user->notify(new SendOtpNotification($otp));
                 $otpSentVia = 'email';
             } catch (\Exception $e) {
-                Log::error('Failed to send OTP via email after WhatsApp failed', [
+                Log::error('Failed to send OTP via email', [
                     'user_id' => $user->id,
                     'error' => $e->getMessage()
                 ]);
+
+                // Fallback to WhatsApp if email fails
+                if (!empty($user->phone)) {
+                    $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
+                    if ($whatsappSent) {
+                        $otpSentVia = 'whatsapp';
+                    }
+                }
             }
+        } else {
+            // Use automatic fallback
+            $otpSentVia = $this->sendOtpWithFallback($user, $otp);
         }
-    } elseif ($preferredMethod === 'email' && !empty($user->email)) {
-        // Send via email directly
-        try {
-            $user->notify(new SendOtpNotification($otp));
-            $otpSentVia = 'email';
-        } catch (\Exception $e) {
-            Log::error('Failed to send OTP via email', [
-                'user_id' => $user->id,
-                'error' => $e->getMessage()
-            ]);
-        }
-    } else {
-        // No preference or invalid method: use fallback (whatsapp then email)
-        $otpSentVia = $this->sendOtpWithFallback($user, $otp);
-    }
 
-    if ($otpSentVia === 'failed') {
+        if ($otpSentVia === 'failed') {
+            return response()->json([
+                'error' => 'Failed to send OTP. Please try again later.'
+            ], 500);
+        }
+
+        Log::info('OTP resent', [
+            'user_id' => $user->id,
+            'method' => $otpSentVia,
+            'requested_method' => $preferredMethod
+        ]);
+
         return response()->json([
-            'error' => 'Failed to send OTP. Please try again later.'
-        ], 500);
+            'message' => 'A new OTP has been sent',
+            'otp_sent_via' => $otpSentVia,
+            'user_id' => $user->id
+        ]);
     }
-
-    Log::info('New OTP resent', [
-        'user_id' => $user->id,
-        'otp_code' => $otp,
-        'method' => $otpSentVia,
-        'requested_method' => $preferredMethod
-    ]);
-
-    return response()->json([
-        'message' => 'A new OTP has been sent',
-        'otp_sent_via' => $otpSentVia,
-        'user_id' => $user->id
-    ]);
-}
 
     /**
      * @OA\Post(
      *     path="/api/resend-otp-email",
-     *     summary="Resend OTP code via email only",
+     *     summary="Resend OTP via email only",
      *     tags={"Authentification"},
      *     @OA\RequestBody(
      *         required=true,
@@ -526,27 +528,7 @@ public function resendOtp(Request $request)
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="OTP resent via email successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="OTP code has been resent to your email"),
-     *             @OA\Property(property="otp_sent_via", type="string", example="email"),
-     *             @OA\Property(property="user_id", type="integer", example=1),
-     *             @OA\Property(property="email", type="string", example="john.doe@example.com")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="User not found or no active OTP",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="No active OTP found. Please request a new login.")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=429,
-     *         description="Too many requests",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="Please wait before requesting another OTP")
-     *         )
+     *         description="OTP resent via email successfully"
      *     )
      * )
      */
@@ -556,7 +538,17 @@ public function resendOtp(Request $request)
             'login' => 'required|string'
         ]);
 
-        // Find user by login (email or phone)
+        // Rate limiting
+        $cacheKey = 'otp_email_resend_' . md5($request->login);
+        $lastRequest = Cache::get($cacheKey);
+
+        if ($lastRequest && now()->diffInSeconds($lastRequest) < 60) {
+            return response()->json([
+                'error' => 'Please wait before requesting another OTP'
+            ], 429);
+        }
+
+        // Find user
         $user = filter_var($request->login, FILTER_VALIDATE_EMAIL)
             ? User::where('email', $request->login)->first()
             : User::where('phone', $request->login)->first();
@@ -569,27 +561,28 @@ public function resendOtp(Request $request)
             return response()->json(['error' => 'User has no email address'], 400);
         }
 
-        // ✅ Generate a new OTP code
+        // Set rate limiting
+        Cache::put($cacheKey, now(), 60);
+
+        // Generate new OTP
         $otp = rand(1000, 9999);
 
-        // ✅ Update or create OTP record
         DB::table('otps')->updateOrInsert(
             ['user_id' => $user->id],
             [
                 'code' => $otp,
                 'expires_at' => now()->addMinutes(5),
                 'updated_at' => now(),
-                'created_at' => now(), // facultatif si jamais insert
+                'created_at' => now(),
             ]
         );
 
-        // ✅ Send OTP via email
+        // Send OTP via email only
         try {
             $user->notify(new SendOtpNotification($otp));
 
             Log::info('OTP resent via email', [
                 'user_id' => $user->id,
-                'otp_code' => $otp,
                 'email' => $user->email
             ]);
 
@@ -600,10 +593,11 @@ public function resendOtp(Request $request)
                 'email' => $user->email
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to send OTP via email', [
+            Log::error('Failed to send OTP via email in resendOtpEmail', [
                 'user_id' => $user->id,
                 'email' => $user->email,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
@@ -612,60 +606,37 @@ public function resendOtp(Request $request)
         }
     }
 
-
     /**
      * @OA\Post(
      *     path="/api/verify-otp",
-     *     summary="Vérification du code OTP pour l'authentification à deux facteurs",
+     *     summary="Verify OTP code",
      *     tags={"Authentification"},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
      *             required={"login", "otp"},
      *             @OA\Property(property="login", type="string", example="john.doe@example.com"),
-     *             @OA\Property(property="otp", type="string", example="123456")
+     *             @OA\Property(property="otp", type="string", example="1234")
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="OTP valide, authentification réussie",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="user", type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="first_name", type="string", example="John"),
-     *                 @OA\Property(property="last_name", type="string", example="Doe"),
-     *                 @OA\Property(property="email", type="string", example="john.doe@example.com"),
-     *                 @OA\Property(property="phone", type="string", example="+123456789"),
-     *                 @OA\Property(property="role_id", type="integer", example=2)
-     *             ),
-     *             @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLC..."),
-     *             @OA\Property(property="token_expiration", type="string", example="2025-04-17 10:45:00")
-     *         )
+     *         description="OTP valid, authentication successful"
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="OTP invalide ou expiré",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="Invalid or expired OTP")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Utilisateur introuvable",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="User not found")
-     *         )
+     *         description="Invalid or expired OTP"
      *     )
      * )
      */
     public function verifyOtp(Request $request)
     {
         $request->validate([
-            'login' => 'required|string', // email ou phone
+            'login' => 'required|string',
             'otp' => 'required|string',
         ]);
 
-        // Rechercher l'utilisateur par login
+        // Find user
         $user = filter_var($request->login, FILTER_VALIDATE_EMAIL)
             ? User::where('email', $request->login)->first()
             : User::where('phone', $request->login)->first();
@@ -674,7 +645,7 @@ public function resendOtp(Request $request)
             return response()->json(['error' => 'User not found'], 404);
         }
 
-        // Vérifier l'OTP
+        // Verify OTP
         $otpRecord = DB::table('otps')
             ->where('user_id', $user->id)
             ->where('code', $request->otp)
@@ -685,14 +656,20 @@ public function resendOtp(Request $request)
             return response()->json(['error' => 'Invalid or expired OTP'], 401);
         }
 
-        // Supprimer l'OTP après usage
+        // Delete OTP after use
         DB::table('otps')->where('id', $otpRecord->id)->delete();
 
-        // ✅ Extract country & continent
+        // Mark user as verified if not already
+        if (!$user->verified) {
+            $user->verified = true;
+            $user->save();
+        }
+
+        // Extract country & continent
         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
         $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
 
-        // Authentifier l'utilisateur avec les claims personnalisés
+        // Create token with claims
         $token = JWTAuth::claims([
             'country' => $country,
             'continent' => $continent,
@@ -722,97 +699,18 @@ public function resendOtp(Request $request)
         ]);
     }
 
-
     /**
      * @OA\Get(
      *     path="/api/me",
-     *     summary="Récupérer les informations de l'utilisateur authentifié",
+     *     summary="Get authenticated user information",
      *     tags={"Authentification"},
      *     security={{"bearerAuth": {}}},
      *     @OA\Response(
      *         response=200,
-     *         description="Informations de l'utilisateur récupérées avec succès",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="user", type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="first_name", type="string", example="John"),
-     *                 @OA\Property(property="last_name", type="string", example="Doe"),
-     *                 @OA\Property(property="email", type="string", example="john.doe@example.com"),
-     *                 @OA\Property(property="phone", type="string", example="+123456789"),
-     *                 @OA\Property(property="role_id", type="integer", example=2),
-     *
-     *                 @OA\Property(property="bank_cards", type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="card_number", type="string", example="1234567890123456"),
-     *                         @OA\Property(property="expiry_date", type="string", example="12/24"),
-     *                         @OA\Property(property="cvv", type="string", example="123")
-     *                     )
-     *                 ),
-     *
-     *                 @OA\Property(property="wishlists", type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="listing_id", type="integer", example=12),
-     *                         @OA\Property(property="created_at", type="string", format="date-time", example="2025-04-24T11:33:12"),
-     *                         @OA\Property(property="listing", type="object",
-     *                             @OA\Property(property="id", type="integer", example=12),
-     *                             @OA\Property(property="title", type="string", example="Yamaha R6 2020"),
-     *                             @OA\Property(property="price", type="number", format="float", example=68000)
-     *                         )
-     *                     )
-     *                 ),
-     *
-     *                 @OA\Property(property="listings", type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=18),
-     *                         @OA\Property(property="title", type="string", example="Honda CBR 600RR"),
-     *                         @OA\Property(property="price", type="number", format="float", example=72000),
-     *                         @OA\Property(property="status", type="string", example="active")
-     *                     )
-     *                 ),
-     *
-     *                 @OA\Property(property="auction_histories_as_seller", type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=5),
-     *                         @OA\Property(property="bid_amount", type="number", format="float", example=60000),
-     *                         @OA\Property(property="bid_date", type="string", format="date-time", example="2025-04-23T10:45:00"),
-     *                         @OA\Property(property="listing", type="object",
-     *                             @OA\Property(property="id", type="integer", example=18),
-     *                             @OA\Property(property="title", type="string", example="Honda CBR 600RR")
-     *                         )
-     *                     )
-     *                 ),
-     *
-     *                 @OA\Property(property="auction_histories_as_buyer", type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=9),
-     *                         @OA\Property(property="bid_amount", type="number", format="float", example=65000),
-     *                         @OA\Property(property="bid_date", type="string", format="date-time", example="2025-04-23T14:15:00"),
-     *                         @OA\Property(property="listing", type="object",
-     *                             @OA\Property(property="id", type="integer", example=21),
-     *                             @OA\Property(property="title", type="string", example="Kawasaki Ninja 400")
-     *                         )
-     *                     )
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Utilisateur non authentifié",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="Unauthorized")
-     *         )
+     *         description="User information retrieved successfully"
      *     )
      * )
      */
-
     public function me(Request $request)
     {
         $user = $request->user();
@@ -828,12 +726,10 @@ public function resendOtp(Request $request)
             'listings.images',
             'auctionHistoriesAsSeller.listing',
             'auctionHistoriesAsBuyer.listing',
-            'auctionHistoriesAsSeller.listing',
-            'auctionHistoriesAsBuyer.listing',
             'bankCards',
         ])->find($user->id);
 
-        // Déchiffrer les CVV
+        // Decrypt CVV
         foreach ($userWithData->bankCards as $card) {
             if (!empty($card->cvv)) {
                 try {
@@ -849,22 +745,14 @@ public function resendOtp(Request $request)
         ]);
     }
 
-
     /**
      * @OA\Post(
      *     path="/api/logout",
-     *     summary="Déconnexion de l'utilisateur",
+     *     summary="User logout",
      *     tags={"Authentification"},
      *     @OA\Response(
      *         response=200,
-     *         description="Déconnexion réussie",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Déconnexion réussie")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Erreur serveur"
+     *         description="Successfully logged out"
      *     )
      * )
      */
@@ -873,24 +761,15 @@ public function resendOtp(Request $request)
         auth()->logout();
         return response()->json(['message' => 'Successfully logged out']);
     }
+
     /**
      * @OA\Post(
      *     path="/api/refresh",
-     *     summary="Rafraîchir le token JWT",
+     *     summary="Refresh JWT token",
      *     tags={"Authentification"},
      *     @OA\Response(
      *         response=200,
-     *         description="Token rafraîchi avec succès",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLC...")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Token invalide ou expiré",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="Token expired or invalid")
-     *         )
+     *         description="Token refreshed successfully"
      *     )
      * )
      */
@@ -908,30 +787,12 @@ public function resendOtp(Request $request)
     /**
      * @OA\Put(
      *     path="/api/user/update",
-     *     summary="Mettre à jour le profil de l'utilisateur",
+     *     summary="Update user profile",
      *     tags={"Authentification"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="first_name", type="string", example="John"),
-     *             @OA\Property(property="last_name", type="string", example="Doe"),
-     *             @OA\Property(property="email", type="string", format="email", example="john.doe@example.com"),
-     *             @OA\Property(property="phone", type="string", example="+123456789"),
-     *             @OA\Property(property="birthday", type="string", format="date", example="1990-05-15")
-     *         )
-     *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Profil mis à jour",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Profile updated successfully"),
-     *             @OA\Property(property="user", type="object")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Données invalides"
+     *         description="Profile updated successfully"
      *     )
      * )
      */
@@ -958,29 +819,19 @@ public function resendOtp(Request $request)
             'user' => $user
         ]);
     }
+
     /**
      * @OA\Put(
      *     path="/api/user/two-factor-toggle",
-     *     summary="Enable or disable two-factor authentication",
-     *     description="Toggles two-factor auth for the authenticated user",
-     *     operationId="toggleTwoFactor",
+     *     summary="Toggle two-factor authentication",
      *     tags={"Authentification"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Response(
      *         response=200,
-     *         description="Success",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Two-factor authentication enabled."),
-     *             @OA\Property(property="two_factor_enabled", type="boolean", example=true)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthorized"
+     *         description="Two-factor authentication toggled"
      *     )
      * )
      */
-
     public function toggleTwoFactor(Request $request)
     {
         $user = $request->user();
@@ -994,7 +845,7 @@ public function resendOtp(Request $request)
         ]);
     }
 
-    // reset password
+    // Password Reset Methods
 
     /**
      * @OA\Post(
@@ -1006,32 +857,12 @@ public function resendOtp(Request $request)
      *         @OA\JsonContent(
      *             required={"login"},
      *             @OA\Property(property="login", type="string", example="john.doe@example.com"),
-     *             @OA\Property(property="method", type="string", enum={"whatsapp", "email"}, example="email", description="Preferred method to send reset code")
+     *             @OA\Property(property="method", type="string", enum={"whatsapp", "email"}, example="email")
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Password reset OTP sent successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Password reset code has been sent"),
-     *             @OA\Property(property="reset_sent_via", type="string", example="email"),
-     *             @OA\Property(property="user_id", type="integer", example=1),
-     *             @OA\Property(property="email", type="string", example="john.doe@example.com")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="User not found",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="User not found")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="User is inactive",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="User account is inactive")
-     *         )
+     *         description="Password reset OTP sent successfully"
      *     )
      * )
      */
@@ -1072,7 +903,6 @@ public function resendOtp(Request $request)
         $preferredMethod = $request->method;
         $resetSentVia = 'failed';
 
-        // 🔥 CORRECTION: Simplifier la logique d'envoi
         if ($preferredMethod === 'whatsapp' && !empty($user->phone)) {
             // Try WhatsApp first
             $whatsappSent = $this->sendWhatsAppPasswordReset($user->phone, $resetCode);
@@ -1081,23 +911,28 @@ public function resendOtp(Request $request)
             } else {
                 // Fallback to email
                 try {
-                    $user->notify(new PasswordResetNotification($resetCode));
-                    $resetSentVia = 'email';
-                    Log::info('Password reset sent via email (WhatsApp fallback)', [
-                        'user_id' => $user->id,
-                        'email' => $user->email
-                    ]);
+                    if (!empty($user->email)) {
+                        $user->notify(new PasswordResetNotification($resetCode));
+                        $resetSentVia = 'email';
+                        Log::info('Password reset sent via email (WhatsApp fallback)', [
+                            'user_id' => $user->id,
+                            'email' => $user->email
+                        ]);
+                    }
                 } catch (\Exception $e) {
                     Log::error('Failed to send password reset via email after WhatsApp failed', [
                         'user_id' => $user->id,
-                        'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString()
+                        'error' => $e->getMessage()
                     ]);
                 }
             }
         } else {
-            // 🔥 CORRECTION: Envoyer directement par email (comme dans OTP)
+            // Send directly by email or use fallback method
             try {
+                if (empty($user->email)) {
+                    throw new \Exception('User has no email address');
+                }
+
                 Log::info('Attempting to send password reset email', [
                     'user_id' => $user->id,
                     'email' => $user->email,
@@ -1109,18 +944,16 @@ public function resendOtp(Request $request)
 
                 Log::info('Password reset email sent successfully', [
                     'user_id' => $user->id,
-                    'email' => $user->email,
-                    'reset_code' => $resetCode
+                    'email' => $user->email
                 ]);
             } catch (\Exception $e) {
                 Log::error('Failed to send password reset via email', [
                     'user_id' => $user->id,
-                    'email' => $user->email,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'email' => $user->email ?? 'none',
+                    'error' => $e->getMessage()
                 ]);
 
-                // Si email préféré mais WhatsApp disponible, essayer WhatsApp
+                // If email preferred but WhatsApp available, try WhatsApp
                 if (!empty($user->phone)) {
                     Log::info('Trying WhatsApp as fallback for email failure');
                     $whatsappSent = $this->sendWhatsAppPasswordReset($user->phone, $resetCode);
@@ -1140,7 +973,6 @@ public function resendOtp(Request $request)
 
         Log::info('Password reset code sent', [
             'user_id' => $user->id,
-            'reset_code' => $resetCode,
             'method' => $resetSentVia,
             'requested_method' => $preferredMethod
         ]);
@@ -1151,54 +983,6 @@ public function resendOtp(Request $request)
             'user_id' => $user->id,
             'email' => $user->email ?? null
         ]);
-    }
-
-
-    /**
-     * Send password reset via WhatsApp first, fallback to email if WhatsApp fails
-     */
-    private function sendPasswordResetWithFallback(User $user, $resetCode)
-    {
-        Log::info('Using fallback method for password reset', [
-            'user_id' => $user->id,
-            'has_phone' => !empty($user->phone),
-            'has_email' => !empty($user->email)
-        ]);
-
-        // First, try WhatsApp if user has phone number
-        if (!empty($user->phone)) {
-            Log::info('Trying WhatsApp in fallback method');
-            $whatsappSent = $this->sendWhatsAppPasswordReset($user->phone, $resetCode);
-
-            if ($whatsappSent) {
-                Log::info('Password reset sent via WhatsApp (fallback)', [
-                    'user_id' => $user->id,
-                    'phone' => $user->phone
-                ]);
-                return 'whatsapp';
-            } else {
-                Log::warning('WhatsApp failed in fallback method');
-            }
-        }
-
-        // Fallback to email
-        try {
-            Log::info('Trying email in fallback method');
-            $this->sendPasswordResetEmail($user, $resetCode);
-            Log::info('Password reset sent via Email (WhatsApp fallback)', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'reason' => empty($user->phone) ? 'no_phone' : 'whatsapp_failed'
-            ]);
-            return 'email';
-        } catch (\Exception $e) {
-            Log::error('Failed to send password reset via both WhatsApp and Email', [
-                'user_id' => $user->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return 'failed';
-        }
     }
 
     /**
@@ -1239,44 +1023,6 @@ public function resendOtp(Request $request)
         }
     }
 
-
-    /**
-     * Send password reset via email
-     */
-    private function sendPasswordResetEmail(User $user, $resetCode)
-    {
-        try {
-            Log::info('Attempting to send password reset email', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'reset_code' => $resetCode
-            ]);
-
-            // Check if user has email
-            if (empty($user->email)) {
-                throw new \Exception('User has no email address');
-            }
-
-            // Send the notification
-            $user->notify(new \App\Notifications\PasswordResetNotification($resetCode));
-
-            Log::info('Password reset email notification sent successfully', [
-                'user_id' => $user->id,
-                'email' => $user->email
-            ]);
-
-            return true;
-        } catch (\Exception $e) {
-            Log::error('Failed to send password reset email', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            throw $e;
-        }
-    }
-
     /**
      * @OA\Post(
      *     path="/api/reset-password",
@@ -1294,39 +1040,7 @@ public function resendOtp(Request $request)
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Password reset successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Password has been reset successfully"),
-     *             @OA\Property(property="user", type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="email", type="string", example="john.doe@example.com"),
-     *                 @OA\Property(property="first_name", type="string", example="John"),
-     *                 @OA\Property(property="last_name", type="string", example="Doe")
-     *             ),
-     *             @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLC..."),
-     *             @OA\Property(property="token_expiration", type="string", example="2025-04-17 10:45:00")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Invalid or expired reset code",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="Invalid or expired reset code")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="User not found",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="User not found")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Validation error",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="The password confirmation does not match.")
-     *         )
+     *         description="Password reset successfully"
      *     )
      * )
      */
@@ -1379,10 +1093,9 @@ public function resendOtp(Request $request)
                 'user_id' => $user->id,
                 'error' => $e->getMessage()
             ]);
-            // Continue anyway, local password is updated
         }
 
-        // ✅ Extract country & continent
+        // Extract country & continent
         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
         $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
 
@@ -1426,41 +1139,9 @@ public function resendOtp(Request $request)
      *     summary="Change current password",
      *     tags={"Authentification"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"current_password", "password", "password_confirmation"},
-     *             @OA\Property(property="current_password", type="string", format="password", example="oldpassword123"),
-     *             @OA\Property(property="password", type="string", format="password", example="newpassword123"),
-     *             @OA\Property(property="password_confirmation", type="string", format="password", example="newpassword123")
-     *         )
-     *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Password changed successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Password has been changed successfully"),
-     *             @OA\Property(property="user", type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="email", type="string", example="john.doe@example.com"),
-     *                 @OA\Property(property="first_name", type="string", example="John"),
-     *                 @OA\Property(property="last_name", type="string", example="Doe")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Current password is incorrect",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="Current password is incorrect")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Validation error",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="The password confirmation does not match.")
-     *         )
+     *         description="Password changed successfully"
      *     )
      * )
      */
@@ -1496,7 +1177,6 @@ public function resendOtp(Request $request)
                 'user_id' => $user->id,
                 'error' => $e->getMessage()
             ]);
-            // Continue anyway, local password is updated
         }
 
         Log::info('Password changed successfully', [
@@ -1510,36 +1190,28 @@ public function resendOtp(Request $request)
         ]);
     }
 
-
     /**
      * @OA\Get(
      *     path="/api/get-country",
-     *     summary="Récupérer le pays et continent de l'utilisateur",
+     *     summary="Get user country and continent",
      *     tags={"Authentification"},
      *     @OA\Response(
      *         response=200,
-     *         description="Informations de localisation récupérées",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="country", type="string", example="MA"),
-     *             @OA\Property(property="continent", type="string", example="AF"),
-     *             @OA\Property(property="ip", type="string", example="196.200.1.1")
-     *         )
+     *         description="Location information retrieved"
      *     )
      * )
      */
     public function getCountry(Request $request)
     {
-        // ✅ Extract country & continent from proxy headers
+        // Extract country & continent from proxy headers
         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
         $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
         $ip = $request->ip();
 
-        // Log pour debug
         Log::info('Country detection', [
             'country' => $country,
             'continent' => $continent,
-            'ip' => $ip,
-            'all_headers' => $request->headers->all()
+            'ip' => $ip
         ]);
 
         return response()->json([
@@ -1552,7 +1224,7 @@ public function resendOtp(Request $request)
     /**
      * @OA\Post(
      *     path="/api/test-email",
-     *     summary="Test email sending (dev only)",
+     *     summary="Test email sending (development only)",
      *     tags={"Authentification"},
      *     @OA\RequestBody(
      *         required=true,
@@ -1569,7 +1241,7 @@ public function resendOtp(Request $request)
      */
     public function testEmail(Request $request)
     {
-        // 🔥 UNIQUEMENT POUR LE DÉVELOPPEMENT
+        // Only for development
         if (!app()->environment('local', 'staging')) {
             return response()->json(['error' => 'Not available in production'], 403);
         }
@@ -1579,12 +1251,6 @@ public function resendOtp(Request $request)
         ]);
 
         try {
-            // Créer un utilisateur temporaire pour le test
-            $tempUser = new \stdClass();
-            $tempUser->email = $request->email;
-            $tempUser->first_name = 'Test User';
-
-            // Test avec PasswordResetNotification
             $resetCode = rand(1000, 9999);
 
             Log::info('Testing password reset email', [
@@ -1592,7 +1258,6 @@ public function resendOtp(Request $request)
                 'reset_code' => $resetCode
             ]);
 
-            // 🔥 CORRECTION: Utiliser l'objet User complet
             $user = User::where('email', $request->email)->first();
             if (!$user) {
                 return response()->json(['error' => 'User not found for test'], 404);
@@ -1608,8 +1273,7 @@ public function resendOtp(Request $request)
         } catch (\Exception $e) {
             Log::error('Test email failed', [
                 'email' => $request->email,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'error' => $e->getMessage()
             ]);
 
             return response()->json([
