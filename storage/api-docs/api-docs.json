@@ -68,40 +68,30 @@
                     }
                 },
                 "responses": {
-                    "200": {
-                        "description": "Inscription réussie",
+                    "202": {
+                        "description": "Registration successful, OTP required",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Registration successful, OTP required for verification"
+                                        },
                                         "user": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "first_name": {
-                                                    "type": "string",
-                                                    "example": "John"
-                                                },
-                                                "last_name": {
-                                                    "type": "string",
-                                                    "example": "Doe"
-                                                },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "john.doe@example.com"
-                                                },
-                                                "phone": {
-                                                    "type": "string",
-                                                    "example": "+123456789"
-                                                },
-                                                "role_id": {
-                                                    "type": "integer",
-                                                    "example": 2
-                                                }
-                                            },
                                             "type": "object"
+                                        },
+                                        "requiresOTP": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "user_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "otp_sent_via": {
+                                            "type": "string",
+                                            "example": "whatsapp"
                                         },
                                         "token": {
                                             "type": "string",
@@ -114,7 +104,7 @@
                         }
                     },
                     "422": {
-                        "description": "Données invalides"
+                        "description": "Validation error"
                     }
                 }
             }
@@ -124,7 +114,7 @@
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Connexion d'un utilisateur",
+                "summary": "User login",
                 "operationId": "a3b306d14572d1f4bd6c064b3233e7b8",
                 "requestBody": {
                     "required": true,
@@ -153,47 +143,19 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Connexion réussie (sans 2FA)",
+                        "description": "Successful login without 2FA",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "user": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "first_name": {
-                                                    "type": "string",
-                                                    "example": "John"
-                                                },
-                                                "last_name": {
-                                                    "type": "string",
-                                                    "example": "Doe"
-                                                },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "john.doe@example.com"
-                                                },
-                                                "phone": {
-                                                    "type": "string",
-                                                    "example": "+123456789"
-                                                },
-                                                "role_id": {
-                                                    "type": "integer",
-                                                    "example": 2
-                                                }
-                                            },
                                             "type": "object"
                                         },
                                         "token": {
-                                            "type": "string",
-                                            "example": "eyJ0eXAiOiJKV1QiLC..."
+                                            "type": "string"
                                         },
                                         "token_expiration": {
-                                            "type": "string",
-                                            "example": "2025-04-17 10:45:00"
+                                            "type": "string"
                                         }
                                     },
                                     "type": "object"
@@ -202,30 +164,25 @@
                         }
                     },
                     "202": {
-                        "description": "Connexion avec OTP requis",
+                        "description": "Login with OTP required",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "OTP requis"
+                                            "example": "OTP required"
+                                        },
+                                        "requiresOTP": {
+                                            "type": "boolean",
+                                            "example": true
                                         },
                                         "user_id": {
-                                            "type": "integer",
-                                            "example": 1
+                                            "type": "integer"
                                         },
-                                        "first_name": {
+                                        "otp_sent_via": {
                                             "type": "string",
-                                            "example": "John"
-                                        },
-                                        "last_name": {
-                                            "type": "string",
-                                            "example": "Doe"
-                                        },
-                                        "phone": {
-                                            "type": "string",
-                                            "example": "+123456789"
+                                            "example": "whatsapp"
                                         }
                                     },
                                     "type": "object"
@@ -234,36 +191,7 @@
                         }
                     },
                     "401": {
-                        "description": "Identifiants invalides",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Invalid credentials"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Utilisateur inactif",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "User is inactive"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Invalid credentials"
                     }
                 }
             }
@@ -273,7 +201,7 @@
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Resend OTP code for two-factor authentication",
+                "summary": "Resend OTP code",
                 "operationId": "d345e764f1190fc7cfdc54bb87ec0a10",
                 "requestBody": {
                     "required": true,
@@ -289,7 +217,6 @@
                                         "example": "john.doe@example.com"
                                     },
                                     "method": {
-                                        "description": "Preferred method to send OTP",
                                         "type": "string",
                                         "enum": [
                                             "whatsapp",
@@ -305,60 +232,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "OTP resent successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "OTP code has been resent"
-                                        },
-                                        "otp_sent_via": {
-                                            "type": "string",
-                                            "example": "email"
-                                        },
-                                        "user_id": {
-                                            "type": "integer",
-                                            "example": 1
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "User not found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "User not found"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "429": {
-                        "description": "Too many requests",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Please wait before requesting another OTP"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OTP resent successfully"
                     }
                 }
             }
@@ -368,7 +242,7 @@
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Resend OTP code via email only",
+                "summary": "Resend OTP via email only",
                 "operationId": "7ff1b1e24e7e39eb9f830aa24f1ab643",
                 "requestBody": {
                     "required": true,
@@ -391,64 +265,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "OTP resent via email successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "OTP code has been resent to your email"
-                                        },
-                                        "otp_sent_via": {
-                                            "type": "string",
-                                            "example": "email"
-                                        },
-                                        "user_id": {
-                                            "type": "integer",
-                                            "example": 1
-                                        },
-                                        "email": {
-                                            "type": "string",
-                                            "example": "john.doe@example.com"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "User not found or no active OTP",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "No active OTP found. Please request a new login."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "429": {
-                        "description": "Too many requests",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Please wait before requesting another OTP"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OTP resent via email successfully"
                     }
                 }
             }
@@ -458,7 +275,7 @@
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Vérification du code OTP pour l'authentification à deux facteurs",
+                "summary": "Verify OTP code",
                 "operationId": "7809ddcd47cab2525ccd43d1c2031bfd",
                 "requestBody": {
                     "required": true,
@@ -476,7 +293,7 @@
                                     },
                                     "otp": {
                                         "type": "string",
-                                        "example": "123456"
+                                        "example": "1234"
                                     }
                                 },
                                 "type": "object"
@@ -486,85 +303,10 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "OTP valide, authentification réussie",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "user": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "first_name": {
-                                                    "type": "string",
-                                                    "example": "John"
-                                                },
-                                                "last_name": {
-                                                    "type": "string",
-                                                    "example": "Doe"
-                                                },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "john.doe@example.com"
-                                                },
-                                                "phone": {
-                                                    "type": "string",
-                                                    "example": "+123456789"
-                                                },
-                                                "role_id": {
-                                                    "type": "integer",
-                                                    "example": 2
-                                                }
-                                            },
-                                            "type": "object"
-                                        },
-                                        "token": {
-                                            "type": "string",
-                                            "example": "eyJ0eXAiOiJKV1QiLC..."
-                                        },
-                                        "token_expiration": {
-                                            "type": "string",
-                                            "example": "2025-04-17 10:45:00"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "OTP valid, authentication successful"
                     },
                     "401": {
-                        "description": "OTP invalide ou expiré",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Invalid or expired OTP"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Utilisateur introuvable",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "User not found"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Invalid or expired OTP"
                     }
                 }
             }
@@ -574,219 +316,11 @@
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Récupérer les informations de l'utilisateur authentifié",
+                "summary": "Get authenticated user information",
                 "operationId": "9d9bc556f927575aa492a88c28fe5908",
                 "responses": {
                     "200": {
-                        "description": "Informations de l'utilisateur récupérées avec succès",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "user": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "first_name": {
-                                                    "type": "string",
-                                                    "example": "John"
-                                                },
-                                                "last_name": {
-                                                    "type": "string",
-                                                    "example": "Doe"
-                                                },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "john.doe@example.com"
-                                                },
-                                                "phone": {
-                                                    "type": "string",
-                                                    "example": "+123456789"
-                                                },
-                                                "role_id": {
-                                                    "type": "integer",
-                                                    "example": 2
-                                                },
-                                                "bank_cards": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "card_number": {
-                                                                "type": "string",
-                                                                "example": "1234567890123456"
-                                                            },
-                                                            "expiry_date": {
-                                                                "type": "string",
-                                                                "example": "12/24"
-                                                            },
-                                                            "cvv": {
-                                                                "type": "string",
-                                                                "example": "123"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                },
-                                                "wishlists": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 1
-                                                            },
-                                                            "listing_id": {
-                                                                "type": "integer",
-                                                                "example": 12
-                                                            },
-                                                            "created_at": {
-                                                                "type": "string",
-                                                                "format": "date-time",
-                                                                "example": "2025-04-24T11:33:12"
-                                                            },
-                                                            "listing": {
-                                                                "properties": {
-                                                                    "id": {
-                                                                        "type": "integer",
-                                                                        "example": 12
-                                                                    },
-                                                                    "title": {
-                                                                        "type": "string",
-                                                                        "example": "Yamaha R6 2020"
-                                                                    },
-                                                                    "price": {
-                                                                        "type": "number",
-                                                                        "format": "float",
-                                                                        "example": 68000
-                                                                    }
-                                                                },
-                                                                "type": "object"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                },
-                                                "listings": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 18
-                                                            },
-                                                            "title": {
-                                                                "type": "string",
-                                                                "example": "Honda CBR 600RR"
-                                                            },
-                                                            "price": {
-                                                                "type": "number",
-                                                                "format": "float",
-                                                                "example": 72000
-                                                            },
-                                                            "status": {
-                                                                "type": "string",
-                                                                "example": "active"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                },
-                                                "auction_histories_as_seller": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 5
-                                                            },
-                                                            "bid_amount": {
-                                                                "type": "number",
-                                                                "format": "float",
-                                                                "example": 60000
-                                                            },
-                                                            "bid_date": {
-                                                                "type": "string",
-                                                                "format": "date-time",
-                                                                "example": "2025-04-23T10:45:00"
-                                                            },
-                                                            "listing": {
-                                                                "properties": {
-                                                                    "id": {
-                                                                        "type": "integer",
-                                                                        "example": 18
-                                                                    },
-                                                                    "title": {
-                                                                        "type": "string",
-                                                                        "example": "Honda CBR 600RR"
-                                                                    }
-                                                                },
-                                                                "type": "object"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                },
-                                                "auction_histories_as_buyer": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 9
-                                                            },
-                                                            "bid_amount": {
-                                                                "type": "number",
-                                                                "format": "float",
-                                                                "example": 65000
-                                                            },
-                                                            "bid_date": {
-                                                                "type": "string",
-                                                                "format": "date-time",
-                                                                "example": "2025-04-23T14:15:00"
-                                                            },
-                                                            "listing": {
-                                                                "properties": {
-                                                                    "id": {
-                                                                        "type": "integer",
-                                                                        "example": 21
-                                                                    },
-                                                                    "title": {
-                                                                        "type": "string",
-                                                                        "example": "Kawasaki Ninja 400"
-                                                                    }
-                                                                },
-                                                                "type": "object"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Utilisateur non authentifié",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Unauthorized"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "User information retrieved successfully"
                     }
                 },
                 "security": [
@@ -801,27 +335,11 @@
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Déconnexion de l'utilisateur",
+                "summary": "User logout",
                 "operationId": "fe8f3429cd6979b3b4517e186505f9f9",
                 "responses": {
                     "200": {
-                        "description": "Déconnexion réussie",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Déconnexion réussie"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Erreur serveur"
+                        "description": "Successfully logged out"
                     }
                 }
             }
@@ -831,40 +349,11 @@
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Rafraîchir le token JWT",
+                "summary": "Refresh JWT token",
                 "operationId": "2c27d311a2876560fcb5a754b556cdc5",
                 "responses": {
                     "200": {
-                        "description": "Token rafraîchi avec succès",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "token": {
-                                            "type": "string",
-                                            "example": "eyJ0eXAiOiJKV1QiLC..."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Token invalide ou expiré",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Token expired or invalid"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Token refreshed successfully"
                     }
                 }
             }
@@ -874,64 +363,11 @@
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Mettre à jour le profil de l'utilisateur",
+                "summary": "Update user profile",
                 "operationId": "89ec70688080b1a0c14c7f4fcb01c1f4",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "first_name": {
-                                        "type": "string",
-                                        "example": "John"
-                                    },
-                                    "last_name": {
-                                        "type": "string",
-                                        "example": "Doe"
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "john.doe@example.com"
-                                    },
-                                    "phone": {
-                                        "type": "string",
-                                        "example": "+123456789"
-                                    },
-                                    "birthday": {
-                                        "type": "string",
-                                        "format": "date",
-                                        "example": "1990-05-15"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
-                        "description": "Profil mis à jour",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Profile updated successfully"
-                                        },
-                                        "user": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Données invalides"
+                        "description": "Profile updated successfully"
                     }
                 },
                 "security": [
@@ -946,37 +382,16 @@
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Enable or disable two-factor authentication",
-                "description": "Toggles two-factor auth for the authenticated user",
-                "operationId": "toggleTwoFactor",
+                "summary": "Toggle two-factor authentication",
+                "operationId": "8ce642e8986526322474e85e158a1a45",
                 "responses": {
                     "200": {
-                        "description": "Success",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Two-factor authentication enabled."
-                                        },
-                                        "two_factor_enabled": {
-                                            "type": "boolean",
-                                            "example": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized"
+                        "description": "Two-factor authentication toggled"
                     }
                 },
                 "security": [
                     {
-                        "sanctum": []
+                        "bearerAuth": []
                     }
                 ]
             }
@@ -1002,7 +417,6 @@
                                         "example": "john.doe@example.com"
                                     },
                                     "method": {
-                                        "description": "Preferred method to send reset code",
                                         "type": "string",
                                         "enum": [
                                             "whatsapp",
@@ -1018,64 +432,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Password reset OTP sent successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Password reset code has been sent"
-                                        },
-                                        "reset_sent_via": {
-                                            "type": "string",
-                                            "example": "email"
-                                        },
-                                        "user_id": {
-                                            "type": "integer",
-                                            "example": 1
-                                        },
-                                        "email": {
-                                            "type": "string",
-                                            "example": "john.doe@example.com"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "User not found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "User not found"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "User is inactive",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "User account is inactive"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Password reset OTP sent successfully"
                     }
                 }
             }
@@ -1125,97 +482,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Password reset successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Password has been reset successfully"
-                                        },
-                                        "user": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "john.doe@example.com"
-                                                },
-                                                "first_name": {
-                                                    "type": "string",
-                                                    "example": "John"
-                                                },
-                                                "last_name": {
-                                                    "type": "string",
-                                                    "example": "Doe"
-                                                }
-                                            },
-                                            "type": "object"
-                                        },
-                                        "token": {
-                                            "type": "string",
-                                            "example": "eyJ0eXAiOiJKV1QiLC..."
-                                        },
-                                        "token_expiration": {
-                                            "type": "string",
-                                            "example": "2025-04-17 10:45:00"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Invalid or expired reset code",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Invalid or expired reset code"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "User not found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "User not found"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "The password confirmation does not match."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Password reset successfully"
                     }
                 }
             }
@@ -1227,107 +494,9 @@
                 ],
                 "summary": "Change current password",
                 "operationId": "c9cf137ca229152d78da153d798cb251",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "current_password",
-                                    "password",
-                                    "password_confirmation"
-                                ],
-                                "properties": {
-                                    "current_password": {
-                                        "type": "string",
-                                        "format": "password",
-                                        "example": "oldpassword123"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "format": "password",
-                                        "example": "newpassword123"
-                                    },
-                                    "password_confirmation": {
-                                        "type": "string",
-                                        "format": "password",
-                                        "example": "newpassword123"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
-                        "description": "Password changed successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Password has been changed successfully"
-                                        },
-                                        "user": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "john.doe@example.com"
-                                                },
-                                                "first_name": {
-                                                    "type": "string",
-                                                    "example": "John"
-                                                },
-                                                "last_name": {
-                                                    "type": "string",
-                                                    "example": "Doe"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Current password is incorrect",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Current password is incorrect"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "The password confirmation does not match."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Password changed successfully"
                     }
                 },
                 "security": [
@@ -1342,32 +511,11 @@
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Récupérer le pays et continent de l'utilisateur",
+                "summary": "Get user country and continent",
                 "operationId": "fb0a07b92de42a0fb9bc3bc46d42456e",
                 "responses": {
                     "200": {
-                        "description": "Informations de localisation récupérées",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "country": {
-                                            "type": "string",
-                                            "example": "MA"
-                                        },
-                                        "continent": {
-                                            "type": "string",
-                                            "example": "AF"
-                                        },
-                                        "ip": {
-                                            "type": "string",
-                                            "example": "196.200.1.1"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Location information retrieved"
                     }
                 }
             }
@@ -1377,7 +525,7 @@
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Test email sending (dev only)",
+                "summary": "Test email sending (development only)",
                 "operationId": "bdba0fbe8093cbe44f0733ff2c7f53b5",
                 "requestBody": {
                     "required": true,
