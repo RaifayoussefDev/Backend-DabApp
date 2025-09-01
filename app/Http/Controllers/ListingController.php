@@ -165,250 +165,258 @@ class ListingController extends Controller
      *     )
      * )
      */
-public function store(Request $request)
-{
-    DB::beginTransaction();
+    public function store(Request $request)
+    {
+        DB::beginTransaction();
 
-    try {
-        $sellerId = Auth::id();
-        if (!$sellerId) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $step = $request->step ?? 1;
-        $listing = $request->listing_id ? Listing::find($request->listing_id) : null;
-
-        if ($listing && $listing->seller_id !== $sellerId) {
-            return response()->json(['message' => 'Listing not found or access denied'], 403);
-        }
-
-        if (!$listing) {
-            $listing = Listing::create([
-                'seller_id' => $sellerId,
-                'status' => 'draft',
-                'step' => $step,
-                'created_at' => now(),
-            ]);
-        }
-
-        // ✅ Validation selon le step
-        if ($step >= 3) {
-            // Step paiement - on retire bank_card_id
-            $request->validate([
-                'amount' => 'required|numeric|min:1',
-            ]);
-        } else {
-            // Step 1 & 2 : validation des données de base
-            $request->validate([
-                'title'       => 'sometimes|string|max:255',
-                'description' => 'sometimes|string',
-                'price'       => 'sometimes|numeric|min:0',
-                'category_id' => 'sometimes|exists:categories,id',
-                'country_id'  => 'sometimes|exists:countries,id',
-                'city_id'     => 'sometimes|exists:cities,id',
-            ]);
-        }
-
-        // Remplissage du listing
-        $listing->fill(array_filter($request->only([
-            'title',
-            'description',
-            'price',
-            'category_id',
-            'country_id',
-            'city_id',
-            'auction_enabled',
-            'minimum_bid',
-            'allow_submission',
-            'listing_type_id',
-            'contacting_channel',
-            'seller_type'
-        ])));
-        $listing->step = max($listing->step, $step);
-        $listing->save();
-
-        // Gestion des images
-        if ($request->has('images')) {
-            foreach ($request->images as $imageUrl) {
-                $listing->images()->updateOrCreate(['image_url' => $imageUrl]);
-            }
-        }
-
-        // ✅ Traitement des données spécifiques selon la catégorie
-        $this->handleCategorySpecificData($listing, $request);
-
-        // ✅ Paiement uniquement au step 3 (sans bank_card_id)
-        if ($step >= 3) {
-            $payment = Payment::create([
-                'user_id'       => $sellerId,
-                'listing_id'    => $listing->id,
-                'amount'        => $request->amount,
-                'payment_status' => 'pending',
-                'cart_id'       => 'cart_' . time(),
-            ]);
-
-            // Payload PayTabs
-            $payload = [
-                'profile_id' => (int) config('paytabs.profile_id'),
-                'tran_type' => 'sale',
-                'tran_class' => 'ecom',
-                'cart_id' => $payment->cart_id,
-                'cart_description' => 'Payment for Listing #' . $listing->id,
-                'cart_currency' => config('paytabs.currency'),
-                'cart_amount' => $payment->amount,
-                'customer_details' => [
-                    'name' => Auth::user()->name,
-                    'email' => Auth::user()->email,
-                    'phone' => Auth::user()->phone ?? '000000000',
-                    'street1' => 'N/A',
-                    'city' => 'N/A',
-                    'state' => 'N/A',
-                    'country' => config('paytabs.region'),
-                    'zip' => '00000',
-                    'ip' => $request->ip()
-                ],
-                'callback' => route('paytabs.callback'),
-                'return' => route('paytabs.return'),
-            ];
-
-            $baseUrls = [
-                'ARE' => 'https://secure.paytabs.com/',
-                'SAU' => 'https://secure.paytabs.sa/',
-                'OMN' => 'https://secure-oman.paytabs.com/',
-                'JOR' => 'https://secure-jordan.paytabs.com/',
-                'EGY' => 'https://secure-egypt.paytabs.com/',
-                'GLOBAL' => 'https://secure-global.paytabs.com/'
-            ];
-            $region = config('paytabs.region', 'ARE');
-            $baseUrl = $baseUrls[$region] ?? $baseUrls['ARE'];
-
-            $response = Http::withHeaders([
-                'Authorization' => config('paytabs.server_key'),
-                'Content-Type'  => 'application/json',
-                'Accept'        => 'application/json'
-            ])->post($baseUrl . 'payment/request', $payload);
-
-            if (!$response->successful()) {
-                DB::rollBack();
-                return response()->json(['error' => 'Payment request failed', 'details' => $response->json()], 400);
+        try {
+            $sellerId = Auth::id();
+            if (!$sellerId) {
+                return response()->json(['message' => 'Unauthorized'], 401);
             }
 
-            $data = $response->json();
-            $payment->update([
-                'tran_ref' => $data['tran_ref'] ?? null,
-                'payment_status' => 'initiated',
-            ]);
+            $step = $request->step ?? 1;
+            $listing = $request->listing_id ? Listing::find($request->listing_id) : null;
 
+            if ($listing && $listing->seller_id !== $sellerId) {
+                return response()->json(['message' => 'Listing not found or access denied'], 403);
+            }
+
+            if (!$listing) {
+                $listing = Listing::create([
+                    'seller_id' => $sellerId,
+                    'status' => 'draft',
+                    'step' => $step,
+                    'created_at' => now(),
+                ]);
+            }
+
+            // ✅ Validation selon le step
+            if ($step >= 3) {
+                // Step paiement - on retire bank_card_id
+                $request->validate([
+                    'amount' => 'required|numeric|min:1',
+                ]);
+            } else {
+                // Step 1 & 2 : validation des données de base
+                $request->validate([
+                    'title'       => 'sometimes|string|max:255',
+                    'description' => 'sometimes|string',
+                    'price'       => 'sometimes|numeric|min:0',
+                    'category_id' => 'sometimes|exists:categories,id',
+                    'country_id'  => 'sometimes|exists:countries,id',
+                    'city_id'     => 'sometimes|exists:cities,id',
+                ]);
+            }
+
+            // Remplissage du listing
+            $listing->fill(array_filter($request->only([
+                'title',
+                'description',
+                'price',
+                'category_id',
+                'country_id',
+                'city_id',
+                'auction_enabled',
+                'minimum_bid',
+                'allow_submission',
+                'listing_type_id',
+                'contacting_channel',
+                'seller_type'
+            ])));
+            $listing->step = max($listing->step, $step);
+            $listing->save();
+
+            // Gestion des images
+            if ($request->has('images')) {
+                foreach ($request->images as $imageUrl) {
+                    $listing->images()->updateOrCreate(['image_url' => $imageUrl]);
+                }
+            }
+
+            // ✅ Traitement des données spécifiques selon la catégorie
+            $this->handleCategorySpecificData($listing, $request);
+
+            // ✅ Paiement uniquement au step 3 (sans bank_card_id)
+            if ($step >= 3) {
+                $payment = Payment::create([
+                    'user_id'       => $sellerId,
+                    'listing_id'    => $listing->id,
+                    'amount'        => $request->amount,
+                    'payment_status' => 'pending',
+                    'cart_id'       => 'cart_' . time(),
+                ]);
+
+                // Payload PayTabs
+                $payload = [
+                    'profile_id' => (int) config('paytabs.profile_id'),
+                    'tran_type' => 'sale',
+                    'tran_class' => 'ecom',
+                    'cart_id' => $payment->cart_id,
+                    'cart_description' => 'Payment for Listing #' . $listing->id,
+                    'cart_currency' => config('paytabs.currency'),
+                    'cart_amount' => $payment->amount,
+                    'customer_details' => [
+                        'name' => Auth::user()->name,
+                        'email' => Auth::user()->email,
+                        'phone' => Auth::user()->phone ?? '000000000',
+                        'street1' => 'N/A',
+                        'city' => 'N/A',
+                        'state' => 'N/A',
+                        'country' => config('paytabs.region'),
+                        'zip' => '00000',
+                        'ip' => $request->ip()
+                    ],
+                    'callback' => route('paytabs.callback'),
+                    'return' => route('paytabs.return'),
+                ];
+
+                $baseUrls = [
+                    'ARE' => 'https://secure.paytabs.com/',
+                    'SAU' => 'https://secure.paytabs.sa/',
+                    'OMN' => 'https://secure-oman.paytabs.com/',
+                    'JOR' => 'https://secure-jordan.paytabs.com/',
+                    'EGY' => 'https://secure-egypt.paytabs.com/',
+                    'GLOBAL' => 'https://secure-global.paytabs.com/'
+                ];
+                $region = config('paytabs.region', 'ARE');
+                $baseUrl = $baseUrls[$region] ?? $baseUrls['ARE'];
+
+                $response = Http::withHeaders([
+                    'Authorization' => config('paytabs.server_key'),
+                    'Content-Type'  => 'application/json',
+                    'Accept'        => 'application/json'
+                ])->post($baseUrl . 'payment/request', $payload);
+
+                if (!$response->successful()) {
+                    DB::rollBack();
+                    return response()->json(['error' => 'Payment request failed', 'details' => $response->json()], 400);
+                }
+
+                $data = $response->json();
+                $payment->update([
+                    'tran_ref' => $data['tran_ref'] ?? null,
+                    'payment_status' => 'initiated',
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'message' => 'Listing saved, waiting for payment',
+                    'listing_id' => $listing->id,
+                    'payment_id' => $payment->id,
+                    'redirect_url' => $data['redirect_url'] ?? null,
+                    'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate']),
+                ], 201);
+            }
+
+            // ✅ Step 1 & 2 : pas de paiement
             DB::commit();
-
             return response()->json([
-                'message' => 'Listing saved, waiting for payment',
+                'message' => 'Listing saved (no payment yet)',
                 'listing_id' => $listing->id,
-                'payment_id' => $payment->id,
-                'redirect_url' => $data['redirect_url'] ?? null,
                 'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate']),
             ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to process listing', 'details' => $e->getMessage()], 500);
         }
-
-        // ✅ Step 1 & 2 : pas de paiement
-        DB::commit();
-        return response()->json([
-            'message' => 'Listing saved (no payment yet)',
-            'listing_id' => $listing->id,
-            'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate']),
-        ], 201);
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return response()->json(['error' => 'Failed to process listing', 'details' => $e->getMessage()], 500);
     }
-}
 
-/**
- * ✅ Méthode pour traiter les données spécifiques à chaque catégorie
- */
-private function handleCategorySpecificData($listing, $request)
-{
-    // Déterminer la catégorie (1=moto, 2=pièce détachée, 3=plaque)
-    $categoryId = $request->category_id ?? $listing->category_id;
+    /**
+     * ✅ Méthode pour traiter les données spécifiques à chaque catégorie
+     */
+    private function handleCategorySpecificData($listing, $request)
+    {
+        // Déterminer la catégorie (1=moto, 2=pièce détachée, 3=plaque)
+        $categoryId = $request->category_id ?? $listing->category_id;
 
-    switch ($categoryId) {
-        case 1: // Moto
-            $motorcycleData = array_filter($request->only([
-                'brand_id',
-                'model_id',
-                'year_id',
-                'engine',
-                'mileage',
-                'body_condition',
-                'modified',
-                'insurance',
-                'general_condition',
-                'vehicle_care',
-                'transmission'
-            ]));
+        switch ($categoryId) {
+            case 1: // Moto
+                $motorcycleData = array_filter($request->only([
+                    'brand_id',
+                    'model_id',
+                    'year_id',
+                    'engine',
+                    'mileage',
+                    'body_condition',
+                    'modified',
+                    'insurance',
+                    'general_condition',
+                    'vehicle_care',
+                    'transmission'
+                ]));
 
-            if (!empty($motorcycleData)) {
-                $listing->motorcycle()->updateOrCreate(
-                    ['listing_id' => $listing->id],
-                    $motorcycleData
-                );
-            }
-            break;
-
-        case 2: // Pièce détachée
-            $sparePartData = array_filter($request->only([
-                'condition'
-            ]));
-
-            if (!empty($sparePartData)) {
-                $sparePart = $listing->sparePart()->updateOrCreate(
-                    ['listing_id' => $listing->id],
-                    $sparePartData
-                );
-
-                // Traiter les motos compatibles
-                if ($request->has('motorcycles') && is_array($request->motorcycles)) {
-                    $sparePart->motorcycles()->delete(); // Supprimer les anciennes relations
-
-                    foreach ($request->motorcycles as $moto) {
-                        $sparePart->motorcycles()->create([
-                            'brand_id' => $moto['brand_id'] ?? null,
-                            'model_id' => $moto['model_id'] ?? null,
-                            'year_id' => $moto['year_id'] ?? null,
-                        ]);
+                // ✅ Récupérer le type_id depuis la table motorcycle_models
+                if (!empty($motorcycleData['model_id'])) {
+                    $model = \App\Models\MotorcycleModel::find($motorcycleData['model_id']);
+                    if ($model && $model->type_id) {
+                        $motorcycleData['type_id'] = $model->type_id;
                     }
                 }
-            }
-            break;
 
-        case 3: // Plaque d'immatriculation
-            $licensePlateData = array_filter($request->only([
-                'plate_format_id',
-                'country_id_lp',
-                'city_id_lp'
-            ]));
+                if (!empty($motorcycleData)) {
+                    $listing->motorcycle()->updateOrCreate(
+                        ['listing_id' => $listing->id],
+                        $motorcycleData
+                    );
+                }
+                break;
 
-            if (!empty($licensePlateData)) {
-                $licensePlate = $listing->licensePlate()->updateOrCreate(
-                    ['listing_id' => $listing->id],
-                    $licensePlateData
-                );
+            case 2: // Pièce détachée
+                $sparePartData = array_filter($request->only([
+                    'condition'
+                ]));
 
-                // Traiter les champs personnalisés
-                if ($request->has('fields') && is_array($request->fields)) {
-                    $licensePlate->fields()->delete(); // Supprimer les anciens champs
+                if (!empty($sparePartData)) {
+                    $sparePart = $listing->sparePart()->updateOrCreate(
+                        ['listing_id' => $listing->id],
+                        $sparePartData
+                    );
 
-                    foreach ($request->fields as $field) {
-                        $licensePlate->fields()->create([
-                            'field_id' => $field['field_id'] ?? null,
-                            'value' => $field['value'] ?? null,
-                        ]);
+                    // Traiter les motos compatibles
+                    if ($request->has('motorcycles') && is_array($request->motorcycles)) {
+                        $sparePart->motorcycles()->delete(); // Supprimer les anciennes relations
+
+                        foreach ($request->motorcycles as $moto) {
+                            $sparePart->motorcycles()->create([
+                                'brand_id' => $moto['brand_id'] ?? null,
+                                'model_id' => $moto['model_id'] ?? null,
+                                'year_id' => $moto['year_id'] ?? null,
+                            ]);
+                        }
                     }
                 }
-            }
-            break;
+                break;
+
+            case 3: // Plaque d'immatriculation
+                $licensePlateData = array_filter($request->only([
+                    'plate_format_id',
+                    'country_id_lp',
+                    'city_id_lp'
+                ]));
+
+                if (!empty($licensePlateData)) {
+                    $licensePlate = $listing->licensePlate()->updateOrCreate(
+                        ['listing_id' => $listing->id],
+                        $licensePlateData
+                    );
+
+                    // Traiter les champs personnalisés
+                    if ($request->has('fields') && is_array($request->fields)) {
+                        $licensePlate->fields()->delete(); // Supprimer les anciens champs
+
+                        foreach ($request->fields as $field) {
+                            $licensePlate->fields()->create([
+                                'field_id' => $field['field_id'] ?? null,
+                                'value' => $field['value'] ?? null,
+                            ]);
+                        }
+                    }
+                }
+                break;
+        }
     }
-}
 
 
 
