@@ -96,6 +96,8 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/listings/draft/{id}', [ListingController::class, 'deleteDraftListingById'])->middleware('auth:api');
 
 
+
+
     // Existing admin routes
     Route::apiResource('BankCards', CardController::class);
 
@@ -108,7 +110,7 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('my-cards/{id}/set-default', [CardController::class, 'setAsDefault']);
 
     Route::post('/listings', [ListingController::class, 'store']);
-    Route::put('/listings/{id}/complete', [ListingController::class, 'completeListing']);
+    Route::put('/listings/complete/{id}', [ListingController::class, 'completeListing']);
 
     Route::get('/my-listing', [ListingController::class, 'my_listing']);
 
