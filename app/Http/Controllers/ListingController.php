@@ -419,6 +419,186 @@ class ListingController extends Controller
     }
 
 
+ /**
+     * @OA\Put(
+     *     path="/api/listings/{id}/complete",
+     *     summary="Compléter un listing existant",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID du listing à compléter",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="step", type="integer", example=3, description="Étape à compléter"),
+     *             @OA\Property(property="action", type="string", example="complete", description="Action: 'update' ou 'complete'"),
+     *             @OA\Property(property="amount", type="number", example=50.00, description="Montant pour step 3"),
+     *             @OA\Property(property="title", type="string", example="Titre mis à jour"),
+     *             @OA\Property(property="description", type="string"),
+     *             @OA\Property(property="price", type="number"),
+     *             @OA\Property(property="images", type="array", @OA\Items(type="string"))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Listing complété avec succès"
+     *     )
+     * )
+     */
+    public function completeListing(Request $request, $id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $sellerId = Auth::id();
+            if (!$sellerId) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            $listing = Listing::where('id', $id)
+                ->where('seller_id', $sellerId)
+                ->first();
+
+            if (!$listing) {
+                return response()->json(['message' => 'Listing not found'], 404);
+            }
+
+            $step = $request->step ?? ($listing->step + 1);
+            $action = $request->action ?? 'update'; // 'update' ou 'complete'
+
+            // Validation selon le step
+            if ($step >= 3 && $action === 'complete') {
+                $request->validate([
+                    'amount' => 'required|numeric|min:1',
+                ]);
+            }
+
+            // Mettre à jour les données du listing
+            $listing->fill(array_filter($request->only([
+                'title',
+                'description',
+                'price',
+                'country_id',
+                'city_id',
+                'auction_enabled',
+                'minimum_bid',
+                'allow_submission',
+                'listing_type_id',
+                'contacting_channel',
+                'seller_type'
+            ])));
+
+            $listing->step = max($listing->step, $step);
+            $listing->save();
+
+            // Mettre à jour les images
+            if ($request->has('images')) {
+                // Supprimer les anciennes images si de nouvelles sont fournies
+                $listing->images()->delete();
+                foreach ($request->images as $imageUrl) {
+                    $listing->images()->create(['image_url' => $imageUrl]);
+                }
+            }
+
+            // Traiter les données spécifiques à la catégorie
+            $this->handleCategorySpecificData($listing, $request);
+
+            // Si c'est un step de finalisation (step 3 + action complete)
+            if ($step >= 3 && $action === 'complete') {
+                $payment = Payment::create([
+                    'user_id' => $sellerId,
+                    'listing_id' => $listing->id,
+                    'amount' => $request->amount,
+                    'payment_status' => 'pending',
+                    'cart_id' => 'cart_' . time(),
+                ]);
+
+                // Processus PayTabs (même logique que dans store())
+                $payload = [
+                    'profile_id' => (int) config('paytabs.profile_id'),
+                    'tran_type' => 'sale',
+                    'tran_class' => 'ecom',
+                    'cart_id' => $payment->cart_id,
+                    'cart_description' => 'Completion Payment for Listing #' . $listing->id,
+                    'cart_currency' => config('paytabs.currency'),
+                    'cart_amount' => $payment->amount,
+                    'customer_details' => [
+                        'name' => Auth::user()->name,
+                        'email' => Auth::user()->email,
+                        'phone' => Auth::user()->phone ?? '000000000',
+                        'street1' => 'N/A',
+                        'city' => 'N/A',
+                        'state' => 'N/A',
+                        'country' => config('paytabs.region'),
+                        'zip' => '00000',
+                        'ip' => $request->ip()
+                    ],
+                    'callback' => route('paytabs.callback'),
+                    'return' => route('paytabs.return'),
+                ];
+
+                $baseUrls = [
+                    'ARE' => 'https://secure.paytabs.com/',
+                    'SAU' => 'https://secure.paytabs.sa/',
+                    'OMN' => 'https://secure-oman.paytabs.com/',
+                    'JOR' => 'https://secure-jordan.paytabs.com/',
+                    'EGY' => 'https://secure-egypt.paytabs.com/',
+                    'GLOBAL' => 'https://secure-global.paytabs.com/'
+                ];
+                $region = config('paytabs.region', 'ARE');
+                $baseUrl = $baseUrls[$region] ?? $baseUrls['ARE'];
+
+                $response = Http::withHeaders([
+                    'Authorization' => config('paytabs.server_key'),
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json'
+                ])->post($baseUrl . 'payment/request', $payload);
+
+                if (!$response->successful()) {
+                    DB::rollBack();
+                    return response()->json(['error' => 'Payment request failed', 'details' => $response->json()], 400);
+                }
+
+                $data = $response->json();
+                $payment->update([
+                    'tran_ref' => $data['tran_ref'] ?? null,
+                    'payment_status' => 'initiated',
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Listing completed, payment initiated',
+                    'listing_id' => $listing->id,
+                    'payment_id' => $payment->id,
+                    'redirect_url' => $data['redirect_url'] ?? null,
+                    'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate'])
+                ]);
+            }
+
+            // Simple mise à jour sans paiement
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Listing updated successfully',
+                'listing_id' => $listing->id,
+                'current_step' => $listing->step,
+                'next_step' => min($listing->step + 1, 3),
+                'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate'])
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to complete listing', 'details' => $e->getMessage()], 500);
+        }
+    }
 
     /**
      * @OA\Get(

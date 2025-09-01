@@ -3742,6 +3742,79 @@
                 ]
             }
         },
+        "/api/listings/{id}/complete": {
+            "put": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Compléter un listing existant",
+                "operationId": "7278363fa39c8676eb5fd9569766a0ac",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du listing à compléter",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "step": {
+                                        "description": "Étape à compléter",
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "action": {
+                                        "description": "Action: 'update' ou 'complete'",
+                                        "type": "string",
+                                        "example": "complete"
+                                    },
+                                    "amount": {
+                                        "description": "Montant pour step 3",
+                                        "type": "number",
+                                        "example": 50
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Titre mis à jour"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "price": {
+                                        "type": "number"
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Listing complété avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/listings/country/{country_id}": {
             "get": {
                 "tags": [
