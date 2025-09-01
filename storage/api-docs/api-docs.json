@@ -3742,13 +3742,13 @@
                 ]
             }
         },
-        "/api/listings/{id}/complete": {
+        "/api/listings/complete/{id}": {
             "put": {
                 "tags": [
                     "Listings"
                 ],
                 "summary": "Compléter un listing existant",
-                "operationId": "7278363fa39c8676eb5fd9569766a0ac",
+                "operationId": "ea4be4bab28515b856eea32a17064021",
                 "parameters": [
                     {
                         "name": "id",

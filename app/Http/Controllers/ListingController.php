@@ -421,7 +421,7 @@ class ListingController extends Controller
 
  /**
      * @OA\Put(
-     *     path="/api/listings/{id}/complete",
+     *     path="/api/listings/complete/{id}",
      *     summary="Compléter un listing existant",
      *     tags={"Listings"},
      *     security={{"bearerAuth":{}}},
