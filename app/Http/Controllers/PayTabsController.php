@@ -435,7 +435,7 @@ class PayTabsController extends Controller
             $successUrl = 'https://dabapp.co/payment/success?' . http_build_query([
                 'payment_id' => $payment->id,
                 'amount' => $payment->amount,
-                'currency' => $payment->currency ?? 'MAD',
+                'currency' => $payment->currency ?? 'SAR',
                 'tran_ref' => $payment->tran_ref,
                 'listing_id' => $payment->listing_id,
                 'status' => 'completed'
@@ -453,7 +453,7 @@ class PayTabsController extends Controller
                 'payment_id' => $payment->id,
                 'status' => $payment->payment_status,
                 'amount' => $payment->amount,
-                'currency' => $payment->currency ?? 'MAD',
+                'currency' => $payment->currency ?? 'SAR',
                 'tran_ref' => $payment->tran_ref,
                 'listing' => $payment->listing,
                 'redirect_url' => $successUrl
@@ -479,7 +479,7 @@ class PayTabsController extends Controller
                 'payment_id' => $payment->id,
                 'status' => $payment->payment_status,
                 'amount' => $payment->amount,
-                'currency' => $payment->currency ?? 'MAD',
+                'currency' => $payment->currency ?? 'SAR',
                 'tran_ref' => $payment->tran_ref,
                 'error_code' => $payment->response_code,
                 'error_message' => $payment->payment_result,
@@ -505,11 +505,181 @@ class PayTabsController extends Controller
                 'payment_id' => $payment->id,
                 'status' => $payment->payment_status,
                 'amount' => $payment->amount,
-                'currency' => $payment->currency ?? 'MAD',
+                'currency' => $payment->currency ?? 'SAR',
                 'tran_ref' => $payment->tran_ref,
                 'redirect_url' => $pendingUrl
             ]);
         }
+    }
+
+    /**
+     * Page de succès - MISE À JOUR pour supporter payment_id et tran_ref
+     */
+    public function paymentSuccess(Request $request)
+    {
+        $tranRef = $request->input('tran_ref');
+        $paymentId = $request->input('payment_id');
+
+        if (!$tranRef && !$paymentId) {
+            return response()->json([
+                'success' => false,
+                'error' => 'payment_id ou tran_ref requis'
+            ], 400);
+        }
+
+        // Rechercher le paiement par ID ou tran_ref
+        $query = Payment::with(['listing', 'user']);
+
+        if ($paymentId) {
+            $query->where('id', $paymentId);
+        } else {
+            $query->where('tran_ref', $tranRef);
+        }
+
+        $payment = $query->first();
+
+        if (!$payment) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Paiement non trouvé'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Paiement réussi ! Votre annonce a été publiée.',
+            'payment_id' => $payment->id,
+            'status' => $payment->payment_status,
+            'amount' => $payment->amount,
+            'currency' => $payment->currency ?? 'SAR',
+            'tran_ref' => $payment->tran_ref,
+            'listing' => $payment->listing,
+            'redirect_url' => 'https://dabapp.co/payment/success?' . http_build_query([
+                'payment_id' => $payment->id,
+                'amount' => $payment->amount,
+                'currency' => $payment->currency ?? 'SAR',
+                'tran_ref' => $payment->tran_ref,
+                'listing_id' => $payment->listing_id,
+                'status' => $payment->payment_status
+            ])
+        ]);
+    }
+
+    /**
+     * Page d'erreur - NOUVELLE méthode
+     */
+    public function paymentError(Request $request)
+    {
+        $tranRef = $request->input('tran_ref');
+        $paymentId = $request->input('payment_id');
+        $reason = $request->input('reason', 'unknown');
+
+        if (!$tranRef && !$paymentId) {
+            return response()->json([
+                'success' => false,
+                'error' => 'payment_id ou tran_ref requis',
+                'reason' => $reason
+            ], 400);
+        }
+
+        // Rechercher le paiement si possible
+        $payment = null;
+        if ($paymentId) {
+            $payment = Payment::with(['listing'])->find($paymentId);
+        } elseif ($tranRef) {
+            $payment = Payment::with(['listing'])->where('tran_ref', $tranRef)->first();
+        }
+
+        if (!$payment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Le paiement a échoué. Veuillez réessayer.',
+                'error' => 'Paiement non trouvé',
+                'reason' => $reason,
+                'tran_ref' => $tranRef,
+                'payment_id' => $paymentId
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Le paiement a échoué. Veuillez réessayer.',
+            'payment_id' => $payment->id,
+            'status' => $payment->payment_status,
+            'amount' => $payment->amount,
+            'currency' => $payment->currency ?? 'SAR',
+            'tran_ref' => $payment->tran_ref,
+            'error_code' => $payment->response_code,
+            'error_message' => $payment->payment_result,
+            'reason' => $reason,
+            'listing' => $payment->listing
+        ]);
+    }
+
+    /**
+     * Page d'attente - NOUVELLE méthode
+     */
+    public function paymentPending(Request $request)
+    {
+        $tranRef = $request->input('tran_ref');
+        $paymentId = $request->input('payment_id');
+
+        if (!$tranRef && !$paymentId) {
+            return response()->json([
+                'success' => false,
+                'error' => 'payment_id ou tran_ref requis'
+            ], 400);
+        }
+
+        // Rechercher le paiement
+        $query = Payment::with(['listing']);
+
+        if ($paymentId) {
+            $query->where('id', $paymentId);
+        } else {
+            $query->where('tran_ref', $tranRef);
+        }
+
+        $payment = $query->first();
+
+        if (!$payment) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Paiement non trouvé'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => null,
+            'message' => 'Votre paiement est en cours de traitement...',
+            'payment_id' => $payment->id,
+            'status' => $payment->payment_status,
+            'amount' => $payment->amount,
+            'currency' => $payment->currency ?? 'SAR',
+            'tran_ref' => $payment->tran_ref,
+            'listing' => $payment->listing
+        ]);
+    }
+
+    /**
+     * Page d'annulation
+     */
+    public function paymentCancel(Request $request)
+    {
+        return response()->json([
+            'success' => false,
+            'message' => 'Paiement annulé par l\'utilisateur',
+            'data' => $request->all()
+        ]);
+    }
+
+    /**
+     * Webhook pour les notifications de statut
+     */
+    public function webhook(Request $request)
+    {
+        Log::info('PayTabs Webhook received', $request->all());
+        return $this->callback($request);
     }
 
     /**
@@ -537,15 +707,6 @@ class PayTabsController extends Controller
             Log::error('PayTabs verification error: ' . $e->getMessage());
             return null;
         }
-    }
-
-    /**
-     * Webhook pour les notifications de statut
-     */
-    public function webhook(Request $request)
-    {
-        Log::info('PayTabs Webhook received', $request->all());
-        return $this->callback($request);
     }
 
     /**
@@ -672,46 +833,6 @@ class PayTabsController extends Controller
                 'per_page' => $payments->perPage(),
                 'total' => $payments->total()
             ]
-        ]);
-    }
-
-    /**
-     * Page de succès
-     */
-    public function paymentSuccess(Request $request)
-    {
-        $tranRef = $request->input('tran_ref');
-        $payment = Payment::where('tran_ref', $tranRef)->first();
-
-        if (!$payment) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Paiement non trouvé'
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Paiement réussi',
-            'payment' => [
-                'id' => $payment->id,
-                'status' => $payment->payment_status,
-                'amount' => $payment->amount,
-                'currency' => $payment->currency,
-                'listing' => $payment->listing
-            ]
-        ]);
-    }
-
-    /**
-     * Page d'annulation
-     */
-    public function paymentCancel(Request $request)
-    {
-        return response()->json([
-            'success' => false,
-            'message' => 'Paiement annulé par l\'utilisateur',
-            'data' => $request->all()
         ]);
     }
 

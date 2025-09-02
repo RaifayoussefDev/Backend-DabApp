@@ -301,33 +301,16 @@ Route::middleware('auth:api')->put('/change-password', [AuthController::class, '
 
 // Routes publiques PayTabs (pas d'authentification requise)
 Route::prefix('paytabs')->name('paytabs.')->group(function () {
-    // Callback automatique de PayTabs (appelé par leurs serveurs)
+    // Tes routes existantes...
     Route::post('/callback', [PayTabsController::class, 'callback'])->name('callback');
-
-    // Page de retour après paiement (où l'utilisateur est redirigé)
     Route::get('/return', [PayTabsController::class, 'return'])->name('return');
-
-    // Webhook pour notifications push (optionnel)
     Route::post('/webhook', [PayTabsController::class, 'webhook'])->name('webhook');
 
-    // Routes de résultat (pour compatibilité avec votre code existant)
+    // Routes mises à jour
     Route::get('/success', [PayTabsController::class, 'paymentSuccess'])->name('success');
+    Route::get('/error', [PayTabsController::class, 'paymentError'])->name('error');
+    Route::get('/pending', [PayTabsController::class, 'paymentPending'])->name('pending');
     Route::get('/cancel', [PayTabsController::class, 'paymentCancel'])->name('cancel');
-});
-
-// PayTabs public endpoints (NO AUTH required - PayTabs needs to access these)
-Route::prefix('paytabs')->name('paytabs.')->group(function () {
-    // PayTabs callback endpoints - MUST be outside auth middleware
-    Route::match(['GET', 'POST'], 'callback', [PayTabsController::class, 'callback'])->name('callback');
-    Route::match(['GET', 'POST'], 'return', [PayTabsController::class, 'return'])->name('return');
-    Route::match(['GET', 'POST'], 'webhook', [PayTabsController::class, 'webhook'])->name('webhook');
-
-    // Success/Cancel pages (for compatibility)
-    Route::match(['GET', 'POST'], 'success', [PayTabsController::class, 'paymentSuccess'])->name('success');
-    Route::match(['GET', 'POST'], 'cancel', [PayTabsController::class, 'paymentCancel'])->name('cancel');
-
-    // Test connection (can be public for testing)
-    Route::get('test', [PayTabsController::class, 'testConnection'])->name('test');
 });
 
 // Protected routes that require authentication
