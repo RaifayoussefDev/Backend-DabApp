@@ -301,16 +301,27 @@ Route::middleware('auth:api')->put('/change-password', [AuthController::class, '
 
 // Routes publiques PayTabs (pas d'authentification requise)
 Route::prefix('paytabs')->name('paytabs.')->group(function () {
-    // Tes routes existantes...
+    // Callback automatique de PayTabs (appelé par leurs serveurs)
     Route::post('/callback', [PayTabsController::class, 'callback'])->name('callback');
-    Route::get('/return', [PayTabsController::class, 'return'])->name('return');
+
+    // Page de retour après paiement - ACCEPTE GET ET POST
+    Route::match(['GET', 'POST'], '/return', [PayTabsController::class, 'return'])->name('return');
+
+    // Webhook pour notifications push (optionnel)
     Route::post('/webhook', [PayTabsController::class, 'webhook'])->name('webhook');
 
-    // Routes mises à jour
-    Route::get('/success', [PayTabsController::class, 'paymentSuccess'])->name('success');
-    Route::get('/error', [PayTabsController::class, 'paymentError'])->name('error');
-    Route::get('/pending', [PayTabsController::class, 'paymentPending'])->name('pending');
-    Route::get('/cancel', [PayTabsController::class, 'paymentCancel'])->name('cancel');
+    // Routes de résultat - Support GET et POST pour plus de flexibilité
+    Route::match(['GET', 'POST'], '/success', [PayTabsController::class, 'paymentSuccess'])->name('success');
+    Route::match(['GET', 'POST'], '/error', [PayTabsController::class, 'paymentError'])->name('error');
+    Route::match(['GET', 'POST'], '/pending', [PayTabsController::class, 'paymentPending'])->name('pending');
+    Route::match(['GET', 'POST'], '/cancel', [PayTabsController::class, 'paymentCancel'])->name('cancel');
+});
+
+// Routes additionnelles pour accès direct style dabapp.co
+Route::prefix('payment')->name('payment.')->group(function () {
+    Route::match(['GET', 'POST'], '/success', [PayTabsController::class, 'paymentSuccess'])->name('success');
+    Route::match(['GET', 'POST'], '/error', [PayTabsController::class, 'paymentError'])->name('error');
+    Route::match(['GET', 'POST'], '/pending', [PayTabsController::class, 'paymentPending'])->name('pending');
 });
 
 // Protected routes that require authentication
