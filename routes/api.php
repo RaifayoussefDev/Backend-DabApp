@@ -25,6 +25,7 @@ use App\Http\Controllers\MotorcycleFilterController;
 use App\Http\Controllers\MotorcycleModelController;
 use App\Http\Controllers\MotorcycleTypeController;
 use App\Http\Controllers\MotorcycleYearController;
+use App\Http\Controllers\PaymentHistoryController;
 use App\Http\Controllers\PayTabsController;
 use App\Http\Controllers\PhonePasswordAuthController;
 use App\Http\Controllers\PromoCodeController;
@@ -159,6 +160,12 @@ Route::middleware('auth:api')->group(function () {
 
 
     Route::get('/listings/{id}', [ListingController::class, 'getById']);
+
+
+     Route::get('/payments/history/user', [PaymentHistoryController::class, 'historyPaymentByUser']);
+    Route::get('/payments/history/global', [PaymentHistoryController::class, 'historyPaymentGlobal']);
+    Route::get('/payments/{id}', [PaymentHistoryController::class, 'show']);
+    Route::get('/payments/stats/user', [PaymentHistoryController::class, 'userStats']);
 });
 
 Route::get('/listings/by-category/{category_id}', [ListingController::class, 'getByCategory']);
