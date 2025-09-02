@@ -322,13 +322,17 @@ class PayTabsController extends Controller
     /**
      * API de retour après paiement
      */
+    /**
+     * API de retour après paiement - CORRIGÉE
+     */
     public function return(Request $request)
     {
         Log::info('PayTabs Return received', [
             'method' => $request->getMethod(),
             'all_data' => $request->all(),
             'query_params' => $request->query(),
-            'post_data' => $request->post()
+            'post_data' => $request->post(),
+            'headers' => $request->headers->all()
         ]);
 
         $tranRef = $request->input('tran_ref') ?? $request->query('tran_ref');
@@ -346,7 +350,8 @@ class PayTabsController extends Controller
 
             $errorUrl = 'https://dabapp.co/payment/error?reason=missing_ref';
 
-            if ($request->isMethod('GET') && !$request->expectsJson()) {
+            // TOUJOURS rediriger si c'est une requête de navigateur
+            if (!$request->ajax() && !$request->wantsJson()) {
                 return redirect()->away($errorUrl);
             }
 
@@ -369,7 +374,8 @@ class PayTabsController extends Controller
 
             $errorUrl = 'https://dabapp.co/payment/error?reason=payment_not_found&tran_ref=' . $tranRef;
 
-            if ($request->isMethod('GET') && !$request->expectsJson()) {
+            // TOUJOURS rediriger si c'est une requête de navigateur
+            if (!$request->ajax() && !$request->wantsJson()) {
                 return redirect()->away($errorUrl);
             }
 
@@ -443,7 +449,9 @@ class PayTabsController extends Controller
 
             Log::info("Payment successful, redirecting to: {$successUrl}");
 
-            if ($request->isMethod('GET') && !$request->expectsJson()) {
+            // FORCER LA REDIRECTION pour les requêtes de navigateur
+            if (!$request->ajax() && !$request->wantsJson()) {
+                Log::info("Forcing redirect to dabapp.co");
                 return redirect()->away($successUrl);
             }
 
@@ -469,7 +477,9 @@ class PayTabsController extends Controller
 
             Log::info("Payment failed, redirecting to: {$errorUrl}");
 
-            if ($request->isMethod('GET') && !$request->expectsJson()) {
+            // FORCER LA REDIRECTION pour les requêtes de navigateur
+            if (!$request->ajax() && !$request->wantsJson()) {
+                Log::info("Forcing redirect to dabapp.co error page");
                 return redirect()->away($errorUrl);
             }
 
@@ -495,7 +505,9 @@ class PayTabsController extends Controller
 
             Log::info("Payment pending, redirecting to: {$pendingUrl}");
 
-            if ($request->isMethod('GET') && !$request->expectsJson()) {
+            // FORCER LA REDIRECTION pour les requêtes de navigateur
+            if (!$request->ajax() && !$request->wantsJson()) {
+                Log::info("Forcing redirect to dabapp.co pending page");
                 return redirect()->away($pendingUrl);
             }
 
