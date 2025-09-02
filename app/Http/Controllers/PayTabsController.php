@@ -349,7 +349,7 @@ public function return(Request $request)
         Log::error('PayTabs Return: No transaction reference found', $request->all());
 
         // REDIRECTION TEMPORAIRE VERS HOME
-        $homeUrl = 'https://dabapp.co/home';
+        $homeUrl = 'https://dabapp.co/submission-success';
 
         if (!$request->ajax() && !$request->wantsJson()) {
             return redirect()->away($homeUrl);
@@ -373,7 +373,7 @@ public function return(Request $request)
         ]);
 
         // REDIRECTION TEMPORAIRE VERS HOME
-        $homeUrl = 'https://dabapp.co/home';
+        $homeUrl = 'https://dabapp.co/submission-success';
 
         if (!$request->ajax() && !$request->wantsJson()) {
             return redirect()->away($homeUrl);
@@ -437,7 +437,7 @@ public function return(Request $request)
     $payment->refresh();
 
     // REDIRECTION TEMPORAIRE - TOUJOURS VERS HOME
-    $homeUrl = 'https://dabapp.co/home?' . http_build_query([
+    $homeUrl = 'https://dabapp.co/submission-success?' . http_build_query([
         'payment_id' => $payment->id,
         'status' => $payment->payment_status,
         'tran_ref' => $payment->tran_ref
