@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
@@ -176,7 +177,6 @@ class PayTabsController extends Controller
                     'details' => $response->json()
                 ], $response->status());
             }
-
         } catch (\Exception $e) {
             Log::error('PayTabs payment error: ' . $e->getMessage(), [
                 'exception' => $e->getTraceAsString()
@@ -204,8 +204,8 @@ class PayTabsController extends Controller
 
         // Trouver le paiement
         $payment = Payment::where('tran_ref', $tranRef)
-                         ->orWhere('cart_id', $cartId)
-                         ->first();
+            ->orWhere('cart_id', $cartId)
+            ->first();
 
         if (!$payment) {
             Log::error('Payment not found for tran_ref: ' . $tranRef . ', cart_id: ' . $cartId);
@@ -256,7 +256,6 @@ class PayTabsController extends Controller
                     'success' => true,
                     'message' => 'Paiement confirmé et listing publié'
                 ]);
-
             } elseif (in_array($verifiedStatus, ['D', 'F', 'E'])) {
                 // Paiement échoué
                 $payment->update([
@@ -348,7 +347,7 @@ class PayTabsController extends Controller
             $errorUrl = 'https://dabapp.co/payment/error?reason=missing_ref';
 
             if ($request->isMethod('GET') && !$request->expectsJson()) {
-                return redirect($errorUrl);
+                return redirect()->away($errorUrl);
             }
 
             return response()->json([
@@ -359,8 +358,8 @@ class PayTabsController extends Controller
         }
 
         $payment = Payment::where('tran_ref', $tranRef)
-                         ->orWhere('cart_id', $cartId)
-                         ->first();
+            ->orWhere('cart_id', $cartId)
+            ->first();
 
         if (!$payment) {
             Log::error('PayTabs Return: Payment not found', [
@@ -368,10 +367,10 @@ class PayTabsController extends Controller
                 'cart_id' => $cartId
             ]);
 
-            $errorUrl = 'https://dabapp.co/payment/error?reason=payment_not_found';
+            $errorUrl = 'https://dabapp.co/payment/error?reason=payment_not_found&tran_ref=' . $tranRef;
 
             if ($request->isMethod('GET') && !$request->expectsJson()) {
-                return redirect($errorUrl);
+                return redirect()->away($errorUrl);
             }
 
             return response()->json([
@@ -414,7 +413,6 @@ class PayTabsController extends Controller
                     }
 
                     Log::info("Payment #{$payment->id} marked as completed and listing published");
-
                 } elseif (in_array($responseStatus, ['D', 'F', 'E'])) {
                     $payment->update([
                         'payment_status' => 'failed',
@@ -432,44 +430,86 @@ class PayTabsController extends Controller
 
         $payment->refresh();
 
-        $responseData = [
-            'payment_id' => $payment->id,
-            'status' => $payment->payment_status,
-            'amount' => $payment->amount,
-            'currency' => $payment->currency,
-            'tran_ref' => $payment->tran_ref
-        ];
-
+        // Construire les URLs vers ton front-end dabapp.co
         if ($payment->payment_status === 'completed') {
-            $responseData['success'] = true;
-            $responseData['message'] = 'Paiement réussi ! Votre annonce a été publiée.';
-            $responseData['listing'] = $payment->listing;
-            $responseData['redirect_url'] = 'https://dabapp.co/payment/success?payment_id=' . $payment->id;
+            $successUrl = 'https://dabapp.co/payment/success?' . http_build_query([
+                'payment_id' => $payment->id,
+                'amount' => $payment->amount,
+                'currency' => $payment->currency ?? 'MAD',
+                'tran_ref' => $payment->tran_ref,
+                'listing_id' => $payment->listing_id,
+                'status' => 'completed'
+            ]);
+
+            Log::info("Payment successful, redirecting to: {$successUrl}");
 
             if ($request->isMethod('GET') && !$request->expectsJson()) {
-                return redirect($responseData['redirect_url']);
+                return redirect()->away($successUrl);
             }
 
+            return response()->json([
+                'success' => true,
+                'message' => 'Paiement réussi ! Votre annonce a été publiée.',
+                'payment_id' => $payment->id,
+                'status' => $payment->payment_status,
+                'amount' => $payment->amount,
+                'currency' => $payment->currency ?? 'MAD',
+                'tran_ref' => $payment->tran_ref,
+                'listing' => $payment->listing,
+                'redirect_url' => $successUrl
+            ]);
         } elseif ($payment->payment_status === 'failed') {
-            $responseData['success'] = false;
-            $responseData['message'] = 'Le paiement a échoué. Veuillez réessayer.';
-            $responseData['redirect_url'] = 'https://dabapp.co/payment/error?payment_id=' . $payment->id;
+            $errorUrl = 'https://dabapp.co/payment/error?' . http_build_query([
+                'payment_id' => $payment->id,
+                'reason' => 'payment_failed',
+                'tran_ref' => $payment->tran_ref,
+                'error_code' => $payment->response_code,
+                'error_message' => $payment->payment_result
+            ]);
+
+            Log::info("Payment failed, redirecting to: {$errorUrl}");
 
             if ($request->isMethod('GET') && !$request->expectsJson()) {
-                return redirect($responseData['redirect_url']);
+                return redirect()->away($errorUrl);
             }
 
+            return response()->json([
+                'success' => false,
+                'message' => 'Le paiement a échoué. Veuillez réessayer.',
+                'payment_id' => $payment->id,
+                'status' => $payment->payment_status,
+                'amount' => $payment->amount,
+                'currency' => $payment->currency ?? 'MAD',
+                'tran_ref' => $payment->tran_ref,
+                'error_code' => $payment->response_code,
+                'error_message' => $payment->payment_result,
+                'redirect_url' => $errorUrl
+            ]);
         } else {
-            $responseData['success'] = null;
-            $responseData['message'] = 'Votre paiement est en cours de traitement...';
-            $responseData['redirect_url'] = 'https://dabapp.co/payment/pending?payment_id=' . $payment->id;
+            // Status pending ou autre
+            $pendingUrl = 'https://dabapp.co/payment/pending?' . http_build_query([
+                'payment_id' => $payment->id,
+                'tran_ref' => $payment->tran_ref,
+                'status' => $payment->payment_status
+            ]);
+
+            Log::info("Payment pending, redirecting to: {$pendingUrl}");
 
             if ($request->isMethod('GET') && !$request->expectsJson()) {
-                return redirect($responseData['redirect_url']);
+                return redirect()->away($pendingUrl);
             }
-        }
 
-        return response()->json($responseData);
+            return response()->json([
+                'success' => null,
+                'message' => 'Votre paiement est en cours de traitement...',
+                'payment_id' => $payment->id,
+                'status' => $payment->payment_status,
+                'amount' => $payment->amount,
+                'currency' => $payment->currency ?? 'MAD',
+                'tran_ref' => $payment->tran_ref,
+                'redirect_url' => $pendingUrl
+            ]);
+        }
     }
 
     /**
@@ -493,7 +533,6 @@ class PayTabsController extends Controller
 
             Log::error('PayTabs verification failed', $response->json());
             return null;
-
         } catch (\Exception $e) {
             Log::error('PayTabs verification error: ' . $e->getMessage());
             return null;
@@ -611,8 +650,8 @@ class PayTabsController extends Controller
     public function getPaymentHistory(Request $request)
     {
         $query = Payment::with(['listing'])
-                       ->where('user_id', auth()->id())
-                       ->orderBy('created_at', 'desc');
+            ->where('user_id', auth()->id())
+            ->orderBy('created_at', 'desc');
 
         if ($request->has('status')) {
             $query->where('payment_status', $request->status);
