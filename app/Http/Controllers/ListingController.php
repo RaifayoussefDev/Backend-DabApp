@@ -293,24 +293,95 @@ class ListingController extends Controller
                 $region = config('paytabs.region', 'ARE');
                 $baseUrl = $baseUrls[$region] ?? $baseUrls['ARE'];
 
-                $response = Http::withHeaders([
-                    'Authorization' => config('paytabs.server_key'),
-                    'Content-Type'  => 'application/json',
-                    'Accept'        => 'application/json'
-                ])->post($baseUrl . 'payment/request', $payload);
+                // ✅ Configuration HTTP avec gestion SSL
+                $httpOptions = [
+                    'verify' => env('PAYTABS_SSL_VERIFY', false), // Configurable via .env
+                    'timeout' => 60,
+                    'connect_timeout' => 30,
+                ];
 
-                if (!$response->successful()) {
-                    DB::rollBack();
-                    return response()->json(['error' => 'Payment request failed', 'details' => $response->json()], 400);
+                // ✅ Options cURL additionnelles pour SSL
+                if (!env('PAYTABS_SSL_VERIFY', false)) {
+                    $httpOptions['curl'] = [
+                        CURLOPT_SSL_VERIFYPEER => false,
+                        CURLOPT_SSL_VERIFYHOST => false,
+                    ];
                 }
 
-                $data = $response->json();
-                $payment->update([
-                    'tran_ref' => $data['tran_ref'] ?? null,
-                    'payment_status' => 'initiated',
-                ]);
+                try {
+                    $response = Http::withHeaders([
+                        'Authorization' => config('paytabs.server_key'),
+                        'Content-Type'  => 'application/json',
+                        'Accept'        => 'application/json'
+                    ])
+                    ->withOptions($httpOptions)
+                    ->post($baseUrl . 'payment/request', $payload);
 
-                DB::commit();
+                    // ✅ Log pour debug (optionnel)
+                    \Log::info('PayTabs Response Status: ' . $response->status());
+                    \Log::info('PayTabs Response Body: ' . $response->body());
+
+                    if (!$response->successful()) {
+                        DB::rollBack();
+
+                        $errorDetails = $response->json();
+                        \Log::error('PayTabs Payment Failed', [
+                            'status' => $response->status(),
+                            'response' => $errorDetails,
+                            'payload' => $payload
+                        ]);
+
+                        return response()->json([
+                            'error' => 'Payment request failed',
+                            'details' => $errorDetails,
+                            'status_code' => $response->status()
+                        ], 400);
+                    }
+
+                    $data = $response->json();
+
+                    // ✅ Vérification que la réponse contient les données nécessaires
+                    if (!isset($data['tran_ref'])) {
+                        DB::rollBack();
+                        \Log::error('PayTabs Response Missing tran_ref', ['response' => $data]);
+
+                        return response()->json([
+                            'error' => 'Invalid payment response',
+                            'details' => 'Missing transaction reference'
+                        ], 400);
+                    }
+
+                    $payment->update([
+                        'tran_ref' => $data['tran_ref'],
+                        'payment_status' => 'initiated',
+                    ]);
+
+                    DB::commit();
+
+                } catch (\Illuminate\Http\Client\ConnectionException $e) {
+                    DB::rollBack();
+                    \Log::error('PayTabs Connection Error', [
+                        'message' => $e->getMessage(),
+                        'url' => $baseUrl . 'payment/request'
+                    ]);
+
+                    return response()->json([
+                        'error' => 'Payment service unavailable',
+                        'details' => 'Connection failed to payment gateway'
+                    ], 503);
+
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    \Log::error('PayTabs General Error', [
+                        'message' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+
+                    return response()->json([
+                        'error' => 'Payment processing failed',
+                        'details' => $e->getMessage()
+                    ], 500);
+                }
 
                 return response()->json([
                     'message' => 'Listing saved, waiting for payment',
