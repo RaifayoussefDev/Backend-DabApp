@@ -193,7 +193,7 @@ class ListingController extends Controller
 
             // ✅ Validation selon le step
             if ($step >= 3) {
-                // Step paiement - on retire bank_card_id
+                // Step paiement
                 $request->validate([
                     'amount' => 'required|numeric|min:1',
                 ]);
@@ -210,16 +210,16 @@ class ListingController extends Controller
                 ];
 
                 // Si auction_enabled = true, le prix n'est pas obligatoire
-                // Sinon, le prix reste avec la validation normale
                 if ($request->auction_enabled) {
                     $rules['price'] = 'nullable|numeric|min:0'; // Prix optionnel pour les enchères
-                    $rules['minimum_bid'] = 'required|numeric|min:0'; // Mais minimum_bid devient obligatoire
+                    $rules['minimum_bid'] = 'required|numeric|min:0'; // minimum_bid obligatoire
                 } else {
                     $rules['price'] = 'sometimes|numeric|min:0'; // Prix normal pour vente directe
                 }
 
                 $request->validate($rules);
             }
+
             // Remplissage du listing
             $listing->fill(array_filter($request->only([
                 'title',
@@ -248,7 +248,34 @@ class ListingController extends Controller
             // ✅ Traitement des données spécifiques selon la catégorie
             $this->handleCategorySpecificData($listing, $request);
 
-            // ✅ Paiement uniquement au step 3 (sans bank_card_id)
+            // ✅ NOUVEAU : Gestion des enchères
+            if ($request->auction_enabled) {
+                // Vérifier si une entrée auction existe déjà pour ce listing
+                $existingAuction = \App\Models\AuctionHistory::where('listing_id', $listing->id)->first();
+
+                if (!$existingAuction) {
+                    // Créer l'entrée initiale dans auction_histories
+                    \App\Models\AuctionHistory::create([
+                        'listing_id' => $listing->id,
+                        'seller_id' => $sellerId,
+                        'buyer_id' => null, // Pas d'acheteur au début
+                        'bid_amount' => $request->minimum_bid ?? 0, // Prix minimum d'enchère
+                        'bid_date' => now(),
+                        'validated' => false, // Pas encore validé
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                        'validated_at' => null,
+                        'validator_id' => null,
+                    ]);
+
+                    \Log::info('Auction created for listing', [
+                        'listing_id' => $listing->id,
+                        'minimum_bid' => $request->minimum_bid
+                    ]);
+                }
+            }
+
+            // ✅ Paiement uniquement au step 3
             if ($step >= 3) {
                 $payment = Payment::create([
                     'user_id'       => $sellerId,
@@ -295,7 +322,7 @@ class ListingController extends Controller
 
                 // ✅ Configuration HTTP avec gestion SSL
                 $httpOptions = [
-                    'verify' => env('PAYTABS_SSL_VERIFY', false), // Configurable via .env
+                    'verify' => env('PAYTABS_SSL_VERIFY', false),
                     'timeout' => 60,
                     'connect_timeout' => 30,
                 ];
@@ -317,7 +344,7 @@ class ListingController extends Controller
                     ->withOptions($httpOptions)
                     ->post($baseUrl . 'payment/request', $payload);
 
-                    // ✅ Log pour debug (optionnel)
+                    // ✅ Log pour debug
                     \Log::info('PayTabs Response Status: ' . $response->status());
                     \Log::info('PayTabs Response Body: ' . $response->body());
 
@@ -358,6 +385,14 @@ class ListingController extends Controller
 
                     DB::commit();
 
+                    return response()->json([
+                        'message' => 'Listing saved, waiting for payment',
+                        'listing_id' => $listing->id,
+                        'payment_id' => $payment->id,
+                        'redirect_url' => $data['redirect_url'] ?? null,
+                        'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate']),
+                    ], 201);
+
                 } catch (\Illuminate\Http\Client\ConnectionException $e) {
                     DB::rollBack();
                     \Log::error('PayTabs Connection Error', [
@@ -382,14 +417,6 @@ class ListingController extends Controller
                         'details' => $e->getMessage()
                     ], 500);
                 }
-
-                return response()->json([
-                    'message' => 'Listing saved, waiting for payment',
-                    'listing_id' => $listing->id,
-                    'payment_id' => $payment->id,
-                    'redirect_url' => $data['redirect_url'] ?? null,
-                    'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate']),
-                ], 201);
             }
 
             // ✅ Step 1 & 2 : pas de paiement
@@ -399,6 +426,7 @@ class ListingController extends Controller
                 'listing_id' => $listing->id,
                 'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate']),
             ], 201);
+
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['error' => 'Failed to process listing', 'details' => $e->getMessage()], 500);
