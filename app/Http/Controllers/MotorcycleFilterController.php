@@ -14,18 +14,19 @@ class MotorcycleFilterController extends Controller
     /**
      * @OA\Get(
      *     path="/api/motorcycle/brands",
-     *     summary="Get all motorcycle brands",
+     *     summary="Get all active motorcycle brands",
      *     tags={"Motorcycle"},
      *     @OA\Response(
      *         response=200,
-     *         description="List of brands",
+     *         description="List of active brands",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="array",
      *                 @OA\Items(
      *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="Honda")
+     *                     @OA\Property(property="name", type="string", example="Honda"),
+     *                     @OA\Property(property="is_displayed", type="boolean", example=true)
      *                 )
      *             )
      *         )
@@ -35,8 +36,49 @@ class MotorcycleFilterController extends Controller
     public function getBrands()
     {
         // Cache pendant 1 heure car les marques changent rarement
-        $brands = Cache::remember('motorcycle_brands', 3600, function () {
-            return MotorcycleBrand::select('id', 'name')
+        $brands = Cache::remember('motorcycle_brands_displayed', 3600, function () {
+            return MotorcycleBrand::select('id', 'name', 'is_displayed')
+                ->where('is_displayed', true) // Seulement les marques à afficher
+                ->orderBy('name')
+                ->get();
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $brands
+        ]);
+    }
+
+    /**
+     * Get all brands including hidden ones (for admin)
+     */
+    /**
+     *
+     * @OA\Get(
+     *     path="/api/motorcycle/brands/all",
+     *     summary="Get all motorcycle brands (including hidden)",
+     *     tags={"Motorcycle"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of all brands",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Honda"),
+     *                     @OA\Property(property="is_displayed", type="boolean", example=true)
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function getAllBrands()
+    {
+        $brands = Cache::remember('motorcycle_brands_all', 3600, function () {
+            return MotorcycleBrand::select('id', 'name', 'is_displayed')
                 ->orderBy('name')
                 ->get();
         });
@@ -225,7 +267,7 @@ class MotorcycleFilterController extends Controller
         foreach ($keys as $key) {
             Cache::getRedis()->del($key);
         }
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Cache cleared'

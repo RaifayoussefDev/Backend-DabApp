@@ -5767,11 +5767,11 @@
                 "tags": [
                     "Motorcycle"
                 ],
-                "summary": "Get all motorcycle brands",
+                "summary": "Get all active motorcycle brands",
                 "operationId": "3af91f5a44ae6c943fdd8df3e034f861",
                 "responses": {
                     "200": {
-                        "description": "List of brands",
+                        "description": "List of active brands",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -5791,6 +5791,57 @@
                                                     "name": {
                                                         "type": "string",
                                                         "example": "Honda"
+                                                    },
+                                                    "is_displayed": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/motorcycle/brands/all": {
+            "get": {
+                "tags": [
+                    "Motorcycle"
+                ],
+                "summary": "Get all motorcycle brands (including hidden)",
+                "operationId": "f42c2c1b1c4bef05698fad6f4f79a00e",
+                "responses": {
+                    "200": {
+                        "description": "List of all brands",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Honda"
+                                                    },
+                                                    "is_displayed": {
+                                                        "type": "boolean",
+                                                        "example": true
                                                     }
                                                 },
                                                 "type": "object"

@@ -162,7 +162,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/listings/{id}', [ListingController::class, 'getById']);
 
 
-     Route::get('/payments/history/user', [PaymentHistoryController::class, 'historyPaymentByUser']);
+    Route::get('/payments/history/user', [PaymentHistoryController::class, 'historyPaymentByUser']);
     Route::get('/payments/history/global', [PaymentHistoryController::class, 'historyPaymentGlobal']);
     Route::get('/payments/{id}', [PaymentHistoryController::class, 'show']);
     Route::get('/payments/stats/user', [PaymentHistoryController::class, 'userStats']);
@@ -184,6 +184,9 @@ Route::post('/motorcycles/import', [MotorcycleController::class, 'importMotorcyc
 Route::prefix('motorcycle')->group(function () {
     // Étape 1: Charger toutes les marques (rapide, avec cache)
     Route::get('/brands', [MotorcycleFilterController::class, 'getBrands']);
+
+    // Dans api.php, ajouter dans le groupe motorcycle :
+    Route::get('/brands/all', [MotorcycleFilterController::class, 'getAllBrands']); // Pour admin
 
     // Étape 2: Charger les modèles d'une marque (appelé quand l'utilisateur sélectionne une marque)
     Route::get('/models/{brandId}', [MotorcycleFilterController::class, 'getModelsByBrand'])
@@ -337,22 +340,22 @@ Route::middleware(['auth:api'])->group(function () {
     Route::prefix('listings')->name('api.listings.')->group(function () {
         // Initier un paiement pour un listing
         Route::post('{listing}/payment', [PayTabsController::class, 'initiatePayment'])
-             ->name('payment');
+            ->name('payment');
     });
 
     // Gestion des paiements
     Route::prefix('payments')->name('api.payments.')->group(function () {
         // Vérifier le statut d'un paiement
         Route::get('{payment}/status', [PayTabsController::class, 'checkPaymentStatus'])
-             ->name('status');
+            ->name('status');
 
         // Obtenir l'historique des paiements d'un utilisateur
         Route::get('history', [PayTabsController::class, 'getPaymentHistory'])
-             ->name('history');
+            ->name('history');
 
         // Obtenir les détails d'un paiement
         Route::get('{payment}', [PayTabsController::class, 'getPaymentDetails'])
-             ->name('details');
+            ->name('details');
     });
 });
 
@@ -360,5 +363,3 @@ Route::middleware(['auth:api'])->group(function () {
 Route::get('/get-country', [AuthController::class, 'getCountry'])->name('get.country');
 
 Route::post('/test-email', [AuthController::class, 'testEmail']);
-
-
