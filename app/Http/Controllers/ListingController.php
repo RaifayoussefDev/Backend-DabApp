@@ -199,16 +199,27 @@ class ListingController extends Controller
                 ]);
             } else {
                 // Step 1 & 2 : validation des données de base
-                $request->validate([
+                $rules = [
                     'title'       => 'sometimes|string|max:255',
                     'description' => 'sometimes|string',
-                    'price'       => 'sometimes|numeric|min:0',
                     'category_id' => 'sometimes|exists:categories,id',
                     'country_id'  => 'sometimes|exists:countries,id',
                     'city_id'     => 'sometimes|exists:cities,id',
-                ]);
-            }
+                    'auction_enabled' => 'sometimes|boolean',
+                    'minimum_bid' => 'sometimes|numeric|min:0',
+                ];
 
+                // Si auction_enabled = true, le prix n'est pas obligatoire
+                // Sinon, le prix reste avec la validation normale
+                if ($request->auction_enabled) {
+                    $rules['price'] = 'nullable|numeric|min:0'; // Prix optionnel pour les enchères
+                    $rules['minimum_bid'] = 'required|numeric|min:0'; // Mais minimum_bid devient obligatoire
+                } else {
+                    $rules['price'] = 'sometimes|numeric|min:0'; // Prix normal pour vente directe
+                }
+
+                $request->validate($rules);
+            }
             // Remplissage du listing
             $listing->fill(array_filter($request->only([
                 'title',
