@@ -1807,7 +1807,6 @@ class ListingController extends Controller
      *     )
      * )
      */
-
     public function getBrandsWithListingCount()
     {
         $motorcycle_brands = MotorcycleBrand::select('motorcycle_brands.id', 'motorcycle_brands.name')
@@ -1815,6 +1814,8 @@ class ListingController extends Controller
             ->leftJoin('listings', 'motorcycles.listing_id', '=', 'listings.id')
             ->groupBy('motorcycle_brands.id', 'motorcycle_brands.name')
             ->selectRaw('COUNT(listings.id) as listings_count')
+            ->havingRaw('COUNT(listings.id) > 0')
+            ->orderByRaw('COUNT(listings.id) DESC')  // Tri par nombre d'annonces décroissant
             ->get();
 
         return response()->json([
