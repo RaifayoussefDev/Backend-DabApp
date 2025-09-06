@@ -168,20 +168,21 @@ class ListingController extends Controller
     public function store(Request $request)
     {
         DB::beginTransaction();
-
+    
         try {
             $sellerId = Auth::id();
             if (!$sellerId) {
                 return response()->json(['message' => 'Unauthorized'], 401);
             }
-
+    
             $step = $request->step ?? 1;
+            $action = $request->action; // AJOUT : Récupérer l'action
             $listing = $request->listing_id ? Listing::find($request->listing_id) : null;
-
+    
             if ($listing && $listing->seller_id !== $sellerId) {
                 return response()->json(['message' => 'Listing not found or access denied'], 403);
             }
-
+    
             if (!$listing) {
                 $listing = Listing::create([
                     'seller_id' => $sellerId,
@@ -190,12 +191,13 @@ class ListingController extends Controller
                     'created_at' => now(),
                 ]);
             }
-
-            // ✅ Validation selon le step
-            if ($step >= 3) {
-                // Step paiement
+    
+            // ✅ Validation selon le step ET l'action
+            if ($step >= 3 || $action === 'complete') {
+                // Step paiement OU action complete
                 $request->validate([
                     'amount' => 'required|numeric|min:1',
+                    'action' => 'sometimes|string', // Valider l'action si présente
                 ]);
             } else {
                 // Step 1 & 2 : validation des données de base
@@ -208,7 +210,7 @@ class ListingController extends Controller
                     'auction_enabled' => 'sometimes|boolean',
                     'minimum_bid' => 'sometimes|numeric|min:0',
                 ];
-
+    
                 // Si auction_enabled = true, le prix n'est pas obligatoire
                 if ($request->auction_enabled) {
                     $rules['price'] = 'nullable|numeric|min:0'; // Prix optionnel pour les enchères
@@ -216,76 +218,223 @@ class ListingController extends Controller
                 } else {
                     $rules['price'] = 'sometimes|numeric|min:0'; // Prix normal pour vente directe
                 }
-
+    
                 $request->validate($rules);
             }
-
-            // Remplissage du listing
-            $listing->fill(array_filter($request->only([
-                'title',
-                'description',
-                'price',
-                'category_id',
-                'country_id',
-                'city_id',
-                'auction_enabled',
-                'minimum_bid',
-                'allow_submission',
-                'listing_type_id',
-                'contacting_channel',
-                'seller_type'
-            ])));
-            $listing->step = max($listing->step, $step);
-            $listing->save();
-
-            // Gestion des images
-            if ($request->has('images')) {
-                foreach ($request->images as $imageUrl) {
-                    $listing->images()->updateOrCreate(['image_url' => $imageUrl]);
+    
+            // Remplissage du listing (sauf pour action complete pure)
+            if ($action !== 'complete' || $step < 3) {
+                $listing->fill(array_filter($request->only([
+                    'title',
+                    'description',
+                    'price',
+                    'category_id',
+                    'country_id',
+                    'city_id',
+                    'auction_enabled',
+                    'minimum_bid',
+                    'allow_submission',
+                    'listing_type_id',
+                    'contacting_channel',
+                    'seller_type'
+                ])));
+                $listing->step = max($listing->step, $step);
+                $listing->save();
+    
+                // Gestion des images
+                if ($request->has('images')) {
+                    foreach ($request->images as $imageUrl) {
+                        $listing->images()->updateOrCreate(['image_url' => $imageUrl]);
+                    }
+                }
+    
+                // ✅ Traitement des données spécifiques selon la catégorie
+                $this->handleCategorySpecificData($listing, $request);
+    
+                // ✅ Gestion des enchères
+                if ($request->auction_enabled) {
+                    $existingAuction = \App\Models\AuctionHistory::where('listing_id', $listing->id)->first();
+    
+                    if (!$existingAuction) {
+                        \App\Models\AuctionHistory::create([
+                            'listing_id' => $listing->id,
+                            'seller_id' => $sellerId,
+                            'buyer_id' => null,
+                            'bid_amount' => $request->minimum_bid ?? 0,
+                            'bid_date' => now(),
+                            'validated' => false,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                            'validated_at' => null,
+                            'validator_id' => null,
+                        ]);
+    
+                        \Log::info('Auction created for listing', [
+                            'listing_id' => $listing->id,
+                            'minimum_bid' => $request->minimum_bid
+                        ]);
+                    }
                 }
             }
-
-            // ✅ Traitement des données spécifiques selon la catégorie
-            $this->handleCategorySpecificData($listing, $request);
-
-            // ✅ NOUVEAU : Gestion des enchères
-            if ($request->auction_enabled) {
-                // Vérifier si une entrée auction existe déjà pour ce listing
-                $existingAuction = \App\Models\AuctionHistory::where('listing_id', $listing->id)->first();
-
-                if (!$existingAuction) {
-                    // Créer l'entrée initiale dans auction_histories
-                    \App\Models\AuctionHistory::create([
-                        'listing_id' => $listing->id,
-                        'seller_id' => $sellerId,
-                        'buyer_id' => null, // Pas d'acheteur au début
-                        'bid_amount' => $request->minimum_bid ?? 0, // Prix minimum d'enchère
-                        'bid_date' => now(),
-                        'validated' => false, // Pas encore validé
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                        'validated_at' => null,
-                        'validator_id' => null,
+    
+            // ✅ NOUVEAU : Gestion spéciale pour l'action "complete"
+            if ($action === 'complete') {
+                \Log::info('Processing completion action', [
+                    'listing_id' => $listing->id,
+                    'step' => $step,
+                    'amount' => $request->amount
+                ]);
+    
+                $payment = Payment::create([
+                    'user_id' => $sellerId,
+                    'listing_id' => $listing->id,
+                    'amount' => $request->amount,
+                    'payment_status' => 'pending',
+                    'cart_id' => 'cart_complete_' . time() . '_' . $listing->id,
+                    'currency' => config('paytabs.currency', 'SAR'),
+                ]);
+    
+                // Payload PayTabs pour completion
+                $payload = [
+                    'profile_id' => (int) config('paytabs.profile_id'),
+                    'tran_type' => 'sale',
+                    'tran_class' => 'ecom',
+                    'cart_id' => $payment->cart_id,
+                    'cart_description' => 'Completion Payment for Listing #' . $listing->id,
+                    'cart_currency' => config('paytabs.currency'),
+                    'cart_amount' => $payment->amount,
+                    'customer_details' => [
+                        'name' => Auth::user()->name,
+                        'email' => Auth::user()->email,
+                        'phone' => Auth::user()->phone ?? '000000000',
+                        'street1' => 'N/A',
+                        'city' => 'N/A',
+                        'state' => 'N/A',
+                        'country' => config('paytabs.region'),
+                        'zip' => '00000',
+                        'ip' => $request->ip()
+                    ],
+                    'callback' => route('paytabs.callback'),
+                    'return' => route('paytabs.return'),
+                ];
+    
+                $baseUrls = [
+                    'ARE' => 'https://secure.paytabs.com/',
+                    'SAU' => 'https://secure.paytabs.sa/',
+                    'OMN' => 'https://secure-oman.paytabs.com/',
+                    'JOR' => 'https://secure-jordan.paytabs.com/',
+                    'EGY' => 'https://secure-egypt.paytabs.com/',
+                    'GLOBAL' => 'https://secure-global.paytabs.com/'
+                ];
+                $region = config('paytabs.region', 'ARE');
+                $baseUrl = $baseUrls[$region] ?? $baseUrls['ARE'];
+    
+                $httpOptions = [
+                    'verify' => env('PAYTABS_SSL_VERIFY', false),
+                    'timeout' => 60,
+                    'connect_timeout' => 30,
+                ];
+    
+                if (!env('PAYTABS_SSL_VERIFY', false)) {
+                    $httpOptions['curl'] = [
+                        CURLOPT_SSL_VERIFYPEER => false,
+                        CURLOPT_SSL_VERIFYHOST => false,
+                    ];
+                }
+    
+                try {
+                    $response = Http::withHeaders([
+                        'Authorization' => config('paytabs.server_key'),
+                        'Content-Type'  => 'application/json',
+                        'Accept'        => 'application/json'
+                    ])
+                    ->withOptions($httpOptions)
+                    ->post($baseUrl . 'payment/request', $payload);
+    
+                    \Log::info('PayTabs Completion Response', [
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                        'payment_id' => $payment->id
                     ]);
-
-                    \Log::info('Auction created for listing', [
-                        'listing_id' => $listing->id,
-                        'minimum_bid' => $request->minimum_bid
+    
+                    if (!$response->successful()) {
+                        DB::rollBack();
+                        \Log::error('PayTabs Completion Payment Failed', [
+                            'status' => $response->status(),
+                            'response' => $response->json(),
+                            'payment_id' => $payment->id
+                        ]);
+    
+                        return response()->json([
+                            'error' => 'Completion payment request failed',
+                            'details' => $response->json(),
+                            'status_code' => $response->status()
+                        ], 400);
+                    }
+    
+                    $data = $response->json();
+    
+                    if (!isset($data['tran_ref'])) {
+                        DB::rollBack();
+                        \Log::error('PayTabs Completion Response Missing tran_ref', [
+                            'response' => $data,
+                            'payment_id' => $payment->id
+                        ]);
+    
+                        return response()->json([
+                            'error' => 'Invalid completion payment response',
+                            'details' => 'Missing transaction reference'
+                        ], 400);
+                    }
+    
+                    $payment->update([
+                        'tran_ref' => $data['tran_ref'],
+                        'payment_status' => 'initiated',
                     ]);
+    
+                    DB::commit();
+    
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Listing completed, payment initiated',
+                        'listing_id' => $listing->id,
+                        'payment_id' => $payment->id,
+                        'redirect_url' => $data['redirect_url'] ?? null,
+                        'tran_ref' => $data['tran_ref'],
+                        'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate'])
+                    ], 201);
+    
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    \Log::error('PayTabs Completion Error', [
+                        'message' => $e->getMessage(),
+                        'payment_id' => $payment->id
+                    ]);
+    
+                    return response()->json([
+                        'error' => 'Completion payment processing failed',
+                        'details' => $e->getMessage()
+                    ], 500);
                 }
             }
-
-            // ✅ Paiement uniquement au step 3
-            if ($step >= 3) {
+    
+            // ✅ Paiement normal au step 3 (pas action complete)
+            if ($step >= 3 && $action !== 'complete') {
+                \Log::info('Processing regular step 3 payment', [
+                    'listing_id' => $listing->id,
+                    'amount' => $request->amount
+                ]);
+    
                 $payment = Payment::create([
                     'user_id'       => $sellerId,
                     'listing_id'    => $listing->id,
                     'amount'        => $request->amount,
                     'payment_status' => 'pending',
-                    'cart_id'       => 'cart_' . time(),
+                    'cart_id'       => 'cart_step3_' . time() . '_' . $listing->id,
+                    'currency'      => config('paytabs.currency', 'SAR'),
                 ]);
-
-                // Payload PayTabs
+    
+                // Payload PayTabs pour step 3 normal
                 $payload = [
                     'profile_id' => (int) config('paytabs.profile_id'),
                     'tran_type' => 'sale',
@@ -308,7 +457,7 @@ class ListingController extends Controller
                     'callback' => route('paytabs.callback'),
                     'return' => route('paytabs.return'),
                 ];
-
+    
                 $baseUrls = [
                     'ARE' => 'https://secure.paytabs.com/',
                     'SAU' => 'https://secure.paytabs.sa/',
@@ -319,22 +468,20 @@ class ListingController extends Controller
                 ];
                 $region = config('paytabs.region', 'ARE');
                 $baseUrl = $baseUrls[$region] ?? $baseUrls['ARE'];
-
-                // ✅ Configuration HTTP avec gestion SSL
+    
                 $httpOptions = [
                     'verify' => env('PAYTABS_SSL_VERIFY', false),
                     'timeout' => 60,
                     'connect_timeout' => 30,
                 ];
-
-                // ✅ Options cURL additionnelles pour SSL
+    
                 if (!env('PAYTABS_SSL_VERIFY', false)) {
                     $httpOptions['curl'] = [
                         CURLOPT_SSL_VERIFYPEER => false,
                         CURLOPT_SSL_VERIFYHOST => false,
                     ];
                 }
-
+    
                 try {
                     $response = Http::withHeaders([
                         'Authorization' => config('paytabs.server_key'),
@@ -343,82 +490,73 @@ class ListingController extends Controller
                     ])
                     ->withOptions($httpOptions)
                     ->post($baseUrl . 'payment/request', $payload);
-
-                    // ✅ Log pour debug
-                    \Log::info('PayTabs Response Status: ' . $response->status());
-                    \Log::info('PayTabs Response Body: ' . $response->body());
-
+    
+                    \Log::info('PayTabs Step 3 Response', [
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                        'payment_id' => $payment->id
+                    ]);
+    
                     if (!$response->successful()) {
                         DB::rollBack();
-
-                        $errorDetails = $response->json();
-                        \Log::error('PayTabs Payment Failed', [
+                        \Log::error('PayTabs Step 3 Payment Failed', [
                             'status' => $response->status(),
-                            'response' => $errorDetails,
-                            'payload' => $payload
+                            'response' => $response->json(),
+                            'payment_id' => $payment->id
                         ]);
-
+    
                         return response()->json([
                             'error' => 'Payment request failed',
-                            'details' => $errorDetails,
+                            'details' => $response->json(),
                             'status_code' => $response->status()
                         ], 400);
                     }
-
+    
                     $data = $response->json();
-
-                    // ✅ Vérification que la réponse contient les données nécessaires
+    
                     if (!isset($data['tran_ref'])) {
                         DB::rollBack();
-                        \Log::error('PayTabs Response Missing tran_ref', ['response' => $data]);
-
+                        \Log::error('PayTabs Step 3 Response Missing tran_ref', [
+                            'response' => $data,
+                            'payment_id' => $payment->id
+                        ]);
+    
                         return response()->json([
                             'error' => 'Invalid payment response',
                             'details' => 'Missing transaction reference'
                         ], 400);
                     }
-
+    
                     $payment->update([
                         'tran_ref' => $data['tran_ref'],
                         'payment_status' => 'initiated',
                     ]);
-
+    
                     DB::commit();
-
+    
                     return response()->json([
                         'message' => 'Listing saved, waiting for payment',
                         'listing_id' => $listing->id,
                         'payment_id' => $payment->id,
                         'redirect_url' => $data['redirect_url'] ?? null,
+                        'tran_ref' => $data['tran_ref'],
                         'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate']),
                     ], 201);
-
-                } catch (\Illuminate\Http\Client\ConnectionException $e) {
-                    DB::rollBack();
-                    \Log::error('PayTabs Connection Error', [
-                        'message' => $e->getMessage(),
-                        'url' => $baseUrl . 'payment/request'
-                    ]);
-
-                    return response()->json([
-                        'error' => 'Payment service unavailable',
-                        'details' => 'Connection failed to payment gateway'
-                    ], 503);
-
+    
                 } catch (\Exception $e) {
                     DB::rollBack();
-                    \Log::error('PayTabs General Error', [
+                    \Log::error('PayTabs Step 3 Error', [
                         'message' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString()
+                        'payment_id' => $payment->id
                     ]);
-
+    
                     return response()->json([
                         'error' => 'Payment processing failed',
                         'details' => $e->getMessage()
                     ], 500);
                 }
             }
-
+    
             // ✅ Step 1 & 2 : pas de paiement
             DB::commit();
             return response()->json([
@@ -426,10 +564,18 @@ class ListingController extends Controller
                 'listing_id' => $listing->id,
                 'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate']),
             ], 201);
-
+    
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => 'Failed to process listing', 'details' => $e->getMessage()], 500);
+            \Log::error('Store method general error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'error' => 'Failed to process listing', 
+                'details' => $e->getMessage()
+            ], 500);
         }
     }
 
@@ -627,6 +773,7 @@ class ListingController extends Controller
                     'payment_status' => 'pending',
                     'cart_id' => 'cart_' . time(),
                 ]);
+                
 
                 // Processus PayTabs (même logique que dans store())
                 $payload = [
