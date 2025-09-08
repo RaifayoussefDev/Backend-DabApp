@@ -120,27 +120,40 @@ class SoomController extends Controller
                 ], 403);
             }
 
-            // Obtenir la dernière soumission pour ce listing
-            $lastSubmission = Submission::where('listing_id', $listingId)
+            // Obtenir la soumission avec le montant le plus élevé (tous statuts confondus)
+            $highestSubmission = Submission::where('listing_id', $listingId)
                 ->orderBy('amount', 'desc')
                 ->first();
 
             $minAmount = $listing->minimum_bid ?? 0;
 
-            // Si il y a déjà des soumissions, la nouvelle doit être supérieure
-            if ($lastSubmission) {
-                $minAmount = $lastSubmission->amount + 1; // Au moins 1 unité de plus
+            // Si il y a déjà des soumissions, la nouvelle doit être supérieure au plus haut montant
+            if ($highestSubmission) {
+                $minAmount = $highestSubmission->amount + 1; // Au moins 1 unité de plus
             }
 
             if ($request->amount < $minAmount) {
                 return response()->json([
                     'message' => "The SOOM amount must be at least {$minAmount}.",
                     'minimum_required' => $minAmount,
-                    'current_highest' => $lastSubmission ? $lastSubmission->amount : null
+                    'current_highest' => $highestSubmission ? $highestSubmission->amount : null
                 ], 422);
             }
 
-            // Créer la nouvelle soumission
+            // Vérifier si l'utilisateur a déjà une soumission PENDING pour ce listing
+            $existingUserSubmission = Submission::where('listing_id', $listingId)
+                ->where('user_id', $userId)
+                ->where('status', 'pending')
+                ->first();
+
+            if ($existingUserSubmission) {
+                return response()->json([
+                    'message' => 'You already have a pending SOOM for this listing. Please wait for the seller to respond or edit your existing SOOM.',
+                    'existing_soom_amount' => $existingUserSubmission->amount
+                ], 422);
+            }
+
+            // Créer la nouvelle soumission avec statut "pending"
             $submission = Submission::create([
                 'listing_id' => $listingId,
                 'user_id' => $userId,
@@ -155,7 +168,7 @@ class SoomController extends Controller
             return response()->json([
                 'message' => 'SOOM created successfully',
                 'data' => $submission->load('user'),
-                'previous_highest' => $lastSubmission ? $lastSubmission->amount : null
+                'previous_highest' => $highestSubmission ? $highestSubmission->amount : null
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
