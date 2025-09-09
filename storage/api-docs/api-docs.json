@@ -2374,300 +2374,6 @@
                 }
             }
         },
-        "api/login-phone-password": {
-            "post": {
-                "tags": [
-                    "Authentication-firebase"
-                ],
-                "summary": "Login with phone and password",
-                "description": "swagger",
-                "operationId": "a54f4938cae0e31b8bf7567026defc47",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "phone": {
-                                        "type": "string",
-                                        "example": "+1234567890"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "example": "your_password_here"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "202": {
-                        "description": "Credentials valid, proceed with SMS verification",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Credentials valid, proceed with SMS verification"
-                                        },
-                                        "user_id": {
-                                            "type": "integer",
-                                            "example": 1
-                                        },
-                                        "first_name": {
-                                            "type": "string",
-                                            "example": "John"
-                                        },
-                                        "last_name": {
-                                            "type": "string",
-                                            "example": "Doe"
-                                        },
-                                        "phone": {
-                                            "type": "string",
-                                            "example": "+1234567890"
-                                        },
-                                        "requiresFirebaseOTP": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "email": {
-                                            "type": "string",
-                                            "example": "test@test.com"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Invalid credentials",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Nom d'utilisateur ou mot de passe incorrect"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "User inactive",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Utilisateur inactif"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "api/verify-otp": {
-            "post": {
-                "tags": [
-                    "Authentication-firebase"
-                ],
-                "summary": "Verify OTP after authentication",
-                "description": "swagger",
-                "operationId": "7672b75b692526d2d4f60b1ef6e58929",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "user_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "otp": {
-                                        "type": "string",
-                                        "example": "1234"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "OTP valid, authentication successful",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "user": {
-                                            "$ref": "#/components/schemas/User"
-                                        },
-                                        "token": {
-                                            "type": "string",
-                                            "example": "your_jwt_token_here"
-                                        },
-                                        "token_expiration": {
-                                            "type": "string",
-                                            "example": "2023-10-01T00:00:00Z"
-                                        },
-                                        "country": {
-                                            "type": "string",
-                                            "example": "FR"
-                                        },
-                                        "continent": {
-                                            "type": "string",
-                                            "example": "Europe"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "User not found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Utilisateur non trouvé"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Invalid session",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Session invalide"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "api/complete-firebase-auth": {
-            "post": {
-                "tags": [
-                    "Authentication-firebase"
-                ],
-                "summary": "Complete Firebase authentication after OTP verification",
-                "description": "swagger",
-                "operationId": "efbb3dd7f3bf9e435c4398f1722798b1",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "user_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "idToken": {
-                                        "type": "string",
-                                        "example": "your_firebase_id_token_here"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Firebase token valid, authentication successful",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "user": {
-                                            "$ref": "#/components/schemas/User"
-                                        },
-                                        "token": {
-                                            "type": "string",
-                                            "example": "your_jwt_token_here"
-                                        },
-                                        "token_expiration": {
-                                            "type": "string",
-                                            "example": "2023-10-01T00:00:00Z"
-                                        },
-                                        "country": {
-                                            "type": "string",
-                                            "example": "FR"
-                                        },
-                                        "continent": {
-                                            "type": "string",
-                                            "example": "Europe"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "User not found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Utilisateur non trouvé"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Invalid session or phone number mismatch",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Session invalide ou numéro de téléphone non correspondant"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/api/upload": {
             "post": {
                 "tags": [
@@ -6484,6 +6190,1012 @@
                 }
             }
         },
+        "/api/my-garage": {
+            "get": {
+                "tags": [
+                    "My Garage"
+                ],
+                "summary": "Get all motorcycles in the authenticated user's garage",
+                "operationId": "6240572814fc6aec5c0dd0d440af314d",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page (default is 10, max is 50)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "maximum": 50,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful retrieval of garage items",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Garage items retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "brand_id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "model_id": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "year_id": {
+                                                        "type": "integer",
+                                                        "example": 10
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "My First Bike"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "This is my favorite motorcycle."
+                                                    },
+                                                    "picture": {
+                                                        "type": "string",
+                                                        "example": "http://example.com/image.jpg"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-01-01T12:00:00Z"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-01-02T12:00:00Z"
+                                                    },
+                                                    "brand": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Yamaha"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "model": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 5
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "YZF-R3"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "year": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 10
+                                                            },
+                                                            "year": {
+                                                                "type": "integer",
+                                                                "example": 2020
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "pagination": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - User not authenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to retrieve garage items"
+                                        },
+                                        "details": {
+                                            "type": "string",
+                                            "example": "Error message details"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "My Garage"
+                ],
+                "summary": "Add a motorcycle to user's garage",
+                "operationId": "032bb1f282b7f71aea6c0edd49616c91",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "brand_id",
+                                    "model_id",
+                                    "year_id",
+                                    "title"
+                                ],
+                                "properties": {
+                                    "brand_id": {
+                                        "description": "Motorcycle brand ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "model_id": {
+                                        "description": "Motorcycle model ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "year_id": {
+                                        "description": "Motorcycle year ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "title": {
+                                        "description": "Custom title for the motorcycle",
+                                        "type": "string",
+                                        "example": "My Daily Beast"
+                                    },
+                                    "description": {
+                                        "description": "Optional description",
+                                        "type": "string",
+                                        "example": "Perfect bike for daily commuting"
+                                    },
+                                    "picture": {
+                                        "description": "Optional picture URL",
+                                        "type": "string",
+                                        "example": "https://example.com/bike.jpg"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Motorcycle added to garage successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Motorcycle added to garage successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "My Daily Beast"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Perfect bike for daily commuting"
+                                                },
+                                                "picture": {
+                                                    "type": "string",
+                                                    "example": "https://example.com/bike.jpg"
+                                                },
+                                                "brand": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Honda"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "model": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "CBR600RR"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "year": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "year": {
+                                                            "type": "integer",
+                                                            "example": 2020
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "details": {
+                                            "properties": {
+                                                "brand_id": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The brand id field is required."
+                                                    }
+                                                },
+                                                "title": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The title field is required."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to add motorcycle to garage"
+                                        },
+                                        "details": {
+                                            "type": "string",
+                                            "example": "Error message details"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/my-garage/{id}": {
+            "get": {
+                "tags": [
+                    "My Garage"
+                ],
+                "summary": "Get a specific garage item",
+                "operationId": "c0c26eb8ec2370efdf355f96209f793a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Garage item ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Garage item retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Garage item retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "My Daily Beast"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Perfect bike for daily commuting"
+                                                },
+                                                "picture": {
+                                                    "type": "string",
+                                                    "example": "https://example.com/bike.jpg"
+                                                },
+                                                "brand": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Honda"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "model": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "CBR600RR"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "year": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "year": {
+                                                            "type": "integer",
+                                                            "example": 2020
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Garage item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Not found"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Garage item not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to retrieve garage item"
+                                        },
+                                        "details": {
+                                            "type": "string",
+                                            "example": "Error message details"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "My Garage"
+                ],
+                "summary": "Update a garage item",
+                "operationId": "554e65487e55220ecfd85c0cc362bff6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Garage item ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "description": "Updated title",
+                                        "type": "string",
+                                        "example": "Updated Beast Machine"
+                                    },
+                                    "description": {
+                                        "description": "Updated description",
+                                        "type": "string",
+                                        "example": "Updated description with modifications"
+                                    },
+                                    "picture": {
+                                        "description": "Updated picture URL",
+                                        "type": "string",
+                                        "example": "https://example.com/updated-bike.jpg"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Garage item updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Garage item updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Updated Beast Machine"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Updated description"
+                                                },
+                                                "picture": {
+                                                    "type": "string",
+                                                    "example": "https://example.com/updated-bike.jpg"
+                                                },
+                                                "brand": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Honda"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Garage item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Not found"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Garage item not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "details": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to update garage item"
+                                        },
+                                        "details": {
+                                            "type": "string",
+                                            "example": "Error message details"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "My Garage"
+                ],
+                "summary": "Delete a garage item",
+                "operationId": "f3d09d633ed040ebe16580fae8034abf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Garage item ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle removed from garage successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Motorcycle removed from garage successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Garage item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Not found"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Garage item not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to delete garage item"
+                                        },
+                                        "details": {
+                                            "type": "string",
+                                            "example": "Error message details"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/motorcycle-data": {
+            "get": {
+                "tags": [
+                    "My Garage"
+                ],
+                "summary": "Get motorcycle data for dropdowns (brands, models, years)",
+                "operationId": "05f9222a14a3ce496364a6bc09469102",
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle data retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Motorcycle data retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "brands": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Honda"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "models": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "brand_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "CBR600RR"
+                                                            },
+                                                            "brand_name": {
+                                                                "type": "string",
+                                                                "example": "Honda"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "years": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "model_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "year": {
+                                                                "type": "integer",
+                                                                "example": 2020
+                                                            },
+                                                            "model_name": {
+                                                                "type": "string",
+                                                                "example": "CBR600RR"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to retrieve motorcycle data"
+                                        },
+                                        "details": {
+                                            "type": "string",
+                                            "example": "Error message details"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/plate-formats": {
             "post": {
                 "tags": [
@@ -7540,6 +8252,10 @@
                                                 "total_sooms_count": {
                                                     "type": "integer",
                                                     "example": 5
+                                                },
+                                                "minimum_bid_required": {
+                                                    "type": "number",
+                                                    "format": "float"
                                                 }
                                             },
                                             "type": "object"
@@ -7560,6 +8276,14 @@
                                                 "total_sooms_count": {
                                                     "type": "integer",
                                                     "example": 0
+                                                },
+                                                "minimum_bid_required": {
+                                                    "type": "number",
+                                                    "format": "float"
+                                                },
+                                                "listing_minimum_bid": {
+                                                    "type": "number",
+                                                    "format": "float"
                                                 }
                                             },
                                             "type": "object"
@@ -8165,38 +8889,14 @@
                     }
                 },
                 "type": "object"
-            },
-            "User": {
-                "title": "User",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "name": {
-                        "type": "string",
-                        "example": "John Doe"
-                    },
-                    "email": {
-                        "type": "string",
-                        "example": "john@example.com"
-                    },
-                    "phone": {
-                        "type": "string",
-                        "example": "+212612345678"
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2023-01-01T00:00:00Z"
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2023-01-01T00:00:00Z"
-                    }
-                },
-                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "Enter token in format: Bearer <your-token>"
             }
         }
     },
@@ -8257,10 +8957,6 @@
             "description": "Colors"
         },
         {
-            "name": "Authentication-firebase",
-            "description": "Authentication-firebase"
-        },
-        {
             "name": "Image Upload",
             "description": "Image Upload"
         },
@@ -8275,6 +8971,10 @@
         {
             "name": "Motorcycle",
             "description": "Motorcycle"
+        },
+        {
+            "name": "My Garage",
+            "description": "My Garage"
         },
         {
             "name": "Plate Formats",
@@ -8295,6 +8995,11 @@
         {
             "name": "Users",
             "description": "Users"
+        }
+    ],
+    "security": [
+        {
+            "bearerAuth": []
         }
     ]
 }

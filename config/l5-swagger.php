@@ -5,7 +5,7 @@ return [
     'documentations' => [
         'default' => [
             'api' => [
-                'title' => 'L5 Swagger UI',
+                'title' => 'DabApp API Documentation', // 👈 Changé
             ],
 
             'routes' => [
@@ -44,7 +44,7 @@ return [
                  * Absolute paths to directory containing the swagger annotations are stored.
                  */
                 'annotations' => [
-                    base_path('app'),
+                    base_path('app/Http/Controllers'), // 👈 Plus spécifique
                 ],
             ],
         ],
@@ -156,7 +156,12 @@ return [
              * @note This option overwrites `paths.excludes`
              * @see \OpenApi\scan
              */
-            'exclude' => [],
+            'exclude' => [
+                base_path('app/Console'),           // 👈 Ajouté pour éviter les warnings
+                base_path('app/Exceptions'),        // 👈 Ajouté
+                base_path('app/Providers'),         // 👈 Ajouté
+                base_path('app/Http/Middleware'),   // 👈 Ajouté
+            ],
 
             /*
              * Allows to generate specs either for OpenAPI 3.0.0 or OpenAPI 3.1.0.
@@ -170,6 +175,14 @@ return [
         */
         'securityDefinitions' => [
             'securitySchemes' => [
+                // 👈 Ajouté la configuration Bearer Auth
+                'bearerAuth' => [
+                    'type' => 'http',
+                    'scheme' => 'bearer',
+                    'bearerFormat' => 'JWT',
+                    'description' => 'Enter token in format: Bearer <your-token>'
+                ],
+
                 /*
                  * Examples of Security schemes
                  */
@@ -221,6 +234,7 @@ return [
                  * Examples of Securities
                  */
                 [
+                    'bearerAuth' => [] // 👈 Ajouté
                     /*
                     'oauth2_security_example' => [
                         'read',
@@ -312,7 +326,7 @@ return [
          * Constants which can be used in annotations
          */
         'constants' => [
-            'L5_SWAGGER_CONST_HOST' => env('L5_SWAGGER_CONST_HOST', 'http://my-default-host.com'),
+            'L5_SWAGGER_CONST_HOST' => env('L5_SWAGGER_CONST_HOST', 'http://localhost:8000'), // 👈 Changé
         ],
     ],
 ];

@@ -1,5 +1,6 @@
 ﻿<?php
 
+use App\Http\Controllers\MyGarageController;
 use App\Http\Controllers\MotorcycleImportController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\CardController;
@@ -151,7 +152,14 @@ Route::middleware('auth:api')->group(function () {
     Route::put('submissions/{submissionId}/edit', [SoomController::class, 'editSoom'])->middleware('auth:sanctum');
 
     Route::get('/listings/{listingId}/last-soom', [SoomController::class, 'getLastSoom']);
-
+    // My Garage CRUD operations
+    Route::get('/my-garage', [MyGarageController::class, 'index']);           // GET all garage items
+    Route::post('/my-garage', [MyGarageController::class, 'store']);          // POST create new item
+    Route::get('/my-garage/{id}', [MyGarageController::class, 'show']);       // GET single item
+    Route::put('/my-garage/{id}', [MyGarageController::class, 'update']);     // PUT update item
+    Route::patch('/my-garage/{id}', [MyGarageController::class, 'update']);   // PATCH update item (alternative)
+    Route::delete('/my-garage/{id}', [MyGarageController::class, 'destroy']); // DELETE item
+    Route::get('motorcycle-data', [MyGarageController::class, 'getMotorcycleData']); // Fetch motorcycle data for dropdowns
 
     Route::patch('/users/{id}/activate', [UserController::class, 'activateUser']);
     Route::patch('/users/{id}/deactivate', [UserController::class, 'deactivateUser']);
