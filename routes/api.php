@@ -335,6 +335,18 @@ Route::prefix('payment')->name('payment.')->group(function () {
     Route::match(['GET', 'POST'], '/pending', [PayTabsController::class, 'paymentPending'])->name('pending');
 });
 
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    Route::post('/listings/republish-paid', [ListingController::class, 'checkAndRepublishPaidListings']);
+    Route::get('/listings/payment-stats', [ListingController::class, 'getListingPaymentStats']);
+    Route::post('/payments/{paymentId}/force-verify', [ListingController::class, 'forcePaymentVerification']);
+});
+
+// User routes
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/listings/{listingId}/payment-status', [ListingController::class, 'checkListingPaymentStatus']);
+});
+Route::post('/paytabs/test-callback', [PayTabsController::class, 'testCallback']);
+
 // Protected routes that require authentication
 Route::middleware(['auth:api'])->group(function () {
 

@@ -24,7 +24,8 @@ class Listing extends Model
         'allow_submission',
         'listing_type_id',
         'contacting_channel',   // <== Doit être ici
-        'seller_type', 
+        'seller_type',
+        'payment_pending',
     ];
 
     public function auctions()
@@ -90,5 +91,27 @@ class Listing extends Model
     public function licensePlate()
     {
         return $this->hasOne(LicensePlate::class);
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('status', 'published')
+            ->whereNotNull('published_at');
+    }
+
+    public function scopeDraft($query)
+    {
+        return $query->where('status', 'draft');
+    }
+
+    public function canBePublished()
+    {
+        return $this->status === 'draft' &&
+            $this->payments()->where('payment_status', 'completed')->exists();
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(\App\Models\Payment::class);
     }
 }
