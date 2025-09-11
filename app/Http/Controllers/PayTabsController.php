@@ -651,9 +651,8 @@ class PayTabsController extends Controller
 
         // URL de redirection selon l'environnement
         $baseUrl = app()->environment('local')
-            ? 'http://localhost:3000/submission-success'
-            : 'https://dabapp.co/submission-success';
-
+            ? 'https://dabapp.co/submission-success'
+            : 'http://localhost:3000/submission-success';
         $redirectUrl = $baseUrl . '?' . http_build_query($redirectParams);
 
         Log::info("Redirection vers: {$redirectUrl}");
