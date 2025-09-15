@@ -169,18 +169,8 @@ class SoomController extends Controller
                 ], 422);
             }
 
-            // Vérifier si l'utilisateur a déjà une soumission PENDING pour ce listing
-            $existingUserSubmission = Submission::where('listing_id', $listingId)
-                ->where('user_id', $userId)
-                ->where('status', 'pending')
-                ->first();
-
-            if ($existingUserSubmission) {
-                return response()->json([
-                    'message' => 'You already have a pending SOOM for this listing. Please wait for the seller to respond or edit your existing SOOM.',
-                    'existing_soom_amount' => $existingUserSubmission->amount
-                ], 422);
-            }
+            // SUPPRIMÉ: La vérification du SOOM pending existant
+            // Maintenant l'utilisateur peut faire plusieurs SOOMs
 
             // Créer la nouvelle soumission avec statut "pending"
             $submission = Submission::create([
@@ -385,36 +375,27 @@ class SoomController extends Controller
                 ], 422);
             }
 
-            // Accepter ce SOOM
+            // Accepter ce SOOM avec acceptance_date
+            $acceptanceDate = now();
             $submission->update([
                 'status' => 'accepted',
-                'acceptance_date' => now()
+                'acceptance_date' => $acceptanceDate
             ]);
-
-            // IMPORTANT: Rafraîchir les données depuis la DB
-            $submission->refresh();
-
-            // Ou recharger avec les relations
-            $submission = Submission::with(['listing', 'user'])->find($submissionId);
-
-            // Rejeter tous les autres SOOMs
-            Submission::where('listing_id', $submission->listing_id)
-                ->where('id', '!=', $submissionId)
-                ->where('status', 'pending')
-                ->update(['status' => 'rejected']);
 
             $seller = Auth::user();
 
             try {
-                Mail::to($submission->user->email)->send(new SoomAcceptedMail($submission, $submission->listing, $seller));
-                \Log::info('SOOM accepted email sent successfully to: ' . $submission->user->email);
+                // MODIFICATION: Envoyer l'email aux DEUX parties
+                $emails = [$submission->user->email, $seller->email];
+                Mail::to($emails)->send(new SoomAcceptedMail($submission, $submission->listing, $seller));
+                \Log::info('SOOM accepted email sent successfully to both parties: ' . implode(', ', $emails));
             } catch (\Exception $e) {
                 \Log::error('Failed to send SOOM accepted email: ' . $e->getMessage());
             }
 
             DB::commit();
 
-            $validationDeadline = Carbon::parse($submission->acceptance_date)->addDays(5);
+            $validationDeadline = Carbon::parse($acceptanceDate)->addDays(5);
 
             return response()->json([
                 'message' => 'SOOM accepted successfully',
@@ -588,14 +569,13 @@ class SoomController extends Controller
                 ], 404);
             }
 
-            // Vérifier que l'utilisateur est le vendeur du listing
+            // Vérifications...
             if ($submission->listing->seller_id != $userId) {
                 return response()->json([
                     'message' => 'Only the seller can validate sales for this listing.',
                 ], 403);
             }
 
-            // Vérifier que le SOOM est accepté
             if ($submission->status !== 'accepted') {
                 return response()->json([
                     'message' => 'Only accepted SOOMs can be validated.',
@@ -603,14 +583,13 @@ class SoomController extends Controller
                 ], 403);
             }
 
-            // Vérifier que la vente n'est pas déjà validée
             if ($submission->sale_validated) {
                 return response()->json([
                     'message' => 'This sale has already been validated.',
                 ], 422);
             }
 
-            // Vérifier que la période de validation n'a pas expiré (5 jours après acceptation)
+            // Vérifier la période de validation (5 jours)
             $validationDeadline = Carbon::parse($submission->acceptance_date)->addDays(5);
             if (now()->gt($validationDeadline)) {
                 return response()->json([
@@ -625,6 +604,12 @@ class SoomController extends Controller
                 'sale_validated' => true,
                 'sale_validation_date' => now()
             ]);
+
+            // MAINTENANT rejeter tous les autres SOOMs pending pour ce listing
+            Submission::where('listing_id', $submission->listing_id)
+                ->where('id', '!=', $submissionId)
+                ->where('status', 'pending')
+                ->update(['status' => 'rejected']);
 
             // Créer l'enregistrement dans auction_histories
             $auctionHistory = AuctionHistory::create([
