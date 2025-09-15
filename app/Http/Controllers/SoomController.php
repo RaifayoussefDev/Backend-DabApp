@@ -4,10 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Listing;
 use App\Models\Submission;
+use App\Models\AuctionHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\SoomCreatedMail;
+use App\Mail\SoomAcceptedMail;
+use App\Mail\SoomRejectedMail;
+use App\Mail\SaleValidatedMail;
+use Carbon\Carbon;
 
 /**
  * @OA\Schema(
@@ -20,6 +27,10 @@ use Illuminate\Support\Facades\Validator;
  *     @OA\Property(property="submission_date", type="string", format="date-time"),
  *     @OA\Property(property="status", type="string", enum={"pending", "accepted", "rejected"}),
  *     @OA\Property(property="min_soom", type="number", format="float"),
+ *     @OA\Property(property="acceptance_date", type="string", format="date-time"),
+ *     @OA\Property(property="sale_validated", type="boolean"),
+ *     @OA\Property(property="sale_validation_date", type="string", format="date-time"),
+ *     @OA\Property(property="rejection_reason", type="string"),
  *     @OA\Property(
  *         property="user",
  *         type="object",
@@ -35,6 +46,24 @@ use Illuminate\Support\Facades\Validator;
  *         @OA\Property(property="title", type="string"),
  *         @OA\Property(property="description", type="string")
  *     )
+ * )
+ */
+
+/**
+ * @OA\Schema(
+ *     schema="AuctionHistory",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(property="listing_id", type="integer"),
+ *     @OA\Property(property="seller_id", type="integer"),
+ *     @OA\Property(property="buyer_id", type="integer"),
+ *     @OA\Property(property="bid_amount", type="number", format="float"),
+ *     @OA\Property(property="bid_date", type="string", format="date-time"),
+ *     @OA\Property(property="validated", type="boolean"),
+ *     @OA\Property(property="validated_at", type="string", format="date-time"),
+ *     @OA\Property(property="validator_id", type="integer"),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
  * )
  */
 class SoomController extends Controller
@@ -99,7 +128,7 @@ class SoomController extends Controller
             }
 
             // Vérifier que le listing existe et permet les soumissions
-            $listing = Listing::find($listingId);
+            $listing = Listing::with('seller')->find($listingId);
 
             if (!$listing) {
                 return response()->json([
@@ -129,7 +158,7 @@ class SoomController extends Controller
 
             // Si il y a déjà des soumissions, la nouvelle doit être supérieure au plus haut montant
             if ($highestSubmission) {
-                $minAmount = $highestSubmission->amount + 1; // Au moins 1 unité de plus
+                $minAmount = $highestSubmission->amount + 1;
             }
 
             if ($request->amount < $minAmount) {
@@ -162,6 +191,14 @@ class SoomController extends Controller
                 'status' => 'pending',
                 'min_soom' => $minAmount,
             ]);
+
+            // Envoyer notification email au vendeur
+            $buyer = Auth::user();
+            try {
+                Mail::to($listing->seller->email)->send(new SoomCreatedMail($submission, $listing, $buyer));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send SOOM created email: ' . $e->getMessage());
+            }
 
             DB::commit();
 
@@ -305,7 +342,8 @@ class SoomController extends Controller
      *         description="SOOM accepted successfully",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="SOOM accepted successfully"),
-     *             @OA\Property(property="data", type="object", ref="#/components/schemas/Submission")
+     *             @OA\Property(property="data", type="object", ref="#/components/schemas/Submission"),
+     *             @OA\Property(property="validation_deadline", type="string", format="date-time", description="Deadline for sale validation (5 days)")
      *         )
      *     ),
      *     @OA\Response(response=401, description="Unauthorized"),
@@ -326,7 +364,7 @@ class SoomController extends Controller
                 ], 401);
             }
 
-            $submission = Submission::with('listing')->find($submissionId);
+            $submission = Submission::with(['listing', 'user'])->find($submissionId);
 
             if (!$submission) {
                 return response()->json([
@@ -334,14 +372,13 @@ class SoomController extends Controller
                 ], 404);
             }
 
-            // Vérifier que l'utilisateur est le vendeur du listing
+            // Vérifications...
             if ($submission->listing->seller_id != $userId) {
                 return response()->json([
                     'message' => 'Only the seller can accept SOOMs for this listing.',
                 ], 403);
             }
 
-            // Vérifier que le SOOM n'est pas déjà accepté
             if ($submission->status === 'accepted') {
                 return response()->json([
                     'message' => 'This SOOM has already been accepted.',
@@ -349,22 +386,44 @@ class SoomController extends Controller
             }
 
             // Accepter ce SOOM
-            $submission->update(['status' => 'accepted']);
+            $submission->update([
+                'status' => 'accepted',
+                'acceptance_date' => now()
+            ]);
 
-            // Rejeter tous les autres SOOMs pour ce listing
+            // IMPORTANT: Rafraîchir les données depuis la DB
+            $submission->refresh();
+
+            // Ou recharger avec les relations
+            $submission = Submission::with(['listing', 'user'])->find($submissionId);
+
+            // Rejeter tous les autres SOOMs
             Submission::where('listing_id', $submission->listing_id)
                 ->where('id', '!=', $submissionId)
                 ->where('status', 'pending')
                 ->update(['status' => 'rejected']);
 
+            $seller = Auth::user();
+
+            try {
+                Mail::to($submission->user->email)->send(new SoomAcceptedMail($submission, $submission->listing, $seller));
+                \Log::info('SOOM accepted email sent successfully to: ' . $submission->user->email);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send SOOM accepted email: ' . $e->getMessage());
+            }
+
             DB::commit();
+
+            $validationDeadline = Carbon::parse($submission->acceptance_date)->addDays(5);
 
             return response()->json([
                 'message' => 'SOOM accepted successfully',
-                'data' => $submission->load(['user:id,first_name,last_name,email', 'listing'])
+                'data' => $submission->load(['user:id,first_name,last_name,email', 'listing']),
+                'validation_deadline' => $validationDeadline->toISOString()
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('ACCEPT SOOM ERROR: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Failed to accept SOOM',
                 'details' => $e->getMessage()
@@ -400,7 +459,7 @@ class SoomController extends Controller
      *         )
      *     ),
      *     @OA\Response(response=401, description="Unauthorized"),
-     *     @OA\Response(response=403, description="Forbidden - Only seller can reject"),
+     *     @OA\Response(response=403, description="Forbidden - Only seller can reject or sale already validated"),
      *     @OA\Response(response=404, description="Submission not found")
      * )
      */
@@ -417,7 +476,7 @@ class SoomController extends Controller
                 ], 401);
             }
 
-            $submission = Submission::with('listing')->find($submissionId);
+            $submission = Submission::with(['listing', 'user'])->find($submissionId);
 
             if (!$submission) {
                 return response()->json([
@@ -439,11 +498,11 @@ class SoomController extends Controller
                 ], 422);
             }
 
-            // Vérifier que le SOOM n'est pas déjà accepté
-            if ($submission->status === 'accepted') {
+            // Vérifier que le SOOM n'est pas déjà accepté ET validé
+            if ($submission->status === 'accepted' && $submission->sale_validated) {
                 return response()->json([
-                    'message' => 'Cannot reject an already accepted SOOM.',
-                ], 422);
+                    'message' => 'Cannot reject a SOOM with validated sale.',
+                ], 403);
             }
 
             // Préparer les données de mise à jour
@@ -456,6 +515,14 @@ class SoomController extends Controller
 
             // Rejeter ce SOOM
             $submission->update($updateData);
+
+            // Envoyer notification email à l'acheteur
+            $seller = Auth::user();
+            try {
+                Mail::to($submission->user->email)->send(new SoomRejectedMail($submission, $submission->listing, $seller, $request->reason));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send SOOM rejected email: ' . $e->getMessage());
+            }
 
             DB::commit();
 
@@ -472,6 +539,192 @@ class SoomController extends Controller
         }
     }
 
+    /**
+     * Valider la vente (pour le vendeur après acceptation du SOOM)
+     * @OA\Post(
+     *     path="/api/submissions/{submissionId}/validate-sale",
+     *     summary="Validate sale after SOOM acceptance (seller only)",
+     *     tags={"Soom"},
+     *     @OA\Parameter(
+     *         name="submissionId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer"),
+     *         description="ID of the accepted submission to validate sale"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Sale validated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Sale validated successfully"),
+     *             @OA\Property(property="data", type="object", ref="#/components/schemas/AuctionHistory"),
+     *             @OA\Property(property="submission", type="object", ref="#/components/schemas/Submission")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=403, description="Forbidden - Only seller can validate or SOOM not accepted"),
+     *     @OA\Response(response=404, description="Submission not found"),
+     *     @OA\Response(response=422, description="Sale already validated or validation period expired")
+     * )
+     */
+    public function validateSale($submissionId)
+    {
+        DB::beginTransaction();
+
+        try {
+            $userId = Auth::id();
+
+            if (!$userId) {
+                return response()->json([
+                    'message' => 'Unauthorized. User must be logged in.',
+                ], 401);
+            }
+
+            $submission = Submission::with(['listing.seller', 'user'])->find($submissionId);
+
+            if (!$submission) {
+                return response()->json([
+                    'message' => 'Submission not found.',
+                ], 404);
+            }
+
+            // Vérifier que l'utilisateur est le vendeur du listing
+            if ($submission->listing->seller_id != $userId) {
+                return response()->json([
+                    'message' => 'Only the seller can validate sales for this listing.',
+                ], 403);
+            }
+
+            // Vérifier que le SOOM est accepté
+            if ($submission->status !== 'accepted') {
+                return response()->json([
+                    'message' => 'Only accepted SOOMs can be validated.',
+                    'current_status' => $submission->status
+                ], 403);
+            }
+
+            // Vérifier que la vente n'est pas déjà validée
+            if ($submission->sale_validated) {
+                return response()->json([
+                    'message' => 'This sale has already been validated.',
+                ], 422);
+            }
+
+            // Vérifier que la période de validation n'a pas expiré (5 jours après acceptation)
+            $validationDeadline = Carbon::parse($submission->acceptance_date)->addDays(5);
+            if (now()->gt($validationDeadline)) {
+                return response()->json([
+                    'message' => 'Validation period has expired. You had 5 days to validate this sale.',
+                    'acceptance_date' => $submission->acceptance_date,
+                    'validation_deadline' => $validationDeadline->toISOString()
+                ], 422);
+            }
+
+            // Marquer la soumission comme validée
+            $submission->update([
+                'sale_validated' => true,
+                'sale_validation_date' => now()
+            ]);
+
+            // Créer l'enregistrement dans auction_histories
+            $auctionHistory = AuctionHistory::create([
+                'listing_id' => $submission->listing_id,
+                'seller_id' => $submission->listing->seller_id,
+                'buyer_id' => $submission->user_id,
+                'bid_amount' => $submission->amount,
+                'bid_date' => $submission->submission_date,
+                'validated' => true,
+                'validated_at' => now(),
+                'validator_id' => $userId,
+            ]);
+
+            // Envoyer les emails avec les informations de contact
+            $seller = $submission->listing->seller;
+            $buyer = $submission->user;
+
+            try {
+                Mail::to([$seller->email, $buyer->email])->send(new SaleValidatedMail($auctionHistory, $submission, $seller, $buyer));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send sale validated email: ' . $e->getMessage());
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Sale validated successfully',
+                'data' => $auctionHistory,
+                'submission' => $submission->load(['user:id,first_name,last_name,email,phone', 'listing'])
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Failed to validate sale',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtenir toutes les ventes validées
+     * @OA\Get(
+     *     path="/api/validated-sales",
+     *     summary="Get all validated sales for the authenticated user",
+     *     tags={"Soom"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Validated sales retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Validated sales retrieved successfully"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/AuctionHistory")),
+     *             @OA\Property(property="stats", type="object",
+     *                 @OA\Property(property="total_sales", type="integer"),
+     *                 @OA\Property(property="as_seller", type="integer"),
+     *                 @OA\Property(property="as_buyer", type="integer"),
+     *                 @OA\Property(property="total_amount", type="number", format="float")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function getValidatedSales()
+    {
+        $userId = Auth::id();
+
+        if (!$userId) {
+            return response()->json([
+                'message' => 'Unauthorized. User must be logged in.',
+            ], 401);
+        }
+
+        // Récupérer toutes les ventes validées où l'utilisateur est vendeur ou acheteur
+        $sales = AuctionHistory::where(function ($query) use ($userId) {
+            $query->where('seller_id', $userId)
+                ->orWhere('buyer_id', $userId);
+        })
+            ->where('validated', true)
+            ->with([
+                'listing:id,title,description',
+                'buyer:id,first_name,last_name,email',
+                'seller:id,first_name,last_name,email'
+            ])
+            ->orderBy('validated_at', 'desc')
+            ->get();
+
+        // Statistiques
+        $stats = [
+            'total_sales' => $sales->count(),
+            'as_seller' => $sales->where('seller_id', $userId)->count(),
+            'as_buyer' => $sales->where('buyer_id', $userId)->count(),
+            'total_amount' => $sales->sum('bid_amount')
+        ];
+
+        return response()->json([
+            'message' => 'Validated sales retrieved successfully',
+            'data' => $sales,
+            'stats' => $stats
+        ]);
+    }
 
     /**
      * Obtenir tous les SOOMs reçus sur mes listings (pour le vendeur)
@@ -489,7 +742,8 @@ class SoomController extends Controller
      *                 @OA\Property(property="total_sooms", type="integer"),
      *                 @OA\Property(property="pending_sooms", type="integer"),
      *                 @OA\Property(property="accepted_sooms", type="integer"),
-     *                 @OA\Property(property="rejected_sooms", type="integer")
+     *                 @OA\Property(property="rejected_sooms", type="integer"),
+     *                 @OA\Property(property="pending_validation", type="integer", description="Accepted SOOMs pending sale validation")
      *             )
      *         )
      *     ),
@@ -523,6 +777,7 @@ class SoomController extends Controller
             'pending_sooms' => $sooms->where('status', 'pending')->count(),
             'accepted_sooms' => $sooms->where('status', 'accepted')->count(),
             'rejected_sooms' => $sooms->where('status', 'rejected')->count(),
+            'pending_validation' => $sooms->where('status', 'accepted')->where('sale_validated', false)->count(),
         ];
 
         return response()->json([
@@ -570,7 +825,7 @@ class SoomController extends Controller
             ->with([
                 'listing:id,title,description,seller_id,country_id',
                 'listing.seller:id,first_name,last_name,email',
-                'listing.country:id,code,name', // Relation avec la table country pour obtenir le code pays du listing
+                'listing.country:id,code,name',
                 'user:id,first_name,last_name,email'
             ])
             ->orderBy('submission_date', 'desc')
@@ -788,7 +1043,7 @@ class SoomController extends Controller
             // Mettre à jour la soumission
             $submission->update([
                 'amount' => $request->amount,
-                'submission_date' => now(), // Mettre à jour la date de soumission
+                'submission_date' => now(),
                 'min_soom' => $minAmount,
             ]);
 
@@ -905,5 +1160,165 @@ class SoomController extends Controller
             'total_sooms_count' => $totalSoomsCount,
             'minimum_bid_required' => (float) $minimumBidRequired
         ], 200);
+    }
+
+    /**
+     * Obtenir les SOOMs en attente de validation (pour les vendeurs)
+     * @OA\Get(
+     *     path="/api/pending-validations",
+     *     summary="Get SOOMs pending sale validation",
+     *     tags={"Soom"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Pending validations retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Pending validations retrieved successfully"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Submission")),
+     *             @OA\Property(property="total_pending", type="integer"),
+     *             @OA\Property(property="expired_count", type="integer", description="Number of validations that will expire soon")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function getPendingValidations()
+    {
+        $userId = Auth::id();
+
+        if (!$userId) {
+            return response()->json([
+                'message' => 'Unauthorized. User must be logged in.',
+            ], 401);
+        }
+
+        // Récupérer tous les SOOMs acceptés non validés sur mes listings
+        $pendingValidations = Submission::whereHas('listing', function ($query) use ($userId) {
+            $query->where('seller_id', $userId);
+        })
+            ->where('status', 'accepted')
+            ->where('sale_validated', false)
+            ->with([
+                'user:id,first_name,last_name,email',
+                'listing:id,title,description,seller_id'
+            ])
+            ->orderBy('acceptance_date', 'asc')
+            ->get();
+
+        // Calculer ceux qui expirent bientôt (dans les 24h)
+        $expiringSoon = $pendingValidations->filter(function ($submission) {
+            $deadline = Carbon::parse($submission->acceptance_date)->addDays(5);
+            return $deadline->diffInHours(now()) <= 24 && $deadline->isFuture();
+        });
+
+        return response()->json([
+            'message' => 'Pending validations retrieved successfully',
+            'data' => $pendingValidations,
+            'total_pending' => $pendingValidations->count(),
+            'expired_count' => $expiringSoon->count()
+        ]);
+    }
+
+    /**
+     * Obtenir les statistiques des SOOMs pour un utilisateur
+     * @OA\Get(
+     *     path="/api/soom-stats",
+     *     summary="Get SOOM statistics for authenticated user",
+     *     tags={"Soom"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Statistics retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Statistics retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="as_seller", type="object",
+     *                     @OA\Property(property="total_received", type="integer"),
+     *                     @OA\Property(property="pending", type="integer"),
+     *                     @OA\Property(property="accepted", type="integer"),
+     *                     @OA\Property(property="rejected", type="integer"),
+     *                     @OA\Property(property="validated_sales", type="integer"),
+     *                     @OA\Property(property="pending_validation", type="integer")
+     *                 ),
+     *                 @OA\Property(property="as_buyer", type="object",
+     *                     @OA\Property(property="total_sent", type="integer"),
+     *                     @OA\Property(property="pending", type="integer"),
+     *                     @OA\Property(property="accepted", type="integer"),
+     *                     @OA\Property(property="rejected", type="integer"),
+     *                     @OA\Property(property="validated_purchases", type="integer")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function getSoomStats()
+    {
+        $userId = Auth::id();
+
+        if (!$userId) {
+            return response()->json([
+                'message' => 'Unauthorized. User must be logged in.',
+            ], 401);
+        }
+
+        // Statistiques en tant que vendeur
+        $sellerSooms = Submission::whereHas('listing', function ($query) use ($userId) {
+            $query->where('seller_id', $userId);
+        })->get();
+
+        $sellerStats = [
+            'total_received' => $sellerSooms->count(),
+            'pending' => $sellerSooms->where('status', 'pending')->count(),
+            'accepted' => $sellerSooms->where('status', 'accepted')->count(),
+            'rejected' => $sellerSooms->where('status', 'rejected')->count(),
+            'validated_sales' => $sellerSooms->where('sale_validated', true)->count(),
+            'pending_validation' => $sellerSooms->where('status', 'accepted')->where('sale_validated', false)->count(),
+        ];
+
+        // Statistiques en tant qu'acheteur
+        $buyerSooms = Submission::where('user_id', $userId)->get();
+
+        $buyerStats = [
+            'total_sent' => $buyerSooms->count(),
+            'pending' => $buyerSooms->where('status', 'pending')->count(),
+            'accepted' => $buyerSooms->where('status', 'accepted')->count(),
+            'rejected' => $buyerSooms->where('status', 'rejected')->count(),
+            'validated_purchases' => $buyerSooms->where('sale_validated', true)->count(),
+        ];
+
+        return response()->json([
+            'message' => 'Statistics retrieved successfully',
+            'data' => [
+                'as_seller' => $sellerStats,
+                'as_buyer' => $buyerStats
+            ]
+        ]);
+    }
+
+    public function testEmail()
+    {
+        try {
+            \Log::info('Testing email functionality');
+
+            // Test avec un email simple
+            Mail::raw('Test email from SOOM system', function ($message) {
+                $message->to('yucefr@gmail.com')
+                    ->subject('SOOM Test Email');
+            });
+
+            \Log::info('Test email sent successfully');
+
+            return response()->json([
+                'message' => 'Test email sent successfully',
+                'check_logs' => 'Check storage/logs/laravel.log for email content'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Test email failed: ' . $e->getMessage());
+
+            return response()->json([
+                'error' => 'Test email failed',
+                'details' => $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -202,7 +202,7 @@ class ListingController extends Controller
                 $request->validate([
                     'title'       => 'sometimes|string|max:255',
                     'description' => 'sometimes|string',
-                    'price'       => 'sometimes|numeric|min:0',
+                    'price'       => 'sometimes|nullable|numeric|min:0', // Ajoutez 'nullable'
                     'category_id' => 'sometimes|exists:categories,id',
                     'country_id'  => 'sometimes|exists:countries,id',
                     'city_id'     => 'sometimes|exists:cities,id',

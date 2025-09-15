@@ -125,33 +125,59 @@ Route::middleware('auth:api')->group(function () {
 
     Route::post('/upload-image', [ImageUploadController::class, 'upload']);
 
-    // Créer un SOOM sur un listing (Acheteur)
-    Route::post('/listings/{listingId}/soom', [SoomController::class, 'createSoom']);
+    // Routes publiques (pas besoin d'authentification)
+        // Obtenir tous les SOOMs d'un listing (Public)
+        Route::get('/listings/{listingId}/sooms', [SoomController::class, 'getListingSooms']);
 
-    // Obtenir tous les SOOMs d'un listing (Public)
-    Route::get('/listings/{listingId}/sooms', [SoomController::class, 'getListingSooms']);
+        // Obtenir le montant minimum requis pour un SOOM (Public)
+        Route::get('/listings/{listingId}/minimum-soom', [SoomController::class, 'getMinimumSoomAmount']);
 
-    // Obtenir le montant minimum requis pour un SOOM (Public)
-    Route::get('/listings/{listingId}/minimum-soom', [SoomController::class, 'getMinimumSoomAmount']);
+        // Obtenir le dernier SOOM d'un listing (Public)
+        Route::get('/listings/{listingId}/last-soom', [SoomController::class, 'getLastSoom']);
 
-    // Accepter un SOOM (Vendeur uniquement)
-    Route::patch('/submissions/{submissionId}/accept', [SoomController::class, 'acceptSoom']);
 
-    Route::patch('/submissions/{submissionId}/reject', [SoomController::class, 'rejectSoom']);
+    // Routes protégées (nécessitent une authentification)
 
-    // Obtenir tous les SOOMs reçus sur mes listings (Vendeur)
-    Route::get('/my-listings-sooms', [SoomController::class, 'getMyListingsSooms']);
+        // === CRÉATION ET GESTION DES SOOMs ===
 
-    // Obtenir tous mes SOOMs envoyés (Acheteur)
-    Route::get('/my-sooms', [SoomController::class, 'getMySooms']);
+        // Créer un SOOM sur un listing (Acheteur)
+        Route::post('/listings/{listingId}/soom', [SoomController::class, 'createSoom']);
 
-    // Annuler un SOOM
-    Route::delete('submissions/{submissionId}/cancel', [SoomController::class, 'cancelSoom'])->middleware('auth:sanctum');
+        // === ACTIONS DU VENDEUR ===
 
-    // Modifier un SOOM
-    Route::put('submissions/{submissionId}/edit', [SoomController::class, 'editSoom'])->middleware('auth:sanctum');
+        // Accepter un SOOM (Vendeur uniquement)
+        Route::patch('/submissions/{submissionId}/accept', [SoomController::class, 'acceptSoom']);
 
-    Route::get('/listings/{listingId}/last-soom', [SoomController::class, 'getLastSoom']);
+        // Rejeter un SOOM (Vendeur uniquement)
+        Route::patch('/submissions/{submissionId}/reject', [SoomController::class, 'rejectSoom']);
+
+        // NOUVELLE: Valider la vente après acceptation (Vendeur uniquement)
+        Route::post('/submissions/{submissionId}/validate-sale', [SoomController::class, 'validateSale']);
+
+        // === ACTIONS DE L'ACHETEUR ===
+
+        // Modifier un SOOM (Acheteur uniquement)
+        Route::put('/submissions/{submissionId}/edit', [SoomController::class, 'editSoom']);
+
+        // Annuler un SOOM (Acheteur uniquement)
+        Route::delete('/submissions/{submissionId}/cancel', [SoomController::class, 'cancelSoom']);
+
+        // === LISTES ET HISTORIQUES ===
+
+        // Obtenir tous les SOOMs reçus sur mes listings (Vendeur)
+        Route::get('/my-listings-sooms', [SoomController::class, 'getMyListingsSooms']);
+
+        // Obtenir tous mes SOOMs envoyés (Acheteur)
+        Route::get('/my-sooms', [SoomController::class, 'getMySooms']);
+
+        // NOUVELLE: Obtenir toutes les ventes validées
+        Route::get('/validated-sales', [SoomController::class, 'getValidatedSales']);
+
+        // NOUVELLE: Obtenir les SOOMs en attente de validation (Vendeur)
+        Route::get('/pending-validations', [SoomController::class, 'getPendingValidations']);
+
+        // NOUVELLE: Obtenir les statistiques des SOOMs
+        Route::get('/soom-stats', [SoomController::class, 'getSoomStats']);
     // My Garage CRUD operations
     Route::get('/my-garage', [MyGarageController::class, 'index']);           // GET all garage items
     Route::post('/my-garage', [MyGarageController::class, 'store']);          // POST create new item
@@ -382,4 +408,24 @@ Route::middleware(['auth:api'])->group(function () {
 
 Route::get('/get-country', [AuthController::class, 'getCountry'])->name('get.country');
 
-Route::post('/test-email', [AuthController::class, 'testEmail']);
+// Route::post('/test-email', [AuthController::class, 'testEmail']);
+
+
+Route::get('/test-email', [SoomController::class, 'testEmail']);
+
+Route::get('/test-email-simple', function () {
+    try {
+        \Log::info('Testing simple email...');
+
+        Mail::raw('This is a test email from Laravel', function ($message) {
+            $message->to('test@example.com')
+                    ->subject('Laravel Test Email');
+        });
+
+        return 'Email test sent - check logs';
+
+    } catch (\Exception $e) {
+        \Log::error('Email test failed: ' . $e->getMessage());
+        return 'Email test failed: ' . $e->getMessage();
+    }
+});
