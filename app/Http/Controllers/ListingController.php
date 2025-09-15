@@ -419,7 +419,7 @@ class ListingController extends Controller
     }
 
 
- /**
+    /**
      * @OA\Put(
      *     path="/api/listings/complete/{id}",
      *     summary="Compléter un listing existant",
@@ -471,18 +471,37 @@ class ListingController extends Controller
             $step = $request->step ?? ($listing->step + 1);
             $action = $request->action ?? 'update'; // 'update' ou 'complete'
 
-            // Validation selon le step
+            // ✅ Nettoyage du prix AVANT validation (même logique que store)
+            if ($request->has('price') && $request->price !== null && $request->price !== '') {
+                $cleanPrice = str_replace([' ', ','], '', $request->price);
+                $cleanPrice = is_numeric($cleanPrice) ? (float)$cleanPrice : null;
+                $request->merge(['price' => $cleanPrice]);
+            }
+
+            // ✅ Validation selon le step (même logique que store)
             if ($step >= 3 && $action === 'complete') {
+                // Step paiement - validation amount seulement
                 $request->validate([
                     'amount' => 'required|numeric|min:1',
                 ]);
+            } else {
+                // Step 1 & 2 : validation des données de base (même que store)
+                $request->validate([
+                    'title'       => 'sometimes|string|max:255',
+                    'description' => 'sometimes|string',
+                    'price'       => 'sometimes|nullable|numeric|min:0',
+                    'category_id' => 'sometimes|exists:categories,id',
+                    'country_id'  => 'sometimes|exists:countries,id',
+                    'city_id'     => 'sometimes|exists:cities,id',
+                ]);
             }
 
-            // Mettre à jour les données du listing
+            // ✅ Remplissage du listing (même logique que store)
             $listing->fill(array_filter($request->only([
                 'title',
                 'description',
                 'price',
+                'category_id',
                 'country_id',
                 'city_id',
                 'auction_enabled',
@@ -496,7 +515,7 @@ class ListingController extends Controller
             $listing->step = max($listing->step, $step);
             $listing->save();
 
-            // Mettre à jour les images
+            // ✅ Gestion des images (même logique que store)
             if ($request->has('images')) {
                 // Supprimer les anciennes images si de nouvelles sont fournies
                 $listing->images()->delete();
@@ -505,20 +524,20 @@ class ListingController extends Controller
                 }
             }
 
-            // Traiter les données spécifiques à la catégorie
+            // ✅ Traitement des données spécifiques selon la catégorie
             $this->handleCategorySpecificData($listing, $request);
 
-            // Si c'est un step de finalisation (step 3 + action complete)
+            // ✅ Paiement uniquement au step 3 avec action complete
             if ($step >= 3 && $action === 'complete') {
                 $payment = Payment::create([
-                    'user_id' => $sellerId,
-                    'listing_id' => $listing->id,
-                    'amount' => $request->amount,
+                    'user_id'       => $sellerId,
+                    'listing_id'    => $listing->id,
+                    'amount'        => $request->amount,
                     'payment_status' => 'pending',
-                    'cart_id' => 'cart_' . time(),
+                    'cart_id'       => 'cart_' . time(),
                 ]);
 
-                // Processus PayTabs (même logique que dans store())
+                // Payload PayTabs (même logique que store)
                 $payload = [
                     'profile_id' => (int) config('paytabs.profile_id'),
                     'tran_type' => 'sale',
@@ -555,8 +574,8 @@ class ListingController extends Controller
 
                 $response = Http::withHeaders([
                     'Authorization' => config('paytabs.server_key'),
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json'
+                    'Content-Type'  => 'application/json',
+                    'Accept'        => 'application/json'
                 ])->post($baseUrl . 'payment/request', $payload);
 
                 if (!$response->successful()) {
@@ -579,10 +598,10 @@ class ListingController extends Controller
                     'payment_id' => $payment->id,
                     'redirect_url' => $data['redirect_url'] ?? null,
                     'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate'])
-                ]);
+                ], 201);
             }
 
-            // Simple mise à jour sans paiement
+            // ✅ Simple mise à jour sans paiement (step 1 & 2)
             DB::commit();
 
             return response()->json([
@@ -592,8 +611,7 @@ class ListingController extends Controller
                 'current_step' => $listing->step,
                 'next_step' => min($listing->step + 1, 3),
                 'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate'])
-            ]);
-
+            ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['error' => 'Failed to complete listing', 'details' => $e->getMessage()], 500);
