@@ -623,15 +623,41 @@ class SoomController extends Controller
                 'validator_id' => $userId,
             ]);
 
+            // DEBUG: Logs détaillés pour l'email
+            \Log::info('=== SALE VALIDATION EMAIL DEBUG ===');
+            \Log::info('Auction History ID: ' . $auctionHistory->id);
+            \Log::info('Seller: ' . $submission->listing->seller->first_name . ' - ' . $submission->listing->seller->email);
+            \Log::info('Buyer: ' . $submission->user->first_name . ' - ' . $submission->user->email);
+
             // Envoyer les emails avec les informations de contact
             $seller = $submission->listing->seller;
             $buyer = $submission->user;
 
             try {
-                Mail::to([$seller->email, $buyer->email])->send(new SaleValidatedMail($auctionHistory, $submission, $seller, $buyer));
+                // Vérifier que la classe SaleValidatedMail existe
+                if (!class_exists('App\Mail\SaleValidatedMail')) {
+                    \Log::error('SaleValidatedMail class NOT found');
+                    throw new \Exception('SaleValidatedMail class not found');
+                }
+
+                \Log::info('SaleValidatedMail class exists');
+
+                // Créer l'instance
+                $mailInstance = new SaleValidatedMail($auctionHistory, $submission, $seller, $buyer);
+                \Log::info('Mail instance created successfully');
+
+                $emails = [$seller->email, $buyer->email];
+                \Log::info('Sending to: ' . implode(', ', $emails));
+
+                // Envoyer l'email
+                Mail::to($emails)->send($mailInstance);
+                \Log::info('Sale validation email sent successfully');
             } catch (\Exception $e) {
-                \Log::error('Failed to send sale validated email: ' . $e->getMessage());
+                \Log::error('SALE VALIDATION EMAIL ERROR: ' . $e->getMessage());
+                \Log::error('EMAIL TRACE: ' . $e->getTraceAsString());
             }
+
+            \Log::info('=== END SALE VALIDATION EMAIL DEBUG ===');
 
             DB::commit();
 
@@ -642,6 +668,7 @@ class SoomController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('VALIDATE SALE ERROR: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Failed to validate sale',
                 'details' => $e->getMessage()

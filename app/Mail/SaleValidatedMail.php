@@ -34,10 +34,13 @@ class SaleValidatedMail extends Mailable
     /**
      * Get the message envelope.
      */
+    /**
+     * Get the message envelope.
+     */
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Sale Validated - Contact Information Exchange',
+            subject: 'البيع مؤكد / Sale Validated - ' . $this->submission->listing->title,
         );
     }
 
