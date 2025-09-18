@@ -365,7 +365,9 @@ class ListingController extends Controller
 
             case 2: // Pièce détachée
                 $sparePartData = array_filter($request->only([
-                    'condition'
+                    'condition',
+                    'bike_part_brand_id',      // ← Added
+                    'bike_part_category_id'    // ← Added
                 ]));
 
                 if (!empty($sparePartData)) {
