@@ -421,10 +421,13 @@ class ListingController extends Controller
                         $licensePlate->fieldValues()->delete(); // Supprimer les anciens champs
 
                         foreach ($request->fields as $field) {
-                            $licensePlate->fieldValues()->create([
-                                'field_id' => $field['field_id'] ?? null,
-                                'value' => $field['value'] ?? null,
-                            ]);
+                            // Only create if we have the required field_id and it's not null
+                            if (!empty($field['field_id'])) {
+                                $licensePlate->fieldValues()->create([
+                                    'plate_format_field_id' => $field['field_id'], // Map to correct field name
+                                    'field_value' => $field['value'] ?? '', // Use 'field_value' not 'value'
+                                ]);
+                            }
                         }
                     }
                 }
