@@ -418,10 +418,10 @@ class ListingController extends Controller
 
                     // Traiter les champs personnalisés
                     if ($request->has('fields') && is_array($request->fields)) {
-                        $licensePlate->fields()->delete(); // Supprimer les anciens champs
+                        $licensePlate->fieldValues()->delete(); // Supprimer les anciens champs
 
                         foreach ($request->fields as $field) {
-                            $licensePlate->fields()->create([
+                            $licensePlate->fieldValues()->create([
                                 'field_id' => $field['field_id'] ?? null,
                                 'value' => $field['value'] ?? null,
                             ]);
