@@ -13,9 +13,8 @@ class AddSaleFieldsToSubmissions2Table extends Migration
      */
     public function up()
     {
-        Schema::table('submissions', function (Blueprint $table) {
+        Schema::table('submissions', callback: function (Blueprint $table) {
             // Ajouter les nouveaux champs pour la gestion des ventes
-            $table->timestamp('acceptance_date')->nullable()->after('status');
             $table->boolean('sale_validated')->default(false)->after('acceptance_date');
             $table->timestamp('sale_validation_date')->nullable()->after('sale_validated');
             $table->text('rejection_reason')->nullable()->after('sale_validation_date');
