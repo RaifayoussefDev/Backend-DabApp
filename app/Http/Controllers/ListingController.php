@@ -392,11 +392,23 @@ class ListingController extends Controller
                 break;
 
             case 3: // Plaque d'immatriculation
-                $licensePlateData = array_filter($request->only([
-                    'plate_format_id',
-                    'country_id_lp',
-                    'city_id_lp'
-                ]));
+                // Map request fields to database fields
+                $licensePlateData = [];
+
+                if ($request->has('plate_format_id')) {
+                    $licensePlateData['plate_format_id'] = $request->plate_format_id;
+                }
+
+                if ($request->has('country_id_lp')) {
+                    $licensePlateData['country_id'] = $request->country_id_lp; // Map to correct field
+                }
+
+                if ($request->has('city_id_lp')) {
+                    $licensePlateData['city_id'] = $request->city_id_lp; // Map to correct field
+                }
+
+                // Remove null/empty values
+                $licensePlateData = array_filter($licensePlateData);
 
                 if (!empty($licensePlateData)) {
                     $licensePlate = $listing->licensePlate()->updateOrCreate(
