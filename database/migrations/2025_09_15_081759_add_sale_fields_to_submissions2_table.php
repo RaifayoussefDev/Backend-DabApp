@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 class AddSaleFieldsToSubmissions2Table extends Migration
 {
@@ -14,7 +15,7 @@ class AddSaleFieldsToSubmissions2Table extends Migration
     public function up()
     {
         Schema::table('submissions', function (Blueprint $table) {
-            // Ajouter les nouveaux champs seulement s'ils n'existent pas déjà
+            // Colonnes
             if (!Schema::hasColumn('submissions', 'sale_validated')) {
                 $table->boolean('sale_validated')->default(false)->after('acceptance_date');
             }
@@ -26,20 +27,26 @@ class AddSaleFieldsToSubmissions2Table extends Migration
             if (!Schema::hasColumn('submissions', 'rejection_reason')) {
                 $table->text('rejection_reason')->nullable()->after('sale_validation_date');
             }
-
-            // Ajouter les index uniquement si les colonnes existent
-            if (Schema::hasColumn('submissions', 'status') && Schema::hasColumn('submissions', 'sale_validated')) {
-                $table->index(['status', 'sale_validated'], 'submissions_status_sale_validated_index');
-            }
-
-            if (Schema::hasColumn('submissions', 'acceptance_date')) {
-                $table->index('acceptance_date', 'submissions_acceptance_date_index');
-            }
-
-            if (Schema::hasColumn('submissions', 'sale_validation_date')) {
-                $table->index('sale_validation_date', 'submissions_sale_validation_date_index');
-            }
         });
+
+        // Index (à vérifier via INFORMATION_SCHEMA)
+        if (!$this->indexExists('submissions', 'submissions_status_sale_validated_index')) {
+            Schema::table('submissions', function (Blueprint $table) {
+                $table->index(['status', 'sale_validated'], 'submissions_status_sale_validated_index');
+            });
+        }
+
+        if (!$this->indexExists('submissions', 'submissions_acceptance_date_index')) {
+            Schema::table('submissions', function (Blueprint $table) {
+                $table->index('acceptance_date', 'submissions_acceptance_date_index');
+            });
+        }
+
+        if (!$this->indexExists('submissions', 'submissions_sale_validation_date_index')) {
+            Schema::table('submissions', function (Blueprint $table) {
+                $table->index('sale_validation_date', 'submissions_sale_validation_date_index');
+            });
+        }
     }
 
     /**
@@ -50,12 +57,18 @@ class AddSaleFieldsToSubmissions2Table extends Migration
     public function down()
     {
         Schema::table('submissions', function (Blueprint $table) {
-            // Supprimer les index (avec leurs noms explicites)
-            $table->dropIndex('submissions_status_sale_validated_index');
-            $table->dropIndex('submissions_acceptance_date_index');
-            $table->dropIndex('submissions_sale_validation_date_index');
+            if ($this->indexExists('submissions', 'submissions_status_sale_validated_index')) {
+                $table->dropIndex('submissions_status_sale_validated_index');
+            }
 
-            // Supprimer seulement les colonnes ajoutées par cette migration
+            if ($this->indexExists('submissions', 'submissions_acceptance_date_index')) {
+                $table->dropIndex('submissions_acceptance_date_index');
+            }
+
+            if ($this->indexExists('submissions', 'submissions_sale_validation_date_index')) {
+                $table->dropIndex('submissions_sale_validation_date_index');
+            }
+
             $columns = ['sale_validated', 'sale_validation_date', 'rejection_reason'];
             foreach ($columns as $col) {
                 if (Schema::hasColumn('submissions', $col)) {
@@ -63,5 +76,20 @@ class AddSaleFieldsToSubmissions2Table extends Migration
                 }
             }
         });
+    }
+
+    /**
+     * Vérifie si un index existe dans une table.
+     */
+    protected function indexExists(string $table, string $indexName): bool
+    {
+        $database = DB::getDatabaseName();
+        $result = DB::selectOne("
+            SELECT COUNT(1) AS count
+            FROM INFORMATION_SCHEMA.STATISTICS
+            WHERE table_schema = ? AND table_name = ? AND index_name = ?
+        ", [$database, $table, $indexName]);
+
+        return $result->count > 0;
     }
 }
