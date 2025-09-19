@@ -8533,6 +8533,1565 @@
                 ]
             }
         },
+        "/api/submissions/{submissionId}/validate-sale": {
+            "post": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Validate a sale after SOOM acceptance",
+                "description": "Validate a sale for an accepted SOOM within 5 days of acceptance. Only sellers can validate sales.",
+                "operationId": "validateSale",
+                "parameters": [
+                    {
+                        "name": "submissionId",
+                        "in": "path",
+                        "description": "ID of the accepted submission to validate",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sale validated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Sale validated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "listing_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "seller_id": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "buyer_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "bid_amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 1500
+                                                },
+                                                "bid_date": {
+                                                    "type": "string",
+                                                    "format": "datetime",
+                                                    "example": "2024-09-18T16:30:00.000000Z"
+                                                },
+                                                "validated": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "validated_at": {
+                                                    "type": "string",
+                                                    "format": "datetime",
+                                                    "example": "2024-09-23T16:30:00.000000Z"
+                                                },
+                                                "validator_id": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "submission": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "listing_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 1500
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "accepted"
+                                                },
+                                                "sale_validated": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "sale_validation_date": {
+                                                    "type": "string",
+                                                    "format": "datetime",
+                                                    "example": "2024-09-23T16:30:00.000000Z"
+                                                },
+                                                "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string",
+                                                            "example": "John"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string",
+                                                            "example": "Doe"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "john@example.com"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "+1234567890",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "listing": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "title": {
+                                                            "type": "string",
+                                                            "example": "Yamaha R1"
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "example": "Great motorcycle"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - User must be logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized. User must be logged in."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Access denied or invalid conditions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "enum": [
+                                                "Only the seller can validate sales for this listing.",
+                                                "Only accepted SOOMs can be validated."
+                                            ],
+                                            "example": "Only the seller can validate sales for this listing."
+                                        },
+                                        "current_status": {
+                                            "type": "string",
+                                            "example": "pending",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Submission not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Submission not found."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation period expired or already validated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "This sale has already been validated."
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Validation period has expired. You had 5 days to validate this sale."
+                                                },
+                                                "acceptance_date": {
+                                                    "type": "string",
+                                                    "format": "datetime",
+                                                    "example": "2024-09-18T16:30:00.000000Z"
+                                                },
+                                                "validation_deadline": {
+                                                    "type": "string",
+                                                    "format": "datetime",
+                                                    "example": "2024-09-23T16:30:00.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to validate sale"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sooms/validated-sales": {
+            "get": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Get all validated sales for authenticated user",
+                "description": "Retrieve all validated sales where the user is either seller or buyer",
+                "operationId": "getValidatedSales",
+                "responses": {
+                    "200": {
+                        "description": "Validated sales retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validated sales retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "listing_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "seller_id": {
+                                                        "type": "integer",
+                                                        "example": 3
+                                                    },
+                                                    "buyer_id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "bid_amount": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 1500
+                                                    },
+                                                    "validated": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "validated_at": {
+                                                        "type": "string",
+                                                        "format": "datetime"
+                                                    },
+                                                    "listing": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "title": {
+                                                                "type": "string",
+                                                                "example": "Yamaha R1"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Great motorcycle"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "buyer": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "first_name": {
+                                                                "type": "string",
+                                                                "example": "John"
+                                                            },
+                                                            "last_name": {
+                                                                "type": "string",
+                                                                "example": "Doe"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "john@example.com"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "seller": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 3
+                                                            },
+                                                            "first_name": {
+                                                                "type": "string",
+                                                                "example": "Jane"
+                                                            },
+                                                            "last_name": {
+                                                                "type": "string",
+                                                                "example": "Smith"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "jane@example.com"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "stats": {
+                                            "properties": {
+                                                "total_sales": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "as_seller": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "as_buyer": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "total_amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 7500
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized. User must be logged in."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sooms/my-listings": {
+            "get": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Get SOOMs received on user's listings",
+                "description": "Retrieve all SOOMs submitted on listings owned by the authenticated user",
+                "operationId": "getMyListingsSooms",
+                "responses": {
+                    "200": {
+                        "description": "SOOMs retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "SOOMs retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "listing_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "amount": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 1500
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "pending"
+                                                    },
+                                                    "submission_date": {
+                                                        "type": "string",
+                                                        "format": "datetime"
+                                                    },
+                                                    "sale_validated": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "user": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "first_name": {
+                                                                "type": "string",
+                                                                "example": "John"
+                                                            },
+                                                            "last_name": {
+                                                                "type": "string",
+                                                                "example": "Doe"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "john@example.com"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "listing": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "title": {
+                                                                "type": "string",
+                                                                "example": "Yamaha R1"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Great motorcycle"
+                                                            },
+                                                            "seller_id": {
+                                                                "type": "integer",
+                                                                "example": 3
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "stats": {
+                                            "properties": {
+                                                "total_sooms": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "pending_sooms": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "accepted_sooms": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "rejected_sooms": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "pending_validation": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized. User must be logged in."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sooms/my-submissions": {
+            "get": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Get user's submitted SOOMs",
+                "description": "Retrieve all SOOMs submitted by the authenticated user",
+                "operationId": "getMySooms",
+                "responses": {
+                    "200": {
+                        "description": "My SOOMs retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "My SOOMs retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "listing_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "amount": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 1500
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "pending"
+                                                    },
+                                                    "submission_date": {
+                                                        "type": "string",
+                                                        "format": "datetime"
+                                                    },
+                                                    "listing": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "title": {
+                                                                "type": "string",
+                                                                "example": "Yamaha R1"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Great motorcycle"
+                                                            },
+                                                            "seller_id": {
+                                                                "type": "integer",
+                                                                "example": 3
+                                                            },
+                                                            "country_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "seller": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 3
+                                                                    },
+                                                                    "first_name": {
+                                                                        "type": "string",
+                                                                        "example": "Jane"
+                                                                    },
+                                                                    "last_name": {
+                                                                        "type": "string",
+                                                                        "example": "Smith"
+                                                                    },
+                                                                    "email": {
+                                                                        "type": "string",
+                                                                        "example": "jane@example.com"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "country": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "code": {
+                                                                        "type": "string",
+                                                                        "example": "US"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "United States"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "stats": {
+                                            "properties": {
+                                                "total_sooms": {
+                                                    "type": "integer",
+                                                    "example": 8
+                                                },
+                                                "pending_sooms": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "accepted_sooms": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "rejected_sooms": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized. User must be logged in."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sooms/{submissionId}": {
+            "put": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Edit a pending SOOM",
+                "description": "Modify the amount of a SOOM submission that is still in pending status",
+                "operationId": "editSoom",
+                "parameters": [
+                    {
+                        "name": "submissionId",
+                        "in": "path",
+                        "description": "ID of the submission to edit",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Updated SOOM data",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "amount"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "description": "New amount for the SOOM",
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0,
+                                        "example": 1600
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "SOOM updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "SOOM updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 1600
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "pending"
+                                                },
+                                                "submission_date": {
+                                                    "type": "string",
+                                                    "format": "datetime"
+                                                },
+                                                "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string",
+                                                            "example": "John"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string",
+                                                            "example": "Doe"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "john@example.com"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "previous_amount": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 1500
+                                        },
+                                        "current_highest": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 1600
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized. User must be logged in."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Access denied or invalid conditions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "enum": [
+                                                "You can only edit your own SOOM submissions.",
+                                                "You can only edit pending SOOM submissions.",
+                                                "Submissions are no longer allowed for this listing."
+                                            ],
+                                            "example": "You can only edit your own SOOM submissions."
+                                        },
+                                        "current_status": {
+                                            "type": "string",
+                                            "example": "accepted"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Submission not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Submission not found."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error or amount too low",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Validation failed"
+                                                },
+                                                "errors": {
+                                                    "properties": {
+                                                        "amount": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "example": "The amount field is required."
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "The SOOM amount must be at least 1501."
+                                                },
+                                                "minimum_required": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 1501
+                                                },
+                                                "current_highest_other": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 1500,
+                                                    "nullable": true
+                                                },
+                                                "your_current_amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 1400
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to update SOOM"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Cancel a pending SOOM",
+                "description": "Cancel a SOOM submission that is still in pending status",
+                "operationId": "cancelSoom",
+                "parameters": [
+                    {
+                        "name": "submissionId",
+                        "in": "path",
+                        "description": "ID of the submission to cancel",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SOOM cancelled successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "SOOM cancelled successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "listing_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 1500
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "pending"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized. User must be logged in."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Access denied or invalid status",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "enum": [
+                                                "You can only cancel your own SOOM submissions.",
+                                                "You can only cancel pending SOOM submissions."
+                                            ],
+                                            "example": "You can only cancel your own SOOM submissions."
+                                        },
+                                        "current_status": {
+                                            "type": "string",
+                                            "example": "accepted"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Submission not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Submission not found."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to cancel SOOM"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/listings/{listingId}/last-soom": {
+            "get": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Get the last SOOM for a listing",
+                "description": "Get the most recent SOOM submission for a specific listing with user context information",
+                "operationId": "getLastSoom",
+                "parameters": [
+                    {
+                        "name": "listingId",
+                        "in": "path",
+                        "description": "ID of the listing",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Last SOOM retrieved successfully or no SOOMs found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "listing_minimum_bid": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 1000
+                                        },
+                                        "is_seller": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "user_has_pending_soom": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "user_pending_soom": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 1400
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "pending"
+                                                }
+                                            },
+                                            "type": "object",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object",
+                                    "oneOf": [
+                                        {
+                                            "description": "When SOOMs exist",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Last SOOM retrieved successfully"
+                                                },
+                                                "data": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "amount": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 1500
+                                                        },
+                                                        "status": {
+                                                            "type": "string",
+                                                            "example": "pending"
+                                                        },
+                                                        "submission_date": {
+                                                            "type": "string",
+                                                            "format": "datetime"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "has_sooms": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "total_sooms_count": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "minimum_bid_required": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 1501
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "description": "When no SOOMs exist",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "No SOOMs found for this listing"
+                                                },
+                                                "data": {
+                                                    "type": "null"
+                                                },
+                                                "has_sooms": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "total_sooms_count": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "minimum_bid_required": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 1000
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Listing not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Listing not found."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/sooms/pending-validations": {
+            "get": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Get pending sale validations",
+                "description": "Get all accepted SOOMs awaiting sale validation from the authenticated seller",
+                "operationId": "getPendingValidations",
+                "responses": {
+                    "200": {
+                        "description": "Pending validations retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pending validations retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "amount": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 1500
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "accepted"
+                                                    },
+                                                    "acceptance_date": {
+                                                        "type": "string",
+                                                        "format": "datetime"
+                                                    },
+                                                    "sale_validated": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "user": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "first_name": {
+                                                                "type": "string",
+                                                                "example": "John"
+                                                            },
+                                                            "last_name": {
+                                                                "type": "string",
+                                                                "example": "Doe"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "john@example.com"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "listing": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "title": {
+                                                                "type": "string",
+                                                                "example": "Yamaha R1"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Great motorcycle"
+                                                            },
+                                                            "seller_id": {
+                                                                "type": "integer",
+                                                                "example": 3
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "total_pending": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "expired_count": {
+                                            "type": "integer",
+                                            "example": 1
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized. User must be logged in."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sooms/stats": {
+            "get": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Get SOOM statistics for authenticated user",
+                "description": "Get comprehensive statistics for SOOMs as both seller and buyer",
+                "operationId": "getSoomStats",
+                "responses": {
+                    "200": {
+                        "description": "Statistics retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Statistics retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "as_seller": {
+                                                    "properties": {
+                                                        "total_received": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        },
+                                                        "pending": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "accepted": {
+                                                            "type": "integer",
+                                                            "example": 4
+                                                        },
+                                                        "rejected": {
+                                                            "type": "integer",
+                                                            "example": 6
+                                                        },
+                                                        "validated_sales": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "pending_validation": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "as_buyer": {
+                                                    "properties": {
+                                                        "total_sent": {
+                                                            "type": "integer",
+                                                            "example": 8
+                                                        },
+                                                        "pending": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "accepted": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "rejected": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "validated_purchases": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized. User must be logged in."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/users": {
             "get": {
                 "tags": [

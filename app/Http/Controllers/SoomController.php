@@ -720,7 +720,122 @@ class SoomController extends Controller
             ], 500);
         }
     }
-
+    /**
+     * @OA\Post(
+     *     path="/api/submissions/{submissionId}/validate-sale",
+     *     summary="Validate a sale after SOOM acceptance",
+     *     description="Validate a sale for an accepted SOOM within 5 days of acceptance. Only sellers can validate sales.",
+     *     operationId="validateSale",
+     *     tags={"SOOMs"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="submissionId",
+     *         in="path",
+     *         description="ID of the accepted submission to validate",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Sale validated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Sale validated successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="listing_id", type="integer", example=1),
+     *                 @OA\Property(property="seller_id", type="integer", example=3),
+     *                 @OA\Property(property="buyer_id", type="integer", example=2),
+     *                 @OA\Property(property="bid_amount", type="number", format="float", example=1500.00),
+     *                 @OA\Property(property="bid_date", type="string", format="datetime", example="2024-09-18T16:30:00.000000Z"),
+     *                 @OA\Property(property="validated", type="boolean", example=true),
+     *                 @OA\Property(property="validated_at", type="string", format="datetime", example="2024-09-23T16:30:00.000000Z"),
+     *                 @OA\Property(property="validator_id", type="integer", example=3)
+     *             ),
+     *             @OA\Property(
+     *                 property="submission",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="listing_id", type="integer", example=1),
+     *                 @OA\Property(property="user_id", type="integer", example=2),
+     *                 @OA\Property(property="amount", type="number", format="float", example=1500.00),
+     *                 @OA\Property(property="status", type="string", example="accepted"),
+     *                 @OA\Property(property="sale_validated", type="boolean", example=true),
+     *                 @OA\Property(property="sale_validation_date", type="string", format="datetime", example="2024-09-23T16:30:00.000000Z"),
+     *                 @OA\Property(
+     *                     property="user",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=2),
+     *                     @OA\Property(property="first_name", type="string", example="John"),
+     *                     @OA\Property(property="last_name", type="string", example="Doe"),
+     *                     @OA\Property(property="email", type="string", example="john@example.com"),
+     *                     @OA\Property(property="phone", type="string", example="+1234567890", nullable=true)
+     *                 ),
+     *                 @OA\Property(
+     *                     property="listing",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="title", type="string", example="Yamaha R1"),
+     *                     @OA\Property(property="description", type="string", example="Great motorcycle")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized - User must be logged in",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized. User must be logged in.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Access denied or invalid conditions",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string",
+     *                 example="Only the seller can validate sales for this listing.",
+     *                 enum={
+     *                     "Only the seller can validate sales for this listing.",
+     *                     "Only accepted SOOMs can be validated."
+     *                 }
+     *             ),
+     *             @OA\Property(property="current_status", type="string", example="pending", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Submission not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Submission not found.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation period expired or already validated",
+     *         @OA\JsonContent(
+     *             oneOf={
+     *                 @OA\Schema(
+     *                     @OA\Property(property="message", type="string", example="This sale has already been validated.")
+     *                 ),
+     *                 @OA\Schema(
+     *                     @OA\Property(property="message", type="string", example="Validation period has expired. You had 5 days to validate this sale."),
+     *                     @OA\Property(property="acceptance_date", type="string", format="datetime", example="2024-09-18T16:30:00.000000Z"),
+     *                     @OA\Property(property="validation_deadline", type="string", format="datetime", example="2024-09-23T16:30:00.000000Z")
+     *                 )
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Failed to validate sale"),
+     *             @OA\Property(property="details", type="string")
+     *         )
+     *     )
+     * )
+     */
     public function validateSale($submissionId)
     {
         DB::beginTransaction();
@@ -844,7 +959,75 @@ class SoomController extends Controller
         }
     }
 
-
+    /**
+     * @OA\Get(
+     *     path="/api/sooms/validated-sales",
+     *     summary="Get all validated sales for authenticated user",
+     *     description="Retrieve all validated sales where the user is either seller or buyer",
+     *     operationId="getValidatedSales",
+     *     tags={"SOOMs"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Validated sales retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Validated sales retrieved successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="listing_id", type="integer", example=1),
+     *                     @OA\Property(property="seller_id", type="integer", example=3),
+     *                     @OA\Property(property="buyer_id", type="integer", example=2),
+     *                     @OA\Property(property="bid_amount", type="number", format="float", example=1500.00),
+     *                     @OA\Property(property="validated", type="boolean", example=true),
+     *                     @OA\Property(property="validated_at", type="string", format="datetime"),
+     *                     @OA\Property(
+     *                         property="listing",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="title", type="string", example="Yamaha R1"),
+     *                         @OA\Property(property="description", type="string", example="Great motorcycle")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="buyer",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=2),
+     *                         @OA\Property(property="first_name", type="string", example="John"),
+     *                         @OA\Property(property="last_name", type="string", example="Doe"),
+     *                         @OA\Property(property="email", type="string", example="john@example.com")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="seller",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=3),
+     *                         @OA\Property(property="first_name", type="string", example="Jane"),
+     *                         @OA\Property(property="last_name", type="string", example="Smith"),
+     *                         @OA\Property(property="email", type="string", example="jane@example.com")
+     *                     )
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="stats",
+     *                 type="object",
+     *                 @OA\Property(property="total_sales", type="integer", example=5),
+     *                 @OA\Property(property="as_seller", type="integer", example=2),
+     *                 @OA\Property(property="as_buyer", type="integer", example=3),
+     *                 @OA\Property(property="total_amount", type="number", format="float", example=7500.00)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized. User must be logged in.")
+     *         )
+     *     )
+     * )
+     */
     public function getValidatedSales()
     {
         $userId = Auth::id();
@@ -883,7 +1066,69 @@ class SoomController extends Controller
             'stats' => $stats
         ]);
     }
-
+    /**
+     * @OA\Get(
+     *     path="/api/sooms/my-listings",
+     *     summary="Get SOOMs received on user's listings",
+     *     description="Retrieve all SOOMs submitted on listings owned by the authenticated user",
+     *     operationId="getMyListingsSooms",
+     *     tags={"SOOMs"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="SOOMs retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="SOOMs retrieved successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="listing_id", type="integer", example=1),
+     *                     @OA\Property(property="user_id", type="integer", example=2),
+     *                     @OA\Property(property="amount", type="number", format="float", example=1500.00),
+     *                     @OA\Property(property="status", type="string", example="pending"),
+     *                     @OA\Property(property="submission_date", type="string", format="datetime"),
+     *                     @OA\Property(property="sale_validated", type="boolean", example=false),
+     *                     @OA\Property(
+     *                         property="user",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=2),
+     *                         @OA\Property(property="first_name", type="string", example="John"),
+     *                         @OA\Property(property="last_name", type="string", example="Doe"),
+     *                         @OA\Property(property="email", type="string", example="john@example.com")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="listing",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="title", type="string", example="Yamaha R1"),
+     *                         @OA\Property(property="description", type="string", example="Great motorcycle"),
+     *                         @OA\Property(property="seller_id", type="integer", example=3)
+     *                     )
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="stats",
+     *                 type="object",
+     *                 @OA\Property(property="total_sooms", type="integer", example=10),
+     *                 @OA\Property(property="pending_sooms", type="integer", example=5),
+     *                 @OA\Property(property="accepted_sooms", type="integer", example=3),
+     *                 @OA\Property(property="rejected_sooms", type="integer", example=2),
+     *                 @OA\Property(property="pending_validation", type="integer", example=1)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized. User must be logged in.")
+     *         )
+     *     )
+     * )
+     */
 
     public function getMyListingsSooms()
     {
@@ -921,7 +1166,75 @@ class SoomController extends Controller
             'stats' => $stats
         ]);
     }
-
+    /**
+     * @OA\Get(
+     *     path="/api/sooms/my-submissions",
+     *     summary="Get user's submitted SOOMs",
+     *     description="Retrieve all SOOMs submitted by the authenticated user",
+     *     operationId="getMySooms",
+     *     tags={"SOOMs"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="My SOOMs retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="My SOOMs retrieved successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="listing_id", type="integer", example=1),
+     *                     @OA\Property(property="user_id", type="integer", example=2),
+     *                     @OA\Property(property="amount", type="number", format="float", example=1500.00),
+     *                     @OA\Property(property="status", type="string", example="pending"),
+     *                     @OA\Property(property="submission_date", type="string", format="datetime"),
+     *                     @OA\Property(
+     *                         property="listing",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="title", type="string", example="Yamaha R1"),
+     *                         @OA\Property(property="description", type="string", example="Great motorcycle"),
+     *                         @OA\Property(property="seller_id", type="integer", example=3),
+     *                         @OA\Property(property="country_id", type="integer", example=1),
+     *                         @OA\Property(
+     *                             property="seller",
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=3),
+     *                             @OA\Property(property="first_name", type="string", example="Jane"),
+     *                             @OA\Property(property="last_name", type="string", example="Smith"),
+     *                             @OA\Property(property="email", type="string", example="jane@example.com")
+     *                         ),
+     *                         @OA\Property(
+     *                             property="country",
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=1),
+     *                             @OA\Property(property="code", type="string", example="US"),
+     *                             @OA\Property(property="name", type="string", example="United States")
+     *                         )
+     *                     )
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="stats",
+     *                 type="object",
+     *                 @OA\Property(property="total_sooms", type="integer", example=8),
+     *                 @OA\Property(property="pending_sooms", type="integer", example=3),
+     *                 @OA\Property(property="accepted_sooms", type="integer", example=2),
+     *                 @OA\Property(property="rejected_sooms", type="integer", example=3)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized. User must be logged in.")
+     *         )
+     *     )
+     * )
+     */
 
     public function getMySooms()
     {
@@ -958,7 +1271,72 @@ class SoomController extends Controller
             'stats' => $stats
         ]);
     }
-
+    /**
+     * @OA\Delete(
+     *     path="/api/sooms/{submissionId}",
+     *     summary="Cancel a pending SOOM",
+     *     description="Cancel a SOOM submission that is still in pending status",
+     *     operationId="cancelSoom",
+     *     tags={"SOOMs"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="submissionId",
+     *         in="path",
+     *         description="ID of the submission to cancel",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="SOOM cancelled successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="SOOM cancelled successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="listing_id", type="integer", example=1),
+     *                 @OA\Property(property="user_id", type="integer", example=2),
+     *                 @OA\Property(property="amount", type="number", format="float", example=1500.00),
+     *                 @OA\Property(property="status", type="string", example="pending")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized. User must be logged in.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Access denied or invalid status",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string",
+     *                 example="You can only cancel your own SOOM submissions.",
+     *                 enum={"You can only cancel your own SOOM submissions.", "You can only cancel pending SOOM submissions."}
+     *             ),
+     *             @OA\Property(property="current_status", type="string", example="accepted")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Submission not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Submission not found.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Failed to cancel SOOM"),
+     *             @OA\Property(property="details", type="string")
+     *         )
+     *     )
+     * )
+     */
 
     public function cancelSoom($submissionId)
     {
@@ -1013,7 +1391,126 @@ class SoomController extends Controller
             ], 500);
         }
     }
-
+    /**
+     * @OA\Put(
+     *     path="/api/sooms/{submissionId}",
+     *     summary="Edit a pending SOOM",
+     *     description="Modify the amount of a SOOM submission that is still in pending status",
+     *     operationId="editSoom",
+     *     tags={"SOOMs"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="submissionId",
+     *         in="path",
+     *         description="ID of the submission to edit",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Updated SOOM data",
+     *         @OA\JsonContent(
+     *             required={"amount"},
+     *             @OA\Property(
+     *                 property="amount",
+     *                 type="number",
+     *                 format="float",
+     *                 description="New amount for the SOOM",
+     *                 example=1600.00,
+     *                 minimum=0
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="SOOM updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="SOOM updated successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="amount", type="number", format="float", example=1600.00),
+     *                 @OA\Property(property="status", type="string", example="pending"),
+     *                 @OA\Property(property="submission_date", type="string", format="datetime"),
+     *                 @OA\Property(
+     *                     property="user",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=2),
+     *                     @OA\Property(property="first_name", type="string", example="John"),
+     *                     @OA\Property(property="last_name", type="string", example="Doe"),
+     *                     @OA\Property(property="email", type="string", example="john@example.com")
+     *                 )
+     *             ),
+     *             @OA\Property(property="previous_amount", type="number", format="float", example=1500.00),
+     *             @OA\Property(property="current_highest", type="number", format="float", example=1600.00)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized. User must be logged in.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Access denied or invalid conditions",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string",
+     *                 example="You can only edit your own SOOM submissions.",
+     *                 enum={
+     *                     "You can only edit your own SOOM submissions.",
+     *                     "You can only edit pending SOOM submissions.",
+     *                     "Submissions are no longer allowed for this listing."
+     *                 }
+     *             ),
+     *             @OA\Property(property="current_status", type="string", example="accepted")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Submission not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Submission not found.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error or amount too low",
+     *         @OA\JsonContent(
+     *             oneOf={
+     *                 @OA\Schema(
+     *                     @OA\Property(property="message", type="string", example="Validation failed"),
+     *                     @OA\Property(
+     *                         property="errors",
+     *                         type="object",
+     *                         @OA\Property(
+     *                             property="amount",
+     *                             type="array",
+     *                             @OA\Items(type="string", example="The amount field is required.")
+     *                         )
+     *                     )
+     *                 ),
+     *                 @OA\Schema(
+     *                     @OA\Property(property="message", type="string", example="The SOOM amount must be at least 1501."),
+     *                     @OA\Property(property="minimum_required", type="number", format="float", example=1501.00),
+     *                     @OA\Property(property="current_highest_other", type="number", format="float", example=1500.00, nullable=true),
+     *                     @OA\Property(property="your_current_amount", type="number", format="float", example=1400.00)
+     *                 )
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Failed to update SOOM"),
+     *             @OA\Property(property="details", type="string")
+     *         )
+     *     )
+     * )
+     */
 
     public function editSoom(Request $request, $submissionId)
     {
@@ -1122,7 +1619,71 @@ class SoomController extends Controller
         }
     }
 
-
+    /**
+     * @OA\Get(
+     *     path="/api/listings/{listingId}/last-soom",
+     *     summary="Get the last SOOM for a listing",
+     *     description="Get the most recent SOOM submission for a specific listing with user context information",
+     *     operationId="getLastSoom",
+     *     tags={"SOOMs"},
+     *     @OA\Parameter(
+     *         name="listingId",
+     *         in="path",
+     *         description="ID of the listing",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Last SOOM retrieved successfully or no SOOMs found",
+     *         @OA\JsonContent(
+     *             oneOf={
+     *                 @OA\Schema(
+     *                     description="When SOOMs exist",
+     *                     @OA\Property(property="message", type="string", example="Last SOOM retrieved successfully"),
+     *                     @OA\Property(
+     *                         property="data",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="amount", type="number", format="float", example=1500.00),
+     *                         @OA\Property(property="status", type="string", example="pending"),
+     *                         @OA\Property(property="submission_date", type="string", format="datetime")
+     *                     ),
+     *                     @OA\Property(property="has_sooms", type="boolean", example=true),
+     *                     @OA\Property(property="total_sooms_count", type="integer", example=5),
+     *                     @OA\Property(property="minimum_bid_required", type="number", format="float", example=1501.00)
+     *                 ),
+     *                 @OA\Schema(
+     *                     description="When no SOOMs exist",
+     *                     @OA\Property(property="message", type="string", example="No SOOMs found for this listing"),
+     *                     @OA\Property(property="data", type="null"),
+     *                     @OA\Property(property="has_sooms", type="boolean", example=false),
+     *                     @OA\Property(property="total_sooms_count", type="integer", example=0),
+     *                     @OA\Property(property="minimum_bid_required", type="number", format="float", example=1000.00)
+     *                 )
+     *             },
+     *             @OA\Property(property="listing_minimum_bid", type="number", format="float", example=1000.00),
+     *             @OA\Property(property="is_seller", type="boolean", example=false),
+     *             @OA\Property(property="user_has_pending_soom", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="user_pending_soom",
+     *                 type="object",
+     *                 nullable=true,
+     *                 @OA\Property(property="id", type="integer", example=2),
+     *                 @OA\Property(property="amount", type="number", format="float", example=1400.00),
+     *                 @OA\Property(property="status", type="string", example="pending")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Listing not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Listing not found.")
+     *         )
+     *     )
+     * )
+     */
     public function getLastSoom($listingId)
     {
         // Vérifier que le listing existe et récupérer ses informations
@@ -1200,7 +1761,60 @@ class SoomController extends Controller
             'user_pending_soom' => $userPendingSoom
         ], 200);
     }
-
+    /**
+     * @OA\Get(
+     *     path="/api/sooms/pending-validations",
+     *     summary="Get pending sale validations",
+     *     description="Get all accepted SOOMs awaiting sale validation from the authenticated seller",
+     *     operationId="getPendingValidations",
+     *     tags={"SOOMs"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Pending validations retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Pending validations retrieved successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="amount", type="number", format="float", example=1500.00),
+     *                     @OA\Property(property="status", type="string", example="accepted"),
+     *                     @OA\Property(property="acceptance_date", type="string", format="datetime"),
+     *                     @OA\Property(property="sale_validated", type="boolean", example=false),
+     *                     @OA\Property(
+     *                         property="user",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=2),
+     *                         @OA\Property(property="first_name", type="string", example="John"),
+     *                         @OA\Property(property="last_name", type="string", example="Doe"),
+     *                         @OA\Property(property="email", type="string", example="john@example.com")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="listing",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="title", type="string", example="Yamaha R1"),
+     *                         @OA\Property(property="description", type="string", example="Great motorcycle"),
+     *                         @OA\Property(property="seller_id", type="integer", example=3)
+     *                     )
+     *                 )
+     *             ),
+     *             @OA\Property(property="total_pending", type="integer", example=3),
+     *             @OA\Property(property="expired_count", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized. User must be logged in.")
+     *         )
+     *     )
+     * )
+     */
 
     public function getPendingValidations()
     {
@@ -1239,7 +1853,53 @@ class SoomController extends Controller
         ]);
     }
 
-
+    /**
+     * @OA\Get(
+     *     path="/api/sooms/stats",
+     *     summary="Get SOOM statistics for authenticated user",
+     *     description="Get comprehensive statistics for SOOMs as both seller and buyer",
+     *     operationId="getSoomStats",
+     *     tags={"SOOMs"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Statistics retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Statistics retrieved successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="as_seller",
+     *                     type="object",
+     *                     @OA\Property(property="total_received", type="integer", example=15),
+     *                     @OA\Property(property="pending", type="integer", example=5),
+     *                     @OA\Property(property="accepted", type="integer", example=4),
+     *                     @OA\Property(property="rejected", type="integer", example=6),
+     *                     @OA\Property(property="validated_sales", type="integer", example=3),
+     *                     @OA\Property(property="pending_validation", type="integer", example=1)
+     *                 ),
+     *                 @OA\Property(
+     *                     property="as_buyer",
+     *                     type="object",
+     *                     @OA\Property(property="total_sent", type="integer", example=8),
+     *                     @OA\Property(property="pending", type="integer", example=3),
+     *                     @OA\Property(property="accepted", type="integer", example=2),
+     *                     @OA\Property(property="rejected", type="integer", example=3),
+     *                     @OA\Property(property="validated_purchases", type="integer", example=1)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized. User must be logged in.")
+     *         )
+     *     )
+     * )
+     */
     public function getSoomStats()
     {
         $userId = Auth::id();

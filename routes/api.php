@@ -125,7 +125,6 @@ Route::middleware('auth:api')->group(function () {
 
     Route::post('/upload-image', [ImageUploadController::class, 'upload']);
 
-    // Routes publiques (pas besoin d'authentification)
         // Obtenir tous les SOOMs d'un listing (Public)
         Route::get('/listings/{listingId}/sooms', [SoomController::class, 'getListingSooms']);
 
@@ -136,7 +135,6 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/listings/{listingId}/last-soom', [SoomController::class, 'getLastSoom']);
 
 
-    // Routes protégées (nécessitent une authentification)
 
         // === CRÉATION ET GESTION DES SOOMs ===
 
