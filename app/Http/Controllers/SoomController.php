@@ -394,8 +394,8 @@ class SoomController extends Controller
         ]);
     }
     /**
-     * @OA\Put(
-     *     path="/api/sooms/{submissionId}/accept",
+     * @OA\Patch(
+     *     path="/api/submissions/{submissionId}/accept",
      *     summary="Accept a SOOM submission",
      *     description="Accept a specific SOOM submission and automatically reject all other pending SOOMs for the same listing",
      *     operationId="acceptSoom",
@@ -515,11 +515,9 @@ class SoomController extends Controller
                 'acceptance_date' => $acceptanceDate
             ]);
 
-            // CORRECTION: Rejeter automatiquement tous les autres SOOMs pending pour ce listing
-            $rejectedCount = Submission::where('listing_id', $submission->listing_id)
-                ->where('id', '!=', $submissionId)
-                ->where('status', 'pending')
-                ->update(['status' => 'rejected']);
+            // SUPPRIMÉ: Le rejet automatique des autres SOOMs
+            // Les autres SOOMs restent en status "pending"
+            // Le vendeur peut accepter plusieurs SOOMs et choisir lequel valider
 
             $seller = Auth::user();
 
@@ -536,11 +534,17 @@ class SoomController extends Controller
 
             $validationDeadline = Carbon::parse($acceptanceDate)->addDays(5);
 
+            // Compter les SOOMs pending restants pour information
+            $remainingPendingCount = Submission::where('listing_id', $submission->listing_id)
+                ->where('id', '!=', $submissionId)
+                ->where('status', 'pending')
+                ->count();
+
             return response()->json([
                 'message' => 'SOOM accepted successfully',
                 'data' => $submission->load(['user:id,first_name,last_name,email', 'listing']),
                 'validation_deadline' => $validationDeadline->toISOString(),
-                'rejected_sooms_count' => $rejectedCount
+                'remaining_pending_sooms' => $remainingPendingCount
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -552,8 +556,8 @@ class SoomController extends Controller
         }
     }
     /**
-     * @OA\Put(
-     *     path="/api/sooms/{submissionId}/reject",
+     * @OA\Patch(
+     *     path="/api/submissions/{submissionId}/reject",
      *     summary="Reject a SOOM submission",
      *     description="Reject a specific SOOM submission with optional rejection reason",
      *     operationId="rejectSoom",
@@ -961,7 +965,7 @@ class SoomController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/sooms/validated-sales",
+     *     path="/api/validated-sales",
      *     summary="Get all validated sales for authenticated user",
      *     description="Retrieve all validated sales where the user is either seller or buyer",
      *     operationId="getValidatedSales",
@@ -1068,7 +1072,7 @@ class SoomController extends Controller
     }
     /**
      * @OA\Get(
-     *     path="/api/sooms/my-listings",
+     *     path="/api/my-listings-sooms",
      *     summary="Get SOOMs received on user's listings",
      *     description="Retrieve all SOOMs submitted on listings owned by the authenticated user",
      *     operationId="getMyListingsSooms",
@@ -1168,7 +1172,7 @@ class SoomController extends Controller
     }
     /**
      * @OA\Get(
-     *     path="/api/sooms/my-submissions",
+     *     path="/api/my-sooms",
      *     summary="Get user's submitted SOOMs",
      *     description="Retrieve all SOOMs submitted by the authenticated user",
      *     operationId="getMySooms",
@@ -1273,7 +1277,7 @@ class SoomController extends Controller
     }
     /**
      * @OA\Delete(
-     *     path="/api/sooms/{submissionId}",
+     *     path="/api/submissions/{submissionId}/cancel",
      *     summary="Cancel a pending SOOM",
      *     description="Cancel a SOOM submission that is still in pending status",
      *     operationId="cancelSoom",
@@ -1393,7 +1397,7 @@ class SoomController extends Controller
     }
     /**
      * @OA\Put(
-     *     path="/api/sooms/{submissionId}",
+     *     path="/api/submissions/{submissionId}/edit",
      *     summary="Edit a pending SOOM",
      *     description="Modify the amount of a SOOM submission that is still in pending status",
      *     operationId="editSoom",
@@ -1763,7 +1767,7 @@ class SoomController extends Controller
     }
     /**
      * @OA\Get(
-     *     path="/api/sooms/pending-validations",
+     *     path="/api/pending-validations",
      *     summary="Get pending sale validations",
      *     description="Get all accepted SOOMs awaiting sale validation from the authenticated seller",
      *     operationId="getPendingValidations",
@@ -1855,7 +1859,7 @@ class SoomController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/sooms/stats",
+     *     path="/api/soom-stats",
      *     summary="Get SOOM statistics for authenticated user",
      *     description="Get comprehensive statistics for SOOMs as both seller and buyer",
      *     operationId="getSoomStats",

@@ -1,4 +1,8 @@
-charset="UTF-8">
+<!-- resources/views/emails/soom-REJECT.blade.php -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
     <title>SOOM مرفوض / SOOM Rejected</title>
     <style>
         body {
@@ -117,6 +121,7 @@ charset="UTF-8">
 
         <div class="footer">
             <p style="margin: 10px 0 0 0; opacity: 0.8;">DabApp</p>
+
         </div>
     </div>
 </body>

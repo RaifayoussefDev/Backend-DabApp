@@ -8142,8 +8142,8 @@
                 }
             }
         },
-        "/api/sooms/{submissionId}/accept": {
-            "put": {
+        "/api/submissions/{submissionId}/accept": {
+            "patch": {
                 "tags": [
                     "SOOMs"
                 ],
@@ -8331,8 +8331,8 @@
                 ]
             }
         },
-        "/api/sooms/{submissionId}/reject": {
-            "put": {
+        "/api/submissions/{submissionId}/reject": {
+            "patch": {
                 "tags": [
                     "SOOMs"
                 ],
@@ -8815,7 +8815,7 @@
                 ]
             }
         },
-        "/api/sooms/validated-sales": {
+        "/api/validated-sales": {
             "get": {
                 "tags": [
                     "SOOMs"
@@ -8982,7 +8982,7 @@
                 ]
             }
         },
-        "/api/sooms/my-listings": {
+        "/api/my-listings-sooms": {
             "get": {
                 "tags": [
                     "SOOMs"
@@ -9135,7 +9135,7 @@
                 ]
             }
         },
-        "/api/sooms/my-submissions": {
+        "/api/my-sooms": {
             "get": {
                 "tags": [
                     "SOOMs"
@@ -9301,7 +9301,153 @@
                 ]
             }
         },
-        "/api/sooms/{submissionId}": {
+        "/api/submissions/{submissionId}/cancel": {
+            "delete": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Cancel a pending SOOM",
+                "description": "Cancel a SOOM submission that is still in pending status",
+                "operationId": "cancelSoom",
+                "parameters": [
+                    {
+                        "name": "submissionId",
+                        "in": "path",
+                        "description": "ID of the submission to cancel",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SOOM cancelled successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "SOOM cancelled successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "listing_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 1500
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "pending"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized. User must be logged in."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Access denied or invalid status",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "enum": [
+                                                "You can only cancel your own SOOM submissions.",
+                                                "You can only cancel pending SOOM submissions."
+                                            ],
+                                            "example": "You can only cancel your own SOOM submissions."
+                                        },
+                                        "current_status": {
+                                            "type": "string",
+                                            "example": "accepted"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Submission not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Submission not found."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to cancel SOOM"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/submissions/{submissionId}/edit": {
             "put": {
                 "tags": [
                     "SOOMs"
@@ -9553,150 +9699,6 @@
                         "bearerAuth": []
                     }
                 ]
-            },
-            "delete": {
-                "tags": [
-                    "SOOMs"
-                ],
-                "summary": "Cancel a pending SOOM",
-                "description": "Cancel a SOOM submission that is still in pending status",
-                "operationId": "cancelSoom",
-                "parameters": [
-                    {
-                        "name": "submissionId",
-                        "in": "path",
-                        "description": "ID of the submission to cancel",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "SOOM cancelled successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "SOOM cancelled successfully"
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "listing_id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "user_id": {
-                                                    "type": "integer",
-                                                    "example": 2
-                                                },
-                                                "amount": {
-                                                    "type": "number",
-                                                    "format": "float",
-                                                    "example": 1500
-                                                },
-                                                "status": {
-                                                    "type": "string",
-                                                    "example": "pending"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Unauthorized. User must be logged in."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Access denied or invalid status",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "enum": [
-                                                "You can only cancel your own SOOM submissions.",
-                                                "You can only cancel pending SOOM submissions."
-                                            ],
-                                            "example": "You can only cancel your own SOOM submissions."
-                                        },
-                                        "current_status": {
-                                            "type": "string",
-                                            "example": "accepted"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Submission not found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Submission not found."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Server error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Failed to cancel SOOM"
-                                        },
-                                        "details": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
             }
         },
         "/api/listings/{listingId}/last-soom": {
@@ -9856,7 +9858,7 @@
                 }
             }
         },
-        "/api/sooms/pending-validations": {
+        "/api/pending-validations": {
             "get": {
                 "tags": [
                     "SOOMs"
@@ -9984,7 +9986,7 @@
                 ]
             }
         },
-        "/api/sooms/stats": {
+        "/api/soom-stats": {
             "get": {
                 "tags": [
                     "SOOMs"
