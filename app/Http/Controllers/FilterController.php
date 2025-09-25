@@ -397,11 +397,35 @@ class FilterController extends Controller
             });
         }
 
-        // Récupérer les résultats avec seulement les champs nécessaires et la première image
-        $spareParts = $query->select('id', 'title', 'description', 'price')
-            ->with(['images' => function ($query) {
-                $query->select('listing_id', 'image_url')->limit(1);
-            }])
+        // Filtres sur la table listings (similaire à filterMotorcycles)
+        if ($request->filled('seller_type')) {
+            $query->where('seller_type', $request->seller_type);
+        }
+
+        if ($request->filled('country_id')) {
+            $query->where('country_id', $request->country_id);
+        }
+
+        if ($request->filled('city_id')) {
+            $query->where('city_id', $request->city_id);
+        }
+
+        // Récupérer les résultats avec les champs nécessaires et les relations
+        $spareParts = $query->select('id', 'title', 'description', 'price', 'created_at', 'seller_type', 'country_id', 'city_id')
+            ->with([
+                'images' => function ($query) {
+                    $query->select('listing_id', 'image_url')->limit(1);
+                },
+                'sparePart' => function ($query) {
+                    $query->select('id', 'listing_id', 'bike_part_brand_id', 'bike_part_category_id', 'condition')
+                        ->with([
+                            'bikePartBrand:id,name',
+                            'bikePartCategory:id,name'
+                        ]);
+                },
+                'country:id,name',
+                'city:id,name'
+            ])
             ->get()
             ->map(function ($listing) {
                 return [
@@ -409,11 +433,23 @@ class FilterController extends Controller
                     'title' => $listing->title,
                     'description' => $listing->description,
                     'price' => $listing->price,
-                    'image' => $listing->images->first()->image_url ?? null,
+                    'currency' => config('paytabs.currency', 'MAD'), // Utilise la devise de config PayTabs
+                    'brand' => $listing->sparePart?->bikePartBrand?->name ?? null,
+                    'category' => $listing->sparePart?->bikePartCategory?->name ?? null,
+                    'condition' => $listing->sparePart?->condition ?? null,
+                    'listing_date' => $listing->created_at?->format('Y-m-d H:i:s') ?? null,
+                    'image' => $listing->images->first()?->image_url ?? null,
+                    'seller_type' => $listing->seller_type,
+                    'location' => [
+                        'country' => $listing->country?->name ?? null,
+                        'city' => $listing->city?->name ?? null,
+                    ]
                 ];
             });
 
-        return response()->json($spareParts);
+        return response()->json([
+            'spare_parts' => $spareParts,
+        ]);
     }
     /**
      * @OA\Get(
@@ -496,14 +532,27 @@ class FilterController extends Controller
             $query->where('price', '<=', (float) $request->max_price);
         }
 
+        // Filtres sur la table listings (seller_type, location)
+        if ($request->filled('seller_type')) {
+            $query->where('seller_type', $request->seller_type);
+        }
+
+        if ($request->filled('listing_country_id')) {
+            $query->where('country_id', $request->listing_country_id);
+        }
+
+        if ($request->filled('listing_city_id')) {
+            $query->where('city_id', $request->listing_city_id);
+        }
+
         // License plate relation filters
         $query->whereHas('licensePlate', function ($q) use ($request) {
-            if ($request->filled('country_id')) {
-                $q->where('country_id', $request->country_id);
+            if ($request->filled('plate_country_id')) {
+                $q->where('country_id', $request->plate_country_id);
             }
 
-            if ($request->filled('city_id')) {
-                $q->where('city_id', $request->city_id);
+            if ($request->filled('plate_city_id')) {
+                $q->where('city_id', $request->plate_city_id);
             }
 
             if ($request->filled('plate_format_id')) {
@@ -517,8 +566,8 @@ class FilterController extends Controller
             }
         });
 
-        // Select fields and preload image + licensePlate + fieldValues
-        $results = $query->select('id', 'title', 'description', 'price')
+        // Select fields and preload image + licensePlate + fieldValues + listing location
+        $results = $query->select('id', 'title', 'description', 'price', 'created_at', 'seller_type', 'country_id', 'city_id')
             ->with([
                 'images' => function ($q) {
                     $q->select('listing_id', 'image_url')->limit(1);
@@ -526,7 +575,9 @@ class FilterController extends Controller
                 'licensePlate.format',
                 'licensePlate.city',
                 'licensePlate.country',
-                'licensePlate.fieldValues.formatField'
+                'licensePlate.fieldValues.formatField',
+                'country:id,name', // Location du listing
+                'city:id,name'     // Location du listing
             ])
             ->get()
             ->map(function ($listing) {
@@ -535,11 +586,20 @@ class FilterController extends Controller
                     'title' => $listing->title,
                     'description' => $listing->description,
                     'price' => $listing->price,
-                    'image' => $listing->images->first()->image_url ?? null,
+                    'currency' => config('paytabs.currency', 'MAD'), // Devise ajoutée
+                    'listing_date' => $listing->created_at?->format('Y-m-d H:i:s') ?? null, // Date ajoutée
+                    'seller_type' => $listing->seller_type,
+                    'seller_location' => [ // Location du vendeur
+                        'country' => $listing->country?->name ?? null,
+                        'city' => $listing->city?->name ?? null,
+                    ],
+                    'image' => $listing->images->first()?->image_url ?? null,
                     'license_plate' => [
                         'format' => $listing->licensePlate?->format?->name,
-                        'city' => $listing->licensePlate?->city?->name,
-                        'country' => $listing->licensePlate?->country?->name,
+                        'plate_location' => [ // Location de la plaque (peut être différente du vendeur)
+                            'city' => $listing->licensePlate?->city?->name,
+                            'country' => $listing->licensePlate?->country?->name,
+                        ],
                         'fields' => $listing->licensePlate?->fieldValues->map(function ($fieldValue) {
                             return [
                                 'field_id' => $fieldValue->formatField?->id,
