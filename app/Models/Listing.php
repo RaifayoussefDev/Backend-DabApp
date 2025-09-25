@@ -114,4 +114,9 @@ class Listing extends Model
     {
         return $this->hasMany(\App\Models\Payment::class);
     }
+
+    public function auctionHistories()
+    {
+        return $this->hasMany(AuctionHistory::class);
+    }
 }
