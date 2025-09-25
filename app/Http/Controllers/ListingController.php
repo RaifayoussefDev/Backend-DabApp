@@ -1843,20 +1843,20 @@ class ListingController extends Controller
      * )
      */
 
-     public function getBrandsWithListingCount()
-     {
-         $motorcycle_brands = MotorcycleBrand::select('motorcycle_brands.id', 'motorcycle_brands.name')
-             ->join('motorcycles', 'motorcycle_brands.id', '=', 'motorcycles.brand_id')
-             ->join('listings', 'motorcycles.listing_id', '=', 'listings.id')
-             ->where('listings.status', 'published') // Ajouter cette ligne
-             ->groupBy('motorcycle_brands.id', 'motorcycle_brands.name')
-             ->selectRaw('COUNT(listings.id) as listings_count')
-             ->get();
+    public function getBrandsWithListingCount()
+    {
+        $motorcycle_brands = MotorcycleBrand::select('motorcycle_brands.id', 'motorcycle_brands.name')
+            ->join('motorcycles', 'motorcycle_brands.id', '=', 'motorcycles.brand_id')
+            ->join('listings', 'motorcycles.listing_id', '=', 'listings.id')
+            ->where('listings.status', 'published') // Ajouter cette ligne
+            ->groupBy('motorcycle_brands.id', 'motorcycle_brands.name')
+            ->selectRaw('COUNT(listings.id) as listings_count')
+            ->get();
 
-         return response()->json([
-             'motorcycle_brands' => $motorcycle_brands
-         ]);
-     }
+        return response()->json([
+            'motorcycle_brands' => $motorcycle_brands
+        ]);
+    }
 
 
 
@@ -1916,10 +1916,28 @@ class ListingController extends Controller
                 ], 422);
             }
 
-            // Récupérer les prix min et max pour la catégorie spécifiée
+            // ✅ Récupérer les prix incluant les minimum_bid des enchères
             $priceRange = Listing::where('category_id', $categoryId)
-                ->where('status', 'published') // Seulement les listings actifs
-                ->selectRaw('MIN(price) as min_price, MAX(price) as max_price, COUNT(*) as total_listings')
+                ->where('status', 'published')
+                ->selectRaw('
+                    MIN(
+                        CASE
+                            WHEN price IS NOT NULL THEN price
+                            WHEN auction_enabled = 1 AND minimum_bid IS NOT NULL THEN minimum_bid
+                            ELSE NULL
+                        END
+                    ) as min_price,
+                    MAX(
+                        CASE
+                            WHEN price IS NOT NULL THEN price
+                            WHEN auction_enabled = 1 AND minimum_bid IS NOT NULL THEN minimum_bid
+                            ELSE NULL
+                        END
+                    ) as max_price,
+                    COUNT(*) as total_listings,
+                    SUM(CASE WHEN price IS NOT NULL THEN 1 ELSE 0 END) as fixed_price_listings,
+                    SUM(CASE WHEN auction_enabled = 1 AND price IS NULL THEN 1 ELSE 0 END) as auction_listings
+                ')
                 ->first();
 
             // Vérifier s'il y a des listings pour cette catégorie
@@ -1929,16 +1947,21 @@ class ListingController extends Controller
                     'category_id' => $categoryId,
                     'min_price' => null,
                     'max_price' => null,
-                    'total_listings' => 0
+                    'total_listings' => 0,
+                    'fixed_price_listings' => 0,
+                    'auction_listings' => 0
                 ], 200);
             }
 
             return response()->json([
                 'message' => 'Price range retrieved successfully',
                 'category_id' => $categoryId,
-                'min_price' => (float) $priceRange->min_price,
-                'max_price' => (float) $priceRange->max_price,
-                'total_listings' => $priceRange->total_listings
+                'min_price' => $priceRange->min_price ? (float) $priceRange->min_price : null,
+                'max_price' => $priceRange->max_price ? (float) $priceRange->max_price : null,
+                'total_listings' => $priceRange->total_listings,
+                'fixed_price_listings' => $priceRange->fixed_price_listings,
+                'auction_listings' => $priceRange->auction_listings,
+                'currency' => config('paytabs.currency', 'MAD')
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
