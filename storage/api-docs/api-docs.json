@@ -2021,6 +2021,58 @@
                                 "poor"
                             ]
                         }
+                    },
+                    {
+                        "name": "year_min",
+                        "in": "query",
+                        "description": "Minimum year filter",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1900
+                        }
+                    },
+                    {
+                        "name": "year_max",
+                        "in": "query",
+                        "description": "Maximum year filter",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1900
+                        }
+                    },
+                    {
+                        "name": "seller_type",
+                        "in": "query",
+                        "description": "Type of seller",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "individual",
+                                "professional",
+                                "dealer"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "country_id",
+                        "in": "query",
+                        "description": "Country ID filter",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "city_id",
+                        "in": "query",
+                        "description": "City ID filter",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
                     }
                 ],
                 "responses": {
@@ -2050,6 +2102,44 @@
                                                         "type": "number",
                                                         "format": "float",
                                                         "example": 8500
+                                                    },
+                                                    "currency": {
+                                                        "type": "string",
+                                                        "example": "MAD"
+                                                    },
+                                                    "brand": {
+                                                        "type": "string",
+                                                        "example": "Honda"
+                                                    },
+                                                    "model": {
+                                                        "type": "string",
+                                                        "example": "CBR600RR"
+                                                    },
+                                                    "year": {
+                                                        "type": "integer",
+                                                        "example": 2020
+                                                    },
+                                                    "listing_date": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-01-15 10:30:00"
+                                                    },
+                                                    "seller_type": {
+                                                        "type": "string",
+                                                        "example": "individual"
+                                                    },
+                                                    "location": {
+                                                        "properties": {
+                                                            "country": {
+                                                                "type": "string",
+                                                                "example": "Morocco"
+                                                            },
+                                                            "city": {
+                                                                "type": "string",
+                                                                "example": "Casablanca"
+                                                            }
+                                                        },
+                                                        "type": "object"
                                                     },
                                                     "image": {
                                                         "type": "string",

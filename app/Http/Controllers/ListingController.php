@@ -1843,19 +1843,19 @@ class ListingController extends Controller
      * )
      */
 
-public function getBrandsWithListingCount()
-{
-    $motorcycle_brands = MotorcycleBrand::select('motorcycle_brands.id', 'motorcycle_brands.name')
-        ->join('motorcycles', 'motorcycle_brands.id', '=', 'motorcycles.brand_id')
-        ->join('listings', 'motorcycles.listing_id', '=', 'listings.id')
-        ->groupBy('motorcycle_brands.id', 'motorcycle_brands.name')
-        ->selectRaw('COUNT(listings.id) as listings_count')
-        ->get();
+    public function getBrandsWithListingCount()
+    {
+        $motorcycle_brands = MotorcycleBrand::select('motorcycle_brands.id', 'motorcycle_brands.name')
+            ->join('motorcycles', 'motorcycle_brands.id', '=', 'motorcycles.brand_id')
+            ->join('listings', 'motorcycles.listing_id', '=', 'listings.id')
+            ->groupBy('motorcycle_brands.id', 'motorcycle_brands.name')
+            ->selectRaw('COUNT(listings.id) as listings_count')
+            ->get();
 
-    return response()->json([
-        'motorcycle_brands' => $motorcycle_brands
-    ]);
-}
+        return response()->json([
+            'motorcycle_brands' => $motorcycle_brands
+        ]);
+    }
 
 
 

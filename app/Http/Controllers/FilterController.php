@@ -64,6 +64,54 @@ class FilterController extends Controller
      *             enum={"new", "used", "excellent", "good", "fair", "poor"}
      *         )
      *     ),
+     *     @OA\Parameter(
+     *         name="year_min",
+     *         in="query",
+     *         description="Minimum year filter",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="integer",
+     *             minimum=1900
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="year_max",
+     *         in="query",
+     *         description="Maximum year filter",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="integer",
+     *             minimum=1900
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="seller_type",
+     *         in="query",
+     *         description="Type of seller",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="string",
+     *             enum={"individual", "professional", "dealer"}
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="country_id",
+     *         in="query",
+     *         description="Country ID filter",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="city_id",
+     *         in="query",
+     *         description="City ID filter",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Successful operation",
@@ -78,6 +126,18 @@ class FilterController extends Controller
      *                     @OA\Property(property="title", type="string", example="Honda CBR600RR"),
      *                     @OA\Property(property="description", type="string", example="Excellent condition motorcycle"),
      *                     @OA\Property(property="price", type="number", format="float", example=8500.00),
+     *                     @OA\Property(property="currency", type="string", example="MAD"),
+     *                     @OA\Property(property="brand", type="string", example="Honda"),
+     *                     @OA\Property(property="model", type="string", example="CBR600RR"),
+     *                     @OA\Property(property="year", type="integer", example=2020),
+     *                     @OA\Property(property="listing_date", type="string", format="date-time", example="2024-01-15 10:30:00"),
+     *                     @OA\Property(property="seller_type", type="string", example="individual"),
+     *                     @OA\Property(
+     *                         property="location",
+     *                         type="object",
+     *                         @OA\Property(property="country", type="string", example="Morocco"),
+     *                         @OA\Property(property="city", type="string", example="Casablanca")
+     *                     ),
      *                     @OA\Property(property="image", type="string", format="url", example="https://example.com/image.jpg", nullable=true)
      *                 )
      *             )
@@ -122,18 +182,80 @@ class FilterController extends Controller
                 }
             }
 
+            // Filtre modèles (model_id) - plusieurs possibles
+            if ($request->has('models')) {
+                $models = $request->input('models');
+                if (is_array($models) && count($models) > 0) {
+                    $q->whereIn('model_id', $models);
+                }
+            }
+
+            // Filtre types de moto (type_id) - plusieurs possibles
+            if ($request->has('types')) {
+                $types = $request->input('types');
+                if (is_array($types) && count($types) > 0) {
+                    $q->whereIn('type_id', $types);
+                }
+            }
+
+            // Filtre années (year_id) - plusieurs possibles
+            if ($request->has('years')) {
+                $years = $request->input('years');
+                if (is_array($years) && count($years) > 0) {
+                    $q->whereIn('year_id', $years);
+                }
+            }
+
             // Filtre condition (ex: 'new', 'used')
             if ($request->has('condition')) {
                 $condition = $request->input('condition');
                 $q->where('general_condition', $condition);
             }
+
+            // Filtre kilométrage
+            $minMileage = $request->input('min_mileage');
+            $maxMileage = $request->input('max_mileage');
+
+            if ($minMileage !== null && $maxMileage !== null) {
+                $q->whereBetween('mileage', [(int)$minMileage, (int)$maxMileage]);
+            } elseif ($minMileage !== null) {
+                $q->where('mileage', '>=', (int)$minMileage);
+            } elseif ($maxMileage !== null) {
+                $q->where('mileage', '<=', (int)$maxMileage);
+            }
         });
 
-        // Récupérer les résultats avec seulement les champs nécessaires et la première image
-        $motorcycles = $query->select('id', 'title', 'description', 'price')
-            ->with(['images' => function ($query) {
-                $query->select('listing_id', 'image_url')->limit(1);
-            }])
+        // Filtres sur la table listings
+        if ($request->has('seller_type')) {
+            $query->where('seller_type', $request->input('seller_type'));
+        }
+
+        if ($request->has('country_id')) {
+            $query->where('country_id', $request->input('country_id'));
+        }
+
+        if ($request->has('city_id')) {
+            $query->where('city_id', $request->input('city_id'));
+        }
+
+        // Récupérer les résultats avec les champs nécessaires et les relations
+        $motorcycles = $query->select('id', 'title', 'description', 'price', 'created_at', 'seller_type', 'country_id', 'city_id')
+            ->with([
+                'images' => function ($query) {
+                    $query->select('listing_id', 'image_url')->limit(1);
+                },
+                'motorcycle' => function ($query) {
+                    $query->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id')
+                        ->with([
+                            'brand:id,name',
+                            'model:id,name',
+                            'year:id,year',
+                            'type:id,name'
+                        ]);
+                },
+                'country:id,name',
+                'city:id,name'
+            ])
             ->get()
             ->map(function ($listing) {
                 return [
@@ -141,7 +263,18 @@ class FilterController extends Controller
                     'title' => $listing->title,
                     'description' => $listing->description,
                     'price' => $listing->price,
-                    'image' => $listing->images->first()->image_url ?? null,
+                    'currency' => config('paytabs.currency', 'MAD'), // Utilise la devise de config PayTabs
+                    'brand' => $listing->motorcycle?->brand?->name ?? null,
+                    'model' => $listing->motorcycle?->model?->name ?? null,
+                    'year' => $listing->motorcycle?->year?->year ?? null,
+                    'type' => $listing->motorcycle?->type?->name ?? null,
+                    'listing_date' => $listing->created_at?->format('Y-m-d H:i:s') ?? null,
+                    'image' => $listing->images->first()?->image_url ?? null,
+                    'seller_type' => $listing->seller_type,
+                    'location' => [
+                        'country' => $listing->country?->name ?? null,
+                        'city' => $listing->city?->name ?? null,
+                    ]
                 ];
             });
 
