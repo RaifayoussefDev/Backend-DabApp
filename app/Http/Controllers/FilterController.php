@@ -160,16 +160,42 @@ class FilterController extends Controller
         // On ne veut que les listings de catégorie 1 (motos)
         $query->where('category_id', 1)->where('status', 'published');
 
-        // Filtre prix entre min_price et max_price sur la table listings
+        // Filtre prix entre min_price et max_price
         $minPrice = $request->input('min_price');
         $maxPrice = $request->input('max_price');
 
-        if ($minPrice !== null && $maxPrice !== null) {
-            $query->whereBetween('price', [(float)$minPrice, (float)$maxPrice]);
-        } elseif ($minPrice !== null) {
-            $query->where('price', '>=', (float)$minPrice);
-        } elseif ($maxPrice !== null) {
-            $query->where('price', '<=', (float)$maxPrice);
+        // ✅ Modification pour gérer les enchères
+        if ($minPrice !== null || $maxPrice !== null) {
+            $query->where(function($q) use ($minPrice, $maxPrice) {
+                // Pour les listings avec prix fixe
+                $q->where(function($subQ) use ($minPrice, $maxPrice) {
+                    $subQ->whereNotNull('price');
+
+                    if ($minPrice !== null && $maxPrice !== null) {
+                        $subQ->whereBetween('price', [(float)$minPrice, (float)$maxPrice]);
+                    } elseif ($minPrice !== null) {
+                        $subQ->where('price', '>=', (float)$minPrice);
+                    } elseif ($maxPrice !== null) {
+                        $subQ->where('price', '<=', (float)$maxPrice);
+                    }
+                });
+
+                // OU pour les listings aux enchères (sans prix fixe)
+                $q->orWhere(function($subQ) use ($minPrice, $maxPrice) {
+                    $subQ->whereNull('price')
+                         ->where('auction_enabled', true)
+                         ->whereHas('auctionHistories', function($auctionQ) use ($minPrice, $maxPrice) {
+                             // On prend la dernière enchère (bid_amount le plus élevé)
+                             $auctionQ->select('listing_id', DB::raw('MAX(bid_amount) as max_bid'))
+                                      ->groupBy('listing_id')
+                                      ->havingRaw('MAX(bid_amount) >= ?', [$minPrice ?? 0]);
+
+                             if ($maxPrice !== null) {
+                                 $auctionQ->havingRaw('MAX(bid_amount) <= ?', [$maxPrice]);
+                             }
+                         });
+                });
+            });
         }
 
         // Filtrer sur la relation motorcycle
@@ -238,8 +264,8 @@ class FilterController extends Controller
             $query->where('city_id', $request->input('city_id'));
         }
 
-        // Récupérer les résultats avec les champs nécessaires et les relations
-        $motorcycles = $query->select('id', 'title', 'description', 'price', 'created_at', 'seller_type', 'country_id', 'city_id')
+        // ✅ Récupérer les résultats avec les enchères
+        $motorcycles = $query->select('id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid', 'created_at', 'seller_type', 'country_id', 'city_id')
             ->with([
                 'images' => function ($query) {
                     $query->select('listing_id', 'image_url')->limit(1);
@@ -254,16 +280,35 @@ class FilterController extends Controller
                         ]);
                 },
                 'country:id,name',
-                'city:id,name'
+                'city:id,name',
+                // ✅ Récupérer la dernière enchère
+                'auctionHistories' => function($query) {
+                    $query->select('listing_id', 'bid_amount', 'created_at')
+                          ->orderBy('bid_amount', 'desc')
+                          ->limit(1);
+                }
             ])
             ->get()
             ->map(function ($listing) {
+                // ✅ Déterminer le prix à afficher
+                $displayPrice = $listing->price;
+                $isAuction = false;
+
+                if (!$displayPrice && $listing->auction_enabled) {
+                    $lastBid = $listing->auctionHistories->first();
+                    $displayPrice = $lastBid ? $lastBid->bid_amount : $listing->minimum_bid;
+                    $isAuction = true;
+                }
+
                 return [
                     'id' => $listing->id,
                     'title' => $listing->title,
                     'description' => $listing->description,
-                    'price' => $listing->price,
-                    'currency' => config('paytabs.currency', 'MAD'), // Utilise la devise de config PayTabs
+                    'price' => $displayPrice,
+                    'is_auction' => $isAuction,
+                    'minimum_bid' => $listing->minimum_bid,
+                    'current_bid' => $isAuction && $listing->auctionHistories->first() ? $listing->auctionHistories->first()->bid_amount : null,
+                    'currency' => config('paytabs.currency', 'MAD'),
                     'brand' => $listing->motorcycle?->brand?->name ?? null,
                     'model' => $listing->motorcycle?->model?->name ?? null,
                     'year' => $listing->motorcycle?->year?->year ?? null,
