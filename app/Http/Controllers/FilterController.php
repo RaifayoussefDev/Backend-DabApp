@@ -164,7 +164,7 @@ class FilterController extends Controller
         $minPrice = $request->input('min_price');
         $maxPrice = $request->input('max_price');
 
-        // ✅ Modification pour gérer les enchères
+        // ✅ Filtre de prix : prix fixe OU minimum_bid pour les enchères
         if ($minPrice !== null || $maxPrice !== null) {
             $query->where(function($q) use ($minPrice, $maxPrice) {
                 // Pour les listings avec prix fixe
@@ -180,27 +180,26 @@ class FilterController extends Controller
                     }
                 });
 
-                // OU pour les listings aux enchères (sans prix fixe)
+                // OU pour les listings aux enchères (vérifier minimum_bid)
                 $q->orWhere(function($subQ) use ($minPrice, $maxPrice) {
                     $subQ->whereNull('price')
-                         ->where('auction_enabled', true)
-                         ->whereHas('auctionHistories', function($auctionQ) use ($minPrice, $maxPrice) {
-                             // On prend la dernière enchère (bid_amount le plus élevé)
-                             $auctionQ->select('listing_id', DB::raw('MAX(bid_amount) as max_bid'))
-                                      ->groupBy('listing_id')
-                                      ->havingRaw('MAX(bid_amount) >= ?', [$minPrice ?? 0]);
+                         ->where('auction_enabled', true);
 
-                             if ($maxPrice !== null) {
-                                 $auctionQ->havingRaw('MAX(bid_amount) <= ?', [$maxPrice]);
-                             }
-                         });
+                    // Filtrer par minimum_bid
+                    if ($minPrice !== null && $maxPrice !== null) {
+                        $subQ->whereBetween('minimum_bid', [(float)$minPrice, (float)$maxPrice]);
+                    } elseif ($minPrice !== null) {
+                        $subQ->where('minimum_bid', '>=', (float)$minPrice);
+                    } elseif ($maxPrice !== null) {
+                        $subQ->where('minimum_bid', '<=', (float)$maxPrice);
+                    }
                 });
             });
         }
 
         // Filtrer sur la relation motorcycle
         $query->whereHas('motorcycle', function ($q) use ($request) {
-            // Filtre marques (brand_id) - plusieurs possibles
+            // ... (rest of motorcycle filters remain the same)
             if ($request->has('brands')) {
                 $brands = $request->input('brands');
                 if (is_array($brands) && count($brands) > 0) {
@@ -208,7 +207,6 @@ class FilterController extends Controller
                 }
             }
 
-            // Filtre modèles (model_id) - plusieurs possibles
             if ($request->has('models')) {
                 $models = $request->input('models');
                 if (is_array($models) && count($models) > 0) {
@@ -216,7 +214,6 @@ class FilterController extends Controller
                 }
             }
 
-            // Filtre types de moto (type_id) - plusieurs possibles
             if ($request->has('types')) {
                 $types = $request->input('types');
                 if (is_array($types) && count($types) > 0) {
@@ -224,7 +221,6 @@ class FilterController extends Controller
                 }
             }
 
-            // Filtre années (year_id) - plusieurs possibles
             if ($request->has('years')) {
                 $years = $request->input('years');
                 if (is_array($years) && count($years) > 0) {
@@ -232,13 +228,11 @@ class FilterController extends Controller
                 }
             }
 
-            // Filtre condition (ex: 'new', 'used')
             if ($request->has('condition')) {
                 $condition = $request->input('condition');
                 $q->where('general_condition', $condition);
             }
 
-            // Filtre kilométrage
             $minMileage = $request->input('min_mileage');
             $maxMileage = $request->input('max_mileage');
 
@@ -264,8 +258,13 @@ class FilterController extends Controller
             $query->where('city_id', $request->input('city_id'));
         }
 
-        // ✅ Récupérer les résultats avec les enchères
-        $motorcycles = $query->select('id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid', 'created_at', 'seller_type', 'country_id', 'city_id')
+        // ✅ Récupérer les résultats avec sous-requête pour les enchères
+        $motorcycles = $query->select([
+                'id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid',
+                'created_at', 'seller_type', 'country_id', 'city_id',
+                // Sous-requête pour récupérer la dernière enchère
+                DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
+            ])
             ->with([
                 'images' => function ($query) {
                     $query->select('listing_id', 'image_url')->limit(1);
@@ -280,13 +279,7 @@ class FilterController extends Controller
                         ]);
                 },
                 'country:id,name',
-                'city:id,name',
-                // ✅ Récupérer la dernière enchère
-                'auctionHistories' => function($query) {
-                    $query->select('listing_id', 'bid_amount', 'created_at')
-                          ->orderBy('bid_amount', 'desc')
-                          ->limit(1);
-                }
+                'city:id,name'
             ])
             ->get()
             ->map(function ($listing) {
@@ -295,8 +288,7 @@ class FilterController extends Controller
                 $isAuction = false;
 
                 if (!$displayPrice && $listing->auction_enabled) {
-                    $lastBid = $listing->auctionHistories->first();
-                    $displayPrice = $lastBid ? $lastBid->bid_amount : $listing->minimum_bid;
+                    $displayPrice = $listing->current_bid ?: $listing->minimum_bid;
                     $isAuction = true;
                 }
 
@@ -307,7 +299,7 @@ class FilterController extends Controller
                     'price' => $displayPrice,
                     'is_auction' => $isAuction,
                     'minimum_bid' => $listing->minimum_bid,
-                    'current_bid' => $isAuction && $listing->auctionHistories->first() ? $listing->auctionHistories->first()->bid_amount : null,
+                    'current_bid' => $listing->current_bid,
                     'currency' => config('paytabs.currency', 'MAD'),
                     'brand' => $listing->motorcycle?->brand?->name ?? null,
                     'model' => $listing->motorcycle?->model?->name ?? null,
