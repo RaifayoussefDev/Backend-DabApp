@@ -25,6 +25,7 @@ class AuthController extends Controller
 {
     private $whatsappApiUrl = 'https://api.360messenger.com/v2/sendMessage';
     private $whatsappApiToken = 'pj0y5xb38khWfp0V0qppIxwKelv7tgTg5yx';
+    // private $whatsappApiToken = 'pj0y5xb38khWfp0V0qppIxwKelv7tgTg5yx';
 
     /**
      * @OA\Post(
