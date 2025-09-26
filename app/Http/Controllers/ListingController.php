@@ -202,7 +202,7 @@ class ListingController extends Controller
                 $request->validate([
                     'title'       => 'sometimes|string|max:255',
                     'description' => 'sometimes|string',
-                    'price'       => 'sometimes|nullable|numeric|min:0', // Ajoutez 'nullable'
+                    'price'       => 'sometimes|nullable|numeric|min:0',
                     'category_id' => 'sometimes|exists:categories,id',
                     'country_id'  => 'sometimes|exists:countries,id',
                     'city_id'     => 'sometimes|exists:cities,id',
@@ -237,25 +237,40 @@ class ListingController extends Controller
             // ✅ Traitement des données spécifiques selon la catégorie
             $this->handleCategorySpecificData($listing, $request);
 
-            // ✅ Paiement uniquement au step 3 (sans bank_card_id)
+            // ✅ Paiement uniquement au step 3 (avec conversion vers AED)
             if ($step >= 3) {
+                // 🔥 تحويل المبلغ إلى AED إذا لم يكن كذلك
+                $originalAmount = $request->amount;
+                $aedAmount = $originalAmount;
+
+                // إذا كان المستخدم من بلد آخر، نحول المبلغ إلى AED
+                if ($request->country_id && $request->country_id != 1) { // assuming 1 is UAE
+                    $currency = CurrencyExchangeRate::where('country_id', $request->country_id)->first();
+                    if ($currency && $currency->exchange_rate > 0) {
+                        // تحويل من العملة المحلية إلى AED (نقسم على سعر الصرف)
+                        $aedAmount = round($originalAmount / $currency->exchange_rate, 2);
+                    }
+                }
+
                 $payment = Payment::create([
                     'user_id'       => $sellerId,
                     'listing_id'    => $listing->id,
-                    'amount'        => $request->amount,
+                    'amount'        => $aedAmount, // 🔥 دائماً AED
+                    'original_amount' => $originalAmount, // حفظ المبلغ الأصلي للمرجع
+                    'currency'      => 'AED', // 🔥 دائماً AED
                     'payment_status' => 'pending',
                     'cart_id'       => 'cart_' . time(),
                 ]);
 
-                // Payload PayTabs
+                // Payload PayTabs - دائماً بـ AED
                 $payload = [
                     'profile_id' => (int) config('paytabs.profile_id'),
                     'tran_type' => 'sale',
                     'tran_class' => 'ecom',
                     'cart_id' => $payment->cart_id,
                     'cart_description' => 'Payment for Listing #' . $listing->id,
-                    'cart_currency' => config('paytabs.currency'),
-                    'cart_amount' => $payment->amount,
+                    'cart_currency' => 'AED', // 🔥 دائماً AED
+                    'cart_amount' => $aedAmount, // 🔥 المبلغ بـ AED
                     'customer_details' => [
                         'name' => Auth::user()->name,
                         'email' => Auth::user()->email,
@@ -263,7 +278,7 @@ class ListingController extends Controller
                         'street1' => 'N/A',
                         'city' => 'N/A',
                         'state' => 'N/A',
-                        'country' => config('paytabs.region'),
+                        'country' => 'ARE', // 🔥 دائماً UAE للدفع
                         'zip' => '00000',
                         'ip' => $request->ip()
                     ],
@@ -271,16 +286,8 @@ class ListingController extends Controller
                     'return' => route('paytabs.return'),
                 ];
 
-                $baseUrls = [
-                    'ARE' => 'https://secure.paytabs.com/',
-                    'SAU' => 'https://secure.paytabs.sa/',
-                    'OMN' => 'https://secure-oman.paytabs.com/',
-                    'JOR' => 'https://secure-jordan.paytabs.com/',
-                    'EGY' => 'https://secure-egypt.paytabs.com/',
-                    'GLOBAL' => 'https://secure-global.paytabs.com/'
-                ];
-                $region = config('paytabs.region', 'ARE');
-                $baseUrl = $baseUrls[$region] ?? $baseUrls['ARE'];
+                // استخدام PayTabs UAE دائماً
+                $baseUrl = 'https://secure.paytabs.com/';
 
                 $response = Http::withHeaders([
                     'Authorization' => config('paytabs.server_key'),
@@ -305,6 +312,9 @@ class ListingController extends Controller
                     'message' => 'Listing saved, waiting for payment',
                     'listing_id' => $listing->id,
                     'payment_id' => $payment->id,
+                    'amount_aed' => $aedAmount, // 🔥 المبلغ بـ AED
+                    'original_amount' => $originalAmount, // المبلغ الأصلي
+                    'currency' => 'AED',
                     'redirect_url' => $data['redirect_url'] ?? null,
                     'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate']),
                 ], 201);
