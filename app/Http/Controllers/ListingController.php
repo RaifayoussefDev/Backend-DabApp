@@ -243,18 +243,29 @@ class ListingController extends Controller
                 $originalAmount = $request->amount;
                 $aedAmount = $originalAmount;
 
-                // البحث عن معلومات العملة للبلد
+                // Debug - ضيف هاد الأسطر
                 if ($request->country_id) {
                     $currency = CurrencyExchangeRate::where('country_id', $request->country_id)->first();
 
+                    // Debug info
+                    \Log::info('Currency Debug:', [
+                        'request_country_id' => $request->country_id,
+                        'currency_found' => $currency ? 'Yes' : 'No',
+                        'currency_code' => $currency->currency_code ?? 'N/A',
+                        'exchange_rate' => $currency->exchange_rate ?? 'N/A',
+                        'original_amount' => $originalAmount,
+                        'will_convert' => ($currency && $currency->currency_code !== 'AED') ? 'Yes' : 'No'
+                    ]);
+
                     if ($currency && $currency->currency_code !== 'AED') {
-                        // إذا لم تكن العملة AED، نحول إلى AED
                         if ($currency->exchange_rate > 0) {
-                            // تحويل من العملة المحلية إلى AED
                             $aedAmount = round($originalAmount / $currency->exchange_rate, 2);
+                            \Log::info('Conversion done:', [
+                                'from' => $originalAmount . ' ' . $currency->currency_code,
+                                'to' => $aedAmount . ' AED'
+                            ]);
                         }
                     }
-                    // إذا كانت العملة AED أو لم نجد currency، نبقي المبلغ كما هو
                 }
 
                 $payment = Payment::create([
