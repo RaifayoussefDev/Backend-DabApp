@@ -239,17 +239,22 @@ class ListingController extends Controller
 
             // ✅ Paiement uniquement au step 3 (avec conversion vers AED)
             if ($step >= 3) {
-                // 🔥 تحويل المبلغ إلى AED إذا لم يكن كذلك
+                // 🔥 تحويل المبلغ إلى AED (الإمارات هي العملة الأساسية)
                 $originalAmount = $request->amount;
                 $aedAmount = $originalAmount;
 
-                // إذا كان المستخدم من بلد آخر، نحول المبلغ إلى AED
-                if ($request->country_id && $request->country_id != 1) { // assuming 1 is UAE
+                // البحث عن معلومات العملة للبلد
+                if ($request->country_id) {
                     $currency = CurrencyExchangeRate::where('country_id', $request->country_id)->first();
-                    if ($currency && $currency->exchange_rate > 0) {
-                        // تحويل من العملة المحلية إلى AED (نقسم على سعر الصرف)
-                        $aedAmount = round($originalAmount / $currency->exchange_rate, 2);
+
+                    if ($currency && $currency->currency_code !== 'AED') {
+                        // إذا لم تكن العملة AED، نحول إلى AED
+                        if ($currency->exchange_rate > 0) {
+                            // تحويل من العملة المحلية إلى AED
+                            $aedAmount = round($originalAmount / $currency->exchange_rate, 2);
+                        }
                     }
+                    // إذا كانت العملة AED أو لم نجد currency، نبقي المبلغ كما هو
                 }
 
                 $payment = Payment::create([
