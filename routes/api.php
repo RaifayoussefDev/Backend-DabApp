@@ -176,6 +176,16 @@ Route::middleware('auth:api')->group(function () {
 
     // NOUVELLE: Obtenir les statistiques des SOOMs
     Route::get('/soom-stats', [SoomController::class, 'getSoomStats']);
+
+
+    // Marquer un listing comme vendu
+    Route::patch('/listings/{listingId}/mark-as-sold', [SoomController::class, 'markListingAsSold']);
+
+    // Fermer un listing sans vente
+    Route::patch('/listings/{listingId}/close', [SoomController::class, 'closeListing']);
+
+    // Rouvrir un listing fermé
+    Route::patch('/listings/{listingId}/reopen', [SoomController::class, 'reopenListing']);
     // My Garage CRUD operations
     Route::get('/my-garage', [MyGarageController::class, 'index']);           // GET all garage items
     Route::post('/my-garage', [MyGarageController::class, 'store']);          // POST create new item

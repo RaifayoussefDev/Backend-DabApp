@@ -239,32 +239,32 @@ class ListingController extends Controller
 
             // ✅ Paiement uniquement au step 3 (avec conversion vers AED)
             if ($step >= 3) {
-                // 🔥 تحويل المبلغ إلى AED (الإمارات هي العملة الأساسية)
+                // 🔥 تحويل المبلغ إلى AED إذا لم يكن كذلك
                 $originalAmount = $request->amount;
                 $aedAmount = $originalAmount;
+                $originalCurrency = 'AED'; // Currency par défaut
 
-                // Debug - ضيف هاد الأسطر
-                if ($request->country_id) {
-                    $currency = CurrencyExchangeRate::where('country_id', $request->country_id)->first();
+                // إذا كان المستخدم من بلد آخر، نحول المبلغ إلى AED
+                $countryId = $request->country_id ?? $listing->country_id;
 
-                    // Debug info
-                    \Log::info('Currency Debug:', [
-                        'request_country_id' => $request->country_id,
-                        'currency_found' => $currency ? 'Yes' : 'No',
-                        'currency_code' => $currency->currency_code ?? 'N/A',
-                        'exchange_rate' => $currency->exchange_rate ?? 'N/A',
-                        'original_amount' => $originalAmount,
-                        'will_convert' => ($currency && $currency->currency_code !== 'AED') ? 'Yes' : 'No'
-                    ]);
+                if ($countryId && $countryId != 2) { // 2 = UAE dans votre DB
+                    $currency = CurrencyExchangeRate::where('country_id', $countryId)->first();
+                    if ($currency && $currency->exchange_rate > 0) {
+                        $originalCurrency = $currency->currency_code;
 
-                    if ($currency && $currency->currency_code !== 'AED') {
-                        if ($currency->exchange_rate > 0) {
+                        // Logique de conversion basée sur les taux de change de votre DB
+                        // Si exchange_rate < 1 (comme KWD = 0.0837), c'est le taux pour convertir de AED vers la devise locale
+                        // Donc pour convertir de la devise locale vers AED, on divise par ce taux
+                        if ($currency->exchange_rate < 1) {
+                            // Pour les devises comme KWD où 1 AED = 0.0837 KWD
+                            // Pour convertir 100 KWD vers AED: 100 / 0.0837 = 1195.22 AED
                             $aedAmount = round($originalAmount / $currency->exchange_rate, 2);
-                            \Log::info('Conversion done:', [
-                                'from' => $originalAmount . ' ' . $currency->currency_code,
-                                'to' => $aedAmount . ' AED'
-                            ]);
+                        } else {
+                            // Pour les devises où 1 unité locale = X AED
+                            $aedAmount = round($originalAmount * $currency->exchange_rate, 2);
                         }
+
+                        \Log::info("Conversion currency: {$originalAmount} {$originalCurrency} = {$aedAmount} AED (rate: {$currency->exchange_rate})");
                     }
                 }
 
@@ -313,7 +313,10 @@ class ListingController extends Controller
 
                 if (!$response->successful()) {
                     DB::rollBack();
-                    return response()->json(['error' => 'Payment request failed', 'details' => $response->json()], 400);
+                    return response()->json([
+                        'error' => 'Payment request failed',
+                        'details' => $response->json()
+                    ], 400);
                 }
 
                 $data = $response->json();
@@ -570,18 +573,34 @@ class ListingController extends Controller
             // ✅ Traitement des données spécifiques selon la catégorie
             $this->handleCategorySpecificData($listing, $request);
 
-            // ✅ Paiement uniquement au step 3 avec action complete (avec conversion vers AED)
+            // ✅ Paiement uniquement au step 3 avec action complete
             if ($step >= 3 && $action === 'complete') {
-                // 🔥 تحويل المبلغ إلى AED إذا لم يكن كذلك
+                // 🔥 تحويل المبلغ إلى AED إذا لم يكن كذلك (même logique que store)
                 $originalAmount = $request->amount;
                 $aedAmount = $originalAmount;
+                $originalCurrency = 'AED'; // Currency par défaut
 
                 // إذا كان المستخدم من بلد آخر، نحول المبلغ إلى AED
-                if ($request->country_id && $request->country_id != 1) { // assuming 1 is UAE
-                    $currency = CurrencyExchangeRate::where('country_id', $request->country_id)->first();
+                $countryId = $request->country_id ?? $listing->country_id;
+
+                if ($countryId && $countryId != 2) { // 2 = UAE dans votre DB
+                    $currency = CurrencyExchangeRate::where('country_id', $countryId)->first();
                     if ($currency && $currency->exchange_rate > 0) {
-                        // تحويل من العملة المحلية إلى AED (نقسم على سعر الصرف)
-                        $aedAmount = round($originalAmount / $currency->exchange_rate, 2);
+                        $originalCurrency = $currency->currency_code;
+
+                        // Logique de conversion basée sur les taux de change de votre DB
+                        // Si exchange_rate < 1 (comme KWD = 0.0837), c'est le taux pour convertir de AED vers la devise locale
+                        // Donc pour convertir de la devise locale vers AED, on divise par ce taux
+                        if ($currency->exchange_rate < 1) {
+                            // Pour les devises comme KWD où 1 AED = 0.0837 KWD
+                            // Pour convertir 100 KWD vers AED: 100 / 0.0837 = 1195.22 AED
+                            $aedAmount = round($originalAmount / $currency->exchange_rate, 2);
+                        } else {
+                            // Pour les devises où 1 unité locale = X AED
+                            $aedAmount = round($originalAmount * $currency->exchange_rate, 2);
+                        }
+
+                        \Log::info("Complete Listing - Conversion currency: {$originalAmount} {$originalCurrency} = {$aedAmount} AED (rate: {$currency->exchange_rate})");
                     }
                 }
 

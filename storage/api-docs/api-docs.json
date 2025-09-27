@@ -1968,13 +1968,13 @@
                     "Filters"
                 ],
                 "summary": "Filter motorcycles",
-                "description": "Filter motorcycles by price, brand, and condition",
+                "description": "Filter motorcycles by price, brand, model, year, condition, mileage, seller type and location",
                 "operationId": "filterMotorcycles",
                 "parameters": [
                     {
                         "name": "min_price",
                         "in": "query",
-                        "description": "Minimum price filter",
+                        "description": "Minimum price filter (includes fixed price and minimum bid for auctions)",
                         "required": false,
                         "schema": {
                             "type": "number",
@@ -1985,7 +1985,7 @@
                     {
                         "name": "max_price",
                         "in": "query",
-                        "description": "Maximum price filter",
+                        "description": "Maximum price filter (includes fixed price and minimum bid for auctions)",
                         "required": false,
                         "schema": {
                             "type": "number",
@@ -1997,6 +1997,42 @@
                         "name": "brands[]",
                         "in": "query",
                         "description": "Array of brand IDs to filter",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "models[]",
+                        "in": "query",
+                        "description": "Array of model IDs to filter",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "types[]",
+                        "in": "query",
+                        "description": "Array of motorcycle type IDs to filter",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "years[]",
+                        "in": "query",
+                        "description": "Array of year IDs to filter",
                         "required": false,
                         "schema": {
                             "type": "array",
@@ -2023,23 +2059,23 @@
                         }
                     },
                     {
-                        "name": "year_min",
+                        "name": "min_mileage",
                         "in": "query",
-                        "description": "Minimum year filter",
+                        "description": "Minimum mileage filter",
                         "required": false,
                         "schema": {
                             "type": "integer",
-                            "minimum": 1900
+                            "minimum": 0
                         }
                     },
                     {
-                        "name": "year_max",
+                        "name": "max_mileage",
                         "in": "query",
-                        "description": "Maximum year filter",
+                        "description": "Maximum mileage filter",
                         "required": false,
                         "schema": {
                             "type": "integer",
-                            "minimum": 1900
+                            "minimum": 0
                         }
                     },
                     {
@@ -2103,6 +2139,22 @@
                                                         "format": "float",
                                                         "example": 8500
                                                     },
+                                                    "is_auction": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "minimum_bid": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 5000,
+                                                        "nullable": true
+                                                    },
+                                                    "current_bid": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 6500,
+                                                        "nullable": true
+                                                    },
                                                     "currency": {
                                                         "type": "string",
                                                         "example": "MAD"
@@ -2118,6 +2170,10 @@
                                                     "year": {
                                                         "type": "integer",
                                                         "example": 2020
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "example": "Sport"
                                                     },
                                                     "listing_date": {
                                                         "type": "string",
@@ -10169,6 +10225,403 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Unauthorized. User must be logged in."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/listings/{listingId}/mark-as-sold": {
+            "patch": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Mark listing as sold",
+                "description": "Mark a listing as sold when a transaction is completed. Only the seller can perform this action.",
+                "operationId": "markListingAsSold",
+                "parameters": [
+                    {
+                        "name": "listingId",
+                        "in": "path",
+                        "description": "ID of the listing to mark as sold",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Listing marked as sold successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Listing marked as sold successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Yamaha R1"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "sold"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "datetime",
+                                                    "example": "2024-09-27T16:30:00.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "rejected_sooms_count": {
+                                            "type": "integer",
+                                            "example": 3
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized. User must be logged in."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Access denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Only the seller can mark this listing as sold."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Listing not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Listing not found."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid status",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "This listing is already sold or inactive."
+                                        },
+                                        "current_status": {
+                                            "type": "string",
+                                            "example": "sold"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/listings/{listingId}/close": {
+            "patch": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Close/finalize listing",
+                "description": "Close a listing when seller wants to end it without a sale (e.g., no agreement reached, decided not to sell, etc.). This action rejects all pending SOOMs.",
+                "operationId": "closeListing",
+                "parameters": [
+                    {
+                        "name": "listingId",
+                        "in": "path",
+                        "description": "ID of the listing to close",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Listing closed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Listing closed successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Yamaha R1"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "inactive"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "datetime",
+                                                    "example": "2024-09-27T16:30:00.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "rejected_sooms_count": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "notified_users_count": {
+                                            "type": "integer",
+                                            "example": 3
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized. User must be logged in."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Access denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Only the seller can close this listing."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Listing not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Listing not found."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid status",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "This listing is already closed or sold."
+                                        },
+                                        "current_status": {
+                                            "type": "string",
+                                            "example": "inactive"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/listings/{listingId}/reopen": {
+            "patch": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Reopen a closed listing",
+                "description": "Reopen a previously closed listing. Only the seller can perform this action.",
+                "operationId": "reopenListing",
+                "parameters": [
+                    {
+                        "name": "listingId",
+                        "in": "path",
+                        "description": "ID of the listing to reopen",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Optional reopening details",
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "allow_submission": {
+                                        "description": "Whether to allow new SOOM submissions",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "reopening_notes": {
+                                        "description": "Notes about why the listing is being reopened",
+                                        "type": "string",
+                                        "example": "Decided to continue selling after reconsideration",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Listing reopened successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Listing reopened successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Yamaha R1"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "published"
+                                                },
+                                                "reopened_at": {
+                                                    "type": "string",
+                                                    "format": "datetime",
+                                                    "example": "2024-09-27T16:30:00.000000Z"
+                                                },
+                                                "allow_submission": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Cannot reopen listing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Only closed listings can be reopened."
+                                        },
+                                        "current_status": {
+                                            "type": "string",
+                                            "example": "published"
                                         }
                                     },
                                     "type": "object"

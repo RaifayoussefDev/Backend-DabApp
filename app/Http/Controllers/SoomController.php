@@ -1974,4 +1974,430 @@ class SoomController extends Controller
             ], 500);
         }
     }
+    /**
+     * @OA\Patch(
+     *     path="/api/listings/{listingId}/mark-as-sold",
+     *     summary="Mark listing as sold",
+     *     description="Mark a listing as sold when a transaction is completed. Only the seller can perform this action.",
+     *     operationId="markListingAsSold",
+     *     tags={"SOOMs"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="listingId",
+     *         in="path",
+     *         description="ID of the listing to mark as sold",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Listing marked as sold successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Listing marked as sold successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="title", type="string", example="Yamaha R1"),
+     *                 @OA\Property(property="status", type="string", example="sold"),
+     *                 @OA\Property(property="updated_at", type="string", format="datetime", example="2024-09-27T16:30:00.000000Z")
+     *             ),
+     *             @OA\Property(property="rejected_sooms_count", type="integer", example=3)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized. User must be logged in.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Access denied",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Only the seller can mark this listing as sold.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Listing not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Listing not found.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Invalid status",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="This listing is already sold or inactive."),
+     *             @OA\Property(property="current_status", type="string", example="sold")
+     *         )
+     *     )
+     * )
+     */
+    public function markListingAsSold(Request $request, $listingId)
+    {
+        DB::beginTransaction();
+
+        try {
+            $userId = Auth::id();
+
+            if (!$userId) {
+                return response()->json([
+                    'message' => 'Unauthorized. User must be logged in.',
+                ], 401);
+            }
+
+            $listing = Listing::find($listingId);
+
+            if (!$listing) {
+                return response()->json([
+                    'message' => 'Listing not found.',
+                ], 404);
+            }
+
+            // Vérifier que l'utilisateur est le propriétaire du listing
+            if ($listing->seller_id != $userId) {
+                return response()->json([
+                    'message' => 'Only the seller can mark this listing as sold.',
+                ], 403);
+            }
+
+            // Vérifier que le listing peut être marqué comme vendu
+            if ($listing->status !== 'published') {
+                return response()->json([
+                    'message' => 'This listing is already sold or inactive.',
+                    'current_status' => $listing->status
+                ], 422);
+            }
+
+            // Mettre à jour le listing - utiliser seulement les colonnes existantes
+            $listing->update([
+                'status' => 'sold',
+                'allow_submission' => false // Désactiver les nouvelles soumissions
+            ]);
+
+            // Rejeter automatiquement tous les SOOMs pending
+            $rejectedSoomsCount = Submission::where('listing_id', $listingId)
+                ->where('status', 'pending')
+                ->update([
+                    'status' => 'rejected',
+                    'rejection_reason' => 'Listing marked as sold by seller'
+                ]);
+
+            // Optionnel : Envoyer des notifications aux utilisateurs avec SOOMs pending
+            $pendingSoomUsers = Submission::where('listing_id', $listingId)
+                ->where('status', 'rejected')
+                ->where('rejection_reason', 'Listing marked as sold by seller')
+                ->with('user')
+                ->get();
+
+            foreach ($pendingSoomUsers as $submission) {
+                try {
+                    // Ici vous pouvez ajouter l'envoi d'email de notification
+                    // Mail::to($submission->user->email)->send(new ListingSoldNotificationMail($listing, $submission));
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send listing sold notification: ' . $e->getMessage());
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Listing marked as sold successfully',
+                'data' => $listing->fresh(),
+                'rejected_sooms_count' => $rejectedSoomsCount
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Failed to mark listing as sold',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/listings/{listingId}/close",
+     *     summary="Close/finalize listing",
+     *     description="Close a listing when seller wants to end it without a sale (e.g., no agreement reached, decided not to sell, etc.). This action rejects all pending SOOMs.",
+     *     operationId="closeListing",
+     *     tags={"SOOMs"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="listingId",
+     *         in="path",
+     *         description="ID of the listing to close",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Listing closed successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Listing closed successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="title", type="string", example="Yamaha R1"),
+     *                 @OA\Property(property="status", type="string", example="inactive"),
+     *                 @OA\Property(property="updated_at", type="string", format="datetime", example="2024-09-27T16:30:00.000000Z")
+     *             ),
+     *             @OA\Property(property="rejected_sooms_count", type="integer", example=5),
+     *             @OA\Property(property="notified_users_count", type="integer", example=3)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized. User must be logged in.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Access denied",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Only the seller can close this listing.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Listing not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Listing not found.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Invalid status",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="This listing is already closed or sold."),
+     *             @OA\Property(property="current_status", type="string", example="inactive")
+     *         )
+     *     )
+     * )
+     */
+    public function closeListing(Request $request, $listingId)
+    {
+        DB::beginTransaction();
+
+        try {
+            $userId = Auth::id();
+
+            if (!$userId) {
+                return response()->json([
+                    'message' => 'Unauthorized. User must be logged in.',
+                ], 401);
+            }
+
+            $listing = Listing::find($listingId);
+
+            if (!$listing) {
+                return response()->json([
+                    'message' => 'Listing not found.',
+                ], 404);
+            }
+
+            // Vérifier que l'utilisateur est le propriétaire du listing
+            if ($listing->seller_id != $userId) {
+                return response()->json([
+                    'message' => 'Only the seller can close this listing.',
+                ], 403);
+            }
+
+            // Vérifier que le listing peut être fermé
+            if ($listing->status !== 'published') {
+                return response()->json([
+                    'message' => 'This listing is already closed or sold.',
+                    'current_status' => $listing->status
+                ], 422);
+            }
+
+            // Mettre à jour le listing - utiliser le statut "inactive" qui existe déjà
+            $listing->update([
+                'status' => 'inactive',
+                'allow_submission' => false // Désactiver les nouvelles soumissions
+            ]);
+
+            // Récupérer les SOOMs pending avant de les rejeter pour les notifications
+            $pendingSooms = Submission::where('listing_id', $listingId)
+                ->where('status', 'pending')
+                ->with('user')
+                ->get();
+
+            // Rejeter automatiquement tous les SOOMs pending
+            $rejectedSoomsCount = Submission::where('listing_id', $listingId)
+                ->where('status', 'pending')
+                ->update([
+                    'status' => 'rejected',
+                    'rejection_reason' => 'Listing closed by seller'
+                ]);
+
+            // Envoyer des notifications aux utilisateurs avec SOOMs pending
+            $notifiedUsersCount = 0;
+            foreach ($pendingSooms as $submission) {
+                try {
+                    // Ici vous pouvez ajouter l'envoi d'email de notification
+                    // Mail::to($submission->user->email)->send(new ListingClosedNotificationMail($listing, $submission));
+                    $notifiedUsersCount++;
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send listing closed notification: ' . $e->getMessage());
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Listing closed successfully',
+                'data' => $listing->fresh(),
+                'rejected_sooms_count' => $rejectedSoomsCount,
+                'notified_users_count' => $notifiedUsersCount
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Failed to close listing',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/listings/{listingId}/reopen",
+     *     summary="Reopen a closed listing",
+     *     description="Reopen a previously closed listing. Only the seller can perform this action.",
+     *     operationId="reopenListing",
+     *     tags={"SOOMs"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="listingId",
+     *         in="path",
+     *         description="ID of the listing to reopen",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=false,
+     *         description="Optional reopening details",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="allow_submission",
+     *                 type="boolean",
+     *                 description="Whether to allow new SOOM submissions",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="reopening_notes",
+     *                 type="string",
+     *                 description="Notes about why the listing is being reopened",
+     *                 example="Decided to continue selling after reconsideration",
+     *                 nullable=true
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Listing reopened successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Listing reopened successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="title", type="string", example="Yamaha R1"),
+     *                 @OA\Property(property="status", type="string", example="published"),
+     *                 @OA\Property(property="reopened_at", type="string", format="datetime", example="2024-09-27T16:30:00.000000Z"),
+     *                 @OA\Property(property="allow_submission", type="boolean", example=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Cannot reopen listing",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Only closed listings can be reopened."),
+     *             @OA\Property(property="current_status", type="string", example="published")
+     *         )
+     *     )
+     * )
+     */
+    public function reopenListing(Request $request, $listingId)
+    {
+        DB::beginTransaction();
+
+        try {
+            $userId = Auth::id();
+
+            if (!$userId) {
+                return response()->json([
+                    'message' => 'Unauthorized. User must be logged in.',
+                ], 401);
+            }
+
+            $listing = Listing::find($listingId);
+
+            if (!$listing) {
+                return response()->json([
+                    'message' => 'Listing not found.',
+                ], 404);
+            }
+
+            if ($listing->seller_id != $userId) {
+                return response()->json([
+                    'message' => 'Only the seller can reopen this listing.',
+                ], 403);
+            }
+
+            if ($listing->status !== 'closed') {
+                return response()->json([
+                    'message' => 'Only closed listings can be reopened.',
+                    'current_status' => $listing->status
+                ], 422);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'allow_submission' => 'boolean',
+                'reopening_notes' => 'nullable|string|max:500'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $updateData = [
+                'status' => 'published',
+                'reopened_at' => now(),
+                'allow_submission' => $request->get('allow_submission', true),
+                'closed_at' => null,
+                'closing_reason' => null
+            ];
+
+            if ($request->has('reopening_notes')) {
+                $updateData['reopening_notes'] = $request->reopening_notes;
+            }
+
+            $listing->update($updateData);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Listing reopened successfully',
+                'data' => $listing->fresh()
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Failed to reopen listing',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
