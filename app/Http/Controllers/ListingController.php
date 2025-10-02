@@ -239,55 +239,58 @@ class ListingController extends Controller
             $this->handleCategorySpecificData($listing, $request);
 
             // ✅ Paiement uniquement au step 3 (avec conversion vers AED)
+            // ✅ Paiement uniquement au step 3 (avec conversion vers AED)
             if ($step >= 3) {
-                // 🔥 تحويل المبلغ إلى AED إذا لم يكن كذلك
                 $originalAmount = $request->amount;
                 $aedAmount = $originalAmount;
-                $originalCurrency = 'AED'; // Currency par défaut
+                $originalCurrency = 'AED';
+                $exchangeRate = 1;
 
-                // إذا كان المستخدم من بلد آخر، نحول المبلغ إلى AED
+                // Si l'utilisateur est d'un autre pays, convertir vers AED
                 $countryId = $request->country_id ?? $listing->country_id;
 
-                if ($countryId && $countryId != 2) { // 2 = UAE dans votre DB
+                if ($countryId && $countryId != 2) { // 2 = UAE
                     $currency = CurrencyExchangeRate::where('country_id', $countryId)->first();
+
                     if ($currency && $currency->exchange_rate > 0) {
                         $originalCurrency = $currency->currency_code;
+                        $exchangeRate = $currency->exchange_rate;
 
-                        // Logique de conversion basée sur les taux de change de votre DB
-                        // Si exchange_rate < 1 (comme KWD = 0.0837), c'est le taux pour convertir de AED vers la devise locale
-                        // Donc pour convertir de la devise locale vers AED, on divise par ce taux
-                        if ($currency->exchange_rate < 1) {
-                            // Pour les devises comme KWD où 1 AED = 0.0837 KWD
-                            // Pour convertir 100 KWD vers AED: 100 / 0.0837 = 1195.22 AED
-                            $aedAmount = round($originalAmount / $currency->exchange_rate, 2);
-                        } else {
-                            // Pour les devises où 1 unité locale = X AED
-                            $aedAmount = round($originalAmount * $currency->exchange_rate, 2);
-                        }
+                        // 🔥 LOGIQUE CORRECTE
+                        // Si exchange_rate = 0.98, cela signifie : 1 AED = 0.98 SAR
+                        // Donc pour convertir SAR → AED : montant_sar / 0.98
+                        //
+                        // Si exchange_rate = 3.67, cela signifie : 1 AED = 3.67 SAR
+                        // Donc pour convertir SAR → AED : montant_sar / 3.67
+                        //
+                        // Conclusion : TOUJOURS diviser par exchange_rate
 
-                        \Log::info("Conversion currency: {$originalAmount} {$originalCurrency} = {$aedAmount} AED (rate: {$currency->exchange_rate})");
+                        $aedAmount = round($originalAmount / $exchangeRate, 2);
+
+                        \Log::info("Conversion: {$originalAmount} {$originalCurrency} → {$aedAmount} AED (rate: 1 AED = {$exchangeRate} {$originalCurrency})");
                     }
                 }
 
                 $payment = Payment::create([
-                    'user_id'       => $sellerId,
-                    'listing_id'    => $listing->id,
-                    'amount'        => $aedAmount, // 🔥 دائماً AED
-                    'original_amount' => $originalAmount, // حفظ المبلغ الأصلي للمرجع
-                    'currency'      => 'AED', // 🔥 دائماً AED
-                    'payment_status' => 'pending',
-                    'cart_id'       => 'cart_' . time(),
+                    'user_id'         => $sellerId,
+                    'listing_id'      => $listing->id,
+                    'amount'          => $aedAmount,
+                    'original_amount' => $originalAmount,
+                    'original_currency' => $originalCurrency, // Ajouter cette colonne si elle n'existe pas
+                    'currency'        => 'AED',
+                    'payment_status'  => 'pending',
+                    'cart_id'         => 'cart_' . time(),
                 ]);
 
-                // Payload PayTabs - دائماً بـ AED
+                // Payload PayTabs
                 $payload = [
                     'profile_id' => (int) config('paytabs.profile_id'),
                     'tran_type' => 'sale',
                     'tran_class' => 'ecom',
                     'cart_id' => $payment->cart_id,
                     'cart_description' => 'Payment for Listing #' . $listing->id,
-                    'cart_currency' => 'AED', // 🔥 دائماً AED
-                    'cart_amount' => $aedAmount, // 🔥 المبلغ بـ AED
+                    'cart_currency' => 'AED',
+                    'cart_amount' => $aedAmount,
                     'customer_details' => [
                         'name' => Auth::user()->name,
                         'email' => Auth::user()->email,
@@ -295,7 +298,7 @@ class ListingController extends Controller
                         'street1' => 'N/A',
                         'city' => 'N/A',
                         'state' => 'N/A',
-                        'country' => 'ARE', // 🔥 دائماً UAE للدفع
+                        'country' => 'ARE',
                         'zip' => '00000',
                         'ip' => $request->ip()
                     ],
@@ -303,7 +306,6 @@ class ListingController extends Controller
                     'return' => route('paytabs.return'),
                 ];
 
-                // استخدام PayTabs UAE دائماً
                 $baseUrl = 'https://secure.paytabs.com/';
 
                 $response = Http::withHeaders([
@@ -332,8 +334,10 @@ class ListingController extends Controller
                     'message' => 'Listing saved, waiting for payment',
                     'listing_id' => $listing->id,
                     'payment_id' => $payment->id,
-                    'amount_aed' => $aedAmount, // 🔥 المبلغ بـ AED
-                    'original_amount' => $originalAmount, // المبلغ الأصلي
+                    'amount_aed' => $aedAmount,
+                    'original_amount' => $originalAmount,
+                    'original_currency' => $originalCurrency,
+                    'exchange_rate' => "1 AED = {$exchangeRate} {$originalCurrency}",
                     'currency' => 'AED',
                     'redirect_url' => $data['redirect_url'] ?? null,
                     'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate']),
