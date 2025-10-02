@@ -1968,9 +1968,19 @@
                     "Filters"
                 ],
                 "summary": "Filter motorcycles",
-                "description": "Filter motorcycles by price, brand, model, year, condition, mileage, seller type and location",
+                "description": "Filter motorcycles by category, price, brand, model, year, condition, mileage, seller type and location",
                 "operationId": "filterMotorcycles",
                 "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Category ID filter (1=motorcycles, 2=cars, etc.)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
                     {
                         "name": "min_price",
                         "in": "query",
@@ -4481,6 +4491,46 @@
                     },
                     "404": {
                         "description": "Brand or Model not found"
+                    }
+                }
+            }
+        },
+        "/api/categorie/listings-count": {
+            "get": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Get motorcycle categorie with listing count",
+                "operationId": "ed6fc946f901deb51b21d44a9fa2b0fd",
+                "responses": {
+                    "200": {
+                        "description": "List of motorcycle categorie with their listing counts",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "motorcycle_types": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "listings_count": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }

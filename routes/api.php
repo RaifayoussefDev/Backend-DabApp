@@ -281,6 +281,8 @@ Route::get('/brands/{brandId}/models-with-listings', [ListingController::class, 
 // Get years with listings for a specific brand and model
 Route::get('/brands/{brandId}/models/{modelId}/years-with-listings', [ListingController::class, 'getYearsWithListingsByBrandAndModel']);
 
+Route::get('/categorie/listings-count', [ListingController::class, 'getTypesWithListingCount']);
+
 Route::get('categories/{categoryId}/price-range', [ListingController::class, 'getPriceRangeByCategory'])
     ->where('categoryId', '[1-3]'); // Limite aux catégories 1, 2, 3
 Route::get('/filter/motorcycles', [FilterController::class, 'filterMotorcycles']);

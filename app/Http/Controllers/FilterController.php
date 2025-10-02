@@ -19,9 +19,16 @@ class FilterController extends Controller
      * @OA\Get(
      *     path="/api/filter/motorcycles",
      *     summary="Filter motorcycles",
-     *     description="Filter motorcycles by price, brand, model, year, condition, mileage, seller type and location",
+     *     description="Filter motorcycles by category, price, brand, model, year, condition, mileage, seller type and location",
      *     operationId="filterMotorcycles",
      *     tags={"Filters"},
+     *     @OA\Parameter(
+     *         name="category_id",
+     *         in="query",
+     *         description="Category ID filter (1=motorcycles, 2=cars, etc.)",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=1)
+     *     ),
      *     @OA\Parameter(
      *         name="min_price",
      *         in="query",
@@ -149,8 +156,9 @@ class FilterController extends Controller
     {
         $query = Listing::query();
 
-        // On ne veut que les listings de catégorie 1 (motos)
-        $query->where('category_id', 1)->where('status', 'published');
+        // ✅ Filtre de catégorie (par défaut = 1 pour motos)
+        $categoryId = $request->input('category_id', 1);
+        $query->where('category_id', $categoryId)->where('status', 'published');
 
         // ✅ Filtre de prix : prix fixe OU minimum_bid pour les enchères
         $minPrice = $request->input('min_price');
@@ -266,6 +274,7 @@ class FilterController extends Controller
             'seller_type',
             'country_id',
             'city_id',
+            'category_id',
             // Sous-requête pour récupérer la dernière enchère
             DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
         ])
@@ -283,7 +292,10 @@ class FilterController extends Controller
                         ]);
                 },
                 'country:id,name',
-                'city:id,name'
+                'city:id,name',
+                'category:id,name',
+                // ✅ Charger la relation currency_exchange_rate du country
+                'country.currencyExchangeRate:id,country_id,currency_symbol'
             ])
             ->get()
             ->map(function ($listing) {
@@ -296,6 +308,9 @@ class FilterController extends Controller
                     $isAuction = true;
                 }
 
+                // ✅ Récupérer le symbole de devise depuis currency_exchange_rates
+                $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+
                 return [
                     'id' => $listing->id,
                     'title' => $listing->title,
@@ -304,7 +319,8 @@ class FilterController extends Controller
                     'is_auction' => $isAuction,
                     'minimum_bid' => $listing->minimum_bid,
                     'current_bid' => $listing->current_bid,
-                    'currency' => config('paytabs.currency', 'MAD'),
+                    'currency' => $currencySymbol,
+                    'category' => $listing->category?->name ?? null,
                     'brand' => $listing->motorcycle?->brand?->name ?? null,
                     'model' => $listing->motorcycle?->model?->name ?? null,
                     'year' => $listing->motorcycle?->year?->year ?? null,
