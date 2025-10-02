@@ -67,7 +67,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name'  => 'required|string|max:255',
-            'email'      => 'required|email|unique:users',
+            'email'      => 'required|email',
             'phone'      => 'required|string',
             'password'   => 'required|string|min:6|confirmed',
         ]);
@@ -83,57 +83,109 @@ class AuthController extends Controller
         $countryData = CountryHelper::processCountryAndPhoneByName($request->phone, $countryName);
         $formattedPhone = $countryData['formatted_phone'];
 
-        Log::info('Registration with country processing', [
+        Log::info('Registration attempt', [
             'original_phone' => $request->phone,
             'country_name' => $countryName,
             'formatted_phone' => $formattedPhone,
-            'country_code' => $countryData['country_code'],
-            'country_id' => $countryData['country_id'],
+            'email' => $request->email,
         ]);
 
-        // Check if the formatted phone number already exists in database
-        $existingUser = User::where('phone', $formattedPhone)->first();
+        // Check if email exists
+        $existingUserByEmail = User::where('email', $request->email)->first();
 
-        if ($existingUser) {
-            Log::warning('Phone number already exists in database', [
-                'formatted_phone' => $formattedPhone,
-                'existing_user_id' => $existingUser->id,
-                'existing_user_email' => $existingUser->email
+        if ($existingUserByEmail) {
+            // Si l'utilisateur existe MAIS n'est PAS vérifié
+            if (!$existingUserByEmail->verified) {
+                Log::info('Found unverified user, allowing update', [
+                    'user_id' => $existingUserByEmail->id,
+                    'old_phone' => $existingUserByEmail->phone,
+                    'new_phone' => $formattedPhone,
+                ]);
+
+                // Vérifier si le nouveau numéro n'est pas utilisé par un AUTRE utilisateur vérifié
+                $phoneUsedByOther = User::where('phone', $formattedPhone)
+                    ->where('id', '!=', $existingUserByEmail->id)
+                    ->where('verified', true)
+                    ->exists();
+
+                if ($phoneUsedByOther) {
+                    return response()->json([
+                        'error' => 'Phone number already in use',
+                        'message' => 'This phone number is already registered with another verified account'
+                    ], 422);
+                }
+
+                // Mettre à jour les informations de l'utilisateur non vérifié
+                $existingUserByEmail->update([
+                    'first_name' => $request->first_name,
+                    'last_name'  => $request->last_name,
+                    'phone'      => $formattedPhone,
+                    'password'   => Hash::make($request->password),
+                    'country_id' => $countryData['country_id'],
+                    'updated_at' => now(),
+                ]);
+
+                $user = $existingUserByEmail;
+
+                Log::info('Updated unverified user information', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'new_phone' => $user->phone
+                ]);
+            } else {
+                // L'utilisateur existe ET est vérifié - erreur classique
+                Log::warning('Email already exists with verified account', [
+                    'email' => $request->email,
+                    'existing_user_id' => $existingUserByEmail->id
+                ]);
+
+                return response()->json([
+                    'error' => 'Email already exists',
+                    'message' => 'This email is already registered. Please login or use password reset.'
+                ], 422);
+            }
+        } else {
+            // Vérifier si le téléphone existe déjà (pour un utilisateur vérifié)
+            $existingUserByPhone = User::where('phone', $formattedPhone)
+                ->where('verified', true)
+                ->first();
+
+            if ($existingUserByPhone) {
+                Log::warning('Phone number already exists with verified account', [
+                    'formatted_phone' => $formattedPhone,
+                    'existing_user_id' => $existingUserByPhone->id,
+                ]);
+
+                return response()->json([
+                    'error' => 'Phone number already exists',
+                    'phone' => $formattedPhone,
+                    'message' => 'This phone number is already registered with a verified account'
+                ], 422);
+            }
+
+            // Créer un NOUVEAU utilisateur non vérifié
+            $user = User::create([
+                'first_name' => $request->first_name,
+                'last_name'  => $request->last_name,
+                'email'      => $request->email,
+                'phone'      => $formattedPhone,
+                'password'   => Hash::make($request->password),
+                'role_id'    => $request->role_id ?? 1,
+                'verified'   => false,
+                'is_active'  => false, // ⚠️ IMPORTANT : désactivé jusqu'à vérification
+                'is_online'  => false,
+                'language'   => 'fr',
+                'timezone'   => 'Africa/Casablanca',
+                'two_factor_enabled' => true,
+                'country_id' => $countryData['country_id'],
             ]);
 
-            return response()->json([
-                'error' => 'Phone number already exists',
-                'phone' => $formattedPhone,
-                'message' => 'This phone number is already registered with another account'
-            ], 422);
+            Log::info('New user created (unverified)', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'phone' => $user->phone
+            ]);
         }
-
-        Log::info('Phone number is unique, proceeding with registration', [
-            'formatted_phone' => $formattedPhone
-        ]);
-
-        // Create user with 2FA enabled by default
-        $user = User::create([
-            'first_name' => $request->first_name,
-            'last_name'  => $request->last_name,
-            'email'      => $request->email,
-            'phone'      => $formattedPhone,
-            'password'   => Hash::make($request->password),
-            'role_id'    => $request->role_id ?? 1,
-            'verified'   => false,
-            'is_active'  => true,
-            'is_online'  => false,
-            'language'   => 'fr',
-            'timezone'   => 'Africa/Casablanca',
-            'two_factor_enabled' => true,
-            'country_id' => $countryData['country_id'],
-        ]);
-
-        Log::info('User created successfully', [
-            'user_id' => $user->id,
-            'email' => $user->email,
-            'phone' => $user->phone
-        ]);
 
         // Generate and send OTP
         $otp = rand(1000, 9999);
@@ -159,7 +211,7 @@ class AuthController extends Controller
             ]);
 
             return response()->json([
-                'error' => 'Registration successful but failed to send OTP. Please login to resend.',
+                'error' => 'Failed to send OTP. Please try again.',
                 'user_id' => $user->id
             ], 500);
         }
@@ -225,10 +277,18 @@ class AuthController extends Controller
         $login = $request->input('login');
         $password = $request->input('password');
 
+        // ⭐ DÉTERMINER LE TYPE DE LOGIN DÈS LE DÉBUT
+        $isEmailLogin = filter_var($login, FILTER_VALIDATE_EMAIL);
+
+        Log::info('Login attempt', [
+            'login' => $login,
+            'is_email_login' => $isEmailLogin
+        ]);
+
         // Find user by email or phone
         $user = null;
 
-        if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
+        if ($isEmailLogin) {
             // Login is an email
             $user = User::where('email', $login)->first();
             Log::info('Login attempt with email', ['email' => $login]);
@@ -285,6 +345,46 @@ class AuthController extends Controller
             return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
+        // ✅ VÉRIFIER SI L'UTILISATEUR EST VÉRIFIÉ
+        if (!$user->verified) {
+            Log::warning('Login attempt by unverified user', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'login_type' => $isEmailLogin ? 'email' : 'phone'
+            ]);
+
+            // Générer et envoyer OTP pour permettre la vérification
+            $otp = rand(1000, 9999);
+            DB::table('otps')->updateOrInsert(
+                ['user_id' => $user->id],
+                [
+                    'code' => $otp,
+                    'expires_at' => now()->addMinutes(5),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+
+            // ⭐ ENVOYER OTP SELON LE TYPE DE LOGIN
+            $otpSentVia = $this->sendOtpBasedOnLoginMethod($user, $otp, $isEmailLogin);
+
+            Log::info('OTP sent for unverified user', [
+                'user_id' => $user->id,
+                'otp_sent_via' => $otpSentVia,
+                'login_type' => $isEmailLogin ? 'email' : 'phone'
+            ]);
+
+            return response()->json([
+                'error' => 'Account not verified',
+                'message' => 'Please verify your account with the OTP code we just sent',
+                'requiresOTP' => true,
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'otp_sent_via' => $otpSentVia
+            ], 403);
+        }
+
         if (!$user->is_active) {
             Log::warning('Login failed - user inactive', [
                 'user_id' => $user->id,
@@ -300,7 +400,7 @@ class AuthController extends Controller
         Log::info('User logged in successfully', [
             'user_id' => $user->id,
             'email' => $user->email,
-            'login_method' => filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone'
+            'login_method' => $isEmailLogin ? 'email' : 'phone'
         ]);
 
         // Extract country & continent from proxy headers
@@ -338,8 +438,8 @@ class AuthController extends Controller
                 ]
             );
 
-            // Send OTP with WhatsApp first, email fallback
-            $otpSentVia = $this->sendOtpWithWhatsAppFirst($user, $otp);
+            // ⭐ ENVOYER OTP 2FA SELON LE TYPE DE LOGIN
+            $otpSentVia = $this->sendOtpBasedOnLoginMethod($user, $otp, $isEmailLogin);
 
             if ($otpSentVia === 'failed') {
                 Log::error('Failed to send OTP during login', [
@@ -353,6 +453,12 @@ class AuthController extends Controller
                     'user_id' => $user->id
                 ], 500);
             }
+
+            Log::info('2FA OTP sent', [
+                'user_id' => $user->id,
+                'otp_sent_via' => $otpSentVia,
+                'login_type' => $isEmailLogin ? 'email' : 'phone'
+            ]);
 
             return response()->json([
                 'message' => 'OTP required',
@@ -376,7 +482,82 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Envoie OTP selon la méthode de login (email → email, phone → WhatsApp)
+     */
+    private function sendOtpBasedOnLoginMethod(User $user, $otp, $isEmailLogin)
+    {
+        if ($isEmailLogin) {
+            // L'utilisateur s'est connecté avec email → Envoyer OTP par email
+            try {
+                if (empty($user->email)) {
+                    throw new \Exception('User has no email address');
+                }
 
+                $user->notify(new SendOtpNotification($otp));
+
+                Log::info('OTP sent via Email (user logged in with email)', [
+                    'user_id' => $user->id,
+                    'email' => $user->email
+                ]);
+
+                return 'email';
+            } catch (\Exception $e) {
+                Log::error('Failed to send OTP via email', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+
+                // Fallback vers WhatsApp si email échoue
+                if (!empty($user->phone)) {
+                    $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
+                    if ($whatsappSent) {
+                        Log::info('OTP sent via WhatsApp (email fallback)', [
+                            'user_id' => $user->id
+                        ]);
+                        return 'whatsapp';
+                    }
+                }
+
+                return 'failed';
+            }
+        } else {
+            // L'utilisateur s'est connecté avec téléphone → Envoyer OTP par WhatsApp
+            if (!empty($user->phone)) {
+                $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
+
+                if ($whatsappSent) {
+                    Log::info('OTP sent via WhatsApp (user logged in with phone)', [
+                        'user_id' => $user->id,
+                        'phone' => $user->phone
+                    ]);
+                    return 'whatsapp';
+                }
+            }
+
+            // Fallback vers email si WhatsApp échoue
+            try {
+                if (empty($user->email)) {
+                    throw new \Exception('User has no email address');
+                }
+
+                $user->notify(new SendOtpNotification($otp));
+
+                Log::info('OTP sent via Email (WhatsApp fallback)', [
+                    'user_id' => $user->id,
+                    'email' => $user->email
+                ]);
+
+                return 'email';
+            } catch (\Exception $e) {
+                Log::error('Failed to send OTP via both WhatsApp and Email', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+                return 'failed';
+            }
+        }
+    }
     private function sendOtpWithWhatsAppFirst(User $user, $otp)
     {
         // Try WhatsApp first if user has phone number
@@ -904,12 +1085,16 @@ class AuthController extends Controller
             'email' => $user->email
         ]);
 
-        // Mark user as verified if not already
-        if (!$user->verified) {
+        // ✅ ACTIVER ET VÉRIFIER L'UTILISATEUR
+        if (!$user->verified || !$user->is_active) {
             $user->verified = true;
+            $user->is_active = true; // Important pour permettre la connexion
             $user->save();
-            Log::info('User marked as verified', [
-                'user_id' => $user->id
+
+            Log::info('User verified and activated', [
+                'user_id' => $user->id,
+                'was_verified' => $user->wasChanged('verified'),
+                'was_activated' => $user->wasChanged('is_active')
             ]);
         }
 
@@ -925,7 +1110,10 @@ class AuthController extends Controller
 
         $tokenExpiration = now()->addMonth();
 
+        // ✅ METTRE À JOUR is_online et last_login aussi
         $user->token_expiration = $tokenExpiration;
+        $user->is_online = true;
+        $user->last_login = now();
         $user->save();
 
         Authentication::updateOrCreate(
@@ -942,6 +1130,9 @@ class AuthController extends Controller
             'user_id' => $user->id,
             'token_expiration' => $tokenExpiration
         ]);
+
+        // ✅ RECHARGER L'UTILISATEUR pour avoir les données fraîches
+        $user->refresh();
 
         return response()->json([
             'user' => $user,
