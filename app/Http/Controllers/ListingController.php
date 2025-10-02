@@ -522,21 +522,19 @@ class ListingController extends Controller
             $step = $request->step ?? ($listing->step + 1);
             $action = $request->action ?? 'update'; // 'update' ou 'complete'
 
-            // ✅ Nettoyage du prix AVANT validation (même logique que store)
+            // ✅ Nettoyage du prix AVANT validation
             if ($request->has('price') && $request->price !== null && $request->price !== '') {
                 $cleanPrice = str_replace([' ', ','], '', $request->price);
                 $cleanPrice = is_numeric($cleanPrice) ? (float)$cleanPrice : null;
                 $request->merge(['price' => $cleanPrice]);
             }
 
-            // ✅ Validation selon le step (même logique que store)
+            // ✅ Validation selon le step
             if ($step >= 3 && $action === 'complete') {
-                // Step paiement - validation amount seulement
                 $request->validate([
                     'amount' => 'required|numeric|min:1',
                 ]);
             } else {
-                // Step 1 & 2 : validation des données de base (même que store)
                 $request->validate([
                     'title'       => 'sometimes|string|max:255',
                     'description' => 'sometimes|string',
@@ -547,7 +545,7 @@ class ListingController extends Controller
                 ]);
             }
 
-            // ✅ Remplissage du listing (même logique que store)
+            // ✅ Remplissage du listing
             $listing->fill(array_filter($request->only([
                 'title',
                 'description',
@@ -566,9 +564,8 @@ class ListingController extends Controller
             $listing->step = max($listing->step, $step);
             $listing->save();
 
-            // ✅ Gestion des images (même logique que store)
+            // ✅ Gestion des images
             if ($request->has('images')) {
-                // Supprimer les anciennes images si de nouvelles sont fournies
                 $listing->images()->delete();
                 foreach ($request->images as $imageUrl) {
                     $listing->images()->create(['image_url' => $imageUrl]);
@@ -580,54 +577,51 @@ class ListingController extends Controller
 
             // ✅ Paiement uniquement au step 3 avec action complete
             if ($step >= 3 && $action === 'complete') {
-                // 🔥 تحويل المبلغ إلى AED إذا لم يكن كذلك (même logique que store)
                 $originalAmount = $request->amount;
                 $aedAmount = $originalAmount;
-                $originalCurrency = 'AED'; // Currency par défaut
+                $originalCurrency = 'AED';
+                $exchangeRate = 1;
 
-                // إذا كان المستخدم من بلد آخر، نحول المبلغ إلى AED
+                // Si l'utilisateur est d'un autre pays, convertir vers AED
                 $countryId = $request->country_id ?? $listing->country_id;
 
-                if ($countryId && $countryId != 2) { // 2 = UAE dans votre DB
+                if ($countryId && $countryId != 2) { // 2 = UAE
                     $currency = CurrencyExchangeRate::where('country_id', $countryId)->first();
+
                     if ($currency && $currency->exchange_rate > 0) {
                         $originalCurrency = $currency->currency_code;
+                        $exchangeRate = $currency->exchange_rate;
 
-                        // Logique de conversion basée sur les taux de change de votre DB
-                        // Si exchange_rate < 1 (comme KWD = 0.0837), c'est le taux pour convertir de AED vers la devise locale
-                        // Donc pour convertir de la devise locale vers AED, on divise par ce taux
-                        if ($currency->exchange_rate < 1) {
-                            // Pour les devises comme KWD où 1 AED = 0.0837 KWD
-                            // Pour convertir 100 KWD vers AED: 100 / 0.0837 = 1195.22 AED
-                            $aedAmount = round($originalAmount / $currency->exchange_rate, 2);
-                        } else {
-                            // Pour les devises où 1 unité locale = X AED
-                            $aedAmount = round($originalAmount * $currency->exchange_rate, 2);
-                        }
+                        // 🔥 LOGIQUE CORRECTE : TOUJOURS diviser par exchange_rate
+                        // Si exchange_rate = 0.98, cela signifie : 1 AED = 0.98 SAR
+                        // Donc pour convertir SAR → AED : montant_sar / 0.98
 
-                        \Log::info("Complete Listing - Conversion currency: {$originalAmount} {$originalCurrency} = {$aedAmount} AED (rate: {$currency->exchange_rate})");
+                        $aedAmount = round($originalAmount / $exchangeRate, 2);
+
+                        \Log::info("Complete Listing - Conversion: {$originalAmount} {$originalCurrency} → {$aedAmount} AED (rate: 1 AED = {$exchangeRate} {$originalCurrency})");
                     }
                 }
 
                 $payment = Payment::create([
-                    'user_id'       => $sellerId,
-                    'listing_id'    => $listing->id,
-                    'amount'        => $aedAmount, // 🔥 دائماً AED
-                    'original_amount' => $originalAmount, // حفظ المبلغ الأصلي للمرجع
-                    'currency'      => 'AED', // 🔥 دائماً AED
-                    'payment_status' => 'pending',
-                    'cart_id'       => 'cart_' . time(),
+                    'user_id'           => $sellerId,
+                    'listing_id'        => $listing->id,
+                    'amount'            => $aedAmount,
+                    'original_amount'   => $originalAmount,
+                    'original_currency' => $originalCurrency,
+                    'currency'          => 'AED',
+                    'payment_status'    => 'pending',
+                    'cart_id'           => 'cart_' . time(),
                 ]);
 
-                // Payload PayTabs - دائماً بـ AED
+                // Payload PayTabs
                 $payload = [
                     'profile_id' => (int) config('paytabs.profile_id'),
                     'tran_type' => 'sale',
                     'tran_class' => 'ecom',
                     'cart_id' => $payment->cart_id,
                     'cart_description' => 'Completion Payment for Listing #' . $listing->id,
-                    'cart_currency' => 'AED', // 🔥 دائماً AED
-                    'cart_amount' => $aedAmount, // 🔥 المبلغ بـ AED
+                    'cart_currency' => 'AED',
+                    'cart_amount' => $aedAmount,
                     'customer_details' => [
                         'name' => Auth::user()->name,
                         'email' => Auth::user()->email,
@@ -635,7 +629,7 @@ class ListingController extends Controller
                         'street1' => 'N/A',
                         'city' => 'N/A',
                         'state' => 'N/A',
-                        'country' => 'ARE', // 🔥 دائماً UAE للدفع
+                        'country' => 'ARE',
                         'zip' => '00000',
                         'ip' => $request->ip()
                     ],
@@ -643,7 +637,6 @@ class ListingController extends Controller
                     'return' => route('paytabs.return'),
                 ];
 
-                // استخدام PayTabs UAE دائماً
                 $baseUrl = 'https://secure.paytabs.com/';
 
                 $response = Http::withHeaders([
@@ -654,7 +647,10 @@ class ListingController extends Controller
 
                 if (!$response->successful()) {
                     DB::rollBack();
-                    return response()->json(['error' => 'Payment request failed', 'details' => $response->json()], 400);
+                    return response()->json([
+                        'error' => 'Payment request failed',
+                        'details' => $response->json()
+                    ], 400);
                 }
 
                 $data = $response->json();
@@ -670,8 +666,10 @@ class ListingController extends Controller
                     'message' => 'Listing completed, payment initiated',
                     'listing_id' => $listing->id,
                     'payment_id' => $payment->id,
-                    'amount_aed' => $aedAmount, // 🔥 المبلغ بـ AED
-                    'original_amount' => $originalAmount, // المبلغ الأصلي
+                    'amount_aed' => $aedAmount,
+                    'original_amount' => $originalAmount,
+                    'original_currency' => $originalCurrency,
+                    'exchange_rate' => "1 AED = {$exchangeRate} {$originalCurrency}",
                     'currency' => 'AED',
                     'redirect_url' => $data['redirect_url'] ?? null,
                     'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate'])
@@ -691,10 +689,12 @@ class ListingController extends Controller
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => 'Failed to complete listing', 'details' => $e->getMessage()], 500);
+            return response()->json([
+                'error' => 'Failed to complete listing',
+                'details' => $e->getMessage()
+            ], 500);
         }
     }
-
     /**
      * @OA\Get(
      *     path="/api/listings/country/{country_id}",
