@@ -16,305 +16,313 @@ use Illuminate\Support\Facades\DB;
 class FilterController extends Controller
 {
     /**
- * @OA\Get(
- *     path="/api/filter/motorcycles",
- *     summary="Filter motorcycles",
- *     description="Filter motorcycles by price, brand, model, year, condition, mileage, seller type and location",
- *     operationId="filterMotorcycles",
- *     tags={"Filters"},
- *     @OA\Parameter(
- *         name="min_price",
- *         in="query",
- *         description="Minimum price filter (includes fixed price and minimum bid for auctions)",
- *         required=false,
- *         @OA\Schema(type="number", format="float", minimum=0)
- *     ),
- *     @OA\Parameter(
- *         name="max_price",
- *         in="query",
- *         description="Maximum price filter (includes fixed price and minimum bid for auctions)",
- *         required=false,
- *         @OA\Schema(type="number", format="float", minimum=0)
- *     ),
- *     @OA\Parameter(
- *         name="brands[]",
- *         in="query",
- *         description="Array of brand IDs to filter",
- *         required=false,
- *         @OA\Schema(type="array", @OA\Items(type="integer"))
- *     ),
- *     @OA\Parameter(
- *         name="models[]",
- *         in="query",
- *         description="Array of model IDs to filter",
- *         required=false,
- *         @OA\Schema(type="array", @OA\Items(type="integer"))
- *     ),
- *     @OA\Parameter(
- *         name="types[]",
- *         in="query",
- *         description="Array of motorcycle type IDs to filter",
- *         required=false,
- *         @OA\Schema(type="array", @OA\Items(type="integer"))
- *     ),
- *     @OA\Parameter(
- *         name="years[]",
- *         in="query",
- *         description="Array of year IDs to filter",
- *         required=false,
- *         @OA\Schema(type="array", @OA\Items(type="integer"))
- *     ),
- *     @OA\Parameter(
- *         name="condition",
- *         in="query",
- *         description="Motorcycle condition",
- *         required=false,
- *         @OA\Schema(type="string", enum={"new", "used", "excellent", "good", "fair", "poor"})
- *     ),
- *     @OA\Parameter(
- *         name="min_mileage",
- *         in="query",
- *         description="Minimum mileage filter",
- *         required=false,
- *         @OA\Schema(type="integer", minimum=0)
- *     ),
- *     @OA\Parameter(
- *         name="max_mileage",
- *         in="query",
- *         description="Maximum mileage filter",
- *         required=false,
- *         @OA\Schema(type="integer", minimum=0)
- *     ),
- *     @OA\Parameter(
- *         name="seller_type",
- *         in="query",
- *         description="Type of seller",
- *         required=false,
- *         @OA\Schema(type="string", enum={"individual", "professional", "dealer"})
- *     ),
- *     @OA\Parameter(
- *         name="country_id",
- *         in="query",
- *         description="Country ID filter",
- *         required=false,
- *         @OA\Schema(type="integer")
- *     ),
- *     @OA\Parameter(
- *         name="city_id",
- *         in="query",
- *         description="City ID filter",
- *         required=false,
- *         @OA\Schema(type="integer")
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Successful operation",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(
- *                 property="motorcycles",
- *                 type="array",
- *                 @OA\Items(
- *                     type="object",
- *                     @OA\Property(property="id", type="integer", example=1),
- *                     @OA\Property(property="title", type="string", example="Honda CBR600RR"),
- *                     @OA\Property(property="description", type="string", example="Excellent condition motorcycle"),
- *                     @OA\Property(property="price", type="number", format="float", example=8500.00),
- *                     @OA\Property(property="is_auction", type="boolean", example=false),
- *                     @OA\Property(property="minimum_bid", type="number", format="float", example=5000.00, nullable=true),
- *                     @OA\Property(property="current_bid", type="number", format="float", example=6500.00, nullable=true),
- *                     @OA\Property(property="currency", type="string", example="MAD"),
- *                     @OA\Property(property="brand", type="string", example="Honda"),
- *                     @OA\Property(property="model", type="string", example="CBR600RR"),
- *                     @OA\Property(property="year", type="integer", example=2020),
- *                     @OA\Property(property="type", type="string", example="Sport"),
- *                     @OA\Property(property="listing_date", type="string", format="date-time", example="2024-01-15 10:30:00"),
- *                     @OA\Property(property="seller_type", type="string", example="individual"),
- *                     @OA\Property(
- *                         property="location",
- *                         type="object",
- *                         @OA\Property(property="country", type="string", example="Morocco"),
- *                         @OA\Property(property="city", type="string", example="Casablanca")
- *                     ),
- *                     @OA\Property(property="image", type="string", format="url", example="https://example.com/image.jpg", nullable=true)
- *                 )
- *             )
- *         )
- *     ),
- *     @OA\Response(response=400, description="Bad request"),
- *     @OA\Response(response=500, description="Internal server error")
- * )
- */
-public function filterMotorcycles(Request $request)
-{
-    $query = Listing::query();
+     * @OA\Get(
+     *     path="/api/filter/motorcycles",
+     *     summary="Filter motorcycles",
+     *     description="Filter motorcycles by price, brand, model, year, condition, mileage, seller type and location",
+     *     operationId="filterMotorcycles",
+     *     tags={"Filters"},
+     *     @OA\Parameter(
+     *         name="min_price",
+     *         in="query",
+     *         description="Minimum price filter (includes fixed price and minimum bid for auctions)",
+     *         required=false,
+     *         @OA\Schema(type="number", format="float", minimum=0)
+     *     ),
+     *     @OA\Parameter(
+     *         name="max_price",
+     *         in="query",
+     *         description="Maximum price filter (includes fixed price and minimum bid for auctions)",
+     *         required=false,
+     *         @OA\Schema(type="number", format="float", minimum=0)
+     *     ),
+     *     @OA\Parameter(
+     *         name="brands[]",
+     *         in="query",
+     *         description="Array of brand IDs to filter",
+     *         required=false,
+     *         @OA\Schema(type="array", @OA\Items(type="integer"))
+     *     ),
+     *     @OA\Parameter(
+     *         name="models[]",
+     *         in="query",
+     *         description="Array of model IDs to filter",
+     *         required=false,
+     *         @OA\Schema(type="array", @OA\Items(type="integer"))
+     *     ),
+     *     @OA\Parameter(
+     *         name="types[]",
+     *         in="query",
+     *         description="Array of motorcycle type IDs to filter",
+     *         required=false,
+     *         @OA\Schema(type="array", @OA\Items(type="integer"))
+     *     ),
+     *     @OA\Parameter(
+     *         name="years[]",
+     *         in="query",
+     *         description="Array of year IDs to filter",
+     *         required=false,
+     *         @OA\Schema(type="array", @OA\Items(type="integer"))
+     *     ),
+     *     @OA\Parameter(
+     *         name="condition",
+     *         in="query",
+     *         description="Motorcycle condition",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"new", "used", "excellent", "good", "fair", "poor"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="min_mileage",
+     *         in="query",
+     *         description="Minimum mileage filter",
+     *         required=false,
+     *         @OA\Schema(type="integer", minimum=0)
+     *     ),
+     *     @OA\Parameter(
+     *         name="max_mileage",
+     *         in="query",
+     *         description="Maximum mileage filter",
+     *         required=false,
+     *         @OA\Schema(type="integer", minimum=0)
+     *     ),
+     *     @OA\Parameter(
+     *         name="seller_type",
+     *         in="query",
+     *         description="Type of seller",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"individual", "professional", "dealer"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="country_id",
+     *         in="query",
+     *         description="Country ID filter",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="city_id",
+     *         in="query",
+     *         description="City ID filter",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="motorcycles",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="title", type="string", example="Honda CBR600RR"),
+     *                     @OA\Property(property="description", type="string", example="Excellent condition motorcycle"),
+     *                     @OA\Property(property="price", type="number", format="float", example=8500.00),
+     *                     @OA\Property(property="is_auction", type="boolean", example=false),
+     *                     @OA\Property(property="minimum_bid", type="number", format="float", example=5000.00, nullable=true),
+     *                     @OA\Property(property="current_bid", type="number", format="float", example=6500.00, nullable=true),
+     *                     @OA\Property(property="currency", type="string", example="MAD"),
+     *                     @OA\Property(property="brand", type="string", example="Honda"),
+     *                     @OA\Property(property="model", type="string", example="CBR600RR"),
+     *                     @OA\Property(property="year", type="integer", example=2020),
+     *                     @OA\Property(property="type", type="string", example="Sport"),
+     *                     @OA\Property(property="listing_date", type="string", format="date-time", example="2024-01-15 10:30:00"),
+     *                     @OA\Property(property="seller_type", type="string", example="individual"),
+     *                     @OA\Property(
+     *                         property="location",
+     *                         type="object",
+     *                         @OA\Property(property="country", type="string", example="Morocco"),
+     *                         @OA\Property(property="city", type="string", example="Casablanca")
+     *                     ),
+     *                     @OA\Property(property="image", type="string", format="url", example="https://example.com/image.jpg", nullable=true)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=500, description="Internal server error")
+     * )
+     */
+    public function filterMotorcycles(Request $request)
+    {
+        $query = Listing::query();
 
-    // On ne veut que les listings de catégorie 1 (motos)
-    $query->where('category_id', 1)->where('status', 'published');
+        // On ne veut que les listings de catégorie 1 (motos)
+        $query->where('category_id', 1)->where('status', 'published');
 
-    // ✅ Filtre de prix : prix fixe OU minimum_bid pour les enchères
-    $minPrice = $request->input('min_price');
-    $maxPrice = $request->input('max_price');
+        // ✅ Filtre de prix : prix fixe OU minimum_bid pour les enchères
+        $minPrice = $request->input('min_price');
+        $maxPrice = $request->input('max_price');
 
-    if ($minPrice !== null || $maxPrice !== null) {
-        $query->where(function($q) use ($minPrice, $maxPrice) {
-            // Pour les listings avec prix fixe
-            $q->where(function($subQ) use ($minPrice, $maxPrice) {
-                $subQ->whereNotNull('price');
+        if ($minPrice !== null || $maxPrice !== null) {
+            $query->where(function ($q) use ($minPrice, $maxPrice) {
+                // Pour les listings avec prix fixe
+                $q->where(function ($subQ) use ($minPrice, $maxPrice) {
+                    $subQ->whereNotNull('price');
 
-                if ($minPrice !== null && $maxPrice !== null) {
-                    $subQ->whereBetween('price', [(float)$minPrice, (float)$maxPrice]);
-                } elseif ($minPrice !== null) {
-                    $subQ->where('price', '>=', (float)$minPrice);
-                } elseif ($maxPrice !== null) {
-                    $subQ->where('price', '<=', (float)$maxPrice);
-                }
+                    if ($minPrice !== null && $maxPrice !== null) {
+                        $subQ->whereBetween('price', [(float)$minPrice, (float)$maxPrice]);
+                    } elseif ($minPrice !== null) {
+                        $subQ->where('price', '>=', (float)$minPrice);
+                    } elseif ($maxPrice !== null) {
+                        $subQ->where('price', '<=', (float)$maxPrice);
+                    }
+                });
+
+                // OU pour les listings aux enchères (vérifier minimum_bid)
+                $q->orWhere(function ($subQ) use ($minPrice, $maxPrice) {
+                    $subQ->whereNull('price')
+                        ->where('auction_enabled', true);
+
+                    // Filtrer par minimum_bid
+                    if ($minPrice !== null && $maxPrice !== null) {
+                        $subQ->whereBetween('minimum_bid', [(float)$minPrice, (float)$maxPrice]);
+                    } elseif ($minPrice !== null) {
+                        $subQ->where('minimum_bid', '>=', (float)$minPrice);
+                    } elseif ($maxPrice !== null) {
+                        $subQ->where('minimum_bid', '<=', (float)$maxPrice);
+                    }
+                });
             });
+        }
 
-            // OU pour les listings aux enchères (vérifier minimum_bid)
-            $q->orWhere(function($subQ) use ($minPrice, $maxPrice) {
-                $subQ->whereNull('price')
-                     ->where('auction_enabled', true);
-
-                // Filtrer par minimum_bid
-                if ($minPrice !== null && $maxPrice !== null) {
-                    $subQ->whereBetween('minimum_bid', [(float)$minPrice, (float)$maxPrice]);
-                } elseif ($minPrice !== null) {
-                    $subQ->where('minimum_bid', '>=', (float)$minPrice);
-                } elseif ($maxPrice !== null) {
-                    $subQ->where('minimum_bid', '<=', (float)$maxPrice);
+        // ✅ Filtrer sur la relation motorcycle
+        $query->whereHas('motorcycle', function ($q) use ($request) {
+            // Filtre marques (brand_id) - plusieurs possibles
+            if ($request->has('brands')) {
+                $brands = $request->input('brands');
+                if (is_array($brands) && count($brands) > 0) {
+                    $q->whereIn('brand_id', $brands);
                 }
-            });
+            }
+
+            // Filtre modèles (model_id) - plusieurs possibles
+            if ($request->has('models')) {
+                $models = $request->input('models');
+                if (is_array($models) && count($models) > 0) {
+                    $q->whereIn('model_id', $models);
+                }
+            }
+
+            // Filtre types de moto (type_id) - plusieurs possibles
+            if ($request->has('types')) {
+                $types = $request->input('types');
+                if (is_array($types) && count($types) > 0) {
+                    $q->whereIn('type_id', $types);
+                }
+            }
+
+            // Filtre années (year_id) - plusieurs possibles
+            if ($request->has('years')) {
+                $years = $request->input('years');
+                if (is_array($years) && count($years) > 0) {
+                    $q->whereIn('year_id', $years);
+                }
+            }
+
+            // Filtre condition (ex: 'new', 'used')
+            if ($request->has('condition')) {
+                $condition = $request->input('condition');
+                $q->where('general_condition', $condition);
+            }
+
+            // Filtre kilométrage
+            $minMileage = $request->input('min_mileage');
+            $maxMileage = $request->input('max_mileage');
+
+            if ($minMileage !== null && $maxMileage !== null) {
+                $q->whereBetween('mileage', [(int)$minMileage, (int)$maxMileage]);
+            } elseif ($minMileage !== null) {
+                $q->where('mileage', '>=', (int)$minMileage);
+            } elseif ($maxMileage !== null) {
+                $q->where('mileage', '<=', (int)$maxMileage);
+            }
         });
-    }
 
-    // ✅ Filtrer sur la relation motorcycle
-    $query->whereHas('motorcycle', function ($q) use ($request) {
-        // Filtre marques (brand_id) - plusieurs possibles
-        if ($request->has('brands')) {
-            $brands = $request->input('brands');
-            if (is_array($brands) && count($brands) > 0) {
-                $q->whereIn('brand_id', $brands);
-            }
+        // ✅ Filtres sur la table listings
+        if ($request->has('seller_type')) {
+            $query->where('seller_type', $request->input('seller_type'));
         }
 
-        // Filtre modèles (model_id) - plusieurs possibles
-        if ($request->has('models')) {
-            $models = $request->input('models');
-            if (is_array($models) && count($models) > 0) {
-                $q->whereIn('model_id', $models);
-            }
+        if ($request->has('country_id')) {
+            $query->where('country_id', $request->input('country_id'));
         }
 
-        // Filtre types de moto (type_id) - plusieurs possibles
-        if ($request->has('types')) {
-            $types = $request->input('types');
-            if (is_array($types) && count($types) > 0) {
-                $q->whereIn('type_id', $types);
-            }
+        if ($request->has('city_id')) {
+            $query->where('city_id', $request->input('city_id'));
         }
 
-        // Filtre années (year_id) - plusieurs possibles
-        if ($request->has('years')) {
-            $years = $request->input('years');
-            if (is_array($years) && count($years) > 0) {
-                $q->whereIn('year_id', $years);
-            }
-        }
-
-        // Filtre condition (ex: 'new', 'used')
-        if ($request->has('condition')) {
-            $condition = $request->input('condition');
-            $q->where('general_condition', $condition);
-        }
-
-        // Filtre kilométrage
-        $minMileage = $request->input('min_mileage');
-        $maxMileage = $request->input('max_mileage');
-
-        if ($minMileage !== null && $maxMileage !== null) {
-            $q->whereBetween('mileage', [(int)$minMileage, (int)$maxMileage]);
-        } elseif ($minMileage !== null) {
-            $q->where('mileage', '>=', (int)$minMileage);
-        } elseif ($maxMileage !== null) {
-            $q->where('mileage', '<=', (int)$maxMileage);
-        }
-    });
-
-    // ✅ Filtres sur la table listings
-    if ($request->has('seller_type')) {
-        $query->where('seller_type', $request->input('seller_type'));
-    }
-
-    if ($request->has('country_id')) {
-        $query->where('country_id', $request->input('country_id'));
-    }
-
-    if ($request->has('city_id')) {
-        $query->where('city_id', $request->input('city_id'));
-    }
-
-    // ✅ Récupérer les résultats avec sous-requête pour les enchères
-    $motorcycles = $query->select([
-            'id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid',
-            'created_at', 'seller_type', 'country_id', 'city_id',
+        // ✅ Récupérer les résultats avec sous-requête pour les enchères
+        $motorcycles = $query->select([
+            'id',
+            'title',
+            'description',
+            'price',
+            'auction_enabled',
+            'minimum_bid',
+            'created_at',
+            'seller_type',
+            'country_id',
+            'city_id',
             // Sous-requête pour récupérer la dernière enchère
             DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
         ])
-        ->with([
-            'images' => function ($query) {
-                $query->select('listing_id', 'image_url')->limit(1);
-            },
-            'motorcycle' => function ($query) {
-                $query->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id')
-                    ->with([
-                        'brand:id,name',
-                        'model:id,name',
-                        'year:id,year',
-                        'type:id,name'
-                    ]);
-            },
-            'country:id,name',
-            'city:id,name'
-        ])
-        ->get()
-        ->map(function ($listing) {
-            // ✅ Déterminer le prix à afficher
-            $displayPrice = $listing->price;
-            $isAuction = false;
+            ->with([
+                'images' => function ($query) {
+                    $query->select('listing_id', 'image_url')->limit(1);
+                },
+                'motorcycle' => function ($query) {
+                    $query->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id')
+                        ->with([
+                            'brand:id,name',
+                            'model:id,name',
+                            'year:id,year',
+                            'type:id,name'
+                        ]);
+                },
+                'country:id,name',
+                'city:id,name'
+            ])
+            ->get()
+            ->map(function ($listing) {
+                // ✅ Déterminer le prix à afficher
+                $displayPrice = $listing->price;
+                $isAuction = false;
 
-            if (!$displayPrice && $listing->auction_enabled) {
-                $displayPrice = $listing->current_bid ?: $listing->minimum_bid;
-                $isAuction = true;
-            }
+                if (!$displayPrice && $listing->auction_enabled) {
+                    $displayPrice = $listing->current_bid ?: $listing->minimum_bid;
+                    $isAuction = true;
+                }
 
-            return [
-                'id' => $listing->id,
-                'title' => $listing->title,
-                'description' => $listing->description,
-                'price' => $displayPrice,
-                'is_auction' => $isAuction,
-                'minimum_bid' => $listing->minimum_bid,
-                'current_bid' => $listing->current_bid,
-                'currency' => config('paytabs.currency', 'MAD'),
-                'brand' => $listing->motorcycle?->brand?->name ?? null,
-                'model' => $listing->motorcycle?->model?->name ?? null,
-                'year' => $listing->motorcycle?->year?->year ?? null,
-                'type' => $listing->motorcycle?->type?->name ?? null,
-                'listing_date' => $listing->created_at?->format('Y-m-d H:i:s') ?? null,
-                'image' => $listing->images->first()?->image_url ?? null,
-                'seller_type' => $listing->seller_type,
-                'location' => [
-                    'country' => $listing->country?->name ?? null,
-                    'city' => $listing->city?->name ?? null,
-                ]
-            ];
-        });
+                return [
+                    'id' => $listing->id,
+                    'title' => $listing->title,
+                    'description' => $listing->description,
+                    'price' => $displayPrice,
+                    'is_auction' => $isAuction,
+                    'minimum_bid' => $listing->minimum_bid,
+                    'current_bid' => $listing->current_bid,
+                    'currency' => config('paytabs.currency', 'MAD'),
+                    'brand' => $listing->motorcycle?->brand?->name ?? null,
+                    'model' => $listing->motorcycle?->model?->name ?? null,
+                    'year' => $listing->motorcycle?->year?->year ?? null,
+                    'type' => $listing->motorcycle?->type?->name ?? null,
+                    'listing_date' => $listing->created_at?->format('Y-m-d H:i:s') ?? null,
+                    'image' => $listing->images->first()?->image_url ?? null,
+                    'seller_type' => $listing->seller_type,
+                    'location' => [
+                        'country' => $listing->country?->name ?? null,
+                        'city' => $listing->city?->name ?? null,
+                    ]
+                ];
+            });
 
-    return response()->json([
-        'motorcycles' => $motorcycles,
-    ]);
-}
+        return response()->json([
+            'motorcycles' => $motorcycles,
+        ]);
+    }
 
     /**
      * @OA\Get(

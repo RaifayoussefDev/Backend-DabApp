@@ -4368,6 +4368,123 @@
                 }
             }
         },
+        "/api/brands/{brandId}/models-with-listings": {
+            "get": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Get motorcycle models with listings for a specific brand",
+                "operationId": "a66327b95c64e3aca63310abfddf49ec",
+                "parameters": [
+                    {
+                        "name": "brandId",
+                        "in": "path",
+                        "description": "Brand ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of motorcycle models with their listing counts",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "models": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "listings_count": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Brand not found"
+                    }
+                }
+            }
+        },
+        "/api/brands/{brandId}/models/{modelId}/years-with-listings": {
+            "get": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Get motorcycle years with listings for a specific brand and model",
+                "operationId": "8fd353f2b653f1039e68240b9d6619f6",
+                "parameters": [
+                    {
+                        "name": "brandId",
+                        "in": "path",
+                        "description": "Brand ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "modelId",
+                        "in": "path",
+                        "description": "Model ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of years with their listing counts",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "years": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "year_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "year": {
+                                                        "type": "integer"
+                                                    },
+                                                    "listings_count": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Brand or Model not found"
+                    }
+                }
+            }
+        },
         "/api/categories/{categoryId}/price-range": {
             "get": {
                 "tags": [

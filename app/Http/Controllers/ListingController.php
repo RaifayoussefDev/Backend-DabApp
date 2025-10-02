@@ -1914,6 +1914,145 @@ class ListingController extends Controller
     }
 
 
+    /**
+     * @OA\Get(
+     *     path="/api/brands/{brandId}/models-with-listings",
+     *     summary="Get motorcycle models with listings for a specific brand",
+     *     tags={"Listings"},
+     *     @OA\Parameter(
+     *         name="brandId",
+     *         in="path",
+     *         required=true,
+     *         description="Brand ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of motorcycle models with their listing counts",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="models",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer"),
+     *                     @OA\Property(property="name", type="string"),
+     *                     @OA\Property(property="listings_count", type="integer")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Brand not found"
+     *     )
+     * )
+     */
+    public function getModelsWithListingsByBrand($brandId)
+    {
+        $brand = MotorcycleBrand::find($brandId);
+
+        if (!$brand) {
+            return response()->json([
+                'message' => 'Brand not found'
+            ], 404);
+        }
+
+        $models = MotorcycleModel::select('motorcycle_models.id', 'motorcycle_models.name')
+            ->join('motorcycles', 'motorcycle_models.id', '=', 'motorcycles.model_id')
+            ->join('listings', 'motorcycles.listing_id', '=', 'listings.id')
+            ->where('motorcycles.brand_id', $brandId)
+            ->where('listings.status', 'published')
+            ->groupBy('motorcycle_models.id', 'motorcycle_models.name')
+            ->selectRaw('COUNT(listings.id) as listings_count')
+            ->orderBy('motorcycle_models.name')
+            ->get();
+
+        return response()->json([
+            'brand' => [
+                'id' => $brand->id,
+                'name' => $brand->name
+            ],
+            'models' => $models
+        ]);
+    }
+
+/**
+ * @OA\Get(
+ *     path="/api/brands/{brandId}/models/{modelId}/years-with-listings",
+ *     summary="Get motorcycle years with listings for a specific brand and model",
+ *     tags={"Listings"},
+ *     @OA\Parameter(
+ *         name="brandId",
+ *         in="path",
+ *         required=true,
+ *         description="Brand ID",
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Parameter(
+ *         name="modelId",
+ *         in="path",
+ *         required=true,
+ *         description="Model ID",
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="List of years with their listing counts",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(
+ *                 property="years",
+ *                 type="array",
+ *                 @OA\Items(
+ *                     @OA\Property(property="year_id", type="integer"),
+ *                     @OA\Property(property="year", type="integer"),
+ *                     @OA\Property(property="listings_count", type="integer")
+ *                 )
+ *             )
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Brand or Model not found"
+ *     )
+ * )
+ */
+public function getYearsWithListingsByBrandAndModel($brandId, $modelId)
+{
+    $brand = MotorcycleBrand::find($brandId);
+    $model = MotorcycleModel::find($modelId);
+
+    if (!$brand || !$model) {
+        return response()->json([
+            'message' => 'Brand or Model not found'
+        ], 404);
+    }
+
+    $years = Motorcycle::select('motorcycles.year_id', 'motorcycle_years.year')
+        ->join('listings', 'motorcycles.listing_id', '=', 'listings.id')
+        ->join('motorcycle_years', 'motorcycles.year_id', '=', 'motorcycle_years.id')
+        ->where('motorcycles.brand_id', $brandId)
+        ->where('motorcycles.model_id', $modelId)
+        ->where('listings.status', 'published')
+        ->groupBy('motorcycles.year_id', 'motorcycle_years.year')
+        ->selectRaw('COUNT(listings.id) as listings_count')
+        ->orderBy('motorcycle_years.year', 'DESC')
+        ->get();
+
+    return response()->json([
+        'brand' => [
+            'id' => $brand->id,
+            'name' => $brand->name
+        ],
+        'model' => [
+            'id' => $model->id,
+            'name' => $model->name
+        ],
+        'years' => $years
+    ]);
+}
+
 
     /**
      * @OA\Get(

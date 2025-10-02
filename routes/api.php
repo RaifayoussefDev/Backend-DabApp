@@ -274,6 +274,13 @@ Route::get('/listings/search-by-model', [ListingController::class, 'searchByCate
 Route::apiResource('currency-rates', CurrencyExchangeRateController::class);
 
 Route::get('/brands/listings-count', [ListingController::class, 'getBrandsWithListingCount']);
+
+// Get models with listings for a specific brand
+Route::get('/brands/{brandId}/models-with-listings', [ListingController::class, 'getModelsWithListingsByBrand']);
+
+// Get years with listings for a specific brand and model
+Route::get('/brands/{brandId}/models/{modelId}/years-with-listings', [ListingController::class, 'getYearsWithListingsByBrandAndModel']);
+
 Route::get('categories/{categoryId}/price-range', [ListingController::class, 'getPriceRangeByCategory'])
     ->where('categoryId', '[1-3]'); // Limite aux catégories 1, 2, 3
 Route::get('/filter/motorcycles', [FilterController::class, 'filterMotorcycles']);
