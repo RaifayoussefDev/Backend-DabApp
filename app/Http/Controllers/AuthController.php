@@ -1562,12 +1562,73 @@ class AuthController extends Controller
             'password' => 'required|string|min:6|confirmed',
         ]);
 
-        // Find user by login (email or phone)
-        $user = filter_var($request->login, FILTER_VALIDATE_EMAIL)
-            ? User::where('email', $request->login)->first()
-            : User::where('phone', $request->login)->first();
+        $login = $request->input('login');
+
+        // ⭐ DÉTERMINER LE TYPE DE LOGIN DÈS LE DÉBUT
+        $isEmailLogin = filter_var($login, FILTER_VALIDATE_EMAIL);
+
+        Log::info('Password reset verification attempt', [
+            'login' => $login,
+            'is_email_login' => $isEmailLogin
+        ]);
+
+        // Find user by email or phone
+        $user = null;
+
+        if ($isEmailLogin) {
+            // Login is an email
+            $user = User::where('email', $login)->first();
+            Log::info('Password reset verification with email', ['email' => $login]);
+        } else {
+            // Login is potentially a phone number - try different formats
+
+            // First, try exact match
+            $user = User::where('phone', $login)->first();
+
+            if (!$user) {
+                // If no exact match, try with country processing
+                $countryName = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Morocco';
+
+                try {
+                    $countryData = CountryHelper::processCountryAndPhoneByName($login, $countryName);
+                    $formattedPhone = $countryData['formatted_phone'];
+
+                    Log::info('Trying password reset verification with formatted phone', [
+                        'original' => $login,
+                        'formatted' => $formattedPhone,
+                        'country' => $countryName
+                    ]);
+
+                    $user = User::where('phone', $formattedPhone)->first();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to format phone for password reset verification', [
+                        'phone' => $login,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            if (!$user) {
+                // Try removing/adding + prefix
+                if (str_starts_with($login, '+')) {
+                    $phoneWithoutPlus = substr($login, 1);
+                    $user = User::where('phone', $phoneWithoutPlus)->first();
+                } else {
+                    $phoneWithPlus = '+' . $login;
+                    $user = User::where('phone', $phoneWithPlus)->first();
+                }
+            }
+
+            Log::info('Password reset verification with phone', [
+                'phone' => $login,
+                'user_found' => $user ? true : false
+            ]);
+        }
 
         if (!$user) {
+            Log::warning('Password reset verification failed - user not found', [
+                'login' => $login
+            ]);
             return response()->json(['error' => 'User not found'], 404);
         }
 
@@ -1579,6 +1640,10 @@ class AuthController extends Controller
             ->first();
 
         if (!$resetRecord) {
+            Log::warning('Invalid or expired reset code', [
+                'user_id' => $user->id,
+                'login' => $login
+            ]);
             return response()->json(['error' => 'Invalid or expired reset code'], 401);
         }
 
@@ -1589,6 +1654,11 @@ class AuthController extends Controller
         // Delete the reset code after successful use
         DB::table('password_resets')->where('id', $resetRecord->id)->delete();
 
+        Log::info('Password reset code verified and deleted', [
+            'user_id' => $user->id,
+            'reset_record_id' => $resetRecord->id
+        ]);
+
         // Also update Firebase password if needed
         try {
             $auth = (new Factory)
@@ -1597,6 +1667,10 @@ class AuthController extends Controller
 
             $auth->updateUser($user->email, [
                 'password' => $request->password,
+            ]);
+
+            Log::info('Firebase password updated successfully', [
+                'user_id' => $user->id
             ]);
         } catch (\Exception $e) {
             Log::warning('Failed to update Firebase password', [
@@ -1628,9 +1702,17 @@ class AuthController extends Controller
             ]
         );
 
+        // Mark user as online
+        $user->is_online = 1;
+        $user->last_login = now();
+        $user->save();
+
         Log::info('Password reset successfully', [
             'user_id' => $user->id,
-            'email' => $user->email
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'login_type' => $isEmailLogin ? 'email' : 'phone',
+            'country' => $country
         ]);
 
         return response()->json([
