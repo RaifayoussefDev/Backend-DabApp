@@ -989,10 +989,10 @@ class ListingController extends Controller
             $listings->load([
                 'licensePlate' => function ($query) {
                     $query->with([
-                        'format:id,name,pattern,country',
+                        'format', // ✅ Charger tous les champs disponibles
                         'city:id,name',
                         'country:id,name',
-                        'fieldValues.formatField:id,field_name,position,field_type,field_label,is_required,max_length,validation_pattern'
+                        'fieldValues.formatField' // ✅ Charger tous les champs disponibles
                     ]);
                 }
             ]);
