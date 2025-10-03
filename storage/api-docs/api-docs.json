@@ -1982,6 +1982,16 @@
                         }
                     },
                     {
+                        "name": "country",
+                        "in": "query",
+                        "description": "Filter by country name (supports partial matching). If no results found, shows all countries.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Morocco"
+                        }
+                    },
+                    {
                         "name": "min_price",
                         "in": "query",
                         "description": "Minimum price filter (includes fixed price and minimum bid for auctions)",
@@ -2105,7 +2115,7 @@
                     {
                         "name": "country_id",
                         "in": "query",
-                        "description": "Country ID filter",
+                        "description": "Country ID filter (alternative to country name)",
                         "required": false,
                         "schema": {
                             "type": "integer"
@@ -2128,6 +2138,23 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Showing listings for 'Morocco'."
+                                        },
+                                        "searched_country": {
+                                            "type": "string",
+                                            "example": "Morocco",
+                                            "nullable": true
+                                        },
+                                        "showing_all_countries": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "total_listings": {
+                                            "type": "integer",
+                                            "example": 25
+                                        },
                                         "motorcycles": {
                                             "type": "array",
                                             "items": {
@@ -2168,6 +2195,10 @@
                                                     "currency": {
                                                         "type": "string",
                                                         "example": "MAD"
+                                                    },
+                                                    "category": {
+                                                        "type": "string",
+                                                        "example": "Motorcycles"
                                                     },
                                                     "brand": {
                                                         "type": "string",
@@ -2238,13 +2269,23 @@
                     "Filters"
                 ],
                 "summary": "Filter spare parts",
-                "description": "Filter spare parts by price, brand, category, and condition",
+                "description": "Filter spare parts by price, brand, category, condition, location and country name",
                 "operationId": "filterSpareParts",
                 "parameters": [
                     {
+                        "name": "country",
+                        "in": "query",
+                        "description": "Filter by country name (supports partial matching). If no results found, shows all countries.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Morocco"
+                        }
+                    },
+                    {
                         "name": "min_price",
                         "in": "query",
-                        "description": "Minimum price filter",
+                        "description": "Minimum price filter (includes fixed price and minimum bid for auctions)",
                         "required": false,
                         "schema": {
                             "type": "number",
@@ -2255,7 +2296,7 @@
                     {
                         "name": "max_price",
                         "in": "query",
-                        "description": "Maximum price filter",
+                        "description": "Maximum price filter (includes fixed price and minimum bid for auctions)",
                         "required": false,
                         "schema": {
                             "type": "number",
@@ -2303,6 +2344,38 @@
                                 "poor"
                             ]
                         }
+                    },
+                    {
+                        "name": "seller_type",
+                        "in": "query",
+                        "description": "Type of seller",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "individual",
+                                "professional",
+                                "dealer"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "country_id",
+                        "in": "query",
+                        "description": "Country ID filter (alternative to country name)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "city_id",
+                        "in": "query",
+                        "description": "City ID filter",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
                     }
                 ],
                 "responses": {
@@ -2311,35 +2384,111 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "properties": {
-                                            "id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "title": {
-                                                "type": "string",
-                                                "example": "Brake Pads Set"
-                                            },
-                                            "description": {
-                                                "type": "string",
-                                                "example": "High quality brake pads"
-                                            },
-                                            "price": {
-                                                "type": "number",
-                                                "format": "float",
-                                                "example": 45.99
-                                            },
-                                            "image": {
-                                                "type": "string",
-                                                "format": "url",
-                                                "example": "https://example.com/image.jpg",
-                                                "nullable": true
-                                            }
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Showing listings for 'Morocco'."
                                         },
-                                        "type": "object"
-                                    }
+                                        "searched_country": {
+                                            "type": "string",
+                                            "example": "Morocco",
+                                            "nullable": true
+                                        },
+                                        "showing_all_countries": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "total_listings": {
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "spare_parts": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "Brake Pads Set"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "High quality brake pads"
+                                                    },
+                                                    "price": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 45.99
+                                                    },
+                                                    "is_auction": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "minimum_bid": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 30,
+                                                        "nullable": true
+                                                    },
+                                                    "current_bid": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 35,
+                                                        "nullable": true
+                                                    },
+                                                    "currency": {
+                                                        "type": "string",
+                                                        "example": "MAD"
+                                                    },
+                                                    "brand": {
+                                                        "type": "string",
+                                                        "example": "Brembo"
+                                                    },
+                                                    "category": {
+                                                        "type": "string",
+                                                        "example": "Brakes"
+                                                    },
+                                                    "condition": {
+                                                        "type": "string",
+                                                        "example": "new"
+                                                    },
+                                                    "listing_date": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-01-15 10:30:00"
+                                                    },
+                                                    "seller_type": {
+                                                        "type": "string",
+                                                        "example": "professional"
+                                                    },
+                                                    "location": {
+                                                        "properties": {
+                                                            "country": {
+                                                                "type": "string",
+                                                                "example": "Morocco"
+                                                            },
+                                                            "city": {
+                                                                "type": "string",
+                                                                "example": "Casablanca"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "image": {
+                                                        "type": "string",
+                                                        "format": "url",
+                                                        "example": "https://example.com/image.jpg",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -2359,13 +2508,23 @@
                     "Filters"
                 ],
                 "summary": "Filter license plates",
-                "description": "Filter license plates by price, country, city, format and plate fields",
+                "description": "Filter license plates by price, country, city, format, plate fields and country name",
                 "operationId": "filterLicensePlates",
                 "parameters": [
                     {
+                        "name": "country",
+                        "in": "query",
+                        "description": "Filter by country name (supports partial matching). If no results found, shows all countries.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Morocco"
+                        }
+                    },
+                    {
                         "name": "min_price",
                         "in": "query",
-                        "description": "Minimum price filter",
+                        "description": "Minimum price filter (includes fixed price and minimum bid for auctions)",
                         "required": false,
                         "schema": {
                             "type": "number",
@@ -2376,7 +2535,7 @@
                     {
                         "name": "max_price",
                         "in": "query",
-                        "description": "Maximum price filter",
+                        "description": "Maximum price filter (includes fixed price and minimum bid for auctions)",
                         "required": false,
                         "schema": {
                             "type": "number",
@@ -2385,18 +2544,50 @@
                         }
                     },
                     {
-                        "name": "country_id",
+                        "name": "seller_type",
                         "in": "query",
-                        "description": "Filter by country ID",
+                        "description": "Type of seller",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "individual",
+                                "professional",
+                                "dealer"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "listing_country_id",
+                        "in": "query",
+                        "description": "Filter by listing country ID",
                         "required": false,
                         "schema": {
                             "type": "integer"
                         }
                     },
                     {
-                        "name": "city_id",
+                        "name": "listing_city_id",
                         "in": "query",
-                        "description": "Filter by city ID",
+                        "description": "Filter by listing city ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "plate_country_id",
+                        "in": "query",
+                        "description": "Filter by plate country ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "plate_city_id",
+                        "in": "query",
+                        "description": "Filter by plate city ID",
                         "required": false,
                         "schema": {
                             "type": "integer"
@@ -2427,35 +2618,133 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "properties": {
-                                            "id": {
-                                                "type": "integer"
-                                            },
-                                            "title": {
-                                                "type": "string"
-                                            },
-                                            "description": {
-                                                "type": "string"
-                                            },
-                                            "price": {
-                                                "type": "number",
-                                                "format": "float"
-                                            },
-                                            "image": {
-                                                "type": "string",
-                                                "nullable": true
-                                            },
-                                            "license_plate": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Showing listings for 'Morocco'."
+                                        },
+                                        "searched_country": {
+                                            "type": "string",
+                                            "example": "Morocco",
+                                            "nullable": true
+                                        },
+                                        "showing_all_countries": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "total_listings": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "results": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "Premium License Plate"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Rare plate number"
+                                                    },
+                                                    "price": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 5000
+                                                    },
+                                                    "is_auction": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "minimum_bid": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 3000,
+                                                        "nullable": true
+                                                    },
+                                                    "current_bid": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 3500,
+                                                        "nullable": true
+                                                    },
+                                                    "currency": {
+                                                        "type": "string",
+                                                        "example": "MAD"
+                                                    },
+                                                    "listing_date": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-01-15 10:30:00"
+                                                    },
+                                                    "seller_type": {
+                                                        "type": "string",
+                                                        "example": "individual"
+                                                    },
+                                                    "seller_location": {
+                                                        "properties": {
+                                                            "country": {
+                                                                "type": "string",
+                                                                "example": "Morocco"
+                                                            },
+                                                            "city": {
+                                                                "type": "string",
+                                                                "example": "Casablanca"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "image": {
+                                                        "type": "string",
+                                                        "format": "url",
+                                                        "nullable": true
+                                                    },
+                                                    "license_plate": {
+                                                        "properties": {
+                                                            "format": {
+                                                                "type": "string",
+                                                                "example": "Standard"
+                                                            },
+                                                            "plate_location": {
+                                                                "properties": {
+                                                                    "country": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "city": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "fields": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "object"
+                                                                }
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
                                                 "type": "object"
                                             }
-                                        },
-                                        "type": "object"
-                                    }
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "500": {
+                        "description": "Internal server error"
                     }
                 }
             }
