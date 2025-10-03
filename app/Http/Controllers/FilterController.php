@@ -712,7 +712,7 @@ class FilterController extends Controller
                 'id' => $listing->id,
                 'title' => $listing->title,
                 'description' => $listing->description,
-                'price' => $listing->price, // ✅ Prix original de la DB
+                'price' => $listing->price ?: $listing->minimum_bid, // ✅ Si pas de prix, afficher minimum_bid
                 'category_id' => $listing->category_id,
                 'auction_enabled' => $listing->auction_enabled,
                 'minimum_bid' => $listing->minimum_bid,
