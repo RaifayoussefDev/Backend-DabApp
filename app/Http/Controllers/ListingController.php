@@ -985,16 +985,12 @@ class ListingController extends Controller
                 }
             ]);
         } elseif ($category_id == 3) {
-            // License plates
+            // License plates - Chargement comme dans filterLicensePlates
             $listings->load([
-                'licensePlate' => function ($query) {
-                    $query->with([
-                        'format', // ✅ Charger tous les champs disponibles
-                        'city:id,name',
-                        'country:id,name',
-                        'fieldValues.formatField' // ✅ Charger tous les champs disponibles
-                    ]);
-                }
+                'licensePlate.format',
+                'licensePlate.city',
+                'licensePlate.country',
+                'licensePlate.fieldValues.formatField'
             ]);
         }
     
@@ -1031,11 +1027,14 @@ class ListingController extends Controller
             $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
     
             // ✅ Garder toutes les colonnes originales + ajouter les nouvelles
+            // Si price est null, afficher minimum_bid
+            $priceToShow = $listing->price ?? $listing->minimum_bid;
+            
             $baseData = [
                 'id' => $listing->id,
                 'title' => $listing->title,
                 'description' => $listing->description,
-                'price' => $listing->price, // ✅ Prix original de la DB
+                'price' => $priceToShow, // ✅ Si null, affiche minimum_bid
                 'category_id' => $listing->category_id,
                 'auction_enabled' => $listing->auction_enabled,
                 'minimum_bid' => $listing->minimum_bid,
