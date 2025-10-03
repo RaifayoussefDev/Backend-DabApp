@@ -715,7 +715,7 @@ class FilterController extends Controller
                 'id' => $listing->id,
                 'title' => $listing->title,
                 'description' => $listing->description,
-                'price' => $priceToShow, // ✅ Si null, affiche minimum_bid
+                'price' => $displayPrice, // ✅ Si null, affiche minimum_bid
                 'category_id' => $listing->category_id,
                 'auction_enabled' => $listing->auction_enabled,
                 'minimum_bid' => $listing->minimum_bid,
