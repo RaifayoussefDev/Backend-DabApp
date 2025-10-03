@@ -574,104 +574,236 @@ class FilterController extends Controller
      *     )
      * )
      */
- public function filterLicensePlates(Request $request)
+    public function getByCategory($category_id, Request $request)
     {
-        $query = Listing::query()
-            ->where('category_id', 3)
-            ->where('status', 'published');
-
-        // Price filtering
-        if ($request->filled('min_price')) {
-            $query->where('price', '>=', (float) $request->min_price);
-        }
-
-        if ($request->filled('max_price')) {
-            $query->where('price', '<=', (float) $request->max_price);
-        }
-
-        // Filtres sur la table listings (seller_type, location)
-        if ($request->filled('seller_type')) {
-            $query->where('seller_type', $request->seller_type);
-        }
-
-        if ($request->filled('listing_country_id')) {
-            $query->where('country_id', $request->listing_country_id);
-        }
-
-        if ($request->filled('listing_city_id')) {
-            $query->where('city_id', $request->listing_city_id);
-        }
-
-        // License plate relation filters
-        $query->whereHas('licensePlate', function ($q) use ($request) {
-            if ($request->filled('plate_country_id')) {
-                $q->where('country_id', $request->plate_country_id);
-            }
-
-            if ($request->filled('plate_city_id')) {
-                $q->where('city_id', $request->plate_city_id);
-            }
-
-            if ($request->filled('plate_format_id')) {
-                $q->where('plate_format_id', $request->plate_format_id);
-            }
-
-            if ($request->filled('plate_search')) {
-                $q->whereHas('fieldValues', function ($q2) use ($request) {
-                    $q2->where('field_value', 'like', '%' . $request->plate_search . '%');
+        $user = Auth::user();
+        $countryName = $request->get('country');
+        $plateSearch = $request->get('plate_search');
+        $showingAllCountries = false;
+        $message = '';
+    
+        // Build the base query
+        $query = Listing::where('category_id', $category_id)
+            ->where('status', 'published')
+            ->orderBy('created_at', 'desc');
+    
+        // Add license plate field search for category 3 (license plates)
+        if ($category_id == 3 && $plateSearch) {
+            $query->whereHas('licensePlate', function ($licensePlateQuery) use ($plateSearch) {
+                $licensePlateQuery->whereHas('fieldValues', function ($fieldQuery) use ($plateSearch) {
+                    $fieldQuery->where('field_value', 'LIKE', '%' . $plateSearch . '%');
                 });
+            });
+        }
+    
+        // Add country filter if provided
+        if ($countryName) {
+            $countryFilteredQuery = clone $query;
+            $countryFilteredQuery->whereHas('country', function ($q) use ($countryName) {
+                $q->where('name', 'LIKE', '%' . $countryName . '%');
+            });
+    
+            $countryListings = $countryFilteredQuery->get();
+    
+            if ($countryListings->isEmpty()) {
+                $listings = $query->get();
+                $showingAllCountries = true;
+                $message = "No listings found for '{$countryName}'. Showing all countries instead.";
+            } else {
+                $listings = $countryListings;
+                $message = "Showing listings for '{$countryName}'.";
             }
-        });
-
-        // Select fields and preload image + licensePlate + fieldValues + listing location
-        $results = $query->select('id', 'title', 'description', 'price', 'created_at', 'seller_type', 'country_id', 'city_id')
-            ->with([
-                'images' => function ($q) {
-                    $q->select('listing_id', 'image_url')->limit(1);
-                },
+        } else {
+            $listings = $query->get();
+    
+            if ($category_id == 3 && $plateSearch) {
+                $message = "Showing license plates containing '{$plateSearch}'.";
+            } else {
+                $message = "Showing all listings.";
+            }
+        }
+    
+        if ($countryName && $category_id == 3 && $plateSearch && !$showingAllCountries) {
+            $message = "Showing license plates containing '{$plateSearch}' for '{$countryName}'.";
+        }
+    
+        // ✅ Charger les relations nécessaires selon la catégorie
+        $listings->load([
+            'images' => function ($query) {
+                $query->select('listing_id', 'image_url')->limit(1);
+            },
+            'category:id,name',
+            'country:id,name',
+            'city:id,name',
+            'country.currencyExchangeRate:id,country_id,currency_symbol'
+        ]);
+    
+        // Charger les relations spécifiques par catégorie
+        if ($category_id == 1) {
+            // Motorcycles
+            $listings->load([
+                'motorcycle' => function ($query) {
+                    $query->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id', 'engine', 'mileage', 'body_condition', 'modified', 'insurance', 'general_condition', 'vehicle_care', 'transmission')
+                        ->with([
+                            'brand:id,name',
+                            'model:id,name',
+                            'year:id,year',
+                            'type:id,name'
+                        ]);
+                }
+            ]);
+        } elseif ($category_id == 2) {
+            // Spare parts
+            $listings->load([
+                'sparePart' => function ($query) {
+                    $query->with([
+                        'bikePartBrand:id,name',
+                        'bikePartCategory:id,name',
+                        'motorcycleAssociations.brand:id,name',
+                        'motorcycleAssociations.model:id,name',
+                        'motorcycleAssociations.year:id,year'
+                    ]);
+                }
+            ]);
+        } elseif ($category_id == 3) {
+            // License plates - Chargement comme dans filterLicensePlates
+            $listings->load([
                 'licensePlate.format',
                 'licensePlate.city',
                 'licensePlate.country',
-                'licensePlate.fieldValues.formatField',
-                'country:id,name', // Location du listing
-                'city:id,name'     // Location du listing
-            ])
-            ->get()
-            ->map(function ($listing) {
-                return [
-                    'id' => $listing->id,
-                    'title' => $listing->title,
-                    'description' => $listing->description,
-                    'price' => $listing->price,
-                    'currency' => config('paytabs.currency', 'MAD'), // Devise ajoutée
-                    'listing_date' => $listing->created_at?->format('Y-m-d H:i:s') ?? null, // Date ajoutée
-                    'seller_type' => $listing->seller_type,
-                    'seller_location' => [ // Location du vendeur
-                        'country' => $listing->country?->name ?? null,
-                        'city' => $listing->city?->name ?? null,
-                    ],
-                    'image' => $listing->images->first()?->image_url ?? null,
-                    'license_plate' => [
-                        'format' => $listing->licensePlate?->format?->name,
-                        'plate_location' => [ // Location de la plaque (peut être différente du vendeur)
-                            'city' => $listing->licensePlate?->city?->name,
-                            'country' => $listing->licensePlate?->country?->name,
-                        ],
-                        'fields' => $listing->licensePlate?->fieldValues->map(function ($fieldValue) {
-                            return [
-                                'field_id' => $fieldValue->formatField?->id,
-                                'field_name' => $fieldValue->formatField?->field_name,
-                                'value' => $fieldValue->field_value,
-                            ];
-                        })
-                    ]
+                'licensePlate.fieldValues.formatField'
+            ]);
+        }
+    
+        // ✅ Pour les enchères, charger la dernière enchère
+        $listingIds = $listings->pluck('id');
+        $currentBids = DB::table('auction_histories')
+            ->whereIn('listing_id', $listingIds)
+            ->select('listing_id', DB::raw('MAX(bid_amount) as current_bid'))
+            ->groupBy('listing_id')
+            ->pluck('current_bid', 'listing_id');
+    
+        // ✅ Formater les résultats selon le format de filterMotorcycles
+        $formattedListings = $listings->map(function ($listing) use ($user, $currentBids) {
+            $isInWishlist = false;
+    
+            if ($user) {
+                $isInWishlist = DB::table('wishlists')
+                    ->where('user_id', $user->id)
+                    ->where('listing_id', $listing->id)
+                    ->exists();
+            }
+    
+            // ✅ Déterminer le prix à afficher (comme filterMotorcycles)
+            $displayPrice = $listing->price;
+            $isAuction = false;
+            $currentBid = $currentBids[$listing->id] ?? null;
+    
+            if (!$displayPrice && $listing->auction_enabled) {
+                $displayPrice = $currentBid ?: $listing->minimum_bid;
+                $isAuction = true;
+            }
+    
+            // ✅ Récupérer le symbole de devise
+            $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+    
+            // ✅ Garder toutes les colonnes originales + ajouter les nouvelles
+            $baseData = [
+                'id' => $listing->id,
+                'title' => $listing->title,
+                'description' => $listing->description,
+                'price' => $listing->price, // ✅ Prix original de la DB
+                'category_id' => $listing->category_id,
+                'auction_enabled' => $listing->auction_enabled,
+                'minimum_bid' => $listing->minimum_bid,
+                'allow_submission' => $listing->allow_submission,
+                'listing_type_id' => $listing->listing_type_id,
+                'contacting_channel' => $listing->contacting_channel,
+                'seller_type' => $listing->seller_type,
+                'status' => $listing->status,
+                'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
+                'city' => $listing->city?->name,
+                'country' => $listing->country?->name,
+                'images' => $listing->images->pluck('image_url'),
+                'wishlist' => $isInWishlist,
+                
+                // ✅ NOUVELLES COLONNES AJOUTÉES (comme filterMotorcycles)
+                'display_price' => $displayPrice, // Prix à afficher (prix fixe ou enchère)
+                'is_auction' => $isAuction, // Boolean pour identifier les enchères
+                'current_bid' => $currentBid, // Montant de la dernière enchère
+                'currency' => $currencySymbol, // Symbole de devise
+            ];
+    
+            // ✅ Ajouter les données spécifiques par catégorie
+            if ($listing->category_id == 1 && $listing->motorcycle) {
+                // Motorcycle data
+                $baseData['motorcycle'] = [
+                    'brand' => $listing->motorcycle->brand?->name ?? null,
+                    'model' => $listing->motorcycle->model?->name ?? null,
+                    'year' => $listing->motorcycle->year?->year ?? null,
+                    'type' => $listing->motorcycle->type?->name ?? null,
+                    'engine' => $listing->motorcycle->engine,
+                    'mileage' => $listing->motorcycle->mileage,
+                    'body_condition' => $listing->motorcycle->body_condition,
+                    'modified' => $listing->motorcycle->modified,
+                    'insurance' => $listing->motorcycle->insurance,
+                    'general_condition' => $listing->motorcycle->general_condition,
+                    'vehicle_care' => $listing->motorcycle->vehicle_care,
+                    'transmission' => $listing->motorcycle->transmission,
                 ];
-            });
-
+            } elseif ($listing->category_id == 2 && $listing->sparePart) {
+                // Spare part data
+                $baseData['spare_part'] = [
+                    'condition' => $listing->sparePart->condition,
+                    'brand' => $listing->sparePart->bikePartBrand?->name ?? null,
+                    'category' => $listing->sparePart->bikePartCategory?->name ?? null,
+                    'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
+                        return [
+                            'brand' => $association->brand?->name ?? null,
+                            'model' => $association->model?->name ?? null,
+                            'year' => $association->year?->year ?? null,
+                        ];
+                    })->toArray(),
+                ];
+            } elseif ($listing->category_id == 3 && $listing->licensePlate) {
+                // License plate data
+                $licensePlate = $listing->licensePlate;
+    
+                $baseData['license_plate'] = [
+                    'plate_format' => [
+                        'id' => $licensePlate->format?->id ?? null,
+                        'name' => $licensePlate->format?->name ?? null,
+                        'pattern' => $licensePlate->format?->pattern ?? null,
+                        'country' => $licensePlate->format?->country ?? null,
+                    ],
+                    'city' => $licensePlate->city?->name ?? null,
+                    'country' => $licensePlate->country?->name ?? null,
+                    'country_id' => $licensePlate->country_id,
+                    'fields' => $licensePlate->fieldValues->map(function ($fieldValue) {
+                        return [
+                            'field_id' => $fieldValue->formatField?->id ?? null,
+                            'field_name' => $fieldValue->formatField?->field_name ?? null,
+                            'field_position' => $fieldValue->formatField?->position ?? null,
+                            'field_type' => $fieldValue->formatField?->field_type ?? null,
+                            'field_label' => $fieldValue->formatField?->field_label ?? null,
+                            'is_required' => $fieldValue->formatField?->is_required ?? null,
+                            'max_length' => $fieldValue->formatField?->max_length ?? null,
+                            'validation_pattern' => $fieldValue->formatField?->validation_pattern ?? null,
+                            'value' => $fieldValue->field_value,
+                        ];
+                    })->toArray(),
+                ];
+            }
+    
+            return $baseData;
+        });
+    
         return response()->json([
-            'success' => true,
-            'results' => $results,
-            'count' => $results->count()
+            'message' => $message,
+            'searched_country' => $countryName,
+            'showing_all_countries' => $showingAllCountries,
+            'total_listings' => $formattedListings->count(),
+            'listings' => $formattedListings
         ]);
     }
 
