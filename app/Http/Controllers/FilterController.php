@@ -574,7 +574,7 @@ class FilterController extends Controller
      *     )
      * )
      */
-    public function filterLicensePlates(Request $request)
+ public function filterLicensePlates(Request $request)
     {
         $query = Listing::query()
             ->where('category_id', 3)
