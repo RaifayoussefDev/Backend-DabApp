@@ -1317,16 +1317,80 @@ class AuthController extends Controller
             'method' => 'nullable|string|in:whatsapp,email'
         ]);
 
-        // Find user by login (email or phone)
-        $user = filter_var($request->login, FILTER_VALIDATE_EMAIL)
-            ? User::where('email', $request->login)->first()
-            : User::where('phone', $request->login)->first();
+        $login = $request->input('login');
+
+        // ⭐ DÉTERMINER LE TYPE DE LOGIN DÈS LE DÉBUT
+        $isEmailLogin = filter_var($login, FILTER_VALIDATE_EMAIL);
+
+        Log::info('Password reset attempt', [
+            'login' => $login,
+            'is_email_login' => $isEmailLogin
+        ]);
+
+        // Find user by email or phone
+        $user = null;
+
+        if ($isEmailLogin) {
+            // Login is an email
+            $user = User::where('email', $login)->first();
+            Log::info('Password reset attempt with email', ['email' => $login]);
+        } else {
+            // Login is potentially a phone number - try different formats
+
+            // First, try exact match
+            $user = User::where('phone', $login)->first();
+
+            if (!$user) {
+                // If no exact match, try with country processing
+                $countryName = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Morocco';
+
+                try {
+                    $countryData = CountryHelper::processCountryAndPhoneByName($login, $countryName);
+                    $formattedPhone = $countryData['formatted_phone'];
+
+                    Log::info('Trying password reset with formatted phone', [
+                        'original' => $login,
+                        'formatted' => $formattedPhone,
+                        'country' => $countryName
+                    ]);
+
+                    $user = User::where('phone', $formattedPhone)->first();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to format phone for password reset', [
+                        'phone' => $login,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            if (!$user) {
+                // Try removing/adding + prefix
+                if (str_starts_with($login, '+')) {
+                    $phoneWithoutPlus = substr($login, 1);
+                    $user = User::where('phone', $phoneWithoutPlus)->first();
+                } else {
+                    $phoneWithPlus = '+' . $login;
+                    $user = User::where('phone', $phoneWithPlus)->first();
+                }
+            }
+
+            Log::info('Password reset attempt with phone', [
+                'phone' => $login,
+                'user_found' => $user ? true : false
+            ]);
+        }
 
         if (!$user) {
+            Log::warning('Password reset failed - user not found', [
+                'login' => $login
+            ]);
             return response()->json(['error' => 'User not found'], 404);
         }
 
         if (!$user->is_active) {
+            Log::warning('Password reset failed - user inactive', [
+                'user_id' => $user->id
+            ]);
             return response()->json(['error' => 'User account is inactive'], 403);
         }
 
@@ -1418,14 +1482,16 @@ class AuthController extends Controller
         Log::info('Password reset code sent', [
             'user_id' => $user->id,
             'method' => $resetSentVia,
-            'requested_method' => $preferredMethod
+            'requested_method' => $preferredMethod,
+            'login_type' => $isEmailLogin ? 'email' : 'phone'
         ]);
 
         return response()->json([
             'message' => 'Password reset code has been sent',
             'reset_sent_via' => $resetSentVia,
             'user_id' => $user->id,
-            'email' => $user->email ?? null
+            'email' => $user->email ?? null,
+            'phone' => $user->phone ?? null
         ]);
     }
 
