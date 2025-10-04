@@ -900,12 +900,12 @@ class ListingController extends Controller
         $plateSearch = $request->get('plate_search');
         $showingAllCountries = false;
         $message = '';
-    
+
         // Build the base query
         $query = Listing::where('category_id', $category_id)
             ->where('status', 'published')
             ->orderBy('created_at', 'desc');
-    
+
         // Add license plate field search for category 3 (license plates)
         if ($category_id == 3 && $plateSearch) {
             $query->whereHas('licensePlate', function ($licensePlateQuery) use ($plateSearch) {
@@ -914,16 +914,16 @@ class ListingController extends Controller
                 });
             });
         }
-    
+
         // Add country filter if provided
         if ($countryName) {
             $countryFilteredQuery = clone $query;
             $countryFilteredQuery->whereHas('country', function ($q) use ($countryName) {
                 $q->where('name', 'LIKE', '%' . $countryName . '%');
             });
-    
+
             $countryListings = $countryFilteredQuery->get();
-    
+
             if ($countryListings->isEmpty()) {
                 $listings = $query->get();
                 $showingAllCountries = true;
@@ -934,18 +934,18 @@ class ListingController extends Controller
             }
         } else {
             $listings = $query->get();
-    
+
             if ($category_id == 3 && $plateSearch) {
                 $message = "Showing license plates containing '{$plateSearch}'.";
             } else {
                 $message = "Showing all listings.";
             }
         }
-    
+
         if ($countryName && $category_id == 3 && $plateSearch && !$showingAllCountries) {
             $message = "Showing license plates containing '{$plateSearch}' for '{$countryName}'.";
         }
-    
+
         // ✅ Charger les relations nécessaires selon la catégorie
         $listings->load([
             'images' => function ($query) {
@@ -956,7 +956,7 @@ class ListingController extends Controller
             'city:id,name',
             'country.currencyExchangeRate:id,country_id,currency_symbol'
         ]);
-    
+
         // Charger les relations spécifiques par catégorie
         if ($category_id == 1) {
             // Motorcycles
@@ -993,7 +993,7 @@ class ListingController extends Controller
                 'licensePlate.fieldValues.formatField'
             ]);
         }
-    
+
         // ✅ Pour les enchères, charger la dernière enchère
         $listingIds = $listings->pluck('id');
         $currentBids = DB::table('auction_histories')
@@ -1001,35 +1001,35 @@ class ListingController extends Controller
             ->select('listing_id', DB::raw('MAX(bid_amount) as current_bid'))
             ->groupBy('listing_id')
             ->pluck('current_bid', 'listing_id');
-    
+
         // ✅ Formater les résultats selon le format de filterMotorcycles
         $formattedListings = $listings->map(function ($listing) use ($user, $currentBids) {
             $isInWishlist = false;
-    
+
             if ($user) {
                 $isInWishlist = DB::table('wishlists')
                     ->where('user_id', $user->id)
                     ->where('listing_id', $listing->id)
                     ->exists();
             }
-    
+
             // ✅ Déterminer le prix à afficher (comme filterMotorcycles)
             $displayPrice = $listing->price;
             $isAuction = false;
             $currentBid = $currentBids[$listing->id] ?? null;
-    
+
             if (!$displayPrice && $listing->auction_enabled) {
                 $displayPrice = $currentBid ?: $listing->minimum_bid;
                 $isAuction = true;
             }
-    
+
             // ✅ Récupérer le symbole de devise
             $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
-    
+
             // ✅ Garder toutes les colonnes originales + ajouter les nouvelles
             // Si price est null, afficher minimum_bid
             $priceToShow = $listing->price ?? $listing->minimum_bid;
-            
+
             $baseData = [
                 'id' => $listing->id,
                 'title' => $listing->title,
@@ -1048,14 +1048,14 @@ class ListingController extends Controller
                 'country' => $listing->country?->name,
                 'images' => $listing->images->pluck('image_url'),
                 'wishlist' => $isInWishlist,
-                
+
                 // ✅ NOUVELLES COLONNES AJOUTÉES (comme filterMotorcycles)
                 'display_price' => $displayPrice, // Prix à afficher (prix fixe ou enchère)
                 'is_auction' => $isAuction, // Boolean pour identifier les enchères
                 'current_bid' => $currentBid, // Montant de la dernière enchère
                 'currency' => $currencySymbol, // Symbole de devise
             ];
-    
+
             // ✅ Ajouter les données spécifiques par catégorie
             if ($listing->category_id == 1 && $listing->motorcycle) {
                 // Motorcycle data
@@ -1090,7 +1090,7 @@ class ListingController extends Controller
             } elseif ($listing->category_id == 3 && $listing->licensePlate) {
                 // License plate data
                 $licensePlate = $listing->licensePlate;
-    
+
                 $baseData['license_plate'] = [
                     'plate_format' => [
                         'id' => $licensePlate->format?->id ?? null,
@@ -1116,10 +1116,10 @@ class ListingController extends Controller
                     })->toArray(),
                 ];
             }
-    
+
             return $baseData;
         });
-    
+
         return response()->json([
             'message' => $message,
             'searched_country' => $countryName,
@@ -1400,6 +1400,7 @@ class ListingController extends Controller
             'images',
             'city',
             'country',
+            'country.currencyExchangeRate', // ✅ Charger la relation currency
             'seller',
             'motorcycle.brand',
             'motorcycle.model',
@@ -1428,6 +1429,26 @@ class ListingController extends Controller
                 ->exists();
         }
 
+        // ✅ Récupérer current_bid pour les enchères
+        $currentBid = null;
+        if ($listing->auction_enabled) {
+            $currentBid = DB::table('auction_histories')
+                ->where('listing_id', $listing->id)
+                ->max('bid_amount');
+        }
+
+        // ✅ Déterminer le prix à afficher
+        $displayPrice = $listing->price;
+        $isAuction = false;
+
+        if (!$displayPrice && $listing->auction_enabled) {
+            $displayPrice = $currentBid ?: $listing->minimum_bid;
+            $isAuction = true;
+        }
+
+        // ✅ Récupérer le symbole de devise
+        $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+
         $data = [
             'id' => $listing->id,
             'title' => $listing->title,
@@ -1445,10 +1466,16 @@ class ListingController extends Controller
             'contacting_channel' => $listing->contacting_channel,
             'seller_type' => $listing->seller_type,
             'status' => $listing->status,
+
+            // ✅ NOUVEAUX CHAMPS AJOUTÉS
+            'currency' => $currencySymbol,
+            'display_price' => $displayPrice,
+            'is_auction' => $isAuction,
+            'current_bid' => $currentBid,
         ];
 
         if (!$listing->allow_submission) {
-            $data['price'] = $listing->price;
+            $data['price'] = $listing->price ?? $listing->minimum_bid; // ✅ Si null, afficher minimum_bid
         }
 
         if ($listing->allow_submission) {
@@ -1519,8 +1546,8 @@ class ListingController extends Controller
                 'plate_format' => [
                     'id' => $licensePlate->format?->id,
                     'name' => $licensePlate->format?->name,
-                    'pattern' => $licensePlate->format?->pattern,
-                    'country' => $licensePlate->format?->country,
+                    'pattern' => $licensePlate->format?->pattern ?? null,
+                    'country' => $licensePlate->format?->country ?? null,
                 ],
                 'city' => $licensePlate->city?->name,
                 'country_id' => $licensePlate->country_id,
