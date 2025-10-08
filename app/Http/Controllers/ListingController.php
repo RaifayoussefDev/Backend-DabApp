@@ -865,6 +865,22 @@ class ListingController extends Controller
      *         @OA\Schema(type="string"),
      *         example="123"
      *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         required=false,
+     *         description="Page number for pagination (default: returns all results if not provided)",
+     *         @OA\Schema(type="integer", minimum=1),
+     *         example=1
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         required=false,
+     *         description="Number of items per page (default: 15, max: 100)",
+     *         @OA\Schema(type="integer", minimum=1, maximum=100),
+     *         example=15
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="List of listings",
@@ -874,6 +890,11 @@ class ListingController extends Controller
      *             @OA\Property(property="searched_country", type="string"),
      *             @OA\Property(property="showing_all_countries", type="boolean"),
      *             @OA\Property(property="total_listings", type="integer"),
+     *             @OA\Property(property="current_page", type="integer", description="Current page number (only present when pagination is used)"),
+     *             @OA\Property(property="per_page", type="integer", description="Items per page (only present when pagination is used)"),
+     *             @OA\Property(property="last_page", type="integer", description="Total number of pages (only present when pagination is used)"),
+     *             @OA\Property(property="from", type="integer", description="Starting item number (only present when pagination is used)"),
+     *             @OA\Property(property="to", type="integer", description="Ending item number (only present when pagination is used)"),
      *             @OA\Property(
      *                 property="listings",
      *                 type="array",
@@ -901,6 +922,12 @@ class ListingController extends Controller
         $showingAllCountries = false;
         $message = '';
 
+        // Pagination parameters
+        $page = $request->get('page');
+        $perPage = $request->get('per_page', 15);
+        $perPage = min($perPage, 100); // Max 100 items per page
+        $usePagination = !is_null($page);
+
         // Build the base query
         $query = Listing::where('category_id', $category_id)
             ->where('status', 'published')
@@ -922,10 +949,19 @@ class ListingController extends Controller
                 $q->where('name', 'LIKE', '%' . $countryName . '%');
             });
 
-            $countryListings = $countryFilteredQuery->get();
+            // Apply pagination if requested
+            if ($usePagination) {
+                $countryListings = $countryFilteredQuery->paginate($perPage, ['*'], 'page', $page);
+            } else {
+                $countryListings = $countryFilteredQuery->get();
+            }
 
             if ($countryListings->isEmpty()) {
-                $listings = $query->get();
+                if ($usePagination) {
+                    $listings = $query->paginate($perPage, ['*'], 'page', $page);
+                } else {
+                    $listings = $query->get();
+                }
                 $showingAllCountries = true;
                 $message = "No listings found for '{$countryName}'. Showing all countries instead.";
             } else {
@@ -933,7 +969,12 @@ class ListingController extends Controller
                 $message = "Showing listings for '{$countryName}'.";
             }
         } else {
-            $listings = $query->get();
+            // Apply pagination if requested
+            if ($usePagination) {
+                $listings = $query->paginate($perPage, ['*'], 'page', $page);
+            } else {
+                $listings = $query->get();
+            }
 
             if ($category_id == 3 && $plateSearch) {
                 $message = "Showing license plates containing '{$plateSearch}'.";
@@ -946,8 +987,11 @@ class ListingController extends Controller
             $message = "Showing license plates containing '{$plateSearch}' for '{$countryName}'.";
         }
 
+        // Get the collection of items (works for both paginated and non-paginated)
+        $listingsCollection = $usePagination ? $listings->getCollection() : $listings;
+
         // ✅ Charger les relations nécessaires selon la catégorie
-        $listings->load([
+        $listingsCollection->load([
             'images' => function ($query) {
                 $query->select('listing_id', 'image_url')->limit(1);
             },
@@ -960,7 +1004,7 @@ class ListingController extends Controller
         // Charger les relations spécifiques par catégorie
         if ($category_id == 1) {
             // Motorcycles
-            $listings->load([
+            $listingsCollection->load([
                 'motorcycle' => function ($query) {
                     $query->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id', 'engine', 'mileage', 'body_condition', 'modified', 'insurance', 'general_condition', 'vehicle_care', 'transmission')
                         ->with([
@@ -973,7 +1017,7 @@ class ListingController extends Controller
             ]);
         } elseif ($category_id == 2) {
             // Spare parts
-            $listings->load([
+            $listingsCollection->load([
                 'sparePart' => function ($query) {
                     $query->with([
                         'bikePartBrand:id,name',
@@ -986,7 +1030,7 @@ class ListingController extends Controller
             ]);
         } elseif ($category_id == 3) {
             // License plates - Chargement comme dans filterLicensePlates
-            $listings->load([
+            $listingsCollection->load([
                 'licensePlate.format',
                 'licensePlate.city',
                 'licensePlate.country',
@@ -995,7 +1039,7 @@ class ListingController extends Controller
         }
 
         // ✅ Pour les enchères, charger la dernière enchère
-        $listingIds = $listings->pluck('id');
+        $listingIds = $listingsCollection->pluck('id');
         $currentBids = DB::table('auction_histories')
             ->whereIn('listing_id', $listingIds)
             ->select('listing_id', DB::raw('MAX(bid_amount) as current_bid'))
@@ -1003,7 +1047,7 @@ class ListingController extends Controller
             ->pluck('current_bid', 'listing_id');
 
         // ✅ Formater les résultats selon le format de filterMotorcycles
-        $formattedListings = $listings->map(function ($listing) use ($user, $currentBids) {
+        $formattedListings = $listingsCollection->map(function ($listing) use ($user, $currentBids) {
             $isInWishlist = false;
 
             if ($user) {
@@ -1120,13 +1164,27 @@ class ListingController extends Controller
             return $baseData;
         });
 
-        return response()->json([
+        // Build response array
+        $response = [
             'message' => $message,
             'searched_country' => $countryName,
             'showing_all_countries' => $showingAllCountries,
-            'total_listings' => $formattedListings->count(),
-            'listings' => $formattedListings
-        ]);
+            'total_listings' => $usePagination ? $listings->total() : $formattedListings->count(),
+        ];
+
+        // Add pagination metadata only if pagination is used
+        if ($usePagination) {
+            $response['current_page'] = $listings->currentPage();
+            $response['per_page'] = $listings->perPage();
+            $response['last_page'] = $listings->lastPage();
+            $response['from'] = $listings->firstItem();
+            $response['to'] = $listings->lastItem();
+        }
+
+        // Add listings array
+        $response['listings'] = $formattedListings;
+
+        return response()->json($response);
     }
     /**
      * @OA\Get(
