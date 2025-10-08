@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers;
 
-
-
 use App\Http\Controllers\Controller;
 use App\Models\MyGarage;
 use App\Models\MotorcycleBrand;
 use App\Models\MotorcycleModel;
 use App\Models\MotorcycleYear;
+use App\Models\MotorcycleType;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -42,9 +41,10 @@ class MyGarageController extends Controller
      *                     @OA\Property(property="brand_id", type="integer", example=2),
      *                     @OA\Property(property="model_id", type="integer", example=5),
      *                     @OA\Property(property="year_id", type="integer", example=10),
-     *                     @OA\Property(property="title", type="string", example="My First Bike"),
-     *                     @OA\Property(property="description", type="string", example="This is my favorite motorcycle."),
-     *                     @OA\Property(property="picture", type="string", example="http://example.com/image.jpg"),
+     *                     @OA\Property(property="type_id", type="integer", example=3),
+     *                     @OA\Property(property="title", type="string", nullable=true, example="My First Bike"),
+     *                     @OA\Property(property="description", type="string", nullable=true, example="This is my favorite motorcycle."),
+     *                     @OA\Property(property="picture", type="string", nullable=true, example="http://example.com/image.jpg"),
      *                     @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T12:00:00Z"),
      *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-02T12:00:00Z"),
      *                     @OA\Property(
@@ -64,6 +64,12 @@ class MyGarageController extends Controller
      *                         type="object",
      *                         @OA\Property(property="id", type="integer", example=10),
      *                         @OA\Property(property="year", type="integer", example=2020)
+     *                     ),
+     *                     @OA\Property(
+     *                         property="type",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=3),
+     *                         @OA\Property(property="name", type="string", example="Sport")
      *                     )
      *                 )
      *             ),
@@ -105,9 +111,9 @@ class MyGarageController extends Controller
             }
 
             $perPage = $request->get('per_page', 10);
-            $perPage = min($perPage, 50); // Limit to 50 items per page
+            $perPage = min($perPage, 50);
 
-            $garageItems = MyGarage::with(['brand', 'model', 'year'])
+            $garageItems = MyGarage::with(['brand', 'model', 'year', 'type'])
                 ->where('user_id', $userId)
                 ->orderBy('created_at', 'desc')
                 ->paginate($perPage);
@@ -142,13 +148,14 @@ class MyGarageController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"brand_id", "model_id", "year_id", "title"},
+     *             required={"brand_id", "model_id", "year_id", "type_id"},
      *             @OA\Property(property="brand_id", type="integer", example=1, description="Motorcycle brand ID"),
      *             @OA\Property(property="model_id", type="integer", example=1, description="Motorcycle model ID"),
      *             @OA\Property(property="year_id", type="integer", example=1, description="Motorcycle year ID"),
-     *             @OA\Property(property="title", type="string", example="My Daily Beast", description="Custom title for the motorcycle"),
-     *             @OA\Property(property="description", type="string", example="Perfect bike for daily commuting", description="Optional description"),
-     *             @OA\Property(property="picture", type="string", example="https://example.com/bike.jpg", description="Optional picture URL")
+     *             @OA\Property(property="type_id", type="integer", example=1, description="Motorcycle type ID"),
+     *             @OA\Property(property="title", type="string", nullable=true, example="My Daily Beast", description="Optional custom title for the motorcycle"),
+     *             @OA\Property(property="description", type="string", nullable=true, example="Perfect bike for daily commuting", description="Optional description"),
+     *             @OA\Property(property="picture", type="string", nullable=true, example="https://example.com/bike.jpg", description="Optional picture URL")
      *         )
      *     ),
      *     @OA\Response(
@@ -160,9 +167,9 @@ class MyGarageController extends Controller
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="title", type="string", example="My Daily Beast"),
-     *                 @OA\Property(property="description", type="string", example="Perfect bike for daily commuting"),
-     *                 @OA\Property(property="picture", type="string", example="https://example.com/bike.jpg"),
+     *                 @OA\Property(property="title", type="string", nullable=true, example="My Daily Beast"),
+     *                 @OA\Property(property="description", type="string", nullable=true, example="Perfect bike for daily commuting"),
+     *                 @OA\Property(property="picture", type="string", nullable=true, example="https://example.com/bike.jpg"),
      *                 @OA\Property(
      *                     property="brand",
      *                     type="object",
@@ -180,6 +187,12 @@ class MyGarageController extends Controller
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="year", type="integer", example=2020)
+     *                 ),
+     *                 @OA\Property(
+     *                     property="type",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Sport")
      *                 ),
      *                 @OA\Property(property="created_at", type="string", format="date-time"),
      *                 @OA\Property(property="updated_at", type="string", format="date-time")
@@ -207,9 +220,9 @@ class MyGarageController extends Controller
      *                     @OA\Items(type="string", example="The brand id field is required.")
      *                 ),
      *                 @OA\Property(
-     *                     property="title",
+     *                     property="type_id",
      *                     type="array",
-     *                     @OA\Items(type="string", example="The title field is required.")
+     *                     @OA\Items(type="string", example="The type id field is required.")
      *                 )
      *             )
      *         )
@@ -236,7 +249,8 @@ class MyGarageController extends Controller
                 'brand_id' => 'required|integer|exists:motorcycle_brands,id',
                 'model_id' => 'required|integer|exists:motorcycle_models,id',
                 'year_id' => 'required|integer|exists:motorcycle_years,id',
-                'title' => 'required|string|max:255',
+                'type_id' => 'required|integer|exists:motorcycle_types,id',
+                'title' => 'nullable|string|max:255',
                 'description' => 'nullable|string|max:1000',
                 'picture' => 'nullable|string|url',
             ]);
@@ -270,12 +284,13 @@ class MyGarageController extends Controller
                 'brand_id' => $validated['brand_id'],
                 'model_id' => $validated['model_id'],
                 'year_id' => $validated['year_id'],
-                'title' => $validated['title'],
+                'type_id' => $validated['type_id'],
+                'title' => $validated['title'] ?? null,
                 'description' => $validated['description'] ?? null,
                 'picture' => $validated['picture'] ?? null,
             ]);
 
-            $garageItem->load(['brand', 'model', 'year']);
+            $garageItem->load(['brand', 'model', 'year', 'type']);
 
             return response()->json([
                 'message' => 'Motorcycle added to garage successfully',
@@ -317,9 +332,9 @@ class MyGarageController extends Controller
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="title", type="string", example="My Daily Beast"),
-     *                 @OA\Property(property="description", type="string", example="Perfect bike for daily commuting"),
-     *                 @OA\Property(property="picture", type="string", example="https://example.com/bike.jpg"),
+     *                 @OA\Property(property="title", type="string", nullable=true, example="My Daily Beast"),
+     *                 @OA\Property(property="description", type="string", nullable=true, example="Perfect bike for daily commuting"),
+     *                 @OA\Property(property="picture", type="string", nullable=true, example="https://example.com/bike.jpg"),
      *                 @OA\Property(
      *                     property="brand",
      *                     type="object",
@@ -337,6 +352,12 @@ class MyGarageController extends Controller
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="year", type="integer", example=2020)
+     *                 ),
+     *                 @OA\Property(
+     *                     property="type",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Sport")
      *                 ),
      *                 @OA\Property(property="created_at", type="string", format="date-time"),
      *                 @OA\Property(property="updated_at", type="string", format="date-time")
@@ -376,7 +397,7 @@ class MyGarageController extends Controller
                 return response()->json(['message' => 'Unauthorized'], 401);
             }
 
-            $garageItem = MyGarage::with(['brand', 'model', 'year'])
+            $garageItem = MyGarage::with(['brand', 'model', 'year', 'type'])
                 ->where('user_id', $userId)
                 ->where('id', $id)
                 ->first();
@@ -417,9 +438,10 @@ class MyGarageController extends Controller
      *     @OA\RequestBody(
      *         required=false,
      *         @OA\JsonContent(
-     *             @OA\Property(property="title", type="string", example="Updated Beast Machine", description="Updated title"),
-     *             @OA\Property(property="description", type="string", example="Updated description with modifications", description="Updated description"),
-     *             @OA\Property(property="picture", type="string", example="https://example.com/updated-bike.jpg", description="Updated picture URL")
+     *             @OA\Property(property="type_id", type="integer", example=2, description="Motorcycle type ID"),
+     *             @OA\Property(property="title", type="string", nullable=true, example="Updated Beast Machine", description="Updated title"),
+     *             @OA\Property(property="description", type="string", nullable=true, example="Updated description with modifications", description="Updated description"),
+     *             @OA\Property(property="picture", type="string", nullable=true, example="https://example.com/updated-bike.jpg", description="Updated picture URL")
      *         )
      *     ),
      *     @OA\Response(
@@ -431,14 +453,20 @@ class MyGarageController extends Controller
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="title", type="string", example="Updated Beast Machine"),
-     *                 @OA\Property(property="description", type="string", example="Updated description"),
-     *                 @OA\Property(property="picture", type="string", example="https://example.com/updated-bike.jpg"),
+     *                 @OA\Property(property="title", type="string", nullable=true, example="Updated Beast Machine"),
+     *                 @OA\Property(property="description", type="string", nullable=true, example="Updated description"),
+     *                 @OA\Property(property="picture", type="string", nullable=true, example="https://example.com/updated-bike.jpg"),
      *                 @OA\Property(
      *                     property="brand",
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="name", type="string", example="Honda")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="type",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=2),
+     *                     @OA\Property(property="name", type="string", example="Cruiser")
      *                 ),
      *                 @OA\Property(property="created_at", type="string", format="date-time"),
      *                 @OA\Property(property="updated_at", type="string", format="date-time")
@@ -498,13 +526,14 @@ class MyGarageController extends Controller
             }
 
             $validated = $request->validate([
-                'title' => 'sometimes|required|string|max:255',
+                'type_id' => 'sometimes|required|integer|exists:motorcycle_types,id',
+                'title' => 'sometimes|nullable|string|max:255',
                 'description' => 'sometimes|nullable|string|max:1000',
                 'picture' => 'sometimes|nullable|string|url',
             ]);
 
             $garageItem->update($validated);
-            $garageItem->load(['brand', 'model', 'year']);
+            $garageItem->load(['brand', 'model', 'year', 'type']);
 
             return response()->json([
                 'message' => 'Garage item updated successfully',
@@ -606,7 +635,7 @@ class MyGarageController extends Controller
      * @OA\Get(
      *     path="/api/motorcycle-data",
      *     tags={"My Garage"},
-     *     summary="Get motorcycle data for dropdowns (brands, models, years)",
+     *     summary="Get motorcycle data for dropdowns (brands, models, years, types)",
      *     security={{"bearerAuth": {}}},
      *     @OA\Response(
      *         response=200,
@@ -643,6 +672,14 @@ class MyGarageController extends Controller
      *                         @OA\Property(property="year", type="integer", example=2020),
      *                         @OA\Property(property="model_name", type="string", example="CBR600RR")
      *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="types",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="name", type="string", example="Sport")
+     *                     )
      *                 )
      *             )
      *         )
@@ -677,6 +714,8 @@ class MyGarageController extends Controller
                 ->orderBy('year', 'desc')
                 ->get(['id', 'model_id', 'year']);
 
+            $types = MotorcycleType::orderBy('name')->get(['id', 'name']);
+
             return response()->json([
                 'message' => 'Motorcycle data retrieved successfully',
                 'data' => [
@@ -697,6 +736,7 @@ class MyGarageController extends Controller
                             'model_name' => $year->model->name ?? null,
                         ];
                     }),
+                    'types' => $types,
                 ]
             ], 200);
 

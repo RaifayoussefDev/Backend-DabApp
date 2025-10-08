@@ -6848,17 +6848,24 @@
                                                         "type": "integer",
                                                         "example": 10
                                                     },
+                                                    "type_id": {
+                                                        "type": "integer",
+                                                        "example": 3
+                                                    },
                                                     "title": {
                                                         "type": "string",
-                                                        "example": "My First Bike"
+                                                        "example": "My First Bike",
+                                                        "nullable": true
                                                     },
                                                     "description": {
                                                         "type": "string",
-                                                        "example": "This is my favorite motorcycle."
+                                                        "example": "This is my favorite motorcycle.",
+                                                        "nullable": true
                                                     },
                                                     "picture": {
                                                         "type": "string",
-                                                        "example": "http://example.com/image.jpg"
+                                                        "example": "http://example.com/image.jpg",
+                                                        "nullable": true
                                                     },
                                                     "created_at": {
                                                         "type": "string",
@@ -6905,6 +6912,19 @@
                                                             "year": {
                                                                 "type": "integer",
                                                                 "example": 2020
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "type": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 3
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Sport"
                                                             }
                                                         },
                                                         "type": "object"
@@ -7006,7 +7026,7 @@
                                     "brand_id",
                                     "model_id",
                                     "year_id",
-                                    "title"
+                                    "type_id"
                                 ],
                                 "properties": {
                                     "brand_id": {
@@ -7024,20 +7044,28 @@
                                         "type": "integer",
                                         "example": 1
                                     },
+                                    "type_id": {
+                                        "description": "Motorcycle type ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
                                     "title": {
-                                        "description": "Custom title for the motorcycle",
+                                        "description": "Optional custom title for the motorcycle",
                                         "type": "string",
-                                        "example": "My Daily Beast"
+                                        "example": "My Daily Beast",
+                                        "nullable": true
                                     },
                                     "description": {
                                         "description": "Optional description",
                                         "type": "string",
-                                        "example": "Perfect bike for daily commuting"
+                                        "example": "Perfect bike for daily commuting",
+                                        "nullable": true
                                     },
                                     "picture": {
                                         "description": "Optional picture URL",
                                         "type": "string",
-                                        "example": "https://example.com/bike.jpg"
+                                        "example": "https://example.com/bike.jpg",
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -7064,15 +7092,18 @@
                                                 },
                                                 "title": {
                                                     "type": "string",
-                                                    "example": "My Daily Beast"
+                                                    "example": "My Daily Beast",
+                                                    "nullable": true
                                                 },
                                                 "description": {
                                                     "type": "string",
-                                                    "example": "Perfect bike for daily commuting"
+                                                    "example": "Perfect bike for daily commuting",
+                                                    "nullable": true
                                                 },
                                                 "picture": {
                                                     "type": "string",
-                                                    "example": "https://example.com/bike.jpg"
+                                                    "example": "https://example.com/bike.jpg",
+                                                    "nullable": true
                                                 },
                                                 "brand": {
                                                     "properties": {
@@ -7109,6 +7140,19 @@
                                                         "year": {
                                                             "type": "integer",
                                                             "example": 2020
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "type": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Sport"
                                                         }
                                                     },
                                                     "type": "object"
@@ -7165,11 +7209,11 @@
                                                         "example": "The brand id field is required."
                                                     }
                                                 },
-                                                "title": {
+                                                "type_id": {
                                                     "type": "array",
                                                     "items": {
                                                         "type": "string",
-                                                        "example": "The title field is required."
+                                                        "example": "The type id field is required."
                                                     }
                                                 }
                                             },
@@ -7247,15 +7291,18 @@
                                                 },
                                                 "title": {
                                                     "type": "string",
-                                                    "example": "My Daily Beast"
+                                                    "example": "My Daily Beast",
+                                                    "nullable": true
                                                 },
                                                 "description": {
                                                     "type": "string",
-                                                    "example": "Perfect bike for daily commuting"
+                                                    "example": "Perfect bike for daily commuting",
+                                                    "nullable": true
                                                 },
                                                 "picture": {
                                                     "type": "string",
-                                                    "example": "https://example.com/bike.jpg"
+                                                    "example": "https://example.com/bike.jpg",
+                                                    "nullable": true
                                                 },
                                                 "brand": {
                                                     "properties": {
@@ -7292,6 +7339,19 @@
                                                         "year": {
                                                             "type": "integer",
                                                             "example": 2020
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "type": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Sport"
                                                         }
                                                     },
                                                     "type": "object"
@@ -7400,20 +7460,28 @@
                         "application/json": {
                             "schema": {
                                 "properties": {
+                                    "type_id": {
+                                        "description": "Motorcycle type ID",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
                                     "title": {
                                         "description": "Updated title",
                                         "type": "string",
-                                        "example": "Updated Beast Machine"
+                                        "example": "Updated Beast Machine",
+                                        "nullable": true
                                     },
                                     "description": {
                                         "description": "Updated description",
                                         "type": "string",
-                                        "example": "Updated description with modifications"
+                                        "example": "Updated description with modifications",
+                                        "nullable": true
                                     },
                                     "picture": {
                                         "description": "Updated picture URL",
                                         "type": "string",
-                                        "example": "https://example.com/updated-bike.jpg"
+                                        "example": "https://example.com/updated-bike.jpg",
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -7440,15 +7508,18 @@
                                                 },
                                                 "title": {
                                                     "type": "string",
-                                                    "example": "Updated Beast Machine"
+                                                    "example": "Updated Beast Machine",
+                                                    "nullable": true
                                                 },
                                                 "description": {
                                                     "type": "string",
-                                                    "example": "Updated description"
+                                                    "example": "Updated description",
+                                                    "nullable": true
                                                 },
                                                 "picture": {
                                                     "type": "string",
-                                                    "example": "https://example.com/updated-bike.jpg"
+                                                    "example": "https://example.com/updated-bike.jpg",
+                                                    "nullable": true
                                                 },
                                                 "brand": {
                                                     "properties": {
@@ -7459,6 +7530,19 @@
                                                         "name": {
                                                             "type": "string",
                                                             "example": "Honda"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "type": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Cruiser"
                                                         }
                                                     },
                                                     "type": "object"
@@ -7666,7 +7750,7 @@
                 "tags": [
                     "My Garage"
                 ],
-                "summary": "Get motorcycle data for dropdowns (brands, models, years)",
+                "summary": "Get motorcycle data for dropdowns (brands, models, years, types)",
                 "operationId": "05f9222a14a3ce496364a6bc09469102",
                 "responses": {
                     "200": {
@@ -7740,6 +7824,22 @@
                                                             "model_name": {
                                                                 "type": "string",
                                                                 "example": "CBR600RR"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "types": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Sport"
                                                             }
                                                         },
                                                         "type": "object"
