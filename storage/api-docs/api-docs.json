@@ -4069,6 +4069,29 @@
                             "type": "string"
                         },
                         "example": "123"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination (default: returns all results if not provided)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page (default: 15, max: 100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        },
+                        "example": 15
                     }
                 ],
                 "responses": {
@@ -4088,6 +4111,26 @@
                                             "type": "boolean"
                                         },
                                         "total_listings": {
+                                            "type": "integer"
+                                        },
+                                        "current_page": {
+                                            "description": "Current page number (only present when pagination is used)",
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "description": "Items per page (only present when pagination is used)",
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "description": "Total number of pages (only present when pagination is used)",
+                                            "type": "integer"
+                                        },
+                                        "from": {
+                                            "description": "Starting item number (only present when pagination is used)",
+                                            "type": "integer"
+                                        },
+                                        "to": {
+                                            "description": "Ending item number (only present when pagination is used)",
                                             "type": "integer"
                                         },
                                         "listings": {
