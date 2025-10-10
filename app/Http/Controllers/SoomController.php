@@ -474,89 +474,87 @@ class SoomController extends Controller
      * )
      */
 
-     public function acceptSoom($submissionId)
-     {
-         DB::beginTransaction();
+    public function acceptSoom($submissionId)
+    {
+        DB::beginTransaction();
 
-         try {
-             $userId = Auth::id();
+        try {
+            $userId = Auth::id();
 
-             if (!$userId) {
-                 return response()->json([
-                     'message' => 'Unauthorized. User must be logged in.',
-                 ], 401);
-             }
+            if (!$userId) {
+                return response()->json([
+                    'message' => 'Unauthorized. User must be logged in.',
+                ], 401);
+            }
 
-             $submission = Submission::with(['listing.images', 'user'])->find($submissionId);
+            $submission = Submission::with(['listing', 'user'])->find($submissionId);
 
-             if (!$submission) {
-                 return response()->json([
-                     'message' => 'Submission not found.',
-                 ], 404);
-             }
+            if (!$submission) {
+                return response()->json([
+                    'message' => 'Submission not found.',
+                ], 404);
+            }
 
-             // Vérifications...
-             if ($submission->listing->seller_id != $userId) {
-                 return response()->json([
-                     'message' => 'Only the seller can accept SOOMs for this listing.',
-                 ], 403);
-             }
+            // Vérifications...
+            if ($submission->listing->seller_id != $userId) {
+                return response()->json([
+                    'message' => 'Only the seller can accept SOOMs for this listing.',
+                ], 403);
+            }
 
-             if ($submission->status === 'accepted') {
-                 return response()->json([
-                     'message' => 'This SOOM has already been accepted.',
-                 ], 422);
-             }
+            if ($submission->status === 'accepted') {
+                return response()->json([
+                    'message' => 'This SOOM has already been accepted.',
+                ], 422);
+            }
 
-             // Accepter ce SOOM avec acceptance_date
-             $acceptanceDate = now();
-             $submission->update([
-                 'status' => 'accepted',
-                 'acceptance_date' => $acceptanceDate
-             ]);
+            // Accepter ce SOOM avec acceptance_date
+            $acceptanceDate = now();
+            $submission->update([
+                'status' => 'accepted',
+                'acceptance_date' => $acceptanceDate
+            ]);
 
-             $seller = Auth::user();
+            // SUPPRIMÉ: Le rejet automatique des autres SOOMs
+            // Les autres SOOMs restent en status "pending"
+            // Le vendeur peut accepter plusieurs SOOMs et choisir lequel valider
 
-             try {
-                 // Envoyer l'email aux DEUX parties
-                 $emails = [$submission->user->email, $seller->email];
-                 Mail::to($emails)->send(new SoomAcceptedMail($submission, $submission->listing, $seller));
-                 \Log::info('SOOM accepted email sent successfully to both parties: ' . implode(', ', $emails));
-             } catch (\Exception $e) {
-                 \Log::error('Failed to send SOOM accepted email: ' . $e->getMessage());
-             }
+            $seller = Auth::user();
 
-             DB::commit();
+            try {
+                // Envoyer l'email aux DEUX parties
+                $emails = [$submission->user->email, $seller->email];
+                Mail::to($emails)->send(new SoomAcceptedMail($submission, $submission->listing, $seller));
+                \Log::info('SOOM accepted email sent successfully to both parties: ' . implode(', ', $emails));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send SOOM accepted email: ' . $e->getMessage());
+            }
 
-             $validationDeadline = Carbon::parse($acceptanceDate)->addDays(5);
+            DB::commit();
 
-             // Compter les SOOMs pending restants pour information
-             $remainingPendingCount = Submission::where('listing_id', $submission->listing_id)
-                 ->where('id', '!=', $submissionId)
-                 ->where('status', 'pending')
-                 ->count();
+            $validationDeadline = Carbon::parse($acceptanceDate)->addDays(5);
 
-             // Get first image URL
-             $firstImage = $submission->listing->images->first()?->image_url;
+            // Compter les SOOMs pending restants pour information
+            $remainingPendingCount = Submission::where('listing_id', $submission->listing_id)
+                ->where('id', '!=', $submissionId)
+                ->where('status', 'pending')
+                ->count();
 
-             return response()->json([
-                 'message' => 'SOOM accepted successfully',
-                 'data' => [
-                     'submission' => $submission->load(['user:id,first_name,last_name,email', 'listing']),
-                     'first_image' => $firstImage,
-                 ],
-                 'validation_deadline' => $validationDeadline->toISOString(),
-                 'remaining_pending_sooms' => $remainingPendingCount
-             ]);
-         } catch (\Exception $e) {
-             DB::rollBack();
-             \Log::error('ACCEPT SOOM ERROR: ' . $e->getMessage());
-             return response()->json([
-                 'error' => 'Failed to accept SOOM',
-                 'details' => $e->getMessage()
-             ], 500);
-         }
-     }
+            return response()->json([
+                'message' => 'SOOM accepted successfully',
+                'data' => $submission->load(['user:id,first_name,last_name,email', 'listing']),
+                'validation_deadline' => $validationDeadline->toISOString(),
+                'remaining_pending_sooms' => $remainingPendingCount
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('ACCEPT SOOM ERROR: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Failed to accept SOOM',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
     /**
      * @OA\Patch(
      *     path="/api/submissions/{submissionId}/reject",
@@ -651,87 +649,81 @@ class SoomController extends Controller
      * )
      */
 
-     public function rejectSoom(Request $request, $submissionId)
-     {
-         DB::beginTransaction();
+    public function rejectSoom(Request $request, $submissionId)
+    {
+        DB::beginTransaction();
 
-         try {
-             $userId = Auth::id();
+        try {
+            $userId = Auth::id();
 
-             if (!$userId) {
-                 return response()->json([
-                     'message' => 'Unauthorized. User must be logged in.',
-                 ], 401);
-             }
+            if (!$userId) {
+                return response()->json([
+                    'message' => 'Unauthorized. User must be logged in.',
+                ], 401);
+            }
 
-             $submission = Submission::with(['listing.images', 'user'])->find($submissionId);
+            $submission = Submission::with(['listing', 'user'])->find($submissionId);
 
-             if (!$submission) {
-                 return response()->json([
-                     'message' => 'Submission not found.',
-                 ], 404);
-             }
+            if (!$submission) {
+                return response()->json([
+                    'message' => 'Submission not found.',
+                ], 404);
+            }
 
-             // Vérifier que l'utilisateur est le vendeur du listing
-             if ($submission->listing->seller_id != $userId) {
-                 return response()->json([
-                     'message' => 'Only the seller can reject SOOMs for this listing.',
-                 ], 403);
-             }
+            // Vérifier que l'utilisateur est le vendeur du listing
+            if ($submission->listing->seller_id != $userId) {
+                return response()->json([
+                    'message' => 'Only the seller can reject SOOMs for this listing.',
+                ], 403);
+            }
 
-             // Vérifier que le SOOM n'est pas déjà rejeté
-             if ($submission->status === 'rejected') {
-                 return response()->json([
-                     'message' => 'This SOOM has already been rejected.',
-                 ], 422);
-             }
+            // Vérifier que le SOOM n'est pas déjà rejeté
+            if ($submission->status === 'rejected') {
+                return response()->json([
+                    'message' => 'This SOOM has already been rejected.',
+                ], 422);
+            }
 
-             // Vérifier que le SOOM n'est pas déjà accepté ET validé
-             if ($submission->status === 'accepted' && $submission->sale_validated) {
-                 return response()->json([
-                     'message' => 'Cannot reject a SOOM with validated sale.',
-                 ], 403);
-             }
+            // Vérifier que le SOOM n'est pas déjà accepté ET validé
+            if ($submission->status === 'accepted' && $submission->sale_validated) {
+                return response()->json([
+                    'message' => 'Cannot reject a SOOM with validated sale.',
+                ], 403);
+            }
 
-             // Préparer les données de mise à jour
-             $updateData = ['status' => 'rejected'];
+            // Préparer les données de mise à jour
+            $updateData = ['status' => 'rejected'];
 
-             // Ajouter la raison de rejet si fournie
-             if ($request->has('reason') && !empty($request->reason)) {
-                 $updateData['rejection_reason'] = $request->reason;
-             }
+            // Ajouter la raison de rejet si fournie
+            if ($request->has('reason') && !empty($request->reason)) {
+                $updateData['rejection_reason'] = $request->reason;
+            }
 
-             // Rejeter ce SOOM
-             $submission->update($updateData);
+            // Rejeter ce SOOM
+            $submission->update($updateData);
 
-             // Envoyer notification email à l'acheteur
-             $seller = Auth::user();
-             try {
-                 Mail::to($submission->user->email)->send(new SoomRejectedMail($submission, $submission->listing, $seller, $request->reason));
-             } catch (\Exception $e) {
-                 \Log::error('Failed to send SOOM rejected email: ' . $e->getMessage());
-             }
+            // Envoyer notification email à l'acheteur
+            $seller = Auth::user();
+            try {
+                Mail::to($submission->user->email)->send(new SoomRejectedMail($submission, $submission->listing, $seller, $request->reason));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send SOOM rejected email: ' . $e->getMessage());
+            }
 
-             DB::commit();
+            DB::commit();
 
-             // Get first image URL
-             $firstImage = $submission->listing->images->first()?->image_url;
-
-             return response()->json([
-                 'message' => 'SOOM rejected successfully',
-                 'data' => [
-                     'submission' => $submission->load(['user:id,first_name,last_name,email', 'listing']),
-                     'first_image' => $firstImage,
-                 ]
-             ]);
-         } catch (\Exception $e) {
-             DB::rollBack();
-             return response()->json([
-                 'error' => 'Failed to reject SOOM',
-                 'details' => $e->getMessage()
-             ], 500);
-         }
-     }
+            return response()->json([
+                'message' => 'SOOM rejected successfully',
+                'data' => $submission->load(['user:id,first_name,last_name,email', 'listing'])
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Failed to reject SOOM',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
     /**
      * @OA\Post(
      *     path="/api/submissions/{submissionId}/validate-sale",
@@ -1142,42 +1134,48 @@ class SoomController extends Controller
      * )
      */
 
-    public function getMyListingsSooms()
-    {
-        $userId = Auth::id();
+     public function getMyListingsSooms()
+     {
+         $userId = Auth::id();
 
-        if (!$userId) {
-            return response()->json([
-                'message' => 'Unauthorized. User must be logged in.',
-            ], 401);
-        }
+         if (!$userId) {
+             return response()->json([
+                 'message' => 'Unauthorized. User must be logged in.',
+             ], 401);
+         }
 
-        // Récupérer tous les SOOMs sur mes listings
-        $sooms = Submission::whereHas('listing', function ($query) use ($userId) {
-            $query->where('seller_id', $userId);
-        })
-            ->with([
-                'user:id,first_name,last_name,email',
-                'listing:id,title,description,seller_id'
-            ])
-            ->orderBy('submission_date', 'desc')
-            ->get();
+         // Récupérer tous les SOOMs sur mes listings
+         $sooms = Submission::whereHas('listing', function ($query) use ($userId) {
+             $query->where('seller_id', $userId);
+         })
+             ->with([
+                 'user:id,first_name,last_name,email',
+                 'listing:id,title,description,seller_id',
+                 'listing.images' // Add images relation
+             ])
+             ->orderBy('submission_date', 'desc')
+             ->get();
 
-        // Statistiques
-        $stats = [
-            'total_sooms' => $sooms->count(),
-            'pending_sooms' => $sooms->where('status', 'pending')->count(),
-            'accepted_sooms' => $sooms->where('status', 'accepted')->count(),
-            'rejected_sooms' => $sooms->where('status', 'rejected')->count(),
-            'pending_validation' => $sooms->where('status', 'accepted')->where('sale_validated', false)->count(),
-        ];
+         // Add first image to each submission
+         $sooms->each(function ($soom) {
+             $soom->first_image = $soom->listing->images->first()?->image_url;
+         });
 
-        return response()->json([
-            'message' => 'SOOMs retrieved successfully',
-            'data' => $sooms,
-            'stats' => $stats
-        ]);
-    }
+         // Statistiques
+         $stats = [
+             'total_sooms' => $sooms->count(),
+             'pending_sooms' => $sooms->where('status', 'pending')->count(),
+             'accepted_sooms' => $sooms->where('status', 'accepted')->count(),
+             'rejected_sooms' => $sooms->where('status', 'rejected')->count(),
+             'pending_validation' => $sooms->where('status', 'accepted')->where('sale_validated', false)->count(),
+         ];
+
+         return response()->json([
+             'message' => 'SOOMs retrieved successfully',
+             'data' => $sooms,
+             'stats' => $stats
+         ]);
+     }
     /**
      * @OA\Get(
      *     path="/api/my-sooms",
