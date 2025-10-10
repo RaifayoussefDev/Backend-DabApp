@@ -17,6 +17,7 @@ class MyGarage extends Model
         'brand_id',
         'model_id',
         'year_id',
+        'type_id', // ✅ ADD THIS
         'title',
         'description',
         'picture',
@@ -57,6 +58,14 @@ class MyGarage extends Model
     public function year(): BelongsTo
     {
         return $this->belongsTo(MotorcycleYear::class, 'year_id');
+    }
+
+    /**
+     * Get the motorcycle type
+     */
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(MotorcycleType::class, 'type_id');
     }
 
     /**
