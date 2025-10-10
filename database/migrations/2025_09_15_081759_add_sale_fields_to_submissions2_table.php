@@ -15,28 +15,37 @@ class AddSaleFieldsToSubmissions2Table extends Migration
     public function up()
     {
         Schema::table('submissions', function (Blueprint $table) {
-            // Colonnes
+            // Vérifie la présence de la colonne de référence avant d'utiliser "after"
+            $referenceColumn = Schema::hasColumn('submissions', 'acceptance_date') ? 'acceptance_date' : null;
+
             if (!Schema::hasColumn('submissions', 'sale_validated')) {
-                $table->boolean('sale_validated')->default(false)->after('acceptance_date');
+                if ($referenceColumn) {
+                    $table->boolean('sale_validated')->default(false)->after($referenceColumn);
+                } else {
+                    $table->boolean('sale_validated')->default(false);
+                }
             }
 
             if (!Schema::hasColumn('submissions', 'sale_validation_date')) {
-                $table->timestamp('sale_validation_date')->nullable()->after('sale_validated');
+                $table->timestamp('sale_validation_date')->nullable()
+                    ->after('sale_validated');
             }
 
             if (!Schema::hasColumn('submissions', 'rejection_reason')) {
-                $table->text('rejection_reason')->nullable()->after('sale_validation_date');
+                $table->text('rejection_reason')->nullable()
+                    ->after('sale_validation_date');
             }
         });
 
-        // Index (à vérifier via INFORMATION_SCHEMA)
+        // Création des index si non existants
         if (!$this->indexExists('submissions', 'submissions_status_sale_validated_index')) {
             Schema::table('submissions', function (Blueprint $table) {
                 $table->index(['status', 'sale_validated'], 'submissions_status_sale_validated_index');
             });
         }
 
-        if (!$this->indexExists('submissions', 'submissions_acceptance_date_index')) {
+        if (Schema::hasColumn('submissions', 'acceptance_date') &&
+            !$this->indexExists('submissions', 'submissions_acceptance_date_index')) {
             Schema::table('submissions', function (Blueprint $table) {
                 $table->index('acceptance_date', 'submissions_acceptance_date_index');
             });

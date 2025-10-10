@@ -2819,6 +2819,744 @@
                 }
             }
         },
+        "/api/guides/categories": {
+            "get": {
+                "tags": [
+                    "Guide Categories"
+                ],
+                "summary": "Liste toutes les catégories de guides",
+                "operationId": "4ba8df2b3bc886b0e5a7e88598a24101",
+                "responses": {
+                    "200": {
+                        "description": "Liste des catégories"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Guide Categories"
+                ],
+                "summary": "Créer une nouvelle catégorie",
+                "operationId": "53f7a1adbe3118aeeee7c5ba226d350d",
+                "responses": {
+                    "201": {
+                        "description": "Catégorie créée"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/categories/{id}": {
+            "get": {
+                "tags": [
+                    "Guide Categories"
+                ],
+                "summary": "Afficher les détails d'une catégorie",
+                "operationId": "dea57fd4f7ecb11e824e127e3f05158d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails de la catégorie"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Guide Categories"
+                ],
+                "summary": "Mettre à jour une catégorie",
+                "operationId": "c9a82abd851b94d1b910a3fc0739f6c7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Catégorie mise à jour"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Guide Categories"
+                ],
+                "summary": "Supprimer une catégorie",
+                "operationId": "83c6368e6bca8f4041f188f0453b9cd0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Catégorie supprimée"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/categories/{id}/guides": {
+            "get": {
+                "tags": [
+                    "Guide Categories"
+                ],
+                "summary": "Obtenir tous les guides d'une catégorie",
+                "operationId": "fb7059fc5050458876fdbf88a3244986",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des guides"
+                    }
+                }
+            }
+        },
+        "/api/guides": {
+            "get": {
+                "tags": [
+                    "Guides"
+                ],
+                "summary": "Liste tous les guides avec filtres",
+                "operationId": "5925d903e77ac2895e3a78a86aea5655",
+                "responses": {
+                    "200": {
+                        "description": "Liste des guides"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Guides"
+                ],
+                "summary": "Créer un nouveau guide",
+                "operationId": "0abfb96706973527a28536a11e02be8b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "content"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Complete Motorcycle Maintenance Guide"
+                                    },
+                                    "content": {
+                                        "type": "string",
+                                        "example": "This comprehensive guide covers all aspects of motorcycle maintenance..."
+                                    },
+                                    "excerpt": {
+                                        "type": "string",
+                                        "example": "Learn how to maintain your motorcycle properly"
+                                    },
+                                    "featured_image": {
+                                        "type": "string",
+                                        "example": "https://example.com/maintenance-cover.jpg"
+                                    },
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "tags": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3
+                                        ]
+                                    },
+                                    "is_featured": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "image_url": {
+                                                    "type": "string",
+                                                    "example": "https://example.com/image1.jpg"
+                                                },
+                                                "caption": {
+                                                    "type": "string",
+                                                    "example": "Oil change procedure"
+                                                },
+                                                "order_position": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Guide créé avec succès"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/{slug}": {
+            "get": {
+                "tags": [
+                    "Guides"
+                ],
+                "summary": "Afficher les détails d'un guide",
+                "operationId": "3def2a2b674d267256f5000120f78789",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du guide"
+                    }
+                }
+            }
+        },
+        "/api/guides/{id}": {
+            "put": {
+                "tags": [
+                    "Guides"
+                ],
+                "summary": "Mettre à jour un guide",
+                "operationId": "e1dc1c6b10d1890d4812b5dbf0f052f1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Guide mis à jour"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Guides"
+                ],
+                "summary": "Supprimer un guide",
+                "operationId": "dc4abf952eb4abf688a099b642b84751",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Guide supprimé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/featured": {
+            "get": {
+                "tags": [
+                    "Guides"
+                ],
+                "summary": "Guides mis en avant",
+                "operationId": "67d9d778da3ccccd7880227dce8278be",
+                "responses": {
+                    "200": {
+                        "description": "Guides featured"
+                    }
+                }
+            }
+        },
+        "/api/guides/popular": {
+            "get": {
+                "tags": [
+                    "Guides"
+                ],
+                "summary": "Guides populaires",
+                "operationId": "f8015f1ef5e34813d0e1e4ec24c875c2",
+                "responses": {
+                    "200": {
+                        "description": "Guides populaires"
+                    }
+                }
+            }
+        },
+        "/api/guides/latest": {
+            "get": {
+                "tags": [
+                    "Guides"
+                ],
+                "summary": "Derniers guides",
+                "operationId": "34717a09e14f3d7b2371210b689708c2",
+                "responses": {
+                    "200": {
+                        "description": "Derniers guides"
+                    }
+                }
+            }
+        },
+        "/api/guides/{id}/publish": {
+            "post": {
+                "tags": [
+                    "Guides"
+                ],
+                "summary": "Publier un guide",
+                "operationId": "a143c91571e8f8c4d9efb2cd1b0c0216",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Guide publié"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/{id}/archive": {
+            "post": {
+                "tags": [
+                    "Guides"
+                ],
+                "summary": "Archiver un guide",
+                "operationId": "ada5334f84c02e9f15467cbd6c39a3bc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Guide archivé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/my/guides": {
+            "get": {
+                "tags": [
+                    "Guides"
+                ],
+                "summary": "Mes guides",
+                "operationId": "46747724ab63fa0fef7a5e7f5ecf739a",
+                "responses": {
+                    "200": {
+                        "description": "Mes guides"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/{guide_id}/images": {
+            "get": {
+                "tags": [
+                    "Guide Images"
+                ],
+                "summary": "Liste toutes les images d'un guide",
+                "operationId": "f30a3163d4449826d554390cb531417f",
+                "parameters": [
+                    {
+                        "name": "guide_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des images"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Guide Images"
+                ],
+                "summary": "Ajouter une image à un guide",
+                "operationId": "3c933cd50dd525b13780f735e109aca4",
+                "parameters": [
+                    {
+                        "name": "guide_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Image ajoutée"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/{guide_id}/images/{id}": {
+            "put": {
+                "tags": [
+                    "Guide Images"
+                ],
+                "summary": "Mettre à jour une image",
+                "operationId": "d57880ba873d71d190ae3317bedbeb64",
+                "parameters": [
+                    {
+                        "name": "guide_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Image mise à jour"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Guide Images"
+                ],
+                "summary": "Supprimer une image",
+                "operationId": "7bc93b01495734742143004dc8e1e748",
+                "parameters": [
+                    {
+                        "name": "guide_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Image supprimée"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/{guide_id}/images/reorder": {
+            "post": {
+                "tags": [
+                    "Guide Images"
+                ],
+                "summary": "Réorganiser l'ordre des images",
+                "operationId": "8f84aa0617dd1879d553253d18ff128b",
+                "parameters": [
+                    {
+                        "name": "guide_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ordre mis à jour"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/tags": {
+            "get": {
+                "tags": [
+                    "Guide Tags"
+                ],
+                "summary": "Liste tous les tags",
+                "operationId": "2eaf3f4483f20c20e309d4c201a69f44",
+                "responses": {
+                    "200": {
+                        "description": "Liste des tags"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Guide Tags"
+                ],
+                "summary": "Créer un nouveau tag",
+                "operationId": "8d50db3be21680e78304c7d3a56d5aeb",
+                "responses": {
+                    "201": {
+                        "description": "Tag créé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/tags/{slug}": {
+            "get": {
+                "tags": [
+                    "Guide Tags"
+                ],
+                "summary": "Afficher les détails d'un tag",
+                "operationId": "45819c20fc78b9bece2e51f4fbb02899",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du tag"
+                    }
+                }
+            }
+        },
+        "/api/guides/tags/{id}": {
+            "put": {
+                "tags": [
+                    "Guide Tags"
+                ],
+                "summary": "Mettre à jour un tag",
+                "operationId": "5081a447489190f4e865f1f19bc0f108",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag mis à jour"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Guide Tags"
+                ],
+                "summary": "Supprimer un tag",
+                "operationId": "754af4a0687f9dc68cb409107f3449a5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag supprimé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/tags/{slug}/guides": {
+            "get": {
+                "tags": [
+                    "Guide Tags"
+                ],
+                "summary": "Obtenir tous les guides avec un tag spécifique",
+                "operationId": "d74c65a4982fda16ff6c3d72852a5bdd",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des guides"
+                    }
+                }
+            }
+        },
+        "/api/guides/tags/popular": {
+            "get": {
+                "tags": [
+                    "Guide Tags"
+                ],
+                "summary": "Obtenir les tags les plus utilisés",
+                "operationId": "6c0e4eec38e37a9b402948def5ae99ce",
+                "responses": {
+                    "200": {
+                        "description": "Tags populaires"
+                    }
+                }
+            }
+        },
         "/api/upload": {
             "post": {
                 "tags": [
@@ -4853,6 +5591,46 @@
                                                     },
                                                     "listings_count": {
                                                         "type": "integer"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/types": {
+            "get": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Get all motorcycle types",
+                "operationId": "91ec443bd674f98c9caec796eaef5576",
+                "responses": {
+                    "200": {
+                        "description": "List of all motorcycle types",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "motorcycle_types": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
                                                     }
                                                 },
                                                 "type": "object"
@@ -11779,6 +12557,22 @@
         {
             "name": "Filters",
             "description": "API endpoints for filtering listings"
+        },
+        {
+            "name": "Guide Categories",
+            "description": "API Endpoints pour la gestion des catégories de guides"
+        },
+        {
+            "name": "Guides",
+            "description": "API Endpoints pour la gestion des guides"
+        },
+        {
+            "name": "Guide Images",
+            "description": "API Endpoints pour la gestion des images de guides"
+        },
+        {
+            "name": "Guide Tags",
+            "description": "API Endpoints pour la gestion des tags de guides"
         },
         {
             "name": "License Plates",

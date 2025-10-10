@@ -34,6 +34,14 @@ use App\Http\Controllers\SoomController;
 use App\Http\Controllers\WhatsAppOtpController;
 use App\Http\Controllers\WishlistController;
 
+use App\Http\Controllers\GuideCategoryController;
+use App\Http\Controllers\GuideController;
+use App\Http\Controllers\GuideImageController;
+use App\Http\Controllers\GuideTagController;
+use App\Http\Controllers\GuideCommentController;
+use App\Http\Controllers\GuideLikeController;
+use App\Http\Controllers\GuideBookmarkController;
+use App\Http\Controllers\ListingTypeController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -278,6 +286,9 @@ Route::get('/brands/listings-count', [ListingController::class, 'getBrandsWithLi
 // Get models with listings for a specific brand
 Route::get('/brands/{brandId}/models-with-listings', [ListingController::class, 'getModelsWithListingsByBrand']);
 
+Route::get('/types', action: [ListingController::class, 'getAllTypes']);
+
+
 // Get years with listings for a specific brand and model
 Route::get('/brands/{brandId}/models/{modelId}/years-with-listings', [ListingController::class, 'getYearsWithListingsByBrandAndModel']);
 
@@ -444,4 +455,79 @@ Route::get('/test-email-simple', function () {
         \Log::error('Email test failed: ' . $e->getMessage());
         return 'Email test failed: ' . $e->getMessage();
     }
+});
+/*
+|--------------------------------------------------------------------------
+| Guide API Routes - JWT Authentication
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('guides')->group(function () {
+
+    // ========================================
+    // GUIDE CATEGORIES ROUTES
+    // ========================================
+    Route::prefix('categories')->group(function () {
+        // Public routes
+        Route::get('/', [GuideCategoryController::class, 'index']);
+        Route::get('/{id}', [GuideCategoryController::class, 'show']);
+        Route::get('/{id}/guides', [GuideCategoryController::class, 'getGuidesByCategory']);
+
+        // Authenticated routes (JWT)
+        Route::middleware(['auth:api'])->group(function () {
+            Route::post('/', [GuideCategoryController::class, 'store']);
+            Route::put('/{id}', [GuideCategoryController::class, 'update']);
+            Route::delete('/{id}', [GuideCategoryController::class, 'destroy']);
+        });
+    });
+
+    // ========================================
+    // GUIDE TAGS ROUTES
+    // ========================================
+    Route::prefix('tags')->group(function () {
+        // Public routes
+        Route::get('/', [GuideTagController::class, 'index']);
+        Route::get('/popular', [GuideTagController::class, 'popular']);
+        Route::get('/{slug}', [GuideTagController::class, 'show']);
+        Route::get('/{slug}/guides', [GuideTagController::class, 'getGuidesByTag']);
+
+        // Authenticated routes (JWT)
+        Route::middleware(['auth:api'])->group(function () {
+            Route::post('/', [GuideTagController::class, 'store']);
+            Route::put('/{id}', [GuideTagController::class, 'update']);
+            Route::delete('/{id}', [GuideTagController::class, 'destroy']);
+        });
+    });
+
+    // ========================================
+    // GUIDES ROUTES
+    // ========================================
+
+    // Routes spéciales AVANT le slug (important pour éviter les conflits)
+    Route::get('/featured', [GuideController::class, 'featured']);
+    Route::get('/popular', [GuideController::class, 'popular']);
+    Route::get('/latest', [GuideController::class, 'latest']);
+
+    // Public routes
+    Route::get('/', [GuideController::class, 'index']);
+    Route::get('/{slug}', [GuideController::class, 'show']);
+
+    // Authenticated routes (JWT)
+    Route::middleware('auth:api')->group(function () {
+        Route::get('/my/guides', [GuideController::class, 'myGuides']);
+        Route::post('/', [GuideController::class, 'store']);
+        Route::put('/{id}', [GuideController::class, 'update']);
+        Route::delete('/{id}', [GuideController::class, 'destroy']);
+        Route::post('/{id}/publish', [GuideController::class, 'publish']);
+        Route::post('/{id}/archive', [GuideController::class, 'archive']);
+
+        // Guide Images routes
+        Route::prefix('{guide_id}/images')->group(function () {
+            Route::get('/', [GuideImageController::class, 'index']);
+            Route::post('/', [GuideImageController::class, 'store']);
+            Route::put('/{id}', [GuideImageController::class, 'update']);
+            Route::delete('/{id}', [GuideImageController::class, 'destroy']);
+            Route::post('/reorder', [GuideImageController::class, 'reorder']);
+        });
+    });
 });

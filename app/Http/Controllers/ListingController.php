@@ -2238,7 +2238,39 @@ class ListingController extends Controller
             'motorcycle_types' => $motorcycle_types
         ]);
     }
+    /**
+     * @OA\Get(
+     *     path="/api/types",
+     *     summary="Get all motorcycle types",
+     *     tags={"Listings"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of all motorcycle types",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="motorcycle_types",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer"),
+     *                     @OA\Property(property="name", type="string"),
+     *                     @OA\Property(property="description", type="string")
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function getAllTypes()
+    {
+        $motorcycle_types = MotorcycleType::select('id', 'name', 'description')
+            ->orderBy('name')
+            ->get();
 
+        return response()->json([
+            'motorcycle_types' => $motorcycle_types
+        ]);
+    }
 
     /**
      * @OA\Get(
