@@ -51,40 +51,7 @@ class WishlistController extends Controller
 
             $wishlists = Wishlist::with([
                 'listing' => function($query) {
-                    $query->where('status', 'published')->with([
-                        'images' => function ($q) {
-                            $q->select('listing_id', 'image_url')->limit(1);
-                        },
-                        'category:id,name',
-                        'country:id,name',
-                        'city:id,name',
-                        'country.currencyExchangeRate:id,country_id,currency_symbol',
-                        'seller' => function($q) {
-                            $q->select('id', 'first_name', 'last_name', 'email', 'phone');
-                        },
-                        'motorcycle' => function ($q) {
-                            $q->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id', 'engine', 'mileage', 'body_condition', 'modified', 'insurance', 'general_condition', 'vehicle_care', 'transmission')
-                                ->with([
-                                    'brand:id,name',
-                                    'model:id,name',
-                                    'year:id,year',
-                                    'type:id,name'
-                                ]);
-                        },
-                        'sparePart' => function ($q) {
-                            $q->with([
-                                'bikePartBrand:id,name',
-                                'bikePartCategory:id,name',
-                                'motorcycleAssociations.brand:id,name',
-                                'motorcycleAssociations.model:id,name',
-                                'motorcycleAssociations.year:id,year'
-                            ]);
-                        },
-                        'licensePlate.format',
-                        'licensePlate.country',
-                        'licensePlate.city',
-                        'licensePlate.fieldValues.formatField' // ✅ Changed from plateFormatField to formatField
-                    ]);
+                    $query->where('status', 'published');
                 }
             ])
             ->where('user_id', $userId)
@@ -94,9 +61,192 @@ class WishlistController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 
+            // Get the collection of wishlisted listings
+            $wishlistCollection = $wishlists->getCollection();
+            $listings = $wishlistCollection->pluck('listing');
+
+            // Load common relations
+            $listings->load([
+                'images' => function ($query) {
+                    $query->select('listing_id', 'image_url')->limit(1);
+                },
+                'category:id,name',
+                'country:id,name',
+                'city:id,name',
+                'country.currencyExchangeRate:id,country_id,currency_symbol'
+            ]);
+
+            // Group listings by category and load specific relations
+            $motorcycleListings = $listings->where('category_id', 1);
+            $sparePartListings = $listings->where('category_id', 2);
+            $licensePlateListings = $listings->where('category_id', 3);
+
+            if ($motorcycleListings->isNotEmpty()) {
+                $motorcycleListings->load([
+                    'motorcycle' => function ($query) {
+                        $query->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id', 'engine', 'mileage', 'body_condition', 'modified', 'insurance', 'general_condition', 'vehicle_care', 'transmission')
+                            ->with([
+                                'brand:id,name',
+                                'model:id,name',
+                                'year:id,year',
+                                'type:id,name'
+                            ]);
+                    }
+                ]);
+            }
+
+            if ($sparePartListings->isNotEmpty()) {
+                $sparePartListings->load([
+                    'sparePart' => function ($query) {
+                        $query->with([
+                            'bikePartBrand:id,name',
+                            'bikePartCategory:id,name',
+                            'motorcycleAssociations.brand:id,name',
+                            'motorcycleAssociations.model:id,name',
+                            'motorcycleAssociations.year:id,year'
+                        ]);
+                    }
+                ]);
+            }
+
+            if ($licensePlateListings->isNotEmpty()) {
+                $licensePlateListings->load([
+                    'licensePlate.format',
+                    'licensePlate.city',
+                    'licensePlate.country',
+                    'licensePlate.fieldValues.formatField'
+                ]);
+            }
+
+            // Get current bids for auctions
+            $listingIds = $listings->pluck('id');
+            $currentBids = DB::table('auction_histories')
+                ->whereIn('listing_id', $listingIds)
+                ->select('listing_id', DB::raw('MAX(bid_amount) as current_bid'))
+                ->groupBy('listing_id')
+                ->pluck('current_bid', 'listing_id');
+
+            // Format the listings
+            $formattedWishlists = $wishlistCollection->map(function ($wishlist) use ($currentBids) {
+                $listing = $wishlist->listing;
+
+                if (!$listing) {
+                    return null;
+                }
+
+                // Determine the price to display
+                $displayPrice = $listing->price;
+                $isAuction = false;
+                $currentBid = $currentBids[$listing->id] ?? null;
+
+                if (!$displayPrice && $listing->auction_enabled) {
+                    $displayPrice = $currentBid ?: $listing->minimum_bid;
+                    $isAuction = true;
+                }
+
+                // Get currency symbol
+                $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+
+                // Price to show
+                $priceToShow = $listing->price ?? $listing->minimum_bid;
+
+                $baseData = [
+                    'wishlist_id' => $wishlist->id,
+                    'added_at' => $wishlist->created_at,
+                    'listing' => [
+                        'id' => $listing->id,
+                        'title' => $listing->title,
+                        'description' => $listing->description,
+                        'price' => $priceToShow,
+                        'category_id' => $listing->category_id,
+                        'auction_enabled' => $listing->auction_enabled,
+                        'minimum_bid' => $listing->minimum_bid,
+                        'allow_submission' => $listing->allow_submission,
+                        'listing_type_id' => $listing->listing_type_id,
+                        'contacting_channel' => $listing->contacting_channel,
+                        'seller_type' => $listing->seller_type,
+                        'status' => $listing->status,
+                        'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
+                        'city' => $listing->city?->name,
+                        'country' => $listing->country?->name,
+                        'images' => $listing->images->pluck('image_url'),
+                        'wishlist' => true, // Always true since this is the wishlist endpoint
+
+                        // New columns
+                        'display_price' => $displayPrice,
+                        'is_auction' => $isAuction,
+                        'current_bid' => $currentBid,
+                        'currency' => $currencySymbol,
+                    ]
+                ];
+
+                // Add category-specific data
+                if ($listing->category_id == 1 && $listing->motorcycle) {
+                    // Motorcycle data
+                    $baseData['listing']['motorcycle'] = [
+                        'brand' => $listing->motorcycle->brand?->name ?? null,
+                        'model' => $listing->motorcycle->model?->name ?? null,
+                        'year' => $listing->motorcycle->year?->year ?? null,
+                        'type' => $listing->motorcycle->type?->name ?? null,
+                        'engine' => $listing->motorcycle->engine,
+                        'mileage' => $listing->motorcycle->mileage,
+                        'body_condition' => $listing->motorcycle->body_condition,
+                        'modified' => $listing->motorcycle->modified,
+                        'insurance' => $listing->motorcycle->insurance,
+                        'general_condition' => $listing->motorcycle->general_condition,
+                        'vehicle_care' => $listing->motorcycle->vehicle_care,
+                        'transmission' => $listing->motorcycle->transmission,
+                    ];
+                } elseif ($listing->category_id == 2 && $listing->sparePart) {
+                    // Spare part data
+                    $baseData['listing']['spare_part'] = [
+                        'condition' => $listing->sparePart->condition,
+                        'brand' => $listing->sparePart->bikePartBrand?->name ?? null,
+                        'category' => $listing->sparePart->bikePartCategory?->name ?? null,
+                        'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
+                            return [
+                                'brand' => $association->brand?->name ?? null,
+                                'model' => $association->model?->name ?? null,
+                                'year' => $association->year?->year ?? null,
+                            ];
+                        })->toArray(),
+                    ];
+                } elseif ($listing->category_id == 3 && $listing->licensePlate) {
+                    // License plate data
+                    $licensePlate = $listing->licensePlate;
+
+                    $baseData['listing']['license_plate'] = [
+                        'plate_format' => [
+                            'id' => $licensePlate->format?->id ?? null,
+                            'name' => $licensePlate->format?->name ?? null,
+                            'pattern' => $licensePlate->format?->pattern ?? null,
+                            'country' => $licensePlate->format?->country ?? null,
+                        ],
+                        'city' => $licensePlate->city?->name ?? null,
+                        'country' => $licensePlate->country?->name ?? null,
+                        'country_id' => $licensePlate->country_id,
+                        'fields' => $licensePlate->fieldValues->map(function ($fieldValue) {
+                            return [
+                                'field_id' => $fieldValue->formatField?->id ?? null,
+                                'field_name' => $fieldValue->formatField?->field_name ?? null,
+                                'field_position' => $fieldValue->formatField?->position ?? null,
+                                'field_type' => $fieldValue->formatField?->field_type ?? null,
+                                'field_label' => $fieldValue->formatField?->field_label ?? null,
+                                'is_required' => $fieldValue->formatField?->is_required ?? null,
+                                'max_length' => $fieldValue->formatField?->max_length ?? null,
+                                'validation_pattern' => $fieldValue->formatField?->validation_pattern ?? null,
+                                'value' => $fieldValue->field_value,
+                            ];
+                        })->toArray(),
+                    ];
+                }
+
+                return $baseData;
+            })->filter(); // Remove null entries
+
             return response()->json([
                 'message' => 'Wishlist retrieved successfully',
-                'data' => $wishlists->items(),
+                'data' => $formattedWishlists->values(),
                 'pagination' => [
                     'current_page' => $wishlists->currentPage(),
                     'last_page' => $wishlists->lastPage(),
