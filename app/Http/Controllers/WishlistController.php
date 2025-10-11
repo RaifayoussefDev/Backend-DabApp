@@ -52,22 +52,38 @@ class WishlistController extends Controller
             $wishlists = Wishlist::with([
                 'listing' => function($query) {
                     $query->where('status', 'published')->with([
-                        'images',
-                        'category',
-                        'country',
-                        'city',
+                        'images' => function ($q) {
+                            $q->select('listing_id', 'image_url')->limit(1);
+                        },
+                        'category:id,name',
+                        'country:id,name',
+                        'city:id,name',
+                        'country.currencyExchangeRate:id,country_id,currency_symbol',
                         'seller' => function($q) {
                             $q->select('id', 'first_name', 'last_name', 'email', 'phone');
                         },
-                        'motorcycle.brand',
-                        'motorcycle.model',
-                        'motorcycle.year',
-                        'sparePart.bikePartBrand',
-                        'sparePart.bikePartCategory',
+                        'motorcycle' => function ($q) {
+                            $q->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id', 'engine', 'mileage', 'body_condition', 'modified', 'insurance', 'general_condition', 'vehicle_care', 'transmission')
+                                ->with([
+                                    'brand:id,name',
+                                    'model:id,name',
+                                    'year:id,year',
+                                    'type:id,name'
+                                ]);
+                        },
+                        'sparePart' => function ($q) {
+                            $q->with([
+                                'bikePartBrand:id,name',
+                                'bikePartCategory:id,name',
+                                'motorcycleAssociations.brand:id,name',
+                                'motorcycleAssociations.model:id,name',
+                                'motorcycleAssociations.year:id,year'
+                            ]);
+                        },
                         'licensePlate.format',
                         'licensePlate.country',
                         'licensePlate.city',
-                        'licensePlate.fieldValues.plateFormatField'
+                        'licensePlate.fieldValues.formatField' // ✅ Changed from plateFormatField to formatField
                     ]);
                 }
             ])
