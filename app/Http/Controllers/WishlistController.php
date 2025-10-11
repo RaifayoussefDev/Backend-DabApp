@@ -51,7 +51,15 @@ class WishlistController extends Controller
 
             $wishlists = Wishlist::with([
                 'listing' => function($query) {
-                    $query->where('status', 'published');
+                    $query->where('status', 'published')->with([
+                        'images' => function ($q) {
+                            $q->select('listing_id', 'image_url')->limit(1);
+                        },
+                        'category:id,name',
+                        'country:id,name',
+                        'city:id,name',
+                        'country.currencyExchangeRate:id,country_id,currency_symbol',
+                    ]);
                 }
             ])
             ->where('user_id', $userId)
@@ -61,65 +69,70 @@ class WishlistController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 
-            // Get the collection of wishlisted listings
+            // Get the collection of wishlisted items
             $wishlistCollection = $wishlists->getCollection();
-            $listings = $wishlistCollection->pluck('listing');
 
-            // Load common relations
-            $listings->load([
-                'images' => function ($query) {
-                    $query->select('listing_id', 'image_url')->limit(1);
-                },
-                'category:id,name',
-                'country:id,name',
-                'city:id,name',
-                'country.currencyExchangeRate:id,country_id,currency_symbol'
-            ]);
+            // Separate listings by category for conditional eager loading
+            $listingIds = $wishlistCollection->pluck('listing_id')->filter();
 
-            // Group listings by category and load specific relations
-            $motorcycleListings = $listings->where('category_id', 1);
-            $sparePartListings = $listings->where('category_id', 2);
-            $licensePlateListings = $listings->where('category_id', 3);
+            // Load category-specific relations
+            $motorcycleListingIds = Listing::whereIn('id', $listingIds)->where('category_id', 1)->pluck('id');
+            $sparePartListingIds = Listing::whereIn('id', $listingIds)->where('category_id', 2)->pluck('id');
+            $licensePlateListingIds = Listing::whereIn('id', $listingIds)->where('category_id', 3)->pluck('id');
 
-            if ($motorcycleListings->isNotEmpty()) {
-                $motorcycleListings->load([
-                    'motorcycle' => function ($query) {
-                        $query->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id', 'engine', 'mileage', 'body_condition', 'modified', 'insurance', 'general_condition', 'vehicle_care', 'transmission')
-                            ->with([
-                                'brand:id,name',
-                                'model:id,name',
-                                'year:id,year',
-                                'type:id,name'
-                            ]);
-                    }
-                ]);
-            }
-
-            if ($sparePartListings->isNotEmpty()) {
-                $sparePartListings->load([
-                    'sparePart' => function ($query) {
-                        $query->with([
-                            'bikePartBrand:id,name',
-                            'bikePartCategory:id,name',
-                            'motorcycleAssociations.brand:id,name',
-                            'motorcycleAssociations.model:id,name',
-                            'motorcycleAssociations.year:id,year'
+            // Load motorcycle data
+            if ($motorcycleListingIds->isNotEmpty()) {
+                $wishlistCollection->each(function($wishlist) use ($motorcycleListingIds) {
+                    if ($wishlist->listing && $motorcycleListingIds->contains($wishlist->listing->id)) {
+                        $wishlist->listing->load([
+                            'motorcycle' => function ($query) {
+                                $query->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id', 'engine', 'mileage', 'body_condition', 'modified', 'insurance', 'general_condition', 'vehicle_care', 'transmission')
+                                    ->with([
+                                        'brand:id,name',
+                                        'model:id,name',
+                                        'year:id,year',
+                                        'type:id,name'
+                                    ]);
+                            }
                         ]);
                     }
-                ]);
+                });
             }
 
-            if ($licensePlateListings->isNotEmpty()) {
-                $licensePlateListings->load([
-                    'licensePlate.format',
-                    'licensePlate.city',
-                    'licensePlate.country',
-                    'licensePlate.fieldValues.formatField'
-                ]);
+            // Load spare part data
+            if ($sparePartListingIds->isNotEmpty()) {
+                $wishlistCollection->each(function($wishlist) use ($sparePartListingIds) {
+                    if ($wishlist->listing && $sparePartListingIds->contains($wishlist->listing->id)) {
+                        $wishlist->listing->load([
+                            'sparePart' => function ($query) {
+                                $query->with([
+                                    'bikePartBrand:id,name',
+                                    'bikePartCategory:id,name',
+                                    'motorcycleAssociations.brand:id,name',
+                                    'motorcycleAssociations.model:id,name',
+                                    'motorcycleAssociations.year:id,year'
+                                ]);
+                            }
+                        ]);
+                    }
+                });
+            }
+
+            // Load license plate data
+            if ($licensePlateListingIds->isNotEmpty()) {
+                $wishlistCollection->each(function($wishlist) use ($licensePlateListingIds) {
+                    if ($wishlist->listing && $licensePlateListingIds->contains($wishlist->listing->id)) {
+                        $wishlist->listing->load([
+                            'licensePlate.format',
+                            'licensePlate.city',
+                            'licensePlate.country',
+                            'licensePlate.fieldValues.formatField'
+                        ]);
+                    }
+                });
             }
 
             // Get current bids for auctions
-            $listingIds = $listings->pluck('id');
             $currentBids = DB::table('auction_histories')
                 ->whereIn('listing_id', $listingIds)
                 ->select('listing_id', DB::raw('MAX(bid_amount) as current_bid'))
@@ -242,11 +255,11 @@ class WishlistController extends Controller
                 }
 
                 return $baseData;
-            })->filter(); // Remove null entries
+            })->filter()->values(); // Remove null entries and reset keys
 
             return response()->json([
                 'message' => 'Wishlist retrieved successfully',
-                'data' => $formattedWishlists->values(),
+                'data' => $formattedWishlists,
                 'pagination' => [
                     'current_page' => $wishlists->currentPage(),
                     'last_page' => $wishlists->lastPage(),
