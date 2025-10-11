@@ -837,11 +837,10 @@ class ListingController extends Controller
 
         return response()->json($listings);
     }
-
     /**
      * @OA\Get(
      *     path="/api/listings/by-category/{category_id}",
-     *     summary="Get listings by category",
+     *     summary="Get listings by category with flexible filtering",
      *     tags={"Listings"},
      *     @OA\Parameter(
      *         name="category_id",
@@ -854,8 +853,21 @@ class ListingController extends Controller
      *         name="country",
      *         in="query",
      *         required=false,
-     *         description="Filter by country name",
-     *         @OA\Schema(type="string")
+     *         description="Filter by country ID (e.g., 1) or country name (e.g., 'Morocco')",
+     *         @OA\Schema(type="string"),
+     *         example="Morocco"
+     *     ),
+     *     @OA\Parameter(
+     *         name="cities[]",
+     *         in="query",
+     *         required=false,
+     *         description="Filter by multiple cities (IDs or names). Can be repeated: ?cities[]=Casablanca&cities[]=Rabat&cities[]=5",
+     *         style="form",
+     *         explode=true,
+     *         @OA\Schema(
+     *             type="array",
+     *             @OA\Items(type="string")
+     *         )
      *     ),
      *     @OA\Parameter(
      *         name="plate_search",
@@ -886,38 +898,133 @@ class ListingController extends Controller
      *         description="List of listings",
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="searched_country", type="string"),
-     *             @OA\Property(property="showing_all_countries", type="boolean"),
-     *             @OA\Property(property="total_listings", type="integer"),
-     *             @OA\Property(property="current_page", type="integer", description="Current page number (only present when pagination is used)"),
-     *             @OA\Property(property="per_page", type="integer", description="Items per page (only present when pagination is used)"),
-     *             @OA\Property(property="last_page", type="integer", description="Total number of pages (only present when pagination is used)"),
-     *             @OA\Property(property="from", type="integer", description="Starting item number (only present when pagination is used)"),
-     *             @OA\Property(property="to", type="integer", description="Ending item number (only present when pagination is used)"),
+     *             @OA\Property(property="message", type="string", example="Showing listings for 'Morocco' in cities: Casablanca, Rabat, Marrakech."),
+     *             @OA\Property(property="searched_country", type="string", nullable=true, example="Morocco"),
+     *             @OA\Property(
+     *                 property="searched_cities",
+     *                 type="array",
+     *                 @OA\Items(type="string"),
+     *                 example={"Casablanca", "Rabat", "Marrakech"}
+     *             ),
+     *             @OA\Property(property="showing_all_countries", type="boolean", example=false),
+     *             @OA\Property(property="total_listings", type="integer", example=42),
+     *             @OA\Property(property="current_page", type="integer", description="Current page number (only present when pagination is used)", example=1),
+     *             @OA\Property(property="per_page", type="integer", description="Items per page (only present when pagination is used)", example=15),
+     *             @OA\Property(property="last_page", type="integer", description="Total number of pages (only present when pagination is used)", example=3),
+     *             @OA\Property(property="from", type="integer", description="Starting item number (only present when pagination is used)", example=1),
+     *             @OA\Property(property="to", type="integer", description="Ending item number (only present when pagination is used)", example=15),
      *             @OA\Property(
      *                 property="listings",
      *                 type="array",
      *                 @OA\Items(
-     *                     @OA\Property(property="id", type="integer"),
-     *                     @OA\Property(property="title", type="string"),
-     *                     @OA\Property(property="description", type="string"),
-     *                     @OA\Property(property="price", type="number"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time"),
-     *                     @OA\Property(property="city", type="string"),
-     *                     @OA\Property(property="country", type="string"),
-     *                     @OA\Property(property="images", type="array", @OA\Items(type="string")),
-     *                     @OA\Property(property="wishlist", type="boolean")
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=123),
+     *                     @OA\Property(property="title", type="string", example="Honda CBR 600RR"),
+     *                     @OA\Property(property="description", type="string", example="Excellent condition, low mileage"),
+     *                     @OA\Property(property="price", type="number", format="float", example=85000.00),
+     *                     @OA\Property(property="category_id", type="integer", example=1),
+     *                     @OA\Property(property="auction_enabled", type="boolean", example=false),
+     *                     @OA\Property(property="minimum_bid", type="number", format="float", nullable=true, example=null),
+     *                     @OA\Property(property="allow_submission", type="boolean", example=true),
+     *                     @OA\Property(property="listing_type_id", type="integer", example=1),
+     *                     @OA\Property(property="contacting_channel", type="string", example="whatsapp"),
+     *                     @OA\Property(property="seller_type", type="string", example="individual"),
+     *                     @OA\Property(property="status", type="string", example="published"),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2025-01-15 10:30:00"),
+     *                     @OA\Property(property="city", type="string", example="Casablanca"),
+     *                     @OA\Property(property="country", type="string", example="Morocco"),
+     *                     @OA\Property(
+     *                         property="images",
+     *                         type="array",
+     *                         @OA\Items(type="string", example="https://example.com/image.jpg")
+     *                     ),
+     *                     @OA\Property(property="wishlist", type="boolean", example=false),
+     *                     @OA\Property(property="display_price", type="number", format="float", example=85000.00, description="Price to display (fixed price or current bid)"),
+     *                     @OA\Property(property="is_auction", type="boolean", example=false, description="Whether this is an auction listing"),
+     *                     @OA\Property(property="current_bid", type="number", format="float", nullable=true, example=null, description="Current highest bid for auctions"),
+     *                     @OA\Property(property="currency", type="string", example="MAD", description="Currency symbol"),
+     *                     @OA\Property(
+     *                         property="motorcycle",
+     *                         type="object",
+     *                         description="Only present for category_id=1",
+     *                         @OA\Property(property="brand", type="string", example="Honda"),
+     *                         @OA\Property(property="model", type="string", example="CBR 600RR"),
+     *                         @OA\Property(property="year", type="integer", example=2020),
+     *                         @OA\Property(property="type", type="string", example="Sport"),
+     *                         @OA\Property(property="engine", type="string", example="600cc"),
+     *                         @OA\Property(property="mileage", type="integer", example=15000),
+     *                         @OA\Property(property="body_condition", type="string", example="excellent"),
+     *                         @OA\Property(property="modified", type="boolean", example=false),
+     *                         @OA\Property(property="insurance", type="string", example="full"),
+     *                         @OA\Property(property="general_condition", type="string", example="excellent"),
+     *                         @OA\Property(property="vehicle_care", type="string", example="well_maintained"),
+     *                         @OA\Property(property="transmission", type="string", example="manual")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="spare_part",
+     *                         type="object",
+     *                         description="Only present for category_id=2",
+     *                         @OA\Property(property="condition", type="string", example="new"),
+     *                         @OA\Property(property="brand", type="string", example="Akrapovic"),
+     *                         @OA\Property(property="category", type="string", example="Exhaust"),
+     *                         @OA\Property(
+     *                             property="compatible_motorcycles",
+     *                             type="array",
+     *                             @OA\Items(
+     *                                 type="object",
+     *                                 @OA\Property(property="brand", type="string", example="Honda"),
+     *                                 @OA\Property(property="model", type="string", example="CBR 600RR"),
+     *                                 @OA\Property(property="year", type="integer", example=2020)
+     *                             )
+     *                         )
+     *                     ),
+     *                     @OA\Property(
+     *                         property="license_plate",
+     *                         type="object",
+     *                         description="Only present for category_id=3",
+     *                         @OA\Property(
+     *                             property="plate_format",
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=1),
+     *                             @OA\Property(property="name", type="string", example="Standard Format"),
+     *                             @OA\Property(property="pattern", type="string", example="XX-1234-YY"),
+     *                             @OA\Property(property="country", type="string", example="Morocco")
+     *                         ),
+     *                         @OA\Property(property="city", type="string", example="Casablanca"),
+     *                         @OA\Property(property="country", type="string", example="Morocco"),
+     *                         @OA\Property(property="country_id", type="integer", example=1),
+     *                         @OA\Property(
+     *                             property="fields",
+     *                             type="array",
+     *                             @OA\Items(
+     *                                 type="object",
+     *                                 @OA\Property(property="field_id", type="integer", example=1),
+     *                                 @OA\Property(property="field_name", type="string", example="plate_number"),
+     *                                 @OA\Property(property="field_position", type="integer", example=1),
+     *                                 @OA\Property(property="field_type", type="string", example="text"),
+     *                                 @OA\Property(property="field_label", type="string", example="Plate Number"),
+     *                                 @OA\Property(property="is_required", type="boolean", example=true),
+     *                                 @OA\Property(property="max_length", type="integer", example=10),
+     *                                 @OA\Property(property="validation_pattern", type="string", nullable=true, example="^[A-Z0-9]+$"),
+     *                                 @OA\Property(property="value", type="string", example="AB-1234-CD")
+     *                             )
+     *                         )
+     *                     )
      *                 )
      *             )
      *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
      *     )
      * )
      */
     public function getByCategory($category_id, Request $request)
     {
         $user = Auth::user();
-        $countryName = $request->get('country');
+        $countryParam = $request->get('country'); // ✅ Peut être ID ou nom
+        $cityParams = $request->get('cities', []); // ✅ Array d'IDs ou noms
         $plateSearch = $request->get('plate_search');
         $showingAllCountries = false;
         $message = '';
@@ -925,7 +1032,7 @@ class ListingController extends Controller
         // Pagination parameters
         $page = $request->get('page');
         $perPage = $request->get('per_page', 15);
-        $perPage = min($perPage, 100); // Max 100 items per page
+        $perPage = min($perPage, 100);
         $usePagination = !is_null($page);
 
         // Build the base query
@@ -933,7 +1040,7 @@ class ListingController extends Controller
             ->where('status', 'published')
             ->orderBy('created_at', 'desc');
 
-        // Add license plate field search for category 3 (license plates)
+        // Add license plate field search for category 3
         if ($category_id == 3 && $plateSearch) {
             $query->whereHas('licensePlate', function ($licensePlateQuery) use ($plateSearch) {
                 $licensePlateQuery->whereHas('fieldValues', function ($fieldQuery) use ($plateSearch) {
@@ -942,12 +1049,63 @@ class ListingController extends Controller
             });
         }
 
-        // Add country filter if provided
-        if ($countryName) {
+        // ✅ Variables pour stocker le nom du pays et des villes (pour les messages)
+        $countryName = null;
+        $cityNames = [];
+
+        // ✅ NOUVEAU : Filtre par pays (ID ou nom)
+        if ($countryParam) {
             $countryFilteredQuery = clone $query;
-            $countryFilteredQuery->whereHas('country', function ($q) use ($countryName) {
-                $q->where('name', 'LIKE', '%' . $countryName . '%');
-            });
+
+            // Vérifier si c'est un ID (numérique) ou un nom
+            if (is_numeric($countryParam)) {
+                // Filtrer par ID
+                $countryFilteredQuery->where('country_id', $countryParam);
+                // Récupérer le nom du pays pour le message
+                $country = \App\Models\Country::find($countryParam);
+                $countryName = $country ? $country->name : "Country ID {$countryParam}";
+            } else {
+                // Filtrer par nom
+                $countryFilteredQuery->whereHas('country', function ($q) use ($countryParam) {
+                    $q->where('name', 'LIKE', '%' . $countryParam . '%');
+                });
+                $countryName = $countryParam;
+            }
+
+            // ✅ NOUVEAU : Filtre par villes (IDs ou noms)
+            if (!empty($cityParams) && is_array($cityParams)) {
+                // Séparer les IDs et les noms
+                $cityIds = [];
+                $cityNamesList = [];
+
+                foreach ($cityParams as $cityParam) {
+                    if (is_numeric($cityParam)) {
+                        $cityIds[] = $cityParam;
+                    } else {
+                        $cityNamesList[] = $cityParam;
+                    }
+                }
+
+                $countryFilteredQuery->where(function ($q) use ($cityIds, $cityNamesList) {
+                    if (!empty($cityIds)) {
+                        $q->whereIn('city_id', $cityIds);
+                    }
+                    if (!empty($cityNamesList)) {
+                        $q->orWhereHas('city', function ($cityQuery) use ($cityNamesList) {
+                            $cityQuery->whereIn('name', $cityNamesList);
+                        });
+                    }
+                });
+
+                // ✅ Récupérer les noms des villes pour le message
+                if (!empty($cityIds)) {
+                    $cities = \App\Models\City::whereIn('id', $cityIds)->pluck('name')->toArray();
+                    $cityNames = array_merge($cityNames, $cities);
+                }
+                if (!empty($cityNamesList)) {
+                    $cityNames = array_merge($cityNames, $cityNamesList);
+                }
+            }
 
             // Apply pagination if requested
             if ($usePagination) {
@@ -963,12 +1121,61 @@ class ListingController extends Controller
                     $listings = $query->get();
                 }
                 $showingAllCountries = true;
-                $message = "No listings found for '{$countryName}'. Showing all countries instead.";
+
+                // ✅ Message adapté
+                if (!empty($cityNames)) {
+                    $cityList = implode(', ', $cityNames);
+                    $message = "No listings found for '{$countryName}' in cities: {$cityList}. Showing all countries instead.";
+                } else {
+                    $message = "No listings found for '{$countryName}'. Showing all countries instead.";
+                }
             } else {
                 $listings = $countryListings;
-                $message = "Showing listings for '{$countryName}'.";
+
+                // ✅ Message adapté
+                if (!empty($cityNames)) {
+                    $cityList = implode(', ', $cityNames);
+                    $message = "Showing listings for '{$countryName}' in cities: {$cityList}.";
+                } else {
+                    $message = "Showing listings for '{$countryName}'.";
+                }
             }
         } else {
+            // ✅ NOUVEAU : Filtre par villes sans pays (IDs ou noms)
+            if (!empty($cityParams) && is_array($cityParams)) {
+                // Séparer les IDs et les noms
+                $cityIds = [];
+                $cityNamesList = [];
+
+                foreach ($cityParams as $cityParam) {
+                    if (is_numeric($cityParam)) {
+                        $cityIds[] = $cityParam;
+                    } else {
+                        $cityNamesList[] = $cityParam;
+                    }
+                }
+
+                $query->where(function ($q) use ($cityIds, $cityNamesList) {
+                    if (!empty($cityIds)) {
+                        $q->whereIn('city_id', $cityIds);
+                    }
+                    if (!empty($cityNamesList)) {
+                        $q->orWhereHas('city', function ($cityQuery) use ($cityNamesList) {
+                            $cityQuery->whereIn('name', $cityNamesList);
+                        });
+                    }
+                });
+
+                // ✅ Récupérer les noms des villes pour le message
+                if (!empty($cityIds)) {
+                    $cities = \App\Models\City::whereIn('id', $cityIds)->pluck('name')->toArray();
+                    $cityNames = array_merge($cityNames, $cities);
+                }
+                if (!empty($cityNamesList)) {
+                    $cityNames = array_merge($cityNames, $cityNamesList);
+                }
+            }
+
             // Apply pagination if requested
             if ($usePagination) {
                 $listings = $query->paginate($perPage, ['*'], 'page', $page);
@@ -976,15 +1183,25 @@ class ListingController extends Controller
                 $listings = $query->get();
             }
 
-            if ($category_id == 3 && $plateSearch) {
+            // ✅ Message adapté
+            if (!empty($cityNames)) {
+                $cityList = implode(', ', $cityNames);
+                $message = "Showing listings in cities: {$cityList}.";
+            } elseif ($category_id == 3 && $plateSearch) {
                 $message = "Showing license plates containing '{$plateSearch}'.";
             } else {
                 $message = "Showing all listings.";
             }
         }
 
+        // ✅ Message combiné pour pays + villes + plate_search
         if ($countryName && $category_id == 3 && $plateSearch && !$showingAllCountries) {
-            $message = "Showing license plates containing '{$plateSearch}' for '{$countryName}'.";
+            if (!empty($cityNames)) {
+                $cityList = implode(', ', $cityNames);
+                $message = "Showing license plates containing '{$plateSearch}' for '{$countryName}' in cities: {$cityList}.";
+            } else {
+                $message = "Showing license plates containing '{$plateSearch}' for '{$countryName}'.";
+            }
         }
 
         // Get the collection of items (works for both paginated and non-paginated)
@@ -1029,7 +1246,7 @@ class ListingController extends Controller
                 }
             ]);
         } elseif ($category_id == 3) {
-            // License plates - Chargement comme dans filterLicensePlates
+            // License plates
             $listingsCollection->load([
                 'licensePlate.format',
                 'licensePlate.city',
@@ -1046,7 +1263,7 @@ class ListingController extends Controller
             ->groupBy('listing_id')
             ->pluck('current_bid', 'listing_id');
 
-        // ✅ Formater les résultats selon le format de filterMotorcycles
+        // ✅ Formater les résultats
         $formattedListings = $listingsCollection->map(function ($listing) use ($user, $currentBids) {
             $isInWishlist = false;
 
@@ -1057,7 +1274,6 @@ class ListingController extends Controller
                     ->exists();
             }
 
-            // ✅ Déterminer le prix à afficher (comme filterMotorcycles)
             $displayPrice = $listing->price;
             $isAuction = false;
             $currentBid = $currentBids[$listing->id] ?? null;
@@ -1067,18 +1283,14 @@ class ListingController extends Controller
                 $isAuction = true;
             }
 
-            // ✅ Récupérer le symbole de devise
             $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
-
-            // ✅ Garder toutes les colonnes originales + ajouter les nouvelles
-            // Si price est null, afficher minimum_bid
             $priceToShow = $listing->price ?? $listing->minimum_bid;
 
             $baseData = [
                 'id' => $listing->id,
                 'title' => $listing->title,
                 'description' => $listing->description,
-                'price' => $priceToShow, // ✅ Si null, affiche minimum_bid
+                'price' => $priceToShow,
                 'category_id' => $listing->category_id,
                 'auction_enabled' => $listing->auction_enabled,
                 'minimum_bid' => $listing->minimum_bid,
@@ -1092,17 +1304,14 @@ class ListingController extends Controller
                 'country' => $listing->country?->name,
                 'images' => $listing->images->pluck('image_url'),
                 'wishlist' => $isInWishlist,
-
-                // ✅ NOUVELLES COLONNES AJOUTÉES (comme filterMotorcycles)
-                'display_price' => $displayPrice, // Prix à afficher (prix fixe ou enchère)
-                'is_auction' => $isAuction, // Boolean pour identifier les enchères
-                'current_bid' => $currentBid, // Montant de la dernière enchère
-                'currency' => $currencySymbol, // Symbole de devise
+                'display_price' => $displayPrice,
+                'is_auction' => $isAuction,
+                'current_bid' => $currentBid,
+                'currency' => $currencySymbol,
             ];
 
             // ✅ Ajouter les données spécifiques par catégorie
             if ($listing->category_id == 1 && $listing->motorcycle) {
-                // Motorcycle data
                 $baseData['motorcycle'] = [
                     'brand' => $listing->motorcycle->brand?->name ?? null,
                     'model' => $listing->motorcycle->model?->name ?? null,
@@ -1118,7 +1327,6 @@ class ListingController extends Controller
                     'transmission' => $listing->motorcycle->transmission,
                 ];
             } elseif ($listing->category_id == 2 && $listing->sparePart) {
-                // Spare part data
                 $baseData['spare_part'] = [
                     'condition' => $listing->sparePart->condition,
                     'brand' => $listing->sparePart->bikePartBrand?->name ?? null,
@@ -1132,7 +1340,6 @@ class ListingController extends Controller
                     })->toArray(),
                 ];
             } elseif ($listing->category_id == 3 && $listing->licensePlate) {
-                // License plate data
                 $licensePlate = $listing->licensePlate;
 
                 $baseData['license_plate'] = [
@@ -1168,6 +1375,7 @@ class ListingController extends Controller
         $response = [
             'message' => $message,
             'searched_country' => $countryName,
+            'searched_cities' => $cityNames, // ✅ Array des noms de villes
             'showing_all_countries' => $showingAllCountries,
             'total_listings' => $usePagination ? $listings->total() : $formattedListings->count(),
         ];

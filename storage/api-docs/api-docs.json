@@ -4777,7 +4777,7 @@
                 "tags": [
                     "Listings"
                 ],
-                "summary": "Get listings by category",
+                "summary": "Get listings by category with flexible filtering",
                 "operationId": "8e72591327b6671d611c12f535bc1c22",
                 "parameters": [
                     {
@@ -4792,10 +4792,25 @@
                     {
                         "name": "country",
                         "in": "query",
-                        "description": "Filter by country name",
+                        "description": "Filter by country ID (e.g., 1) or country name (e.g., 'Morocco')",
                         "required": false,
                         "schema": {
                             "type": "string"
+                        },
+                        "example": "Morocco"
+                    },
+                    {
+                        "name": "cities[]",
+                        "in": "query",
+                        "description": "Filter by multiple cities (IDs or names). Can be repeated: ?cities[]=Casablanca&cities[]=Rabat&cities[]=5",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
                         }
                     },
                     {
@@ -4840,71 +4855,335 @@
                                 "schema": {
                                     "properties": {
                                         "message": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "example": "Showing listings for 'Morocco' in cities: Casablanca, Rabat, Marrakech."
                                         },
                                         "searched_country": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "example": "Morocco",
+                                            "nullable": true
+                                        },
+                                        "searched_cities": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "example": [
+                                                "Casablanca",
+                                                "Rabat",
+                                                "Marrakech"
+                                            ]
                                         },
                                         "showing_all_countries": {
-                                            "type": "boolean"
+                                            "type": "boolean",
+                                            "example": false
                                         },
                                         "total_listings": {
-                                            "type": "integer"
+                                            "type": "integer",
+                                            "example": 42
                                         },
                                         "current_page": {
                                             "description": "Current page number (only present when pagination is used)",
-                                            "type": "integer"
+                                            "type": "integer",
+                                            "example": 1
                                         },
                                         "per_page": {
                                             "description": "Items per page (only present when pagination is used)",
-                                            "type": "integer"
+                                            "type": "integer",
+                                            "example": 15
                                         },
                                         "last_page": {
                                             "description": "Total number of pages (only present when pagination is used)",
-                                            "type": "integer"
+                                            "type": "integer",
+                                            "example": 3
                                         },
                                         "from": {
                                             "description": "Starting item number (only present when pagination is used)",
-                                            "type": "integer"
+                                            "type": "integer",
+                                            "example": 1
                                         },
                                         "to": {
                                             "description": "Ending item number (only present when pagination is used)",
-                                            "type": "integer"
+                                            "type": "integer",
+                                            "example": 15
                                         },
                                         "listings": {
                                             "type": "array",
                                             "items": {
                                                 "properties": {
                                                     "id": {
-                                                        "type": "integer"
+                                                        "type": "integer",
+                                                        "example": 123
                                                     },
                                                     "title": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "example": "Honda CBR 600RR"
                                                     },
                                                     "description": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "example": "Excellent condition, low mileage"
                                                     },
                                                     "price": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 85000
+                                                    },
+                                                    "category_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "auction_enabled": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "minimum_bid": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": null,
+                                                        "nullable": true
+                                                    },
+                                                    "allow_submission": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "listing_type_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "contacting_channel": {
+                                                        "type": "string",
+                                                        "example": "whatsapp"
+                                                    },
+                                                    "seller_type": {
+                                                        "type": "string",
+                                                        "example": "individual"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "published"
                                                     },
                                                     "created_at": {
                                                         "type": "string",
-                                                        "format": "date-time"
+                                                        "format": "date-time",
+                                                        "example": "2025-01-15 10:30:00"
                                                     },
                                                     "city": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "example": "Casablanca"
                                                     },
                                                     "country": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "example": "Morocco"
                                                     },
                                                     "images": {
                                                         "type": "array",
                                                         "items": {
-                                                            "type": "string"
+                                                            "type": "string",
+                                                            "example": "https://example.com/image.jpg"
                                                         }
                                                     },
                                                     "wishlist": {
-                                                        "type": "boolean"
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "display_price": {
+                                                        "description": "Price to display (fixed price or current bid)",
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 85000
+                                                    },
+                                                    "is_auction": {
+                                                        "description": "Whether this is an auction listing",
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "current_bid": {
+                                                        "description": "Current highest bid for auctions",
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": null,
+                                                        "nullable": true
+                                                    },
+                                                    "currency": {
+                                                        "description": "Currency symbol",
+                                                        "type": "string",
+                                                        "example": "MAD"
+                                                    },
+                                                    "motorcycle": {
+                                                        "description": "Only present for category_id=1",
+                                                        "properties": {
+                                                            "brand": {
+                                                                "type": "string",
+                                                                "example": "Honda"
+                                                            },
+                                                            "model": {
+                                                                "type": "string",
+                                                                "example": "CBR 600RR"
+                                                            },
+                                                            "year": {
+                                                                "type": "integer",
+                                                                "example": 2020
+                                                            },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "example": "Sport"
+                                                            },
+                                                            "engine": {
+                                                                "type": "string",
+                                                                "example": "600cc"
+                                                            },
+                                                            "mileage": {
+                                                                "type": "integer",
+                                                                "example": 15000
+                                                            },
+                                                            "body_condition": {
+                                                                "type": "string",
+                                                                "example": "excellent"
+                                                            },
+                                                            "modified": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "insurance": {
+                                                                "type": "string",
+                                                                "example": "full"
+                                                            },
+                                                            "general_condition": {
+                                                                "type": "string",
+                                                                "example": "excellent"
+                                                            },
+                                                            "vehicle_care": {
+                                                                "type": "string",
+                                                                "example": "well_maintained"
+                                                            },
+                                                            "transmission": {
+                                                                "type": "string",
+                                                                "example": "manual"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "spare_part": {
+                                                        "description": "Only present for category_id=2",
+                                                        "properties": {
+                                                            "condition": {
+                                                                "type": "string",
+                                                                "example": "new"
+                                                            },
+                                                            "brand": {
+                                                                "type": "string",
+                                                                "example": "Akrapovic"
+                                                            },
+                                                            "category": {
+                                                                "type": "string",
+                                                                "example": "Exhaust"
+                                                            },
+                                                            "compatible_motorcycles": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "brand": {
+                                                                            "type": "string",
+                                                                            "example": "Honda"
+                                                                        },
+                                                                        "model": {
+                                                                            "type": "string",
+                                                                            "example": "CBR 600RR"
+                                                                        },
+                                                                        "year": {
+                                                                            "type": "integer",
+                                                                            "example": 2020
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "license_plate": {
+                                                        "description": "Only present for category_id=3",
+                                                        "properties": {
+                                                            "plate_format": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Standard Format"
+                                                                    },
+                                                                    "pattern": {
+                                                                        "type": "string",
+                                                                        "example": "XX-1234-YY"
+                                                                    },
+                                                                    "country": {
+                                                                        "type": "string",
+                                                                        "example": "Morocco"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "city": {
+                                                                "type": "string",
+                                                                "example": "Casablanca"
+                                                            },
+                                                            "country": {
+                                                                "type": "string",
+                                                                "example": "Morocco"
+                                                            },
+                                                            "country_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "fields": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "field_id": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "field_name": {
+                                                                            "type": "string",
+                                                                            "example": "plate_number"
+                                                                        },
+                                                                        "field_position": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "field_type": {
+                                                                            "type": "string",
+                                                                            "example": "text"
+                                                                        },
+                                                                        "field_label": {
+                                                                            "type": "string",
+                                                                            "example": "Plate Number"
+                                                                        },
+                                                                        "is_required": {
+                                                                            "type": "boolean",
+                                                                            "example": true
+                                                                        },
+                                                                        "max_length": {
+                                                                            "type": "integer",
+                                                                            "example": 10
+                                                                        },
+                                                                        "validation_pattern": {
+                                                                            "type": "string",
+                                                                            "example": "^[A-Z0-9]+$",
+                                                                            "nullable": true
+                                                                        },
+                                                                        "value": {
+                                                                            "type": "string",
+                                                                            "example": "AB-1234-CD"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            }
+                                                        },
+                                                        "type": "object"
                                                     }
                                                 },
                                                 "type": "object"
@@ -4915,6 +5194,9 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 }
             }
