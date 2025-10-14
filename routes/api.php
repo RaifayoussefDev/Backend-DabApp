@@ -204,6 +204,8 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('/my-garage/{id}', [MyGarageController::class, 'update']);   // PATCH update item (alternative)
     Route::delete('/my-garage/{id}', [MyGarageController::class, 'destroy']); // DELETE item
     Route::post('/my-garage/{id}/set-default', [MyGarageController::class, 'setDefault']);
+    Route::get('/my-garage/default', [MyGarageController::class, 'getDefault']); // ✅ AVANT la route {id}
+
 
     Route::get('motorcycle-data', [MyGarageController::class, 'getMotorcycleData']); // Fetch motorcycle data for dropdowns
 
