@@ -697,6 +697,119 @@ class MyGarageController extends Controller
      *     )
      * )
      */
+
+    /**
+     * @OA\Get(
+     *     path="/api/my-garage/default",
+     *     tags={"My Garage"},
+     *     summary="Get user's default motorcycle",
+     *     description="Returns the motorcycle marked as default in the user's garage. If no default is set, returns null.",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Default motorcycle retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Default motorcycle retrieved successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 nullable=true,
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="user_id", type="integer", example=1),
+     *                 @OA\Property(property="brand_id", type="integer", example=2),
+     *                 @OA\Property(property="model_id", type="integer", example=5),
+     *                 @OA\Property(property="year_id", type="integer", example=10),
+     *                 @OA\Property(property="type_id", type="integer", example=3),
+     *                 @OA\Property(property="title", type="string", nullable=true, example="My Daily Beast"),
+     *                 @OA\Property(property="description", type="string", nullable=true, example="Perfect bike for daily commuting"),
+     *                 @OA\Property(property="picture", type="string", nullable=true, example="https://example.com/bike.jpg"),
+     *                 @OA\Property(property="is_default", type="boolean", example=true),
+     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T12:00:00Z"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-02T12:00:00Z"),
+     *                 @OA\Property(
+     *                     property="brand",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=2),
+     *                     @OA\Property(property="name", type="string", example="Yamaha")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="model",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=5),
+     *                     @OA\Property(property="name", type="string", example="YZF-R3")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="year",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=10),
+     *                     @OA\Property(property="year", type="integer", example=2020)
+     *                 ),
+     *                 @OA\Property(
+     *                     property="type",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=3),
+     *                     @OA\Property(property="name", type="string", example="Sport")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="No default motorcycle found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="No default motorcycle set"),
+     *             @OA\Property(property="data", type="null", example=null)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Failed to retrieve default motorcycle"),
+     *             @OA\Property(property="details", type="string", example="Error message details")
+     *         )
+     *     )
+     * )
+     */
+    public function getDefault(Request $request): JsonResponse
+    {
+        try {
+            $userId = Auth::id();
+            if (!$userId) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            // Récupérer la moto par défaut
+            $defaultMotorcycle = MyGarage::with(['brand', 'model', 'year', 'type'])
+                ->where('user_id', $userId)
+                ->where('is_default', true)
+                ->first();
+
+            if (!$defaultMotorcycle) {
+                return response()->json([
+                    'message' => 'No default motorcycle set',
+                    'data' => null
+                ], 404);
+            }
+
+            return response()->json([
+                'message' => 'Default motorcycle retrieved successfully',
+                'data' => $defaultMotorcycle
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to retrieve default motorcycle',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
     public function getMotorcycleData(): JsonResponse
     {
         try {
