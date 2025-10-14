@@ -51,6 +51,8 @@ Route::middleware('auth:api')->group(function () {
 
     // Auth management
     Route::get('/me', [AuthController::class, 'me']);
+    Route::get('/my-ads', [ListingController::class, 'getMyAds']); // ✅ NOUVELLE ROUTE
+
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:api');
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::put('/user/update', [AuthController::class, 'updateProfile']);
@@ -201,6 +203,8 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/my-garage/{id}', [MyGarageController::class, 'update']);     // PUT update item
     Route::patch('/my-garage/{id}', [MyGarageController::class, 'update']);   // PATCH update item (alternative)
     Route::delete('/my-garage/{id}', [MyGarageController::class, 'destroy']); // DELETE item
+    Route::post('/my-garage/{id}/set-default', [MyGarageController::class, 'setDefault']);
+
     Route::get('motorcycle-data', [MyGarageController::class, 'getMotorcycleData']); // Fetch motorcycle data for dropdowns
 
     Route::patch('/users/{id}/activate', [UserController::class, 'activateUser']);

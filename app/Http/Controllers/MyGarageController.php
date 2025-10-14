@@ -115,6 +115,7 @@ class MyGarageController extends Controller
 
             $garageItems = MyGarage::with(['brand', 'model', 'year', 'type'])
                 ->where('user_id', $userId)
+                ->orderBy('is_default', 'desc') // ✅ Moto par défaut en premier
                 ->orderBy('created_at', 'desc')
                 ->paginate($perPage);
 
@@ -130,7 +131,6 @@ class MyGarageController extends Controller
                     'to' => $garageItems->lastItem()
                 ]
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to retrieve garage items',
@@ -296,7 +296,6 @@ class MyGarageController extends Controller
                 'message' => 'Motorcycle added to garage successfully',
                 'data' => $garageItem
             ], 201);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'error' => 'Validation failed',
@@ -413,7 +412,6 @@ class MyGarageController extends Controller
                 'message' => 'Garage item retrieved successfully',
                 'data' => $garageItem
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to retrieve garage item',
@@ -539,7 +537,6 @@ class MyGarageController extends Controller
                 'message' => 'Garage item updated successfully',
                 'data' => $garageItem
             ], 200);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'error' => 'Validation failed',
@@ -622,7 +619,6 @@ class MyGarageController extends Controller
             return response()->json([
                 'message' => 'Motorcycle removed from garage successfully'
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to delete garage item',
@@ -739,10 +735,133 @@ class MyGarageController extends Controller
                     'types' => $types,
                 ]
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to retrieve motorcycle data',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/my-garage/{id}/set-default",
+     *     tags={"My Garage"},
+     *     summary="Set a motorcycle as default in user's garage",
+     *     description="When a motorcycle is set as default, all other motorcycles in the garage will be set to non-default",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Garage item ID to set as default",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Default motorcycle updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Default motorcycle set successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="title", type="string", nullable=true, example="My Daily Beast"),
+     *                 @OA\Property(property="description", type="string", nullable=true, example="Perfect bike for daily commuting"),
+     *                 @OA\Property(property="picture", type="string", nullable=true, example="https://example.com/bike.jpg"),
+     *                 @OA\Property(property="is_default", type="boolean", example=true),
+     *                 @OA\Property(
+     *                     property="brand",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Honda")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="model",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="CBR600RR")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="year",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="year", type="integer", example=2020)
+     *                 ),
+     *                 @OA\Property(
+     *                     property="type",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Sport")
+     *                 ),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Garage item not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Not found"),
+     *             @OA\Property(property="message", type="string", example="Garage item not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Failed to set default motorcycle"),
+     *             @OA\Property(property="details", type="string", example="Error message details")
+     *         )
+     *     )
+     * )
+     */
+    public function setDefault(Request $request, $id): JsonResponse
+    {
+        try {
+            $userId = Auth::id();
+            if (!$userId) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            // Vérifier que la moto appartient bien à l'utilisateur
+            $garageItem = MyGarage::where('user_id', $userId)
+                ->where('id', $id)
+                ->first();
+
+            if (!$garageItem) {
+                return response()->json([
+                    'error' => 'Not found',
+                    'message' => 'Garage item not found'
+                ], 404);
+            }
+
+            // ✅ Mettre toutes les autres motos à is_default = false
+            MyGarage::where('user_id', $userId)
+                ->where('id', '!=', $id)
+                ->update(['is_default' => false]);
+
+            // ✅ Mettre cette moto à is_default = true
+            $garageItem->update(['is_default' => true]);
+
+            // Recharger les relations
+            $garageItem->load(['brand', 'model', 'year', 'type']);
+
+            return response()->json([
+                'message' => 'Default motorcycle set successfully',
+                'data' => $garageItem
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to set default motorcycle',
                 'details' => $e->getMessage()
             ], 500);
         }

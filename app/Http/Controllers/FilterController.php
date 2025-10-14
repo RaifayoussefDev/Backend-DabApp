@@ -120,6 +120,22 @@ class FilterController extends Controller
      *         required=false,
      *         @OA\Schema(type="integer")
      *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         required=false,
+     *         description="Page number for pagination",
+     *         @OA\Schema(type="integer", minimum=1),
+     *         example=1
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         required=false,
+     *         description="Number of items per page (default: 15, max: 100)",
+     *         @OA\Schema(type="integer", minimum=1, maximum=100),
+     *         example=15
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Successful operation",
@@ -129,6 +145,11 @@ class FilterController extends Controller
      *             @OA\Property(property="searched_country", type="string", example="Morocco", nullable=true),
      *             @OA\Property(property="showing_all_countries", type="boolean", example=false),
      *             @OA\Property(property="total_listings", type="integer", example=25),
+     *             @OA\Property(property="current_page", type="integer", example=1, description="Only present when pagination is used"),
+     *             @OA\Property(property="per_page", type="integer", example=15, description="Only present when pagination is used"),
+     *             @OA\Property(property="last_page", type="integer", example=2, description="Only present when pagination is used"),
+     *             @OA\Property(property="from", type="integer", example=1, description="Only present when pagination is used"),
+     *             @OA\Property(property="to", type="integer", example=15, description="Only present when pagination is used"),
      *             @OA\Property(
      *                 property="motorcycles",
      *                 type="array",
@@ -172,17 +193,22 @@ class FilterController extends Controller
         $showingAllCountries = false;
         $message = '';
 
-        // ✅ Filtre de catégorie (par défaut = 1 pour motos)
+        // Pagination parameters
+        $page = $request->get('page');
+        $perPage = $request->get('per_page', 15);
+        $perPage = min($perPage, 100);
+        $usePagination = !is_null($page);
+
+        // Filtre de catégorie (par défaut = 1 pour motos)
         $categoryId = $request->input('category_id', 1);
         $query->where('category_id', $categoryId)->where('status', 'published');
 
-        // ✅ Filtre de prix : prix fixe OU minimum_bid pour les enchères
+        // Filtre de prix : prix fixe OU minimum_bid pour les enchères
         $minPrice = $request->input('min_price');
         $maxPrice = $request->input('max_price');
 
         if ($minPrice !== null || $maxPrice !== null) {
             $query->where(function ($q) use ($minPrice, $maxPrice) {
-                // Pour les listings avec prix fixe
                 $q->where(function ($subQ) use ($minPrice, $maxPrice) {
                     $subQ->whereNotNull('price');
 
@@ -195,12 +221,10 @@ class FilterController extends Controller
                     }
                 });
 
-                // OU pour les listings aux enchères (vérifier minimum_bid)
                 $q->orWhere(function ($subQ) use ($minPrice, $maxPrice) {
                     $subQ->whereNull('price')
                         ->where('auction_enabled', true);
 
-                    // Filtrer par minimum_bid
                     if ($minPrice !== null && $maxPrice !== null) {
                         $subQ->whereBetween('minimum_bid', [(float)$minPrice, (float)$maxPrice]);
                     } elseif ($minPrice !== null) {
@@ -212,9 +236,8 @@ class FilterController extends Controller
             });
         }
 
-        // ✅ Filtrer sur la relation motorcycle
+        // Filtrer sur la relation motorcycle
         $query->whereHas('motorcycle', function ($q) use ($request) {
-            // Filtre marques (brand_id) - plusieurs possibles
             if ($request->has('brands')) {
                 $brands = $request->input('brands');
                 if (is_array($brands) && count($brands) > 0) {
@@ -222,7 +245,6 @@ class FilterController extends Controller
                 }
             }
 
-            // Filtre modèles (model_id) - plusieurs possibles
             if ($request->has('models')) {
                 $models = $request->input('models');
                 if (is_array($models) && count($models) > 0) {
@@ -230,7 +252,6 @@ class FilterController extends Controller
                 }
             }
 
-            // Filtre types de moto (type_id) - plusieurs possibles
             if ($request->has('types')) {
                 $types = $request->input('types');
                 if (is_array($types) && count($types) > 0) {
@@ -238,7 +259,6 @@ class FilterController extends Controller
                 }
             }
 
-            // Filtre années (year_id) - plusieurs possibles
             if ($request->has('years')) {
                 $years = $request->input('years');
                 if (is_array($years) && count($years) > 0) {
@@ -246,13 +266,11 @@ class FilterController extends Controller
                 }
             }
 
-            // Filtre condition (ex: 'new', 'used')
             if ($request->has('condition')) {
                 $condition = $request->input('condition');
                 $q->where('general_condition', $condition);
             }
 
-            // Filtre kilométrage
             $minMileage = $request->input('min_mileage');
             $maxMileage = $request->input('max_mileage');
 
@@ -265,7 +283,7 @@ class FilterController extends Controller
             }
         });
 
-        // ✅ Filtres sur la table listings
+        // Filtres sur la table listings
         if ($request->has('seller_type')) {
             $query->where('seller_type', $request->input('seller_type'));
         }
@@ -278,7 +296,7 @@ class FilterController extends Controller
             $query->where('city_id', $request->input('city_id'));
         }
 
-        // ✅ NOUVEAU: Filtre par nom de pays (comme dans getByCategory)
+        // Filtre par nom de pays
         if ($countryName) {
             $countryFilteredQuery = clone $query;
             $countryFilteredQuery->whereHas('country', function ($q) use ($countryName) {
@@ -296,86 +314,119 @@ class FilterController extends Controller
             }
         }
 
-        // ✅ Récupérer les résultats avec sous-requête pour les enchères
-        $motorcycles = $query->select([
-            'id',
-            'title',
-            'description',
-            'price',
-            'auction_enabled',
-            'minimum_bid',
-            'created_at',
-            'seller_type',
-            'country_id',
-            'city_id',
-            'category_id',
-            // Sous-requête pour récupérer la dernière enchère
-            DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
-        ])
-            ->with([
-                'images' => function ($query) {
-                    $query->select('listing_id', 'image_url')->limit(1);
-                },
-                'motorcycle' => function ($query) {
-                    $query->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id')
-                        ->with([
-                            'brand:id,name',
-                            'model:id,name',
-                            'year:id,year',
-                            'type:id,name'
-                        ]);
-                },
-                'country:id,name',
-                'city:id,name',
-                'category:id,name',
-                // ✅ Charger la relation currency_exchange_rate du country
-                'country.currencyExchangeRate:id,country_id,currency_symbol'
-            ])
-            ->get()
-            ->map(function ($listing) {
-                // ✅ Déterminer le prix à afficher
-                $displayPrice = $listing->price;
-                $isAuction = false;
+        // Apply pagination if requested
+        if ($usePagination) {
+            $motorcycles = $query->select([
+                'id',
+                'title',
+                'description',
+                'price',
+                'auction_enabled',
+                'minimum_bid',
+                'created_at',
+                'seller_type',
+                'country_id',
+                'city_id',
+                'category_id',
+                DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
+            ])->paginate($perPage, ['*'], 'page', $page);
+        } else {
+            $motorcycles = $query->select([
+                'id',
+                'title',
+                'description',
+                'price',
+                'auction_enabled',
+                'minimum_bid',
+                'created_at',
+                'seller_type',
+                'country_id',
+                'city_id',
+                'category_id',
+                DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
+            ])->get();
+        }
 
-                if (!$displayPrice && $listing->auction_enabled) {
-                    $displayPrice = $listing->current_bid ?: $listing->minimum_bid;
-                    $isAuction = true;
-                }
+        // Get the collection of items
+        $motorcyclesCollection = $usePagination ? $motorcycles->getCollection() : $motorcycles;
 
-                // ✅ Récupérer le symbole de devise depuis currency_exchange_rates
-                $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+        // Load relations
+        $motorcyclesCollection->load([
+            'images' => function ($query) {
+                $query->select('listing_id', 'image_url')->limit(1);
+            },
+            'motorcycle' => function ($query) {
+                $query->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id')
+                    ->with([
+                        'brand:id,name',
+                        'model:id,name',
+                        'year:id,year',
+                        'type:id,name'
+                    ]);
+            },
+            'country:id,name',
+            'city:id,name',
+            'category:id,name',
+            'country.currencyExchangeRate:id,country_id,currency_symbol'
+        ]);
 
-                return [
-                    'id' => $listing->id,
-                    'title' => $listing->title,
-                    'description' => $listing->description,
-                    'price' => $displayPrice,
-                    'is_auction' => $isAuction,
-                    'minimum_bid' => $listing->minimum_bid,
-                    'current_bid' => $listing->current_bid,
-                    'currency' => $currencySymbol,
-                    'category' => $listing->category?->name ?? null,
-                    'brand' => $listing->motorcycle?->brand?->name ?? null,
-                    'model' => $listing->motorcycle?->model?->name ?? null,
-                    'year' => $listing->motorcycle?->year?->year ?? null,
-                    'type' => $listing->motorcycle?->type?->name ?? null,
-                    'listing_date' => $listing->created_at?->format('Y-m-d H:i:s') ?? null,
-                    'image' => $listing->images->first()?->image_url ?? null,
-                    'seller_type' => $listing->seller_type,
-                    'location' => [
-                        'country' => $listing->country?->name ?? null,
-                        'city' => $listing->city?->name ?? null,
-                    ]
-                ];
-            });
+        // Format results
+        $formattedMotorcycles = $motorcyclesCollection->map(function ($listing) {
+            $displayPrice = $listing->price;
+            $isAuction = false;
 
-        return response()->json([
+            if (!$displayPrice && $listing->auction_enabled) {
+                $displayPrice = $listing->current_bid ?: $listing->minimum_bid;
+                $isAuction = true;
+            }
+
+            $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+
+            return [
+                'id' => $listing->id,
+                'title' => $listing->title,
+                'description' => $listing->description,
+                'price' => $displayPrice,
+                'is_auction' => $isAuction,
+                'minimum_bid' => $listing->minimum_bid,
+                'current_bid' => $listing->current_bid,
+                'currency' => $currencySymbol,
+                'category' => $listing->category?->name ?? null,
+                'brand' => $listing->motorcycle?->brand?->name ?? null,
+                'model' => $listing->motorcycle?->model?->name ?? null,
+                'year' => $listing->motorcycle?->year?->year ?? null,
+                'type' => $listing->motorcycle?->type?->name ?? null,
+                'listing_date' => $listing->created_at?->format('Y-m-d H:i:s') ?? null,
+                'image' => $listing->images->first()?->image_url ?? null,
+                'seller_type' => $listing->seller_type,
+                'location' => [
+                    'country' => $listing->country?->name ?? null,
+                    'city' => $listing->city?->name ?? null,
+                ]
+            ];
+        });
+
+        // Build response
+        $response = [
             'message' => $message ?: 'Showing all listings.',
             'searched_country' => $countryName,
             'showing_all_countries' => $showingAllCountries,
-            'total_listings' => $motorcycles->count(),
-            'motorcycles' => $motorcycles,
-        ]);
+            'total_listings' => $usePagination ? $motorcycles->total() : $formattedMotorcycles->count(),
+        ];
+
+        // Add pagination metadata only if pagination is used
+        if ($usePagination) {
+            $response['current_page'] = $motorcycles->currentPage();
+            $response['per_page'] = $motorcycles->perPage();
+            $response['last_page'] = $motorcycles->lastPage();
+            $response['from'] = $motorcycles->firstItem();
+            $response['to'] = $motorcycles->lastItem();
+        }
+
+        // Add motorcycles array
+        $response['motorcycles'] = $formattedMotorcycles;
+
+        return response()->json($response);
     }
 
     /**
@@ -448,6 +499,22 @@ class FilterController extends Controller
      *         required=false,
      *         @OA\Schema(type="integer")
      *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         required=false,
+     *         description="Page number for pagination",
+     *         @OA\Schema(type="integer", minimum=1),
+     *         example=1
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         required=false,
+     *         description="Number of items per page (default: 15, max: 100)",
+     *         @OA\Schema(type="integer", minimum=1, maximum=100),
+     *         example=15
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Successful operation",
@@ -457,6 +524,11 @@ class FilterController extends Controller
      *             @OA\Property(property="searched_country", type="string", example="Morocco", nullable=true),
      *             @OA\Property(property="showing_all_countries", type="boolean", example=false),
      *             @OA\Property(property="total_listings", type="integer", example=15),
+     *             @OA\Property(property="current_page", type="integer", example=1, description="Only present when pagination is used"),
+     *             @OA\Property(property="per_page", type="integer", example=15, description="Only present when pagination is used"),
+     *             @OA\Property(property="last_page", type="integer", example=2, description="Only present when pagination is used"),
+     *             @OA\Property(property="from", type="integer", example=1, description="Only present when pagination is used"),
+     *             @OA\Property(property="to", type="integer", example=15, description="Only present when pagination is used"),
      *             @OA\Property(
      *                 property="spare_parts",
      *                 type="array",
@@ -498,15 +570,20 @@ class FilterController extends Controller
         $showingAllCountries = false;
         $message = '';
 
+        // Pagination parameters
+        $page = $request->get('page');
+        $perPage = $request->get('per_page', 15);
+        $perPage = min($perPage, 100);
+        $usePagination = !is_null($page);
+
         $query->where('category_id', 2)->where('status', 'published');
 
-        // ✅ Filtre de prix : prix fixe OU minimum_bid pour les enchères
+        // Filtre de prix : prix fixe OU minimum_bid pour les enchères
         $minPrice = $request->input('min_price');
         $maxPrice = $request->input('max_price');
 
         if ($minPrice !== null || $maxPrice !== null) {
             $query->where(function ($q) use ($minPrice, $maxPrice) {
-                // Pour les listings avec prix fixe
                 $q->where(function ($subQ) use ($minPrice, $maxPrice) {
                     $subQ->whereNotNull('price');
 
@@ -519,7 +596,6 @@ class FilterController extends Controller
                     }
                 });
 
-                // OU pour les listings aux enchères (vérifier minimum_bid)
                 $q->orWhere(function ($subQ) use ($minPrice, $maxPrice) {
                     $subQ->whereNull('price')
                         ->where('auction_enabled', true);
@@ -553,7 +629,6 @@ class FilterController extends Controller
             });
         }
 
-        // Filtres sur la table listings
         if ($request->filled('seller_type')) {
             $query->where('seller_type', $request->seller_type);
         }
@@ -566,7 +641,7 @@ class FilterController extends Controller
             $query->where('city_id', $request->city_id);
         }
 
-        // ✅ Filtre par nom de pays
+        // Filtre par nom de pays
         if ($countryName) {
             $countryFilteredQuery = clone $query;
             $countryFilteredQuery->whereHas('country', function ($q) use ($countryName) {
@@ -584,82 +659,118 @@ class FilterController extends Controller
             }
         }
 
-        // ✅ Récupérer les résultats avec sous-requête pour les enchères
-        $spareParts = $query->select([
-            'id',
-            'title',
-            'description',
-            'price',
-            'auction_enabled',
-            'minimum_bid',
-            'created_at',
-            'seller_type',
-            'country_id',
-            'city_id',
-            'category_id',
-            DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
-        ])
-            ->with([
-                'images' => function ($query) {
-                    $query->select('listing_id', 'image_url')->limit(1);
-                },
-                'sparePart' => function ($query) {
-                    $query->select('id', 'listing_id', 'bike_part_brand_id', 'bike_part_category_id', 'condition')
-                        ->with([
-                            'bikePartBrand:id,name',
-                            'bikePartCategory:id,name'
-                        ]);
-                },
-                'country:id,name',
-                'city:id,name',
-                'category:id,name',
-                'country.currencyExchangeRate:id,country_id,currency_symbol'
-            ])
-            ->get()
-            ->map(function ($listing) {
-                // ✅ Déterminer le prix à afficher
-                $displayPrice = $listing->price;
-                $isAuction = false;
+        // Apply pagination if requested
+        if ($usePagination) {
+            $spareParts = $query->select([
+                'id',
+                'title',
+                'description',
+                'price',
+                'auction_enabled',
+                'minimum_bid',
+                'created_at',
+                'seller_type',
+                'country_id',
+                'city_id',
+                'category_id',
+                DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
+            ])->paginate($perPage, ['*'], 'page', $page);
+        } else {
+            $spareParts = $query->select([
+                'id',
+                'title',
+                'description',
+                'price',
+                'auction_enabled',
+                'minimum_bid',
+                'created_at',
+                'seller_type',
+                'country_id',
+                'city_id',
+                'category_id',
+                DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
+            ])->get();
+        }
 
-                if (!$displayPrice && $listing->auction_enabled) {
-                    $displayPrice = $listing->current_bid ?: $listing->minimum_bid;
-                    $isAuction = true;
-                }
+        // Get the collection of items
+        $sparePartsCollection = $usePagination ? $spareParts->getCollection() : $spareParts;
 
-                // ✅ Récupérer le symbole de devise
-                $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+        // Load relations
+        $sparePartsCollection->load([
+            'images' => function ($query) {
+                $query->select('listing_id', 'image_url')->limit(1);
+            },
+            'sparePart' => function ($query) {
+                $query->select('id', 'listing_id', 'bike_part_brand_id', 'bike_part_category_id', 'condition')
+                    ->with([
+                        'bikePartBrand:id,name',
+                        'bikePartCategory:id,name'
+                    ]);
+            },
+            'country:id,name',
+            'city:id,name',
+            'category:id,name',
+            'country.currencyExchangeRate:id,country_id,currency_symbol'
+        ]);
 
-                return [
-                    'id' => $listing->id,
-                    'title' => $listing->title,
-                    'description' => $listing->description,
-                    'price' => $displayPrice,
-                    'is_auction' => $isAuction,
-                    'minimum_bid' => $listing->minimum_bid,
-                    'current_bid' => $listing->current_bid,
-                    'currency' => $currencySymbol,
-                    'category' => $listing->category?->name ?? null,
-                    'brand' => $listing->sparePart?->bikePartBrand?->name ?? null,
-                    'part_category' => $listing->sparePart?->bikePartCategory?->name ?? null,
-                    'condition' => $listing->sparePart?->condition ?? null,
-                    'listing_date' => $listing->created_at?->format('Y-m-d H:i:s') ?? null,
-                    'image' => $listing->images->first()?->image_url ?? null,
-                    'seller_type' => $listing->seller_type,
-                    'location' => [
-                        'country' => $listing->country?->name ?? null,
-                        'city' => $listing->city?->name ?? null,
-                    ]
-                ];
-            });
+        // Format results
+        $formattedSpareParts = $sparePartsCollection->map(function ($listing) {
+            $displayPrice = $listing->price;
+            $isAuction = false;
 
-        return response()->json([
+            if (!$displayPrice && $listing->auction_enabled) {
+                $displayPrice = $listing->current_bid ?: $listing->minimum_bid;
+                $isAuction = true;
+            }
+
+            $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+
+            return [
+                'id' => $listing->id,
+                'title' => $listing->title,
+                'description' => $listing->description,
+                'price' => $displayPrice,
+                'is_auction' => $isAuction,
+                'minimum_bid' => $listing->minimum_bid,
+                'current_bid' => $listing->current_bid,
+                'currency' => $currencySymbol,
+                'category' => $listing->category?->name ?? null,
+                'brand' => $listing->sparePart?->bikePartBrand?->name ?? null,
+                'part_category' => $listing->sparePart?->bikePartCategory?->name ?? null,
+                'condition' => $listing->sparePart?->condition ?? null,
+                'listing_date' => $listing->created_at?->format('Y-m-d H:i:s') ?? null,
+                'image' => $listing->images->first()?->image_url ?? null,
+                'seller_type' => $listing->seller_type,
+                'location' => [
+                    'country' => $listing->country?->name ?? null,
+                    'city' => $listing->city?->name ?? null,
+                ]
+            ];
+        });
+
+        // Build response
+        $response = [
             'message' => $message ?: 'Showing all listings.',
             'searched_country' => $countryName,
             'showing_all_countries' => $showingAllCountries,
-            'total_listings' => $spareParts->count(),
-            'spare_parts' => $spareParts,
-        ]);
+            'total_listings' => $usePagination ? $spareParts->total() : $formattedSpareParts->count(),
+        ];
+
+        // Add pagination metadata only if pagination is used
+        if ($usePagination) {
+            $response['current_page'] = $spareParts->currentPage();
+            $response['per_page'] = $spareParts->perPage();
+            $response['last_page'] = $spareParts->lastPage();
+            $response['from'] = $spareParts->firstItem();
+            $response['to'] = $spareParts->lastItem();
+        }
+
+        // Add spare_parts array
+        $response['spare_parts'] = $formattedSpareParts;
+
+        return response()->json($response);
     }
+
     /**
      * @OA\Get(
      *     path="/api/filter/license-plates",
@@ -737,6 +848,22 @@ class FilterController extends Controller
      *         required=false,
      *         @OA\Schema(type="string")
      *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         required=false,
+     *         description="Page number for pagination",
+     *         @OA\Schema(type="integer", minimum=1),
+     *         example=1
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         required=false,
+     *         description="Number of items per page (default: 15, max: 100)",
+     *         @OA\Schema(type="integer", minimum=1, maximum=100),
+     *         example=15
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
@@ -746,6 +873,12 @@ class FilterController extends Controller
      *             @OA\Property(property="searched_country", type="string", example="Morocco", nullable=true),
      *             @OA\Property(property="showing_all_countries", type="boolean", example=false),
      *             @OA\Property(property="total_listings", type="integer", example=10),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="current_page", type="integer", example=1, description="Only present when pagination is used"),
+     *             @OA\Property(property="per_page", type="integer", example=15, description="Only present when pagination is used"),
+     *             @OA\Property(property="last_page", type="integer", example=2, description="Only present when pagination is used"),
+     *             @OA\Property(property="from", type="integer", example=1, description="Only present when pagination is used"),
+     *             @OA\Property(property="to", type="integer", example=15, description="Only present when pagination is used"),
      *             @OA\Property(
      *                 property="results",
      *                 type="array",
@@ -796,15 +929,20 @@ class FilterController extends Controller
         $showingAllCountries = false;
         $message = '';
 
+        // Pagination parameters
+        $page = $request->get('page');
+        $perPage = $request->get('per_page', 15);
+        $perPage = min($perPage, 100);
+        $usePagination = !is_null($page);
+
         $query->where('category_id', 3)->where('status', 'published');
 
-        // ✅ Filtre de prix : prix fixe OU minimum_bid pour les enchères
+        // Filtre de prix : prix fixe OU minimum_bid pour les enchères
         $minPrice = $request->input('min_price');
         $maxPrice = $request->input('max_price');
 
         if ($minPrice !== null || $maxPrice !== null) {
             $query->where(function ($q) use ($minPrice, $maxPrice) {
-                // Pour les listings avec prix fixe
                 $q->where(function ($subQ) use ($minPrice, $maxPrice) {
                     $subQ->whereNotNull('price');
 
@@ -817,7 +955,6 @@ class FilterController extends Controller
                     }
                 });
 
-                // OU pour les listings aux enchères
                 $q->orWhere(function ($subQ) use ($minPrice, $maxPrice) {
                     $subQ->whereNull('price')
                         ->where('auction_enabled', true);
@@ -833,7 +970,6 @@ class FilterController extends Controller
             });
         }
 
-        // Filtres sur la table listings
         if ($request->filled('seller_type')) {
             $query->where('seller_type', $request->seller_type);
         }
@@ -867,7 +1003,7 @@ class FilterController extends Controller
             }
         });
 
-        // ✅ Filtre par nom de pays
+        // Filtre par nom de pays
         if ($countryName) {
             $countryFilteredQuery = clone $query;
             $countryFilteredQuery->whereHas('country', function ($q) use ($countryName) {
@@ -885,90 +1021,125 @@ class FilterController extends Controller
             }
         }
 
-        // ✅ Récupérer les résultats avec sous-requête pour les enchères
-        $results = $query->select([
-            'id',
-            'title',
-            'description',
-            'price',
-            'auction_enabled',
-            'minimum_bid',
-            'created_at',
-            'seller_type',
-            'country_id',
-            'city_id',
-            'category_id',
-            DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
-        ])
-            ->with([
-                'images' => function ($q) {
-                    $q->select('listing_id', 'image_url')->limit(1);
-                },
-                'licensePlate.format',
-                'licensePlate.city',
-                'licensePlate.country',
-                'licensePlate.fieldValues.formatField',
-                'country:id,name',
-                'city:id,name',
-                'category:id,name',
-                'country.currencyExchangeRate:id,country_id,currency_symbol'
-            ])
-            ->get()
-            ->map(function ($listing) {
-                // ✅ Déterminer le prix à afficher
-                $displayPrice = $listing->price;
-                $isAuction = false;
+        // Apply pagination if requested
+        if ($usePagination) {
+            $results = $query->select([
+                'id',
+                'title',
+                'description',
+                'price',
+                'auction_enabled',
+                'minimum_bid',
+                'created_at',
+                'seller_type',
+                'country_id',
+                'city_id',
+                'category_id',
+                DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
+            ])->paginate($perPage, ['*'], 'page', $page);
+        } else {
+            $results = $query->select([
+                'id',
+                'title',
+                'description',
+                'price',
+                'auction_enabled',
+                'minimum_bid',
+                'created_at',
+                'seller_type',
+                'country_id',
+                'city_id',
+                'category_id',
+                DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
+            ])->get();
+        }
 
-                if (!$displayPrice && $listing->auction_enabled) {
-                    $displayPrice = $listing->current_bid ?: $listing->minimum_bid;
-                    $isAuction = true;
-                }
+        // Get the collection of items
+        $resultsCollection = $usePagination ? $results->getCollection() : $results;
 
-                // ✅ Récupérer le symbole de devise
-                $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+        // Load relations
+        $resultsCollection->load([
+            'images' => function ($q) {
+                $q->select('listing_id', 'image_url')->limit(1);
+            },
+            'licensePlate.format',
+            'licensePlate.city',
+            'licensePlate.country',
+            'licensePlate.fieldValues.formatField',
+            'country:id,name',
+            'city:id,name',
+            'category:id,name',
+            'country.currencyExchangeRate:id,country_id,currency_symbol'
+        ]);
 
-                return [
-                    'id' => $listing->id,
-                    'title' => $listing->title,
-                    'description' => $listing->description,
-                    'price' => $displayPrice,
-                    'is_auction' => $isAuction,
-                    'minimum_bid' => $listing->minimum_bid,
-                    'current_bid' => $listing->current_bid,
-                    'currency' => $currencySymbol,
-                    'category' => $listing->category?->name ?? null,
-                    'listing_date' => $listing->created_at?->format('Y-m-d H:i:s') ?? null,
-                    'seller_type' => $listing->seller_type,
-                    'seller_location' => [
-                        'country' => $listing->country?->name ?? null,
-                        'city' => $listing->city?->name ?? null,
+        // Format results
+        $formattedResults = $resultsCollection->map(function ($listing) {
+            $displayPrice = $listing->price;
+            $isAuction = false;
+
+            if (!$displayPrice && $listing->auction_enabled) {
+                $displayPrice = $listing->current_bid ?: $listing->minimum_bid;
+                $isAuction = true;
+            }
+
+            $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+
+            return [
+                'id' => $listing->id,
+                'title' => $listing->title,
+                'description' => $listing->description,
+                'price' => $displayPrice,
+                'is_auction' => $isAuction,
+                'minimum_bid' => $listing->minimum_bid,
+                'current_bid' => $listing->current_bid,
+                'currency' => $currencySymbol,
+                'category' => $listing->category?->name ?? null,
+                'listing_date' => $listing->created_at?->format('Y-m-d H:i:s') ?? null,
+                'seller_type' => $listing->seller_type,
+                'seller_location' => [
+                    'country' => $listing->country?->name ?? null,
+                    'city' => $listing->city?->name ?? null,
+                ],
+                'image' => $listing->images->first()?->image_url ?? null,
+                'license_plate' => [
+                    'format' => $listing->licensePlate?->format?->name,
+                    'plate_location' => [
+                        'city' => $listing->licensePlate?->city?->name,
+                        'country' => $listing->licensePlate?->country?->name,
                     ],
-                    'image' => $listing->images->first()?->image_url ?? null,
-                    'license_plate' => [
-                        'format' => $listing->licensePlate?->format?->name,
-                        'plate_location' => [
-                            'city' => $listing->licensePlate?->city?->name,
-                            'country' => $listing->licensePlate?->country?->name,
-                        ],
-                        'fields' => $listing->licensePlate?->fieldValues->map(function ($fieldValue) {
-                            return [
-                                'field_id' => $fieldValue->formatField?->id,
-                                'field_name' => $fieldValue->formatField?->field_name,
-                                'value' => $fieldValue->field_value,
-                            ];
-                        })
-                    ]
-                ];
-            });
+                    'fields' => $listing->licensePlate?->fieldValues->map(function ($fieldValue) {
+                        return [
+                            'field_id' => $fieldValue->formatField?->id,
+                            'field_name' => $fieldValue->formatField?->field_name,
+                            'value' => $fieldValue->field_value,
+                        ];
+                    })
+                ]
+            ];
+        });
 
-        return response()->json([
+        // Build response
+        $response = [
             'message' => $message ?: 'Showing all listings.',
             'searched_country' => $countryName,
             'showing_all_countries' => $showingAllCountries,
-            'total_listings' => $results->count(),
+            'total_listings' => $usePagination ? $results->total() : $formattedResults->count(),
             'success' => true,
-            'results' => $results,
-        ]);
+        ];
+
+        // Add pagination metadata only if pagination is used
+        if ($usePagination) {
+            $response['current_page'] = $results->currentPage();
+            $response['per_page'] = $results->perPage();
+            $response['last_page'] = $results->lastPage();
+            $response['from'] = $results->firstItem();
+            $response['to'] = $results->lastItem();
+        }
+
+        // Add results array
+        $response['results'] = $formattedResults;
+
+        return response()->json($response);
     }
 
     /**
@@ -999,7 +1170,6 @@ class FilterController extends Controller
      *     @OA\Response(response=500, description="Internal server error")
      * )
      */
-
     public function getLicensePlateFilterOptions()
     {
         try {

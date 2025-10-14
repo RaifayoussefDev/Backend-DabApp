@@ -2129,6 +2129,29 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page (default: 15, max: 100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        },
+                        "example": 15
                     }
                 ],
                 "responses": {
@@ -2154,6 +2177,31 @@
                                         "total_listings": {
                                             "type": "integer",
                                             "example": 25
+                                        },
+                                        "current_page": {
+                                            "description": "Only present when pagination is used",
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "description": "Only present when pagination is used",
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "last_page": {
+                                            "description": "Only present when pagination is used",
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "from": {
+                                            "description": "Only present when pagination is used",
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "to": {
+                                            "description": "Only present when pagination is used",
+                                            "type": "integer",
+                                            "example": 15
                                         },
                                         "motorcycles": {
                                             "type": "array",
@@ -2376,6 +2424,29 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page (default: 15, max: 100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        },
+                        "example": 15
                     }
                 ],
                 "responses": {
@@ -2399,6 +2470,31 @@
                                             "example": false
                                         },
                                         "total_listings": {
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "current_page": {
+                                            "description": "Only present when pagination is used",
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "description": "Only present when pagination is used",
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "last_page": {
+                                            "description": "Only present when pagination is used",
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "from": {
+                                            "description": "Only present when pagination is used",
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "to": {
+                                            "description": "Only present when pagination is used",
                                             "type": "integer",
                                             "example": 15
                                         },
@@ -2610,6 +2706,29 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page (default: 15, max: 100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        },
+                        "example": 15
                     }
                 ],
                 "responses": {
@@ -2635,6 +2754,35 @@
                                         "total_listings": {
                                             "type": "integer",
                                             "example": 10
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "current_page": {
+                                            "description": "Only present when pagination is used",
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "description": "Only present when pagination is used",
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "last_page": {
+                                            "description": "Only present when pagination is used",
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "from": {
+                                            "description": "Only present when pagination is used",
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "to": {
+                                            "description": "Only present when pagination is used",
+                                            "type": "integer",
+                                            "example": 15
                                         },
                                         "results": {
                                             "type": "array",
@@ -5201,6 +5349,202 @@
                 }
             }
         },
+        "/api/my-ads": {
+            "get": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Get authenticated user's listings (My Ads)",
+                "operationId": "80891a8944393bc636f2e427ec1fc9d4",
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Filter by category ID (1=Motorcycle, 2=SparePart, 3=LicensePlate)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status (published, draft, sold, expired)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "published",
+                                "draft",
+                                "sold",
+                                "expired"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page (default: 15, max: 100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        },
+                        "example": 15
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User's listings retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Your listings retrieved successfully"
+                                        },
+                                        "total_listings": {
+                                            "type": "integer",
+                                            "example": 25
+                                        },
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "last_page": {
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "from": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "to": {
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "listings": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 123
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "Honda CBR 600RR"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Excellent condition"
+                                                    },
+                                                    "price": {
+                                                        "type": "number",
+                                                        "example": 85000
+                                                    },
+                                                    "category_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "published"
+                                                    },
+                                                    "auction_enabled": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "views_count": {
+                                                        "type": "integer",
+                                                        "example": 150
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "city": {
+                                                        "type": "string",
+                                                        "example": "Casablanca"
+                                                    },
+                                                    "country": {
+                                                        "type": "string",
+                                                        "example": "Morocco"
+                                                    },
+                                                    "images": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "display_price": {
+                                                        "type": "number",
+                                                        "example": 85000
+                                                    },
+                                                    "is_auction": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "current_bid": {
+                                                        "type": "number",
+                                                        "example": null,
+                                                        "nullable": true
+                                                    },
+                                                    "currency": {
+                                                        "type": "string",
+                                                        "example": "MAD"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/listings/city/{city_id}": {
             "get": {
                 "tags": [
@@ -5477,6 +5821,10 @@
                                             }
                                         },
                                         "wishlist": {
+                                            "type": "boolean"
+                                        },
+                                        "is_seller": {
+                                            "description": "True if authenticated user is the seller",
                                             "type": "boolean"
                                         },
                                         "category_id": {
@@ -8982,6 +9330,195 @@
                                         "error": {
                                             "type": "string",
                                             "example": "Failed to retrieve motorcycle data"
+                                        },
+                                        "details": {
+                                            "type": "string",
+                                            "example": "Error message details"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/my-garage/{id}/set-default": {
+            "post": {
+                "tags": [
+                    "My Garage"
+                ],
+                "summary": "Set a motorcycle as default in user's garage",
+                "description": "When a motorcycle is set as default, all other motorcycles in the garage will be set to non-default",
+                "operationId": "187ed75cf4bcf9bd7c349152f15cd892",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Garage item ID to set as default",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Default motorcycle updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Default motorcycle set successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "My Daily Beast",
+                                                    "nullable": true
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Perfect bike for daily commuting",
+                                                    "nullable": true
+                                                },
+                                                "picture": {
+                                                    "type": "string",
+                                                    "example": "https://example.com/bike.jpg",
+                                                    "nullable": true
+                                                },
+                                                "is_default": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "brand": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Honda"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "model": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "CBR600RR"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "year": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "year": {
+                                                            "type": "integer",
+                                                            "example": 2020
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "type": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Sport"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Garage item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Not found"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Garage item not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to set default motorcycle"
                                         },
                                         "details": {
                                             "type": "string",

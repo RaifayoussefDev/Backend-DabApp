@@ -17,16 +17,19 @@ class MyGarage extends Model
         'brand_id',
         'model_id',
         'year_id',
-        'type_id', // ✅ ADD THIS
+        'type_id',
         'title',
         'description',
         'picture',
+        'is_default',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'is_default' => 'boolean',
     ];
+
 
     /**
      * Get the user that owns the garage entry

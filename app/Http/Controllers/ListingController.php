@@ -1394,6 +1394,314 @@ class ListingController extends Controller
 
         return response()->json($response);
     }
+
+
+    /**
+     * @OA\Get(
+     *     path="/api/my-ads",
+     *     summary="Get authenticated user's listings (My Ads)",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="category_id",
+     *         in="query",
+     *         required=false,
+     *         description="Filter by category ID (1=Motorcycle, 2=SparePart, 3=LicensePlate)",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         required=false,
+     *         description="Filter by status (published, draft, sold, expired)",
+     *         @OA\Schema(type="string", enum={"published", "draft", "sold", "expired"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         required=false,
+     *         description="Page number for pagination",
+     *         @OA\Schema(type="integer", minimum=1),
+     *         example=1
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         required=false,
+     *         description="Number of items per page (default: 15, max: 100)",
+     *         @OA\Schema(type="integer", minimum=1, maximum=100),
+     *         example=15
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User's listings retrieved successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="message", type="string", example="Your listings retrieved successfully"),
+     *             @OA\Property(property="total_listings", type="integer", example=25),
+     *             @OA\Property(property="current_page", type="integer", example=1),
+     *             @OA\Property(property="per_page", type="integer", example=15),
+     *             @OA\Property(property="last_page", type="integer", example=2),
+     *             @OA\Property(property="from", type="integer", example=1),
+     *             @OA\Property(property="to", type="integer", example=15),
+     *             @OA\Property(
+     *                 property="listings",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=123),
+     *                     @OA\Property(property="title", type="string", example="Honda CBR 600RR"),
+     *                     @OA\Property(property="description", type="string", example="Excellent condition"),
+     *                     @OA\Property(property="price", type="number", example=85000.00),
+     *                     @OA\Property(property="category_id", type="integer", example=1),
+     *                     @OA\Property(property="status", type="string", example="published"),
+     *                     @OA\Property(property="auction_enabled", type="boolean", example=false),
+     *                     @OA\Property(property="views_count", type="integer", example=150),
+     *                     @OA\Property(property="created_at", type="string", format="date-time"),
+     *                     @OA\Property(property="city", type="string", example="Casablanca"),
+     *                     @OA\Property(property="country", type="string", example="Morocco"),
+     *                     @OA\Property(property="images", type="array", @OA\Items(type="string")),
+     *                     @OA\Property(property="display_price", type="number", example=85000.00),
+     *                     @OA\Property(property="is_auction", type="boolean", example=false),
+     *                     @OA\Property(property="current_bid", type="number", nullable=true, example=null),
+     *                     @OA\Property(property="currency", type="string", example="MAD")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     )
+     * )
+     */
+    public function getMyAds(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        // Paramètres de filtrage
+        $categoryId = $request->get('category_id');
+        $status = $request->get('status');
+
+        // Pagination parameters
+        $page = $request->get('page');
+        $perPage = $request->get('per_page', 15);
+        $perPage = min($perPage, 100);
+        $usePagination = !is_null($page);
+
+        // ✅ CORRECTION : Build the base query - ONLY user's listings with seller_id
+        $query = Listing::where('seller_id', $user->id)
+            ->orderBy('created_at', 'desc');
+
+        // Filtrer par catégorie si spécifié
+        if ($categoryId) {
+            $query->where('category_id', $categoryId);
+        }
+
+        // Filtrer par statut si spécifié
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        // Apply pagination if requested
+        if ($usePagination) {
+            $listings = $query->paginate($perPage, ['*'], 'page', $page);
+        } else {
+            $listings = $query->get();
+        }
+
+        // Get the collection of items
+        $listingsCollection = $usePagination ? $listings->getCollection() : $listings;
+
+        // Charger les relations nécessaires
+        $listingsCollection->load([
+            'images' => function ($query) {
+                $query->select('listing_id', 'image_url')->limit(1);
+            },
+            'category:id,name',
+            'country:id,name',
+            'city:id,name',
+            'country.currencyExchangeRate:id,country_id,currency_symbol'
+        ]);
+
+        // Charger les relations spécifiques par catégorie
+        $categoryIds = $listingsCollection->pluck('category_id')->unique();
+
+        foreach ($categoryIds as $catId) {
+            if ($catId == 1) {
+                // Motorcycles
+                $listingsCollection->where('category_id', 1)->load([
+                    'motorcycle' => function ($query) {
+                        $query->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id', 'engine', 'mileage', 'body_condition', 'modified', 'insurance', 'general_condition', 'vehicle_care', 'transmission')
+                            ->with([
+                                'brand:id,name',
+                                'model:id,name',
+                                'year:id,year',
+                                'type:id,name'
+                            ]);
+                    }
+                ]);
+            } elseif ($catId == 2) {
+                // Spare parts
+                $listingsCollection->where('category_id', 2)->load([
+                    'sparePart' => function ($query) {
+                        $query->with([
+                            'bikePartBrand:id,name',
+                            'bikePartCategory:id,name',
+                            'motorcycleAssociations.brand:id,name',
+                            'motorcycleAssociations.model:id,name',
+                            'motorcycleAssociations.year:id,year'
+                        ]);
+                    }
+                ]);
+            } elseif ($catId == 3) {
+                // License plates
+                $listingsCollection->where('category_id', 3)->load([
+                    'licensePlate.format',
+                    'licensePlate.city',
+                    'licensePlate.country',
+                    'licensePlate.fieldValues.formatField'
+                ]);
+            }
+        }
+
+        // Pour les enchères, charger la dernière enchère
+        $listingIds = $listingsCollection->pluck('id');
+        $currentBids = DB::table('auction_histories')
+            ->whereIn('listing_id', $listingIds)
+            ->select('listing_id', DB::raw('MAX(bid_amount) as current_bid'))
+            ->groupBy('listing_id')
+            ->pluck('current_bid', 'listing_id');
+
+        // Formater les résultats
+        $formattedListings = $listingsCollection->map(function ($listing) use ($currentBids) {
+            $displayPrice = $listing->price;
+            $isAuction = false;
+            $currentBid = $currentBids[$listing->id] ?? null;
+
+            if (!$displayPrice && $listing->auction_enabled) {
+                $displayPrice = $currentBid ?: $listing->minimum_bid;
+                $isAuction = true;
+            }
+
+            $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+            $priceToShow = $listing->price ?? $listing->minimum_bid;
+
+            $baseData = [
+                'id' => $listing->id,
+                'title' => $listing->title,
+                'description' => $listing->description,
+                'price' => $priceToShow,
+                'category_id' => $listing->category_id,
+                'category_name' => $listing->category?->name,
+                'auction_enabled' => $listing->auction_enabled,
+                'minimum_bid' => $listing->minimum_bid,
+                'allow_submission' => $listing->allow_submission,
+                'listing_type_id' => $listing->listing_type_id,
+                'contacting_channel' => $listing->contacting_channel,
+                'seller_type' => $listing->seller_type,
+                'status' => $listing->status,
+                'views_count' => $listing->views_count ?? 0,
+                'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $listing->updated_at->format('Y-m-d H:i:s'),
+                'city' => $listing->city?->name,
+                'country' => $listing->country?->name,
+                'images' => $listing->images->pluck('image_url'),
+                'display_price' => $displayPrice,
+                'is_auction' => $isAuction,
+                'current_bid' => $currentBid,
+                'currency' => $currencySymbol,
+            ];
+
+            // Ajouter les données spécifiques par catégorie
+            if ($listing->category_id == 1 && $listing->motorcycle) {
+                $baseData['motorcycle'] = [
+                    'brand' => $listing->motorcycle->brand?->name ?? null,
+                    'model' => $listing->motorcycle->model?->name ?? null,
+                    'year' => $listing->motorcycle->year?->year ?? null,
+                    'type' => $listing->motorcycle->type?->name ?? null,
+                    'engine' => $listing->motorcycle->engine,
+                    'mileage' => $listing->motorcycle->mileage,
+                    'body_condition' => $listing->motorcycle->body_condition,
+                    'modified' => $listing->motorcycle->modified,
+                    'insurance' => $listing->motorcycle->insurance,
+                    'general_condition' => $listing->motorcycle->general_condition,
+                    'vehicle_care' => $listing->motorcycle->vehicle_care,
+                    'transmission' => $listing->motorcycle->transmission,
+                ];
+            } elseif ($listing->category_id == 2 && $listing->sparePart) {
+                $baseData['spare_part'] = [
+                    'condition' => $listing->sparePart->condition,
+                    'brand' => $listing->sparePart->bikePartBrand?->name ?? null,
+                    'category' => $listing->sparePart->bikePartCategory?->name ?? null,
+                    'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
+                        return [
+                            'brand' => $association->brand?->name ?? null,
+                            'model' => $association->model?->name ?? null,
+                            'year' => $association->year?->year ?? null,
+                        ];
+                    })->toArray(),
+                ];
+            } elseif ($listing->category_id == 3 && $listing->licensePlate) {
+                $licensePlate = $listing->licensePlate;
+
+                $baseData['license_plate'] = [
+                    'plate_format' => [
+                        'id' => $licensePlate->format?->id ?? null,
+                        'name' => $licensePlate->format?->name ?? null,
+                        'pattern' => $licensePlate->format?->pattern ?? null,
+                        'country' => $licensePlate->format?->country ?? null,
+                    ],
+                    'city' => $licensePlate->city?->name ?? null,
+                    'country' => $licensePlate->country?->name ?? null,
+                    'country_id' => $licensePlate->country_id,
+                    'fields' => $licensePlate->fieldValues->map(function ($fieldValue) {
+                        return [
+                            'field_id' => $fieldValue->formatField?->id ?? null,
+                            'field_name' => $fieldValue->formatField?->field_name ?? null,
+                            'field_position' => $fieldValue->formatField?->position ?? null,
+                            'field_type' => $fieldValue->formatField?->field_type ?? null,
+                            'field_label' => $fieldValue->formatField?->field_label ?? null,
+                            'is_required' => $fieldValue->formatField?->is_required ?? null,
+                            'max_length' => $fieldValue->formatField?->max_length ?? null,
+                            'validation_pattern' => $fieldValue->formatField?->validation_pattern ?? null,
+                            'value' => $fieldValue->field_value,
+                        ];
+                    })->toArray(),
+                ];
+            }
+
+            return $baseData;
+        });
+
+        // Build response
+        $response = [
+            'message' => 'Your listings retrieved successfully',
+            'total_listings' => $usePagination ? $listings->total() : $formattedListings->count(),
+        ];
+
+        // Add pagination metadata only if pagination is used
+        if ($usePagination) {
+            $response['current_page'] = $listings->currentPage();
+            $response['per_page'] = $listings->perPage();
+            $response['last_page'] = $listings->lastPage();
+            $response['from'] = $listings->firstItem();
+            $response['to'] = $listings->lastItem();
+        }
+
+        // Add listings array
+        $response['listings'] = $formattedListings;
+
+        return response()->json($response);
+    }
+
     /**
      * @OA\Get(
      *     path="/api/listings/city/{city_id}",
@@ -1644,6 +1952,7 @@ class ListingController extends Controller
      *             @OA\Property(property="country", type="string"),
      *             @OA\Property(property="images", type="array", @OA\Items(type="string")),
      *             @OA\Property(property="wishlist", type="boolean"),
+     *             @OA\Property(property="is_seller", type="boolean", description="True if authenticated user is the seller"),
      *             @OA\Property(property="category_id", type="integer"),
      *             @OA\Property(property="submission", type="object", nullable=true),
      *             @OA\Property(property="seller", type="object", nullable=true),
@@ -1666,7 +1975,7 @@ class ListingController extends Controller
             'images',
             'city',
             'country',
-            'country.currencyExchangeRate', // ✅ Charger la relation currency
+            'country.currencyExchangeRate',
             'seller',
             'motorcycle.brand',
             'motorcycle.model',
@@ -1695,7 +2004,13 @@ class ListingController extends Controller
                 ->exists();
         }
 
-        // ✅ Récupérer current_bid pour les enchères
+        // ✅ Vérifier si l'utilisateur connecté est le vendeur
+        $isSeller = false;
+        if ($user && $user->id == $listing->seller_id) {
+            $isSeller = true;
+        }
+
+        // Récupérer current_bid pour les enchères
         $currentBid = null;
         if ($listing->auction_enabled) {
             $currentBid = DB::table('auction_histories')
@@ -1703,7 +2018,7 @@ class ListingController extends Controller
                 ->max('bid_amount');
         }
 
-        // ✅ Déterminer le prix à afficher
+        // Déterminer le prix à afficher
         $displayPrice = $listing->price;
         $isAuction = false;
 
@@ -1712,7 +2027,7 @@ class ListingController extends Controller
             $isAuction = true;
         }
 
-        // ✅ Récupérer le symbole de devise
+        // Récupérer le symbole de devise
         $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
 
         $data = [
@@ -1724,6 +2039,7 @@ class ListingController extends Controller
             'country' => $listing->country?->name,
             'images' => $listing->images->pluck('image_url'),
             'wishlist' => $isInWishlist,
+            'is_seller' => $isSeller, // ✅ NOUVEAU CHAMP AJOUTÉ
             'category_id' => $listing->category_id,
             'allow_submission' => $listing->allow_submission,
             'auction_enabled' => $listing->auction_enabled,
@@ -1732,8 +2048,6 @@ class ListingController extends Controller
             'contacting_channel' => $listing->contacting_channel,
             'seller_type' => $listing->seller_type,
             'status' => $listing->status,
-
-            // ✅ NOUVEAUX CHAMPS AJOUTÉS
             'currency' => $currencySymbol,
             'display_price' => $displayPrice,
             'is_auction' => $isAuction,
@@ -1741,7 +2055,7 @@ class ListingController extends Controller
         ];
 
         if (!$listing->allow_submission) {
-            $data['price'] = $listing->price ?? $listing->minimum_bid; // ✅ Si null, afficher minimum_bid
+            $data['price'] = $listing->price ?? $listing->minimum_bid;
         }
 
         if ($listing->allow_submission) {
