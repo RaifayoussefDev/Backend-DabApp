@@ -7,7 +7,6 @@ use App\Models\MyGarage;
 use App\Models\MotorcycleBrand;
 use App\Models\MotorcycleModel;
 use App\Models\MotorcycleYear;
-use App\Models\MotorcycleType;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -41,7 +40,6 @@ class MyGarageController extends Controller
      *                     @OA\Property(property="brand_id", type="integer", example=2),
      *                     @OA\Property(property="model_id", type="integer", example=5),
      *                     @OA\Property(property="year_id", type="integer", example=10),
-     *                     @OA\Property(property="type_id", type="integer", example=3),
      *                     @OA\Property(property="title", type="string", nullable=true, example="My First Bike"),
      *                     @OA\Property(property="description", type="string", nullable=true, example="This is my favorite motorcycle."),
      *                     @OA\Property(property="picture", type="string", nullable=true, example="http://example.com/image.jpg"),
@@ -64,12 +62,6 @@ class MyGarageController extends Controller
      *                         type="object",
      *                         @OA\Property(property="id", type="integer", example=10),
      *                         @OA\Property(property="year", type="integer", example=2020)
-     *                     ),
-     *                     @OA\Property(
-     *                         property="type",
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=3),
-     *                         @OA\Property(property="name", type="string", example="Sport")
      *                     )
      *                 )
      *             ),
@@ -113,9 +105,9 @@ class MyGarageController extends Controller
             $perPage = $request->get('per_page', 10);
             $perPage = min($perPage, 50);
 
-            $garageItems = MyGarage::with(['brand', 'model', 'year', 'type'])
+            $garageItems = MyGarage::with(['brand', 'model', 'year'])
                 ->where('user_id', $userId)
-                ->orderBy('is_default', 'desc') // ✅ Moto par défaut en premier
+                ->orderBy('is_default', 'desc')
                 ->orderBy('created_at', 'desc')
                 ->paginate($perPage);
 
@@ -148,11 +140,10 @@ class MyGarageController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"brand_id", "model_id", "year_id", "type_id"},
+     *             required={"brand_id", "model_id", "year_id"},
      *             @OA\Property(property="brand_id", type="integer", example=1, description="Motorcycle brand ID"),
      *             @OA\Property(property="model_id", type="integer", example=1, description="Motorcycle model ID"),
      *             @OA\Property(property="year_id", type="integer", example=1, description="Motorcycle year ID"),
-     *             @OA\Property(property="type_id", type="integer", example=1, description="Motorcycle type ID"),
      *             @OA\Property(property="title", type="string", nullable=true, example="My Daily Beast", description="Optional custom title for the motorcycle"),
      *             @OA\Property(property="description", type="string", nullable=true, example="Perfect bike for daily commuting", description="Optional description"),
      *             @OA\Property(property="picture", type="string", nullable=true, example="https://example.com/bike.jpg", description="Optional picture URL")
@@ -188,12 +179,6 @@ class MyGarageController extends Controller
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="year", type="integer", example=2020)
      *                 ),
-     *                 @OA\Property(
-     *                     property="type",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="Sport")
-     *                 ),
      *                 @OA\Property(property="created_at", type="string", format="date-time"),
      *                 @OA\Property(property="updated_at", type="string", format="date-time")
      *             )
@@ -218,11 +203,6 @@ class MyGarageController extends Controller
      *                     property="brand_id",
      *                     type="array",
      *                     @OA\Items(type="string", example="The brand id field is required.")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="type_id",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="The type id field is required.")
      *                 )
      *             )
      *         )
@@ -249,7 +229,6 @@ class MyGarageController extends Controller
                 'brand_id' => 'required|integer|exists:motorcycle_brands,id',
                 'model_id' => 'required|integer|exists:motorcycle_models,id',
                 'year_id' => 'required|integer|exists:motorcycle_years,id',
-                'type_id' => 'required|integer|exists:motorcycle_types,id',
                 'title' => 'nullable|string|max:255',
                 'description' => 'nullable|string|max:1000',
                 'picture' => 'nullable|string|url',
@@ -284,13 +263,12 @@ class MyGarageController extends Controller
                 'brand_id' => $validated['brand_id'],
                 'model_id' => $validated['model_id'],
                 'year_id' => $validated['year_id'],
-                'type_id' => $validated['type_id'],
                 'title' => $validated['title'] ?? null,
                 'description' => $validated['description'] ?? null,
                 'picture' => $validated['picture'] ?? null,
             ]);
 
-            $garageItem->load(['brand', 'model', 'year', 'type']);
+            $garageItem->load(['brand', 'model', 'year']);
 
             return response()->json([
                 'message' => 'Motorcycle added to garage successfully',
@@ -352,12 +330,6 @@ class MyGarageController extends Controller
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="year", type="integer", example=2020)
      *                 ),
-     *                 @OA\Property(
-     *                     property="type",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="Sport")
-     *                 ),
      *                 @OA\Property(property="created_at", type="string", format="date-time"),
      *                 @OA\Property(property="updated_at", type="string", format="date-time")
      *             )
@@ -396,7 +368,7 @@ class MyGarageController extends Controller
                 return response()->json(['message' => 'Unauthorized'], 401);
             }
 
-            $garageItem = MyGarage::with(['brand', 'model', 'year', 'type'])
+            $garageItem = MyGarage::with(['brand', 'model', 'year'])
                 ->where('user_id', $userId)
                 ->where('id', $id)
                 ->first();
@@ -436,7 +408,6 @@ class MyGarageController extends Controller
      *     @OA\RequestBody(
      *         required=false,
      *         @OA\JsonContent(
-     *             @OA\Property(property="type_id", type="integer", example=2, description="Motorcycle type ID"),
      *             @OA\Property(property="title", type="string", nullable=true, example="Updated Beast Machine", description="Updated title"),
      *             @OA\Property(property="description", type="string", nullable=true, example="Updated description with modifications", description="Updated description"),
      *             @OA\Property(property="picture", type="string", nullable=true, example="https://example.com/updated-bike.jpg", description="Updated picture URL")
@@ -459,12 +430,6 @@ class MyGarageController extends Controller
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="name", type="string", example="Honda")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="type",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=2),
-     *                     @OA\Property(property="name", type="string", example="Cruiser")
      *                 ),
      *                 @OA\Property(property="created_at", type="string", format="date-time"),
      *                 @OA\Property(property="updated_at", type="string", format="date-time")
@@ -524,14 +489,13 @@ class MyGarageController extends Controller
             }
 
             $validated = $request->validate([
-                'type_id' => 'sometimes|required|integer|exists:motorcycle_types,id',
                 'title' => 'sometimes|nullable|string|max:255',
                 'description' => 'sometimes|nullable|string|max:1000',
                 'picture' => 'sometimes|nullable|string|url',
             ]);
 
             $garageItem->update($validated);
-            $garageItem->load(['brand', 'model', 'year', 'type']);
+            $garageItem->load(['brand', 'model', 'year']);
 
             return response()->json([
                 'message' => 'Garage item updated successfully',
@@ -631,7 +595,7 @@ class MyGarageController extends Controller
      * @OA\Get(
      *     path="/api/motorcycle-data",
      *     tags={"My Garage"},
-     *     summary="Get motorcycle data for dropdowns (brands, models, years, types)",
+     *     summary="Get motorcycle data for dropdowns (brands, models, years)",
      *     security={{"bearerAuth": {}}},
      *     @OA\Response(
      *         response=200,
@@ -668,14 +632,6 @@ class MyGarageController extends Controller
      *                         @OA\Property(property="year", type="integer", example=2020),
      *                         @OA\Property(property="model_name", type="string", example="CBR600RR")
      *                     )
-     *                 ),
-     *                 @OA\Property(
-     *                     property="types",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="name", type="string", example="Sport")
-     *                     )
      *                 )
      *             )
      *         )
@@ -697,6 +653,48 @@ class MyGarageController extends Controller
      *     )
      * )
      */
+    public function getMotorcycleData(): JsonResponse
+    {
+        try {
+            $brands = MotorcycleBrand::orderBy('name')->get(['id', 'name']);
+
+            $models = MotorcycleModel::with('brand:id,name')
+                ->orderBy('name')
+                ->get(['id', 'brand_id', 'name']);
+
+            $years = MotorcycleYear::with('model:id,name')
+                ->orderBy('year', 'desc')
+                ->get(['id', 'model_id', 'year']);
+
+            return response()->json([
+                'message' => 'Motorcycle data retrieved successfully',
+                'data' => [
+                    'brands' => $brands,
+                    'models' => $models->map(function ($model) {
+                        return [
+                            'id' => $model->id,
+                            'brand_id' => $model->brand_id,
+                            'name' => $model->name,
+                            'brand_name' => $model->brand->name ?? null,
+                        ];
+                    }),
+                    'years' => $years->map(function ($year) {
+                        return [
+                            'id' => $year->id,
+                            'model_id' => $year->model_id,
+                            'year' => $year->year,
+                            'model_name' => $year->model->name ?? null,
+                        ];
+                    }),
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to retrieve motorcycle data',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
 
     /**
      * @OA\Get(
@@ -719,7 +717,6 @@ class MyGarageController extends Controller
      *                 @OA\Property(property="brand_id", type="integer", example=2),
      *                 @OA\Property(property="model_id", type="integer", example=5),
      *                 @OA\Property(property="year_id", type="integer", example=10),
-     *                 @OA\Property(property="type_id", type="integer", example=3),
      *                 @OA\Property(property="title", type="string", nullable=true, example="My Daily Beast"),
      *                 @OA\Property(property="description", type="string", nullable=true, example="Perfect bike for daily commuting"),
      *                 @OA\Property(property="picture", type="string", nullable=true, example="https://example.com/bike.jpg"),
@@ -743,12 +740,6 @@ class MyGarageController extends Controller
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=10),
      *                     @OA\Property(property="year", type="integer", example=2020)
-     *                 ),
-     *                 @OA\Property(
-     *                     property="type",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=3),
-     *                     @OA\Property(property="name", type="string", example="Sport")
      *                 )
      *             )
      *         )
@@ -786,8 +777,7 @@ class MyGarageController extends Controller
                 return response()->json(['message' => 'Unauthorized'], 401);
             }
 
-            // Récupérer la moto par défaut
-            $defaultMotorcycle = MyGarage::with(['brand', 'model', 'year', 'type'])
+            $defaultMotorcycle = MyGarage::with(['brand', 'model', 'year'])
                 ->where('user_id', $userId)
                 ->where('is_default', true)
                 ->first();
@@ -806,51 +796,6 @@ class MyGarageController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to retrieve default motorcycle',
-                'details' => $e->getMessage()
-            ], 500);
-        }
-    }
-    public function getMotorcycleData(): JsonResponse
-    {
-        try {
-            $brands = MotorcycleBrand::orderBy('name')->get(['id', 'name']);
-
-            $models = MotorcycleModel::with('brand:id,name')
-                ->orderBy('name')
-                ->get(['id', 'brand_id', 'name']);
-
-            $years = MotorcycleYear::with('model:id,name')
-                ->orderBy('year', 'desc')
-                ->get(['id', 'model_id', 'year']);
-
-            $types = MotorcycleType::orderBy('name')->get(['id', 'name']);
-
-            return response()->json([
-                'message' => 'Motorcycle data retrieved successfully',
-                'data' => [
-                    'brands' => $brands,
-                    'models' => $models->map(function ($model) {
-                        return [
-                            'id' => $model->id,
-                            'brand_id' => $model->brand_id,
-                            'name' => $model->name,
-                            'brand_name' => $model->brand->name ?? null,
-                        ];
-                    }),
-                    'years' => $years->map(function ($year) {
-                        return [
-                            'id' => $year->id,
-                            'model_id' => $year->model_id,
-                            'year' => $year->year,
-                            'model_name' => $year->model->name ?? null,
-                        ];
-                    }),
-                    'types' => $types,
-                ]
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to retrieve motorcycle data',
                 'details' => $e->getMessage()
             ], 500);
         }
@@ -901,12 +846,6 @@ class MyGarageController extends Controller
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="year", type="integer", example=2020)
      *                 ),
-     *                 @OA\Property(
-     *                     property="type",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="Sport")
-     *                 ),
      *                 @OA\Property(property="created_at", type="string", format="date-time"),
      *                 @OA\Property(property="updated_at", type="string", format="date-time")
      *             )
@@ -945,7 +884,6 @@ class MyGarageController extends Controller
                 return response()->json(['message' => 'Unauthorized'], 401);
             }
 
-            // Vérifier que la moto appartient bien à l'utilisateur
             $garageItem = MyGarage::where('user_id', $userId)
                 ->where('id', $id)
                 ->first();
@@ -957,16 +895,16 @@ class MyGarageController extends Controller
                 ], 404);
             }
 
-            // ✅ Mettre toutes les autres motos à is_default = false
+            // Mettre toutes les autres motos à is_default = false
             MyGarage::where('user_id', $userId)
                 ->where('id', '!=', $id)
                 ->update(['is_default' => false]);
 
-            // ✅ Mettre cette moto à is_default = true
+            // Mettre cette moto à is_default = true
             $garageItem->update(['is_default' => true]);
 
             // Recharger les relations
-            $garageItem->load(['brand', 'model', 'year', 'type']);
+            $garageItem->load(['brand', 'model', 'year']);
 
             return response()->json([
                 'message' => 'Default motorcycle set successfully',

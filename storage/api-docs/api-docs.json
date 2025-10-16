@@ -8299,10 +8299,6 @@
                                                         "type": "integer",
                                                         "example": 10
                                                     },
-                                                    "type_id": {
-                                                        "type": "integer",
-                                                        "example": 3
-                                                    },
                                                     "title": {
                                                         "type": "string",
                                                         "example": "My First Bike",
@@ -8363,19 +8359,6 @@
                                                             "year": {
                                                                 "type": "integer",
                                                                 "example": 2020
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    },
-                                                    "type": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 3
-                                                            },
-                                                            "name": {
-                                                                "type": "string",
-                                                                "example": "Sport"
                                                             }
                                                         },
                                                         "type": "object"
@@ -8476,8 +8459,7 @@
                                 "required": [
                                     "brand_id",
                                     "model_id",
-                                    "year_id",
-                                    "type_id"
+                                    "year_id"
                                 ],
                                 "properties": {
                                     "brand_id": {
@@ -8492,11 +8474,6 @@
                                     },
                                     "year_id": {
                                         "description": "Motorcycle year ID",
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "type_id": {
-                                        "description": "Motorcycle type ID",
                                         "type": "integer",
                                         "example": 1
                                     },
@@ -8595,19 +8572,6 @@
                                                     },
                                                     "type": "object"
                                                 },
-                                                "type": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 1
-                                                        },
-                                                        "name": {
-                                                            "type": "string",
-                                                            "example": "Sport"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                },
                                                 "created_at": {
                                                     "type": "string",
                                                     "format": "date-time"
@@ -8658,13 +8622,6 @@
                                                     "items": {
                                                         "type": "string",
                                                         "example": "The brand id field is required."
-                                                    }
-                                                },
-                                                "type_id": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "example": "The type id field is required."
                                                     }
                                                 }
                                             },
@@ -8794,19 +8751,6 @@
                                                     },
                                                     "type": "object"
                                                 },
-                                                "type": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 1
-                                                        },
-                                                        "name": {
-                                                            "type": "string",
-                                                            "example": "Sport"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                },
                                                 "created_at": {
                                                     "type": "string",
                                                     "format": "date-time"
@@ -8911,11 +8855,6 @@
                         "application/json": {
                             "schema": {
                                 "properties": {
-                                    "type_id": {
-                                        "description": "Motorcycle type ID",
-                                        "type": "integer",
-                                        "example": 2
-                                    },
                                     "title": {
                                         "description": "Updated title",
                                         "type": "string",
@@ -8981,19 +8920,6 @@
                                                         "name": {
                                                             "type": "string",
                                                             "example": "Honda"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                },
-                                                "type": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 2
-                                                        },
-                                                        "name": {
-                                                            "type": "string",
-                                                            "example": "Cruiser"
                                                         }
                                                     },
                                                     "type": "object"
@@ -9196,6 +9122,143 @@
                 ]
             }
         },
+        "/api/motorcycle-data": {
+            "get": {
+                "tags": [
+                    "My Garage"
+                ],
+                "summary": "Get motorcycle data for dropdowns (brands, models, years)",
+                "operationId": "05f9222a14a3ce496364a6bc09469102",
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle data retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Motorcycle data retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "brands": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Honda"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "models": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "brand_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "CBR600RR"
+                                                            },
+                                                            "brand_name": {
+                                                                "type": "string",
+                                                                "example": "Honda"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "years": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "model_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "year": {
+                                                                "type": "integer",
+                                                                "example": 2020
+                                                            },
+                                                            "model_name": {
+                                                                "type": "string",
+                                                                "example": "CBR600RR"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to retrieve motorcycle data"
+                                        },
+                                        "details": {
+                                            "type": "string",
+                                            "example": "Error message details"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/my-garage/default": {
             "get": {
                 "tags": [
@@ -9236,10 +9299,6 @@
                                                 "year_id": {
                                                     "type": "integer",
                                                     "example": 10
-                                                },
-                                                "type_id": {
-                                                    "type": "integer",
-                                                    "example": 3
                                                 },
                                                 "title": {
                                                     "type": "string",
@@ -9305,19 +9364,6 @@
                                                         "year": {
                                                             "type": "integer",
                                                             "example": 2020
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                },
-                                                "type": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 3
-                                                        },
-                                                        "name": {
-                                                            "type": "string",
-                                                            "example": "Sport"
                                                         }
                                                     },
                                                     "type": "object"
@@ -9487,19 +9533,6 @@
                                                         "year": {
                                                             "type": "integer",
                                                             "example": 2020
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                },
-                                                "type": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 1
-                                                        },
-                                                        "name": {
-                                                            "type": "string",
-                                                            "example": "Sport"
                                                         }
                                                     },
                                                     "type": "object"
