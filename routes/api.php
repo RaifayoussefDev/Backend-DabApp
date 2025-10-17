@@ -1,5 +1,6 @@
 ﻿<?php
 
+use App\Http\Controllers\MotorcycleComparisonController;
 use App\Http\Controllers\MyGarageController;
 use App\Http\Controllers\MotorcycleImportController;
 use App\Http\Controllers\ListingController;
@@ -342,16 +343,16 @@ Route::get('filter-license-plates', [FilterController::class, 'filterLicensePlat
 // Garder uniquement ces routes
 Route::post('/firebase-login', [FirebaseAuthController::class, 'loginWithFirebase']); // Pour Google
 // Authentification avec numéro et mot de passe
-Route::post('/login-phone-password', [FirebasePhoneAuthController::class, 'loginWithPhonePassword']);
+// Route::post('/login-phone-password', [FirebasePhoneAuthController::class, 'loginWithPhonePassword']);
 
-// Vérification OTP classique
-// Route::post('/verify-otp', [FirebasePhoneAuthController::class, 'verifyOTP']);
+// // Vérification OTP classique
+// // Route::post('/verify-otp', [FirebasePhoneAuthController::class, 'verifyOTP']);
 
-// Envoi OTP Firebase (si besoin)
-Route::post('/send-firebase-otp', [FirebasePhoneAuthController::class, 'sendFirebaseOTP']);
+// // Envoi OTP Firebase (si besoin)
+// Route::post('/send-firebase-otp', [FirebasePhoneAuthController::class, 'sendFirebaseOTP']);
 
-// Finaliser l'authentification Firebase
-Route::post('/complete-firebase-auth', [FirebasePhoneAuthController::class, 'completeFirebaseAuth']);
+// // Finaliser l'authentification Firebase
+// Route::post('/complete-firebase-auth', [FirebasePhoneAuthController::class, 'completeFirebaseAuth']);
 
 
 Route::post('/send-otp', [WhatsAppOtpController::class, 'sendOtp']);
@@ -447,21 +448,21 @@ Route::get('/get-country', [AuthController::class, 'getCountry'])->name('get.cou
 
 Route::get('/test-email', [SoomController::class, 'testEmail']);
 
-Route::get('/test-email-simple', function () {
-    try {
-        \Log::info('Testing simple email...');
+// Route::get('/test-email-simple', function () {
+//     try {
+//         \Log::info('Testing simple email...');
 
-        Mail::raw('This is a test email from Laravel', function ($message) {
-            $message->to('test@example.com')
-                ->subject('Laravel Test Email');
-        });
+//         Mail::raw('This is a test email from Laravel', function ($message) {
+//             $message->to('test@example.com')
+//                 ->subject('Laravel Test Email');
+//         });
 
-        return 'Email test sent - check logs';
-    } catch (\Exception $e) {
-        \Log::error('Email test failed: ' . $e->getMessage());
-        return 'Email test failed: ' . $e->getMessage();
-    }
-});
+//         return 'Email test sent - check logs';
+//     } catch (\Exception $e) {
+//         \Log::error('Email test failed: ' . $e->getMessage());
+//         return 'Email test failed: ' . $e->getMessage();
+//     }
+// });
 /*
 |--------------------------------------------------------------------------
 | Guide API Routes - JWT Authentication
@@ -518,8 +519,12 @@ Route::prefix('guides')->group(function () {
     Route::get('/', [GuideController::class, 'index']);
     Route::get('/{slug}', [GuideController::class, 'show']);
 
+    // Commentaires publics (lecture seule)
+    Route::get('/{id}/comments', [GuideCommentController::class, 'index']);
+
     // Authenticated routes (JWT)
     Route::middleware('auth:api')->group(function () {
+        // Gestion des guides
         Route::get('/my/guides', [GuideController::class, 'myGuides']);
         Route::post('/', [GuideController::class, 'store']);
         Route::put('/{id}', [GuideController::class, 'update']);
@@ -527,7 +532,9 @@ Route::prefix('guides')->group(function () {
         Route::post('/{id}/publish', [GuideController::class, 'publish']);
         Route::post('/{id}/archive', [GuideController::class, 'archive']);
 
-        // Guide Images routes
+        // ========================================
+        // GUIDE IMAGES ROUTES
+        // ========================================
         Route::prefix('{guide_id}/images')->group(function () {
             Route::get('/', [GuideImageController::class, 'index']);
             Route::post('/', [GuideImageController::class, 'store']);
@@ -535,5 +542,48 @@ Route::prefix('guides')->group(function () {
             Route::delete('/{id}', [GuideImageController::class, 'destroy']);
             Route::post('/reorder', [GuideImageController::class, 'reorder']);
         });
+
+        // ========================================
+        // GUIDE LIKES ROUTES
+        // ========================================
+        Route::post('/{id}/like', [GuideLikeController::class, 'like']);
+        Route::delete('/{id}/unlike', [GuideLikeController::class, 'unlike']);
+        Route::post('/{id}/toggle-like', [GuideLikeController::class, 'toggleLike']);
+        Route::get('/my/liked', [GuideLikeController::class, 'myLikedGuides']);
+        Route::get('/{id}/likes', [GuideLikeController::class, 'getGuideLikes']);
+
+        // ========================================
+        // GUIDE BOOKMARKS ROUTES
+        // ========================================
+        Route::post('/{id}/bookmark', [GuideBookmarkController::class, 'bookmark']);
+        Route::delete('/{id}/unbookmark', [GuideBookmarkController::class, 'unbookmark']);
+        Route::post('/{id}/toggle-bookmark', [GuideBookmarkController::class, 'toggleBookmark']);
+        Route::get('/my/bookmarks', [GuideBookmarkController::class, 'myBookmarks']);
+        Route::get('/my/bookmarks/count', [GuideBookmarkController::class, 'countMyBookmarks']);
+        Route::delete('/my/bookmarks/clear', [GuideBookmarkController::class, 'clearAllBookmarks']);
+        Route::get('/{id}/bookmark-status', [GuideBookmarkController::class, 'checkBookmarkStatus']);
+        Route::post('/bookmarks/batch', [GuideBookmarkController::class, 'batchCheckBookmarks']);
+
+        // ========================================
+        // GUIDE COMMENTS ROUTES
+        // ========================================
+        Route::post('/{id}/comments', [GuideCommentController::class, 'store']);
+        Route::put('/comments/{commentId}', [GuideCommentController::class, 'update']);
+        Route::delete('/comments/{commentId}', [GuideCommentController::class, 'destroy']);
+        Route::get('/my/comments', [GuideCommentController::class, 'myComments']);
+
+        // Modération des commentaires (Admin uniquement)
+        Route::post('/comments/{commentId}/approve', [GuideCommentController::class, 'approve']);
+        Route::post('/comments/{commentId}/reject', [GuideCommentController::class, 'reject']);
+        Route::get('/comments/pending', [GuideCommentController::class, 'pending']);
     });
+});
+
+Route::prefix('comparaison/motorcycles')->group(function () {
+    Route::get('/types', [MotorcycleComparisonController::class, 'getTypes']);
+    Route::get('/brands', [MotorcycleComparisonController::class, 'getBrands']);
+    Route::get('/models', [MotorcycleComparisonController::class, 'getModels']);
+    Route::get('/years', [MotorcycleComparisonController::class, 'getYears']);
+    Route::get('/details/{yearId}', [MotorcycleComparisonController::class, 'getMotorcycleDetails']);
+    Route::post('/compare', [MotorcycleComparisonController::class, 'compare']);
 });

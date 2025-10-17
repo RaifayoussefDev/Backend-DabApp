@@ -2156,151 +2156,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful operation",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Showing listings for 'Morocco'."
-                                        },
-                                        "searched_country": {
-                                            "type": "string",
-                                            "example": "Morocco",
-                                            "nullable": true
-                                        },
-                                        "showing_all_countries": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "total_listings": {
-                                            "type": "integer",
-                                            "example": 25
-                                        },
-                                        "current_page": {
-                                            "description": "Only present when pagination is used",
-                                            "type": "integer",
-                                            "example": 1
-                                        },
-                                        "per_page": {
-                                            "description": "Only present when pagination is used",
-                                            "type": "integer",
-                                            "example": 15
-                                        },
-                                        "last_page": {
-                                            "description": "Only present when pagination is used",
-                                            "type": "integer",
-                                            "example": 2
-                                        },
-                                        "from": {
-                                            "description": "Only present when pagination is used",
-                                            "type": "integer",
-                                            "example": 1
-                                        },
-                                        "to": {
-                                            "description": "Only present when pagination is used",
-                                            "type": "integer",
-                                            "example": 15
-                                        },
-                                        "motorcycles": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "title": {
-                                                        "type": "string",
-                                                        "example": "Honda CBR600RR"
-                                                    },
-                                                    "description": {
-                                                        "type": "string",
-                                                        "example": "Excellent condition motorcycle"
-                                                    },
-                                                    "price": {
-                                                        "type": "number",
-                                                        "format": "float",
-                                                        "example": 8500
-                                                    },
-                                                    "is_auction": {
-                                                        "type": "boolean",
-                                                        "example": false
-                                                    },
-                                                    "minimum_bid": {
-                                                        "type": "number",
-                                                        "format": "float",
-                                                        "example": 5000,
-                                                        "nullable": true
-                                                    },
-                                                    "current_bid": {
-                                                        "type": "number",
-                                                        "format": "float",
-                                                        "example": 6500,
-                                                        "nullable": true
-                                                    },
-                                                    "currency": {
-                                                        "type": "string",
-                                                        "example": "MAD"
-                                                    },
-                                                    "category": {
-                                                        "type": "string",
-                                                        "example": "Motorcycles"
-                                                    },
-                                                    "brand": {
-                                                        "type": "string",
-                                                        "example": "Honda"
-                                                    },
-                                                    "model": {
-                                                        "type": "string",
-                                                        "example": "CBR600RR"
-                                                    },
-                                                    "year": {
-                                                        "type": "integer",
-                                                        "example": 2020
-                                                    },
-                                                    "type": {
-                                                        "type": "string",
-                                                        "example": "Sport"
-                                                    },
-                                                    "listing_date": {
-                                                        "type": "string",
-                                                        "format": "date-time",
-                                                        "example": "2024-01-15 10:30:00"
-                                                    },
-                                                    "seller_type": {
-                                                        "type": "string",
-                                                        "example": "individual"
-                                                    },
-                                                    "location": {
-                                                        "properties": {
-                                                            "country": {
-                                                                "type": "string",
-                                                                "example": "Morocco"
-                                                            },
-                                                            "city": {
-                                                                "type": "string",
-                                                                "example": "Casablanca"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    },
-                                                    "image": {
-                                                        "type": "string",
-                                                        "format": "url",
-                                                        "example": "https://example.com/image.jpg",
-                                                        "nullable": true
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Successful operation"
                     },
                     "400": {
                         "description": "Bad request"
@@ -2323,7 +2179,7 @@
                     {
                         "name": "country",
                         "in": "query",
-                        "description": "Filter by country name (supports partial matching). If no results found, shows all countries.",
+                        "description": "Filter by country name",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -2333,7 +2189,7 @@
                     {
                         "name": "min_price",
                         "in": "query",
-                        "description": "Minimum price filter (includes fixed price and minimum bid for auctions)",
+                        "description": "Minimum price filter",
                         "required": false,
                         "schema": {
                             "type": "number",
@@ -2344,7 +2200,7 @@
                     {
                         "name": "max_price",
                         "in": "query",
-                        "description": "Maximum price filter (includes fixed price and minimum bid for auctions)",
+                        "description": "Maximum price filter",
                         "required": false,
                         "schema": {
                             "type": "number",
@@ -2355,7 +2211,7 @@
                     {
                         "name": "bike_part_brands[]",
                         "in": "query",
-                        "description": "Array of bike part brand IDs to filter",
+                        "description": "Array of bike part brand IDs",
                         "required": false,
                         "schema": {
                             "type": "array",
@@ -2367,7 +2223,7 @@
                     {
                         "name": "bike_part_categories[]",
                         "in": "query",
-                        "description": "Array of bike part category IDs to filter",
+                        "description": "Array of bike part category IDs",
                         "required": false,
                         "schema": {
                             "type": "array",
@@ -2410,7 +2266,7 @@
                     {
                         "name": "country_id",
                         "in": "query",
-                        "description": "Country ID filter (alternative to country name)",
+                        "description": "Country ID filter",
                         "required": false,
                         "schema": {
                             "type": "integer"
@@ -2428,7 +2284,7 @@
                     {
                         "name": "page",
                         "in": "query",
-                        "description": "Page number for pagination",
+                        "description": "Page number",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -2439,7 +2295,7 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Number of items per page (default: 15, max: 100)",
+                        "description": "Items per page",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -2451,143 +2307,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful operation",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Showing listings for 'Morocco'."
-                                        },
-                                        "searched_country": {
-                                            "type": "string",
-                                            "example": "Morocco",
-                                            "nullable": true
-                                        },
-                                        "showing_all_countries": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "total_listings": {
-                                            "type": "integer",
-                                            "example": 15
-                                        },
-                                        "current_page": {
-                                            "description": "Only present when pagination is used",
-                                            "type": "integer",
-                                            "example": 1
-                                        },
-                                        "per_page": {
-                                            "description": "Only present when pagination is used",
-                                            "type": "integer",
-                                            "example": 15
-                                        },
-                                        "last_page": {
-                                            "description": "Only present when pagination is used",
-                                            "type": "integer",
-                                            "example": 2
-                                        },
-                                        "from": {
-                                            "description": "Only present when pagination is used",
-                                            "type": "integer",
-                                            "example": 1
-                                        },
-                                        "to": {
-                                            "description": "Only present when pagination is used",
-                                            "type": "integer",
-                                            "example": 15
-                                        },
-                                        "spare_parts": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "title": {
-                                                        "type": "string",
-                                                        "example": "Brake Pads Set"
-                                                    },
-                                                    "description": {
-                                                        "type": "string",
-                                                        "example": "High quality brake pads"
-                                                    },
-                                                    "price": {
-                                                        "type": "number",
-                                                        "format": "float",
-                                                        "example": 45.99
-                                                    },
-                                                    "is_auction": {
-                                                        "type": "boolean",
-                                                        "example": false
-                                                    },
-                                                    "minimum_bid": {
-                                                        "type": "number",
-                                                        "format": "float",
-                                                        "example": 30,
-                                                        "nullable": true
-                                                    },
-                                                    "current_bid": {
-                                                        "type": "number",
-                                                        "format": "float",
-                                                        "example": 35,
-                                                        "nullable": true
-                                                    },
-                                                    "currency": {
-                                                        "type": "string",
-                                                        "example": "MAD"
-                                                    },
-                                                    "brand": {
-                                                        "type": "string",
-                                                        "example": "Brembo"
-                                                    },
-                                                    "category": {
-                                                        "type": "string",
-                                                        "example": "Brakes"
-                                                    },
-                                                    "condition": {
-                                                        "type": "string",
-                                                        "example": "new"
-                                                    },
-                                                    "listing_date": {
-                                                        "type": "string",
-                                                        "format": "date-time",
-                                                        "example": "2024-01-15 10:30:00"
-                                                    },
-                                                    "seller_type": {
-                                                        "type": "string",
-                                                        "example": "professional"
-                                                    },
-                                                    "location": {
-                                                        "properties": {
-                                                            "country": {
-                                                                "type": "string",
-                                                                "example": "Morocco"
-                                                            },
-                                                            "city": {
-                                                                "type": "string",
-                                                                "example": "Casablanca"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    },
-                                                    "image": {
-                                                        "type": "string",
-                                                        "format": "url",
-                                                        "example": "https://example.com/image.jpg",
-                                                        "nullable": true
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Successful operation"
                     },
                     "400": {
                         "description": "Bad request"
@@ -2610,7 +2330,7 @@
                     {
                         "name": "country",
                         "in": "query",
-                        "description": "Filter by country name (supports partial matching). If no results found, shows all countries.",
+                        "description": "Filter by country name",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -2620,7 +2340,7 @@
                     {
                         "name": "min_price",
                         "in": "query",
-                        "description": "Minimum price filter (includes fixed price and minimum bid for auctions)",
+                        "description": "Minimum price filter",
                         "required": false,
                         "schema": {
                             "type": "number",
@@ -2631,7 +2351,7 @@
                     {
                         "name": "max_price",
                         "in": "query",
-                        "description": "Maximum price filter (includes fixed price and minimum bid for auctions)",
+                        "description": "Maximum price filter",
                         "required": false,
                         "schema": {
                             "type": "number",
@@ -2710,7 +2430,7 @@
                     {
                         "name": "page",
                         "in": "query",
-                        "description": "Page number for pagination",
+                        "description": "Page number",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -2721,7 +2441,7 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Number of items per page (default: 15, max: 100)",
+                        "description": "Items per page",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -2733,160 +2453,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful response",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Showing listings for 'Morocco'."
-                                        },
-                                        "searched_country": {
-                                            "type": "string",
-                                            "example": "Morocco",
-                                            "nullable": true
-                                        },
-                                        "showing_all_countries": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "total_listings": {
-                                            "type": "integer",
-                                            "example": 10
-                                        },
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "current_page": {
-                                            "description": "Only present when pagination is used",
-                                            "type": "integer",
-                                            "example": 1
-                                        },
-                                        "per_page": {
-                                            "description": "Only present when pagination is used",
-                                            "type": "integer",
-                                            "example": 15
-                                        },
-                                        "last_page": {
-                                            "description": "Only present when pagination is used",
-                                            "type": "integer",
-                                            "example": 2
-                                        },
-                                        "from": {
-                                            "description": "Only present when pagination is used",
-                                            "type": "integer",
-                                            "example": 1
-                                        },
-                                        "to": {
-                                            "description": "Only present when pagination is used",
-                                            "type": "integer",
-                                            "example": 15
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "title": {
-                                                        "type": "string",
-                                                        "example": "Premium License Plate"
-                                                    },
-                                                    "description": {
-                                                        "type": "string",
-                                                        "example": "Rare plate number"
-                                                    },
-                                                    "price": {
-                                                        "type": "number",
-                                                        "format": "float",
-                                                        "example": 5000
-                                                    },
-                                                    "is_auction": {
-                                                        "type": "boolean",
-                                                        "example": false
-                                                    },
-                                                    "minimum_bid": {
-                                                        "type": "number",
-                                                        "format": "float",
-                                                        "example": 3000,
-                                                        "nullable": true
-                                                    },
-                                                    "current_bid": {
-                                                        "type": "number",
-                                                        "format": "float",
-                                                        "example": 3500,
-                                                        "nullable": true
-                                                    },
-                                                    "currency": {
-                                                        "type": "string",
-                                                        "example": "MAD"
-                                                    },
-                                                    "listing_date": {
-                                                        "type": "string",
-                                                        "format": "date-time",
-                                                        "example": "2024-01-15 10:30:00"
-                                                    },
-                                                    "seller_type": {
-                                                        "type": "string",
-                                                        "example": "individual"
-                                                    },
-                                                    "seller_location": {
-                                                        "properties": {
-                                                            "country": {
-                                                                "type": "string",
-                                                                "example": "Morocco"
-                                                            },
-                                                            "city": {
-                                                                "type": "string",
-                                                                "example": "Casablanca"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    },
-                                                    "image": {
-                                                        "type": "string",
-                                                        "format": "url",
-                                                        "nullable": true
-                                                    },
-                                                    "license_plate": {
-                                                        "properties": {
-                                                            "format": {
-                                                                "type": "string",
-                                                                "example": "Standard"
-                                                            },
-                                                            "plate_location": {
-                                                                "properties": {
-                                                                    "country": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "city": {
-                                                                        "type": "string"
-                                                                    }
-                                                                },
-                                                                "type": "object"
-                                                            },
-                                                            "fields": {
-                                                                "type": "array",
-                                                                "items": {
-                                                                    "type": "object"
-                                                                }
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Successful response"
                     },
                     "400": {
                         "description": "Bad request"
@@ -2907,50 +2474,56 @@
                 "operationId": "getLicensePlateFilterOptions",
                 "responses": {
                     "200": {
-                        "description": "Filter options retrieved successfully",
+                        "description": "Filter options retrieved successfully"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/api/guides/{id}/bookmark": {
+            "post": {
+                "tags": [
+                    "Guide Bookmarks"
+                ],
+                "summary": "Ajouter un guide aux favoris",
+                "operationId": "3cdf4fcab89a69bda88e7d75b41b305f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du guide",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Guide ajouté aux favoris avec succès",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Guide ajouté aux favoris avec succès"
                                         },
-                                        "filter_options": {
+                                        "data": {
                                             "properties": {
-                                                "countries": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "object"
-                                                    }
+                                                "guide_id": {
+                                                    "type": "integer",
+                                                    "example": 1
                                                 },
-                                                "cities": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "object"
-                                                    }
+                                                "bookmarked": {
+                                                    "type": "boolean",
+                                                    "example": true
                                                 },
-                                                "plate_formats": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "object"
-                                                    }
-                                                },
-                                                "format_fields": {
-                                                    "type": "object"
-                                                },
-                                                "price_range": {
-                                                    "properties": {
-                                                        "min": {
-                                                            "type": "number",
-                                                            "example": 100
-                                                        },
-                                                        "max": {
-                                                            "type": "number",
-                                                            "example": 5000
-                                                        }
-                                                    },
-                                                    "type": "object"
+                                                "bookmarked_at": {
+                                                    "type": "string",
+                                                    "example": "2025-10-17 10:30:00"
                                                 }
                                             },
                                             "type": "object"
@@ -2961,10 +2534,452 @@
                             }
                         }
                     },
-                    "500": {
-                        "description": "Internal server error"
+                    "404": {
+                        "description": "Guide non trouvé"
+                    },
+                    "401": {
+                        "description": "Non authentifié"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/{id}/unbookmark": {
+            "delete": {
+                "tags": [
+                    "Guide Bookmarks"
+                ],
+                "summary": "Retirer un guide des favoris",
+                "operationId": "ae74fd652c40696efd753d690534bdc1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du guide",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Guide retiré des favoris avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Guide retiré des favoris avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "guide_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "bookmarked": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Guide non trouvé ou bookmark inexistant"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/{id}/toggle-bookmark": {
+            "post": {
+                "tags": [
+                    "Guide Bookmarks"
+                ],
+                "summary": "Toggle bookmark d'un guide (bookmark/unbookmark automatique)",
+                "operationId": "95a089921810d6ad9cd22f350f58c0d1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du guide",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Toggle effectué avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Guide ajouté aux favoris avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "guide_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "bookmarked": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Guide non trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/my/bookmarks": {
+            "get": {
+                "tags": [
+                    "Guide Bookmarks"
+                ],
+                "summary": "Liste des guides bookmarkés par l'utilisateur connecté",
+                "operationId": "92772b8b07ba0d711991c304c339d2ce",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Numéro de page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Tri: latest (bookmarkés récemment), oldest, title",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "latest",
+                            "enum": [
+                                "latest",
+                                "oldest",
+                                "title"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des guides bookmarkés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 25
+                                        },
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "bookmarks": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "Guide complet de maintenance"
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "example": "guide-complet-maintenance"
+                                                    },
+                                                    "excerpt": {
+                                                        "type": "string"
+                                                    },
+                                                    "featured_image": {
+                                                        "type": "string"
+                                                    },
+                                                    "views_count": {
+                                                        "type": "integer"
+                                                    },
+                                                    "bookmarked_at": {
+                                                        "type": "string",
+                                                        "example": "2025-10-17 10:30:00"
+                                                    },
+                                                    "author": {
+                                                        "properties": {
+                                                            "name": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "category": {
+                                                        "properties": {
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "slug": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/my/bookmarks/count": {
+            "get": {
+                "tags": [
+                    "Guide Bookmarks"
+                ],
+                "summary": "Nombre de guides bookmarkés",
+                "operationId": "5617775251e58f0f7bd8adfbc82982eb",
+                "responses": {
+                    "200": {
+                        "description": "Nombre de bookmarks",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "count": {
+                                            "type": "integer",
+                                            "example": 25
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/my/bookmarks/clear": {
+            "delete": {
+                "tags": [
+                    "Guide Bookmarks"
+                ],
+                "summary": "Supprimer tous les bookmarks de l'utilisateur",
+                "operationId": "b880cb12b9c3f194a93299c34bdb6bca",
+                "responses": {
+                    "200": {
+                        "description": "Tous les favoris ont été supprimés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tous les favoris ont été supprimés avec succès"
+                                        },
+                                        "deleted_count": {
+                                            "type": "integer",
+                                            "example": 12
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/{id}/bookmark-status": {
+            "get": {
+                "tags": [
+                    "Guide Bookmarks"
+                ],
+                "summary": "Vérifier si un guide est bookmarké par l'utilisateur",
+                "operationId": "6db71c55c332d78abe9cbd137a47d588",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du guide",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statut du bookmark",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "guide_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "bookmarked": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "bookmarked_at": {
+                                            "type": "string",
+                                            "example": "2025-10-17 10:30:00"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Guide non trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/bookmarks/batch": {
+            "post": {
+                "tags": [
+                    "Guide Bookmarks"
+                ],
+                "summary": "Vérifier le statut bookmark de plusieurs guides",
+                "operationId": "e7603b570656dfd7a17b1d00347fef0e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "guide_ids"
+                                ],
+                                "properties": {
+                                    "guide_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3,
+                                            4,
+                                            5
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Statuts des bookmarks",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "guide_id": {
+                                                "type": "integer"
+                                            },
+                                            "bookmarked": {
+                                                "type": "boolean"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/guides/categories": {
@@ -3098,6 +3113,381 @@
                         "description": "Liste des guides"
                     }
                 }
+            }
+        },
+        "/api/guides/{id}/comments": {
+            "get": {
+                "tags": [
+                    "Guide Comments"
+                ],
+                "summary": "Liste tous les commentaires d'un guide",
+                "operationId": "e11988f6880acac86cc05e930080b0d2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du guide",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Tri: latest, oldest",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "latest",
+                            "enum": [
+                                "latest",
+                                "oldest"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des commentaires",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "guide_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "total_comments": {
+                                            "type": "integer",
+                                            "example": 25
+                                        },
+                                        "comments": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "content": {
+                                                        "type": "string"
+                                                    },
+                                                    "is_approved": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string"
+                                                    },
+                                                    "user": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "profile_picture": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "replies": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "$ref": "#"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Guide non trouvé"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Guide Comments"
+                ],
+                "summary": "Ajouter un commentaire à un guide",
+                "operationId": "f1dc21f315bad87d0ce25103847c8ee5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du guide",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "content"
+                                ],
+                                "properties": {
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Excellent guide, très utile!"
+                                    },
+                                    "parent_id": {
+                                        "description": "ID du commentaire parent pour les réponses",
+                                        "type": "integer",
+                                        "example": null
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Commentaire créé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Commentaire ajouté avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "content": {
+                                                    "type": "string"
+                                                },
+                                                "created_at": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Guide non trouvé"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/comments/{commentId}": {
+            "put": {
+                "tags": [
+                    "Guide Comments"
+                ],
+                "summary": "Modifier un commentaire",
+                "operationId": "e50b1bb1d189773f7d8055388e11489d",
+                "parameters": [
+                    {
+                        "name": "commentId",
+                        "in": "path",
+                        "description": "ID du commentaire",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "content"
+                                ],
+                                "properties": {
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Commentaire mis à jour"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Commentaire mis à jour avec succès"
+                    },
+                    "403": {
+                        "description": "Non autorisé"
+                    },
+                    "404": {
+                        "description": "Commentaire non trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Guide Comments"
+                ],
+                "summary": "Supprimer un commentaire",
+                "operationId": "125aed063893e8c06aea82b393338a27",
+                "parameters": [
+                    {
+                        "name": "commentId",
+                        "in": "path",
+                        "description": "ID du commentaire",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Commentaire supprimé avec succès"
+                    },
+                    "403": {
+                        "description": "Non autorisé"
+                    },
+                    "404": {
+                        "description": "Commentaire non trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/comments/{commentId}/approve": {
+            "post": {
+                "tags": [
+                    "Guide Comments"
+                ],
+                "summary": "Approuver un commentaire (Admin uniquement)",
+                "operationId": "e79a53c1eb8d6b4e8009a0fb99064ba9",
+                "parameters": [
+                    {
+                        "name": "commentId",
+                        "in": "path",
+                        "description": "ID du commentaire",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Commentaire approuvé avec succès"
+                    },
+                    "403": {
+                        "description": "Non autorisé - Admin uniquement"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/comments/{commentId}/reject": {
+            "post": {
+                "tags": [
+                    "Guide Comments"
+                ],
+                "summary": "Rejeter un commentaire (Admin uniquement)",
+                "operationId": "702eb42c4e472f90c1bf2eb69ff1d17d",
+                "parameters": [
+                    {
+                        "name": "commentId",
+                        "in": "path",
+                        "description": "ID du commentaire",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Commentaire rejeté avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/comments/pending": {
+            "get": {
+                "tags": [
+                    "Guide Comments"
+                ],
+                "summary": "Liste des commentaires en attente de modération (Admin)",
+                "operationId": "b13761e86c85c8d1c61265559e16cdb9",
+                "responses": {
+                    "200": {
+                        "description": "Liste des commentaires en attente"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/my/comments": {
+            "get": {
+                "tags": [
+                    "Guide Comments"
+                ],
+                "summary": "Mes commentaires",
+                "operationId": "49092f276ed86ff17e37108c8e6618f0",
+                "responses": {
+                    "200": {
+                        "description": "Liste de mes commentaires"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/guides": {
@@ -3404,6 +3794,171 @@
                 ]
             }
         },
+        "/api/guides/id/{id}": {
+            "get": {
+                "tags": [
+                    "Guides"
+                ],
+                "summary": "Afficher les détails d'un guide par ID",
+                "operationId": "f4d1bfed474b5ad96928e6c56262aa8d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du guide"
+                    },
+                    "404": {
+                        "description": "Guide non trouvé"
+                    }
+                }
+            }
+        },
+        "/api/guides/category/{category_id}": {
+            "get": {
+                "tags": [
+                    "Guides"
+                ],
+                "summary": "Liste des guides par catégorie",
+                "operationId": "15c4ebac030bf00ec6b4609def75238e",
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Tri: latest, popular",
+                        "schema": {
+                            "type": "string",
+                            "default": "latest",
+                            "enum": [
+                                "latest",
+                                "popular"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Nombre de résultats",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des guides de la catégorie"
+                    }
+                }
+            }
+        },
+        "/api/guides/tag/{tag_slug}": {
+            "get": {
+                "tags": [
+                    "Guides"
+                ],
+                "summary": "Liste des guides par tag (slug)",
+                "operationId": "2ecc9d06685e23de6cb3f93d20582bb4",
+                "parameters": [
+                    {
+                        "name": "tag_slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Tri: latest, popular",
+                        "schema": {
+                            "type": "string",
+                            "default": "latest",
+                            "enum": [
+                                "latest",
+                                "popular"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Nombre de résultats",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des guides du tag"
+                    }
+                }
+            }
+        },
+        "/api/guides/tag/id/{tag_id}": {
+            "get": {
+                "tags": [
+                    "Guides"
+                ],
+                "summary": "Liste des guides par tag ID",
+                "operationId": "dc6ce8becb88f80222ccae3233c5cde3",
+                "parameters": [
+                    {
+                        "name": "tag_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Tri: latest, popular",
+                        "schema": {
+                            "type": "string",
+                            "default": "latest",
+                            "enum": [
+                                "latest",
+                                "popular"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Nombre de résultats",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des guides du tag"
+                    }
+                }
+            }
+        },
         "/api/guides/{guide_id}/images": {
             "get": {
                 "tags": [
@@ -3554,6 +4109,341 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/guides/{id}/like": {
+            "post": {
+                "tags": [
+                    "Guide Likes"
+                ],
+                "summary": "Liker un guide",
+                "operationId": "f7426133a5efe7c7ce3722158f667774",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du guide",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Guide liké avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Guide liké avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "guide_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "liked": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "likes_count": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Guide non trouvé"
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/{id}/unlike": {
+            "delete": {
+                "tags": [
+                    "Guide Likes"
+                ],
+                "summary": "Unliker un guide",
+                "operationId": "88e30024a901ac6b610851d4c0fa3d75",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du guide",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Like retiré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Like retiré avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "guide_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "liked": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "likes_count": {
+                                                    "type": "integer",
+                                                    "example": 14
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Guide non trouvé ou like inexistant"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/{id}/toggle-like": {
+            "post": {
+                "tags": [
+                    "Guide Likes"
+                ],
+                "summary": "Toggle like d'un guide (like/unlike automatique)",
+                "operationId": "4221438809d95e3ced82bfd41fa53d7e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du guide",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Toggle effectué avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Guide liké avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "guide_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "liked": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "likes_count": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Guide non trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/my/liked": {
+            "get": {
+                "tags": [
+                    "Guide Likes"
+                ],
+                "summary": "Liste des guides likés par l'utilisateur connecté",
+                "operationId": "5d8c4541b7a67a71cbdab34f6e32008a",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Numéro de page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des guides likés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "title": {
+                                                "type": "string",
+                                                "example": "Guide complet de maintenance"
+                                            },
+                                            "slug": {
+                                                "type": "string",
+                                                "example": "guide-complet-maintenance"
+                                            },
+                                            "excerpt": {
+                                                "type": "string"
+                                            },
+                                            "featured_image": {
+                                                "type": "string"
+                                            },
+                                            "liked_at": {
+                                                "type": "string",
+                                                "example": "2025-10-17 10:30:00"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/guides/{id}/likes": {
+            "get": {
+                "tags": [
+                    "Guide Likes"
+                ],
+                "summary": "Liste des utilisateurs qui ont liké un guide",
+                "operationId": "ec4e265af618c28985f49b84e8bad4c4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du guide",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des likes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "guide_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "likes_count": {
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "likes": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "user_name": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "profile_picture": {
+                                                        "type": "string"
+                                                    },
+                                                    "liked_at": {
+                                                        "type": "string",
+                                                        "example": "2025-10-17 10:30:00"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Guide non trouvé"
+                    }
+                }
             }
         },
         "/api/guides/tags": {
@@ -7352,6 +8242,521 @@
                     },
                     "404": {
                         "description": "Not Found"
+                    }
+                }
+            }
+        },
+        "/comparison/motorcycles/types": {
+            "get": {
+                "tags": [
+                    "Motorcycles Comparison"
+                ],
+                "summary": "Get all motorcycle types",
+                "description": "Returns the list of all available motorcycle types",
+                "operationId": "2b32c39f295bfe4130fa582f8aa88d12",
+                "responses": {
+                    "200": {
+                        "description": "Types list retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Sport"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Sport motorcycles"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/comparison/motorcycles/brands": {
+            "get": {
+                "tags": [
+                    "Motorcycles Comparison"
+                ],
+                "summary": "Get all brands",
+                "description": "Returns the list of all motorcycle brands",
+                "operationId": "06770141aaec130f38eff5cd15a3b177",
+                "responses": {
+                    "200": {
+                        "description": "Brands list retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Yamaha"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/comparison/motorcycles/models": {
+            "get": {
+                "tags": [
+                    "Motorcycles Comparison"
+                ],
+                "summary": "Get all models",
+                "description": "Returns the list of all models, filtered by brand and/or type",
+                "operationId": "3875c03c19b573f1545cfeaa72667236",
+                "parameters": [
+                    {
+                        "name": "brand_id",
+                        "in": "query",
+                        "description": "Brand ID to filter models",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "type_id",
+                        "in": "query",
+                        "description": "Type ID to filter models",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Models list retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "brand_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "YZF-R1"
+                                                    },
+                                                    "type_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "brand": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Yamaha"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "type": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Sport"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/comparison/motorcycles/years": {
+            "get": {
+                "tags": [
+                    "Motorcycles Comparison"
+                ],
+                "summary": "Get all years for a model",
+                "description": "Returns the list of all available years for a specific model",
+                "operationId": "c47f77add17ae4e4c23aa34c63b7c7ba",
+                "parameters": [
+                    {
+                        "name": "model_id",
+                        "in": "query",
+                        "description": "Model ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Years list retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "model_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "year": {
+                                                        "type": "integer",
+                                                        "example": 2023
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/comparison/motorcycles/details/{yearId}": {
+            "get": {
+                "tags": [
+                    "Motorcycles Comparison"
+                ],
+                "summary": "Get complete motorcycle details",
+                "description": "Returns all detailed information about a specific motorcycle",
+                "operationId": "27391880a3c123cdb002fdb99a4d9ea9",
+                "parameters": [
+                    {
+                        "name": "yearId",
+                        "in": "path",
+                        "description": "Motorcycle year ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle details retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "info": {
+                                                    "properties": {
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "Sport"
+                                                        },
+                                                        "brand": {
+                                                            "type": "string",
+                                                            "example": "Yamaha"
+                                                        },
+                                                        "model": {
+                                                            "type": "string",
+                                                            "example": "YZF-R1"
+                                                        },
+                                                        "year": {
+                                                            "type": "integer",
+                                                            "example": 2023
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "details": {
+                                                    "properties": {
+                                                        "displacement": {
+                                                            "type": "string",
+                                                            "example": "998cc"
+                                                        },
+                                                        "engine_type": {
+                                                            "type": "string",
+                                                            "example": "4-cylinder"
+                                                        },
+                                                        "power": {
+                                                            "type": "string",
+                                                            "example": "200hp"
+                                                        },
+                                                        "torque": {
+                                                            "type": "string",
+                                                            "example": "112.4Nm"
+                                                        },
+                                                        "top_speed": {
+                                                            "type": "string",
+                                                            "example": "299 km/h"
+                                                        },
+                                                        "dry_weight": {
+                                                            "type": "string",
+                                                            "example": "199kg"
+                                                        },
+                                                        "price": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 17999.99
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Motorcycle not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Motorcycle details not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/comparison/motorcycles/compare": {
+            "post": {
+                "tags": [
+                    "Motorcycles Comparison"
+                ],
+                "summary": "Compare two motorcycles",
+                "description": "Compares the complete details of two motorcycles side by side",
+                "operationId": "a7e5636a7d91ddb39505542635e3e0b8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "year_id_1",
+                                    "year_id_2"
+                                ],
+                                "properties": {
+                                    "year_id_1": {
+                                        "description": "Year ID of the first motorcycle",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "year_id_2": {
+                                        "description": "Year ID of the second motorcycle",
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Comparison performed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "motorcycle_1": {
+                                                    "properties": {
+                                                        "info": {
+                                                            "properties": {
+                                                                "type": {
+                                                                    "type": "string",
+                                                                    "example": "Sport"
+                                                                },
+                                                                "brand": {
+                                                                    "type": "string",
+                                                                    "example": "Yamaha"
+                                                                },
+                                                                "model": {
+                                                                    "type": "string",
+                                                                    "example": "YZF-R1"
+                                                                },
+                                                                "year": {
+                                                                    "type": "integer",
+                                                                    "example": 2023
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "details": {
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "motorcycle_2": {
+                                                    "properties": {
+                                                        "info": {
+                                                            "properties": {
+                                                                "type": {
+                                                                    "type": "string",
+                                                                    "example": "Sport"
+                                                                },
+                                                                "brand": {
+                                                                    "type": "string",
+                                                                    "example": "Honda"
+                                                                },
+                                                                "model": {
+                                                                    "type": "string",
+                                                                    "example": "CBR1000RR"
+                                                                },
+                                                                "year": {
+                                                                    "type": "integer",
+                                                                    "example": 2023
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "details": {
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "One or more motorcycles not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "One or more motorcycles not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 }
             }
@@ -13458,8 +14863,16 @@
             "description": "API endpoints for filtering listings"
         },
         {
+            "name": "Guide Bookmarks",
+            "description": "API Endpoints pour la gestion des favoris/bookmarks de guides"
+        },
+        {
             "name": "Guide Categories",
             "description": "API Endpoints pour la gestion des catégories de guides"
+        },
+        {
+            "name": "Guide Comments",
+            "description": "API Endpoints pour la gestion des commentaires de guides"
         },
         {
             "name": "Guides",
@@ -13468,6 +14881,10 @@
         {
             "name": "Guide Images",
             "description": "API Endpoints pour la gestion des images de guides"
+        },
+        {
+            "name": "Guide Likes",
+            "description": "API Endpoints pour la gestion des likes de guides"
         },
         {
             "name": "Guide Tags",
@@ -13531,6 +14948,10 @@
         {
             "name": "locations",
             "description": "locations"
+        },
+        {
+            "name": "Motorcycles Comparison",
+            "description": "Motorcycles Comparison"
         },
         {
             "name": "Motorcycle",
