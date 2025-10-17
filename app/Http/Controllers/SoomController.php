@@ -1134,48 +1134,50 @@ class SoomController extends Controller
      * )
      */
 
-     public function getMyListingsSooms()
-     {
-         $userId = Auth::id();
+    public function getMyListingsSooms()
+    {
+        $userId = Auth::id();
 
-         if (!$userId) {
-             return response()->json([
-                 'message' => 'Unauthorized. User must be logged in.',
-             ], 401);
-         }
+        if (!$userId) {
+            return response()->json([
+                'message' => 'Unauthorized. User must be logged in.',
+            ], 401);
+        }
 
-         // Récupérer tous les SOOMs sur mes listings
-         $sooms = Submission::whereHas('listing', function ($query) use ($userId) {
-             $query->where('seller_id', $userId);
-         })
-             ->with([
-                 'user:id,first_name,last_name,email',
-                 'listing:id,title,description,seller_id',
-                 'listing.images' // Add images relation
-             ])
-             ->orderBy('submission_date', 'desc')
-             ->get();
+        // Récupérer tous les SOOMs sur mes listings
+        $sooms = Submission::whereHas('listing', function ($query) use ($userId) {
+            $query->where('seller_id', $userId);
+        })
+            ->with([
+                'user:id,first_name,last_name,email',
+                'listing:id,title,description,seller_id,city_id,country_id',
+                'listing.images',
+                'listing.city:id,name,country_id',
+                'listing.country:id,name,code',
+            ])
+            ->orderBy('submission_date', 'desc')
+            ->get();
 
-         // Add first image to each submission
-         $sooms->each(function ($soom) {
-             $soom->first_image = $soom->listing->images->first()?->image_url;
-         });
+        // Add first image to each submission
+        $sooms->each(function ($soom) {
+            $soom->first_image = $soom->listing->images->first()?->image_url;
+        });
 
-         // Statistiques
-         $stats = [
-             'total_sooms' => $sooms->count(),
-             'pending_sooms' => $sooms->where('status', 'pending')->count(),
-             'accepted_sooms' => $sooms->where('status', 'accepted')->count(),
-             'rejected_sooms' => $sooms->where('status', 'rejected')->count(),
-             'pending_validation' => $sooms->where('status', 'accepted')->where('sale_validated', false)->count(),
-         ];
+        // Statistiques
+        $stats = [
+            'total_sooms' => $sooms->count(),
+            'pending_sooms' => $sooms->where('status', 'pending')->count(),
+            'accepted_sooms' => $sooms->where('status', 'accepted')->count(),
+            'rejected_sooms' => $sooms->where('status', 'rejected')->count(),
+            'pending_validation' => $sooms->where('status', 'accepted')->where('sale_validated', false)->count(),
+        ];
 
-         return response()->json([
-             'message' => 'SOOMs retrieved successfully',
-             'data' => $sooms,
-             'stats' => $stats
-         ]);
-     }
+        return response()->json([
+            'message' => 'SOOMs retrieved successfully',
+            'data' => $sooms,
+            'stats' => $stats
+        ]);
+    }
     /**
      * @OA\Get(
      *     path="/api/my-sooms",
@@ -1259,13 +1261,15 @@ class SoomController extends Controller
         // Récupérer tous mes SOOMs envoyés
         $sooms = Submission::where('user_id', $userId)
             ->with([
-                'listing:id,title,description,seller_id,country_id',
+                'listing:id,title,description,seller_id,city_id,country_id',
                 'listing.seller:id,first_name,last_name,email',
+                'listing.city:id,name,country_id',
                 'listing.country:id,code,name',
                 'user:id,first_name,last_name,email'
             ])
             ->orderBy('submission_date', 'desc')
             ->get();
+
 
         // Statistiques
         $stats = [
