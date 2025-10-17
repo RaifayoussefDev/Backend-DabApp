@@ -20,16 +20,23 @@ class FilterController extends Controller
      */
     private function hasValue($value)
     {
+        // Check if null
         if (is_null($value)) {
             return false;
         }
 
+        // Check if empty string or whitespace only
         if (is_string($value) && trim($value) === '') {
             return false;
         }
 
-        if (is_array($value) && empty($value)) {
-            return false;
+        // Check if empty array
+        if (is_array($value)) {
+            // Filter out empty strings and null values from array
+            $filtered = array_filter($value, function($item) {
+                return !is_null($item) && (!is_string($item) || trim($item) !== '');
+            });
+            return !empty($filtered);
         }
 
         return true;
