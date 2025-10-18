@@ -6267,7 +6267,7 @@
                                 "published",
                                 "draft",
                                 "sold",
-                                "expired"
+                                "inactive"
                             ]
                         }
                     },

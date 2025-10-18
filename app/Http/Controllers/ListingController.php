@@ -1414,7 +1414,7 @@ class ListingController extends Controller
      *         in="query",
      *         required=false,
      *         description="Filter by status (published, draft, sold, expired)",
-     *         @OA\Schema(type="string", enum={"published", "draft", "sold", "expired"})
+     *         @OA\Schema(type="string", enum={"published", "draft", "sold", "inactive"})
      *     ),
      *     @OA\Parameter(
      *         name="page",
