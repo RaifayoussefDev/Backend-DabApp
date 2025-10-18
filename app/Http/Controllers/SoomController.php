@@ -915,7 +915,7 @@ class SoomController extends Controller
                 'validator_id' => $userId,
             ]);
 
-            // CORRECTION: Simplifier l'envoi d'email et ajouter plus de logs
+
             $seller = $submission->listing->seller;
             $buyer = $submission->user;
 
@@ -923,27 +923,38 @@ class SoomController extends Controller
                 \Log::info('=== ATTEMPTING SALE VALIDATION EMAIL ===');
                 \Log::info('Seller email: ' . $seller->email);
                 \Log::info('Buyer email: ' . $buyer->email);
+                \Log::info('Listing title: ' . $submission->listing->title);
+                \Log::info('Auction history ID: ' . $auctionHistory->id);
 
-                // Créer l'instance de mail
-                $mailInstance = new SaleValidatedMail($auctionHistory, $submission, $seller, $buyer);
+                // Vérifier que les données nécessaires existent
+                if (!$seller || !$buyer || !$seller->email || !$buyer->email) {
+                    throw new \Exception('Missing seller or buyer information');
+                }
 
-                // Envoyer à chaque destinataire séparément pour plus de contrôle
-                Mail::to($seller->email)->send($mailInstance);
-                \Log::info('Email sent to seller: ' . $seller->email);
+                // Envoyer à chaque destinataire séparément
+                Mail::to($seller->email)->send(new SaleValidatedMail(
+                    $auctionHistory,
+                    $submission,
+                    $seller,
+                    $buyer
+                ));
+                \Log::info('Email sent successfully to seller: ' . $seller->email);
 
-                Mail::to($buyer->email)->send($mailInstance);
-                \Log::info('Email sent to buyer: ' . $buyer->email);
+                Mail::to($buyer->email)->send(new SaleValidatedMail(
+                    $auctionHistory,
+                    $submission,
+                    $seller,
+                    $buyer
+                ));
+                \Log::info('Email sent successfully to buyer: ' . $buyer->email);
 
-                \Log::info('=== SALE VALIDATION EMAILS SENT SUCCESSFULLY ===');
+                \log::info('=== SALE VALIDATION EMAILS SENT SUCCESSFULLY ===');
             } catch (\Exception $e) {
                 \Log::error('=== SALE VALIDATION EMAIL ERROR ===');
                 \Log::error('Error message: ' . $e->getMessage());
                 \Log::error('Error file: ' . $e->getFile());
                 \Log::error('Error line: ' . $e->getLine());
                 \Log::error('Stack trace: ' . $e->getTraceAsString());
-
-                // Ne pas faire échouer la transaction pour un problème d'email
-                // L'important est que la validation soit enregistrée
             }
 
             DB::commit();
