@@ -1273,7 +1273,7 @@ class SoomController extends Controller
         $sooms = Submission::where('user_id', $userId)
             ->with([
                 'listing:id,title,description,seller_id,city_id,country_id',
-                'listing.seller:id,first_name,last_name,email',
+                'listing.seller:id,first_name,last_name,email,phone',
                 'listing.city:id,name,country_id',
                 'listing.country:id,code,name',
                 'user:id,first_name,last_name,email,phone'
