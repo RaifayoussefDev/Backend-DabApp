@@ -1276,7 +1276,7 @@ class SoomController extends Controller
                 'listing.seller:id,first_name,last_name,email',
                 'listing.city:id,name,country_id',
                 'listing.country:id,code,name',
-                'user:id,first_name,last_name,email'
+                'user:id,first_name,last_name,email,phone'
             ])
             ->orderBy('submission_date', 'desc')
             ->get();
