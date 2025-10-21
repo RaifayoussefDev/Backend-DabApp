@@ -27,8 +27,8 @@ class AuthController extends Controller
     private $whatsappApiUrl = 'https://api.360messenger.com/v2/sendMessage';
     private $whatsappApiToken = 'pj0y5xb38khWfp0V0qppIxwKelv7tgTg5yx';
 
-    private const ACCESS_TOKEN_DURATION = 1; // 60 minutes
-    private const REFRESH_TOKEN_DURATION = 43200; // 30 jours en minutes
+    private const ACCESS_TOKEN_DURATION = 60;
+    private const REFRESH_TOKEN_DURATION = 43200;
 
     private function generateTokens(User $user, $country = 'Unknown', $continent = 'Unknown')
     {
