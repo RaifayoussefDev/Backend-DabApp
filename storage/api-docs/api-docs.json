@@ -425,11 +425,30 @@
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Refresh JWT token",
+                "summary": "Refresh JWT access token using refresh token",
                 "operationId": "2c27d311a2876560fcb5a754b556cdc5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "refresh_token"
+                                ],
+                                "properties": {
+                                    "refresh_token": {
+                                        "type": "string",
+                                        "example": "abc123..."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Token refreshed successfully"
+                        "description": "New access token generated"
                     }
                 }
             }

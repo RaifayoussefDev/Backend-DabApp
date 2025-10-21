@@ -11,6 +11,7 @@ use App\Notifications\PasswordResetNotification;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Cache;
+use Str;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +26,44 @@ class AuthController extends Controller
 {
     private $whatsappApiUrl = 'https://api.360messenger.com/v2/sendMessage';
     private $whatsappApiToken = 'pj0y5xb38khWfp0V0qppIxwKelv7tgTg5yx';
-    // private $whatsappApiToken = 'pj0y5xb38khWfp0V0qppIxwKelv7tgTg5yx';
+
+    private const ACCESS_TOKEN_DURATION = 1; // 60 minutes
+    private const REFRESH_TOKEN_DURATION = 43200; // 30 jours en minutes
+
+    private function generateTokens(User $user, $country = 'Unknown', $continent = 'Unknown')
+    {
+        $customClaims = [
+            'country' => $country,
+            'continent' => $continent,
+            'type' => 'access'
+        ];
+
+        JWTAuth::factory()->setTTL(self::ACCESS_TOKEN_DURATION);
+        $accessToken = JWTAuth::claims($customClaims)->fromUser($user);
+        $accessTokenExpiration = now()->addMinutes(self::ACCESS_TOKEN_DURATION);
+
+        $refreshToken = Str::random(64);
+        $refreshTokenExpiration = now()->addMinutes(self::REFRESH_TOKEN_DURATION);
+
+        Authentication::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'token' => $accessToken,
+                'token_expiration' => $accessTokenExpiration,
+                'refresh_token' => $refreshToken,
+                'refresh_token_expiration' => $refreshTokenExpiration,
+                'is_online' => true,
+                'connection_date' => now(),
+            ]
+        );
+
+        return [
+            'token' => $accessToken,
+            'token_expiration' => $accessTokenExpiration,
+            'refresh_token' => $refreshToken,
+            'refresh_token_expiration' => $refreshTokenExpiration,
+        ];
+    }
 
     /**
      * @OA\Post(
@@ -407,24 +445,6 @@ class AuthController extends Controller
         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
         $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
 
-        // Create token with claims
-        $token = JWTAuth::claims([
-            'country' => $country,
-            'continent' => $continent,
-        ])->fromUser($user);
-
-        $tokenExpiration = now()->addMonth();
-
-        Authentication::updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'token' => $token,
-                'token_expiration' => $tokenExpiration,
-                'is_online' => true,
-                'connection_date' => now(),
-            ]
-        );
-
         if ($user->two_factor_enabled) {
             $otp = rand(1000, 9999);
 
@@ -473,10 +493,15 @@ class AuthController extends Controller
             ], 202);
         }
 
+        // ✅ GÉNÉRER LES DEUX TOKENS
+        $tokens = $this->generateTokens($user, $country, $continent);
+
         return response()->json([
             'user' => $user,
-            'token' => $token,
-            'token_expiration' => $tokenExpiration,
+            'token' => $tokens['token'],
+            'token_expiration' => $tokens['token_expiration'],
+            'refresh_token' => $tokens['refresh_token'],
+            'refresh_token_expiration' => $tokens['refresh_token_expiration'],
             'country' => $country,
             'continent' => $continent
         ]);
@@ -1088,7 +1113,7 @@ class AuthController extends Controller
         // ✅ ACTIVER ET VÉRIFIER L'UTILISATEUR
         if (!$user->verified || !$user->is_active) {
             $user->verified = true;
-            $user->is_active = true; // Important pour permettre la connexion
+            $user->is_active = true;
             $user->save();
 
             Log::info('User verified and activated', [
@@ -1102,33 +1127,16 @@ class AuthController extends Controller
         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
         $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
 
-        // Create token with claims
-        $token = JWTAuth::claims([
-            'country' => $country,
-            'continent' => $continent,
-        ])->fromUser($user);
+        // ✅ GÉNÉRER LES DEUX TOKENS
+        $tokens = $this->generateTokens($user, $country, $continent);
 
-        $tokenExpiration = now()->addMonth();
-
-        // ✅ METTRE À JOUR is_online et last_login aussi
-        $user->token_expiration = $tokenExpiration;
+        // ✅ METTRE À JOUR is_online et last_login
         $user->is_online = true;
         $user->last_login = now();
         $user->save();
 
-        Authentication::updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'token' => $token,
-                'token_expiration' => $tokenExpiration,
-                'is_online' => true,
-                'connection_date' => now(),
-            ]
-        );
-
         Log::info('User authentication completed after OTP verification', [
-            'user_id' => $user->id,
-            'token_expiration' => $tokenExpiration
+            'user_id' => $user->id
         ]);
 
         // ✅ RECHARGER L'UTILISATEUR pour avoir les données fraîches
@@ -1136,8 +1144,10 @@ class AuthController extends Controller
 
         return response()->json([
             'user' => $user,
-            'token' => $token,
-            'token_expiration' => $tokenExpiration,
+            'token' => $tokens['token'],
+            'token_expiration' => $tokens['token_expiration'],
+            'refresh_token' => $tokens['refresh_token'],
+            'refresh_token_expiration' => $tokens['refresh_token_expiration'],
             'country' => $country,
             'continent' => $continent
         ]);
@@ -1210,22 +1220,83 @@ class AuthController extends Controller
     /**
      * @OA\Post(
      *     path="/api/refresh",
-     *     summary="Refresh JWT token",
+     *     summary="Refresh JWT access token using refresh token",
      *     tags={"Authentification"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"refresh_token"},
+     *             @OA\Property(property="refresh_token", type="string", example="abc123...")
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Token refreshed successfully"
+     *         description="New access token generated"
      *     )
      * )
      */
-    public function refresh()
+    public function refresh(Request $request)
     {
-        $token = auth()->refresh();
-        $tokenExpiration = now()->addMonth();
+        $request->validate([
+            'refresh_token' => 'required|string'
+        ]);
+
+        $refreshToken = $request->input('refresh_token');
+
+        // Chercher l'authentification avec ce refresh token
+        $auth = Authentication::where('refresh_token', $refreshToken)
+            ->where('refresh_token_expiration', '>', now())
+            ->first();
+
+        if (!$auth) {
+            Log::warning('Invalid or expired refresh token', [
+                'refresh_token' => substr($refreshToken, 0, 10) . '...'
+            ]);
+
+            return response()->json([
+                'error' => 'Invalid or expired refresh token',
+                'message' => 'Please login again'
+            ], 401);
+        }
+
+        $user = User::find($auth->user_id);
+
+        if (!$user || !$user->is_active) {
+            return response()->json(['error' => 'User is inactive'], 403);
+        }
+
+        $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
+        $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
+
+        // ✅ GÉNÉRER NOUVEAU ACCESS TOKEN (on garde le même refresh token)
+        $customClaims = [
+            'country' => $country,
+            'continent' => $continent,
+            'type' => 'access'
+        ];
+
+        JWTAuth::factory()->setTTL(self::ACCESS_TOKEN_DURATION);
+        $accessToken = JWTAuth::claims($customClaims)->fromUser($user);
+
+        $accessTokenExpiration = now()->addMinutes(self::ACCESS_TOKEN_DURATION);
+
+        // Mettre à jour seulement l'access token
+        $auth->update([
+            'token' => $accessToken,
+            'token_expiration' => $accessTokenExpiration,
+        ]);
+
+        Log::info('Access token refreshed', [
+            'user_id' => $user->id,
+            'email' => $user->email
+        ]);
 
         return response()->json([
-            'token' => $token,
-            'expires_at' => $tokenExpiration->toDateTimeString()
+            'token' => $accessToken,
+            'token_expiration' => $accessTokenExpiration,
+            'refresh_token' => $refreshToken,
+            'refresh_token_expiration' => $auth->refresh_token_expiration,
+            'message' => 'Access token refreshed successfully'
         ]);
     }
 
@@ -1574,57 +1645,7 @@ class AuthController extends Controller
         ]);
 
         // Find user by email or phone
-        $user = null;
-
-        if ($isEmailLogin) {
-            // Login is an email
-            $user = User::where('email', $login)->first();
-            Log::info('Password reset verification with email', ['email' => $login]);
-        } else {
-            // Login is potentially a phone number - try different formats
-
-            // First, try exact match
-            $user = User::where('phone', $login)->first();
-
-            if (!$user) {
-                // If no exact match, try with country processing
-                $countryName = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Morocco';
-
-                try {
-                    $countryData = CountryHelper::processCountryAndPhoneByName($login, $countryName);
-                    $formattedPhone = $countryData['formatted_phone'];
-
-                    Log::info('Trying password reset verification with formatted phone', [
-                        'original' => $login,
-                        'formatted' => $formattedPhone,
-                        'country' => $countryName
-                    ]);
-
-                    $user = User::where('phone', $formattedPhone)->first();
-                } catch (\Exception $e) {
-                    Log::warning('Failed to format phone for password reset verification', [
-                        'phone' => $login,
-                        'error' => $e->getMessage()
-                    ]);
-                }
-            }
-
-            if (!$user) {
-                // Try removing/adding + prefix
-                if (str_starts_with($login, '+')) {
-                    $phoneWithoutPlus = substr($login, 1);
-                    $user = User::where('phone', $phoneWithoutPlus)->first();
-                } else {
-                    $phoneWithPlus = '+' . $login;
-                    $user = User::where('phone', $phoneWithPlus)->first();
-                }
-            }
-
-            Log::info('Password reset verification with phone', [
-                'phone' => $login,
-                'user_found' => $user ? true : false
-            ]);
-        }
+        $user = $this->findUserByLogin($login);
 
         if (!$user) {
             Log::warning('Password reset verification failed - user not found', [
@@ -1684,26 +1705,9 @@ class AuthController extends Controller
         $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
         $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
 
-        // Generate new token for automatic login
-        $token = JWTAuth::claims([
-            'country' => $country,
-            'continent' => $continent,
-        ])->fromUser($user);
+        // ✅ GÉNÉRER LES DEUX TOKENS
+        $tokens = $this->generateTokens($user, $country, $continent);
 
-        $tokenExpiration = now()->addMonth();
-
-        // Update authentication record
-        Authentication::updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'token' => $token,
-                'token_expiration' => $tokenExpiration,
-                'is_online' => true,
-                'connection_date' => now(),
-            ]
-        );
-
-        // Mark user as online
         $user->is_online = 1;
         $user->last_login = now();
         $user->save();
@@ -1719,8 +1723,10 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Password has been reset successfully',
             'user' => $user->only(['id', 'first_name', 'last_name', 'email', 'phone']),
-            'token' => $token,
-            'token_expiration' => $tokenExpiration,
+            'token' => $tokens['token'],
+            'token_expiration' => $tokens['token_expiration'],
+            'refresh_token' => $tokens['refresh_token'],
+            'refresh_token_expiration' => $tokens['refresh_token_expiration'],
             'country' => $country,
             'continent' => $continent
         ]);

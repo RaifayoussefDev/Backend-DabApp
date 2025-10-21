@@ -61,6 +61,7 @@ use App\Http\Controllers\EventUpdateController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('/refresh', [AuthController::class, 'refresh']);
 
 Route::middleware('auth:api')->group(function () {
 
@@ -69,7 +70,6 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/my-ads', [ListingController::class, 'getMyAds']); // ✅ NOUVELLE ROUTE
 
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:api');
-    Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::put('/user/update', [AuthController::class, 'updateProfile']);
     Route::put('/user/two-factor-toggle', [AuthController::class, 'toggleTwoFactor']);
 
