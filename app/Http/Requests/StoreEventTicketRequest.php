@@ -1,28 +1,32 @@
 <?php
-
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreEventTicketRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
+    public function authorize()
     {
-        return false;
+        $event = $this->route('event');
+        return $this->user()->id === $event->organizer_id;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
-    public function rules(): array
+    public function rules()
     {
         return [
-            //
+            'ticket_type' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'quantity_available' => 'nullable|integer|min:1',
+            'description' => 'nullable|string|max:1000',
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'ticket_type.required' => 'The ticket type is required',
+            'price.required' => 'The price is required',
+            'price.min' => 'The price must be positive',
         ];
     }
 }

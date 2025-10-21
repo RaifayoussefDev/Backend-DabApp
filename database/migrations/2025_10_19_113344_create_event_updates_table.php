@@ -6,20 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('event_updates', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('event_id')->constrained('events')->onDelete('cascade');
+            $table->string('title');
+            $table->text('content');
+            $table->foreignId('posted_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->tinyInteger('is_important')->default(0);
             $table->timestamps();
+
+            $table->index(['event_id', 'is_important']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('event_updates');

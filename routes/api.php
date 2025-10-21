@@ -44,6 +44,20 @@ use App\Http\Controllers\GuideLikeController;
 use App\Http\Controllers\GuideBookmarkController;
 use App\Http\Controllers\ListingTypeController;
 
+
+use App\Http\Controllers\EventCategoryController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventParticipantController;
+use App\Http\Controllers\EventReviewController;
+use App\Http\Controllers\EventFavoriteController;
+use App\Http\Controllers\EventTicketController;
+use App\Http\Controllers\EventActivityController;
+use App\Http\Controllers\EventSponsorController;
+use App\Http\Controllers\EventContactController;
+use App\Http\Controllers\EventFaqController;
+use App\Http\Controllers\EventUpdateController;
+
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
@@ -586,4 +600,156 @@ Route::prefix('comparaison/motorcycles')->group(function () {
     Route::get('/years', [MotorcycleComparisonController::class, 'getYears']);
     Route::get('/details/{yearId}', [MotorcycleComparisonController::class, 'getMotorcycleDetails']);
     Route::post('/compare', [MotorcycleComparisonController::class, 'compare']);
+});
+
+
+
+/*
+|--------------------------------------------------------------------------
+| API Routes - Events Module
+|--------------------------------------------------------------------------
+*/
+
+
+// Event Categories (Public & Protected)
+Route::prefix('event-categories')->group(function () {
+    // Public routes
+    Route::get('/', [EventCategoryController::class, 'index']);
+    Route::get('/{id}', [EventCategoryController::class, 'show']);
+    Route::get('/{id}/events', [EventCategoryController::class, 'events']);
+
+    // Protected routes - JWT Authentication
+    Route::middleware('auth:api')->group(function () {
+        Route::post('/', [EventCategoryController::class, 'store']);
+        Route::put('/{id}', [EventCategoryController::class, 'update']);
+        Route::delete('/{id}', [EventCategoryController::class, 'destroy']);
+    });
+});
+
+// Events (Public & Protected)
+Route::prefix('events')->group(function () {
+    // Public routes
+    Route::get('/', [EventController::class, 'index']);
+    Route::get('/upcoming', [EventController::class, 'upcoming']);
+    Route::get('/featured', [EventController::class, 'featured']);
+    Route::get('/{id}', [EventController::class, 'show']);
+    Route::get('/{eventId}/participants', [EventParticipantController::class, 'index']);
+    Route::get('/{eventId}/reviews', [EventReviewController::class, 'index']);
+    Route::get('/{eventId}/reviews/{reviewId}', [EventReviewController::class, 'show']);
+    Route::get('/{eventId}/activities', [EventActivityController::class, 'index']);
+    Route::get('/{eventId}/activities/{activityId}', [EventActivityController::class, 'show']);
+    Route::get('/{eventId}/tickets', [EventTicketController::class, 'index']);
+    Route::get('/{eventId}/tickets/{ticketId}', [EventTicketController::class, 'show']);
+    Route::get('/{eventId}/contacts', [EventContactController::class, 'index']);
+    Route::get('/{eventId}/contacts/{contactId}', [EventContactController::class, 'show']);
+    Route::get('/{eventId}/faqs', [EventFaqController::class, 'index']);
+    Route::get('/{eventId}/faqs/{faqId}', [EventFaqController::class, 'show']);
+    Route::get('/{eventId}/updates', [EventUpdateController::class, 'index']);
+    Route::get('/{eventId}/updates/{updateId}', [EventUpdateController::class, 'show']);
+    Route::get('/{eventId}/updates/important', [EventUpdateController::class, 'important']);
+    Route::get('/{eventId}/updates/latest', [EventUpdateController::class, 'latest']);
+
+    // Protected routes - JWT Authentication
+    Route::middleware('auth:api')->group(function () {
+        // Event CRUD
+        Route::post('/', [EventController::class, 'store']);
+        Route::put('/{id}', [EventController::class, 'update']);
+        Route::delete('/{id}', [EventController::class, 'destroy']);
+        Route::get('/{id}/statistics', [EventController::class, 'statistics']);
+        Route::post('/{id}/publish', [EventController::class, 'togglePublish']);
+
+        // Event registration & participants
+        Route::post('/{eventId}/register', [EventParticipantController::class, 'register']);
+        Route::delete('/{eventId}/unregister', [EventParticipantController::class, 'unregister']);
+        Route::put('/{eventId}/participants/{participantId}/confirm', [EventParticipantController::class, 'confirm']);
+        Route::put('/{eventId}/participants/{participantId}/check-in', [EventParticipantController::class, 'checkIn']);
+        Route::get('/{eventId}/participants/statistics', [EventParticipantController::class, 'statistics']);
+        Route::get('/{eventId}/participants/{participantId}', [EventParticipantController::class, 'show']);
+        Route::get('/{eventId}/my-registration', [EventParticipantController::class, 'myRegistration']);
+
+        // Event reviews
+        Route::post('/{eventId}/reviews', [EventReviewController::class, 'store']);
+        Route::put('/{eventId}/reviews/{reviewId}', [EventReviewController::class, 'update']);
+        Route::delete('/{eventId}/reviews/{reviewId}', [EventReviewController::class, 'destroy']);
+        Route::get('/{eventId}/my-review', [EventReviewController::class, 'myReview']);
+        Route::get('/{eventId}/reviews/can-review', [EventReviewController::class, 'canReview']);
+
+        // Event favorites
+        Route::post('/{eventId}/favorite', [EventFavoriteController::class, 'store']);
+        Route::delete('/{eventId}/unfavorite', [EventFavoriteController::class, 'destroy']);
+        Route::get('/{eventId}/is-favorite', [EventFavoriteController::class, 'isFavorite']);
+        Route::post('/{eventId}/toggle-favorite', [EventFavoriteController::class, 'toggle']);
+
+        // Event activities (Organizer only)
+        Route::post('/{eventId}/activities', [EventActivityController::class, 'store']);
+        Route::put('/{eventId}/activities/{activityId}', [EventActivityController::class, 'update']);
+        Route::delete('/{eventId}/activities/{activityId}', [EventActivityController::class, 'destroy']);
+
+        // Event tickets
+        Route::post('/{eventId}/tickets', [EventTicketController::class, 'store']);
+        Route::put('/{eventId}/tickets/{ticketId}', [EventTicketController::class, 'update']);
+        Route::delete('/{eventId}/tickets/{ticketId}', [EventTicketController::class, 'destroy']);
+        Route::post('/{eventId}/tickets/{ticketId}/purchase', [EventTicketController::class, 'purchase']);
+        Route::get('/{eventId}/tickets/statistics', [EventTicketController::class, 'statistics']);
+        Route::get('/{eventId}/tickets/purchases', [EventTicketController::class, 'eventPurchases']);
+        Route::post('/{eventId}/tickets/{ticketId}/toggle-active', [EventTicketController::class, 'toggleActive']);
+
+        // Event contacts (Organizer only)
+        Route::post('/{eventId}/contacts', [EventContactController::class, 'store']);
+        Route::put('/{eventId}/contacts/{contactId}', [EventContactController::class, 'update']);
+        Route::delete('/{eventId}/contacts/{contactId}', [EventContactController::class, 'destroy']);
+
+        // Event FAQs (Organizer only)
+        Route::post('/{eventId}/faqs', [EventFaqController::class, 'store']);
+        Route::put('/{eventId}/faqs/{faqId}', [EventFaqController::class, 'update']);
+        Route::delete('/{eventId}/faqs/{faqId}', [EventFaqController::class, 'destroy']);
+        Route::post('/{eventId}/faqs/reorder', [EventFaqController::class, 'reorder']);
+        Route::delete('/{eventId}/faqs/bulk-delete', [EventFaqController::class, 'bulkDelete']);
+        Route::get('/{eventId}/faqs/search', [EventFaqController::class, 'search']);
+
+        // Event updates (Organizer only)
+        Route::post('/{eventId}/updates', [EventUpdateController::class, 'store']);
+        Route::put('/{eventId}/updates/{updateId}', [EventUpdateController::class, 'update']);
+        Route::delete('/{eventId}/updates/{updateId}', [EventUpdateController::class, 'destroy']);
+        Route::delete('/{eventId}/updates/bulk-delete', [EventUpdateController::class, 'bulkDelete']);
+    });
+});
+
+// Tickets routes (Protected)
+Route::middleware('auth:api')->prefix('tickets')->group(function () {
+    Route::get('/{purchaseId}', [EventTicketController::class, 'showPurchase']);
+    Route::post('/{purchaseId}/check-in', [EventTicketController::class, 'checkIn']);
+    Route::get('/verify/{qrCode}', [EventTicketController::class, 'verifyQRCode']);
+});
+
+// User-specific event routes (Protected)
+Route::middleware('auth:api')->group(function () {
+    Route::get('/my-events', [EventParticipantController::class, 'myEvents']);
+    Route::get('/my-favorite-events', [EventFavoriteController::class, 'myFavorites']);
+    Route::delete('/my-favorite-events/clear', [EventFavoriteController::class, 'clearAll']);
+    Route::get('/my-favorite-events/count', [EventFavoriteController::class, 'count']);
+    Route::get('/my-tickets', [EventTicketController::class, 'myTickets']);
+    Route::get('/my-organized-events', [EventController::class, 'myOrganizedEvents']);
+    Route::get('/my-reviews', [EventReviewController::class, 'myReviews']);
+    Route::get('/my-event-updates', [EventUpdateController::class, 'myEventUpdates']);
+});
+
+// Event Sponsors (Protected)
+Route::prefix('event-sponsors')->group(function () {
+    // Protected routes - JWT Authentication
+    Route::middleware('auth:api')->group(function () {
+        Route::get('/', [EventSponsorController::class, 'index']);
+        Route::post('/', [EventSponsorController::class, 'store']);
+        Route::get('/{id}', [EventSponsorController::class, 'show']);
+        Route::put('/{id}', [EventSponsorController::class, 'update']);
+        Route::delete('/{id}', [EventSponsorController::class, 'destroy']);
+    });
+});
+
+// Event Sponsors - Event Management (Protected)
+Route::middleware('auth:api')->prefix('events')->group(function () {
+    Route::get('/{eventId}/sponsors', [EventSponsorController::class, 'eventSponsors']);
+    Route::post('/{eventId}/sponsors/{sponsorId}/attach', [EventSponsorController::class, 'attachToEvent']);
+    Route::delete('/{eventId}/sponsors/{sponsorId}/detach', [EventSponsorController::class, 'detachFromEvent']);
+    Route::put('/{eventId}/sponsors/{sponsorId}/update-level', [EventSponsorController::class, 'updateSponsorLevel']);
 });

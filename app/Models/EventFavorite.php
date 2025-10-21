@@ -7,6 +7,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class EventFavorite extends Model
 {
-    /** @use HasFactory<\Database\Factories\EventFavoriteFactory> */
     use HasFactory;
+
+    protected $fillable = [
+        'event_id',
+        'user_id',
+    ];
+
+    public function event()
+    {
+        return $this->belongsTo(Event::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

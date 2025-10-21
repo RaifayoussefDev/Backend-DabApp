@@ -7,6 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class EventFaq extends Model
 {
-    /** @use HasFactory<\Database\Factories\EventFaqFactory> */
     use HasFactory;
+
+    protected $fillable = [
+        'event_id',
+        'question',
+        'answer',
+        'order_position',
+    ];
+
+    public function event()
+    {
+        return $this->belongsTo(Event::class);
+    }
 }

@@ -6,20 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('event_sponsor_relations', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('event_id')->constrained('events')->onDelete('cascade');
+            $table->foreignId('sponsor_id')->constrained('event_sponsors')->onDelete('cascade');
+            $table->string('sponsorship_level', 50)->nullable(); // platinum, gold, silver, bronze
             $table->timestamps();
+
+            $table->index(['event_id', 'sponsor_id']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('event_sponsor_relations');

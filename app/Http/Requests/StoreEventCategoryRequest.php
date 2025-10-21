@@ -6,23 +6,26 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreEventCategoryRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
+    public function authorize()
     {
-        return false;
+        return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
-    public function rules(): array
+    public function rules()
     {
         return [
-            //
+            'name' => 'required|string|max:255|unique:event_categories,name',
+            'description' => 'nullable|string',
+            'icon' => 'nullable|string|max:255',
+            'color' => 'nullable|string|max:50',
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'name.required' => 'The category name is required',
+            'name.unique' => 'This category already exists',
         ];
     }
 }

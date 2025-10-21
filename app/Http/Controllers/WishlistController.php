@@ -280,48 +280,48 @@ class WishlistController extends Controller
         }
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/wishlists",
-     *     tags={"Wishlist"},
-     *     summary="Add listing to wishlist (auth required)",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"listing_id"},
-     *             @OA\Property(property="listing_id", type="integer", example=5)
-     *         )
-     *     ),
-     *     @OA\Response(response=201, description="Added to wishlist"),
-     *     @OA\Response(response=409, description="Already in wishlist"),
-     *     @OA\Response(response=401, description="Unauthorized")
-     * )
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'listing_id' => 'required|exists:listings,id',
-        ]);
+        /**
+         * @OA\Post(
+         *     path="/api/wishlists",
+         *     tags={"Wishlist"},
+         *     summary="Add listing to wishlist (auth required)",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\RequestBody(
+         *         required=true,
+         *         @OA\JsonContent(
+         *             required={"listing_id"},
+         *             @OA\Property(property="listing_id", type="integer", example=5)
+         *         )
+         *     ),
+         *     @OA\Response(response=201, description="Added to wishlist"),
+         *     @OA\Response(response=409, description="Already in wishlist"),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
+        public function store(Request $request)
+        {
+            $request->validate([
+                'listing_id' => 'required|exists:listings,id',
+            ]);
 
-        $user = Auth::user(); // Récupère l'utilisateur connecté via token
+            $user = Auth::user(); // Récupère l'utilisateur connecté via token
 
-        // Vérifie s'il existe déjà un wishlist pour ce user + listing
-        $exists = Wishlist::where('user_id', $user->id)
-            ->where('listing_id', $request->listing_id)
-            ->exists();
+            // Vérifie s'il existe déjà un wishlist pour ce user + listing
+            $exists = Wishlist::where('user_id', $user->id)
+                ->where('listing_id', $request->listing_id)
+                ->exists();
 
-        if ($exists) {
-            return response()->json(['message' => 'Already in wishlist'], 409);
+            if ($exists) {
+                return response()->json(['message' => 'Already in wishlist'], 409);
+            }
+
+            $wishlist = Wishlist::create([
+                'user_id' => $user->id,
+                'listing_id' => $request->listing_id
+            ]);
+
+            return response()->json($wishlist, 201);
         }
-
-        $wishlist = Wishlist::create([
-            'user_id' => $user->id,
-            'listing_id' => $request->listing_id
-        ]);
-
-        return response()->json($wishlist, 201);
-    }
 
     /**
      * @OA\Get(
