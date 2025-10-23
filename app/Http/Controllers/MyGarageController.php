@@ -20,6 +20,13 @@ class MyGarageController extends Controller
      *     summary="Get all motorcycles in the authenticated user's garage",
      *     security={{"bearerAuth": {}}},
      *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number (default is 1)",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=1, minimum=1)
+     *     ),
+     *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of items per page (default is 10, max is 50)",
@@ -73,7 +80,9 @@ class MyGarageController extends Controller
      *                 @OA\Property(property="per_page", type="integer", example=10),
      *                 @OA\Property(property="total", type="integer", example=25),
      *                 @OA\Property(property="from", type="integer", example=1),
-     *                 @OA\Property(property="to", type="integer", example=10)
+     *                 @OA\Property(property="to", type="integer", example=10),
+     *                 @OA\Property(property="next_page_url", type="string", nullable=true, example="http://example.com/api/my-garage?page=2"),
+     *                 @OA\Property(property="prev_page_url", type="string", nullable=true, example=null)
      *             )
      *         )
      *     ),
@@ -102,14 +111,18 @@ class MyGarageController extends Controller
                 return response()->json(['message' => 'Unauthorized'], 401);
             }
 
-            $perPage = $request->get('per_page', 10);
-            $perPage = min($perPage, 50);
+            // Validation des paramètres de pagination
+            $perPage = (int) $request->get('per_page', 10);
+            $perPage = max(1, min($perPage, 50)); // Entre 1 et 50
+
+            $page = (int) $request->get('page', 1);
+            $page = max(1, $page); // Minimum 1
 
             $garageItems = MyGarage::with(['brand', 'model', 'year'])
                 ->where('user_id', $userId)
                 ->orderBy('is_default', 'desc')
                 ->orderBy('created_at', 'desc')
-                ->paginate($perPage);
+                ->paginate($perPage, ['*'], 'page', $page);
 
             return response()->json([
                 'message' => 'Garage items retrieved successfully',
@@ -120,7 +133,9 @@ class MyGarageController extends Controller
                     'per_page' => $garageItems->perPage(),
                     'total' => $garageItems->total(),
                     'from' => $garageItems->firstItem(),
-                    'to' => $garageItems->lastItem()
+                    'to' => $garageItems->lastItem(),
+                    'next_page_url' => $garageItems->nextPageUrl(),
+                    'prev_page_url' => $garageItems->previousPageUrl(),
                 ]
             ], 200);
         } catch (\Exception $e) {
