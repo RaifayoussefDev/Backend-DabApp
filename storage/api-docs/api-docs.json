@@ -3076,9 +3076,125 @@
                 ],
                 "summary": "Get all events with filters",
                 "operationId": "7058ab7c89d20c752b6afd6d808f6526",
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Filter by category ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "published",
+                                "cancelled"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "is_featured",
+                        "in": "query",
+                        "description": "Filter by featured status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "is_free",
+                        "in": "query",
+                        "description": "Filter by free events",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "country_id",
+                        "in": "query",
+                        "description": "Filter by country ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "city_id",
+                        "in": "query",
+                        "description": "Filter by city ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "description": "Filter events from this date",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "description": "Filter events until this date",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search in title, description, and venue name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "List of events"
+                        "description": "List of events retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Events retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -3100,6 +3216,310 @@
                                     "event_date",
                                     "start_time"
                                 ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Tech Conference 2024"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Annual technology conference"
+                                    },
+                                    "short_description": {
+                                        "type": "string",
+                                        "example": "Join us for the biggest tech event"
+                                    },
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "event_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-12-25"
+                                    },
+                                    "start_time": {
+                                        "type": "string",
+                                        "format": "time",
+                                        "example": "09:00:00"
+                                    },
+                                    "end_time": {
+                                        "type": "string",
+                                        "format": "time",
+                                        "example": "17:00:00"
+                                    },
+                                    "venue_name": {
+                                        "type": "string",
+                                        "example": "Convention Center"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "123 Main Street"
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "country_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 40.7128
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": -74.006
+                                    },
+                                    "max_participants": {
+                                        "type": "integer",
+                                        "example": 500
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 99.99
+                                    },
+                                    "is_free": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "featured_image": {
+                                        "type": "string",
+                                        "example": "https://example.com/image.jpg"
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "image_url": {
+                                                    "type": "string",
+                                                    "example": "https://example.com/gallery1.jpg"
+                                                },
+                                                "is_primary": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "sponsors": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "sponsor_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "sponsorship_level": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "platinum",
+                                                        "gold",
+                                                        "silver",
+                                                        "bronze"
+                                                    ],
+                                                    "example": "gold"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "activities": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Opening Keynote"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Welcome speech and introduction"
+                                                },
+                                                "start_time": {
+                                                    "type": "string",
+                                                    "format": "time",
+                                                    "example": "09:00:00"
+                                                },
+                                                "end_time": {
+                                                    "type": "string",
+                                                    "format": "time",
+                                                    "example": "10:00:00"
+                                                },
+                                                "location": {
+                                                    "type": "string",
+                                                    "example": "Main Hall"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "contacts": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "contact_type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "organizer",
+                                                        "support",
+                                                        "emergency"
+                                                    ],
+                                                    "example": "organizer"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "+1234567890"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "format": "email",
+                                                    "example": "john@example.com"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "faqs": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "question": {
+                                                    "type": "string",
+                                                    "example": "What should I bring?"
+                                                },
+                                                "answer": {
+                                                    "type": "string",
+                                                    "example": "Bring your ID and confirmation email"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Event created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Event created successfully with all relations"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Failed to create event"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/events/{id}": {
+            "get": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Get event details with all relations",
+                "operationId": "6f743f71f7a88dbe57be1d9c9ebf47cb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Event ID or slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Event details retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Event retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "is_registration_open": {
+                                            "type": "boolean"
+                                        },
+                                        "is_full": {
+                                            "type": "boolean"
+                                        },
+                                        "available_spots": {
+                                            "type": "integer",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Event not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Update event with all relations",
+                "operationId": "fb130dcf1ab4d7abbd3a173741df1f8f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Event ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
                                 "properties": {
                                     "title": {
                                         "type": "string"
@@ -3158,96 +3578,30 @@
                                     "images": {
                                         "type": "array",
                                         "items": {
-                                            "properties": {
-                                                "image_url": {
-                                                    "type": "string"
-                                                },
-                                                "is_primary": {
-                                                    "type": "boolean"
-                                                }
-                                            },
                                             "type": "object"
                                         }
                                     },
                                     "sponsors": {
                                         "type": "array",
                                         "items": {
-                                            "properties": {
-                                                "sponsor_id": {
-                                                    "type": "integer"
-                                                },
-                                                "sponsorship_level": {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "platinum",
-                                                        "gold",
-                                                        "silver",
-                                                        "bronze"
-                                                    ]
-                                                }
-                                            },
                                             "type": "object"
                                         }
                                     },
                                     "activities": {
                                         "type": "array",
                                         "items": {
-                                            "properties": {
-                                                "title": {
-                                                    "type": "string"
-                                                },
-                                                "description": {
-                                                    "type": "string"
-                                                },
-                                                "start_time": {
-                                                    "type": "string"
-                                                },
-                                                "end_time": {
-                                                    "type": "string"
-                                                },
-                                                "location": {
-                                                    "type": "string"
-                                                }
-                                            },
                                             "type": "object"
                                         }
                                     },
                                     "contacts": {
                                         "type": "array",
                                         "items": {
-                                            "properties": {
-                                                "contact_type": {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "organizer",
-                                                        "support",
-                                                        "emergency"
-                                                    ]
-                                                },
-                                                "name": {
-                                                    "type": "string"
-                                                },
-                                                "phone": {
-                                                    "type": "string"
-                                                },
-                                                "email": {
-                                                    "type": "string"
-                                                }
-                                            },
                                             "type": "object"
                                         }
                                     },
                                     "faqs": {
                                         "type": "array",
                                         "items": {
-                                            "properties": {
-                                                "question": {
-                                                    "type": "string"
-                                                },
-                                                "answer": {
-                                                    "type": "string"
-                                                }
-                                            },
                                             "type": "object"
                                         }
                                     }
@@ -3258,11 +3612,383 @@
                     }
                 },
                 "responses": {
-                    "201": {
-                        "description": "Event created with all relations"
+                    "200": {
+                        "description": "Event updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Event updated successfully with all relations"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Event not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Delete an event",
+                "operationId": "b8c8f4b41a32532f5e9f7146e511bc61",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Event ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Event deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Event deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Cannot delete event with registered participants"
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Event not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/events/upcoming": {
+            "get": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Get upcoming events",
+                "operationId": "25014ea2c3814dd710a605ec6d5f9c01",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of events to return",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Upcoming events retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Upcoming events retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/events/featured": {
+            "get": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Get featured events",
+                "operationId": "2bb2fce2067c7e40e4026c0fe29c4af2",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of events to return",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Featured events retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Featured events retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/events/my-organized": {
+            "get": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Get events organized by authenticated user",
+                "operationId": "c87f1a1ee7e7c80bb4f3a8c0b4ba2b2a",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by event status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "published",
+                                "cancelled"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Your organized events retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Your organized events retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/events/{id}/statistics": {
+            "get": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Get event statistics",
+                "operationId": "4c94fd7e3ca2febce0ec4e9671b5b69c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Event ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Event statistics retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Event statistics retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_participants": {
+                                                    "type": "integer"
+                                                },
+                                                "confirmed_participants": {
+                                                    "type": "integer"
+                                                },
+                                                "pending_participants": {
+                                                    "type": "integer"
+                                                },
+                                                "cancelled_participants": {
+                                                    "type": "integer"
+                                                },
+                                                "total_revenue": {
+                                                    "type": "number"
+                                                },
+                                                "tickets_sold": {
+                                                    "type": "integer"
+                                                },
+                                                "average_rating": {
+                                                    "type": "number"
+                                                },
+                                                "total_reviews": {
+                                                    "type": "integer"
+                                                },
+                                                "views_count": {
+                                                    "type": "integer"
+                                                },
+                                                "favorites_count": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Event not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/events/{id}/toggle-publish": {
+            "patch": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Publish or unpublish an event",
+                "operationId": "81aa91f088fcccadc069d9824c279454",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Event ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "is_published"
+                                ],
+                                "properties": {
+                                    "is_published": {
+                                        "description": "Set to true to publish, false to unpublish",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Event publish status updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Event published successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Event not found"
                     },
                     "422": {
                         "description": "Validation error"
@@ -3275,54 +4001,72 @@
                 ]
             }
         },
-        "/api/events/{id}": {
-            "get": {
+        "/api/events/{id}/toggle-featured": {
+            "patch": {
                 "tags": [
                     "Events"
                 ],
-                "summary": "Get event details with all relations",
-                "operationId": "6f743f71f7a88dbe57be1d9c9ebf47cb",
+                "summary": "Feature or unfeature an event",
+                "operationId": "9e3d1b44ae05dbb73f1ee52249e69e62",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Event details with all relations"
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "Events"
-                ],
-                "summary": "Update event with all relations",
-                "operationId": "fb130dcf1ab4d7abbd3a173741df1f8f",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
+                        "description": "Event ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "is_featured"
+                                ],
+                                "properties": {
+                                    "is_featured": {
+                                        "description": "Set to true to feature, false to unfeature",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Event updated with all relations"
+                        "description": "Event featured status updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Event featured successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "403": {
                         "description": "Unauthorized"
                     },
-                    "401": {
-                        "description": "Unauthenticated"
+                    "404": {
+                        "description": "Event not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 },
                 "security": [

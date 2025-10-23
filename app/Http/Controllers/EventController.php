@@ -20,7 +20,84 @@ class EventController extends Controller
      *     path="/api/events",
      *     summary="Get all events with filters",
      *     tags={"Events"},
-     *     @OA\Response(response=200, description="List of events")
+     *     @OA\Parameter(
+     *         name="category_id",
+     *         in="query",
+     *         description="Filter by category ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="Filter by status",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"draft", "published", "cancelled"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="is_featured",
+     *         in="query",
+     *         description="Filter by featured status",
+     *         required=false,
+     *         @OA\Schema(type="boolean")
+     *     ),
+     *     @OA\Parameter(
+     *         name="is_free",
+     *         in="query",
+     *         description="Filter by free events",
+     *         required=false,
+     *         @OA\Schema(type="boolean")
+     *     ),
+     *     @OA\Parameter(
+     *         name="country_id",
+     *         in="query",
+     *         description="Filter by country ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="city_id",
+     *         in="query",
+     *         description="Filter by city ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="date_from",
+     *         in="query",
+     *         description="Filter events from this date",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="date_to",
+     *         in="query",
+     *         description="Filter events until this date",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search in title, description, and venue name",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=15)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of events retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Events retrieved successfully"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
      * )
      */
     public function index(Request $request)
@@ -83,8 +160,25 @@ class EventController extends Controller
      *     path="/api/events/{id}",
      *     summary="Get event details with all relations",
      *     tags={"Events"},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string")),
-     *     @OA\Response(response=200, description="Event details with all relations")
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Event ID or slug",
+     *         required=true,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Event details retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Event retrieved successfully"),
+     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="is_registration_open", type="boolean"),
+     *             @OA\Property(property="is_full", type="boolean"),
+     *             @OA\Property(property="available_spots", type="integer", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Event not found")
      * )
      */
     public function show($id)
@@ -146,30 +240,30 @@ class EventController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"title","description","category_id","event_date","start_time"},
-     *             @OA\Property(property="title", type="string"),
-     *             @OA\Property(property="description", type="string"),
-     *             @OA\Property(property="short_description", type="string"),
-     *             @OA\Property(property="category_id", type="integer"),
-     *             @OA\Property(property="event_date", type="string", format="date"),
-     *             @OA\Property(property="start_time", type="string", format="time"),
-     *             @OA\Property(property="end_time", type="string", format="time"),
-     *             @OA\Property(property="venue_name", type="string"),
-     *             @OA\Property(property="address", type="string"),
-     *             @OA\Property(property="city_id", type="integer"),
-     *             @OA\Property(property="country_id", type="integer"),
-     *             @OA\Property(property="latitude", type="number"),
-     *             @OA\Property(property="longitude", type="number"),
-     *             @OA\Property(property="max_participants", type="integer"),
-     *             @OA\Property(property="price", type="number"),
-     *             @OA\Property(property="is_free", type="boolean"),
-     *             @OA\Property(property="featured_image", type="string"),
+     *             @OA\Property(property="title", type="string", example="Tech Conference 2024"),
+     *             @OA\Property(property="description", type="string", example="Annual technology conference"),
+     *             @OA\Property(property="short_description", type="string", example="Join us for the biggest tech event"),
+     *             @OA\Property(property="category_id", type="integer", example=1),
+     *             @OA\Property(property="event_date", type="string", format="date", example="2024-12-25"),
+     *             @OA\Property(property="start_time", type="string", format="time", example="09:00:00"),
+     *             @OA\Property(property="end_time", type="string", format="time", example="17:00:00"),
+     *             @OA\Property(property="venue_name", type="string", example="Convention Center"),
+     *             @OA\Property(property="address", type="string", example="123 Main Street"),
+     *             @OA\Property(property="city_id", type="integer", example=1),
+     *             @OA\Property(property="country_id", type="integer", example=1),
+     *             @OA\Property(property="latitude", type="number", format="float", example=40.7128),
+     *             @OA\Property(property="longitude", type="number", format="float", example=-74.0060),
+     *             @OA\Property(property="max_participants", type="integer", example=500),
+     *             @OA\Property(property="price", type="number", format="float", example=99.99),
+     *             @OA\Property(property="is_free", type="boolean", example=false),
+     *             @OA\Property(property="featured_image", type="string", example="https://example.com/image.jpg"),
      *             @OA\Property(
      *                 property="images",
      *                 type="array",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="image_url", type="string"),
-     *                     @OA\Property(property="is_primary", type="boolean")
+     *                     @OA\Property(property="image_url", type="string", example="https://example.com/gallery1.jpg"),
+     *                     @OA\Property(property="is_primary", type="boolean", example=true)
      *                 )
      *             ),
      *             @OA\Property(
@@ -177,8 +271,8 @@ class EventController extends Controller
      *                 type="array",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="sponsor_id", type="integer"),
-     *                     @OA\Property(property="sponsorship_level", type="string", enum={"platinum","gold","silver","bronze"})
+     *                     @OA\Property(property="sponsor_id", type="integer", example=1),
+     *                     @OA\Property(property="sponsorship_level", type="string", enum={"platinum","gold","silver","bronze"}, example="gold")
      *                 )
      *             ),
      *             @OA\Property(
@@ -186,11 +280,11 @@ class EventController extends Controller
      *                 type="array",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="title", type="string"),
-     *                     @OA\Property(property="description", type="string"),
-     *                     @OA\Property(property="start_time", type="string"),
-     *                     @OA\Property(property="end_time", type="string"),
-     *                     @OA\Property(property="location", type="string")
+     *                     @OA\Property(property="title", type="string", example="Opening Keynote"),
+     *                     @OA\Property(property="description", type="string", example="Welcome speech and introduction"),
+     *                     @OA\Property(property="start_time", type="string", format="time", example="09:00:00"),
+     *                     @OA\Property(property="end_time", type="string", format="time", example="10:00:00"),
+     *                     @OA\Property(property="location", type="string", example="Main Hall")
      *                 )
      *             ),
      *             @OA\Property(
@@ -198,10 +292,10 @@ class EventController extends Controller
      *                 type="array",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="contact_type", type="string", enum={"organizer","support","emergency"}),
-     *                     @OA\Property(property="name", type="string"),
-     *                     @OA\Property(property="phone", type="string"),
-     *                     @OA\Property(property="email", type="string")
+     *                     @OA\Property(property="contact_type", type="string", enum={"organizer","support","emergency"}, example="organizer"),
+     *                     @OA\Property(property="name", type="string", example="John Doe"),
+     *                     @OA\Property(property="phone", type="string", example="+1234567890"),
+     *                     @OA\Property(property="email", type="string", format="email", example="john@example.com")
      *                 )
      *             ),
      *             @OA\Property(
@@ -209,123 +303,96 @@ class EventController extends Controller
      *                 type="array",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="question", type="string"),
-     *                     @OA\Property(property="answer", type="string")
+     *                     @OA\Property(property="question", type="string", example="What should I bring?"),
+     *                     @OA\Property(property="answer", type="string", example="Bring your ID and confirmation email")
      *                 )
      *             )
      *         )
      *     ),
-     *     @OA\Response(response=201, description="Event created with all relations"),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=422, description="Validation error")
+     *     @OA\Response(
+     *         response=201,
+     *         description="Event created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Event created successfully with all relations"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=500, description="Failed to create event")
      * )
      */
     public function store(Request $request)
     {
-        $user = Auth::user();
-
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'short_description' => 'nullable|string|max:500',
             'category_id' => 'required|exists:event_categories,id',
-            'event_date' => 'required|date|after_or_equal:today',
-            'start_time' => 'required|date_format:H:i:s',
-            'end_time' => 'nullable|date_format:H:i:s',
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
+            'event_date' => 'required|date',
+            'start_time' => 'required',
+            'end_time' => 'nullable',
             'venue_name' => 'nullable|string|max:255',
-            'address' => 'nullable|string|max:500',
+            'address' => 'nullable|string',
             'city_id' => 'nullable|exists:cities,id',
             'country_id' => 'nullable|exists:countries,id',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
             'max_participants' => 'nullable|integer|min:1',
-            'registration_deadline' => 'nullable|date|before:event_date',
             'price' => 'nullable|numeric|min:0',
             'is_free' => 'boolean',
-            'featured_image' => 'nullable|string|max:500',
-
-            // Images
+            'featured_image' => 'nullable|url',
             'images' => 'nullable|array',
-            'images.*.image_url' => 'required|string|max:500',
-            'images.*.is_primary' => 'nullable|boolean',
-
-            // Sponsors
+            'images.*.image_url' => 'required|url',
+            'images.*.is_primary' => 'boolean',
             'sponsors' => 'nullable|array',
-            'sponsors.*.sponsor_id' => 'required|exists:event_sponsors,id',
+            'sponsors.*.sponsor_id' => 'required|exists:sponsors,id',
             'sponsors.*.sponsorship_level' => 'nullable|in:platinum,gold,silver,bronze',
-
-            // Activities
             'activities' => 'nullable|array',
             'activities.*.title' => 'required|string|max:255',
             'activities.*.description' => 'nullable|string',
-            'activities.*.start_time' => 'nullable|date_format:H:i:s',
-            'activities.*.end_time' => 'nullable|date_format:H:i:s',
+            'activities.*.start_time' => 'nullable',
+            'activities.*.end_time' => 'nullable',
             'activities.*.location' => 'nullable|string|max:255',
-
-            // Contacts
             'contacts' => 'nullable|array',
             'contacts.*.contact_type' => 'required|in:organizer,support,emergency',
             'contacts.*.name' => 'nullable|string|max:255',
-            'contacts.*.phone' => 'nullable|string|max:255',
+            'contacts.*.phone' => 'nullable|string|max:50',
             'contacts.*.email' => 'nullable|email|max:255',
-
-            // FAQs
             'faqs' => 'nullable|array',
-            'faqs.*.question' => 'required|string|max:500',
-            'faqs.*.answer' => 'required|string|max:2000',
+            'faqs.*.question' => 'required|string',
+            'faqs.*.answer' => 'required|string',
         ]);
 
         DB::beginTransaction();
-        try {
-            // Generate unique slug
-            $slug = Str::slug($validated['title']);
-            $originalSlug = $slug;
-            $counter = 1;
-            while (Event::where('slug', $slug)->exists()) {
-                $slug = $originalSlug . '-' . $counter;
-                $counter++;
-            }
 
-            // Create Event
-            $event = Event::create([
-                'title' => $validated['title'],
-                'slug' => $slug,
-                'description' => $validated['description'],
-                'short_description' => $validated['short_description'] ?? null,
-                'category_id' => $validated['category_id'],
+        try {
+            $user = Auth::user();
+
+            $eventData = array_merge($validated, [
                 'organizer_id' => $user->id,
-                'event_date' => $validated['event_date'],
-                'start_time' => $validated['start_time'],
-                'end_time' => $validated['end_time'] ?? null,
-                'venue_name' => $validated['venue_name'] ?? null,
-                'address' => $validated['address'] ?? null,
-                'city_id' => $validated['city_id'] ?? null,
-                'country_id' => $validated['country_id'] ?? null,
-                'latitude' => $validated['latitude'] ?? null,
-                'longitude' => $validated['longitude'] ?? null,
-                'max_participants' => $validated['max_participants'] ?? null,
-                'registration_deadline' => $validated['registration_deadline'] ?? null,
-                'price' => $validated['price'] ?? 0,
-                'is_free' => $validated['is_free'] ?? false,
-                'featured_image' => $validated['featured_image'] ?? null,
-                'status' => 'upcoming',
-                'is_published' => 1,
+                'slug' => Str::slug($validated['title']) . '-' . uniqid(),
+                'status' => 'draft',
+                'is_published' => false,
+                'is_featured' => false,
             ]);
 
-            // Add Images
-            if (!empty($validated['images'])) {
-                foreach ($validated['images'] as $index => $imageData) {
+            unset($eventData['images'], $eventData['sponsors'], $eventData['activities'], $eventData['contacts'], $eventData['faqs']);
+
+            $event = Event::create($eventData);
+
+            // Create images
+            if (isset($validated['images'])) {
+                foreach ($validated['images'] as $imageData) {
                     EventImage::create([
                         'event_id' => $event->id,
                         'image_url' => $imageData['image_url'],
                         'is_primary' => $imageData['is_primary'] ?? false,
-                        'order_position' => $index + 1,
                     ]);
                 }
             }
 
-            // Attach Sponsors
-            if (!empty($validated['sponsors'])) {
+            // Attach sponsors
+            if (isset($validated['sponsors'])) {
                 $sponsorData = [];
                 foreach ($validated['sponsors'] as $sponsor) {
                     $sponsorData[$sponsor['sponsor_id']] = [
@@ -335,8 +402,8 @@ class EventController extends Controller
                 $event->sponsors()->attach($sponsorData);
             }
 
-            // Add Activities
-            if (!empty($validated['activities'])) {
+            // Create activities
+            if (isset($validated['activities'])) {
                 foreach ($validated['activities'] as $index => $activityData) {
                     EventActivity::create([
                         'event_id' => $event->id,
@@ -350,8 +417,8 @@ class EventController extends Controller
                 }
             }
 
-            // Add Contacts
-            if (!empty($validated['contacts'])) {
+            // Create contacts
+            if (isset($validated['contacts'])) {
                 foreach ($validated['contacts'] as $contactData) {
                     EventContact::create([
                         'event_id' => $event->id,
@@ -363,8 +430,8 @@ class EventController extends Controller
                 }
             }
 
-            // Add FAQs
-            if (!empty($validated['faqs'])) {
+            // Create FAQs
+            if (isset($validated['faqs'])) {
                 foreach ($validated['faqs'] as $index => $faqData) {
                     EventFaq::create([
                         'event_id' => $event->id,
@@ -410,10 +477,51 @@ class EventController extends Controller
      *     summary="Update event with all relations",
      *     tags={"Events"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Event updated with all relations"),
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Event ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="title", type="string"),
+     *             @OA\Property(property="description", type="string"),
+     *             @OA\Property(property="short_description", type="string"),
+     *             @OA\Property(property="category_id", type="integer"),
+     *             @OA\Property(property="event_date", type="string", format="date"),
+     *             @OA\Property(property="start_time", type="string", format="time"),
+     *             @OA\Property(property="end_time", type="string", format="time"),
+     *             @OA\Property(property="venue_name", type="string"),
+     *             @OA\Property(property="address", type="string"),
+     *             @OA\Property(property="city_id", type="integer"),
+     *             @OA\Property(property="country_id", type="integer"),
+     *             @OA\Property(property="latitude", type="number"),
+     *             @OA\Property(property="longitude", type="number"),
+     *             @OA\Property(property="max_participants", type="integer"),
+     *             @OA\Property(property="price", type="number"),
+     *             @OA\Property(property="is_free", type="boolean"),
+     *             @OA\Property(property="featured_image", type="string"),
+     *             @OA\Property(property="images", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="sponsors", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="activities", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="contacts", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="faqs", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Event updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Event updated successfully with all relations"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
      *     @OA\Response(response=403, description="Unauthorized"),
-     *     @OA\Response(response=401, description="Unauthenticated")
+     *     @OA\Response(response=404, description="Event not found"),
+     *     @OA\Response(response=422, description="Validation error")
      * )
      */
     public function update(Request $request, $id)
@@ -428,85 +536,66 @@ class EventController extends Controller
         }
 
         $validated = $request->validate([
-            'title' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string',
+            'title' => 'sometimes|required|string|max:255',
+            'description' => 'sometimes|required|string',
             'short_description' => 'nullable|string|max:500',
-            'category_id' => 'sometimes|exists:event_categories,id',
-            'event_date' => 'sometimes|date',
-            'start_time' => 'sometimes|date_format:H:i:s',
-            'end_time' => 'nullable|date_format:H:i:s',
+            'category_id' => 'sometimes|required|exists:event_categories,id',
+            'event_date' => 'sometimes|required|date',
+            'start_time' => 'sometimes|required',
+            'end_time' => 'nullable',
             'venue_name' => 'nullable|string|max:255',
-            'address' => 'nullable|string|max:500',
+            'address' => 'nullable|string',
             'city_id' => 'nullable|exists:cities,id',
             'country_id' => 'nullable|exists:countries,id',
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
             'max_participants' => 'nullable|integer|min:1',
-            'registration_deadline' => 'nullable|date',
             'price' => 'nullable|numeric|min:0',
-            'is_free' => 'sometimes|boolean',
-            'status' => 'sometimes|in:upcoming,ongoing,completed,cancelled',
-            'is_featured' => 'sometimes|boolean',
-            'is_published' => 'sometimes|boolean',
-            'featured_image' => 'nullable|string|max:500',
-
-            // Images (replace all)
+            'is_free' => 'boolean',
+            'featured_image' => 'nullable|url',
             'images' => 'nullable|array',
-            'images.*.image_url' => 'required|string|max:500',
-            'images.*.is_primary' => 'nullable|boolean',
-
-            // Sponsors (replace all)
+            'images.*.image_url' => 'required|url',
+            'images.*.is_primary' => 'boolean',
             'sponsors' => 'nullable|array',
-            'sponsors.*.sponsor_id' => 'required|exists:event_sponsors,id',
+            'sponsors.*.sponsor_id' => 'required|exists:sponsors,id',
             'sponsors.*.sponsorship_level' => 'nullable|in:platinum,gold,silver,bronze',
-
-            // Activities (replace all)
             'activities' => 'nullable|array',
             'activities.*.title' => 'required|string|max:255',
             'activities.*.description' => 'nullable|string',
-            'activities.*.start_time' => 'nullable|date_format:H:i:s',
-            'activities.*.end_time' => 'nullable|date_format:H:i:s',
+            'activities.*.start_time' => 'nullable',
+            'activities.*.end_time' => 'nullable',
             'activities.*.location' => 'nullable|string|max:255',
-
-            // Contacts (replace all)
             'contacts' => 'nullable|array',
             'contacts.*.contact_type' => 'required|in:organizer,support,emergency',
             'contacts.*.name' => 'nullable|string|max:255',
-            'contacts.*.phone' => 'nullable|string|max:255',
+            'contacts.*.phone' => 'nullable|string|max:50',
             'contacts.*.email' => 'nullable|email|max:255',
-
-            // FAQs (replace all)
             'faqs' => 'nullable|array',
-            'faqs.*.question' => 'required|string|max:500',
-            'faqs.*.answer' => 'required|string|max:2000',
+            'faqs.*.question' => 'required|string',
+            'faqs.*.answer' => 'required|string',
         ]);
 
         DB::beginTransaction();
+
         try {
-            // Update slug if title changed
+            // Update basic event data
+            $eventData = $validated;
+            unset($eventData['images'], $eventData['sponsors'], $eventData['activities'], $eventData['contacts'], $eventData['faqs']);
+
             if (isset($validated['title']) && $validated['title'] !== $event->title) {
-                $slug = Str::slug($validated['title']);
-                $originalSlug = $slug;
-                $counter = 1;
-                while (Event::where('slug', $slug)->where('id', '!=', $id)->exists()) {
-                    $slug = $originalSlug . '-' . $counter;
-                    $counter++;
-                }
-                $validated['slug'] = $slug;
+                $eventData['slug'] = Str::slug($validated['title']) . '-' . uniqid();
             }
 
-            // Update Event
-            $event->update($validated);
+            $event->update($eventData);
 
             // Update Images (replace all)
             if (isset($validated['images'])) {
                 $event->images()->delete();
-                foreach ($validated['images'] as $index => $imageData) {
+                foreach ($validated['images'] as $imageData) {
                     EventImage::create([
                         'event_id' => $event->id,
                         'image_url' => $imageData['image_url'],
                         'is_primary' => $imageData['is_primary'] ?? false,
-                        'order_position' => $index + 1,
                     ]);
                 }
             }
@@ -595,6 +684,31 @@ class EventController extends Controller
         }
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/events/{id}",
+     *     summary="Delete an event",
+     *     tags={"Events"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Event ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Event deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Event deleted successfully")
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Cannot delete event with registered participants"),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=404, description="Event not found")
+     * )
+     */
     public function destroy($id)
     {
         $user = Auth::user();
@@ -619,6 +733,28 @@ class EventController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/events/upcoming",
+     *     summary="Get upcoming events",
+     *     tags={"Events"},
+     *     @OA\Parameter(
+     *         name="limit",
+     *         in="query",
+     *         description="Number of events to return",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=15)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Upcoming events retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Upcoming events retrieved successfully"),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function upcoming(Request $request)
     {
         $limit = $request->get('limit', 15);
@@ -636,6 +772,28 @@ class EventController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/events/featured",
+     *     summary="Get featured events",
+     *     tags={"Events"},
+     *     @OA\Parameter(
+     *         name="limit",
+     *         in="query",
+     *         description="Number of events to return",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=10)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Featured events retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Featured events retrieved successfully"),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function featured(Request $request)
     {
         $limit = $request->get('limit', 10);
@@ -653,6 +811,30 @@ class EventController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/events/my-organized",
+     *     summary="Get events organized by authenticated user",
+     *     tags={"Events"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="Filter by event status",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"draft", "published", "cancelled"})
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Your organized events retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Your organized events retrieved successfully"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
     public function myOrganizedEvents(Request $request)
     {
         $user = Auth::user();
@@ -673,6 +855,44 @@ class EventController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/events/{id}/statistics",
+     *     summary="Get event statistics",
+     *     tags={"Events"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Event ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Event statistics retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Event statistics retrieved successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="total_participants", type="integer"),
+     *                 @OA\Property(property="confirmed_participants", type="integer"),
+     *                 @OA\Property(property="pending_participants", type="integer"),
+     *                 @OA\Property(property="cancelled_participants", type="integer"),
+     *                 @OA\Property(property="total_revenue", type="number"),
+     *                 @OA\Property(property="tickets_sold", type="integer"),
+     *                 @OA\Property(property="average_rating", type="number"),
+     *                 @OA\Property(property="total_reviews", type="integer"),
+     *                 @OA\Property(property="views_count", type="integer"),
+     *                 @OA\Property(property="favorites_count", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=404, description="Event not found")
+     * )
+     */
     public function statistics($id)
     {
         $user = Auth::user();
@@ -703,6 +923,39 @@ class EventController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Patch(
+     *     path="/api/events/{id}/toggle-publish",
+     *     summary="Publish or unpublish an event",
+     *     tags={"Events"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Event ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"is_published"},
+     *             @OA\Property(property="is_published", type="boolean", example=true, description="Set to true to publish, false to unpublish")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Event publish status updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Event published successfully"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=404, description="Event not found"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
+     */
     public function togglePublish(Request $request, $id)
     {
         $user = Auth::user();
@@ -721,6 +974,64 @@ class EventController extends Controller
         $event->update(['is_published' => $validated['is_published']]);
 
         $message = $validated['is_published'] ? 'Event published successfully' : 'Event unpublished successfully';
+
+        return response()->json([
+            'message' => $message,
+            'data' => $event
+        ]);
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/events/{id}/toggle-featured",
+     *     summary="Feature or unfeature an event",
+     *     tags={"Events"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Event ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"is_featured"},
+     *             @OA\Property(property="is_featured", type="boolean", example=true, description="Set to true to feature, false to unfeature")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Event featured status updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Event featured successfully"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=404, description="Event not found"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
+     */
+    public function toggleFeatured(Request $request, $id)
+    {
+        $user = Auth::user();
+        $event = Event::findOrFail($id);
+
+        if ($event->organizer_id !== $user->id) {
+            return response()->json([
+                'message' => 'Unauthorized. Only event organizer can feature/unfeature this event.'
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'is_featured' => 'required|boolean'
+        ]);
+
+        $event->update(['is_featured' => $validated['is_featured']]);
+
+        $message = $validated['is_featured'] ? 'Event featured successfully' : 'Event unfeatured successfully';
 
         return response()->json([
             'message' => $message,
