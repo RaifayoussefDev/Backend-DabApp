@@ -22,8 +22,9 @@ class OwnCors
             'https://dabapp.co',
             'https://old.dabapp.co',
             'http://localhost:4200',
-            'http://localhost:8000', // Ajout pour le développement
-            'http://127.0.0.1:8000', // Alternative à localhost
+            'http://localhost:8000',
+            'http://127.0.0.1:8000',
+            'http://192.168.1.191:8080',
 
         ];
 
