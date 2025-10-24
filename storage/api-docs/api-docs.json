@@ -20147,6 +20147,21 @@
                             "type": "integer",
                             "example": 10
                         }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "description": "Filter by category (1=Motorcycle, 2=Spare Part, 3=License Plate)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                1,
+                                2,
+                                3
+                            ],
+                            "example": 1
+                        }
                     }
                 ],
                 "responses": {

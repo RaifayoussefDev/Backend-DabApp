@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
  */
 class WishlistController extends Controller
 {
-   /**
+    /**
      * @OA\Get(
      *     path="/api/wishlists",
      *     tags={"Wishlist"},
@@ -36,6 +36,13 @@ class WishlistController extends Controller
      *         required=false,
      *         @OA\Schema(type="integer", example=10)
      *     ),
+     *     @OA\Parameter(
+     *         name="category",
+     *         in="query",
+     *         description="Filter by category (1=Motorcycle, 2=Spare Part, 3=License Plate)",
+     *         required=false,
+     *         @OA\Schema(type="integer", enum={1, 2, 3}, example=1)
+     *     ),
      *     @OA\Response(response=200, description="Wishlist retrieved successfully"),
      *     @OA\Response(response=401, description="Unauthorized")
      * )
@@ -51,8 +58,11 @@ class WishlistController extends Controller
             $perPage = $request->get('per_page', 10);
             $perPage = min($perPage, 50); // Limit to 50 items per page
 
+            // Get category filter
+            $categoryFilter = $request->get('category');
+
             $wishlists = Wishlist::with([
-                'listing' => function($query) {
+                'listing' => function ($query) {
                     $query->where('status', 'published')->with([
                         'images' => function ($q) {
                             $q->select('listing_id', 'image_url')->limit(1);
@@ -64,12 +74,17 @@ class WishlistController extends Controller
                     ]);
                 }
             ])
-            ->where('user_id', $userId)
-            ->whereHas('listing', function($query) {
-                $query->where('status', 'published');
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+                ->where('user_id', $userId)
+                ->whereHas('listing', function ($query) use ($categoryFilter) {
+                    $query->where('status', 'published');
+
+                    // Apply category filter if provided
+                    if ($categoryFilter && in_array($categoryFilter, [1, 2, 3])) {
+                        $query->where('category_id', $categoryFilter);
+                    }
+                })
+                ->orderBy('created_at', 'desc')
+                ->paginate($perPage);
 
             // Get the collection of wishlisted items
             $wishlistCollection = $wishlists->getCollection();
@@ -84,7 +99,7 @@ class WishlistController extends Controller
 
             // Load motorcycle data
             if ($motorcycleListingIds->isNotEmpty()) {
-                $wishlistCollection->each(function($wishlist) use ($motorcycleListingIds) {
+                $wishlistCollection->each(function ($wishlist) use ($motorcycleListingIds) {
                     if ($wishlist->listing && $motorcycleListingIds->contains($wishlist->listing->id)) {
                         $wishlist->listing->load([
                             'motorcycle' => function ($query) {
@@ -103,7 +118,7 @@ class WishlistController extends Controller
 
             // Load spare part data
             if ($sparePartListingIds->isNotEmpty()) {
-                $wishlistCollection->each(function($wishlist) use ($sparePartListingIds) {
+                $wishlistCollection->each(function ($wishlist) use ($sparePartListingIds) {
                     if ($wishlist->listing && $sparePartListingIds->contains($wishlist->listing->id)) {
                         $wishlist->listing->load([
                             'sparePart' => function ($query) {
@@ -122,7 +137,7 @@ class WishlistController extends Controller
 
             // Load license plate data
             if ($licensePlateListingIds->isNotEmpty()) {
-                $wishlistCollection->each(function($wishlist) use ($licensePlateListingIds) {
+                $wishlistCollection->each(function ($wishlist) use ($licensePlateListingIds) {
                     if ($wishlist->listing && $licensePlateListingIds->contains($wishlist->listing->id)) {
                         $wishlist->listing->load([
                             'licensePlate.format',
@@ -271,7 +286,6 @@ class WishlistController extends Controller
                     'to' => $wishlists->lastItem()
                 ]
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to retrieve wishlist',
@@ -279,49 +293,48 @@ class WishlistController extends Controller
             ], 500);
         }
     }
+    /**
+     * @OA\Post(
+     *     path="/api/wishlists",
+     *     tags={"Wishlist"},
+     *     summary="Add listing to wishlist (auth required)",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"listing_id"},
+     *             @OA\Property(property="listing_id", type="integer", example=5)
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Added to wishlist"),
+     *     @OA\Response(response=409, description="Already in wishlist"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'listing_id' => 'required|exists:listings,id',
+        ]);
 
-        /**
-         * @OA\Post(
-         *     path="/api/wishlists",
-         *     tags={"Wishlist"},
-         *     summary="Add listing to wishlist (auth required)",
-         *     security={{"bearerAuth":{}}},
-         *     @OA\RequestBody(
-         *         required=true,
-         *         @OA\JsonContent(
-         *             required={"listing_id"},
-         *             @OA\Property(property="listing_id", type="integer", example=5)
-         *         )
-         *     ),
-         *     @OA\Response(response=201, description="Added to wishlist"),
-         *     @OA\Response(response=409, description="Already in wishlist"),
-         *     @OA\Response(response=401, description="Unauthorized")
-         * )
-         */
-        public function store(Request $request)
-        {
-            $request->validate([
-                'listing_id' => 'required|exists:listings,id',
-            ]);
+        $user = Auth::user(); // Récupère l'utilisateur connecté via token
 
-            $user = Auth::user(); // Récupère l'utilisateur connecté via token
+        // Vérifie s'il existe déjà un wishlist pour ce user + listing
+        $exists = Wishlist::where('user_id', $user->id)
+            ->where('listing_id', $request->listing_id)
+            ->exists();
 
-            // Vérifie s'il existe déjà un wishlist pour ce user + listing
-            $exists = Wishlist::where('user_id', $user->id)
-                ->where('listing_id', $request->listing_id)
-                ->exists();
-
-            if ($exists) {
-                return response()->json(['message' => 'Already in wishlist'], 409);
-            }
-
-            $wishlist = Wishlist::create([
-                'user_id' => $user->id,
-                'listing_id' => $request->listing_id
-            ]);
-
-            return response()->json($wishlist, 201);
+        if ($exists) {
+            return response()->json(['message' => 'Already in wishlist'], 409);
         }
+
+        $wishlist = Wishlist::create([
+            'user_id' => $user->id,
+            'listing_id' => $request->listing_id
+        ]);
+
+        return response()->json($wishlist, 201);
+    }
 
     /**
      * @OA\Get(
