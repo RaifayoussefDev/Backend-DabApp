@@ -22,7 +22,9 @@ return [
         'http://localhost:4200',
         'http://192.168.11.184:5500',  // Specify the trusted origin(s)
         'http://localhost:5500',
-        'https://old.dabapp.co'
+        'https://old.dabapp.co',
+        'https://new.dabapp.co',
+
     ],
 
     'allowed_headers' => ['*'],  // Allow all headers
