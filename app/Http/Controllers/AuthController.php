@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Log;
 class AuthController extends Controller
 {
     private $whatsappApiUrl = 'https://api.360messenger.com/v2/sendMessage';
-    private $whatsappApiToken = 'pj0y5xb38khWfp0V0qppIxwKelv7tgTg5yx';
+    private $whatsappApiToken = 'fFUXfEtxJDqxX2lnteWxheeazIYyDriNBDn';
 
     private const ACCESS_TOKEN_DURATION = 60;
     private const REFRESH_TOKEN_DURATION = 43200;
@@ -65,7 +65,7 @@ class AuthController extends Controller
         ];
     }
 
-/**
+    /**
      * @OA\Post(
      *     path="/api/register",
      *     summary="Enregistrer un nouvel utilisateur",
@@ -208,60 +208,62 @@ class AuthController extends Controller
                 'email'      => $request->email,
                 'phone'      => $formattedPhone,
                 'password'   => Hash::make($request->password),
-                'role_id'    => $request->role_id ?? 2,
-                'country_id' => $countryData['country_id'],
+                'role_id'    => $request->role_id ?? 1,
                 'verified'   => false,
+                'is_active'  => false, // ⚠️ IMPORTANT : désactivé jusqu'à vérification
+                'is_online'  => false,
+                'language'   => 'fr',
+                'timezone'   => 'Africa/Casablanca',
+                'two_factor_enabled' => true,
+                'country_id' => $countryData['country_id'],
             ]);
 
-            Log::info('Created new unverified user', [
+            Log::info('New user created (unverified)', [
                 'user_id' => $user->id,
                 'email' => $user->email,
-                'phone' => $user->phone,
+                'phone' => $user->phone
             ]);
         }
 
-        // Générer un OTP
+        // Generate and send OTP
         $otp = rand(1000, 9999);
-        $expiresAt = now()->addMinutes(10);
 
-        Cache::put("otp_{$user->id}", [
-            'code' => $otp,
-            'expires_at' => $expiresAt
-        ], 600);
+        DB::table('otps')->updateOrInsert(
+            ['user_id' => $user->id],
+            [
+                'code' => $otp,
+                'expires_at' => now()->addMinutes(5),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
 
-        Log::info('OTP generated for registration', [
-            'user_id' => $user->id,
-            'otp' => $otp,
-            'expires_at' => $expiresAt
-        ]);
-
-        // ✅ UTILISER LA MÊME LOGIQUE QUE LOGIN : WhatsApp d'abord, puis Email en fallback
+        // Send OTP with WhatsApp first, email fallback
         $otpSentVia = $this->sendOtpWithWhatsAppFirst($user, $otp);
 
         if ($otpSentVia === 'failed') {
             Log::error('Failed to send OTP during registration', [
                 'user_id' => $user->id,
-                'email' => $user->email,
-                'phone' => $user->phone
+                'phone' => $user->phone,
+                'email' => $user->email
             ]);
 
             return response()->json([
-                'error' => 'Failed to send OTP',
-                'message' => 'Could not send verification code via WhatsApp or Email. Please try again later.'
+                'error' => 'Failed to send OTP. Please try again.',
+                'user_id' => $user->id
             ], 500);
         }
-
-        Log::info('Registration OTP sent successfully', [
-            'user_id' => $user->id,
-            'otp_sent_via' => $otpSentVia
-        ]);
 
         return response()->json([
             'message' => 'Registration successful, OTP required for verification',
             'user' => $user->only(['id', 'first_name', 'last_name', 'email', 'phone']),
             'requiresOTP' => true,
             'user_id' => $user->id,
-            'otp_sent_via' => $otpSentVia,
+            'country' => $countryData['country_name'],
+            'country_code' => $countryData['country_code'],
+            'country_id' => $countryData['country_id'],
+            'formatted_phone' => $formattedPhone,
+            'otp_sent_via' => $otpSentVia
         ], 202);
     }
 
