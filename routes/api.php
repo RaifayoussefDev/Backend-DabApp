@@ -75,8 +75,63 @@ Route::middleware('auth:api')->group(function () {
 
 
     // Users
-    Route::apiResource('users', UserController::class);
+    // Basic CRUD (apiResource)
+    Route::prefix('users')->group(function () {
+        Route::get('/', [UserController::class, 'index']);
+        Route::post('/', [UserController::class, 'store']);
+        Route::get('/stats', [UserController::class, 'stats']);
+        Route::get('/export', [UserController::class, 'export']);
+        Route::post('/search', [UserController::class, 'search']);
+        Route::post('/bulk-action', [UserController::class, 'bulkAction']);
 
+        Route::get('/{id}', [UserController::class, 'show']);
+        Route::put('/{id}', [UserController::class, 'update']);
+        Route::delete('/{id}', [UserController::class, 'destroy']);
+
+        Route::put('/{id}/activate', [UserController::class, 'activate']);
+        Route::put('/{id}/deactivate', [UserController::class, 'deactivate']);
+        Route::post('/{id}/reset-password', [UserController::class, 'resetPassword']);
+
+        Route::post('/{id}/two-factor/enable', [UserController::class, 'enableTwoFactor']);
+        Route::post('/{id}/two-factor/disable', [UserController::class, 'disableTwoFactor']);
+
+        Route::put('/{id}/last-login', [UserController::class, 'updateLastLogin']);
+        Route::put('/{id}/online-status', [UserController::class, 'updateOnlineStatus']);
+    });
+    // Routes additionnelles
+    Route::prefix('users')->group(function () {
+        // Gestion de compte
+        Route::post('/{id}/activate', [UserController::class, 'activateUser']);
+        Route::post('/{id}/deactivate', [UserController::class, 'deactivateUser']);
+        Route::post('/{id}/verify', [UserController::class, 'verifyUser']);
+        Route::post('/{id}/reset-password', [UserController::class, 'resetPassword']);
+        Route::put('/{id}/change-password', [UserController::class, 'changePassword']);
+
+        // Gestion du profil
+        Route::put('/{id}/profile-picture', [UserController::class, 'updateProfilePicture']);
+        Route::put('/{id}/last-login', [UserController::class, 'updateLastLogin']);
+        Route::put('/{id}/online-status', [UserController::class, 'updateOnlineStatus']);
+
+        // Authentification à deux facteurs
+        Route::post('/{id}/two-factor/enable', [UserController::class, 'enableTwoFactor']);
+        Route::post('/{id}/two-factor/disable', [UserController::class, 'disableTwoFactor']);
+
+        // Relations utilisateur
+        Route::get('/{id}/wishlists', [UserController::class, 'getUserWishlists']);
+        Route::get('/{id}/listings', [UserController::class, 'getUserListings']);
+        Route::get('/{id}/bank-cards', [UserController::class, 'getUserBankCards']);
+        Route::get('/{id}/auction-history', [UserController::class, 'getUserAuctionHistory']);
+
+        // Gestion avancée
+        Route::post('/{id}/restore', [UserController::class, 'restore']);
+        Route::delete('/{id}/force-delete', [UserController::class, 'forceDelete']);
+    });
+
+    // Statistiques & opérations en masse
+    Route::get('/users-statistics', [UserController::class, 'getStatistics']);
+    Route::get('/users-trashed', [UserController::class, 'getTrashed']);
+    Route::post('/users-bulk-action', [UserController::class, 'bulkAction']);
+    Route::get('/users-export', [UserController::class, 'export']);
     // Cards
     Route::apiResource('BankCards', CardController::class);
 
