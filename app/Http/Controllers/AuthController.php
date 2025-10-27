@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Log;
 class AuthController extends Controller
 {
     private $whatsappApiUrl = 'https://api.360messenger.com/v2/sendMessage';
-    private $whatsappApiToken = 'fFUXfEtxJDqxX2lnteWxheeariNBDn';
+    private $whatsappApiToken = 'fFUXfEtxJDqxX2lnteWxheeazIYyDriNBDnàà';
 
     private const ACCESS_TOKEN_DURATION = 60;
     private const REFRESH_TOKEN_DURATION = 43200;
@@ -588,7 +588,7 @@ class AuthController extends Controller
         // Try WhatsApp first if user has phone number
         if (!empty($user->phone)) {
             try {
-                $success = $this->sendWhatsAppMessage($user->phone, $otp);
+                $success = $this->sendWhatsAppOtp($user->phone, $otp);
 
                 if ($success) {
                     Log::info('OTP sent via WhatsApp', [
