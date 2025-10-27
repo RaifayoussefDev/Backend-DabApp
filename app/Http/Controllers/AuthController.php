@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Log;
 class AuthController extends Controller
 {
     private $whatsappApiUrl = 'https://api.360messenger.com/v2/sendMessage';
-    private $whatsappApiToken = 'fFUXfEtxJDqxX2lnteWxheeazIYyDriNBDnàà';
+    private $whatsappApiToken = 'pj0y5xb38khWfp0V0qppIxwKelv7tgTg5yx';
 
     private const ACCESS_TOKEN_DURATION = 60;
     private const REFRESH_TOKEN_DURATION = 43200;
@@ -588,7 +588,7 @@ class AuthController extends Controller
         // Try WhatsApp first if user has phone number
         if (!empty($user->phone)) {
             try {
-                $success = $this->sendWhatsAppOtp($user->phone, $otp);
+                $success = $this->sendWhatsAppMessage($user->phone, $otp);
 
                 if ($success) {
                     Log::info('OTP sent via WhatsApp', [
@@ -597,13 +597,13 @@ class AuthController extends Controller
                     ]);
                     return 'whatsapp';
                 } else {
-                    Log::warning('WhatsApp OTP failed, trying email fallback', [
+                    Log::warning('WhatsApp returned false, trying email fallback', [
                         'user_id' => $user->id,
                         'phone' => $user->phone
                     ]);
                 }
             } catch (\Exception $e) {
-                Log::error('WhatsApp sending failed, trying email fallback', [
+                Log::error('WhatsApp sending exception, trying email fallback', [
                     'user_id' => $user->id,
                     'error' => $e->getMessage()
                 ]);
@@ -618,7 +618,7 @@ class AuthController extends Controller
 
             $user->notify(new SendOtpNotification($otp));
 
-            Log::info('OTP sent via Email (WhatsApp fallback)', [
+            Log::info('OTP sent via Email (WhatsApp fallback during registration)', [
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'reason' => empty($user->phone) ? 'no_phone' : 'whatsapp_failed'
@@ -626,8 +626,10 @@ class AuthController extends Controller
 
             return 'email';
         } catch (\Exception $e) {
-            Log::error('Failed to send OTP via both WhatsApp and Email', [
+            Log::error('Failed to send OTP via both WhatsApp and Email during registration', [
                 'user_id' => $user->id,
+                'phone' => $user->phone ?? 'no_phone',
+                'email' => $user->email ?? 'no_email',
                 'error' => $e->getMessage()
             ]);
             return 'failed';
