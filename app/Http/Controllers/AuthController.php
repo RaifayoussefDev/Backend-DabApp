@@ -588,7 +588,7 @@ class AuthController extends Controller
         // Try WhatsApp first if user has phone number
         if (!empty($user->phone)) {
             try {
-                $success = $this->sendWhatsAppMessage($user->phone, $otp);
+                $success = $this->sendWhatsAppOtp($user->phone, $otp);
 
                 if ($success) {
                     Log::info('OTP sent via WhatsApp', [
