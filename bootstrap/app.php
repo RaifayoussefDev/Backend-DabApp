@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\OwnCors;
+use App\Http\Middleware\SwaggerAuth;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,6 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->append(OwnCors::class);
+
+        // Enregistrer l'alias pour le middleware Swagger
+        $middleware->alias([
+            'swagger.auth' => SwaggerAuth::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
