@@ -65,7 +65,7 @@ class AuthController extends Controller
         ];
     }
 
-    /**
+/**
      * @OA\Post(
      *     path="/api/register",
      *     summary="Enregistrer un nouvel utilisateur",
@@ -235,67 +235,26 @@ class AuthController extends Controller
             'expires_at' => $expiresAt
         ]);
 
-        // ✅ NOUVELLE LOGIQUE : Essayer WhatsApp d'abord, puis Email en fallback
-        $otpSentVia = 'whatsapp';
-        $whatsappSuccess = false;
+        // ✅ UTILISER LA MÊME LOGIQUE QUE LOGIN : WhatsApp d'abord, puis Email en fallback
+        $otpSentVia = $this->sendOtpWithWhatsAppFirst($user, $otp);
 
-        try {
-            // Tentative d'envoi par WhatsApp
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->whatsappApiToken,
-                'Content-Type' => 'application/json',
-            ])->post($this->whatsappApiUrl, [
-                'to' => $formattedPhone,
-                'message' => "Your verification code is: {$otp}. Valid for 10 minutes.",
-            ]);
-
-            if ($response->successful()) {
-                $whatsappSuccess = true;
-                Log::info('OTP sent via WhatsApp successfully', [
-                    'user_id' => $user->id,
-                    'phone' => $formattedPhone,
-                    'response' => $response->json()
-                ]);
-            } else {
-                Log::warning('WhatsApp API returned non-successful status', [
-                    'user_id' => $user->id,
-                    'phone' => $formattedPhone,
-                    'status' => $response->status(),
-                    'response' => $response->body()
-                ]);
-            }
-        } catch (\Exception $e) {
-            Log::error('WhatsApp API request failed', [
+        if ($otpSentVia === 'failed') {
+            Log::error('Failed to send OTP during registration', [
                 'user_id' => $user->id,
-                'phone' => $formattedPhone,
-                'error' => $e->getMessage()
+                'email' => $user->email,
+                'phone' => $user->phone
             ]);
+
+            return response()->json([
+                'error' => 'Failed to send OTP',
+                'message' => 'Could not send verification code via WhatsApp or Email. Please try again later.'
+            ], 500);
         }
 
-        // ✅ Si WhatsApp a échoué, envoyer par Email
-        if (!$whatsappSuccess) {
-            try {
-                $user->notify(new SendOtpNotification($otp));
-                $otpSentVia = 'email';
-
-                Log::info('OTP sent via email as fallback', [
-                    'user_id' => $user->id,
-                    'email' => $user->email,
-                    'otp' => $otp
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Failed to send OTP via email fallback', [
-                    'user_id' => $user->id,
-                    'email' => $user->email,
-                    'error' => $e->getMessage()
-                ]);
-
-                return response()->json([
-                    'error' => 'Failed to send OTP',
-                    'message' => 'Could not send verification code via WhatsApp or Email. Please try again later.'
-                ], 500);
-            }
-        }
+        Log::info('Registration OTP sent successfully', [
+            'user_id' => $user->id,
+            'otp_sent_via' => $otpSentVia
+        ]);
 
         return response()->json([
             'message' => 'Registration successful, OTP required for verification',
