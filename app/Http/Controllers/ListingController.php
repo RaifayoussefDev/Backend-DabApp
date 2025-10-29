@@ -1275,12 +1275,10 @@ class ListingController extends Controller
             }
 
             $displayPrice = $listing->price;
-            $isAuction = false;
             $currentBid = $currentBids[$listing->id] ?? null;
 
             if (!$displayPrice && $listing->auction_enabled) {
                 $displayPrice = $currentBid ?: $listing->minimum_bid;
-                $isAuction = true;
             }
 
             $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
@@ -1291,22 +1289,12 @@ class ListingController extends Controller
                 'title' => $listing->title,
                 'description' => $listing->description,
                 'price' => $priceToShow,
-                'category_id' => $listing->category_id,
-                'auction_enabled' => $listing->auction_enabled,
-                'minimum_bid' => $listing->minimum_bid,
-                'allow_submission' => $listing->allow_submission,
-                'listing_type_id' => $listing->listing_type_id,
-                'contacting_channel' => $listing->contacting_channel,
-                'seller_type' => $listing->seller_type,
-                'status' => $listing->status,
                 'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
                 'city' => $listing->city?->name,
                 'country' => $listing->country?->name,
                 'images' => $listing->images->pluck('image_url'),
                 'wishlist' => $isInWishlist,
                 'display_price' => $displayPrice,
-                'is_auction' => $isAuction,
-                'current_bid' => $currentBid,
                 'currency' => $currencySymbol,
             ];
 
@@ -1317,14 +1305,6 @@ class ListingController extends Controller
                     'model' => $listing->motorcycle->model?->name ?? null,
                     'year' => $listing->motorcycle->year?->year ?? null,
                     'type' => $listing->motorcycle->type?->name ?? null,
-                    'engine' => $listing->motorcycle->engine,
-                    'mileage' => $listing->motorcycle->mileage,
-                    'body_condition' => $listing->motorcycle->body_condition,
-                    'modified' => $listing->motorcycle->modified,
-                    'insurance' => $listing->motorcycle->insurance,
-                    'general_condition' => $listing->motorcycle->general_condition,
-                    'vehicle_care' => $listing->motorcycle->vehicle_care,
-                    'transmission' => $listing->motorcycle->transmission,
                 ];
             } elseif ($listing->category_id == 2 && $listing->sparePart) {
                 $baseData['spare_part'] = [
