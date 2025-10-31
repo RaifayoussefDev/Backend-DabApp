@@ -56,7 +56,11 @@ use App\Http\Controllers\EventSponsorController;
 use App\Http\Controllers\EventContactController;
 use App\Http\Controllers\EventFaqController;
 use App\Http\Controllers\EventUpdateController;
-
+use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\PointOfInterestController;
+use App\Http\Controllers\PoiReviewController;
+use App\Http\Controllers\RouteController;
+use App\Http\Controllers\RouteReviewController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -807,4 +811,37 @@ Route::middleware('auth:api')->prefix('events')->group(function () {
     Route::post('/{eventId}/sponsors/{sponsorId}/attach', [EventSponsorController::class, 'attachToEvent']);
     Route::delete('/{eventId}/sponsors/{sponsorId}/detach', [EventSponsorController::class, 'detachFromEvent']);
     Route::put('/{eventId}/sponsors/{sponsorId}/update-level', [EventSponsorController::class, 'updateSponsorLevel']);
+});
+
+
+// Points of Interest
+Route::middleware('auth:api')->group(function () {
+    Route::apiResource('pois', PointOfInterestController::class);
+    Route::get('pois/nearby', [PointOfInterestController::class, 'nearby']);
+    Route::post('pois/{id}/favorite', [PointOfInterestController::class, 'toggleFavorite']);
+
+    Route::get('pois/{poi_id}/reviews', [PoiReviewController::class, 'index']);
+    Route::post('pois/{poi_id}/reviews', [PoiReviewController::class, 'store']);
+    Route::put('pois/{poi_id}/reviews/{id}', [PoiReviewController::class, 'update']);
+    Route::delete('pois/{poi_id}/reviews/{id}', [PoiReviewController::class, 'destroy']);
+});
+
+// Newsletter
+Route::post('newsletter/subscribe', [NewsletterController::class, 'subscribe']);
+Route::post('newsletter/unsubscribe', [NewsletterController::class, 'unsubscribe']);
+
+Route::middleware('auth:api')->group(function () {
+    Route::get('newsletter/preferences', [NewsletterController::class, 'getPreferences']);
+    Route::put('newsletter/preferences', [NewsletterController::class, 'updatePreferences']);
+});
+
+// Routes
+Route::middleware('auth:api')->group(function () {
+    Route::apiResource('routes', RouteController::class);
+    Route::post('routes/{id}/like', [RouteController::class, 'toggleLike']);
+    Route::post('routes/{id}/favorite', [RouteController::class, 'toggleFavorite']);
+
+    Route::get('routes/{route_id}/reviews', [RouteReviewController::class, 'index']);
+    Route::post('routes/{route_id}/reviews', [RouteReviewController::class, 'store']);
+    Route::delete('routes/{route_id}/reviews/{id}', [RouteReviewController::class, 'destroy']);
 });

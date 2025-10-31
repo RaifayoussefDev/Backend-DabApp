@@ -16545,6 +16545,152 @@
                 ]
             }
         },
+        "/api/newsletter/subscribe": {
+            "post": {
+                "tags": [
+                    "Newsletter"
+                ],
+                "summary": "Subscribe to newsletter",
+                "operationId": "3aa61be29ffb066a9485dfa17dd4afd6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Subscribed successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/newsletter/unsubscribe": {
+            "post": {
+                "tags": [
+                    "Newsletter"
+                ],
+                "summary": "Unsubscribe from newsletter",
+                "operationId": "500f0663336696003aed244f1d404f24",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Unsubscribed successfully"
+                    },
+                    "404": {
+                        "description": "Email not found"
+                    }
+                }
+            }
+        },
+        "/api/newsletter/preferences": {
+            "get": {
+                "tags": [
+                    "Newsletter"
+                ],
+                "summary": "Get newsletter preferences",
+                "operationId": "153d8cd9aac057563e58c1f718c80909",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Subscriber not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Newsletter"
+                ],
+                "summary": "Update newsletter preferences",
+                "operationId": "8dc9f3071b3096704b1b3181a5aab523",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "receive_new_articles": {
+                                        "type": "boolean"
+                                    },
+                                    "receive_new_listings": {
+                                        "type": "boolean"
+                                    },
+                                    "receive_promotions": {
+                                        "type": "boolean"
+                                    },
+                                    "receive_weekly_digest": {
+                                        "type": "boolean"
+                                    },
+                                    "frequency": {
+                                        "type": "string",
+                                        "enum": [
+                                            "immediate",
+                                            "daily",
+                                            "weekly"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Preferences updated successfully"
+                    },
+                    "404": {
+                        "description": "Subscriber not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/plate-formats": {
             "post": {
                 "tags": [
@@ -16684,6 +16830,570 @@
                         "description": "Erreur de validation"
                     }
                 }
+            }
+        },
+        "/api/pois/{poi_id}/reviews": {
+            "get": {
+                "tags": [
+                    "POI Reviews"
+                ],
+                "summary": "Get all reviews for a POI",
+                "operationId": "aa7e1e65799b4761385b1da2caab1c7e",
+                "parameters": [
+                    {
+                        "name": "poi_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "POI not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "POI Reviews"
+                ],
+                "summary": "Create a review for a POI",
+                "operationId": "ecbfb7221a5d1a0789c6be1e7dc6aef1",
+                "parameters": [
+                    {
+                        "name": "poi_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "rating"
+                                ],
+                                "properties": {
+                                    "rating": {
+                                        "type": "integer",
+                                        "maximum": 5,
+                                        "minimum": 1
+                                    },
+                                    "comment": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Review created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/pois/{poi_id}/reviews/{id}": {
+            "put": {
+                "tags": [
+                    "POI Reviews"
+                ],
+                "summary": "Update a review",
+                "operationId": "ad4989e4ef89ca80e6bf74520db44c8d",
+                "parameters": [
+                    {
+                        "name": "poi_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "rating": {
+                                        "type": "integer",
+                                        "maximum": 5,
+                                        "minimum": 1
+                                    },
+                                    "comment": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Review updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "POI Reviews"
+                ],
+                "summary": "Delete a review",
+                "operationId": "8682529ab28eb310d012b136bc61b6b1",
+                "parameters": [
+                    {
+                        "name": "poi_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/pois": {
+            "get": {
+                "tags": [
+                    "Points of Interest"
+                ],
+                "summary": "Get all points of interest",
+                "operationId": "1b13031fb8d045e8aa6ebbd06d431a46",
+                "parameters": [
+                    {
+                        "name": "type_id",
+                        "in": "query",
+                        "description": "Filter by POI type",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "latitude",
+                        "in": "query",
+                        "description": "Latitude for nearby search",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "longitude",
+                        "in": "query",
+                        "description": "Longitude for nearby search",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "radius",
+                        "in": "query",
+                        "description": "Search radius in km (default 10)",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "is_verified",
+                        "in": "query",
+                        "description": "Filter by verification status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Points of Interest"
+                ],
+                "summary": "Create a new point of interest",
+                "operationId": "d3d4d26039115ffe5f38356fc849ecba",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "type_id",
+                                    "latitude",
+                                    "longitude"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "type_id": {
+                                        "type": "integer"
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "address": {
+                                        "type": "string"
+                                    },
+                                    "city_id": {
+                                        "type": "integer"
+                                    },
+                                    "country_id": {
+                                        "type": "integer"
+                                    },
+                                    "phone": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "website": {
+                                        "type": "string"
+                                    },
+                                    "opening_hours": {
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "POI created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/pois/{id}": {
+            "get": {
+                "tags": [
+                    "Points of Interest"
+                ],
+                "summary": "Get a specific point of interest",
+                "operationId": "f5a583baef0d88b3736cf4be3e40147b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "POI not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Points of Interest"
+                ],
+                "summary": "Update a point of interest",
+                "operationId": "4b8abdf27c185d320dea8256af6e3111",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "format": "float"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "POI updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "POI not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Points of Interest"
+                ],
+                "summary": "Delete a point of interest",
+                "operationId": "054ac26a2d810ec53837492383eebcce",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "POI deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "POI not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/pois/{id}/favorite": {
+            "post": {
+                "tags": [
+                    "Points of Interest"
+                ],
+                "summary": "Toggle favorite status for a POI",
+                "operationId": "e5814fef14e6f11173d1ab938eea4268",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Favorite toggled successfully"
+                    },
+                    "404": {
+                        "description": "POI not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/pois/nearby": {
+            "get": {
+                "tags": [
+                    "Points of Interest"
+                ],
+                "summary": "Get nearby points of interest",
+                "operationId": "5de9daacae5f37431f23003d733f13e7",
+                "parameters": [
+                    {
+                        "name": "latitude",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "longitude",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "radius",
+                        "in": "query",
+                        "description": "Search radius in km",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/check-promo": {
@@ -17013,6 +17723,326 @@
                         "description": "Role deleted"
                     }
                 }
+            }
+        },
+        "/api/routes": {
+            "get": {
+                "tags": [
+                    "Routes"
+                ],
+                "summary": "Get all routes",
+                "operationId": "25d3d0d0f5d12b021dc6272e30293e95",
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Filter by category",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "difficulty",
+                        "in": "query",
+                        "description": "Filter by difficulty",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "easy",
+                                "moderate",
+                                "difficult",
+                                "expert"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "is_featured",
+                        "in": "query",
+                        "description": "Filter featured routes",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Routes"
+                ],
+                "summary": "Create a new route",
+                "operationId": "b33c4c1179bc9292122b3d06edfeaff1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "description",
+                                    "waypoints"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "category_id": {
+                                        "type": "integer"
+                                    },
+                                    "difficulty": {
+                                        "type": "string"
+                                    },
+                                    "best_season": {
+                                        "type": "string"
+                                    },
+                                    "waypoints": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Route created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/routes/{id}": {
+            "get": {
+                "tags": [
+                    "Routes"
+                ],
+                "summary": "Get a specific route",
+                "operationId": "e2a8d29a88e0b4b65e46b742ac68f79e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Route not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Routes"
+                ],
+                "summary": "Update a route",
+                "operationId": "deeadf381bc7b3d6471d4c17c0cfe8ac",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Route updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Route not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Routes"
+                ],
+                "summary": "Delete a route",
+                "operationId": "90c67fe2765db8d58d5efc5a24316169",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Route deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Route not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/routes/{id}/like": {
+            "post": {
+                "tags": [
+                    "Routes"
+                ],
+                "summary": "Toggle like status for a route",
+                "operationId": "7cfa77d8550d33d61a9b410be9fd7521",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Like toggled successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/routes/{id}/favorite": {
+            "post": {
+                "tags": [
+                    "Routes"
+                ],
+                "summary": "Toggle favorite status for a route",
+                "operationId": "62c47a8bdffd439ee9f3b9e30106879c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Favorite toggled successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/routes/{route_id}/reviews": {
+            "get": {
+                "tags": [
+                    "Route Reviews"
+                ],
+                "summary": "Get all reviews for a route",
+                "operationId": "e36f71d348ee4ae5b06f382b3998b157",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Route Reviews"
+                ],
+                "summary": "Create a review for a route",
+                "operationId": "20efbbb72f2a90a0ee6fa0674e98e550",
+                "responses": {
+                    "201": {
+                        "description": "Review created successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/routes/{route_id}/reviews/{id}": {
+            "delete": {
+                "tags": [
+                    "Route Reviews"
+                ],
+                "summary": "Delete a review",
+                "operationId": "3b1cc097c236b65d4204f593587143a9",
+                "responses": {
+                    "200": {
+                        "description": "Review deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/listings/{listingId}/soom": {
@@ -20201,6 +21231,26 @@
         },
         {
             "name": "Motorcycle Years"
+        },
+        {
+            "name": "Newsletter",
+            "description": "API Endpoints for Newsletter Subscription"
+        },
+        {
+            "name": "POI Reviews",
+            "description": "API Endpoints for POI Reviews"
+        },
+        {
+            "name": "Points of Interest",
+            "description": "API Endpoints for Points of Interest"
+        },
+        {
+            "name": "Routes",
+            "description": "API Endpoints for Motorcycle Routes"
+        },
+        {
+            "name": "Route Reviews",
+            "description": "API Endpoints for Route Reviews"
         },
         {
             "name": "Wishlist",
