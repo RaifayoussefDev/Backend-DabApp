@@ -315,11 +315,13 @@ class UserController extends Controller
         $authenticatedUser = Auth::user(); // Récupère l'utilisateur connecté via JWT token
 
         $user = User::findOrFail($id);
-        $user->delete();
+
+        // Suppression définitive de la base de données (pas de soft delete)
+        $user->forceDelete();
 
         return response()->json([
             'status' => 'success',
-            'message' => 'User deleted successfully'
+            'message' => 'User permanently deleted successfully'
         ]);
     }
 
