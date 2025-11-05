@@ -37,3 +37,8 @@ Route::view('/test-google-login', 'Auth.google-test');
 Route::get('/motorcycles/import', [ImportMotorcycleController::class, 'index'])->name('motorcycles.import');
 Route::post('/motorcycles/import', [ImportMotorcycleController::class, 'import'])->name('motorcycles.import.process');
 Route::get('/motorcycles/import/template', [ImportMotorcycleController::class, 'downloadTemplate'])->name('motorcycles.import.template');
+
+Route::get('/routes/{id}', function ($id) {
+    $route = \App\Models\Route::with(['waypoints', 'creator'])->findOrFail($id);
+    return view('routes.show', compact('route'));
+});

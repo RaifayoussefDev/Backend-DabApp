@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API Routes - Harley Davidson Style</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #ff6b00 0%, #cc5500 100%);
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            text-transform: uppercase;
+        }
+
+        .section {
+            background: #2c2c2c;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid #ff6b00;
+        }
+
+        .section h2 {
+            color: #ff6b00;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #ff6b00;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            background: #1a1a1a;
+            border: 2px solid #444;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #ff6b00;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            background: linear-gradient(90deg, #ff6b00 0%, #cc5500 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            text-transform: uppercase;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #555;
+        }
+
+        .btn-danger {
+            background: #d32f2f;
+        }
+
+        .response-box {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            border: 2px solid #444;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .response-box pre {
+            color: #4caf50;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .map-container {
+            background: #1a1a1a;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        #map, #displayMap {
+            width: 100%;
+            height: 500px;
+        }
+
+        .waypoint-card {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ff6b00;
+            position: relative;
+        }
+
+        .waypoint-card h4 {
+            color: #ff6b00;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .waypoint-card .location {
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+
+        .waypoint-card .remove-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #d32f2f;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .waypoint-card .remove-btn:hover {
+            background: #b71c1c;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .success {
+            color: #4caf50;
+        }
+
+        .error {
+            color: #f44336;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: #2c2c2c;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 10px;
+            border: 3px solid #ff6b00;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: #ff6b00;
+            font-size: 20px;
+        }
+
+        .close-modal {
+            background: #d32f2f;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏍️ Test API Routes Motorcycle</h1>
+            <p>Interface de test complète avec gestion des waypoints</p>
+        </div>
+
+        <!-- Configuration -->
+        <div class="section">
+            <h2>⚙️ Configuration API</h2>
+            <div class="grid-3">
+                <div class="form-group">
+                    <label>URL de l'API</label>
+                    <input type="text" id="apiUrl" value="http://localhost:8000/api">
+                </div>
+                <div class="form-group">
+                    <label>Token d'authentification</label>
+                    <input type="text" id="authToken" placeholder="Bearer token">
+                </div>
+                <div class="form-group">
+                    <label>Clé Google Maps API</label>
+                    <input type="text" id="mapsApiKey" placeholder="AIzaSy...">
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte Interactive -->
+        <div class="section">
+            <h2>🗺️ Étape 1 : Sélectionner les Points sur la Carte</h2>
+            <p style="color: #999; margin-bottom: 15px;">
+                Cliquez sur la carte pour ajouter des waypoints. Ensuite, configurez chaque waypoint avec ses détails.
+            </p>
+            <button class="btn" onclick="initMap()">Charger la Carte</button>
+            <button class="btn btn-secondary" onclick="clearWaypoints()">Effacer Tous les Points</button>
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+        </div>
+
+        <!-- Liste des Waypoints -->
+        <div class="section">
+            <h2>📍 Waypoints Sélectionnés (<span id="waypointCount">0</span>)</h2>
+            <div id="waypointsList"></div>
+        </div>
+
+        <!-- Informations de la Route -->
+        <div class="section">
+            <h2>📝 Étape 2 : Informations de la Route</h2>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Titre de la route *</label>
+                    <input type="text" id="routeTitle" placeholder="Route des Alpes" value="Test Route API">
+                </div>
+                <div class="form-group">
+                    <label>Difficulté</label>
+                    <select id="routeDifficulty">
+                        <option value="easy">Facile</option>
+                        <option value="moderate">Modérée</option>
+                        <option value="difficult">Difficile</option>
+                        <option value="expert">Expert</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Description *</label>
+                <textarea id="routeDescription" rows="4" placeholder="Décrivez votre route...">Ceci est une route de test pour valider l'API</textarea>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Durée Estimée</label>
+                    <input type="text" id="estimatedDuration" placeholder="Ex: 3 heures">
+                </div>
+                <div class="form-group">
+                    <label>Meilleure Saison</label>
+                    <input type="text" id="bestSeason" placeholder="Ex: Printemps, Été">
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Création -->
+        <div class="section">
+            <h2>🚀 Étape 3 : Créer la Route (POST)</h2>
+            <button class="btn" id="createBtn" onclick="createRoute()">Créer la Route</button>
+            <div class="response-box" id="createResponse"></div>
+        </div>
+
+        <!-- Test Liste -->
+        <div class="section">
+            <h2>📋 Test API : Liste des Routes (GET)</h2>
+            <button class="btn" onclick="getRoutes()">Récupérer toutes les routes</button>
+            <div class="response-box" id="listResponse"></div>
+        </div>
+
+        <!-- Test Détails + Affichage sur Carte -->
+        <div class="section">
+            <h2>🔍 Test API : Afficher une Route sur la Carte (GET by ID)</h2>
+            <div class="form-group">
+                <label>ID de la route</label>
+                <input type="number" id="displayRouteId" placeholder="1">
+            </div>
+            <button class="btn" onclick="displayRouteOnMap()">Afficher sur la Carte</button>
+            <div class="response-box" id="displayResponse"></div>
+            <div class="map-container">
+                <div id="displayMap"></div>
+            </div>
+        </div>
+
+        <!-- Test Like -->
+        <div class="section">
+            <h2>❤️ Test API : Like/Unlike (POST)</h2>
+            <div class="form-group">
+                <label>ID de la route</label>
+                <input type="number" id="likeRouteId" placeholder="1">
+            </div>
+            <button class="btn" onclick="toggleLike()">Toggle Like</button>
+            <div class="response-box" id="likeResponse"></div>
+        </div>
+
+        <!-- Test Favorite -->
+        <div class="section">
+            <h2>⭐ Test API : Favorite (POST)</h2>
+            <div class="form-group">
+                <label>ID de la route</label>
+                <input type="number" id="favRouteId" placeholder="1">
+            </div>
+            <button class="btn" onclick="toggleFavorite()">Toggle Favorite</button>
+            <div class="response-box" id="favResponse"></div>
+        </div>
+    </div>
+
+    <!-- Modal pour éditer un Waypoint -->
+    <div id="waypointModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📍 Configurer le Waypoint</h3>
+                <button class="close-modal" onclick="closeWaypointModal()">✕</button>
+            </div>
+
+            <input type="hidden" id="editWaypointIndex">
+
+            <div class="form-group">
+                <label>Nom du lieu *</label>
+                <input type="text" id="waypointName" placeholder="Nom du waypoint">
+            </div>
+
+            <div class="form-group">
+                <label>Type de waypoint</label>
+                <select id="waypointType">
+                    <option value="start">🏁 Point de départ</option>
+                    <option value="waypoint">📍 Point de passage</option>
+                    <option value="poi">🎯 Point d'intérêt</option>
+                    <option value="rest_stop">☕ Pause repos</option>
+                    <option value="gas_station">⛽ Station essence</option>
+                    <option value="viewpoint">🌄 Point de vue</option>
+                    <option value="end">🏁 Point d'arrivée</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Description / Notes</label>
+                <textarea id="waypointDescription" rows="3" placeholder="Ajoutez des notes sur ce point..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Durée de pause (minutes)</label>
+                <input type="number" id="waypointPauseDuration" placeholder="Ex: 15" min="0">
+            </div>
+
+            <div class="form-group">
+                <label>Raison de la pause</label>
+                <input type="text" id="waypointPauseReason" placeholder="Ex: Déjeuner, Essence, Photo...">
+            </div>
+
+            <div class="form-group">
+                <label style="margin-bottom: 10px;">Services disponibles :</label>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="hasGasStation">
+                    <label for="hasGasStation" style="color: #fff; margin: 0;">⛽ Station essence</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="hasRestaurant">
+                    <label for="hasRestaurant" style="color: #fff; margin: 0;">🍽️ Restaurant</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="hasToilets">
+                    <label for="hasToilets" style="color: #fff; margin: 0;">🚻 Toilettes</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="hasParking">
+                    <label for="hasParking" style="color: #fff; margin: 0;">🅿️ Parking</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="hasHotel">
+                    <label for="hasHotel" style="color: #fff; margin: 0;">🏨 Hôtel</label>
+                </div>
+            </div>
+
+            <button class="btn" onclick="saveWaypoint()">💾 Enregistrer le Waypoint</button>
+        </div>
+    </div>
+
+<script>
+    let map;
+    let displayMap;
+    let markers = [];
+    let displayMarkers = [];
+    let waypoints = [];
+    let directionsService;
+    let directionsRenderer;
+    let displayDirectionsService;
+    let displayDirectionsRenderer;
+    let alternativeRoutes = [];
+    let selectedRouteIndex = 0;
+    let motorcycleMarker = null;
+    let animationPath = [];
+    let animationInterval = null;
+    let currentPathIndex = 0;
+
+    const mapStyles = [
+        {"featureType": "all", "elementType": "geometry", "stylers": [{"color": "#242f3e"}]},
+        {"featureType": "road", "elementType": "geometry.fill", "stylers": [{"color": "#2b2b2b"}]},
+        {"featureType": "road", "elementType": "labels.text.fill", "stylers": [{"color": "#ff6b00"}]},
+        {"featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [{"color": "#ff6b00"}]},
+        {"featureType": "water", "elementType": "geometry", "stylers": [{"color": "#17263c"}]}
+    ];
+
+    // Icône SVG de moto personnalisée Harley Davidson
+    const motorcycleIcon = {
+        path: 'M17.5,9.5C17.5,10.9 16.4,12 15,12C13.6,12 12.5,10.9 12.5,9.5C12.5,8.1 13.6,7 15,7C16.4,7 17.5,8.1 17.5,9.5M6.5,9.5C6.5,10.9 5.4,12 4,12C2.6,12 1.5,10.9 1.5,9.5C1.5,8.1 2.6,7 4,7C5.4,7 6.5,8.1 6.5,9.5M10.1,6.9C9.7,7.1 9.4,7.4 9.1,7.7L7,7.7C6.7,7.7 6.5,7.9 6.5,8.2C6.5,8.5 6.7,8.7 7,8.7L8.7,8.7C8.6,9 8.5,9.2 8.5,9.5C8.5,9.6 8.5,9.7 8.5,9.8L4.8,10.8C4.5,10.9 4.4,11.2 4.5,11.5C4.6,11.7 4.8,11.9 5,11.9L8.9,10.8C9.3,11.6 10.1,12.2 11,12.4L11,15L10,15C9.7,15 9.5,15.2 9.5,15.5C9.5,15.8 9.7,16 10,16L13,16C13.3,16 13.5,15.8 13.5,15.5C13.5,15.2 13.3,15 13,15L12,15L12,12.4C12.9,12.2 13.7,11.6 14.1,10.8L18,11.9C18.2,11.9 18.4,11.7 18.5,11.5C18.6,11.2 18.5,10.9 18.2,10.8L14.5,9.8C14.5,9.7 14.5,9.6 14.5,9.5C14.5,9.2 14.4,9 14.3,8.7L16,8.7C16.3,8.7 16.5,8.5 16.5,8.2C16.5,7.9 16.3,7.7 16,7.7L13.9,7.7C13.6,7.4 13.3,7.1 12.9,6.9L13.5,5.7C13.6,5.4 13.5,5.1 13.2,5C12.9,4.9 12.6,5 12.5,5.3L11.9,6.5C11.6,6.5 11.4,6.5 11.1,6.5L10.5,5.3C10.4,5 10.1,4.9 9.8,5C9.5,5.1 9.4,5.4 9.5,5.7L10.1,6.9Z',
+        fillColor: '#ff6b00',
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 2,
+        scale: 1.8,
+        anchor: new google.maps.Point(10, 10),
+        rotation: 0
+    };
+
+    function initMap() {
+        const apiKey = document.getElementById('mapsApiKey').value;
+
+        if (!apiKey) {
+            alert('⚠️ Veuillez entrer votre clé Google Maps API !');
+            return;
+        }
+
+        if (!window.google) {
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry`;
+            script.onload = () => {
+                setupMap();
+                setupDisplayMap();
+                getUserLocation();
+            };
+            document.head.appendChild(script);
+        } else {
+            setupMap();
+            setupDisplayMap();
+            getUserLocation();
+        }
+    }
+
+    // Détecter la position de l'utilisateur
+    function getUserLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const userPos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+
+                    map.setCenter(userPos);
+                    map.setZoom(12);
+
+                    new google.maps.Marker({
+                        position: userPos,
+                        map: map,
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 8,
+                            fillColor: '#4285F4',
+                            fillOpacity: 1,
+                            strokeColor: '#fff',
+                            strokeWeight: 2
+                        },
+                        title: 'Votre position'
+                    });
+
+                    const geocoder = new google.maps.Geocoder();
+                    geocoder.geocode({ location: userPos }, function(results, status) {
+                        if (status === 'OK' && results[0]) {
+                            showLocationInfo(results[0].formatted_address, userPos);
+                        }
+                    });
+                },
+                function(error) {
+                    console.warn('Géolocalisation désactivée:', error);
+                    alert('📍 Géolocalisation désactivée. La carte sera centrée sur Paris par défaut.');
+                }
+            );
+        }
+    }
+
+    function showLocationInfo(address, coords) {
+        const configSection = document.querySelector('.section');
+        let locationDiv = document.getElementById('locationInfo');
+
+        if (!locationDiv) {
+            locationDiv = document.createElement('div');
+            locationDiv.id = 'locationInfo';
+            locationDiv.style.cssText = 'background: #1a1a1a; padding: 15px; border-radius: 5px; margin-top: 15px; border: 2px solid #ff6b00;';
+            configSection.appendChild(locationDiv);
+        }
+
+        locationDiv.innerHTML = `
+            <p style="margin: 5px 0; color: #ff6b00; font-weight: bold;">📍 Votre localisation détectée :</p>
+            <p style="margin: 5px 0; color: #fff;">${address}</p>
+            <p style="margin: 5px 0; color: #999; font-size: 12px;">Lat: ${coords.lat.toFixed(6)}, Lng: ${coords.lng.toFixed(6)}</p>
+        `;
+    }
+
+    function setupMap() {
+        const center = { lat: 48.8566, lng: 2.3522 };
+
+        map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 6,
+            center: center,
+            styles: mapStyles,
+            mapTypeControl: false,
+            streetViewControl: false
+        });
+
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+            map: map,
+            suppressMarkers: true,
+            polylineOptions: {
+                strokeColor: '#ff6b00',
+                strokeWeight: 5,
+                strokeOpacity: 0.8
+            },
+            provideRouteAlternatives: true
+        });
+
+        map.addListener('click', function(event) {
+            addWaypoint(event.latLng);
+        });
+    }
+
+    function setupDisplayMap() {
+        const center = { lat: 48.8566, lng: 2.3522 };
+
+        displayMap = new google.maps.Map(document.getElementById('displayMap'), {
+            zoom: 6,
+            center: center,
+            styles: mapStyles,
+            mapTypeControl: false,
+            streetViewControl: false
+        });
+
+        displayDirectionsService = new google.maps.DirectionsService();
+        displayDirectionsRenderer = new google.maps.DirectionsRenderer({
+            map: displayMap,
+            suppressMarkers: true,
+            polylineOptions: {
+                strokeColor: '#ff6b00',
+                strokeWeight: 5,
+                strokeOpacity: 0.8
+            }
+        });
+    }
+
+    function addWaypoint(location) {
+        const position = {
+            lat: location.lat(),
+            lng: location.lng()
+        };
+
+        const marker = new google.maps.Marker({
+            position: position,
+            map: map,
+            label: {
+                text: String(markers.length + 1),
+                color: 'white',
+                fontWeight: 'bold'
+            },
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 12,
+                fillColor: markers.length === 0 ? '#4caf50' : '#ff6b00',
+                fillOpacity: 1,
+                strokeColor: '#fff',
+                strokeWeight: 2
+            }
+        });
+
+        markers.push(marker);
+
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ location: position }, function(results, status) {
+            if (status === 'OK' && results[0]) {
+                const waypointData = {
+                    name: results[0].formatted_address,
+                    latitude: position.lat,
+                    longitude: position.lng,
+                    waypoint_type: markers.length === 1 ? 'start' : 'waypoint',
+                    description: '',
+                    pause_duration: null,
+                    pause_reason: '',
+                    has_gas_station: false,
+                    has_restaurant: false,
+                    has_toilets: false,
+                    has_parking: false,
+                    has_hotel: false
+                };
+
+                waypoints.push(waypointData);
+                updateWaypointsList();
+
+                if (waypoints.length >= 2) {
+                    calculateRouteWithAlternatives();
+                }
+
+                editWaypoint(waypoints.length - 1);
+            }
+        });
+    }
+
+    function removeWaypoint(index) {
+        markers[index].setMap(null);
+        markers.splice(index, 1);
+        waypoints.splice(index, 1);
+
+        markers.forEach((marker, i) => {
+            marker.setLabel({
+                text: String(i + 1),
+                color: 'white',
+                fontWeight: 'bold'
+            });
+
+            marker.setIcon({
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 12,
+                fillColor: i === 0 ? '#4caf50' : '#ff6b00',
+                fillOpacity: 1,
+                strokeColor: '#fff',
+                strokeWeight: 2
+            });
+        });
+
+        updateWaypointsList();
+
+        if (waypoints.length >= 2) {
+            calculateRouteWithAlternatives();
+        } else {
+            directionsRenderer.setMap(null);
+            directionsRenderer.setMap(map);
+            hideRouteSelector();
+            removeMotorcycleMarker();
+        }
+    }
+
+    function clearWaypoints() {
+        if (confirm('Voulez-vous effacer tous les waypoints ?')) {
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
+            waypoints = [];
+            alternativeRoutes = [];
+            updateWaypointsList();
+            directionsRenderer.setMap(null);
+            directionsRenderer.setMap(map);
+            hideRouteSelector();
+            removeMotorcycleMarker();
+        }
+    }
+
+    // ===== FONCTIONS MOTO =====
+
+    function removeMotorcycleMarker() {
+        if (motorcycleMarker) {
+            motorcycleMarker.setMap(null);
+            motorcycleMarker = null;
+        }
+        animationPath = [];
+        stopMotorcycleAnimation();
+
+        const controlsDiv = document.getElementById('animationControls');
+        if (controlsDiv) {
+            controlsDiv.remove();
+        }
+    }
+
+    function createMotorcycleMarker(position, rotation = 0) {
+        if (motorcycleMarker) {
+            motorcycleMarker.setMap(null);
+        }
+
+        const icon = {
+            ...motorcycleIcon,
+            rotation: rotation
+        };
+
+        motorcycleMarker = new google.maps.Marker({
+            position: position,
+            map: map,
+            icon: icon,
+            title: '🏍️ Harley Davidson',
+            zIndex: 1000
+        });
+
+        return motorcycleMarker;
+    }
+
+    function placeMotorcycleIcons(route) {
+        removeMotorcycleMarker();
+
+        const path = route.overview_path;
+
+        if (path.length === 0) return;
+
+        const startPosition = path[0];
+
+        let heading = 0;
+        if (path.length > 1) {
+            heading = google.maps.geometry.spherical.computeHeading(path[0], path[1]);
+        }
+
+        createMotorcycleMarker(startPosition, heading);
+
+        animationPath = path;
+
+        addAnimationControls();
+    }
+
+    function addAnimationControls() {
+        let controlsDiv = document.getElementById('animationControls');
+
+        if (!controlsDiv) {
+            controlsDiv = document.createElement('div');
+            controlsDiv.id = 'animationControls';
+            controlsDiv.style.cssText = 'background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%); padding: 20px; border-radius: 8px; margin-top: 15px; border: 3px solid #ff6b00; box-shadow: 0 5px 15px rgba(255, 107, 0, 0.3);';
+
+            const waypointsSection = document.querySelector('.section:nth-of-type(3)');
+            const routeSelector = document.getElementById('routeSelector');
+            if (routeSelector) {
+                routeSelector.after(controlsDiv);
+            } else {
+                waypointsSection.appendChild(controlsDiv);
+            }
+        }
+
+        controlsDiv.innerHTML = `
+            <h3 style="color: #ff6b00; margin-bottom: 15px; text-align: center; font-size: 18px;">
+                🏍️ Animation Harley Davidson
+            </h3>
+            <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                <button class="btn" onclick="animateMotorcycle()" style="margin: 0;">
+                    ▶️ Démarrer
+                </button>
+                <button class="btn btn-secondary" onclick="pauseMotorcycleAnimation()" style="margin: 0;">
+                    ⏸️ Pause
+                </button>
+                <button class="btn btn-secondary" onclick="resetMotorcycle()" style="margin: 0;">
+                    🔄 Réinitialiser
+                </button>
+            </div>
+            <div id="animationProgress" style="margin-top: 15px; text-align: center; color: #fff; font-size: 14px;">
+                <p>Prêt à partir ! 🏁</p>
+            </div>
+        `;
+    }
+
+    function animateMotorcycle() {
+        if (animationPath.length === 0) {
+            alert('⚠️ Aucune route sélectionnée !');
+            return;
+        }
+
+        if (animationInterval) {
+            clearInterval(animationInterval);
+        }
+
+        if (currentPathIndex >= animationPath.length - 1) {
+            currentPathIndex = 0;
+        }
+
+        const progressDiv = document.getElementById('animationProgress');
+        if (progressDiv) {
+            progressDiv.innerHTML = '<p style="color: #4caf50;">🏍️ En route... <span id="progressPercent">0%</span></p>';
+        }
+
+        animationInterval = setInterval(() => {
+            if (currentPathIndex >= animationPath.length - 1) {
+                clearInterval(animationInterval);
+                if (progressDiv) {
+                    progressDiv.innerHTML = '<p style="color: #4caf50; font-weight: bold;">🏁 Arrivée ! Parcours terminé !</p>';
+                }
+                return;
+            }
+
+            const currentPoint = animationPath[currentPathIndex];
+            const nextPoint = animationPath[currentPathIndex + 1];
+
+            const heading = google.maps.geometry.spherical.computeHeading(currentPoint, nextPoint);
+
+            motorcycleMarker.setPosition(nextPoint);
+
+            const icon = {
+                ...motorcycleIcon,
+                rotation: heading
+            };
+            motorcycleMarker.setIcon(icon);
+
+            map.panTo(nextPoint);
+
+            currentPathIndex++;
+
+            // Mettre à jour le pourcentage
+            const percent = Math.round((currentPathIndex / animationPath.length) * 100);
+            const percentSpan = document.getElementById('progressPercent');
+            if (percentSpan) {
+                percentSpan.textContent = percent + '%';
+            }
+        }, 50);
+    }
+
+    function pauseMotorcycleAnimation() {
+        if (animationInterval) {
+            clearInterval(animationInterval);
+            animationInterval = null;
+
+            const progressDiv = document.getElementById('animationProgress');
+            if (progressDiv) {
+                progressDiv.innerHTML = '<p style="color: #ffa726;">⏸️ En pause</p>';
+            }
+        }
+    }
+
+    function stopMotorcycleAnimation() {
+        if (animationInterval) {
+            clearInterval(animationInterval);
+            animationInterval = null;
+        }
+    }
+
+    function resetMotorcycle() {
+        stopMotorcycleAnimation();
+
+        if (animationPath.length > 0) {
+            currentPathIndex = 0;
+            const startPosition = animationPath[0];
+
+            let heading = 0;
+            if (animationPath.length > 1) {
+                heading = google.maps.geometry.spherical.computeHeading(animationPath[0], animationPath[1]);
+            }
+
+            motorcycleMarker.setPosition(startPosition);
+
+            const icon = {
+                ...motorcycleIcon,
+                rotation: heading
+            };
+            motorcycleMarker.setIcon(icon);
+
+            map.panTo(startPosition);
+            map.setZoom(14);
+
+            const progressDiv = document.getElementById('animationProgress');
+            if (progressDiv) {
+                progressDiv.innerHTML = '<p>Prêt à partir ! 🏁</p>';
+            }
+        }
+    }
+
+    // ===== ROUTES ALTERNATIVES =====
+
+    function calculateRouteWithAlternatives() {
+        if (waypoints.length < 2) return;
+
+        const origin = new google.maps.LatLng(waypoints[0].latitude, waypoints[0].longitude);
+        const destination = new google.maps.LatLng(
+            waypoints[waypoints.length - 1].latitude,
+            waypoints[waypoints.length - 1].longitude
+        );
+
+        const waypointsForDirections = waypoints.slice(1, -1).map(wp => ({
+            location: new google.maps.LatLng(wp.latitude, wp.longitude),
+            stopover: true
+        }));
+
+        directionsService.route({
+            origin: origin,
+            destination: destination,
+            waypoints: waypointsForDirections,
+            travelMode: google.maps.TravelMode.DRIVING,
+            provideRouteAlternatives: true
+        }, function(result, status) {
+            if (status === 'OK') {
+                alternativeRoutes = result.routes;
+                selectedRouteIndex = 0;
+
+                displaySelectedRoute();
+                showRouteSelector();
+                placeMotorcycleIcons(alternativeRoutes[selectedRouteIndex]);
+            }
+        });
+    }
+
+    function displaySelectedRoute() {
+        directionsRenderer.setDirections({
+            routes: [alternativeRoutes[selectedRouteIndex]],
+            request: {
+                origin: alternativeRoutes[selectedRouteIndex].legs[0].start_location,
+                destination: alternativeRoutes[selectedRouteIndex].legs[alternativeRoutes[selectedRouteIndex].legs.length - 1].end_location,
+                travelMode: google.maps.TravelMode.DRIVING
+            }
+        });
+
+        updateRouteInfo();
+        placeMotorcycleIcons(alternativeRoutes[selectedRouteIndex]);
+    }
+
+    function showRouteSelector() {
+        let selectorDiv = document.getElementById('routeSelector');
+
+        if (!selectorDiv) {
+            selectorDiv = document.createElement('div');
+            selectorDiv.id = 'routeSelector';
+            selectorDiv.style.cssText = 'background: #1a1a1a; padding: 20px; border-radius: 8px; margin-top: 15px; border: 2px solid #ff6b00;';
+
+            const waypointsSection = document.querySelector('.section:nth-of-type(3)');
+            waypointsSection.appendChild(selectorDiv);
+        }
+
+        let html = '<h3 style="color: #ff6b00; margin-bottom: 15px;">🛣️ Routes Disponibles (' + alternativeRoutes.length + ')</h3>';
+
+        alternativeRoutes.forEach((route, index) => {
+            const leg = route.legs[0];
+            const distance = leg.distance.text;
+            const duration = leg.duration.text;
+            const isSelected = index === selectedRouteIndex;
+
+            html += `
+                <div onclick="selectRoute(${index})" style="
+                    background: ${isSelected ? '#ff6b00' : '#2c2c2c'};
+                    padding: 15px;
+                    margin-bottom: 10px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    border: 2px solid ${isSelected ? '#fff' : '#444'};
+                    transition: all 0.3s;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4 style="color: ${isSelected ? '#fff' : '#ff6b00'}; margin-bottom: 5px;">
+                                ${index === 0 ? '🏆 Route Recommandée' : '📍 Route Alternative ' + index}
+                            </h4>
+                            <p style="color: ${isSelected ? '#fff' : '#ccc'}; font-size: 13px; margin: 5px 0;">
+                                📏 Distance: <strong>${distance}</strong>
+                            </p>
+                            <p style="color: ${isSelected ? '#fff' : '#ccc'}; font-size: 13px; margin: 5px 0;">
+                                ⏱️ Durée: <strong>${duration}</strong>
+                            </p>
+                            ${route.summary ? `<p style="color: ${isSelected ? '#fff' : '#999'}; font-size: 12px; margin-top: 5px;">Via: ${route.summary}</p>` : ''}
+                        </div>
+                        <div style="font-size: 24px;">
+                            ${isSelected ? '✅' : '⚪'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        selectorDiv.innerHTML = html;
+    }
+
+    function selectRoute(index) {
+        selectedRouteIndex = index;
+        displaySelectedRoute();
+        showRouteSelector();
+    }
+
+    function hideRouteSelector() {
+        const selectorDiv = document.getElementById('routeSelector');
+        if (selectorDiv) {
+            selectorDiv.remove();
+        }
+
+        const infoDiv = document.getElementById('selectedRouteInfo');
+        if (infoDiv) {
+            infoDiv.remove();
+        }
+    }
+
+    function updateRouteInfo() {
+        const route = alternativeRoutes[selectedRouteIndex];
+        const leg = route.legs[0];
+
+        let infoDiv = document.getElementById('selectedRouteInfo');
+
+        if (!infoDiv) {
+            infoDiv = document.createElement('div');
+            infoDiv.id = 'selectedRouteInfo';
+            infoDiv.style.cssText = 'background: #4caf50; padding: 15px; border-radius: 5px; margin-top: 15px; color: #fff;';
+
+            const waypointsSection = document.querySelector('.section:nth-of-type(3)');
+            waypointsSection.appendChild(infoDiv);
+        }
+
+        infoDiv.innerHTML = `
+            <h3 style="margin-bottom: 10px; font-size: 16px;">✅ Route Sélectionnée</h3>
+            <p style="margin: 5px 0;"><strong>Distance totale:</strong> ${leg.distance.text}</p>
+            <p style="margin: 5px 0;"><strong>Durée estimée:</strong> ${leg.duration.text}</p>
+            ${route.summary ? `<p style="margin: 5px 0;"><strong>Itinéraire:</strong> ${route.summary}</p>` : ''}
+        `;
+    }
+
+    // ===== WAYPOINTS =====
+
+    function updateWaypointsList() {
+        const list = document.getElementById('waypointsList');
+        list.innerHTML = '';
+
+        waypoints.forEach((wp, index) => {
+            const services = [];
+            if (wp.has_gas_station) services.push('⛽');
+            if (wp.has_restaurant) services.push('🍽️');
+            if (wp.has_toilets) services.push('🚻');
+            if (wp.has_parking) services.push('🅿️');
+            if (wp.has_hotel) services.push('🏨');
+
+            const typeIcons = {
+                'start': '🏁',
+                'waypoint': '📍',
+                'poi': '🎯',
+                'rest_stop': '☕',
+                'gas_station': '⛽',
+                'viewpoint': '🌄',
+                'end': '🏁'
+            };
+
+            const card = document.createElement('div');
+            card.className = 'waypoint-card';
+            card.innerHTML = `
+                <button class="remove-btn" onclick="removeWaypoint(${index})">✕ Supprimer</button>
+                <h4>${typeIcons[wp.waypoint_type] || '📍'} Point ${index + 1}: ${wp.name}</h4>
+                <p class="location">Lat: ${wp.latitude.toFixed(6)}, Lng: ${wp.longitude.toFixed(6)}</p>
+
+                ${wp.description ? `<p style="color: #ccc; margin-bottom: 10px;">📝 ${wp.description}</p>` : ''}
+
+                ${wp.pause_duration ? `
+                    <p style="color: #ff6b00; margin-bottom: 5px;">
+                        ⏱️ Pause: ${wp.pause_duration} minutes
+                        ${wp.pause_reason ? `- ${wp.pause_reason}` : ''}
+                    </p>
+                ` : ''}
+
+                ${services.length > 0 ? `<p style="font-size: 18px; margin-top: 10px;">${services.join(' ')}</p>` : ''}
+
+                <button class="btn btn-secondary" style="margin-top: 10px;" onclick="editWaypoint(${index})">
+                    ✏️ Modifier les détails
+                </button>
+            `;
+            list.appendChild(card);
+        });
+
+        document.getElementById('waypointCount').textContent = waypoints.length;
+    }
+
+    function editWaypoint(index) {
+        const wp = waypoints[index];
+
+        document.getElementById('editWaypointIndex').value = index;
+        document.getElementById('waypointName').value = wp.name;
+        document.getElementById('waypointType').value = wp.waypoint_type;
+        document.getElementById('waypointDescription').value = wp.description || '';
+        document.getElementById('waypointPauseDuration').value = wp.pause_duration || '';
+        document.getElementById('waypointPauseReason').value = wp.pause_reason || '';
+        document.getElementById('hasGasStation').checked = wp.has_gas_station || false;
+        document.getElementById('hasRestaurant').checked = wp.has_restaurant || false;
+        document.getElementById('hasToilets').checked = wp.has_toilets || false;
+        document.getElementById('hasParking').checked = wp.has_parking || false;
+        document.getElementById('hasHotel').checked = wp.has_hotel || false;
+
+        document.getElementById('waypointModal').style.display = 'block';
+    }
+
+    function closeWaypointModal() {
+        document.getElementById('waypointModal').style.display = 'none';
+    }
+
+    function saveWaypoint() {
+        const index = parseInt(document.getElementById('editWaypointIndex').value);
+
+        waypoints[index].name = document.getElementById('waypointName').value;
+        waypoints[index].waypoint_type = document.getElementById('waypointType').value;
+        waypoints[index].description = document.getElementById('waypointDescription').value;
+        waypoints[index].pause_duration = document.getElementById('waypointPauseDuration').value || null;
+        waypoints[index].pause_reason = document.getElementById('waypointPauseReason').value;
+        waypoints[index].has_gas_station = document.getElementById('hasGasStation').checked;
+        waypoints[index].has_restaurant = document.getElementById('hasRestaurant').checked;
+        waypoints[index].has_toilets = document.getElementById('hasToilets').checked;
+        waypoints[index].has_parking = document.getElementById('hasParking').checked;
+        waypoints[index].has_hotel = document.getElementById('hasHotel').checked;
+
+        updateWaypointsList();
+        closeWaypointModal();
+
+        const marker = markers[index];
+        let color = '#ff6b00';
+
+        if (waypoints[index].waypoint_type === 'start' || waypoints[index].waypoint_type === 'end') {
+            color = '#4caf50';
+        } else if (waypoints[index].waypoint_type === 'gas_station') {
+            color = '#2196f3';
+        } else if (waypoints[index].waypoint_type === 'rest_stop') {
+            color = '#9c27b0';
+        } else if (waypoints[index].waypoint_type === 'viewpoint') {
+            color = '#ffc107';
+        }
+
+        marker.setIcon({
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 12,
+            fillColor: color,
+            fillOpacity: 1,
+            strokeColor: '#fff',
+            strokeWeight: 2
+        });
+    }
+
+    // ===== API CALLS =====
+
+    function getHeaders() {
+        const token = document.getElementById('authToken').value;
+        return {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : ''
+        };
+    }
+
+    function getApiUrl() {
+        return document.getElementById('apiUrl').value;
+    }
+
+    async function createRoute() {
+        const btn = document.getElementById('createBtn');
+        const responseBox = document.getElementById('createResponse');
+
+        if (waypoints.length < 2) {
+            responseBox.innerHTML = '<pre class="error">❌ Erreur : Vous devez sélectionner au moins 2 points sur la carte !</pre>';
+            return;
+        }
+
+        waypoints[waypoints.length - 1].waypoint_type = 'end';
+
+        let selectedRouteInfo = {};
+        if (alternativeRoutes.length > 0) {
+            const route = alternativeRoutes[selectedRouteIndex];
+            selectedRouteInfo = {
+                selected_route_index: selectedRouteIndex,
+                route_summary: route.summary || '',
+                total_distance_meters: route.legs[0].distance.value,
+                total_duration_seconds: route.legs[0].duration.value
+            };
+        }
+
+        const data = {
+            title: document.getElementById('routeTitle').value,
+            description: document.getElementById('routeDescription').value,
+            difficulty: document.getElementById('routeDifficulty').value,
+            estimated_duration: document.getElementById('estimatedDuration').value,
+            best_season: document.getElementById('bestSeason').value,
+            waypoints: waypoints,
+            route_info: selectedRouteInfo
+        };
+
+        btn.disabled = true;
+        btn.textContent = '⏳ Création en cours...';
+        responseBox.innerHTML = '<pre>Envoi de la requête...</pre>';
+
+        try {
+            const response = await fetch(`${getApiUrl()}/routes`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            responseBox.innerHTML = `<pre class="${result.success ? 'success' : 'error'}">${JSON.stringify(result, null, 2)}</pre>`;
+
+            if (result.success && result.data) {
+                document.getElementById('displayRouteId').value = result.data.id;
+                document.getElementById('likeRouteId').value = result.data.id;
+                document.getElementById('favRouteId').value = result.data.id;
+            }
+        } catch (error) {
+            responseBox.innerHTML = `<pre class="error">❌ Erreur: ${error.message}</pre>`;
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '🚀 Créer la Route';
+        }
+    }
+
+    async function getRoutes() {
+        const responseBox = document.getElementById('listResponse');
+        responseBox.innerHTML = '<pre>Chargement...</pre>';
+
+        try {
+            const response = await fetch(`${getApiUrl()}/routes`, {
+                headers: getHeaders()
+            });
+            const result = await response.json();
+            responseBox.innerHTML = `<pre class="success">${JSON.stringify(result, null, 2)}</pre>`;
+        } catch (error) {
+            responseBox.innerHTML = `<pre class="error">❌ Erreur: ${error.message}</pre>`;
+        }
+    }
+
+    async function displayRouteOnMap() {
+        const routeId = document.getElementById('displayRouteId').value;
+        const responseBox = document.getElementById('displayResponse');
+
+        if (!routeId) {
+            responseBox.innerHTML = '<pre class="error">❌ Veuillez entrer un ID de route</pre>';
+            return;
+        }
+
+        responseBox.innerHTML = '<pre>Chargement...</pre>';
+
+        try {
+            const response = await fetch(`${getApiUrl()}/routes/${routeId}`, {
+                headers: getHeaders()
+            });
+            const result = await response.json();
+
+            responseBox.innerHTML = `<pre class="success">${JSON.stringify(result, null, 2)}</pre>`;
+
+            if (result.success && result.data && result.data.waypoints) {
+                displayRouteOnMapFromData(result.data);
+            }
+        } catch (error) {
+            responseBox.innerHTML = `<pre class="error">❌ Erreur: ${error.message}</pre>`;
+        }
+    }
+
+    function displayRouteOnMapFromData(routeData) {
+        displayMarkers.forEach(marker => marker.setMap(null));
+        displayMarkers = [];
+
+        const waypoints = routeData.waypoints;
+
+        if (waypoints.length < 2) return;
+
+        waypoints.forEach((wp, index) => {
+            const position = {
+                lat: parseFloat(wp.latitude),
+                lng: parseFloat(wp.longitude)
+            };
+
+            let color = '#ff6b00';
+            if (wp.waypoint_type === 'start' || wp.waypoint_type === 'end') {
+                color = '#4caf50';
+            } else if (wp.waypoint_type === 'gas_station') {
+                color = '#2196f3';
+            } else if (wp.waypoint_type === 'rest_stop') {
+                color = '#9c27b0';
+            } else if (wp.waypoint_type === 'viewpoint') {
+                color = '#ffc107';
+            }
+
+            const marker = new google.maps.Marker({
+                position: position,
+                map: displayMap,
+                label: {
+                    text: String(index + 1),
+                    color: 'white',
+                    fontWeight: 'bold'
+                },
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 12,
+                    fillColor: color,
+                    fillOpacity: 1,
+                    strokeColor: '#fff',
+                    strokeWeight: 2
+                }
+            });
+
+            const infoContent = `
+                <div style="color: #000; padding: 10px;">
+                    <h3 style="margin: 0 0 10px 0;">${wp.name}</h3>
+                    <p><strong>Type:</strong> ${wp.waypoint_type}</p>
+                    ${wp.description ? `<p><strong>Description:</strong> ${wp.description}</p>` : ''}
+                    ${wp.pause_duration ? `<p><strong>Pause:</strong> ${wp.pause_duration} min</p>` : ''}
+                    ${wp.pause_reason ? `<p><strong>Raison:</strong> ${wp.pause_reason}</p>` : ''}
+                </div>
+            `;
+
+            const infowindow = new google.maps.InfoWindow({
+                content: infoContent
+            });
+
+            marker.addListener('click', function() {
+                infowindow.open(displayMap, marker);
+            });
+
+            displayMarkers.push(marker);
+        });
+
+        const origin = new google.maps.LatLng(
+            parseFloat(waypoints[0].latitude),
+            parseFloat(waypoints[0].longitude)
+        );
+
+        const destination = new google.maps.LatLng(
+            parseFloat(waypoints[waypoints.length - 1].latitude),
+            parseFloat(waypoints[waypoints.length - 1].longitude)
+        );
+
+        const waypointsForDirections = waypoints.slice(1, -1).map(wp => ({
+            location: new google.maps.LatLng(parseFloat(wp.latitude), parseFloat(wp.longitude)),
+            stopover: true
+        }));
+
+        displayDirectionsService.route({
+            origin: origin,
+            destination: destination,
+            waypoints: waypointsForDirections,
+            travelMode: google.maps.TravelMode.DRIVING
+        }, function(result, status) {
+            if (status === 'OK') {
+                displayDirectionsRenderer.setDirections(result);
+            }
+        });
+    }
+
+    async function toggleLike() {
+        const routeId = document.getElementById('likeRouteId').value;
+        const responseBox = document.getElementById('likeResponse');
+
+        if (!routeId) {
+            responseBox.innerHTML = '<pre class="error">❌ Veuillez entrer un ID de route</pre>';
+            return;
+        }
+
+        responseBox.innerHTML = '<pre>Envoi...</pre>';
+
+        try {
+            const response = await fetch(`${getApiUrl()}/routes/${routeId}/like`, {
+                method: 'POST',
+                headers: getHeaders()
+            });
+            const result = await response.json();
+            responseBox.innerHTML = `<pre class="success">${JSON.stringify(result, null, 2)}</pre>`;
+        } catch (error) {
+            responseBox.innerHTML = `<pre class="error">❌ Erreur: ${error.message}</pre>`;
+        }
+    }
+
+    async function toggleFavorite() {
+        const routeId = document.getElementById('favRouteId').value;
+        const responseBox = document.getElementById('favResponse');
+
+        if (!routeId) {
+            responseBox.innerHTML = '<pre class="error">❌ Veuillez entrer un ID de route</pre>';
+            return;
+        }
+
+        responseBox.innerHTML = '<pre>Envoi...</pre>';
+
+        try {
+            const response = await fetch(`${getApiUrl()}/routes/${routeId}/favorite`, {
+                method: 'POST',
+                headers: getHeaders()
+            });
+            const result = await response.json();
+            responseBox.innerHTML = `<pre class="success">${JSON.stringify(result, null, 2)}</pre>`;
+        } catch (error) {
+            responseBox.innerHTML = `<pre class="error">❌ Erreur: ${error.message}</pre>`;
+        }
+    }
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('waypointModal');
+        if (event.target === modal) {
+            closeWaypointModal();
+        }
+    }
+</script>
+</body>
+</html>

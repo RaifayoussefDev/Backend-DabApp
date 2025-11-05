@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Itinéraire Route - Harley Davidson</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: Arial, sans-serif;
+                background: #1a1a1a;
+                color: #fff;
+                overflow: hidden;
+            }
+
+            .header {
+                background: linear-gradient(90deg, #ff6b00 0%, #cc5500 100%);
+                padding: 15px 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            }
+
+            .header h1 {
+                font-size: 24px;
+                text-transform: uppercase;
+            }
+
+            .header-controls {
+                display: flex;
+                gap: 10px;
+            }
+
+            .main-layout {
+                display: grid;
+                grid-template-columns: 400px 1fr;
+                height: calc(100vh - 70px);
+            }
+
+            .sidebar {
+                background: #2c2c2c;
+                overflow-y: auto;
+                border-right: 3px solid #ff6b00;
+            }
+
+            .route-info {
+                padding: 20px;
+                background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
+                border-bottom: 2px solid #ff6b00;
+            }
+
+            .route-title {
+                color: #ff6b00;
+                font-size: 22px;
+                margin-bottom: 10px;
+            }
+
+            .route-stats {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-top: 15px;
+            }
+
+            .stat-box {
+                background: #1a1a1a;
+                padding: 12px;
+                border-radius: 5px;
+                text-align: center;
+                border: 2px solid #ff6b00;
+            }
+
+            .stat-value {
+                font-size: 20px;
+                font-weight: bold;
+                color: #ff6b00;
+            }
+
+            .stat-label {
+                font-size: 11px;
+                color: #999;
+                text-transform: uppercase;
+                margin-top: 5px;
+            }
+
+            .instructions-container {
+                padding: 20px;
+            }
+
+            .instructions-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+
+            .instructions-header h2 {
+                color: #ff6b00;
+                font-size: 18px;
+            }
+
+            .instruction-step {
+                background: #1a1a1a;
+                padding: 15px;
+                margin-bottom: 12px;
+                border-radius: 8px;
+                border-left: 4px solid #ff6b00;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+
+            .instruction-step:hover {
+                background: #333;
+                transform: translateX(5px);
+            }
+
+            .instruction-step.active {
+                background: #ff6b00;
+                border-left-color: #fff;
+            }
+
+            .step-header {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                margin-bottom: 10px;
+            }
+
+            .step-icon {
+                font-size: 28px;
+                min-width: 35px;
+                text-align: center;
+            }
+
+            .step-number {
+                color: #ff6b00;
+                font-weight: bold;
+                font-size: 12px;
+            }
+
+            .instruction-step.active .step-number {
+                color: #fff;
+            }
+
+            .step-instruction {
+                color: #fff;
+                font-size: 14px;
+                margin-bottom: 8px;
+                line-height: 1.4;
+            }
+
+            .step-distance {
+                color: #999;
+                font-size: 12px;
+            }
+
+            .instruction-step.active .step-distance {
+                color: #fff;
+            }
+
+            .map-area {
+                position: relative;
+            }
+
+            #map {
+                width: 100%;
+                height: 100%;
+            }
+
+            .nav-panel {
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
+                padding: 25px;
+                border-radius: 15px;
+                border: 3px solid #ff6b00;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+                min-width: 350px;
+                max-width: 400px;
+                z-index: 1000;
+            }
+
+            .nav-panel.hidden {
+                display: none;
+            }
+
+            .current-instruction {
+                text-align: center;
+                margin-bottom: 20px;
+            }
+
+            .current-icon {
+                font-size: 64px;
+                margin-bottom: 10px;
+            }
+
+            .current-distance {
+                color: #ff6b00;
+                font-size: 28px;
+                font-weight: bold;
+                margin-bottom: 10px;
+            }
+
+            .current-text {
+                color: #fff;
+                font-size: 16px;
+                line-height: 1.4;
+            }
+
+            .nav-stats {
+                background: #1a1a1a;
+                padding: 15px;
+                border-radius: 8px;
+                margin-bottom: 15px;
+            }
+
+            .nav-stat-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 10px;
+            }
+
+            .nav-stat-row:last-child {
+                margin-bottom: 0;
+            }
+
+            .nav-stat-label {
+                color: #999;
+            }
+
+            .nav-stat-value {
+                color: #fff;
+                font-weight: bold;
+            }
+
+            .next-instruction {
+                background: #2c2c2c;
+                padding: 12px;
+                border-radius: 8px;
+                margin-bottom: 15px;
+            }
+
+            .next-label {
+                color: #ff6b00;
+                font-size: 12px;
+                margin-bottom: 5px;
+            }
+
+            .next-text {
+                color: #ccc;
+                font-size: 13px;
+            }
+
+            .nav-controls {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+
+            .btn {
+                padding: 12px 20px;
+                border: none;
+                border-radius: 5px;
+                font-weight: bold;
+                cursor: pointer;
+                font-size: 13px;
+                text-transform: uppercase;
+                transition: all 0.3s;
+            }
+
+            .btn-primary {
+                background: linear-gradient(90deg, #ff6b00 0%, #cc5500 100%);
+                color: white;
+            }
+
+            .btn-primary:hover {
+                opacity: 0.9;
+                transform: translateY(-2px);
+            }
+
+            .btn-secondary {
+                background: #555;
+                color: white;
+            }
+
+            .btn-secondary:hover {
+                background: #666;
+            }
+
+            .btn-danger {
+                background: #d32f2f;
+                color: white;
+            }
+
+            .btn-danger:hover {
+                background: #b71c1c;
+            }
+
+            .btn-success {
+                background: #4caf50;
+                color: white;
+            }
+
+            .btn-full {
+                width: 100%;
+            }
+
+            .config-section {
+                padding: 20px;
+                background: #1a1a1a;
+                border-bottom: 2px solid #444;
+            }
+
+            .form-group {
+                margin-bottom: 15px;
+            }
+
+            .form-group label {
+                display: block;
+                color: #ff6b00;
+                margin-bottom: 5px;
+                font-weight: bold;
+                font-size: 12px;
+            }
+
+            .form-group input {
+                width: 100%;
+                padding: 10px;
+                background: #2c2c2c;
+                border: 2px solid #444;
+                border-radius: 5px;
+                color: #fff;
+                font-size: 13px;
+            }
+
+            .form-group input:focus {
+                outline: none;
+                border-color: #ff6b00;
+            }
+
+            .form-group input::placeholder {
+                font-style: italic;
+                color: #666;
+            }
+
+            .form-group input#authToken {
+                font-family: monospace;
+                font-size: 12px;
+            }
+
+            .form-group input#authToken:not(:placeholder-shown) {
+                border-color: #4caf50;
+                background: #1a3a1a;
+            }
+
+            .sidebar::-webkit-scrollbar,
+            .instructions-container::-webkit-scrollbar {
+                width: 8px;
+            }
+
+            .sidebar::-webkit-scrollbar-track {
+                background: #1a1a1a;
+            }
+
+            .sidebar::-webkit-scrollbar-thumb {
+                background: #ff6b00;
+                border-radius: 10px;
+            }
+
+            .waypoints-section {
+                padding: 20px;
+                background: #1a1a1a;
+            }
+
+            .waypoints-section h3 {
+                color: #ff6b00;
+                margin-bottom: 15px;
+                font-size: 16px;
+            }
+
+            .waypoint-item {
+                background: #2c2c2c;
+                padding: 12px;
+                margin-bottom: 10px;
+                border-radius: 5px;
+                border-left: 3px solid #ff6b00;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+
+            .waypoint-item:hover {
+                background: #333;
+                transform: translateX(5px);
+            }
+
+            .waypoint-name {
+                color: #fff;
+                font-size: 14px;
+                margin-bottom: 5px;
+            }
+
+            .waypoint-type {
+                color: #999;
+                font-size: 11px;
+            }
+
+            .moto-controls {
+                background: #1a1a1a;
+                padding: 15px;
+                border-radius: 8px;
+                margin-top: 15px;
+                text-align: center;
+            }
+
+            .moto-controls h4 {
+                color: #ff6b00;
+                margin-bottom: 10px;
+                font-size: 14px;
+            }
+
+            .progress-bar {
+                background: #2c2c2c;
+                height: 8px;
+                border-radius: 4px;
+                margin: 15px 0;
+                overflow: hidden;
+            }
+
+            .progress-fill {
+                background: linear-gradient(90deg, #ff6b00 0%, #cc5500 100%);
+                height: 100%;
+                width: 0%;
+                transition: width 0.3s;
+            }
+
+            .progress-text {
+                color: #fff;
+                font-size: 12px;
+            }
+
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            #navigationPanel {
+                animation: slideIn 0.3s ease-out;
+            }
+
+            @media (max-width: 1024px) {
+                .main-layout {
+                    grid-template-columns: 1fr;
+                }
+
+                .sidebar {
+                    display: none;
+                }
+
+                .sidebar.mobile-visible {
+                    display: block;
+                    position: fixed;
+                    top: 70px;
+                    left: 0;
+                    width: 100%;
+                    height: calc(100vh - 70px);
+                    z-index: 2000;
+                }
+
+                .nav-panel {
+                    min-width: 300px;
+                    right: 10px;
+                    top: 10px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>🏍️ Itinéraire Harley Davidson</h1>
+            <div class="header-controls">
+                <button class="btn btn-secondary" onclick="toggleSidebar()">
+                    📋 Instructions
+                </button>
+                <button class="btn btn-danger" onclick="goBack()">
+                    ✕ Fermer
+                </button>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="sidebar" id="sidebar">
+                <div class="config-section">
+                    <div class="form-group">
+                        <label>Clé Google Maps API *</label>
+                        <input
+                            type="text"
+                            id="mapsApiKey"
+                            placeholder="AIzaSy..."
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>ID de la Route *</label>
+                        <input type="number" id="routeId" placeholder="1" />
+                    </div>
+                    <div class="form-group">
+                        <label>URL de l'API</label>
+                        <input
+                            type="text"
+                            id="apiUrl"
+                            value="http://localhost:8000/api"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>Token d'authentification</label>
+                        <input
+                            type="text"
+                            id="authToken"
+                            placeholder="Bearer token (optionnel)"
+                        />
+                    </div>
+                    <button
+                        class="btn btn-primary btn-full"
+                        onclick="loadRoute()"
+                    >
+                        🔍 Charger la Route
+                    </button>
+                </div>
+
+                <div class="route-info" id="routeInfo" style="display: none">
+                    <h2 class="route-title" id="routeTitle">Chargement...</h2>
+                    <p
+                        id="routeDescription"
+                        style="
+                            color: #ccc;
+                            font-size: 13px;
+                            margin-bottom: 15px;
+                        "
+                    ></p>
+
+                    <div class="route-stats">
+                        <div class="stat-box">
+                            <div class="stat-value" id="totalDistance">
+                                0 km
+                            </div>
+                            <div class="stat-label">Distance</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="totalDuration">
+                                0 min
+                            </div>
+                            <div class="stat-label">Durée</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="routeDifficulty">-</div>
+                            <div class="stat-label">Difficulté</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="waypointCount">0</div>
+                            <div class="stat-label">Points</div>
+                        </div>
+                    </div>
+
+                    <button
+                        class="btn btn-success btn-full"
+                        onclick="startNavigation()"
+                        style="margin-top: 15px"
+                    >
+                        🧭 Démarrer la Navigation
+                    </button>
+                </div>
+
+                <div
+                    class="waypoints-section"
+                    id="waypointsSection"
+                    style="display: none"
+                >
+                    <h3>📍 Points de Passage</h3>
+                    <div id="waypointsList"></div>
+                </div>
+
+                <div
+                    class="instructions-container"
+                    id="instructionsContainer"
+                    style="display: none"
+                >
+                    <div class="instructions-header">
+                        <h2>🗺️ Instructions Détaillées</h2>
+                        <span
+                            id="stepCounter"
+                            style="color: #999; font-size: 14px"
+                            >0 / 0</span
+                        >
+                    </div>
+                    <div id="instructionsList"></div>
+                </div>
+
+                <div
+                    class="moto-controls"
+                    id="motoControls"
+                    style="display: none"
+                >
+                    <h4>🏍️ Animation Harley Davidson</h4>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px">
+                        <button
+                            class="btn btn-primary"
+                            style="flex: 1; margin: 0"
+                            onclick="animateMotorcycle()"
+                        >
+                            ▶️ Démarrer
+                        </button>
+                        <button
+                            class="btn btn-secondary"
+                            style="flex: 1; margin: 0"
+                            onclick="pauseAnimation()"
+                        >
+                            ⏸️ Pause
+                        </button>
+                        <button
+                            class="btn btn-danger"
+                            style="flex: 1; margin: 0"
+                            onclick="stopAnimation()"
+                        >
+                            ⏹️ Stop
+                        </button>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">0%</div>
+                </div>
+            </div>
+
+            <div class="map-area">
+                <div id="map"></div>
+
+                <div class="nav-panel hidden" id="navPanel">
+                    <div class="current-instruction">
+                        <div class="current-icon" id="currentIcon">⬆️</div>
+                        <div class="current-distance" id="currentDistance">
+                            500 m
+                        </div>
+                        <div class="current-text" id="currentText">
+                            Continuez tout droit
+                        </div>
+                    </div>
+
+                    <div class="nav-stats">
+                        <div class="nav-stat-row">
+                            <span class="nav-stat-label">Étape:</span>
+                            <span class="nav-stat-value" id="navStepCounter"
+                                >1 / 10</span
+                            >
+                        </div>
+                        <div class="nav-stat-row">
+                            <span class="nav-stat-label">Temps restant:</span>
+                            <span class="nav-stat-value" id="navTimeRemaining"
+                                >5 min</span
+                            >
+                        </div>
+                        <div class="nav-stat-row">
+                            <span class="nav-stat-label"
+                                >Distance restante:</span
+                            >
+                            <span
+                                class="nav-stat-value"
+                                id="navDistanceRemaining"
+                                >2.5 km</span
+                            >
+                        </div>
+                    </div>
+
+                    <div class="next-instruction" id="nextInstruction">
+                        <div class="next-label">ENSUITE:</div>
+                        <div class="next-text" id="nextText">
+                            Tournez à droite
+                        </div>
+                    </div>
+
+                    <div class="nav-controls">
+                        <button
+                            class="btn btn-secondary"
+                            onclick="previousStep()"
+                        >
+                            ⬅️ Précédent
+                        </button>
+                        <button class="btn btn-primary" onclick="nextStep()">
+                            Suivant ➡️
+                        </button>
+                    </div>
+
+                    <button
+                        class="btn btn-danger btn-full"
+                        onclick="stopNavigation()"
+                        style="margin-top: 10px"
+                    >
+                        ❌ Arrêter
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // ===== VARIABLES GLOBALES =====
+            let map;
+            let directionsService;
+            let directionsRenderer;
+            let currentRoute = null;
+            let allSteps = [];
+            let currentStepIndex = 0;
+            let navigationMode = false;
+            let markers = [];
+            let motorcycleMarker = null;
+            let animationPath = [];
+            let animationInterval = null;
+            let currentPathIndex = 0;
+
+            // ===== CONSTANTES =====
+            const mapStyles = [
+                {
+                    featureType: "all",
+                    elementType: "geometry",
+                    stylers: [{ color: "#242f3e" }],
+                },
+                {
+                    featureType: "road",
+                    elementType: "geometry.fill",
+                    stylers: [{ color: "#2b2b2b" }],
+                },
+                {
+                    featureType: "road",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#ff6b00" }],
+                },
+                {
+                    featureType: "road.highway",
+                    elementType: "geometry.stroke",
+                    stylers: [{ color: "#ff6b00" }],
+                },
+                {
+                    featureType: "water",
+                    elementType: "geometry",
+                    stylers: [{ color: "#17263c" }],
+                },
+            ];
+
+            // Fonction qui retourne l'icône moto (appel après chargement de Google Maps)
+            function getMotorcycleIcon(rotation = 0) {
+                return {
+                    path: "M17.5,9.5C17.5,10.9 16.4,12 15,12C13.6,12 12.5,10.9 12.5,9.5C12.5,8.1 13.6,7 15,7C16.4,7 17.5,8.1 17.5,9.5M6.5,9.5C6.5,10.9 5.4,12 4,12C2.6,12 1.5,10.9 1.5,9.5C1.5,8.1 2.6,7 4,7C5.4,7 6.5,8.1 6.5,9.5M10.1,6.9C9.7,7.1 9.4,7.4 9.1,7.7L7,7.7C6.7,7.7 6.5,7.9 6.5,8.2C6.5,8.5 6.7,8.7 7,8.7L8.7,8.7C8.6,9 8.5,9.2 8.5,9.5C8.5,9.6 8.5,9.7 8.5,9.8L4.8,10.8C4.5,10.9 4.4,11.2 4.5,11.5C4.6,11.7 4.8,11.9 5,11.9L8.9,10.8C9.3,11.6 10.1,12.2 11,12.4L11,15L10,15C9.7,15 9.5,15.2 9.5,15.5C9.5,15.8 9.7,16 10,16L13,16C13.3,16 13.5,15.8 13.5,15.5C13.5,15.2 13.3,15 13,15L12,15L12,12.4C12.9,12.2 13.7,11.6 14.1,10.8L18,11.9C18.2,11.9 18.4,11.7 18.5,11.5C18.6,11.2 18.5,10.9 18.2,10.8L14.5,9.8C14.5,9.7 14.5,9.6 14.5,9.5C14.5,9.2 14.4,9 14.3,8.7L16,8.7C16.3,8.7 16.5,8.5 16.5,8.2C16.5,7.9 16.3,7.7 16,7.7L13.9,7.7C13.6,7.4 13.3,7.1 12.9,6.9L13.5,5.7C13.6,5.4 13.5,5.1 13.2,5C12.9,4.9 12.6,5 12.5,5.3L11.9,6.5C11.6,6.5 11.4,6.5 11.1,6.5L10.5,5.3C10.4,5 10.1,4.9 9.8,5C9.5,5.1 9.4,5.4 9.5,5.7L10.1,6.9Z",
+                    fillColor: "#ff6b00",
+                    fillOpacity: 1,
+                    strokeColor: "#ffffff",
+                    strokeWeight: 2,
+                    scale: 1.8,
+                    anchor: new google.maps.Point(10, 10),
+                    rotation: rotation,
+                };
+            }
+
+            // ===== FONCTIONS UTILITAIRES =====
+            function stripHtml(html) {
+                const tmp = document.createElement("div");
+                tmp.innerHTML = html;
+                return tmp.textContent || tmp.innerText || "";
+            }
+
+            function getManeuverIcon(maneuver) {
+                const icons = {
+                    "turn-left": "↰",
+                    "turn-right": "↱",
+                    "turn-slight-left": "↖️",
+                    "turn-slight-right": "↗️",
+                    "turn-sharp-left": "⬅️",
+                    "turn-sharp-right": "➡️",
+                    straight: "⬆️",
+                    "uturn-left": "↶",
+                    "uturn-right": "↷",
+                    merge: "🔀",
+                    "roundabout-left": "🔄",
+                    "roundabout-right": "🔄",
+                    "ramp-left": "⤴️",
+                    "ramp-right": "⤴️",
+                    "fork-left": "↙️",
+                    "fork-right": "↘️",
+                };
+                return icons[maneuver] || "➡️";
+            }
+
+            // ===== API =====
+            async function loadRoute() {
+                const apiKey = document.getElementById("mapsApiKey").value;
+                const routeId = document.getElementById("routeId").value;
+                const apiUrl = document.getElementById("apiUrl").value;
+                const authToken = document.getElementById("authToken").value;
+
+                if (!apiKey) {
+                    alert("⚠️ Veuillez entrer votre clé Google Maps API !");
+                    return;
+                }
+                if (!routeId) {
+                    alert("⚠️ Veuillez entrer un ID de route !");
+                    return;
+                }
+
+                if (!map) await initializeMap(apiKey);
+
+                try {
+                    const headers = {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                    };
+                    if (authToken)
+                        headers["Authorization"] = authToken.startsWith(
+                            "Bearer "
+                        )
+                            ? authToken
+                            : `Bearer ${authToken}`;
+
+                    const response = await fetch(
+                        `${apiUrl}/routes/${routeId}`,
+                        { method: "GET", headers }
+                    );
+                    const result = await response.json();
+
+                    if (result.success && result.data) {
+                        currentRoute = result.data;
+                        displayRouteOnMap(result.data);
+                        showRouteInfo(result.data);
+                    } else {
+                        alert(
+                            "❌ Route non trouvée ! " + (result.message || "")
+                        );
+                    }
+                } catch (error) {
+                    alert("❌ Erreur: " + error.message);
+                    console.error("Erreur:", error);
+                }
+            }
+
+            function initializeMap(apiKey) {
+                return new Promise((resolve) => {
+                    if (window.google) {
+                        setupMap();
+                        resolve();
+                    } else {
+                        const script = document.createElement("script");
+                        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry`;
+                        script.onload = () => {
+                            setupMap();
+                            resolve();
+                        };
+                        document.head.appendChild(script);
+                    }
+                });
+            }
+
+            function setupMap() {
+                map = new google.maps.Map(document.getElementById("map"), {
+                    zoom: 6,
+                    center: { lat: 46.603354, lng: 1.888334 },
+                    styles: mapStyles,
+                    mapTypeControl: false,
+                    streetViewControl: false,
+                });
+                directionsService = new google.maps.DirectionsService();
+                directionsRenderer = new google.maps.DirectionsRenderer({
+                    map,
+                    suppressMarkers: true,
+                    polylineOptions: {
+                        strokeColor: "#ff6b00",
+                        strokeWeight: 5,
+                        strokeOpacity: 0.8,
+                    },
+                });
+            }
+
+            function displayRouteOnMap(routeData) {
+                markers.forEach((m) => m.setMap(null));
+                markers = [];
+
+                const waypoints = routeData.waypoints;
+                if (waypoints.length < 2) return;
+
+                waypoints.forEach((wp, i) => {
+                    const pos = {
+                        lat: parseFloat(wp.latitude),
+                        lng: parseFloat(wp.longitude),
+                    };
+                    let color = "#ff6b00";
+                    if (
+                        wp.waypoint_type === "start" ||
+                        wp.waypoint_type === "end"
+                    )
+                        color = "#4caf50";
+                    else if (wp.waypoint_type === "gas_station")
+                        color = "#2196f3";
+                    else if (wp.waypoint_type === "rest_stop")
+                        color = "#9c27b0";
+                    else if (wp.waypoint_type === "viewpoint")
+                        color = "#ffc107";
+
+                    markers.push(
+                        new google.maps.Marker({
+                            position: pos,
+                            map,
+                            label: {
+                                text: String(i + 1),
+                                color: "white",
+                                fontWeight: "bold",
+                            },
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 12,
+                                fillColor: color,
+                                fillOpacity: 1,
+                                strokeColor: "#fff",
+                                strokeWeight: 2,
+                            },
+                        })
+                    );
+                });
+
+                const origin = new google.maps.LatLng(
+                    parseFloat(waypoints[0].latitude),
+                    parseFloat(waypoints[0].longitude)
+                );
+                const destination = new google.maps.LatLng(
+                    parseFloat(waypoints[waypoints.length - 1].latitude),
+                    parseFloat(waypoints[waypoints.length - 1].longitude)
+                );
+                const waypointsForDirections = waypoints
+                    .slice(1, -1)
+                    .map((wp) => ({
+                        location: new google.maps.LatLng(
+                            parseFloat(wp.latitude),
+                            parseFloat(wp.longitude)
+                        ),
+                        stopover: true,
+                    }));
+
+                directionsService.route(
+                    {
+                        origin,
+                        destination,
+                        waypoints: waypointsForDirections,
+                        travelMode: google.maps.TravelMode.DRIVING,
+                    },
+                    (result, status) => {
+                        if (status === "OK") {
+                            directionsRenderer.setDirections(result);
+                            extractNavigationSteps(result.routes[0]);
+                            animationPath = result.routes[0].overview_path;
+                            placeMotorcycle();
+                        }
+                    }
+                );
+            }
+
+            function showRouteInfo(routeData) {
+                document.getElementById("routeInfo").style.display = "block";
+                document.getElementById("routeTitle").textContent =
+                    routeData.title;
+                document.getElementById("routeDescription").textContent =
+                    routeData.description;
+                document.getElementById("totalDistance").textContent =
+                    routeData.total_distance + " km";
+                document.getElementById("totalDuration").textContent =
+                    routeData.estimated_duration || "N/A";
+                document.getElementById("routeDifficulty").textContent =
+                    routeData.difficulty
+                        ? routeData.difficulty.toUpperCase()
+                        : "N/A";
+                document.getElementById("waypointCount").textContent =
+                    routeData.waypoints.length;
+                displayWaypoints(routeData.waypoints);
+            }
+
+            function displayWaypoints(waypoints) {
+                document.getElementById("waypointsSection").style.display =
+                    "block";
+                const list = document.getElementById("waypointsList");
+                list.innerHTML = "";
+                const typeIcons = {
+                    start: "🏁",
+                    waypoint: "📍",
+                    poi: "🎯",
+                    rest_stop: "☕",
+                    gas_station: "⛽",
+                    viewpoint: "🌄",
+                    end: "🏁",
+                };
+                waypoints.forEach((wp, i) => {
+                    const item = document.createElement("div");
+                    item.className = "waypoint-item";
+                    item.innerHTML = `<div class="waypoint-name">${
+                        typeIcons[wp.waypoint_type] || "📍"
+                    } ${wp.name}</div><div class="waypoint-type">${
+                        wp.waypoint_type
+                    }</div>`;
+                    item.onclick = () => focusOnWaypoint(i);
+                    list.appendChild(item);
+                });
+            }
+
+            function focusOnWaypoint(i) {
+                if (markers[i]) {
+                    map.setCenter(markers[i].getPosition());
+                    map.setZoom(15);
+                }
+            }
+
+            function extractNavigationSteps(route) {
+                allSteps = [];
+                route.legs.forEach((leg) =>
+                    leg.steps.forEach((step) =>
+                        allSteps.push({
+                            instruction: stripHtml(step.instructions),
+                            distance: step.distance.text,
+                            duration: step.duration.text,
+                            maneuver: step.maneuver || "straight",
+                            startLocation: step.start_location,
+                            endLocation: step.end_location,
+                        })
+                    )
+                );
+                displayInstructions();
+            }
+
+            function displayInstructions() {
+                document.getElementById("instructionsContainer").style.display =
+                    "block";
+                document.getElementById("motoControls").style.display = "block";
+                const list = document.getElementById("instructionsList");
+                list.innerHTML = "";
+                document.getElementById(
+                    "stepCounter"
+                ).textContent = `${allSteps.length} étapes`;
+
+                allSteps.forEach((step, i) => {
+                    const div = document.createElement("div");
+                    div.className = "instruction-step";
+                    div.setAttribute("data-step", i);
+                    const header = document.createElement("div");
+                    header.className = "step-header";
+                    const icon = document.createElement("div");
+                    icon.className = "step-icon";
+                    icon.textContent = getManeuverIcon(step.maneuver);
+                    const content = document.createElement("div");
+                    content.style.flex = "1";
+                    const num = document.createElement("div");
+                    num.className = "step-number";
+                    num.textContent = `Étape ${i + 1}`;
+                    const instr = document.createElement("div");
+                    instr.className = "step-instruction";
+                    instr.textContent = step.instruction;
+                    const dist = document.createElement("div");
+                    dist.className = "step-distance";
+                    dist.textContent = `📏 ${step.distance} • ⏱️ ${step.duration}`;
+                    content.append(num, instr, dist);
+                    header.append(icon, content);
+                    div.appendChild(header);
+                    div.onclick = () => focusOnStep(i);
+                    list.appendChild(div);
+                });
+            }
+
+            function focusOnStep(i) {
+                currentStepIndex = i;
+                document
+                    .querySelectorAll(".instruction-step")
+                    .forEach((el) => el.classList.remove("active"));
+                const el = document.querySelector(`[data-step="${i}"]`);
+                if (el) {
+                    el.classList.add("active");
+                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+                if (allSteps[i]) {
+                    map.setCenter(allSteps[i].startLocation);
+                    map.setZoom(16);
+                }
+                if (navigationMode) updateNavigationPanel();
+            }
+
+            function startNavigation() {
+                if (!allSteps.length) {
+                    alert("⚠️ Aucune instruction disponible !");
+                    return;
+                }
+                navigationMode = true;
+                currentStepIndex = 0;
+                document.getElementById("navPanel").classList.remove("hidden");
+                updateNavigationPanel();
+                focusOnStep(0);
+            }
+
+            function updateNavigationPanel() {
+                const curr = allSteps[currentStepIndex];
+                const next = allSteps[currentStepIndex + 1];
+                document.getElementById("currentIcon").textContent =
+                    getManeuverIcon(curr.maneuver);
+                document.getElementById("currentDistance").textContent =
+                    curr.distance;
+                document.getElementById("currentText").textContent =
+                    curr.instruction;
+                document.getElementById("navStepCounter").textContent = `${
+                    currentStepIndex + 1
+                } / ${allSteps.length}`;
+                document.getElementById("navTimeRemaining").textContent =
+                    curr.duration;
+                let rem = 0;
+                for (let i = currentStepIndex; i < allSteps.length; i++) {
+                    const d = parseFloat(
+                        allSteps[i].distance.replace(/[^\d.]/g, "")
+                    );
+                    rem += allSteps[i].distance.includes("km") ? d : d / 1000;
+                }
+                document.getElementById("navDistanceRemaining").textContent =
+                    rem.toFixed(1) + " km";
+                if (next) {
+                    document.getElementById("nextInstruction").style.display =
+                        "block";
+                    document.getElementById(
+                        "nextText"
+                    ).textContent = `${getManeuverIcon(next.maneuver)} ${
+                        next.instruction
+                    }`;
+                } else
+                    document.getElementById("nextInstruction").style.display =
+                        "none";
+            }
+
+            function nextStep() {
+                if (currentStepIndex < allSteps.length - 1)
+                    focusOnStep(currentStepIndex + 1);
+                else {
+                    alert("🏁 Vous êtes arrivé à destination !");
+                    stopNavigation();
+                }
+            }
+
+            function previousStep() {
+                if (currentStepIndex > 0) focusOnStep(currentStepIndex - 1);
+            }
+
+            function stopNavigation() {
+                navigationMode = false;
+                document.getElementById("navPanel").classList.add("hidden");
+                document
+                    .querySelectorAll(".instruction-step")
+                    .forEach((el) => el.classList.remove("active"));
+            }
+
+            // ===== ANIMATION MOTO =====
+            function placeMotorcycle() {
+                if (!animationPath.length) return;
+                const start = animationPath[0];
+                let heading = 0;
+                if (animationPath.length > 1) {
+                    heading = google.maps.geometry.spherical.computeHeading(
+                        animationPath[0],
+                        animationPath[1]
+                    );
+                }
+                motorcycleMarker = new google.maps.Marker({
+                    position: start,
+                    map: map,
+                    icon: getMotorcycleIcon(heading),
+                    title: "🏍️ Harley Davidson",
+                    zIndex: 1000,
+                });
+            }
+
+            function animateMotorcycle() {
+                if (!animationPath.length) {
+                    alert("⚠️ Aucune route disponible !");
+                    return;
+                }
+                if (animationInterval) {
+                    clearInterval(animationInterval);
+                    animationInterval = null;
+                }
+                currentPathIndex = 0;
+
+                if (!motorcycleMarker) {
+                    placeMotorcycle();
+                } else {
+                    const start = animationPath[0];
+                    let heading = 0;
+                    if (animationPath.length > 1) {
+                        heading = google.maps.geometry.spherical.computeHeading(
+                            animationPath[0],
+                            animationPath[1]
+                        );
+                    }
+                    motorcycleMarker.setPosition(start);
+                    motorcycleMarker.setIcon(getMotorcycleIcon(heading));
+                }
+
+                document.getElementById("progressFill").style.width = "0%";
+                document.getElementById("progressText").textContent = "0%";
+
+                animationInterval = setInterval(() => {
+                    if (currentPathIndex >= animationPath.length - 1) {
+                        clearInterval(animationInterval);
+                        animationInterval = null;
+                        document.getElementById("progressText").textContent =
+                            "100% - Arrivée !";
+                        document.getElementById("progressFill").style.width =
+                            "100%";
+                        return;
+                    }
+                    const curr = animationPath[currentPathIndex];
+                    const next = animationPath[currentPathIndex + 1];
+                    const heading =
+                        google.maps.geometry.spherical.computeHeading(
+                            curr,
+                            next
+                        );
+                    motorcycleMarker.setPosition(next);
+                    motorcycleMarker.setIcon(getMotorcycleIcon(heading));
+                    map.panTo(next);
+                    currentPathIndex++;
+                    const percent = Math.round(
+                        (currentPathIndex / animationPath.length) * 100
+                    );
+                    document.getElementById("progressFill").style.width =
+                        percent + "%";
+                    document.getElementById("progressText").textContent =
+                        percent + "%";
+                }, 50);
+            }
+
+            function pauseAnimation() {
+                if (animationInterval) {
+                    clearInterval(animationInterval);
+                    animationInterval = null;
+                    const txt =
+                        document.getElementById("progressText").textContent;
+                    if (!txt.includes("(Pause)")) {
+                        document.getElementById("progressText").textContent =
+                            txt + " (Pause)";
+                    }
+                }
+            }
+
+            function stopAnimation() {
+                if (animationInterval) {
+                    clearInterval(animationInterval);
+                    animationInterval = null;
+                }
+                currentPathIndex = 0;
+                document.getElementById("progressFill").style.width = "0%";
+                document.getElementById("progressText").textContent = "0%";
+                if (motorcycleMarker && animationPath.length) {
+                    const start = animationPath[0];
+                    let heading = 0;
+                    if (animationPath.length > 1) {
+                        heading = google.maps.geometry.spherical.computeHeading(
+                            animationPath[0],
+                            animationPath[1]
+                        );
+                    }
+                    motorcycleMarker.setPosition(start);
+                    motorcycleMarker.setIcon(getMotorcycleIcon(heading));
+                    map.panTo(start);
+                }
+            }
+
+            function toggleSidebar() {
+                document
+                    .getElementById("sidebar")
+                    .classList.toggle("mobile-visible");
+            }
+            function goBack() {
+                if (confirm("Voulez-vous quitter cette page ?"))
+                    window.history.back();
+            }
+
+            window.onload = function () {
+                const params = new URLSearchParams(window.location.search);
+                const routeId = params.get("id");
+                const apiKey = params.get("key");
+                const token = params.get("token");
+                if (routeId) document.getElementById("routeId").value = routeId;
+                if (apiKey)
+                    document.getElementById("mapsApiKey").value = apiKey;
+                if (token) document.getElementById("authToken").value = token;
+                if (routeId && apiKey) setTimeout(() => loadRoute(), 500);
+            };
+        </script>
+    </body>
+</html>
