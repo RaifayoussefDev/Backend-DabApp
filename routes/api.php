@@ -56,11 +56,28 @@ use App\Http\Controllers\EventSponsorController;
 use App\Http\Controllers\EventContactController;
 use App\Http\Controllers\EventFaqController;
 use App\Http\Controllers\EventUpdateController;
-use App\Http\Controllers\NewsletterController;
-use App\Http\Controllers\PointOfInterestController;
-use App\Http\Controllers\PoiReviewController;
-use App\Http\Controllers\RouteController;
-use App\Http\Controllers\RouteReviewController;
+// use App\Http\Controllers\NewsletterController;
+// use App\Http\Controllers\PointOfInterestController;
+// use App\Http\Controllers\PoiReviewController;
+// use App\Http\Controllers\RouteController;
+// use App\Http\Controllers\RouteReviewController;
+
+use App\Http\Controllers\{
+    NewsletterController,
+    NewsletterCampaignController,
+    PointOfInterestController,
+    PoiTypeController,
+    PoiServiceController,
+    PoiReviewController,
+    PoiReportController,
+    RouteController,
+    RouteCategoryController,
+    RouteTagController,
+    RouteWaypointController,
+    RouteReviewController,
+    RouteWarningController,
+    RouteCompletionController
+};
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -273,12 +290,12 @@ Route::middleware('auth:api')->group(function () {
     // My Garage CRUD operations
     Route::get('/my-garage', [MyGarageController::class, 'index']);           // GET all garage items
     Route::post('/my-garage', [MyGarageController::class, 'store']);          // POST create new item
+    Route::get('/my-garage/default', [MyGarageController::class, 'getDefault']);
     Route::get('/my-garage/{id}', [MyGarageController::class, 'show']);       // GET single item
     Route::put('/my-garage/{id}', [MyGarageController::class, 'update']);     // PUT update item
     Route::patch('/my-garage/{id}', [MyGarageController::class, 'update']);   // PATCH update item (alternative)
     Route::delete('/my-garage/{id}', [MyGarageController::class, 'destroy']); // DELETE item
     Route::post('/my-garage/{id}/set-default', [MyGarageController::class, 'setDefault']);
-    Route::get('/my-garage/default', [MyGarageController::class, 'getDefault']); // ✅ AVANT la route {id}
 
 
     Route::get('motorcycle-data', [MyGarageController::class, 'getMotorcycleData']); // Fetch motorcycle data for dropdowns
@@ -469,14 +486,14 @@ Route::prefix('payment')->name('payment.')->group(function () {
     Route::match(['GET', 'POST'], '/pending', [PayTabsController::class, 'paymentPending'])->name('pending');
 });
 
-Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::post('/listings/republish-paid', [ListingController::class, 'checkAndRepublishPaidListings']);
     Route::get('/listings/payment-stats', [ListingController::class, 'getListingPaymentStats']);
     Route::post('/payments/{paymentId}/force-verify', [ListingController::class, 'forcePaymentVerification']);
 });
 
 // User routes
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth:api'])->group(function () {
     Route::get('/listings/{listingId}/payment-status', [ListingController::class, 'checkListingPaymentStatus']);
 });
 Route::post('/paytabs/test-callback', [PayTabsController::class, 'testCallback']);
@@ -814,34 +831,192 @@ Route::middleware('auth:api')->prefix('events')->group(function () {
 });
 
 
-// Points of Interest
-Route::middleware('auth:api')->group(function () {
-    Route::apiResource('pois', PointOfInterestController::class);
-    Route::get('pois/nearby', [PointOfInterestController::class, 'nearby']);
-    Route::post('pois/{id}/favorite', [PointOfInterestController::class, 'toggleFavorite']);
+// Public newsletter routes
+Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe']);
+Route::post('/newsletter/unsubscribe', [NewsletterController::class, 'unsubscribe']);
 
-    Route::get('pois/{poi_id}/reviews', [PoiReviewController::class, 'index']);
-    Route::post('pois/{poi_id}/reviews', [PoiReviewController::class, 'store']);
-    Route::put('pois/{poi_id}/reviews/{id}', [PoiReviewController::class, 'update']);
-    Route::delete('pois/{poi_id}/reviews/{id}', [PoiReviewController::class, 'destroy']);
+// Authenticated newsletter routes
+Route::middleware('auth:api')->group(function () {
+    Route::get('/newsletter/preferences', [NewsletterController::class, 'getPreferences']);
+    Route::put('/newsletter/preferences', [NewsletterController::class, 'updatePreferences']);
 });
 
-// Newsletter
-Route::post('newsletter/subscribe', [NewsletterController::class, 'subscribe']);
-Route::post('newsletter/unsubscribe', [NewsletterController::class, 'unsubscribe']);
-
-Route::middleware('auth:api')->group(function () {
-    Route::get('newsletter/preferences', [NewsletterController::class, 'getPreferences']);
-    Route::put('newsletter/preferences', [NewsletterController::class, 'updatePreferences']);
+// Newsletter campaign routes (Admin only)
+Route::middleware(['auth:api'])->prefix('newsletter')->group(function () {
+    Route::get('/campaigns', [NewsletterCampaignController::class, 'index']);
+    Route::post('/campaigns', [NewsletterCampaignController::class, 'store']);
+    Route::get('/campaigns/{id}', [NewsletterCampaignController::class, 'show']);
+    Route::put('/campaigns/{id}', [NewsletterCampaignController::class, 'update']);
+    Route::delete('/campaigns/{id}', [NewsletterCampaignController::class, 'destroy']);
+    Route::post('/campaigns/{id}/send', [NewsletterCampaignController::class, 'send']);
+    Route::get('/campaigns/{id}/stats', [NewsletterCampaignController::class, 'stats']);
+    Route::post('/campaigns/{id}/duplicate', [NewsletterCampaignController::class, 'duplicate']);
 });
 
-// Routes
-Route::middleware('auth:api')->group(function () {
-    Route::apiResource('routes', RouteController::class);
-    Route::post('routes/{id}/like', [RouteController::class, 'toggleLike']);
-    Route::post('routes/{id}/favorite', [RouteController::class, 'toggleFavorite']);
+// ============================================
+// POI TYPE ROUTES
+// ============================================
 
-    Route::get('routes/{route_id}/reviews', [RouteReviewController::class, 'index']);
-    Route::post('routes/{route_id}/reviews', [RouteReviewController::class, 'store']);
-    Route::delete('routes/{route_id}/reviews/{id}', [RouteReviewController::class, 'destroy']);
+Route::get('/poi-types', [PoiTypeController::class, 'index']);
+Route::get('/poi-types/{id}', [PoiTypeController::class, 'show']);
+
+Route::middleware(['auth:api'])->group(function () {
+    Route::post('/poi-types', [PoiTypeController::class, 'store']);
+    Route::put('/poi-types/{id}', [PoiTypeController::class, 'update']);
+    Route::delete('/poi-types/{id}', [PoiTypeController::class, 'destroy']);
+});
+
+// ============================================
+// POI SERVICE ROUTES
+// ============================================
+
+Route::get('/poi-services', [PoiServiceController::class, 'index']);
+Route::get('/poi-services/{id}', [PoiServiceController::class, 'show']);
+
+Route::middleware(['auth:api'])->group(function () {
+    Route::post('/poi-services', [PoiServiceController::class, 'store']);
+    Route::put('/poi-services/{id}', [PoiServiceController::class, 'update']);
+    Route::delete('/poi-services/{id}', [PoiServiceController::class, 'destroy']);
+});
+
+// ============================================
+// POINTS OF INTEREST ROUTES
+// ============================================
+
+Route::middleware(['auth:api'])->group(function () {
+    Route::get('/pois', [PointOfInterestController::class, 'index']);
+    Route::post('/pois', [PointOfInterestController::class, 'store']);
+    Route::get('/pois/{id}', [PointOfInterestController::class, 'show']);
+    Route::put('/pois/{id}', [PointOfInterestController::class, 'update']);
+    Route::delete('/pois/{id}', [PointOfInterestController::class, 'destroy']);
+    Route::post('/pois/{id}/favorite', [PointOfInterestController::class, 'toggleFavorite']);
+    Route::get('/pois/nearby', [PointOfInterestController::class, 'nearby']);
+});
+
+// ============================================
+// POI REVIEW ROUTES
+// ============================================
+
+Route::middleware(['auth:api'])->group(function () {
+    Route::get('/pois/{poi_id}/reviews', [PoiReviewController::class, 'index']);
+    Route::post('/pois/{poi_id}/reviews', [PoiReviewController::class, 'store']);
+    Route::put('/pois/{poi_id}/reviews/{id}', [PoiReviewController::class, 'update']);
+    Route::delete('/pois/{poi_id}/reviews/{id}', [PoiReviewController::class, 'destroy']);
+});
+
+// ============================================
+// POI REPORT ROUTES
+// ============================================
+
+Route::middleware(['auth:api'])->group(function () {
+    Route::get('/pois/{poi_id}/reports', [PoiReportController::class, 'index']);
+    Route::post('/pois/{poi_id}/reports', [PoiReportController::class, 'store']);
+    Route::get('/pois/{poi_id}/reports/{id}', [PoiReportController::class, 'show']);
+    Route::put('/pois/{poi_id}/reports/{id}/status', [PoiReportController::class, 'updateStatus']);
+    Route::delete('/pois/{poi_id}/reports/{id}', [PoiReportController::class, 'destroy']);
+
+    // Admin routes for reports
+    Route::get('/reports/pending', [PoiReportController::class, 'pending']);
+    Route::get('/reports/stats', [PoiReportController::class, 'stats']);
+
+    // User's own reports
+    Route::get('/user/reports', [PoiReportController::class, 'userReports']);
+});
+
+// ============================================
+// ROUTE CATEGORY ROUTES
+// ============================================
+
+Route::get('/route-categories', [RouteCategoryController::class, 'index']);
+Route::get('/route-categories/{id}', [RouteCategoryController::class, 'show']);
+
+Route::middleware(['auth:api'])->group(function () {
+    Route::post('/route-categories', [RouteCategoryController::class, 'store']);
+    Route::put('/route-categories/{id}', [RouteCategoryController::class, 'update']);
+    Route::delete('/route-categories/{id}', [RouteCategoryController::class, 'destroy']);
+});
+
+// ============================================
+// ROUTE TAG ROUTES
+// ============================================
+
+Route::get('/route-tags', [RouteTagController::class, 'index']);
+Route::get('/route-tags/{id}', [RouteTagController::class, 'show']);
+Route::get('/route-tags/slug/{slug}', [RouteTagController::class, 'showBySlug']);
+Route::post('/route-tags/search', [RouteTagController::class, 'search']);
+
+Route::middleware(['auth:api'])->group(function () {
+    Route::post('/route-tags', [RouteTagController::class, 'store']);
+    Route::put('/route-tags/{id}', [RouteTagController::class, 'update']);
+    Route::delete('/route-tags/{id}', [RouteTagController::class, 'destroy']);
+});
+
+// ============================================
+// ROUTE ROUTES
+// ============================================
+
+Route::middleware(['auth:api'])->group(function () {
+    Route::get('/routes', [RouteController::class, 'index']);
+    Route::post('/routes', [RouteController::class, 'store']);
+    Route::get('/routes/{id}', [RouteController::class, 'show']);
+    Route::put('/routes/{id}', [RouteController::class, 'update']);
+    Route::delete('/routes/{id}', [RouteController::class, 'destroy']);
+    Route::post('/routes/{id}/like', [RouteController::class, 'toggleLike']);
+    Route::post('/routes/{id}/favorite', [RouteController::class, 'toggleFavorite']);
+});
+
+// ============================================
+// ROUTE WAYPOINT ROUTES
+// ============================================
+
+Route::middleware(['auth:api'])->group(function () {
+    Route::get('/routes/{route_id}/waypoints', [RouteWaypointController::class, 'index']);
+    Route::post('/routes/{route_id}/waypoints', [RouteWaypointController::class, 'store']);
+    Route::get('/routes/{route_id}/waypoints/{id}', [RouteWaypointController::class, 'show']);
+    Route::put('/routes/{route_id}/waypoints/{id}', [RouteWaypointController::class, 'update']);
+    Route::delete('/routes/{route_id}/waypoints/{id}', [RouteWaypointController::class, 'destroy']);
+    Route::put('/routes/{route_id}/waypoints/{id}/reorder', [RouteWaypointController::class, 'reorder']);
+});
+
+// ============================================
+// ROUTE REVIEW ROUTES
+// ============================================
+
+Route::middleware(['auth:api'])->group(function () {
+    Route::get('/routes/{route_id}/reviews', [RouteReviewController::class, 'index']);
+    Route::post('/routes/{route_id}/reviews', [RouteReviewController::class, 'store']);
+    Route::delete('/routes/{route_id}/reviews/{id}', [RouteReviewController::class, 'destroy']);
+});
+
+// ============================================
+// ROUTE WARNING ROUTES
+// ============================================
+
+Route::middleware(['auth:api'])->group(function () {
+    Route::get('/routes/{route_id}/warnings', [RouteWarningController::class, 'index']);
+    Route::post('/routes/{route_id}/warnings', [RouteWarningController::class, 'store']);
+    Route::get('/routes/{route_id}/warnings/{id}', [RouteWarningController::class, 'show']);
+    Route::put('/routes/{route_id}/warnings/{id}', [RouteWarningController::class, 'update']);
+    Route::delete('/routes/{route_id}/warnings/{id}', [RouteWarningController::class, 'destroy']);
+    Route::put('/routes/{route_id}/warnings/{id}/deactivate', [RouteWarningController::class, 'deactivate']);
+
+    // All active warnings
+    Route::get('/warnings/active', [RouteWarningController::class, 'getAllActive']);
+});
+
+// ============================================
+// ROUTE COMPLETION ROUTES
+// ============================================
+
+Route::middleware(['auth:api'])->group(function () {
+    Route::get('/routes/{route_id}/completions', [RouteCompletionController::class, 'index']);
+    Route::post('/routes/{route_id}/completions', [RouteCompletionController::class, 'store']);
+    Route::get('/routes/{route_id}/completions/{id}', [RouteCompletionController::class, 'show']);
+    Route::put('/routes/{route_id}/completions/{id}', [RouteCompletionController::class, 'update']);
+    Route::delete('/routes/{route_id}/completions/{id}', [RouteCompletionController::class, 'destroy']);
+    Route::get('/routes/{route_id}/check-completion', [RouteCompletionController::class, 'checkCompletion']);
+
+    // User completion stats
+    Route::get('/user/completions', [RouteCompletionController::class, 'userCompletions']);
+    Route::get('/user/completion-stats', [RouteCompletionController::class, 'userStats']);
 });

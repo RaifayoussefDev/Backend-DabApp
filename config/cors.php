@@ -24,7 +24,6 @@ return [
         'http://localhost:5500',
         'https://old.dabapp.co',
         'https://new.dabapp.co',
-
     ],
 
     'allowed_headers' => ['*'],  // Allow all headers

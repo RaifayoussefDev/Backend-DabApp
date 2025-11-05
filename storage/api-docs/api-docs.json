@@ -16545,6 +16545,315 @@
                 ]
             }
         },
+        "/api/newsletter/campaigns": {
+            "get": {
+                "tags": [
+                    "Newsletter Campaigns"
+                ],
+                "summary": "Get all newsletter campaigns",
+                "operationId": "6b75f05791bb170a1b1e888e77a9ac5a",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by campaign status",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "scheduled",
+                                "sending",
+                                "sent"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Newsletter Campaigns"
+                ],
+                "summary": "Create a new newsletter campaign",
+                "operationId": "f2fdf85573157106fa16b8a4ca45c7b0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "subject",
+                                    "content"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "subject": {
+                                        "type": "string"
+                                    },
+                                    "content": {
+                                        "type": "string"
+                                    },
+                                    "template_id": {
+                                        "type": "integer"
+                                    },
+                                    "scheduled_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Campaign created successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/newsletter/campaigns/{id}": {
+            "get": {
+                "tags": [
+                    "Newsletter Campaigns"
+                ],
+                "summary": "Get a specific campaign",
+                "operationId": "4be2d8bf4b1456fd7cc2ab22d433cdb1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "Campaign not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Newsletter Campaigns"
+                ],
+                "summary": "Update a campaign",
+                "operationId": "7d6f4ca73a214614b63da27fbe44149e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Campaign updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "Campaign not found"
+                    },
+                    "422": {
+                        "description": "Cannot edit sent campaign"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Newsletter Campaigns"
+                ],
+                "summary": "Delete a campaign",
+                "operationId": "a203c388855dedeebb806b3665ea8ae1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Campaign deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "Campaign not found"
+                    },
+                    "422": {
+                        "description": "Cannot delete sent campaign"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/newsletter/campaigns/{id}/send": {
+            "post": {
+                "tags": [
+                    "Newsletter Campaigns"
+                ],
+                "summary": "Send a campaign immediately",
+                "operationId": "fb6d7ad4cda378747d01c15ae673ede6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Campaign queued for sending"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "Campaign not found"
+                    },
+                    "422": {
+                        "description": "Campaign cannot be sent"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/newsletter/campaigns/{id}/stats": {
+            "get": {
+                "tags": [
+                    "Newsletter Campaigns"
+                ],
+                "summary": "Get campaign statistics",
+                "operationId": "437573f73486a6df4d3a91d23c1f1b6f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "Campaign not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/newsletter/campaigns/{id}/duplicate": {
+            "post": {
+                "tags": [
+                    "Newsletter Campaigns"
+                ],
+                "summary": "Duplicate a campaign",
+                "operationId": "42790afba045a72935f9de6e7a591932",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Campaign duplicated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "Campaign not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/newsletter/subscribe": {
             "post": {
                 "tags": [
@@ -16832,6 +17141,307 @@
                 }
             }
         },
+        "/api/pois/{poi_id}/reports": {
+            "get": {
+                "tags": [
+                    "POI Reports"
+                ],
+                "summary": "Get all reports for a POI (Admin only)",
+                "operationId": "e58001d559aac96eebef77bc59fddc7c",
+                "parameters": [
+                    {
+                        "name": "poi_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "POI not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "POI Reports"
+                ],
+                "summary": "Report an issue with a POI",
+                "operationId": "843a6f014f91bf4d99dfb81a931d51ed",
+                "parameters": [
+                    {
+                        "name": "poi_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Closed permanently"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "This location has been closed for 6 months"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Report submitted successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/pois/{poi_id}/reports/{id}": {
+            "get": {
+                "tags": [
+                    "POI Reports"
+                ],
+                "summary": "Get a specific report",
+                "operationId": "10bfa19cd25c047b17812066b1dc3c66",
+                "parameters": [
+                    {
+                        "name": "poi_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Report not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "POI Reports"
+                ],
+                "summary": "Delete a report",
+                "operationId": "911e9ad908d19ff16e53da1919becbb9",
+                "parameters": [
+                    {
+                        "name": "poi_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Report deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Report not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/pois/{poi_id}/reports/{id}/status": {
+            "put": {
+                "tags": [
+                    "POI Reports"
+                ],
+                "summary": "Update report status (Admin only)",
+                "operationId": "9423c9257e8e7f704f114908045e4256",
+                "parameters": [
+                    {
+                        "name": "poi_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "resolved",
+                                            "rejected"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Report status updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "Report not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reports/pending": {
+            "get": {
+                "tags": [
+                    "POI Reports"
+                ],
+                "summary": "Get all pending reports (Admin only)",
+                "operationId": "7223ffc56e6d8535791f34027b9d9837",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/reports": {
+            "get": {
+                "tags": [
+                    "POI Reports"
+                ],
+                "summary": "Get all reports by the authenticated user",
+                "operationId": "0ab8d8abd12f726143deb20d2aa045e8",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reports/stats": {
+            "get": {
+                "tags": [
+                    "POI Reports"
+                ],
+                "summary": "Get report statistics (Admin only)",
+                "operationId": "880fddffa6d88d055426a16458add589",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/pois/{poi_id}/reviews": {
             "get": {
                 "tags": [
@@ -17012,6 +17622,368 @@
                     },
                     "404": {
                         "description": "Review not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/poi-services": {
+            "get": {
+                "tags": [
+                    "POI Services"
+                ],
+                "summary": "Get all POI services",
+                "operationId": "c87ec5f84e4e02d6857307370b80ac08",
+                "parameters": [
+                    {
+                        "name": "type_id",
+                        "in": "query",
+                        "description": "Filter by POI type",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "POI Services"
+                ],
+                "summary": "Create a new POI service",
+                "operationId": "7fe8cbb1099613961e8127b70cf57fa0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Oil Change"
+                                    },
+                                    "type_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Service created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/poi-services/{id}": {
+            "get": {
+                "tags": [
+                    "POI Services"
+                ],
+                "summary": "Get a specific POI service",
+                "operationId": "6765f86fdf2bdc3730cdd2585bde1cbf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Service not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "POI Services"
+                ],
+                "summary": "Update a POI service",
+                "operationId": "e2a16254c9e4163a03683540d711c5cd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "type_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Service updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "Service not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "POI Services"
+                ],
+                "summary": "Delete a POI service",
+                "operationId": "de6b9aa61e57f4480864320421a96517",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Service deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "Service not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/poi-types": {
+            "get": {
+                "tags": [
+                    "POI Types"
+                ],
+                "summary": "Get all POI types",
+                "operationId": "c72e2bd637e111c6d84a1363ac498d7e",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "POI Types"
+                ],
+                "summary": "Create a new POI type",
+                "operationId": "a91bc5717b72d41599b55e22d1b04df8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Garage/Maintenance"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "wrench"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "example": "#FF5722"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "POI type created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/poi-types/{id}": {
+            "get": {
+                "tags": [
+                    "POI Types"
+                ],
+                "summary": "Get a specific POI type",
+                "operationId": "90c264c7054db5c18e25fe5f21fd063b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "POI type not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "POI Types"
+                ],
+                "summary": "Update a POI type",
+                "operationId": "e1649f77bcac63ba6042b40a7c566ef0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "icon": {
+                                        "type": "string"
+                                    },
+                                    "color": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "POI type updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "POI type not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "POI Types"
+                ],
+                "summary": "Delete a POI type",
+                "operationId": "47cca5200750aad17f510a9d15dfd325",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "POI type deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "POI type not found"
+                    },
+                    "422": {
+                        "description": "Cannot delete type with POIs"
                     }
                 },
                 "security": [
@@ -17725,6 +18697,464 @@
                 }
             }
         },
+        "/api/route-categories": {
+            "get": {
+                "tags": [
+                    "Route Categories"
+                ],
+                "summary": "Get all route categories",
+                "operationId": "460bea7c7cf5fbf3e85b3cd88c80e44c",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Route Categories"
+                ],
+                "summary": "Create a new route category",
+                "operationId": "5cd80439e01e5cafb3e7e64975f19ab3",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Scenic"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "mountain"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "example": "#4CAF50"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Category created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/route-categories/{id}": {
+            "get": {
+                "tags": [
+                    "Route Categories"
+                ],
+                "summary": "Get a specific route category",
+                "operationId": "cf92c7ad33a71b2401ad5d0ed1d631ba",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Route Categories"
+                ],
+                "summary": "Update a route category",
+                "operationId": "fe63275564f071b2a9f62c7b6694effd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "icon": {
+                                        "type": "string"
+                                    },
+                                    "color": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Category updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Route Categories"
+                ],
+                "summary": "Delete a route category",
+                "operationId": "b70cea4ec09698a9f8a078baeec4c0dd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "422": {
+                        "description": "Cannot delete category with routes"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/routes/{route_id}/completions": {
+            "get": {
+                "tags": [
+                    "Route Completions"
+                ],
+                "summary": "Get all completions for a route",
+                "operationId": "d33987b46ef4df67402da0f439d6e287",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Route not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Route Completions"
+                ],
+                "summary": "Mark a route as completed",
+                "operationId": "a4e52010104334010f50942b2289cded",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "completed_at"
+                                ],
+                                "properties": {
+                                    "completed_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "actual_duration": {
+                                        "type": "string",
+                                        "example": "3 hours 45 minutes"
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Route marked as completed"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/routes/{route_id}/completions/{id}": {
+            "get": {
+                "tags": [
+                    "Route Completions"
+                ],
+                "summary": "Get a specific completion",
+                "operationId": "95d034969f2bd600f9d97d1305c50408",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Completion not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Route Completions"
+                ],
+                "summary": "Update a completion record",
+                "operationId": "14b4f2145ecbb64982e6fc3ce894d3ad",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Completion updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Completion not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Route Completions"
+                ],
+                "summary": "Delete a completion record",
+                "operationId": "3e76bfefaee7b96f9e34180e659f33fc",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Completion deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Completion not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/completions": {
+            "get": {
+                "tags": [
+                    "Route Completions"
+                ],
+                "summary": "Get all completions for the authenticated user",
+                "operationId": "bcc183412214dfaad44550c2eb60b4b5",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/completion-stats": {
+            "get": {
+                "tags": [
+                    "Route Completions"
+                ],
+                "summary": "Get completion statistics for the authenticated user",
+                "operationId": "722eaf82d3c626ba9fb519694824fb45",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/routes/{route_id}/check-completion": {
+            "get": {
+                "tags": [
+                    "Route Completions"
+                ],
+                "summary": "Check if current user has completed this route",
+                "operationId": "d76c1babf24f8c209080169699dda523",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/routes": {
             "get": {
                 "tags": [
@@ -18036,6 +19466,855 @@
                 "responses": {
                     "200": {
                         "description": "Review deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/route-tags": {
+            "get": {
+                "tags": [
+                    "Route Tags"
+                ],
+                "summary": "Get all route tags",
+                "operationId": "00e5a9f51f5550219ca9fdce6968186e",
+                "parameters": [
+                    {
+                        "name": "popular",
+                        "in": "query",
+                        "description": "Get only popular tags (most used)",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Route Tags"
+                ],
+                "summary": "Create a new route tag",
+                "operationId": "8375d5edc5dbac4cc14fbd087c1d6939",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "scenic"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tag created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/route-tags/{id}": {
+            "get": {
+                "tags": [
+                    "Route Tags"
+                ],
+                "summary": "Get a specific route tag with its routes",
+                "operationId": "ca2e5b0edc6cf4502ac3539550f5a606",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Tag not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Route Tags"
+                ],
+                "summary": "Update a route tag",
+                "operationId": "b35158cc448d9452141ca1a2a39259fe",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tag updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "Tag not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Route Tags"
+                ],
+                "summary": "Delete a route tag",
+                "operationId": "fca5aa3c5549849b2b29b0e93e36bd78",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    },
+                    "404": {
+                        "description": "Tag not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/route-tags/slug/{slug}": {
+            "get": {
+                "tags": [
+                    "Route Tags"
+                ],
+                "summary": "Get a tag by slug with its routes",
+                "operationId": "8e23b9c5dc010ab5b99754cef4f59d32",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Tag not found"
+                    }
+                }
+            }
+        },
+        "/api/route-tags/search": {
+            "post": {
+                "tags": [
+                    "Route Tags"
+                ],
+                "summary": "Search route tags",
+                "operationId": "e1e94b5d0dd3e89cbdce9ba11c8efdd9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "query"
+                                ],
+                                "properties": {
+                                    "query": {
+                                        "type": "string",
+                                        "example": "scen"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/api/routes/{route_id}/warnings": {
+            "get": {
+                "tags": [
+                    "Route Warnings"
+                ],
+                "summary": "Get all warnings for a route",
+                "operationId": "7fc4e31613f3c9ce7ac89942abc28a5e",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "active_only",
+                        "in": "query",
+                        "description": "Get only active warnings",
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Route not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Route Warnings"
+                ],
+                "summary": "Report a warning for a route",
+                "operationId": "b5a3b843fb31a9c7c531708619f9dd3e",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "warning_type",
+                                    "description"
+                                ],
+                                "properties": {
+                                    "warning_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "construction",
+                                            "accident",
+                                            "weather",
+                                            "road_closure"
+                                        ]
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "waypoint_id": {
+                                        "type": "integer"
+                                    },
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Warning reported successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/routes/{route_id}/warnings/{id}": {
+            "get": {
+                "tags": [
+                    "Route Warnings"
+                ],
+                "summary": "Get a specific warning",
+                "operationId": "cb43981afd976be347dee773f0caaa7a",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Warning not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Route Warnings"
+                ],
+                "summary": "Update a warning",
+                "operationId": "f58712e7f70ecf58aaaf15019c6e2f6a",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Warning updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Warning not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Route Warnings"
+                ],
+                "summary": "Delete a warning",
+                "operationId": "30ff31a7682a306e7809333e9711b9ec",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Warning deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Warning not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/routes/{route_id}/warnings/{id}/deactivate": {
+            "put": {
+                "tags": [
+                    "Route Warnings"
+                ],
+                "summary": "Deactivate a warning",
+                "operationId": "440f90e055bd22e7b8fa6163089d3b62",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Warning deactivated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Warning not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/warnings/active": {
+            "get": {
+                "tags": [
+                    "Route Warnings"
+                ],
+                "summary": "Get all active warnings across all routes",
+                "operationId": "c95e6cdad51346b47c8f2e8c00e93110",
+                "parameters": [
+                    {
+                        "name": "warning_type",
+                        "in": "query",
+                        "description": "Filter by warning type",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "construction",
+                                "accident",
+                                "weather",
+                                "road_closure"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/routes/{route_id}/waypoints": {
+            "get": {
+                "tags": [
+                    "Route Waypoints"
+                ],
+                "summary": "Get all waypoints for a route",
+                "operationId": "85cf1a9b1a58c85cbde5706ccbadb738",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Route not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Route Waypoints"
+                ],
+                "summary": "Add a waypoint to a route",
+                "operationId": "75bb942ed180c2953b039afa9dfcd35e",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "latitude",
+                                    "longitude",
+                                    "order_position"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "order_position": {
+                                        "type": "integer"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "waypoint_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "start",
+                                            "waypoint",
+                                            "poi",
+                                            "rest_stop",
+                                            "gas_station",
+                                            "viewpoint",
+                                            "end"
+                                        ]
+                                    },
+                                    "poi_id": {
+                                        "type": "integer"
+                                    },
+                                    "stop_duration": {
+                                        "type": "integer"
+                                    },
+                                    "elevation": {
+                                        "type": "integer"
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Waypoint created successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Route not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/routes/{route_id}/waypoints/{id}": {
+            "get": {
+                "tags": [
+                    "Route Waypoints"
+                ],
+                "summary": "Get a specific waypoint",
+                "operationId": "75d9b7a3573602bbb0177313e68f65b6",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Waypoint not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Route Waypoints"
+                ],
+                "summary": "Update a waypoint",
+                "operationId": "85b90216cb7fcfe9308c4ced29187c0f",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Waypoint updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Waypoint not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Route Waypoints"
+                ],
+                "summary": "Delete a waypoint",
+                "operationId": "6a6e75e9b3e71665eb231dd2425d33e0",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Waypoint deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Waypoint not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/routes/{route_id}/waypoints/{id}/reorder": {
+            "put": {
+                "tags": [
+                    "Route Waypoints"
+                ],
+                "summary": "Reorder a waypoint",
+                "operationId": "e7bb84f4d8a9df3887aaf3311335ff8e",
+                "parameters": [
+                    {
+                        "name": "route_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "new_position"
+                                ],
+                                "properties": {
+                                    "new_position": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Waypoint reordered successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Waypoint not found"
                     }
                 },
                 "security": [
@@ -21233,16 +23512,40 @@
             "name": "Motorcycle Years"
         },
         {
+            "name": "Newsletter Campaigns",
+            "description": "API Endpoints for managing Newsletter Campaigns (Admin only)"
+        },
+        {
             "name": "Newsletter",
             "description": "API Endpoints for Newsletter Subscription"
+        },
+        {
+            "name": "POI Reports",
+            "description": "API Endpoints for reporting POI issues (closed, wrong info, duplicate, etc.)"
         },
         {
             "name": "POI Reviews",
             "description": "API Endpoints for POI Reviews"
         },
         {
+            "name": "POI Services",
+            "description": "API Endpoints for POI Services (Oil Change, Tire Replacement, etc.)"
+        },
+        {
+            "name": "POI Types",
+            "description": "API Endpoints for POI Types (Garage, Dealer, Gas Station, etc.)"
+        },
+        {
             "name": "Points of Interest",
             "description": "API Endpoints for Points of Interest"
+        },
+        {
+            "name": "Route Categories",
+            "description": "API Endpoints for Route Categories"
+        },
+        {
+            "name": "Route Completions",
+            "description": "API Endpoints for tracking route completions by users"
         },
         {
             "name": "Routes",
@@ -21251,6 +23554,18 @@
         {
             "name": "Route Reviews",
             "description": "API Endpoints for Route Reviews"
+        },
+        {
+            "name": "Route Tags",
+            "description": "API Endpoints for Route Tags (#scenic, #twisty, #beginner_friendly)"
+        },
+        {
+            "name": "Route Warnings",
+            "description": "API Endpoints for Route Warnings (construction, accidents, weather alerts, etc.)"
+        },
+        {
+            "name": "Route Waypoints",
+            "description": "API Endpoints for Route Waypoints"
         },
         {
             "name": "Wishlist",
