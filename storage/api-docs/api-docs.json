@@ -10797,8 +10797,8 @@
                 "tags": [
                     "Listings"
                 ],
-                "summary": "Create or update a motorcycle listing (multi-step)",
-                "description": "Step 1: Basic info (no listing_id) | Step 2: Motorcycle details (with listing_id) | Step 3: Payment (with listing_id)",
+                "summary": "Create motorcycle listing (flexible 3-step process)",
+                "description": "Step 1: Vehicle details | Step 2: Basic info | Step 3: Payment",
                 "operationId": "82e466deecdfc7f046318f30b8399c74",
                 "requestBody": {
                     "required": true,
@@ -10807,138 +10807,137 @@
                             "schema": {
                                 "properties": {
                                     "step": {
-                                        "description": "Current step: 1 (Basic info), 2 (Details), or 3 (Payment)",
+                                        "description": "Current step (1, 2, or 3)",
                                         "type": "integer",
                                         "example": 1
                                     },
                                     "listing_id": {
-                                        "description": "NOT required in Step 1 | REQUIRED in Steps 2 & 3",
+                                        "description": "Required in Steps 2 & 3, NOT in Step 1",
                                         "type": "integer",
-                                        "example": 42
+                                        "example": 520
                                     },
                                     "category_id": {
-                                        "description": "Step 1 REQUIRED: Category ID (1=Motorcycle, 2=Spare Part, 3=License Plate)",
+                                        "description": "Step 1: 1=Motorcycle, 2=Spare Part, 3=License Plate",
                                         "type": "integer",
                                         "example": 1
-                                    },
-                                    "title": {
-                                        "description": "Step 1 REQUIRED: Listing title",
-                                        "type": "string",
-                                        "example": "Yamaha MT-07 2020"
-                                    },
-                                    "description": {
-                                        "description": "Step 1 REQUIRED: Full description",
-                                        "type": "string",
-                                        "example": "Well maintained motorcycle, single owner, no accidents"
-                                    },
-                                    "price": {
-                                        "description": "Step 1: Selling price (optional if auction_enabled=true and no fixed price)",
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 5000
-                                    },
-                                    "country_id": {
-                                        "description": "Step 1 REQUIRED: Country ID where item is located",
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "city_id": {
-                                        "description": "Step 1 REQUIRED: City ID where item is located",
-                                        "type": "integer",
-                                        "example": 10
-                                    },
-                                    "auction_enabled": {
-                                        "description": "Step 1: Enable auction feature (if true, minimum_bid is REQUIRED)",
-                                        "type": "boolean",
-                                        "example": true
-                                    },
-                                    "minimum_bid": {
-                                        "description": "Step 1: REQUIRED if auction_enabled=true - Starting bid amount",
-                                        "type": "number",
-                                        "example": 4000
-                                    },
-                                    "allow_submission": {
-                                        "description": "Step 1: Allow buyers to submit price offers",
-                                        "type": "boolean",
-                                        "example": true
-                                    },
-                                    "contacting_channel": {
-                                        "description": "Step 1 REQUIRED: Preferred contact method",
-                                        "type": "string",
-                                        "example": "phone / email / whatsapp"
-                                    },
-                                    "seller_type": {
-                                        "description": "Step 1 REQUIRED: Type of seller",
-                                        "type": "string",
-                                        "example": "owner / dealer"
-                                    },
-                                    "images": {
-                                        "description": "Step 1: Array of image URLs (can be added/updated in Step 1 or 2)",
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string",
-                                            "example": "https://example.com/bike1.jpg"
-                                        }
                                     },
                                     "brand_id": {
-                                        "description": "Step 2 REQUIRED: Motorcycle brand ID",
+                                        "description": "Step 1: Motorcycle brand ID",
                                         "type": "integer",
-                                        "example": 1
+                                        "example": 7
                                     },
                                     "model_id": {
-                                        "description": "Step 2 REQUIRED: Motorcycle model ID",
+                                        "description": "Step 1: Motorcycle model ID",
                                         "type": "integer",
-                                        "example": 2
+                                        "example": 5712
                                     },
                                     "year_id": {
-                                        "description": "Step 2 REQUIRED: Manufacturing year",
+                                        "description": "Step 1: Year ID",
                                         "type": "integer",
-                                        "example": 2020
+                                        "example": 10671
                                     },
                                     "engine": {
-                                        "description": "Step 2: Engine capacity",
+                                        "description": "Step 1: Engine capacity",
                                         "type": "string",
-                                        "example": "700cc"
+                                        "example": "9500cc"
                                     },
                                     "mileage": {
-                                        "description": "Step 2: Mileage in kilometers",
+                                        "description": "Step 1: Mileage in KM",
                                         "type": "integer",
-                                        "example": 15000
+                                        "example": 9000
                                     },
                                     "body_condition": {
-                                        "description": "Step 2: Physical body condition",
+                                        "description": "Step 1: Body condition",
                                         "type": "string",
                                         "example": "As New / Used / Needs some fixes"
                                     },
                                     "modified": {
-                                        "description": "Step 2: Has modifications",
+                                        "description": "Step 1: Has modifications",
                                         "type": "boolean",
                                         "example": false
                                     },
                                     "insurance": {
-                                        "description": "Step 2: Has active insurance",
+                                        "description": "Step 1: Has insurance",
                                         "type": "boolean",
                                         "example": true
                                     },
                                     "general_condition": {
-                                        "description": "Step 2: Overall condition",
+                                        "description": "Step 1: General condition",
                                         "type": "string",
                                         "example": "New / Used"
                                     },
                                     "vehicle_care": {
-                                        "description": "Step 2: Vehicle origin/care type",
+                                        "description": "Step 1: Vehicle care type",
                                         "type": "string",
                                         "example": "Wakeel / USA / Europe / GCC / Customs License / Other"
                                     },
                                     "transmission": {
-                                        "description": "Step 2: Transmission type",
+                                        "description": "Step 1: Transmission type",
                                         "type": "string",
                                         "example": "Automatic / Manual / Semi-Automatic"
                                     },
-                                    "amount": {
-                                        "description": "Step 3 REQUIRED: Payment amount in your local currency (will be converted to AED)",
+                                    "images": {
+                                        "description": "Step 1 or 2: Array of image URLs",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "example": "https://be.dabapp.co/storage/listings/image.jpg"
+                                        }
+                                    },
+                                    "title": {
+                                        "description": "Step 2: Listing title",
+                                        "type": "string",
+                                        "example": "MOTORCYCLE TEST 16"
+                                    },
+                                    "description": {
+                                        "description": "Step 2: Full description",
+                                        "type": "string",
+                                        "example": "Well maintained motorcycle in excellent condition"
+                                    },
+                                    "price": {
+                                        "description": "Step 2: Price (optional if auction only)",
                                         "type": "number",
-                                        "example": 100
+                                        "example": 9000
+                                    },
+                                    "allow_submission": {
+                                        "description": "Step 2: Allow buyers to submit offers",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "contacting_channel": {
+                                        "description": "Step 2: Contact method",
+                                        "type": "string",
+                                        "example": "phone / email / whatsapp"
+                                    },
+                                    "country_id": {
+                                        "description": "Step 2: Country ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "city_id": {
+                                        "description": "Step 2: City ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "seller_type": {
+                                        "description": "Step 2: Seller type",
+                                        "type": "string",
+                                        "example": "owner / dealer / middleman"
+                                    },
+                                    "auction_enabled": {
+                                        "description": "Step 2: Enable auction",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "minimum_bid": {
+                                        "description": "Step 2: Required if auction_enabled=true",
+                                        "type": "number",
+                                        "example": null
+                                    },
+                                    "amount": {
+                                        "description": "Step 3: Payment amount in local currency",
+                                        "type": "number",
+                                        "example": 599
                                     }
                                 },
                                 "type": "object"
@@ -10948,53 +10947,30 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Motorcycle listing saved successfully",
+                        "description": "Success",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "oneOf": [
                                         {
-                                            "description": "Response for Step 1 & 2 (no payment)",
+                                            "description": "Steps 1 & 2 Response",
                                             "properties": {
                                                 "message": {
                                                     "type": "string",
                                                     "example": "Listing saved (no payment yet)"
                                                 },
                                                 "listing_id": {
-                                                    "description": "Use this ID for Steps 2 & 3",
                                                     "type": "integer",
-                                                    "example": 42
+                                                    "example": 520
                                                 },
                                                 "data": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 42
-                                                        },
-                                                        "title": {
-                                                            "type": "string",
-                                                            "example": "Yamaha MT-07 2020"
-                                                        },
-                                                        "price": {
-                                                            "type": "number",
-                                                            "example": 5000
-                                                        },
-                                                        "status": {
-                                                            "type": "string",
-                                                            "example": "draft"
-                                                        },
-                                                        "step": {
-                                                            "type": "integer",
-                                                            "example": 2
-                                                        }
-                                                    },
                                                     "type": "object"
                                                 }
                                             },
                                             "type": "object"
                                         },
                                         {
-                                            "description": "Response for Step 3 (with payment redirect)",
+                                            "description": "Step 3 Response",
                                             "properties": {
                                                 "message": {
                                                     "type": "string",
@@ -11002,38 +10978,33 @@
                                                 },
                                                 "listing_id": {
                                                     "type": "integer",
-                                                    "example": 42
+                                                    "example": 520
                                                 },
                                                 "payment_id": {
                                                     "type": "integer",
                                                     "example": 123
                                                 },
                                                 "amount_aed": {
-                                                    "description": "Final amount in AED",
                                                     "type": "number",
-                                                    "example": 100
+                                                    "example": 599
                                                 },
                                                 "original_amount": {
-                                                    "description": "Original amount in local currency",
                                                     "type": "number",
-                                                    "example": 367
+                                                    "example": 599
                                                 },
                                                 "original_currency": {
-                                                    "description": "Local currency code",
                                                     "type": "string",
-                                                    "example": "SAR"
+                                                    "example": "AED"
                                                 },
                                                 "exchange_rate": {
-                                                    "description": "Conversion rate used",
                                                     "type": "string",
-                                                    "example": "1 AED = 3.67 SAR"
+                                                    "example": "1 AED = 1 AED"
                                                 },
                                                 "currency": {
                                                     "type": "string",
                                                     "example": "AED"
                                                 },
                                                 "redirect_url": {
-                                                    "description": "PayTabs payment page URL",
                                                     "type": "string",
                                                     "example": "https://secure.paytabs.com/payment/page/..."
                                                 }
@@ -11049,37 +11020,13 @@
                         "description": "Payment request failed"
                     },
                     "401": {
-                        "description": "Unauthorized - Invalid or missing authentication token"
+                        "description": "Unauthorized"
                     },
                     "403": {
-                        "description": "Access denied - Listing belongs to another user"
+                        "description": "Access denied"
                     },
                     "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "errors": {
-                                            "type": "object",
-                                            "example": {
-                                                "title": [
-                                                    "The title field is required."
-                                                ],
-                                                "minimum_bid": [
-                                                    "The minimum bid field is required when auction is enabled."
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Validation error"
                     },
                     "500": {
                         "description": "Server error"
@@ -11097,8 +11044,8 @@
                 "tags": [
                     "Listings"
                 ],
-                "summary": "Create or update a spare part listing (multi-step)",
-                "description": "Step 1: Basic info (no listing_id) | Step 2: Part details (with listing_id) | Step 3: Payment (with listing_id)",
+                "summary": "Create spare part listing (flexible 3-step process)",
+                "description": "Step 1: Part details | Step 2: Basic info | Step 3: Payment",
                 "operationId": "e7bd91a7a7d7d7e0ab2c539cc2348a62",
                 "requestBody": {
                     "required": true,
@@ -11111,53 +11058,49 @@
                                         "example": 1
                                     },
                                     "listing_id": {
-                                        "description": "NOT required in Step 1 | REQUIRED in Steps 2 & 3",
                                         "type": "integer",
-                                        "example": 45
+                                        "example": 522
                                     },
                                     "category_id": {
+                                        "description": "Step 1: Always 2 for spare parts",
                                         "type": "integer",
                                         "example": 2
                                     },
-                                    "title": {
-                                        "type": "string",
-                                        "example": "Michelin Pilot Street Rear Tire"
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "example": "Brand new rear tire, never used"
-                                    },
-                                    "price": {
-                                        "type": "number",
-                                        "example": 200
-                                    },
-                                    "country_id": {
+                                    "bike_part_brand_id": {
+                                        "description": "Step 1: Part brand ID",
                                         "type": "integer",
-                                        "example": 1
+                                        "example": 2
                                     },
-                                    "city_id": {
+                                    "bike_part_category_id": {
+                                        "description": "Step 1: Part category ID",
                                         "type": "integer",
-                                        "example": 5
+                                        "example": 2
                                     },
-                                    "auction_enabled": {
-                                        "type": "boolean",
-                                        "example": false
+                                    "motorcycles": {
+                                        "description": "Step 1: Compatible motorcycles array",
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "brand_id": {
+                                                    "type": "integer",
+                                                    "example": 7
+                                                },
+                                                "model_id": {
+                                                    "type": "integer",
+                                                    "example": 5713
+                                                },
+                                                "year_id": {
+                                                    "type": "integer",
+                                                    "example": 10672
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
                                     },
-                                    "minimum_bid": {
-                                        "type": "number",
-                                        "example": null
-                                    },
-                                    "allow_submission": {
-                                        "type": "boolean",
-                                        "example": false
-                                    },
-                                    "contacting_channel": {
+                                    "condition": {
+                                        "description": "Step 1: Part condition",
                                         "type": "string",
-                                        "example": "phone / email / whatsapp"
-                                    },
-                                    "seller_type": {
-                                        "type": "string",
-                                        "example": "owner / dealer"
+                                        "example": "new / used"
                                     },
                                     "images": {
                                         "type": "array",
@@ -11165,36 +11108,52 @@
                                             "type": "string"
                                         }
                                     },
-                                    "condition": {
-                                        "description": "Step 2: Part condition",
+                                    "title": {
+                                        "description": "Step 2",
                                         "type": "string",
-                                        "example": "new / used"
+                                        "example": "SPARE PART TEST 16"
                                     },
-                                    "motorcycles": {
-                                        "description": "Step 2: Compatible motorcycles",
-                                        "type": "array",
-                                        "items": {
-                                            "properties": {
-                                                "brand_id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "model_id": {
-                                                    "type": "integer",
-                                                    "example": 2
-                                                },
-                                                "year_id": {
-                                                    "type": "integer",
-                                                    "example": 2020
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
+                                    "description": {
+                                        "description": "Step 2",
+                                        "type": "string"
+                                    },
+                                    "price": {
+                                        "description": "Step 2",
+                                        "type": "number",
+                                        "example": null
+                                    },
+                                    "allow_submission": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "contacting_channel": {
+                                        "type": "string",
+                                        "example": "phone / email / whatsapp"
+                                    },
+                                    "country_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "seller_type": {
+                                        "type": "string",
+                                        "example": "owner / dealer / middleman"
+                                    },
+                                    "auction_enabled": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "minimum_bid": {
+                                        "type": "number",
+                                        "example": 9000
                                     },
                                     "amount": {
-                                        "description": "Step 3: Payment amount",
+                                        "description": "Step 3",
                                         "type": "number",
-                                        "example": 50
+                                        "example": 599
                                     }
                                 },
                                 "type": "object"
@@ -11204,19 +11163,10 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Spare part listing saved successfully"
-                    },
-                    "401": {
-                        "description": "Unauthorized"
-                    },
-                    "403": {
-                        "description": "Access denied"
+                        "description": "Success"
                     },
                     "422": {
                         "description": "Validation error"
-                    },
-                    "500": {
-                        "description": "Server error"
                     }
                 },
                 "security": [
@@ -11231,8 +11181,8 @@
                 "tags": [
                     "Listings"
                 ],
-                "summary": "Create or update a license plate listing (multi-step)",
-                "description": "Step 1: Basic info (no listing_id) | Step 2: Plate details (with listing_id) | Step 3: Payment (with listing_id)",
+                "summary": "Create license plate listing (flexible 3-step process)",
+                "description": "Step 1: Plate details | Step 2: Basic info | Step 3: Payment",
                 "operationId": "fd028dfaaee30bf948a3880d3acb1632",
                 "requestBody": {
                     "required": true,
@@ -11245,25 +11195,66 @@
                                         "example": 1
                                     },
                                     "listing_id": {
-                                        "description": "NOT required in Step 1 | REQUIRED in Steps 2 & 3",
                                         "type": "integer",
-                                        "example": 46
+                                        "example": 524
                                     },
                                     "category_id": {
+                                        "description": "Step 1: Always 3 for license plates",
                                         "type": "integer",
                                         "example": 3
                                     },
+                                    "plate_format_id": {
+                                        "description": "Step 1: Plate format ID",
+                                        "type": "integer",
+                                        "example": 17
+                                    },
+                                    "country_id_lp": {
+                                        "description": "Step 1: Plate country",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "city_id_lp": {
+                                        "description": "Step 1: Plate emirate/city",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "fields": {
+                                        "description": "Step 1: Plate field values (Arabic/English supported)",
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "field_id": {
+                                                    "type": "integer",
+                                                    "example": 40
+                                                },
+                                                "value": {
+                                                    "type": "string",
+                                                    "example": "١١١"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
                                     "title": {
+                                        "description": "Step 2",
                                         "type": "string",
-                                        "example": "Dubai Custom Plate - ABC 12345"
+                                        "example": "license plate TEST 16"
                                     },
                                     "description": {
-                                        "type": "string",
-                                        "example": "Red Dubai plate with unique number combination"
+                                        "description": "Step 2",
+                                        "type": "string"
                                     },
                                     "price": {
                                         "type": "number",
-                                        "example": 800
+                                        "example": 9000
+                                    },
+                                    "allow_submission": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "contacting_channel": {
+                                        "type": "string",
+                                        "example": "phone / email / whatsapp"
                                     },
                                     "country_id": {
                                         "type": "integer",
@@ -11271,72 +11262,20 @@
                                     },
                                     "city_id": {
                                         "type": "integer",
-                                        "example": 8
-                                    },
-                                    "auction_enabled": {
-                                        "description": "If true, minimum_bid is REQUIRED",
-                                        "type": "boolean",
-                                        "example": true
-                                    },
-                                    "minimum_bid": {
-                                        "description": "REQUIRED if auction_enabled=true",
-                                        "type": "number",
-                                        "example": 500
-                                    },
-                                    "allow_submission": {
-                                        "type": "boolean",
-                                        "example": true
-                                    },
-                                    "contacting_channel": {
-                                        "type": "string",
-                                        "example": "phone / email / whatsapp"
+                                        "example": 1
                                     },
                                     "seller_type": {
                                         "type": "string",
-                                        "example": "owner / dealer"
+                                        "example": "owner / dealer / middleman"
                                     },
-                                    "images": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "plate_format_id": {
-                                        "description": "Step 2: Plate format ID",
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "country_id_lp": {
-                                        "description": "Step 2: Plate country ID",
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "city_id_lp": {
-                                        "description": "Step 2: Plate emirate ID",
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "fields": {
-                                        "description": "Step 2: Plate field values",
-                                        "type": "array",
-                                        "items": {
-                                            "properties": {
-                                                "field_id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "value": {
-                                                    "type": "string",
-                                                    "example": "A"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
+                                    "auction_enabled": {
+                                        "type": "boolean",
+                                        "example": false
                                     },
                                     "amount": {
-                                        "description": "Step 3: Payment amount",
+                                        "description": "Step 3",
                                         "type": "number",
-                                        "example": 75
+                                        "example": 599
                                     }
                                 },
                                 "type": "object"
@@ -11346,19 +11285,10 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "License plate listing saved successfully"
-                    },
-                    "401": {
-                        "description": "Unauthorized"
-                    },
-                    "403": {
-                        "description": "Access denied"
+                        "description": "Success"
                     },
                     "422": {
                         "description": "Validation error"
-                    },
-                    "500": {
-                        "description": "Server error"
                     }
                 },
                 "security": [

@@ -40,412 +40,374 @@ class ListingController extends Controller
 {
     /**
      * ===========================================================================================
-     * MULTI-STEP LISTING CREATION PROCESS
+     * MULTI-STEP LISTING CREATION - FLEXIBLE WORKFLOW
      * ===========================================================================================
      *
-     * This endpoint handles a 3-step process for creating listings (motorcycles, spare parts, or license plates).
+     * WORKFLOW: You can send any fields at any step (Steps 1 & 2 are flexible)
      *
-     * ──────────────────────────────────────────────────────────────────────────────────────────
-     * STEP 1: BASIC INFORMATION
-     * ──────────────────────────────────────────────────────────────────────────────────────────
-     * Purpose: Create the listing draft with basic details
-     * Required Fields:
-     *   - step: 1
-     *   - category_id: Category ID (1=Motorcycle, 2=Spare Part, 3=License Plate)
-     *   - title: Listing title
-     *   - description: Detailed description
-     *   - price: Selling price (optional if auction only)
-     *   - country_id: Country where item is located
-     *   - city_id: City where item is located
-     *   - contacting_channel: How buyers can contact (phone / email / whatsapp)
-     *   - seller_type: Type of seller (owner / dealer)
-     *   - images: Array of image URLs
+     * TYPICAL USAGE:
+     * - STEP 1: Category-specific details (vehicle/spare part/plate data)
+     * - STEP 2: Basic listing information (title, description, price, location)
+     * - STEP 3: Payment (validates amount only, then processes payment)
      *
-     * Optional Fields:
-     *   - auction_enabled: Enable auction (true/false)
-     *   - minimum_bid: Required if auction_enabled=true
-     *   - allow_submission: Allow price offers (true/false)
-     *
-     * Note: DO NOT send listing_id in Step 1
-     * Response: Returns listing_id to use in Step 2
-     *
-     * ──────────────────────────────────────────────────────────────────────────────────────────
-     * STEP 2: CATEGORY-SPECIFIC DETAILS
-     * ──────────────────────────────────────────────────────────────────────────────────────────
-     * Purpose: Add specific details based on listing category
-     * Required Fields:
-     *   - step: 2
-     *   - listing_id: The ID returned from Step 1 (REQUIRED)
-     *
-     * For MOTORCYCLES, add:
-     *   - brand_id: Motorcycle brand
-     *   - model_id: Motorcycle model
-     *   - year_id: Manufacturing year
-     *   - engine: Engine capacity (e.g., "700cc")
-     *   - mileage: Mileage in kilometers
-     *   - body_condition: As New / Used / Needs some fixes
-     *   - modified: Has modifications (true/false)
-     *   - insurance: Has insurance (true/false)
-     *   - general_condition: New / Used
-     *   - vehicle_care: Wakeel / USA / Europe / GCC / Customs License / Other
-     *   - transmission: Automatic / Manual / Semi-Automatic
-     *
-     * For SPARE PARTS, add:
-     *   - condition: new / used
-     *   - motorcycles: Array of compatible motorcycles
-     *       [
-     *         { "brand_id": 1, "model_id": 2, "year_id": 2020 },
-     *         { "brand_id": 1, "model_id": 3, "year_id": 2021 }
-     *       ]
-     *
-     * For LICENSE PLATES, add:
-     *   - plate_format_id: Format ID (defines plate structure)
-     *   - country_id_lp: Plate issuing country
-     *   - city_id_lp: Plate emirate/city (e.g., Dubai, Abu Dhabi)
-     *   - fields: Array of field values based on format
-     *       [
-     *         { "field_id": 1, "value": "A" },
-     *         { "field_id": 2, "value": "B" },
-     *         { "field_id": 3, "value": "C" },
-     *         { "field_id": 4, "value": "12345" }
-     *       ]
-     *
-     * Response: Returns updated listing data with category-specific details
-     *
-     * ──────────────────────────────────────────────────────────────────────────────────────────
-     * STEP 3: PAYMENT
-     * ──────────────────────────────────────────────────────────────────────────────────────────
-     * Purpose: Process payment and publish the listing
-     * Required Fields:
-     *   - step: 3
-     *   - listing_id: The ID from Step 1 (REQUIRED)
-     *   - amount: Payment amount in your local currency
-     *
-     * Payment Process:
-     *   1. Amount is automatically converted to AED based on user's country
-     *   2. PayTabs payment gateway is initiated
-     *   3. User is redirected to payment page via redirect_url
-     *   4. After successful payment, listing becomes active
-     *
-     * Currency Conversion:
-     *   - If country is UAE (country_id=2): No conversion, amount stays in AED
-     *   - If country is other (e.g., Saudi Arabia): Converts using exchange rate
-     *     Example: 367 SAR → 100 AED (if rate is 1 AED = 3.67 SAR)
-     *
-     * Response: Returns payment_id, redirect_url, and conversion details
-     *
-     * ──────────────────────────────────────────────────────────────────────────────────────────
-     * IMPORTANT NOTES
-     * ──────────────────────────────────────────────────────────────────────────────────────────
-     * - Each step can be called independently
-     * - listing_id is NOT required in Step 1, but REQUIRED in Steps 2 & 3
-     * - If auction_enabled=true, minimum_bid is REQUIRED in Step 1
-     * - Images can be added in Step 1 or updated in Step 2
-     * - Payment (Step 3) must be completed to activate the listing
-     * - listing_type_id is always null (handled automatically)
-     *
+     * IMPORTANT: listing_type_id is NOT used - do not send this field
      * ===========================================================================================
      *
      * @OA\Post(
      *     path="/api/listings/motorcycle",
-     *     summary="Create or update a motorcycle listing (multi-step)",
-     *     description="Step 1: Basic info (no listing_id) | Step 2: Motorcycle details (with listing_id) | Step 3: Payment (with listing_id)",
+     *     summary="Create motorcycle listing (flexible 3-step process)",
+     *     description="Step 1: Vehicle details | Step 2: Basic info | Step 3: Payment",
      *     tags={"Listings"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="step", type="integer", example=1, description="Current step: 1 (Basic info), 2 (Details), or 3 (Payment)"),
-     *             @OA\Property(property="listing_id", type="integer", example=42, description="NOT required in Step 1 | REQUIRED in Steps 2 & 3"),
+     *             @OA\Property(property="step", type="integer", example=1, description="Current step (1, 2, or 3)"),
+     *             @OA\Property(property="listing_id", type="integer", example=520, description="Required in Steps 2 & 3, NOT in Step 1"),
      *
-     *             @OA\Property(property="category_id", type="integer", example=1, description="Step 1 REQUIRED: Category ID (1=Motorcycle, 2=Spare Part, 3=License Plate)"),
-     *             @OA\Property(property="title", type="string", example="Yamaha MT-07 2020", description="Step 1 REQUIRED: Listing title"),
-     *             @OA\Property(property="description", type="string", example="Well maintained motorcycle, single owner, no accidents", description="Step 1 REQUIRED: Full description"),
-     *             @OA\Property(property="price", type="number", format="float", example=5000, description="Step 1: Selling price (optional if auction_enabled=true and no fixed price)"),
-     *             @OA\Property(property="country_id", type="integer", example=1, description="Step 1 REQUIRED: Country ID where item is located"),
-     *             @OA\Property(property="city_id", type="integer", example=10, description="Step 1 REQUIRED: City ID where item is located"),
-     *             @OA\Property(property="auction_enabled", type="boolean", example=true, description="Step 1: Enable auction feature (if true, minimum_bid is REQUIRED)"),
-     *             @OA\Property(property="minimum_bid", type="number", example=4000, description="Step 1: REQUIRED if auction_enabled=true - Starting bid amount"),
-     *             @OA\Property(property="allow_submission", type="boolean", example=true, description="Step 1: Allow buyers to submit price offers"),
-     *             @OA\Property(property="contacting_channel", type="string", example="phone / email / whatsapp", description="Step 1 REQUIRED: Preferred contact method"),
-     *             @OA\Property(property="seller_type", type="string", example="owner / dealer", description="Step 1 REQUIRED: Type of seller"),
+     *             @OA\Property(property="category_id", type="integer", example=1, description="Step 1: 1=Motorcycle, 2=Spare Part, 3=License Plate"),
+     *             @OA\Property(property="brand_id", type="integer", example=7, description="Step 1: Motorcycle brand ID"),
+     *             @OA\Property(property="model_id", type="integer", example=5712, description="Step 1: Motorcycle model ID"),
+     *             @OA\Property(property="year_id", type="integer", example=10671, description="Step 1: Year ID"),
+     *             @OA\Property(property="engine", type="string", example="9500cc", description="Step 1: Engine capacity"),
+     *             @OA\Property(property="mileage", type="integer", example=9000, description="Step 1: Mileage in KM"),
+     *             @OA\Property(property="body_condition", type="string", example="As New / Used / Needs some fixes", description="Step 1: Body condition"),
+     *             @OA\Property(property="modified", type="boolean", example=false, description="Step 1: Has modifications"),
+     *             @OA\Property(property="insurance", type="boolean", example=true, description="Step 1: Has insurance"),
+     *             @OA\Property(property="general_condition", type="string", example="New / Used", description="Step 1: General condition"),
+     *             @OA\Property(property="vehicle_care", type="string", example="Wakeel / USA / Europe / GCC / Customs License / Other", description="Step 1: Vehicle care type"),
+     *             @OA\Property(property="transmission", type="string", example="Automatic / Manual / Semi-Automatic", description="Step 1: Transmission type"),
      *             @OA\Property(
      *                 property="images",
      *                 type="array",
-     *                 description="Step 1: Array of image URLs (can be added/updated in Step 1 or 2)",
-     *                 @OA\Items(type="string", example="https://example.com/bike1.jpg")
+     *                 description="Step 1 or 2: Array of image URLs",
+     *                 @OA\Items(type="string", example="https://be.dabapp.co/storage/listings/image.jpg")
      *             ),
      *
-     *             @OA\Property(property="brand_id", type="integer", example=1, description="Step 2 REQUIRED: Motorcycle brand ID"),
-     *             @OA\Property(property="model_id", type="integer", example=2, description="Step 2 REQUIRED: Motorcycle model ID"),
-     *             @OA\Property(property="year_id", type="integer", example=2020, description="Step 2 REQUIRED: Manufacturing year"),
-     *             @OA\Property(property="engine", type="string", example="700cc", description="Step 2: Engine capacity"),
-     *             @OA\Property(property="mileage", type="integer", example=15000, description="Step 2: Mileage in kilometers"),
-     *             @OA\Property(property="body_condition", type="string", example="As New / Used / Needs some fixes", description="Step 2: Physical body condition"),
-     *             @OA\Property(property="modified", type="boolean", example=false, description="Step 2: Has modifications"),
-     *             @OA\Property(property="insurance", type="boolean", example=true, description="Step 2: Has active insurance"),
-     *             @OA\Property(property="general_condition", type="string", example="New / Used", description="Step 2: Overall condition"),
-     *             @OA\Property(property="vehicle_care", type="string", example="Wakeel / USA / Europe / GCC / Customs License / Other", description="Step 2: Vehicle origin/care type"),
-     *             @OA\Property(property="transmission", type="string", example="Automatic / Manual / Semi-Automatic", description="Step 2: Transmission type"),
+     *             @OA\Property(property="title", type="string", example="MOTORCYCLE TEST 16", description="Step 2: Listing title"),
+     *             @OA\Property(property="description", type="string", example="Well maintained motorcycle in excellent condition", description="Step 2: Full description"),
+     *             @OA\Property(property="price", type="number", example=9000, description="Step 2: Price (optional if auction only)"),
+     *             @OA\Property(property="allow_submission", type="boolean", example=false, description="Step 2: Allow buyers to submit offers"),
+     *             @OA\Property(property="contacting_channel", type="string", example="phone / email / whatsapp", description="Step 2: Contact method"),
+     *             @OA\Property(property="country_id", type="integer", example=1, description="Step 2: Country ID"),
+     *             @OA\Property(property="city_id", type="integer", example=1, description="Step 2: City ID"),
+     *             @OA\Property(property="seller_type", type="string", example="owner / dealer / middleman", description="Step 2: Seller type"),
+     *             @OA\Property(property="auction_enabled", type="boolean", example=false, description="Step 2: Enable auction"),
+     *             @OA\Property(property="minimum_bid", type="number", example=null, description="Step 2: Required if auction_enabled=true"),
      *
-     *             @OA\Property(property="amount", type="number", example=100, description="Step 3 REQUIRED: Payment amount in your local currency (will be converted to AED)")
+     *             @OA\Property(property="amount", type="number", example=599, description="Step 3: Payment amount in local currency")
      *         )
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Motorcycle listing saved successfully",
+     *         description="Success",
      *         @OA\JsonContent(
      *             oneOf={
      *                 @OA\Schema(
-     *                     description="Response for Step 1 & 2 (no payment)",
+     *                     description="Steps 1 & 2 Response",
      *                     @OA\Property(property="message", type="string", example="Listing saved (no payment yet)"),
-     *                     @OA\Property(property="listing_id", type="integer", example=42, description="Use this ID for Steps 2 & 3"),
-     *                     @OA\Property(
-     *                         property="data",
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=42),
-     *                         @OA\Property(property="title", type="string", example="Yamaha MT-07 2020"),
-     *                         @OA\Property(property="price", type="number", example=5000),
-     *                         @OA\Property(property="status", type="string", example="draft"),
-     *                         @OA\Property(property="step", type="integer", example=2)
-     *                     )
+     *                     @OA\Property(property="listing_id", type="integer", example=520),
+     *                     @OA\Property(property="data", type="object")
      *                 ),
      *                 @OA\Schema(
-     *                     description="Response for Step 3 (with payment redirect)",
+     *                     description="Step 3 Response",
      *                     @OA\Property(property="message", type="string", example="Listing saved, waiting for payment"),
-     *                     @OA\Property(property="listing_id", type="integer", example=42),
+     *                     @OA\Property(property="listing_id", type="integer", example=520),
      *                     @OA\Property(property="payment_id", type="integer", example=123),
-     *                     @OA\Property(property="amount_aed", type="number", example=100, description="Final amount in AED"),
-     *                     @OA\Property(property="original_amount", type="number", example=367, description="Original amount in local currency"),
-     *                     @OA\Property(property="original_currency", type="string", example="SAR", description="Local currency code"),
-     *                     @OA\Property(property="exchange_rate", type="string", example="1 AED = 3.67 SAR", description="Conversion rate used"),
+     *                     @OA\Property(property="amount_aed", type="number", example=599),
+     *                     @OA\Property(property="original_amount", type="number", example=599),
+     *                     @OA\Property(property="original_currency", type="string", example="AED"),
+     *                     @OA\Property(property="exchange_rate", type="string", example="1 AED = 1 AED"),
      *                     @OA\Property(property="currency", type="string", example="AED"),
-     *                     @OA\Property(property="redirect_url", type="string", example="https://secure.paytabs.com/payment/page/...", description="PayTabs payment page URL")
+     *                     @OA\Property(property="redirect_url", type="string", example="https://secure.paytabs.com/payment/page/...")
      *                 )
      *             }
      *         )
      *     ),
      *     @OA\Response(response=400, description="Payment request failed"),
-     *     @OA\Response(response=401, description="Unauthorized - Invalid or missing authentication token"),
-     *     @OA\Response(response=403, description="Access denied - Listing belongs to another user"),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Validation error",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 example={"title": {"The title field is required."}, "minimum_bid": {"The minimum bid field is required when auction is enabled."}}
-     *             )
-     *         )
-     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=403, description="Access denied"),
+     *     @OA\Response(response=422, description="Validation error"),
      *     @OA\Response(response=500, description="Server error")
      * )
      *
-     * Example Usage:
+     * ═══════════════════════════════════════════════════════════════════════════════════════
+     * REAL POSTMAN EXAMPLES - MOTORCYCLE
+     * ═══════════════════════════════════════════════════════════════════════════════════════
      *
-     * ──────────────────────────────────────────────────────────────────────────────────────────
-     * STEP 1 - Basic Information (NO listing_id)
-     * ──────────────────────────────────────────────────────────────────────────────────────────
-     * POST /api/listings/motorcycle
+     * STEP 1 - Vehicle Details (NO listing_id):
      * {
      *   "step": 1,
      *   "category_id": 1,
-     *   "title": "Yamaha MT-07 2020",
-     *   "description": "Well maintained motorcycle, single owner, no accidents",
-     *   "price": 5000,
-     *   "country_id": 1,
-     *   "city_id": 10,
-     *   "auction_enabled": true,
-     *   "minimum_bid": 4000,
-     *   "allow_submission": true,
-     *   "contacting_channel": "phone",
-     *   "seller_type": "owner",
-     *   "images": [
-     *     "https://example.com/bike1.jpg",
-     *     "https://example.com/bike2.jpg"
-     *   ]
-     * }
-     *
-     * Success Response:
-     * {
-     *   "message": "Listing saved (no payment yet)",
-     *   "listing_id": 42,
-     *   "data": { "id": 42, "title": "Yamaha MT-07 2020", "step": 1, "status": "draft" }
-     * }
-     *
-     * ──────────────────────────────────────────────────────────────────────────────────────────
-     * STEP 2 - Motorcycle Details (WITH listing_id from Step 1)
-     * ──────────────────────────────────────────────────────────────────────────────────────────
-     * POST /api/listings/motorcycle
-     * {
-     *   "step": 2,
-     *   "listing_id": 42,
-     *   "brand_id": 1,
-     *   "model_id": 2,
-     *   "year_id": 2020,
-     *   "engine": "700cc",
-     *   "mileage": 15000,
+     *   "brand_id": 7,
+     *   "model_id": 5712,
+     *   "year_id": 10671,
+     *   "engine": "9500cc",
+     *   "mileage": 9000,
      *   "body_condition": "As New",
      *   "modified": false,
      *   "insurance": true,
      *   "general_condition": "Used",
      *   "vehicle_care": "Wakeel",
-     *   "transmission": "Manual"
+     *   "transmission": "Automatic",
+     *   "images": [
+     *     "https://be.dabapp.co/storage/listings/CTobcffyMbRWHnYMI9er.jpg",
+     *     "https://be.dabapp.co/storage/listings/0q6JBb2p7Kplehgjn8Jk.jpg",
+     *     "https://be.dabapp.co/storage/listings/bpMEJWrjqh2PteTm3QCu.jpg",
+     *     "https://be.dabapp.co/storage/listings/1ATufTUAQD7unRHXzugu.jpg"
+     *   ]
      * }
      *
-     * Success Response:
+     * Response: { "message": "Listing saved (no payment yet)", "listing_id": 520 }
+     *
+     * ───────────────────────────────────────────────────────────────────────────────────────
+     *
+     * STEP 2 - Basic Listing Info (WITH listing_id=520):
      * {
-     *   "message": "Listing saved (no payment yet)",
-     *   "listing_id": 42,
-     *   "data": { "id": 42, "title": "Yamaha MT-07 2020", "step": 2, "motorcycle": {...} }
+     *   "step": 2,
+     *   "listing_id": 520,
+     *   "title": "MOTORCYCLE TEST 16",
+     *   "description": "MOTORCYCLE TEST 16MOTORCYCLE TEST 16MOTORCYCLE TEST 16MOTORCYCLE TEST 16",
+     *   "price": 9000,
+     *   "allow_submission": false,
+     *   "contacting_channel": "phone",
+     *   "country_id": 1,
+     *   "city_id": 1,
+     *   "seller_type": "middleman",
+     *   "auction_enabled": false
      * }
      *
-     * ──────────────────────────────────────────────────────────────────────────────────────────
-     * STEP 3 - Payment (WITH listing_id from Step 1)
-     * ──────────────────────────────────────────────────────────────────────────────────────────
-     * POST /api/listings/motorcycle
+     * Response: { "message": "Listing saved (no payment yet)", "listing_id": 520 }
+     *
+     * ───────────────────────────────────────────────────────────────────────────────────────
+     *
+     * STEP 3 - Payment (WITH listing_id=520):
      * {
      *   "step": 3,
-     *   "listing_id": 42,
-     *   "amount": 100
+     *   "listing_id": 520,
+     *   "amount": 599
      * }
      *
-     * Success Response:
+     * Response:
      * {
      *   "message": "Listing saved, waiting for payment",
-     *   "listing_id": 42,
+     *   "listing_id": 520,
      *   "payment_id": 123,
-     *   "amount_aed": 100,
-     *   "original_amount": 100,
+     *   "amount_aed": 599,
+     *   "original_amount": 599,
      *   "original_currency": "AED",
      *   "exchange_rate": "1 AED = 1 AED",
      *   "currency": "AED",
      *   "redirect_url": "https://secure.paytabs.com/payment/page/xxxxx"
      * }
      *
-     * Action: Redirect user to the redirect_url for payment
-     * After payment: User returns to your callback URL with payment status
+     * Action: Redirect user to redirect_url for payment
+     *
      *
      * @OA\Post(
      *     path="/api/listings/spare-part",
-     *     summary="Create or update a spare part listing (multi-step)",
-     *     description="Step 1: Basic info (no listing_id) | Step 2: Part details (with listing_id) | Step 3: Payment (with listing_id)",
+     *     summary="Create spare part listing (flexible 3-step process)",
+     *     description="Step 1: Part details | Step 2: Basic info | Step 3: Payment",
      *     tags={"Listings"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
      *             @OA\Property(property="step", type="integer", example=1),
-     *             @OA\Property(property="listing_id", type="integer", example=45, description="NOT required in Step 1 | REQUIRED in Steps 2 & 3"),
-     *             @OA\Property(property="category_id", type="integer", example=2),
-     *             @OA\Property(property="title", type="string", example="Michelin Pilot Street Rear Tire"),
-     *             @OA\Property(property="description", type="string", example="Brand new rear tire, never used"),
-     *             @OA\Property(property="price", type="number", example=200),
-     *             @OA\Property(property="country_id", type="integer", example=1),
-     *             @OA\Property(property="city_id", type="integer", example=5),
-     *             @OA\Property(property="auction_enabled", type="boolean", example=false),
-     *             @OA\Property(property="minimum_bid", type="number", example=null),
-     *             @OA\Property(property="allow_submission", type="boolean", example=false),
-     *             @OA\Property(property="contacting_channel", type="string", example="phone / email / whatsapp"),
-     *             @OA\Property(property="seller_type", type="string", example="owner / dealer"),
-     *             @OA\Property(property="images", type="array", @OA\Items(type="string")),
-     *             @OA\Property(property="condition", type="string", example="new / used", description="Step 2: Part condition"),
+     *             @OA\Property(property="listing_id", type="integer", example=522),
+     *             @OA\Property(property="category_id", type="integer", example=2, description="Step 1: Always 2 for spare parts"),
+     *             @OA\Property(property="bike_part_brand_id", type="integer", example=2, description="Step 1: Part brand ID"),
+     *             @OA\Property(property="bike_part_category_id", type="integer", example=2, description="Step 1: Part category ID"),
      *             @OA\Property(
      *                 property="motorcycles",
      *                 type="array",
-     *                 description="Step 2: Compatible motorcycles",
+     *                 description="Step 1: Compatible motorcycles array",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="brand_id", type="integer", example=1),
-     *                     @OA\Property(property="model_id", type="integer", example=2),
-     *                     @OA\Property(property="year_id", type="integer", example=2020)
+     *                     @OA\Property(property="brand_id", type="integer", example=7),
+     *                     @OA\Property(property="model_id", type="integer", example=5713),
+     *                     @OA\Property(property="year_id", type="integer", example=10672)
      *                 )
      *             ),
-     *             @OA\Property(property="amount", type="number", example=50, description="Step 3: Payment amount")
+     *             @OA\Property(property="condition", type="string", example="new / used", description="Step 1: Part condition"),
+     *             @OA\Property(property="images", type="array", @OA\Items(type="string")),
+     *             @OA\Property(property="title", type="string", example="SPARE PART TEST 16", description="Step 2"),
+     *             @OA\Property(property="description", type="string", description="Step 2"),
+     *             @OA\Property(property="price", type="number", example=null, description="Step 2"),
+     *             @OA\Property(property="allow_submission", type="boolean", example=true),
+     *             @OA\Property(property="contacting_channel", type="string", example="phone / email / whatsapp"),
+     *             @OA\Property(property="country_id", type="integer", example=1),
+     *             @OA\Property(property="city_id", type="integer", example=1),
+     *             @OA\Property(property="seller_type", type="string", example="owner / dealer / middleman"),
+     *             @OA\Property(property="auction_enabled", type="boolean", example=true),
+     *             @OA\Property(property="minimum_bid", type="number", example=9000),
+     *             @OA\Property(property="amount", type="number", example=599, description="Step 3")
      *         )
      *     ),
-     *     @OA\Response(response=201, description="Spare part listing saved successfully"),
-     *     @OA\Response(response=401, description="Unauthorized"),
-     *     @OA\Response(response=403, description="Access denied"),
-     *     @OA\Response(response=422, description="Validation error"),
-     *     @OA\Response(response=500, description="Server error")
+     *     @OA\Response(response=201, description="Success"),
+     *     @OA\Response(response=422, description="Validation error")
      * )
      *
-     * Example Usage:
+     * ═══════════════════════════════════════════════════════════════════════════════════════
+     * REAL POSTMAN EXAMPLES - SPARE PART
+     * ═══════════════════════════════════════════════════════════════════════════════════════
      *
-     * STEP 1 (NO listing_id):
-     * { "step": 1, "category_id": 2, "title": "Michelin Tire", "price": 200, ... }
-     * Response: { "listing_id": 45 }
+     * STEP 1 - Part Details (NO listing_id):
+     * {
+     *   "step": 1,
+     *   "category_id": 2,
+     *   "bike_part_brand_id": 2,
+     *   "bike_part_category_id": 2,
+     *   "motorcycles": [
+     *     {
+     *       "brand_id": 7,
+     *       "model_id": 5713,
+     *       "year_id": 10672
+     *     },
+     *     {
+     *       "brand_id": 8,
+     *       "model_id": 7813,
+     *       "year_id": 18672
+     *     }
+     *   ],
+     *   "condition": "new",
+     *   "images": [
+     *     "https://be.dabapp.co/storage/listings/yBmRoLbcd8bWW04w2sBG.webp",
+     *     "https://be.dabapp.co/storage/listings/n08Cm7AU8QtaxYzHeZsd.webp",
+     *     "https://be.dabapp.co/storage/listings/AfoqHB2SaxQE6oLxoERI.jpg",
+     *     "https://be.dabapp.co/storage/listings/yGCzHRHqC4fo5RhdKJjS.jpg"
+     *   ]
+     * }
      *
-     * STEP 2 (WITH listing_id):
-     * { "step": 2, "listing_id": 45, "condition": "new", "motorcycles": [...] }
-     * Response: { "listing_id": 45, "data": {...} }
+     * Response: { "listing_id": 522 }
      *
-     * STEP 3 (WITH listing_id):
-     * { "step": 3, "listing_id": 45, "amount": 50 }
-     * Response: { "redirect_url": "https://..." }
+     * ───────────────────────────────────────────────────────────────────────────────────────
+     *
+     * STEP 2 - Basic Info (WITH listing_id=522):
+     * {
+     *   "step": 2,
+     *   "listing_id": 522,
+     *   "title": "SPARE PART TEST 16",
+     *   "description": "MOTORCYCLE TEST 16MOTORCYCLE TEST 16MOTORCYCLE TEST 16",
+     *   "price": null,
+     *   "allow_submission": true,
+     *   "contacting_channel": "",
+     *   "country_id": 1,
+     *   "city_id": 1,
+     *   "seller_type": "middleman",
+     *   "auction_enabled": true,
+     *   "minimum_bid": 9000
+     * }
+     *
+     * ───────────────────────────────────────────────────────────────────────────────────────
+     *
+     * STEP 3 - Payment (WITH listing_id=522):
+     * {
+     *   "step": 3,
+     *   "listing_id": 522,
+     *   "amount": 599
+     * }
+     *
      *
      * @OA\Post(
      *     path="/api/listings/license-plate",
-     *     summary="Create or update a license plate listing (multi-step)",
-     *     description="Step 1: Basic info (no listing_id) | Step 2: Plate details (with listing_id) | Step 3: Payment (with listing_id)",
+     *     summary="Create license plate listing (flexible 3-step process)",
+     *     description="Step 1: Plate details | Step 2: Basic info | Step 3: Payment",
      *     tags={"Listings"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
      *             @OA\Property(property="step", type="integer", example=1),
-     *             @OA\Property(property="listing_id", type="integer", example=46, description="NOT required in Step 1 | REQUIRED in Steps 2 & 3"),
-     *             @OA\Property(property="category_id", type="integer", example=3),
-     *             @OA\Property(property="title", type="string", example="Dubai Custom Plate - ABC 12345"),
-     *             @OA\Property(property="description", type="string", example="Red Dubai plate with unique number combination"),
-     *             @OA\Property(property="price", type="number", example=800),
-     *             @OA\Property(property="country_id", type="integer", example=1),
-     *             @OA\Property(property="city_id", type="integer", example=8),
-     *             @OA\Property(property="auction_enabled", type="boolean", example=true, description="If true, minimum_bid is REQUIRED"),
-     *             @OA\Property(property="minimum_bid", type="number", example=500, description="REQUIRED if auction_enabled=true"),
-     *             @OA\Property(property="allow_submission", type="boolean", example=true),
-     *             @OA\Property(property="contacting_channel", type="string", example="phone / email / whatsapp"),
-     *             @OA\Property(property="seller_type", type="string", example="owner / dealer"),
-     *             @OA\Property(property="images", type="array", @OA\Items(type="string")),
-     *             @OA\Property(property="plate_format_id", type="integer", example=1, description="Step 2: Plate format ID"),
-     *             @OA\Property(property="country_id_lp", type="integer", example=1, description="Step 2: Plate country ID"),
-     *             @OA\Property(property="city_id_lp", type="integer", example=1, description="Step 2: Plate emirate ID"),
+     *             @OA\Property(property="listing_id", type="integer", example=524),
+     *             @OA\Property(property="category_id", type="integer", example=3, description="Step 1: Always 3 for license plates"),
+     *             @OA\Property(property="plate_format_id", type="integer", example=17, description="Step 1: Plate format ID"),
+     *             @OA\Property(property="country_id_lp", type="integer", example=1, description="Step 1: Plate country"),
+     *             @OA\Property(property="city_id_lp", type="integer", example=1, description="Step 1: Plate emirate/city"),
      *             @OA\Property(
      *                 property="fields",
      *                 type="array",
-     *                 description="Step 2: Plate field values",
+     *                 description="Step 1: Plate field values (Arabic/English supported)",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="field_id", type="integer", example=1),
-     *                     @OA\Property(property="value", type="string", example="A")
+     *                     @OA\Property(property="field_id", type="integer", example=40),
+     *                     @OA\Property(property="value", type="string", example="١١١")
      *                 )
      *             ),
-     *             @OA\Property(property="amount", type="number", example=75, description="Step 3: Payment amount")
+     *             @OA\Property(property="title", type="string", example="license plate TEST 16", description="Step 2"),
+     *             @OA\Property(property="description", type="string", description="Step 2"),
+     *             @OA\Property(property="price", type="number", example=9000),
+     *             @OA\Property(property="allow_submission", type="boolean", example=false),
+     *             @OA\Property(property="contacting_channel", type="string", example="phone / email / whatsapp"),
+     *             @OA\Property(property="country_id", type="integer", example=1),
+     *             @OA\Property(property="city_id", type="integer", example=1),
+     *             @OA\Property(property="seller_type", type="string", example="owner / dealer / middleman"),
+     *             @OA\Property(property="auction_enabled", type="boolean", example=false),
+     *             @OA\Property(property="amount", type="number", example=599, description="Step 3")
      *         )
      *     ),
-     *     @OA\Response(response=201, description="License plate listing saved successfully"),
-     *     @OA\Response(response=401, description="Unauthorized"),
-     *     @OA\Response(response=403, description="Access denied"),
-     *     @OA\Response(response=422, description="Validation error"),
-     *     @OA\Response(response=500, description="Server error")
+     *     @OA\Response(response=201, description="Success"),
+     *     @OA\Response(response=422, description="Validation error")
      * )
      *
-     * Example Usage:
+     * ═══════════════════════════════════════════════════════════════════════════════════════
+     * REAL POSTMAN EXAMPLES - LICENSE PLATE
+     * ═══════════════════════════════════════════════════════════════════════════════════════
      *
-     * STEP 1 (NO listing_id):
-     * { "step": 1, "category_id": 3, "title": "Dubai Plate ABC 12345", "auction_enabled": true, "minimum_bid": 500, ... }
-     * Response: { "listing_id": 46 }
+     * STEP 1 - Plate Details (NO listing_id):
+     * {
+     *   "category_id": 3,
+     *   "step": 1,
+     *   "plate_format_id": 17,
+     *   "country_id_lp": 1,
+     *   "city_id_lp": 1,
+     *   "fields": [
+     *     {
+     *       "field_id": 40,
+     *       "value": "١١١"
+     *     },
+     *     {
+     *       "field_id": 43,
+     *       "value": "AAA"
+     *     },
+     *     {
+     *       "field_id": 41,
+     *       "value": "أأأ"
+     *     },
+     *     {
+     *       "field_id": 42,
+     *       "value": "111"
+     *     }
+     *   ]
+     * }
      *
-     * STEP 2 (WITH listing_id):
-     * { "step": 2, "listing_id": 46, "plate_format_id": 1, "fields": [{"field_id": 1, "value": "A"}] }
-     * Response: { "listing_id": 46, "data": {...} }
+     * Response: { "listing_id": 524 }
      *
-     * STEP 3 (WITH listing_id):
-     * { "step": 3, "listing_id": 46, "amount": 75 }
-     * Response: { "redirect_url": "https://..." }
+     * ───────────────────────────────────────────────────────────────────────────────────────
+     *
+     * STEP 2 - Basic Info (WITH listing_id=524):
+     * {
+     *   "step": 2,
+     *   "listing_id": 524,
+     *   "title": "license plate TEST 16",
+     *   "description": "license plate TEST 16license plate TEST 16license plate TEST 16",
+     *   "price": 9000,
+     *   "allow_submission": false,
+     *   "contacting_channel": "phone",
+     *   "country_id": 1,
+     *   "city_id": 1,
+     *   "seller_type": "middleman",
+     *   "auction_enabled": false
+     * }
+     *
+     * ───────────────────────────────────────────────────────────────────────────────────────
+     *
+     * STEP 3 - Payment (WITH listing_id=524):
+     * {
+     *   "step": 3,
+     *   "listing_id": 524,
+     *   "amount": 599
+     * }
      */
     public function store(Request $request)
     {
