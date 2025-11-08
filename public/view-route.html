@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Itinéraire Route - Harley Davidson</title>
+        <title>Route Itinerary - DabApp</title>
         <style>
             * {
                 margin: 0;
@@ -489,13 +489,13 @@
     </head>
     <body>
         <div class="header">
-            <h1>🏍️ Itinéraire Harley Davidson</h1>
+            <h1>🏍️ DabApp Route Itinerary</h1>
             <div class="header-controls">
                 <button class="btn btn-secondary" onclick="toggleSidebar()">
                     📋 Instructions
                 </button>
                 <button class="btn btn-danger" onclick="goBack()">
-                    ✕ Fermer
+                    ✕ Close
                 </button>
             </div>
         </div>
@@ -504,19 +504,11 @@
             <div class="sidebar" id="sidebar">
                 <div class="config-section">
                     <div class="form-group">
-                        <label>Clé Google Maps API *</label>
-                        <input
-                            type="text"
-                            id="mapsApiKey"
-                            placeholder="AIzaSy..."
-                        />
-                    </div>
-                    <div class="form-group">
-                        <label>ID de la Route *</label>
+                        <label>Route ID *</label>
                         <input type="number" id="routeId" placeholder="1" />
                     </div>
                     <div class="form-group">
-                        <label>URL de l'API</label>
+                        <label>API URL</label>
                         <input
                             type="text"
                             id="apiUrl"
@@ -524,23 +516,23 @@
                         />
                     </div>
                     <div class="form-group">
-                        <label>Token d'authentification</label>
+                        <label>Authentication Token</label>
                         <input
                             type="text"
                             id="authToken"
-                            placeholder="Bearer token (optionnel)"
+                            placeholder="Bearer token (optional)"
                         />
                     </div>
                     <button
                         class="btn btn-primary btn-full"
                         onclick="loadRoute()"
                     >
-                        🔍 Charger la Route
+                        🔍 Load Route
                     </button>
                 </div>
 
                 <div class="route-info" id="routeInfo" style="display: none">
-                    <h2 class="route-title" id="routeTitle">Chargement...</h2>
+                    <h2 class="route-title" id="routeTitle">Loading...</h2>
                     <p
                         id="routeDescription"
                         style="
@@ -561,11 +553,11 @@
                             <div class="stat-value" id="totalDuration">
                                 0 min
                             </div>
-                            <div class="stat-label">Durée</div>
+                            <div class="stat-label">Duration</div>
                         </div>
                         <div class="stat-box">
                             <div class="stat-value" id="routeDifficulty">-</div>
-                            <div class="stat-label">Difficulté</div>
+                            <div class="stat-label">Difficulty</div>
                         </div>
                         <div class="stat-box">
                             <div class="stat-value" id="waypointCount">0</div>
@@ -578,7 +570,7 @@
                         onclick="startNavigation()"
                         style="margin-top: 15px"
                     >
-                        🧭 Démarrer la Navigation
+                        🧭 Start Navigation
                     </button>
                 </div>
 
@@ -587,7 +579,7 @@
                     id="waypointsSection"
                     style="display: none"
                 >
-                    <h3>📍 Points de Passage</h3>
+                    <h3>📍 Waypoints</h3>
                     <div id="waypointsList"></div>
                 </div>
 
@@ -597,7 +589,7 @@
                     style="display: none"
                 >
                     <div class="instructions-header">
-                        <h2>🗺️ Instructions Détaillées</h2>
+                        <h2>🗺️ Detailed Instructions</h2>
                         <span
                             id="stepCounter"
                             style="color: #999; font-size: 14px"
@@ -612,14 +604,14 @@
                     id="motoControls"
                     style="display: none"
                 >
-                    <h4>🏍️ Animation Harley Davidson</h4>
+                    <h4>🏍️ Motorcycle Animation</h4>
                     <div style="display: flex; gap: 10px; margin-bottom: 15px">
                         <button
                             class="btn btn-primary"
                             style="flex: 1; margin: 0"
                             onclick="animateMotorcycle()"
                         >
-                            ▶️ Démarrer
+                            ▶️ Start
                         </button>
                         <button
                             class="btn btn-secondary"
@@ -653,26 +645,26 @@
                             500 m
                         </div>
                         <div class="current-text" id="currentText">
-                            Continuez tout droit
+                            Continue straight
                         </div>
                     </div>
 
                     <div class="nav-stats">
                         <div class="nav-stat-row">
-                            <span class="nav-stat-label">Étape:</span>
+                            <span class="nav-stat-label">Step:</span>
                             <span class="nav-stat-value" id="navStepCounter"
                                 >1 / 10</span
                             >
                         </div>
                         <div class="nav-stat-row">
-                            <span class="nav-stat-label">Temps restant:</span>
+                            <span class="nav-stat-label">Time remaining:</span>
                             <span class="nav-stat-value" id="navTimeRemaining"
                                 >5 min</span
                             >
                         </div>
                         <div class="nav-stat-row">
                             <span class="nav-stat-label"
-                                >Distance restante:</span
+                                >Distance remaining:</span
                             >
                             <span
                                 class="nav-stat-value"
@@ -683,9 +675,9 @@
                     </div>
 
                     <div class="next-instruction" id="nextInstruction">
-                        <div class="next-label">ENSUITE:</div>
+                        <div class="next-label">NEXT:</div>
                         <div class="next-text" id="nextText">
-                            Tournez à droite
+                            Turn right
                         </div>
                     </div>
 
@@ -694,10 +686,10 @@
                             class="btn btn-secondary"
                             onclick="previousStep()"
                         >
-                            ⬅️ Précédent
+                            ⬅️ Previous
                         </button>
                         <button class="btn btn-primary" onclick="nextStep()">
-                            Suivant ➡️
+                            Next ➡️
                         </button>
                     </div>
 
@@ -706,14 +698,16 @@
                         onclick="stopNavigation()"
                         style="margin-top: 10px"
                     >
-                        ❌ Arrêter
+                        ❌ Stop
                     </button>
                 </div>
             </div>
         </div>
 
         <script>
-            // ===== VARIABLES GLOBALES =====
+            // ===== GLOBAL VARIABLES =====
+            const GOOGLE_MAPS_API_KEY = 'AIzaSyBznLyPEvm9nm3LerujutDMx1F6zNSpk2E';
+
             let map;
             let directionsService;
             let directionsRenderer;
@@ -727,7 +721,7 @@
             let animationInterval = null;
             let currentPathIndex = 0;
 
-            // ===== CONSTANTES =====
+            // ===== CONSTANTS =====
             const mapStyles = [
                 {
                     featureType: "all",
@@ -756,7 +750,7 @@
                 },
             ];
 
-            // Fonction qui retourne l'icône moto (appel après chargement de Google Maps)
+            // Function that returns motorcycle icon (call after loading Google Maps)
             function getMotorcycleIcon(rotation = 0) {
                 return {
                     path: "M17.5,9.5C17.5,10.9 16.4,12 15,12C13.6,12 12.5,10.9 12.5,9.5C12.5,8.1 13.6,7 15,7C16.4,7 17.5,8.1 17.5,9.5M6.5,9.5C6.5,10.9 5.4,12 4,12C2.6,12 1.5,10.9 1.5,9.5C1.5,8.1 2.6,7 4,7C5.4,7 6.5,8.1 6.5,9.5M10.1,6.9C9.7,7.1 9.4,7.4 9.1,7.7L7,7.7C6.7,7.7 6.5,7.9 6.5,8.2C6.5,8.5 6.7,8.7 7,8.7L8.7,8.7C8.6,9 8.5,9.2 8.5,9.5C8.5,9.6 8.5,9.7 8.5,9.8L4.8,10.8C4.5,10.9 4.4,11.2 4.5,11.5C4.6,11.7 4.8,11.9 5,11.9L8.9,10.8C9.3,11.6 10.1,12.2 11,12.4L11,15L10,15C9.7,15 9.5,15.2 9.5,15.5C9.5,15.8 9.7,16 10,16L13,16C13.3,16 13.5,15.8 13.5,15.5C13.5,15.2 13.3,15 13,15L12,15L12,12.4C12.9,12.2 13.7,11.6 14.1,10.8L18,11.9C18.2,11.9 18.4,11.7 18.5,11.5C18.6,11.2 18.5,10.9 18.2,10.8L14.5,9.8C14.5,9.7 14.5,9.6 14.5,9.5C14.5,9.2 14.4,9 14.3,8.7L16,8.7C16.3,8.7 16.5,8.5 16.5,8.2C16.5,7.9 16.3,7.7 16,7.7L13.9,7.7C13.6,7.4 13.3,7.1 12.9,6.9L13.5,5.7C13.6,5.4 13.5,5.1 13.2,5C12.9,4.9 12.6,5 12.5,5.3L11.9,6.5C11.6,6.5 11.4,6.5 11.1,6.5L10.5,5.3C10.4,5 10.1,4.9 9.8,5C9.5,5.1 9.4,5.4 9.5,5.7L10.1,6.9Z",
@@ -770,7 +764,7 @@
                 };
             }
 
-            // ===== FONCTIONS UTILITAIRES =====
+            // ===== UTILITY FUNCTIONS =====
             function stripHtml(html) {
                 const tmp = document.createElement("div");
                 tmp.innerHTML = html;
@@ -801,21 +795,16 @@
 
             // ===== API =====
             async function loadRoute() {
-                const apiKey = document.getElementById("mapsApiKey").value;
                 const routeId = document.getElementById("routeId").value;
                 const apiUrl = document.getElementById("apiUrl").value;
                 const authToken = document.getElementById("authToken").value;
 
-                if (!apiKey) {
-                    alert("⚠️ Veuillez entrer votre clé Google Maps API !");
-                    return;
-                }
                 if (!routeId) {
-                    alert("⚠️ Veuillez entrer un ID de route !");
+                    alert("⚠️ Please enter a route ID!");
                     return;
                 }
 
-                if (!map) await initializeMap(apiKey);
+                if (!map) await initializeMap();
 
                 try {
                     const headers = {
@@ -841,23 +830,23 @@
                         showRouteInfo(result.data);
                     } else {
                         alert(
-                            "❌ Route non trouvée ! " + (result.message || "")
+                            "❌ Route not found! " + (result.message || "")
                         );
                     }
                 } catch (error) {
-                    alert("❌ Erreur: " + error.message);
-                    console.error("Erreur:", error);
+                    alert("❌ Error: " + error.message);
+                    console.error("Error:", error);
                 }
             }
 
-            function initializeMap(apiKey) {
+            function initializeMap() {
                 return new Promise((resolve) => {
                     if (window.google) {
                         setupMap();
                         resolve();
                     } else {
                         const script = document.createElement("script");
-                        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry`;
+                        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,geometry`;
                         script.onload = () => {
                             setupMap();
                             resolve();
@@ -1047,7 +1036,7 @@
                 list.innerHTML = "";
                 document.getElementById(
                     "stepCounter"
-                ).textContent = `${allSteps.length} étapes`;
+                ).textContent = `${allSteps.length} steps`;
 
                 allSteps.forEach((step, i) => {
                     const div = document.createElement("div");
@@ -1062,7 +1051,7 @@
                     content.style.flex = "1";
                     const num = document.createElement("div");
                     num.className = "step-number";
-                    num.textContent = `Étape ${i + 1}`;
+                    num.textContent = `Step ${i + 1}`;
                     const instr = document.createElement("div");
                     instr.className = "step-instruction";
                     instr.textContent = step.instruction;
@@ -1096,7 +1085,7 @@
 
             function startNavigation() {
                 if (!allSteps.length) {
-                    alert("⚠️ Aucune instruction disponible !");
+                    alert("⚠️ No instructions available!");
                     return;
                 }
                 navigationMode = true;
@@ -1146,7 +1135,7 @@
                 if (currentStepIndex < allSteps.length - 1)
                     focusOnStep(currentStepIndex + 1);
                 else {
-                    alert("🏁 Vous êtes arrivé à destination !");
+                    alert("🏁 You have arrived at your destination!");
                     stopNavigation();
                 }
             }
@@ -1163,7 +1152,7 @@
                     .forEach((el) => el.classList.remove("active"));
             }
 
-            // ===== ANIMATION MOTO =====
+            // ===== MOTORCYCLE ANIMATION =====
             function placeMotorcycle() {
                 if (!animationPath.length) return;
                 const start = animationPath[0];
@@ -1178,14 +1167,14 @@
                     position: start,
                     map: map,
                     icon: getMotorcycleIcon(heading),
-                    title: "🏍️ Harley Davidson",
+                    title: "🏍️ DabApp Motorcycle",
                     zIndex: 1000,
                 });
             }
 
             function animateMotorcycle() {
                 if (!animationPath.length) {
-                    alert("⚠️ Aucune route disponible !");
+                    alert("⚠️ No route available!");
                     return;
                 }
                 if (animationInterval) {
@@ -1217,7 +1206,7 @@
                         clearInterval(animationInterval);
                         animationInterval = null;
                         document.getElementById("progressText").textContent =
-                            "100% - Arrivée !";
+                            "100% - Arrived!";
                         document.getElementById("progressFill").style.width =
                             "100%";
                         return;
@@ -1249,9 +1238,9 @@
                     animationInterval = null;
                     const txt =
                         document.getElementById("progressText").textContent;
-                    if (!txt.includes("(Pause)")) {
+                    if (!txt.includes("(Paused)")) {
                         document.getElementById("progressText").textContent =
-                            txt + " (Pause)";
+                            txt + " (Paused)";
                     }
                 }
             }
@@ -1284,21 +1273,21 @@
                     .getElementById("sidebar")
                     .classList.toggle("mobile-visible");
             }
+
             function goBack() {
-                if (confirm("Voulez-vous quitter cette page ?"))
+                if (confirm("Do you want to leave this page?"))
                     window.history.back();
             }
 
             window.onload = function () {
                 const params = new URLSearchParams(window.location.search);
                 const routeId = params.get("id");
-                const apiKey = params.get("key");
                 const token = params.get("token");
+
                 if (routeId) document.getElementById("routeId").value = routeId;
-                if (apiKey)
-                    document.getElementById("mapsApiKey").value = apiKey;
                 if (token) document.getElementById("authToken").value = token;
-                if (routeId && apiKey) setTimeout(() => loadRoute(), 500);
+
+                if (routeId) setTimeout(() => loadRoute(), 500);
             };
         </script>
     </body>

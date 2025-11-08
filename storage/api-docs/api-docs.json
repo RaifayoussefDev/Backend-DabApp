@@ -19376,7 +19376,7 @@
                     "SOOMs"
                 ],
                 "summary": "Create a new SOOM (Submission of Offer on Market)",
-                "description": "Create a new SOOM for a specific listing. Users can submit multiple SOOMs, but each must be higher than the previous highest amount.",
+                "description": "Create a new SOOM for a specific listing. Users can submit multiple SOOMs, but each must be higher than the previous highest amount. Automatically detects overbidding (>150% of last SOOM).",
                 "operationId": "createSoom",
                 "parameters": [
                     {
@@ -19456,6 +19456,10 @@
                                                     "type": "number",
                                                     "format": "float",
                                                     "example": 1400
+                                                },
+                                                "isOverbidding": {
+                                                    "type": "boolean",
+                                                    "example": false
                                                 },
                                                 "user": {
                                                     "properties": {
@@ -22193,6 +22197,255 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/sooms/max": {
+            "get": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Get maximum SOOM for an item",
+                "description": "Returns the highest SOOM submission for a specific listing/item",
+                "operationId": "getMaxSoom",
+                "parameters": [
+                    {
+                        "name": "id_item",
+                        "in": "query",
+                        "description": "ID of the listing/item",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Maximum SOOM retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 123
+                                        },
+                                        "user_id": {
+                                            "type": "integer",
+                                            "example": 45
+                                        },
+                                        "item_id": {
+                                            "type": "integer",
+                                            "example": 67
+                                        },
+                                        "soom_value": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 15000
+                                        },
+                                        "isOverbidding": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "createdAt": {
+                                            "type": "string",
+                                            "format": "datetime",
+                                            "example": "2025-11-07T10:22:00Z"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "pending"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No SOOM found for this item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No SOOM found for this item"
+                                        },
+                                        "item_id": {
+                                            "type": "integer",
+                                            "example": 67
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "id_item": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The id_item field is required."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/sooms/max/me": {
+            "get": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Get my maximum SOOM",
+                "description": "Returns the highest SOOM submission made by the authenticated user",
+                "operationId": "getMyMaxSoom",
+                "parameters": [
+                    {
+                        "name": "item_id",
+                        "in": "query",
+                        "description": "Optional: ID of the listing/item to filter by",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 67
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Maximum SOOM retrieved successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sooms/overbidding/users": {
+            "get": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Get all users with overbidding SOOMs",
+                "description": "Returns all users who have made overbidding SOOMs with count",
+                "operationId": "getUsersWithOverbidding",
+                "parameters": [
+                    {
+                        "name": "listing_id",
+                        "in": "query",
+                        "description": "Optional: Filter by listing ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 51
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Users with overbidding SOOMs retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_users": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "total_overbidding_sooms": {
+                                            "type": "integer",
+                                            "example": 12
+                                        },
+                                        "users": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "user_name": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "user_email": {
+                                                        "type": "string",
+                                                        "example": "john@example.com"
+                                                    },
+                                                    "overbidding_count": {
+                                                        "type": "integer",
+                                                        "example": 3
+                                                    },
+                                                    "total_overbidding_amount": {
+                                                        "type": "number",
+                                                        "example": 150000
+                                                    },
+                                                    "overbidding_sooms": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 8
+                                                                },
+                                                                "listing_id": {
+                                                                    "type": "integer",
+                                                                    "example": 51
+                                                                },
+                                                                "amount": {
+                                                                    "type": "number",
+                                                                    "example": 70000
+                                                                },
+                                                                "status": {
+                                                                    "type": "string",
+                                                                    "example": "pending"
+                                                                },
+                                                                "submission_date": {
+                                                                    "type": "string",
+                                                                    "example": "2025-11-08T11:04:55Z"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/users/{id}": {

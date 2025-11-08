@@ -235,7 +235,12 @@ Route::middleware('auth:api')->group(function () {
     // Obtenir le dernier SOOM d'un listing (Public)
     Route::get('/listings/{listingId}/last-soom', [SoomController::class, 'getLastSoom']);
 
+    Route::get('/sooms/max', [SoomController::class, 'getMaxSoom']);
+    // Route pour le max SOOM de l'utilisateur connecté
+    Route::get('/sooms/max/me', [SoomController::class, 'getMyMaxSoom']);
 
+    // Route pour tous les utilisateurs avec overbidding
+    Route::get('/sooms/overbidding/users', [SoomController::class, 'getUsersWithOverbidding']);
 
     // === CRÉATION ET GESTION DES SOOMs ===
 

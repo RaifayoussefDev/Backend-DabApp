@@ -17,7 +17,8 @@ class Submission extends Model
         'acceptance_date',           // New: When SOOM was accepted
         'rejection_reason',          // New: Reason for rejection (optional)
         'sale_validated',           // New: Boolean for sale validation
-        'sale_validation_date'      // New: When sale was validated
+        'sale_validation_date',      // New: When sale was validated
+        'isOverbidding'
     ];
 
     protected $casts = [
