@@ -25,7 +25,7 @@ return [
         'https://old.dabapp.co',
         'https://new.dabapp.co',
         'https://cf.dabapp.co',
-        'https://team.dabapp.co/fbg/pl/7axbkxu5wbgjt855pw6h6zs1my'
+        'https://dabapp-frontend-new.pages.dev'
     ],
 
     'allowed_headers' => ['*'],  // Allow all headers
