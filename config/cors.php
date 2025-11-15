@@ -24,6 +24,8 @@ return [
         'http://localhost:5500',
         'https://old.dabapp.co',
         'https://new.dabapp.co',
+        'https://cf.dabapp.co',
+        'https://team.dabapp.co/fbg/pl/7axbkxu5wbgjt855pw6h6zs1my'
     ],
 
     'allowed_headers' => ['*'],  // Allow all headers
