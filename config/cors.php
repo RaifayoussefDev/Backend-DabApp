@@ -25,6 +25,7 @@ return [
         'https://old.dabapp.co',
         'https://new.dabapp.co',
         'https://cf.dabapp.co',
+        'https://as.dabapp.co',
         'https://dabapp-frontend-new.pages.dev'
     ],
 
