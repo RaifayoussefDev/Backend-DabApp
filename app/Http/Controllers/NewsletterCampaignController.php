@@ -38,7 +38,7 @@ class NewsletterCampaignController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        }
+
 
         $query = NewsletterCampaign::with('creator');
 
@@ -78,7 +78,7 @@ class NewsletterCampaignController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        }
+
 
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
@@ -131,7 +131,7 @@ class NewsletterCampaignController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        }
+
 
         $campaign = NewsletterCampaign::with('creator')->find($id);
 
@@ -181,7 +181,7 @@ class NewsletterCampaignController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
-        }
+
 
         $campaign = NewsletterCampaign::find($id);
 
@@ -252,7 +252,7 @@ class NewsletterCampaignController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
-        }
+
 
         $campaign = NewsletterCampaign::find($id);
 
@@ -299,7 +299,7 @@ class NewsletterCampaignController extends Controller
      */
     public function send(int $id): JsonResponse
     {
-        }
+
 
         $campaign = NewsletterCampaign::find($id);
 
@@ -376,7 +376,7 @@ class NewsletterCampaignController extends Controller
      */
     public function stats(int $id): JsonResponse
     {
-        }
+
 
         $campaign = NewsletterCampaign::find($id);
 
@@ -430,7 +430,7 @@ class NewsletterCampaignController extends Controller
      */
     public function duplicate(int $id): JsonResponse
     {
-        }
+        
 
         $campaign = NewsletterCampaign::find($id);
 
@@ -460,4 +460,5 @@ class NewsletterCampaignController extends Controller
             'data' => $newCampaign,
         ], 201);
     }
+
 }

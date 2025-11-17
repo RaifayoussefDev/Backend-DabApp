@@ -37,7 +37,6 @@ class PoiReportController extends Controller
      */
     public function index(int $poiId): JsonResponse
     {
-        }
 
         $poi = PointOfInterest::find($poiId);
 
@@ -171,7 +170,7 @@ class PoiReportController extends Controller
         }
 
         // Only admin or report creator can view
-        if ($report->user_id !== Auth::id() ) {
+        if ($report->user_id !== Auth::id()) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not authorized to view this report',
@@ -218,7 +217,6 @@ class PoiReportController extends Controller
      */
     public function updateStatus(Request $request, int $poiId, int $id): JsonResponse
     {
-        }
 
         $report = PoiReport::where('poi_id', $poiId)->find($id);
 
@@ -285,7 +283,7 @@ class PoiReportController extends Controller
         }
 
         // Only admin or report creator can delete
-        if ($report->user_id !== Auth::id() ) {
+        if ($report->user_id !== Auth::id()) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not authorized to delete this report',
@@ -312,7 +310,6 @@ class PoiReportController extends Controller
      */
     public function pending(): JsonResponse
     {
-        }
 
         $reports = PoiReport::where('status', 'pending')
             ->with(['user', 'poi'])
@@ -359,7 +356,6 @@ class PoiReportController extends Controller
      */
     public function stats(): JsonResponse
     {
-        }
 
         $stats = [
             'total_reports' => PoiReport::count(),

@@ -20,10 +20,33 @@ use Carbon\Carbon;
 class SoomController extends Controller
 {
     /**
+     * Calculate minimum increment based on amount
+     */
+    private function getMinimumIncrement($amount)
+    {
+        if ($amount < 1000) {
+            return 10;
+        } elseif ($amount < 5000) {
+            return 50;
+        } elseif ($amount < 20000) {
+            return 100;
+        } else {
+            return 500;
+        }
+    }
+    /**
+     * Validate if amount respects increment rules
+     */
+    private function validateIncrementRules($amount)
+    {
+        $increment = $this->getMinimumIncrement($amount);
+        return ($amount % $increment) === 0;
+    }
+    /**
      * @OA\Post(
      *     path="/api/listings/{listingId}/soom",
      *     summary="Create a new SOOM (Submission of Offer on Market)",
-     *     description="Create a new SOOM for a specific listing. Users can submit multiple SOOMs, but each must be higher than the previous highest amount.",
+     *     description="Create a new SOOM for a specific listing. Users can submit multiple SOOMs, but each must be higher than the previous highest amount. Automatically detects overbidding (>150% of last SOOM).",
      *     operationId="createSoom",
      *     tags={"SOOMs"},
      *     security={{"bearerAuth":{}}},
@@ -67,6 +90,7 @@ class SoomController extends Controller
      *                 @OA\Property(property="submission_date", type="string", format="datetime", example="2024-09-18T16:30:00.000000Z"),
      *                 @OA\Property(property="status", type="string", example="pending"),
      *                 @OA\Property(property="min_soom", type="number", format="float", example=1400.00),
+     *                 @OA\Property(property="isOverbidding", type="boolean", example=false),
      *                 @OA\Property(
      *                     property="user",
      *                     type="object",
@@ -190,11 +214,13 @@ class SoomController extends Controller
 
             $minAmount = $listing->minimum_bid ?? 0;
 
-            // Si il y a déjà des soumissions, la nouvelle doit être supérieure au plus haut montant
+            // Si il y a déjà des soumissions, calculer le minimum requis
             if ($highestSubmission) {
-                $minAmount = $highestSubmission->amount + 1;
+                $increment = $this->getMinimumIncrement($highestSubmission->amount);
+                $minAmount = $highestSubmission->amount + $increment;
             }
 
+            // Valider le montant minimum
             if ($request->amount < $minAmount) {
                 return response()->json([
                     'message' => "The SOOM amount must be at least {$minAmount}.",
@@ -203,8 +229,31 @@ class SoomController extends Controller
                 ], 422);
             }
 
-            // SUPPRIMÉ: La vérification du SOOM pending existant
-            // Maintenant l'utilisateur peut faire plusieurs SOOMs
+            // Valider les règles d'incrémentation
+            if (!$this->validateIncrementRules($request->amount)) {
+                $increment = $this->getMinimumIncrement($request->amount);
+                return response()->json([
+                    'message' => "The SOOM amount must be a multiple of {$increment}.",
+                    'required_increment' => $increment,
+                    'your_amount' => $request->amount
+                ], 422);
+            }
+
+            // Calculer si c'est un overbidding (>150% du dernier soom)
+            // Calculer si c'est un overbidding (>150% du dernier soom)
+            $isOverbidding = false;
+            if ($highestSubmission) {
+                $overbiddingThreshold = $highestSubmission->amount * 1.5;
+                $isOverbidding = $request->amount > $overbiddingThreshold;
+
+                // Log pour débogage
+                \Log::info('Overbidding check', [
+                    'highest_amount' => $highestSubmission->amount,
+                    'threshold_150%' => $overbiddingThreshold,
+                    'new_amount' => $request->amount,
+                    'is_overbidding' => $isOverbidding
+                ]);
+            }
 
             // Créer la nouvelle soumission avec statut "pending"
             $submission = Submission::create([
@@ -214,6 +263,7 @@ class SoomController extends Controller
                 'submission_date' => now(),
                 'status' => 'pending',
                 'min_soom' => $minAmount,
+                'isOverbidding' => $isOverbidding,
             ]);
 
             // Envoyer notification email au vendeur
@@ -239,6 +289,8 @@ class SoomController extends Controller
             ], 500);
         }
     }
+
+
     /**
      * @OA\Get(
      *     path="/api/listings/{listingId}/sooms",
@@ -2420,5 +2472,298 @@ class SoomController extends Controller
                 'details' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/sooms/max",
+     *     summary="Get maximum SOOM for an item",
+     *     description="Returns the highest SOOM submission for a specific listing/item",
+     *     operationId="getMaxSoom",
+     *     tags={"SOOMs"},
+     *     @OA\Parameter(
+     *         name="id_item",
+     *         in="query",
+     *         description="ID of the listing/item",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Maximum SOOM retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="integer", example=123),
+     *             @OA\Property(property="user_id", type="integer", example=45),
+     *             @OA\Property(property="item_id", type="integer", example=67),
+     *             @OA\Property(property="soom_value", type="number", format="float", example=15000),
+     *             @OA\Property(property="isOverbidding", type="boolean", example=false),
+     *             @OA\Property(property="createdAt", type="string", format="datetime", example="2025-11-07T10:22:00Z"),
+     *             @OA\Property(property="status", type="string", example="pending")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="No SOOM found for this item",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="No SOOM found for this item"),
+     *             @OA\Property(property="item_id", type="integer", example=67)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Validation failed"),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="id_item",
+     *                     type="array",
+     *                     @OA\Items(type="string", example="The id_item field is required.")
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function getMaxSoom(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id_item' => 'required|integer|exists:listings,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $itemId = $request->id_item;
+
+        $maxSoom = Submission::where('listing_id', $itemId)
+            ->orderBy('amount', 'desc')
+            ->first();
+
+        if (!$maxSoom) {
+            return response()->json([
+                'message' => 'No SOOM found for this item',
+                'item_id' => $itemId
+            ], 404);
+        }
+
+        return response()->json([
+            'id' => $maxSoom->id,
+            'user_id' => $maxSoom->user_id,
+            'item_id' => $maxSoom->listing_id,
+            'soom_value' => (float) $maxSoom->amount,
+            'isOverbidding' => (bool) $maxSoom->isOverbidding,
+            'createdAt' => $maxSoom->created_at->toISOString(),
+            'status' => $maxSoom->status
+        ], 200);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/sooms/max/me",
+     *     summary="Get my maximum SOOM",
+     *     description="Returns the highest SOOM submission made by the authenticated user, optionally filtered by listing",
+     *     operationId="getMyMaxSoom",
+     *     tags={"SOOMs"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="listing_id",
+     *         in="query",
+     *         description="Optional: ID of the listing/item to filter by",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=51)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Maximum SOOM retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="integer", example=8),
+     *             @OA\Property(property="user_id", type="integer", example=2),
+     *             @OA\Property(property="listing_id", type="integer", example=51),
+     *             @OA\Property(property="amount", type="number", example=70000.00),
+     *             @OA\Property(property="isOverbidding", type="boolean", example=true),
+     *             @OA\Property(property="status", type="string", example="pending"),
+     *             @OA\Property(property="submission_date", type="string", example="2025-11-08T11:04:55Z"),
+     *             @OA\Property(property="created_at", type="string", example="2025-11-08T11:04:55Z")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="No SOOM found"
+     *     )
+     * )
+     */
+    public function getMyMaxSoom(Request $request)
+    {
+        $userId = Auth::id();
+
+        if (!$userId) {
+            return response()->json([
+                'message' => 'Unauthorized. User must be logged in.',
+            ], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'listing_id' => 'nullable|integer|exists:listings,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $listingId = $request->listing_id;
+
+        $query = Submission::where('user_id', $userId);
+
+        if ($listingId) {
+            $query->where('listing_id', $listingId);
+        }
+
+        $maxSoom = $query->orderBy('amount', 'desc')->first();
+
+        if (!$maxSoom) {
+            return response()->json([
+                'message' => 'No SOOM found for you',
+                'user_id' => $userId,
+                'listing_id' => $listingId
+            ], 404);
+        }
+
+        return response()->json([
+            'id' => $maxSoom->id,
+            'user_id' => $maxSoom->user_id,
+            'listing_id' => $maxSoom->listing_id,
+            'amount' => (float) $maxSoom->amount,
+            'isOverbidding' => (bool) $maxSoom->isOverbidding,
+            'status' => $maxSoom->status,
+            'submission_date' => $maxSoom->submission_date,
+            'created_at' => $maxSoom->created_at->toISOString()
+        ], 200);
+    }
+    /**
+     * @OA\Get(
+     *     path="/api/sooms/overbidding/users",
+     *     summary="Get all users with overbidding SOOMs",
+     *     description="Returns all users who have made overbidding SOOMs (>150% of previous highest) with their overbidding count and details",
+     *     operationId="getUsersWithOverbidding",
+     *     tags={"SOOMs"},
+     *     @OA\Parameter(
+     *         name="listing_id",
+     *         in="query",
+     *         description="Optional: Filter by specific listing ID",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=51)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Users with overbidding SOOMs retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total_users", type="integer", example=3, description="Number of unique users who made overbidding SOOMs"),
+     *             @OA\Property(property="total_overbidding_sooms", type="integer", example=8, description="Total number of overbidding SOOMs"),
+     *             @OA\Property(
+     *                 property="users",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="user_id", type="integer", example=2),
+     *                     @OA\Property(property="user_name", type="string", example="John Doe"),
+     *                     @OA\Property(property="user_email", type="string", example="john@example.com"),
+     *                     @OA\Property(property="overbidding_count", type="integer", example=3, description="Number of overbidding SOOMs by this user"),
+     *                     @OA\Property(property="total_overbidding_amount", type="number", example=215000.00, description="Sum of all overbidding amounts"),
+     *                     @OA\Property(
+     *                         property="overbidding_sooms",
+     *                         type="array",
+     *                         description="List of all overbidding SOOMs by this user",
+     *                         @OA\Items(
+     *                             @OA\Property(property="id", type="integer", example=8),
+     *                             @OA\Property(property="listing_id", type="integer", example=51),
+     *                             @OA\Property(property="amount", type="number", example=70000.00),
+     *                             @OA\Property(property="status", type="string", example="pending"),
+     *                             @OA\Property(property="submission_date", type="string", example="2025-11-08T11:04:55Z")
+     *                         )
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
+     */
+    public function getUsersWithOverbidding(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'listing_id' => 'nullable|integer|exists:listings,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $listingId = $request->listing_id;
+
+        // Query pour récupérer tous les SOOMs avec isOverbidding = true/1
+        $query = Submission::where('isOverbidding', 1) // ou true
+            ->with('user:id,first_name,last_name,email'); // Charger les infos utilisateur
+
+        if ($listingId) {
+            $query->where('listing_id', $listingId);
+        }
+
+        $overbiddingSubmissions = $query->orderBy('submission_date', 'desc')->get();
+
+        if ($overbiddingSubmissions->isEmpty()) {
+            return response()->json([
+                'message' => 'No overbidding SOOMs found',
+                'total_users' => 0,
+                'total_overbidding_sooms' => 0,
+                'users' => []
+            ], 200);
+        }
+
+        // Grouper par utilisateur et calculer les statistiques
+        $userStats = $overbiddingSubmissions->groupBy('user_id')->map(function ($submissions, $userId) {
+            $user = $submissions->first()->user;
+
+            return [
+                'user_id' => $userId,
+                'user_name' => $user ? trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) : 'Unknown',
+                'user_email' => $user->email ?? 'N/A',
+                'overbidding_count' => $submissions->count(),
+                'total_overbidding_amount' => (float) $submissions->sum('amount'),
+                'overbidding_sooms' => $submissions->map(function ($submission) {
+                    return [
+                        'id' => $submission->id,
+                        'listing_id' => $submission->listing_id,
+                        'amount' => (float) $submission->amount,
+                        'status' => $submission->status,
+                        'submission_date' => $submission->submission_date
+                    ];
+                })->values()
+            ];
+        })->values();
+
+        return response()->json([
+            'total_users' => $userStats->count(),
+            'total_overbidding_sooms' => $overbiddingSubmissions->count(),
+            'users' => $userStats
+        ], 200);
     }
 }

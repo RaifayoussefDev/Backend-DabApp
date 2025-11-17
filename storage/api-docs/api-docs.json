@@ -10797,7 +10797,8 @@
                 "tags": [
                     "Listings"
                 ],
-                "summary": "Créer ou mettre à jour une annonce de moto (multi-étapes)",
+                "summary": "Create motorcycle listing (flexible 3-step process)",
+                "description": "Step 1: Vehicle details | Step 2: Basic info | Step 3: Payment",
                 "operationId": "82e466deecdfc7f046318f30b8399c74",
                 "requestBody": {
                     "required": true,
@@ -10806,113 +10807,137 @@
                             "schema": {
                                 "properties": {
                                     "step": {
-                                        "description": "Étape actuelle (1, 2 ou 3)",
+                                        "description": "Current step (1, 2, or 3)",
                                         "type": "integer",
                                         "example": 1
                                     },
                                     "listing_id": {
-                                        "description": "Obligatoire à partir de l'étape 2",
+                                        "description": "Required in Steps 2 & 3, NOT in Step 1",
                                         "type": "integer",
-                                        "example": 42
+                                        "example": 520
                                     },
                                     "category_id": {
+                                        "description": "Step 1: 1=Motorcycle, 2=Spare Part, 3=License Plate",
                                         "type": "integer",
                                         "example": 1
-                                    },
-                                    "title": {
-                                        "type": "string",
-                                        "example": "Yamaha MT-07"
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "example": "Moto bien entretenue"
-                                    },
-                                    "price": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 5000
-                                    },
-                                    "country_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "city_id": {
-                                        "type": "integer",
-                                        "example": 10
-                                    },
-                                    "auction_enabled": {
-                                        "type": "boolean",
-                                        "example": true
-                                    },
-                                    "minimum_bid": {
-                                        "type": "number",
-                                        "example": 4000
-                                    },
-                                    "allow_submission": {
-                                        "type": "boolean",
-                                        "example": true
-                                    },
-                                    "listing_type_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "contacting_channel": {
-                                        "type": "string",
-                                        "example": "phone"
-                                    },
-                                    "seller_type": {
-                                        "type": "string",
-                                        "example": "owner"
-                                    },
-                                    "images": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
                                     },
                                     "brand_id": {
+                                        "description": "Step 1: Motorcycle brand ID",
                                         "type": "integer",
-                                        "example": 1
+                                        "example": 7
                                     },
                                     "model_id": {
+                                        "description": "Step 1: Motorcycle model ID",
                                         "type": "integer",
-                                        "example": 2
+                                        "example": 5712
                                     },
                                     "year_id": {
+                                        "description": "Step 1: Year ID",
                                         "type": "integer",
-                                        "example": 2020
+                                        "example": 10671
                                     },
                                     "engine": {
+                                        "description": "Step 1: Engine capacity",
                                         "type": "string",
-                                        "example": "700cc"
+                                        "example": "9500cc"
                                     },
                                     "mileage": {
+                                        "description": "Step 1: Mileage in KM",
                                         "type": "integer",
-                                        "example": 15000
+                                        "example": 9000
                                     },
                                     "body_condition": {
+                                        "description": "Step 1: Body condition",
                                         "type": "string",
-                                        "example": "Bon état"
+                                        "example": "As New / Used / Needs some fixes"
                                     },
                                     "modified": {
+                                        "description": "Step 1: Has modifications",
                                         "type": "boolean",
                                         "example": false
                                     },
                                     "insurance": {
+                                        "description": "Step 1: Has insurance",
                                         "type": "boolean",
                                         "example": true
                                     },
                                     "general_condition": {
+                                        "description": "Step 1: General condition",
                                         "type": "string",
-                                        "example": "Excellent"
+                                        "example": "New / Used"
                                     },
                                     "vehicle_care": {
+                                        "description": "Step 1: Vehicle care type",
                                         "type": "string",
-                                        "example": "Toujours au garage"
+                                        "example": "Wakeel / USA / Europe / GCC / Customs License / Other"
                                     },
                                     "transmission": {
+                                        "description": "Step 1: Transmission type",
                                         "type": "string",
-                                        "example": "Manuelle"
+                                        "example": "Automatic / Manual / Semi-Automatic"
+                                    },
+                                    "images": {
+                                        "description": "Step 1 or 2: Array of image URLs",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "example": "https://be.dabapp.co/storage/listings/image.jpg"
+                                        }
+                                    },
+                                    "title": {
+                                        "description": "Step 2: Listing title",
+                                        "type": "string",
+                                        "example": "MOTORCYCLE TEST 16"
+                                    },
+                                    "description": {
+                                        "description": "Step 2: Full description",
+                                        "type": "string",
+                                        "example": "Well maintained motorcycle in excellent condition"
+                                    },
+                                    "price": {
+                                        "description": "Step 2: Price (optional if auction only)",
+                                        "type": "number",
+                                        "example": 9000
+                                    },
+                                    "allow_submission": {
+                                        "description": "Step 2: Allow buyers to submit offers",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "contacting_channel": {
+                                        "description": "Step 2: Contact method",
+                                        "type": "string",
+                                        "example": "phone / email / whatsapp"
+                                    },
+                                    "country_id": {
+                                        "description": "Step 2: Country ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "city_id": {
+                                        "description": "Step 2: City ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "seller_type": {
+                                        "description": "Step 2: Seller type",
+                                        "type": "string",
+                                        "example": "owner / dealer / middleman"
+                                    },
+                                    "auction_enabled": {
+                                        "description": "Step 2: Enable auction",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "minimum_bid": {
+                                        "description": "Step 2: Required if auction_enabled=true",
+                                        "type": "number",
+                                        "example": null
+                                    },
+                                    "amount": {
+                                        "description": "Step 3: Payment amount in local currency",
+                                        "type": "number",
+                                        "example": 599
                                     }
                                 },
                                 "type": "object"
@@ -10922,7 +10947,89 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Annonce moto enregistrée ou mise à jour avec succès"
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "description": "Steps 1 & 2 Response",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Listing saved (no payment yet)"
+                                                },
+                                                "listing_id": {
+                                                    "type": "integer",
+                                                    "example": 520
+                                                },
+                                                "data": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "description": "Step 3 Response",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Listing saved, waiting for payment"
+                                                },
+                                                "listing_id": {
+                                                    "type": "integer",
+                                                    "example": 520
+                                                },
+                                                "payment_id": {
+                                                    "type": "integer",
+                                                    "example": 123
+                                                },
+                                                "amount_aed": {
+                                                    "type": "number",
+                                                    "example": 599
+                                                },
+                                                "original_amount": {
+                                                    "type": "number",
+                                                    "example": 599
+                                                },
+                                                "original_currency": {
+                                                    "type": "string",
+                                                    "example": "AED"
+                                                },
+                                                "exchange_rate": {
+                                                    "type": "string",
+                                                    "example": "1 AED = 1 AED"
+                                                },
+                                                "currency": {
+                                                    "type": "string",
+                                                    "example": "AED"
+                                                },
+                                                "redirect_url": {
+                                                    "type": "string",
+                                                    "example": "https://secure.paytabs.com/payment/page/..."
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Payment request failed"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Access denied"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
                     }
                 },
                 "security": [
@@ -10937,7 +11044,8 @@
                 "tags": [
                     "Listings"
                 ],
-                "summary": "Créer ou mettre à jour une annonce de pièce détachée (multi-étapes)",
+                "summary": "Create spare part listing (flexible 3-step process)",
+                "description": "Step 1: Part details | Step 2: Basic info | Step 3: Payment",
                 "operationId": "e7bd91a7a7d7d7e0ab2c539cc2348a62",
                 "requestBody": {
                     "required": true,
@@ -10951,55 +11059,48 @@
                                     },
                                     "listing_id": {
                                         "type": "integer",
-                                        "example": 45
+                                        "example": 522
                                     },
                                     "category_id": {
+                                        "description": "Step 1: Always 2 for spare parts",
                                         "type": "integer",
                                         "example": 2
                                     },
-                                    "title": {
-                                        "type": "string",
-                                        "example": "Pneu arrière"
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "example": "Pneu en bon état"
-                                    },
-                                    "price": {
-                                        "type": "number",
-                                        "example": 200
-                                    },
-                                    "country_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "city_id": {
-                                        "type": "integer",
-                                        "example": 5
-                                    },
-                                    "auction_enabled": {
-                                        "type": "boolean",
-                                        "example": false
-                                    },
-                                    "minimum_bid": {
-                                        "type": "number",
-                                        "example": null
-                                    },
-                                    "allow_submission": {
-                                        "type": "boolean",
-                                        "example": false
-                                    },
-                                    "listing_type_id": {
+                                    "bike_part_brand_id": {
+                                        "description": "Step 1: Part brand ID",
                                         "type": "integer",
                                         "example": 2
                                     },
-                                    "contacting_channel": {
-                                        "type": "string",
-                                        "example": "email"
+                                    "bike_part_category_id": {
+                                        "description": "Step 1: Part category ID",
+                                        "type": "integer",
+                                        "example": 2
                                     },
-                                    "seller_type": {
+                                    "motorcycles": {
+                                        "description": "Step 1: Compatible motorcycles array",
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "brand_id": {
+                                                    "type": "integer",
+                                                    "example": 7
+                                                },
+                                                "model_id": {
+                                                    "type": "integer",
+                                                    "example": 5713
+                                                },
+                                                "year_id": {
+                                                    "type": "integer",
+                                                    "example": 10672
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "condition": {
+                                        "description": "Step 1: Part condition",
                                         "type": "string",
-                                        "example": "dealer"
+                                        "example": "new / used"
                                     },
                                     "images": {
                                         "type": "array",
@@ -11007,29 +11108,52 @@
                                             "type": "string"
                                         }
                                     },
-                                    "condition": {
+                                    "title": {
+                                        "description": "Step 2",
                                         "type": "string",
-                                        "example": "used"
+                                        "example": "SPARE PART TEST 16"
                                     },
-                                    "motorcycles": {
-                                        "type": "array",
-                                        "items": {
-                                            "properties": {
-                                                "brand_id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "model_id": {
-                                                    "type": "integer",
-                                                    "example": 2
-                                                },
-                                                "year_id": {
-                                                    "type": "integer",
-                                                    "example": 2020
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
+                                    "description": {
+                                        "description": "Step 2",
+                                        "type": "string"
+                                    },
+                                    "price": {
+                                        "description": "Step 2",
+                                        "type": "number",
+                                        "example": null
+                                    },
+                                    "allow_submission": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "contacting_channel": {
+                                        "type": "string",
+                                        "example": "phone / email / whatsapp"
+                                    },
+                                    "country_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "seller_type": {
+                                        "type": "string",
+                                        "example": "owner / dealer / middleman"
+                                    },
+                                    "auction_enabled": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "minimum_bid": {
+                                        "type": "number",
+                                        "example": 9000
+                                    },
+                                    "amount": {
+                                        "description": "Step 3",
+                                        "type": "number",
+                                        "example": 599
                                     }
                                 },
                                 "type": "object"
@@ -11039,7 +11163,10 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Annonce pièce détachée enregistrée ou mise à jour avec succès"
+                        "description": "Success"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 },
                 "security": [
@@ -11054,7 +11181,8 @@
                 "tags": [
                     "Listings"
                 ],
-                "summary": "Créer ou mettre à jour une annonce de plaque d'immatriculation (multi-étapes)",
+                "summary": "Create license plate listing (flexible 3-step process)",
+                "description": "Step 1: Plate details | Step 2: Basic info | Step 3: Payment",
                 "operationId": "fd028dfaaee30bf948a3880d3acb1632",
                 "requestBody": {
                     "required": true,
@@ -11068,23 +11196,65 @@
                                     },
                                     "listing_id": {
                                         "type": "integer",
-                                        "example": 46
+                                        "example": 524
                                     },
                                     "category_id": {
+                                        "description": "Step 1: Always 3 for license plates",
                                         "type": "integer",
                                         "example": 3
                                     },
+                                    "plate_format_id": {
+                                        "description": "Step 1: Plate format ID",
+                                        "type": "integer",
+                                        "example": 17
+                                    },
+                                    "country_id_lp": {
+                                        "description": "Step 1: Plate country",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "city_id_lp": {
+                                        "description": "Step 1: Plate emirate/city",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "fields": {
+                                        "description": "Step 1: Plate field values (Arabic/English supported)",
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "field_id": {
+                                                    "type": "integer",
+                                                    "example": 40
+                                                },
+                                                "value": {
+                                                    "type": "string",
+                                                    "example": "١١١"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
                                     "title": {
+                                        "description": "Step 2",
                                         "type": "string",
-                                        "example": "Plaque personnalisée"
+                                        "example": "license plate TEST 16"
                                     },
                                     "description": {
-                                        "type": "string",
-                                        "example": "Plaque ABC123 rouge"
+                                        "description": "Step 2",
+                                        "type": "string"
                                     },
                                     "price": {
                                         "type": "number",
-                                        "example": 800
+                                        "example": 9000
+                                    },
+                                    "allow_submission": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "contacting_channel": {
+                                        "type": "string",
+                                        "example": "phone / email / whatsapp"
                                     },
                                     "country_id": {
                                         "type": "integer",
@@ -11092,65 +11262,20 @@
                                     },
                                     "city_id": {
                                         "type": "integer",
-                                        "example": 8
-                                    },
-                                    "auction_enabled": {
-                                        "type": "boolean",
-                                        "example": true
-                                    },
-                                    "minimum_bid": {
-                                        "type": "number",
-                                        "example": 500
-                                    },
-                                    "allow_submission": {
-                                        "type": "boolean",
-                                        "example": true
-                                    },
-                                    "listing_type_id": {
-                                        "type": "integer",
-                                        "example": 3
-                                    },
-                                    "contacting_channel": {
-                                        "type": "string",
-                                        "example": "whatsapp"
+                                        "example": 1
                                     },
                                     "seller_type": {
                                         "type": "string",
-                                        "example": "owner"
+                                        "example": "owner / dealer / middleman"
                                     },
-                                    "images": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
+                                    "auction_enabled": {
+                                        "type": "boolean",
+                                        "example": false
                                     },
-                                    "plate_format_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "country_id_lp": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "city_id_lp": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "fields": {
-                                        "type": "array",
-                                        "items": {
-                                            "properties": {
-                                                "field_id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "value": {
-                                                    "type": "string",
-                                                    "example": "ABC123"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
+                                    "amount": {
+                                        "description": "Step 3",
+                                        "type": "number",
+                                        "example": 599
                                     }
                                 },
                                 "type": "object"
@@ -11160,7 +11285,10 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Annonce plaque immatriculation enregistrée ou mise à jour avec succès"
+                        "description": "Success"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 },
                 "security": [
@@ -17631,368 +17759,6 @@
                 ]
             }
         },
-        "/api/poi-services": {
-            "get": {
-                "tags": [
-                    "POI Services"
-                ],
-                "summary": "Get all POI services",
-                "operationId": "c87ec5f84e4e02d6857307370b80ac08",
-                "parameters": [
-                    {
-                        "name": "type_id",
-                        "in": "query",
-                        "description": "Filter by POI type",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "POI Services"
-                ],
-                "summary": "Create a new POI service",
-                "operationId": "7fe8cbb1099613961e8127b70cf57fa0",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "name"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "Oil Change"
-                                    },
-                                    "type_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Service created successfully"
-                    },
-                    "422": {
-                        "description": "Validation error"
-                    },
-                    "403": {
-                        "description": "Forbidden - Admin only"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/poi-services/{id}": {
-            "get": {
-                "tags": [
-                    "POI Services"
-                ],
-                "summary": "Get a specific POI service",
-                "operationId": "6765f86fdf2bdc3730cdd2585bde1cbf",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    },
-                    "404": {
-                        "description": "Service not found"
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "POI Services"
-                ],
-                "summary": "Update a POI service",
-                "operationId": "e2a16254c9e4163a03683540d711c5cd",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "name": {
-                                        "type": "string"
-                                    },
-                                    "type_id": {
-                                        "type": "integer"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Service updated successfully"
-                    },
-                    "403": {
-                        "description": "Forbidden - Admin only"
-                    },
-                    "404": {
-                        "description": "Service not found"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "delete": {
-                "tags": [
-                    "POI Services"
-                ],
-                "summary": "Delete a POI service",
-                "operationId": "de6b9aa61e57f4480864320421a96517",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Service deleted successfully"
-                    },
-                    "403": {
-                        "description": "Forbidden - Admin only"
-                    },
-                    "404": {
-                        "description": "Service not found"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/poi-types": {
-            "get": {
-                "tags": [
-                    "POI Types"
-                ],
-                "summary": "Get all POI types",
-                "operationId": "c72e2bd637e111c6d84a1363ac498d7e",
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "POI Types"
-                ],
-                "summary": "Create a new POI type",
-                "operationId": "a91bc5717b72d41599b55e22d1b04df8",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "name"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "Garage/Maintenance"
-                                    },
-                                    "icon": {
-                                        "type": "string",
-                                        "example": "wrench"
-                                    },
-                                    "color": {
-                                        "type": "string",
-                                        "example": "#FF5722"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "POI type created successfully"
-                    },
-                    "422": {
-                        "description": "Validation error"
-                    },
-                    "403": {
-                        "description": "Forbidden - Admin only"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/poi-types/{id}": {
-            "get": {
-                "tags": [
-                    "POI Types"
-                ],
-                "summary": "Get a specific POI type",
-                "operationId": "90c264c7054db5c18e25fe5f21fd063b",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    },
-                    "404": {
-                        "description": "POI type not found"
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "POI Types"
-                ],
-                "summary": "Update a POI type",
-                "operationId": "e1649f77bcac63ba6042b40a7c566ef0",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "name": {
-                                        "type": "string"
-                                    },
-                                    "icon": {
-                                        "type": "string"
-                                    },
-                                    "color": {
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "POI type updated successfully"
-                    },
-                    "403": {
-                        "description": "Forbidden - Admin only"
-                    },
-                    "404": {
-                        "description": "POI type not found"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "delete": {
-                "tags": [
-                    "POI Types"
-                ],
-                "summary": "Delete a POI type",
-                "operationId": "47cca5200750aad17f510a9d15dfd325",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "POI type deleted successfully"
-                    },
-                    "403": {
-                        "description": "Forbidden - Admin only"
-                    },
-                    "404": {
-                        "description": "POI type not found"
-                    },
-                    "422": {
-                        "description": "Cannot delete type with POIs"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/api/pois": {
             "get": {
                 "tags": [
@@ -18697,187 +18463,6 @@
                 }
             }
         },
-        "/api/route-categories": {
-            "get": {
-                "tags": [
-                    "Route Categories"
-                ],
-                "summary": "Get all route categories",
-                "operationId": "460bea7c7cf5fbf3e85b3cd88c80e44c",
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "Route Categories"
-                ],
-                "summary": "Create a new route category",
-                "operationId": "5cd80439e01e5cafb3e7e64975f19ab3",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "name"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "Scenic"
-                                    },
-                                    "icon": {
-                                        "type": "string",
-                                        "example": "mountain"
-                                    },
-                                    "color": {
-                                        "type": "string",
-                                        "example": "#4CAF50"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Category created successfully"
-                    },
-                    "422": {
-                        "description": "Validation error"
-                    },
-                    "403": {
-                        "description": "Forbidden - Admin only"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/route-categories/{id}": {
-            "get": {
-                "tags": [
-                    "Route Categories"
-                ],
-                "summary": "Get a specific route category",
-                "operationId": "cf92c7ad33a71b2401ad5d0ed1d631ba",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    },
-                    "404": {
-                        "description": "Category not found"
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "Route Categories"
-                ],
-                "summary": "Update a route category",
-                "operationId": "fe63275564f071b2a9f62c7b6694effd",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "name": {
-                                        "type": "string"
-                                    },
-                                    "icon": {
-                                        "type": "string"
-                                    },
-                                    "color": {
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Category updated successfully"
-                    },
-                    "403": {
-                        "description": "Forbidden - Admin only"
-                    },
-                    "404": {
-                        "description": "Category not found"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "delete": {
-                "tags": [
-                    "Route Categories"
-                ],
-                "summary": "Delete a route category",
-                "operationId": "b70cea4ec09698a9f8a078baeec4c0dd",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Category deleted successfully"
-                    },
-                    "403": {
-                        "description": "Forbidden - Admin only"
-                    },
-                    "404": {
-                        "description": "Category not found"
-                    },
-                    "422": {
-                        "description": "Cannot delete category with routes"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/api/routes/{route_id}/completions": {
             "get": {
                 "tags": [
@@ -19475,237 +19060,6 @@
                 ]
             }
         },
-        "/api/route-tags": {
-            "get": {
-                "tags": [
-                    "Route Tags"
-                ],
-                "summary": "Get all route tags",
-                "operationId": "00e5a9f51f5550219ca9fdce6968186e",
-                "parameters": [
-                    {
-                        "name": "popular",
-                        "in": "query",
-                        "description": "Get only popular tags (most used)",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "Route Tags"
-                ],
-                "summary": "Create a new route tag",
-                "operationId": "8375d5edc5dbac4cc14fbd087c1d6939",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "name"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "scenic"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Tag created successfully"
-                    },
-                    "422": {
-                        "description": "Validation error"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/route-tags/{id}": {
-            "get": {
-                "tags": [
-                    "Route Tags"
-                ],
-                "summary": "Get a specific route tag with its routes",
-                "operationId": "ca2e5b0edc6cf4502ac3539550f5a606",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    },
-                    "404": {
-                        "description": "Tag not found"
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "Route Tags"
-                ],
-                "summary": "Update a route tag",
-                "operationId": "b35158cc448d9452141ca1a2a39259fe",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "name": {
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Tag updated successfully"
-                    },
-                    "403": {
-                        "description": "Forbidden - Admin only"
-                    },
-                    "404": {
-                        "description": "Tag not found"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "delete": {
-                "tags": [
-                    "Route Tags"
-                ],
-                "summary": "Delete a route tag",
-                "operationId": "fca5aa3c5549849b2b29b0e93e36bd78",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Tag deleted successfully"
-                    },
-                    "403": {
-                        "description": "Forbidden - Admin only"
-                    },
-                    "404": {
-                        "description": "Tag not found"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/route-tags/slug/{slug}": {
-            "get": {
-                "tags": [
-                    "Route Tags"
-                ],
-                "summary": "Get a tag by slug with its routes",
-                "operationId": "8e23b9c5dc010ab5b99754cef4f59d32",
-                "parameters": [
-                    {
-                        "name": "slug",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    },
-                    "404": {
-                        "description": "Tag not found"
-                    }
-                }
-            }
-        },
-        "/api/route-tags/search": {
-            "post": {
-                "tags": [
-                    "Route Tags"
-                ],
-                "summary": "Search route tags",
-                "operationId": "e1e94b5d0dd3e89cbdce9ba11c8efdd9",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "query"
-                                ],
-                                "properties": {
-                                    "query": {
-                                        "type": "string",
-                                        "example": "scen"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                }
-            }
-        },
         "/api/routes/{route_id}/warnings": {
             "get": {
                 "tags": [
@@ -20016,321 +19370,13 @@
                 ]
             }
         },
-        "/api/routes/{route_id}/waypoints": {
-            "get": {
-                "tags": [
-                    "Route Waypoints"
-                ],
-                "summary": "Get all waypoints for a route",
-                "operationId": "85cf1a9b1a58c85cbde5706ccbadb738",
-                "parameters": [
-                    {
-                        "name": "route_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    },
-                    "404": {
-                        "description": "Route not found"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "post": {
-                "tags": [
-                    "Route Waypoints"
-                ],
-                "summary": "Add a waypoint to a route",
-                "operationId": "75bb942ed180c2953b039afa9dfcd35e",
-                "parameters": [
-                    {
-                        "name": "route_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "name",
-                                    "latitude",
-                                    "longitude",
-                                    "order_position"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "type": "string"
-                                    },
-                                    "latitude": {
-                                        "type": "number",
-                                        "format": "float"
-                                    },
-                                    "longitude": {
-                                        "type": "number",
-                                        "format": "float"
-                                    },
-                                    "order_position": {
-                                        "type": "integer"
-                                    },
-                                    "description": {
-                                        "type": "string"
-                                    },
-                                    "waypoint_type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "start",
-                                            "waypoint",
-                                            "poi",
-                                            "rest_stop",
-                                            "gas_station",
-                                            "viewpoint",
-                                            "end"
-                                        ]
-                                    },
-                                    "poi_id": {
-                                        "type": "integer"
-                                    },
-                                    "stop_duration": {
-                                        "type": "integer"
-                                    },
-                                    "elevation": {
-                                        "type": "integer"
-                                    },
-                                    "notes": {
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Waypoint created successfully"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    },
-                    "404": {
-                        "description": "Route not found"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/routes/{route_id}/waypoints/{id}": {
-            "get": {
-                "tags": [
-                    "Route Waypoints"
-                ],
-                "summary": "Get a specific waypoint",
-                "operationId": "75d9b7a3573602bbb0177313e68f65b6",
-                "parameters": [
-                    {
-                        "name": "route_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    },
-                    "404": {
-                        "description": "Waypoint not found"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "put": {
-                "tags": [
-                    "Route Waypoints"
-                ],
-                "summary": "Update a waypoint",
-                "operationId": "85b90216cb7fcfe9308c4ced29187c0f",
-                "parameters": [
-                    {
-                        "name": "route_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Waypoint updated successfully"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    },
-                    "404": {
-                        "description": "Waypoint not found"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "delete": {
-                "tags": [
-                    "Route Waypoints"
-                ],
-                "summary": "Delete a waypoint",
-                "operationId": "6a6e75e9b3e71665eb231dd2425d33e0",
-                "parameters": [
-                    {
-                        "name": "route_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Waypoint deleted successfully"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    },
-                    "404": {
-                        "description": "Waypoint not found"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/routes/{route_id}/waypoints/{id}/reorder": {
-            "put": {
-                "tags": [
-                    "Route Waypoints"
-                ],
-                "summary": "Reorder a waypoint",
-                "operationId": "e7bb84f4d8a9df3887aaf3311335ff8e",
-                "parameters": [
-                    {
-                        "name": "route_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "new_position"
-                                ],
-                                "properties": {
-                                    "new_position": {
-                                        "type": "integer",
-                                        "minimum": 1
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Waypoint reordered successfully"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    },
-                    "404": {
-                        "description": "Waypoint not found"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/api/listings/{listingId}/soom": {
             "post": {
                 "tags": [
                     "SOOMs"
                 ],
                 "summary": "Create a new SOOM (Submission of Offer on Market)",
-                "description": "Create a new SOOM for a specific listing. Users can submit multiple SOOMs, but each must be higher than the previous highest amount.",
+                "description": "Create a new SOOM for a specific listing. Users can submit multiple SOOMs, but each must be higher than the previous highest amount. Automatically detects overbidding (>150% of last SOOM).",
                 "operationId": "createSoom",
                 "parameters": [
                     {
@@ -20410,6 +19456,10 @@
                                                     "type": "number",
                                                     "format": "float",
                                                     "example": 1400
+                                                },
+                                                "isOverbidding": {
+                                                    "type": "boolean",
+                                                    "example": false
                                                 },
                                                 "user": {
                                                     "properties": {
@@ -23149,6 +22199,255 @@
                 ]
             }
         },
+        "/api/sooms/max": {
+            "get": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Get maximum SOOM for an item",
+                "description": "Returns the highest SOOM submission for a specific listing/item",
+                "operationId": "getMaxSoom",
+                "parameters": [
+                    {
+                        "name": "id_item",
+                        "in": "query",
+                        "description": "ID of the listing/item",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Maximum SOOM retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 123
+                                        },
+                                        "user_id": {
+                                            "type": "integer",
+                                            "example": 45
+                                        },
+                                        "item_id": {
+                                            "type": "integer",
+                                            "example": 67
+                                        },
+                                        "soom_value": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 15000
+                                        },
+                                        "isOverbidding": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "createdAt": {
+                                            "type": "string",
+                                            "format": "datetime",
+                                            "example": "2025-11-07T10:22:00Z"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "pending"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No SOOM found for this item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No SOOM found for this item"
+                                        },
+                                        "item_id": {
+                                            "type": "integer",
+                                            "example": 67
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "id_item": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The id_item field is required."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/sooms/max/me": {
+            "get": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Get my maximum SOOM",
+                "description": "Returns the highest SOOM submission made by the authenticated user",
+                "operationId": "getMyMaxSoom",
+                "parameters": [
+                    {
+                        "name": "item_id",
+                        "in": "query",
+                        "description": "Optional: ID of the listing/item to filter by",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 67
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Maximum SOOM retrieved successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sooms/overbidding/users": {
+            "get": {
+                "tags": [
+                    "SOOMs"
+                ],
+                "summary": "Get all users with overbidding SOOMs",
+                "description": "Returns all users who have made overbidding SOOMs with count",
+                "operationId": "getUsersWithOverbidding",
+                "parameters": [
+                    {
+                        "name": "listing_id",
+                        "in": "query",
+                        "description": "Optional: Filter by listing ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 51
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Users with overbidding SOOMs retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_users": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "total_overbidding_sooms": {
+                                            "type": "integer",
+                                            "example": 12
+                                        },
+                                        "users": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "user_name": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "user_email": {
+                                                        "type": "string",
+                                                        "example": "john@example.com"
+                                                    },
+                                                    "overbidding_count": {
+                                                        "type": "integer",
+                                                        "example": 3
+                                                    },
+                                                    "total_overbidding_amount": {
+                                                        "type": "number",
+                                                        "example": 150000
+                                                    },
+                                                    "overbidding_sooms": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 8
+                                                                },
+                                                                "listing_id": {
+                                                                    "type": "integer",
+                                                                    "example": 51
+                                                                },
+                                                                "amount": {
+                                                                    "type": "number",
+                                                                    "example": 70000
+                                                                },
+                                                                "status": {
+                                                                    "type": "string",
+                                                                    "example": "pending"
+                                                                },
+                                                                "submission_date": {
+                                                                    "type": "string",
+                                                                    "example": "2025-11-08T11:04:55Z"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/users/{id}": {
             "delete": {
                 "tags": [
@@ -23528,20 +22827,8 @@
             "description": "API Endpoints for POI Reviews"
         },
         {
-            "name": "POI Services",
-            "description": "API Endpoints for POI Services (Oil Change, Tire Replacement, etc.)"
-        },
-        {
-            "name": "POI Types",
-            "description": "API Endpoints for POI Types (Garage, Dealer, Gas Station, etc.)"
-        },
-        {
             "name": "Points of Interest",
             "description": "API Endpoints for Points of Interest"
-        },
-        {
-            "name": "Route Categories",
-            "description": "API Endpoints for Route Categories"
         },
         {
             "name": "Route Completions",
@@ -23556,16 +22843,8 @@
             "description": "API Endpoints for Route Reviews"
         },
         {
-            "name": "Route Tags",
-            "description": "API Endpoints for Route Tags (#scenic, #twisty, #beginner_friendly)"
-        },
-        {
             "name": "Route Warnings",
             "description": "API Endpoints for Route Warnings (construction, accidents, weather alerts, etc.)"
-        },
-        {
-            "name": "Route Waypoints",
-            "description": "API Endpoints for Route Waypoints"
         },
         {
             "name": "Wishlist",
