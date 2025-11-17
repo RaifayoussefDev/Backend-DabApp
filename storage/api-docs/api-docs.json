@@ -13875,14 +13875,14 @@
                 }
             }
         },
-        "/comparison/motorcycles/types": {
+        "/api/comparison/motorcycles/types": {
             "get": {
                 "tags": [
                     "Motorcycles Comparison"
                 ],
                 "summary": "Get all motorcycle types",
                 "description": "Returns the list of all available motorcycle types",
-                "operationId": "2b32c39f295bfe4130fa582f8aa88d12",
+                "operationId": "a57d1bdd0f755d9ee8d4ec670e8f16b0",
                 "responses": {
                     "200": {
                         "description": "Types list retrieved successfully",
@@ -13923,14 +13923,14 @@
                 }
             }
         },
-        "/comparison/motorcycles/brands": {
+        "/api/comparison/motorcycles/brands": {
             "get": {
                 "tags": [
                     "Motorcycles Comparison"
                 ],
                 "summary": "Get all brands",
                 "description": "Returns the list of all motorcycle brands",
-                "operationId": "06770141aaec130f38eff5cd15a3b177",
+                "operationId": "96de67bbfc4be78c2ad8d4492b48eb96",
                 "responses": {
                     "200": {
                         "description": "Brands list retrieved successfully",
@@ -13967,14 +13967,14 @@
                 }
             }
         },
-        "/comparison/motorcycles/models": {
+        "/api/comparison/motorcycles/models": {
             "get": {
                 "tags": [
                     "Motorcycles Comparison"
                 ],
                 "summary": "Get all models",
                 "description": "Returns the list of all models, filtered by brand and/or type",
-                "operationId": "3875c03c19b573f1545cfeaa72667236",
+                "operationId": "3642c76fe0c4c37fb6c1894470b23497",
                 "parameters": [
                     {
                         "name": "brand_id",
@@ -14067,14 +14067,14 @@
                 }
             }
         },
-        "/comparison/motorcycles/years": {
+        "/api/comparison/motorcycles/years": {
             "get": {
                 "tags": [
                     "Motorcycles Comparison"
                 ],
                 "summary": "Get all years for a model",
                 "description": "Returns the list of all available years for a specific model",
-                "operationId": "c47f77add17ae4e4c23aa34c63b7c7ba",
+                "operationId": "dd44364dfc6304e1a21f4cd1133f9b73",
                 "parameters": [
                     {
                         "name": "model_id",
@@ -14130,14 +14130,14 @@
                 }
             }
         },
-        "/comparison/motorcycles/details/{yearId}": {
+        "/api/comparison/motorcycles/details/{yearId}": {
             "get": {
                 "tags": [
                     "Motorcycles Comparison"
                 ],
                 "summary": "Get complete motorcycle details",
                 "description": "Returns all detailed information about a specific motorcycle",
-                "operationId": "27391880a3c123cdb002fdb99a4d9ea9",
+                "operationId": "c2e3163dc4edc4b291ac70dee24822cc",
                 "parameters": [
                     {
                         "name": "yearId",
@@ -14250,14 +14250,14 @@
                 }
             }
         },
-        "/comparison/motorcycles/compare": {
+        "/api/comparison/motorcycles/compare": {
             "post": {
                 "tags": [
                     "Motorcycles Comparison"
                 ],
                 "summary": "Compare two motorcycles",
                 "description": "Compares the complete details of two motorcycles side by side",
-                "operationId": "a7e5636a7d91ddb39505542635e3e0b8",
+                "operationId": "539486846b7fd351599cc5a7e0a29ef8",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -22319,26 +22319,70 @@
                     "SOOMs"
                 ],
                 "summary": "Get my maximum SOOM",
-                "description": "Returns the highest SOOM submission made by the authenticated user",
+                "description": "Returns the highest SOOM submission made by the authenticated user, optionally filtered by listing",
                 "operationId": "getMyMaxSoom",
                 "parameters": [
                     {
-                        "name": "item_id",
+                        "name": "listing_id",
                         "in": "query",
                         "description": "Optional: ID of the listing/item to filter by",
                         "required": false,
                         "schema": {
                             "type": "integer",
-                            "example": 67
+                            "example": 51
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Maximum SOOM retrieved successfully"
+                        "description": "Maximum SOOM retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 8
+                                        },
+                                        "user_id": {
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "listing_id": {
+                                            "type": "integer",
+                                            "example": 51
+                                        },
+                                        "amount": {
+                                            "type": "number",
+                                            "example": 70000
+                                        },
+                                        "isOverbidding": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "pending"
+                                        },
+                                        "submission_date": {
+                                            "type": "string",
+                                            "example": "2025-11-08T11:04:55Z"
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "example": "2025-11-08T11:04:55Z"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthenticated"
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "No SOOM found"
                     }
                 },
                 "security": [
@@ -22354,13 +22398,13 @@
                     "SOOMs"
                 ],
                 "summary": "Get all users with overbidding SOOMs",
-                "description": "Returns all users who have made overbidding SOOMs with count",
+                "description": "Returns all users who have made overbidding SOOMs (>150% of previous highest) with their overbidding count and details",
                 "operationId": "getUsersWithOverbidding",
                 "parameters": [
                     {
                         "name": "listing_id",
                         "in": "query",
-                        "description": "Optional: Filter by listing ID",
+                        "description": "Optional: Filter by specific listing ID",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -22376,12 +22420,14 @@
                                 "schema": {
                                     "properties": {
                                         "total_users": {
+                                            "description": "Number of unique users who made overbidding SOOMs",
                                             "type": "integer",
-                                            "example": 5
+                                            "example": 3
                                         },
                                         "total_overbidding_sooms": {
+                                            "description": "Total number of overbidding SOOMs",
                                             "type": "integer",
-                                            "example": 12
+                                            "example": 8
                                         },
                                         "users": {
                                             "type": "array",
@@ -22400,14 +22446,17 @@
                                                         "example": "john@example.com"
                                                     },
                                                     "overbidding_count": {
+                                                        "description": "Number of overbidding SOOMs by this user",
                                                         "type": "integer",
                                                         "example": 3
                                                     },
                                                     "total_overbidding_amount": {
+                                                        "description": "Sum of all overbidding amounts",
                                                         "type": "number",
-                                                        "example": 150000
+                                                        "example": 215000
                                                     },
                                                     "overbidding_sooms": {
+                                                        "description": "List of all overbidding SOOMs by this user",
                                                         "type": "array",
                                                         "items": {
                                                             "properties": {
@@ -22444,6 +22493,9 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 }
             }
@@ -22799,6 +22851,10 @@
             "name": "Motorcycle Brands"
         },
         {
+            "name": "Motorcycles Comparison",
+            "description": "Motorcycle comparison endpoints"
+        },
+        {
             "name": "Motorcycles"
         },
         {
@@ -22929,10 +22985,6 @@
         {
             "name": "locations",
             "description": "locations"
-        },
-        {
-            "name": "Motorcycles Comparison",
-            "description": "Motorcycles Comparison"
         },
         {
             "name": "Motorcycle",

@@ -675,13 +675,14 @@ Route::prefix('guides')->group(function () {
 });
 
 
-    Route::get('/comparison/motorcycles/types', [MotorcycleComparisonController::class, 'getTypes']);
-    Route::get('/comparison/motorcycles/brands', [MotorcycleComparisonController::class, 'getBrands']);
-    Route::get('/comparison/motorcycles/models', [MotorcycleComparisonController::class, 'getModels']);
-    Route::get('/comparison/motorcycles/years', [MotorcycleComparisonController::class, 'getYears']);
-    Route::get('/comparison/motorcycles/details/{yearId}', [MotorcycleComparisonController::class, 'getMotorcycleDetails']);
-    Route::post('/comparison/motorcycles/compare', [MotorcycleComparisonController::class, 'compare']);
-
+Route::prefix('comparison/motorcycles')->group(function () {
+    Route::get('/types', [MotorcycleComparisonController::class, 'getTypes']);
+    Route::get('/brands', [MotorcycleComparisonController::class, 'getBrands']);
+    Route::get('/models', [MotorcycleComparisonController::class, 'getModels']);
+    Route::get('/years', [MotorcycleComparisonController::class, 'getYears']);
+    Route::get('/details/{yearId}', [MotorcycleComparisonController::class, 'getMotorcycleDetails']);
+    Route::post('/compare', [MotorcycleComparisonController::class, 'compare']);
+});
 
 
 /*

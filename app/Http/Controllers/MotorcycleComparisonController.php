@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 
 /**
  * @OA\Tag(
- *     name="Motorcycles",
+ *     name="Motorcycles Comparison",
  *     description="Motorcycle comparison endpoints"
  * )
  */
@@ -20,7 +20,7 @@ class MotorcycleComparisonController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/comparison/motorcycles/types",
+     *     path="/api/comparison/motorcycles/types",
      *     tags={"Motorcycles Comparison"},
      *     summary="Get all motorcycle types",
      *     description="Returns the list of all available motorcycle types",
@@ -54,7 +54,7 @@ class MotorcycleComparisonController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/comparison/motorcycles/brands",
+     *     path="/api/comparison/motorcycles/brands",
      *     tags={"Motorcycles Comparison"},
      *     summary="Get all brands",
      *     description="Returns the list of all motorcycle brands",
@@ -87,7 +87,7 @@ class MotorcycleComparisonController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/comparison/motorcycles/models",
+     *     path="/api/comparison/motorcycles/models",
      *     tags={"Motorcycles Comparison"},
      *     summary="Get all models",
      *     description="Returns the list of all models, filtered by brand and/or type",
@@ -158,7 +158,7 @@ class MotorcycleComparisonController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/comparison/motorcycles/years",
+     *     path="/api/comparison/motorcycles/years",
      *     tags={"Motorcycles Comparison"},
      *     summary="Get all years for a model",
      *     description="Returns the list of all available years for a specific model",
@@ -210,7 +210,7 @@ class MotorcycleComparisonController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/comparison/motorcycles/details/{yearId}",
+     *     path="/api/comparison/motorcycles/details/{yearId}",
      *     tags={"Motorcycles Comparison"},
      *     summary="Get complete motorcycle details",
      *     description="Returns all detailed information about a specific motorcycle",
@@ -295,7 +295,7 @@ class MotorcycleComparisonController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/comparison/motorcycles/compare",
+     *     path="/api/comparison/motorcycles/compare",
      *     tags={"Motorcycles Comparison"},
      *     summary="Compare two motorcycles",
      *     description="Compares the complete details of two motorcycles side by side",
