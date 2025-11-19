@@ -8489,10 +8489,64 @@
                     "Guide Categories"
                 ],
                 "summary": "Liste toutes les catégories de guides",
+                "description": "Récupère la liste complète des catégories avec le nombre de guides associés",
                 "operationId": "4ba8df2b3bc886b0e5a7e88598a24101",
                 "responses": {
                     "200": {
-                        "description": "Liste des catégories"
+                        "description": "Liste des catégories récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Entretien"
+                                            },
+                                            "slug": {
+                                                "type": "string",
+                                                "example": "entretien"
+                                            },
+                                            "description": {
+                                                "type": "string",
+                                                "example": "Guides d'entretien pour motos",
+                                                "nullable": true
+                                            },
+                                            "icon": {
+                                                "type": "string",
+                                                "example": "wrench",
+                                                "nullable": true
+                                            },
+                                            "color": {
+                                                "type": "string",
+                                                "example": "#FF5722",
+                                                "nullable": true
+                                            },
+                                            "guides_count": {
+                                                "type": "integer",
+                                                "example": 15
+                                            },
+                                            "created_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2025-01-15 10:30:00"
+                                            },
+                                            "updated_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2025-01-15 10:30:00"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -8501,10 +8555,140 @@
                     "Guide Categories"
                 ],
                 "summary": "Créer une nouvelle catégorie",
+                "description": "Crée une nouvelle catégorie de guide. Le slug est généré automatiquement à partir du nom. Nécessite une authentification.",
                 "operationId": "53f7a1adbe3118aeeee7c5ba226d350d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Nom de la catégorie (le slug sera généré automatiquement)",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Sécurité Routière"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Conseils et guides pour une conduite sécuritaire",
+                                        "nullable": true
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "shield",
+                                        "nullable": true
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "maxLength": 50,
+                                        "example": "#4CAF50",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "201": {
-                        "description": "Catégorie créée"
+                        "description": "Catégorie créée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Catégorie créée avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Sécurité Routière"
+                                                },
+                                                "slug": {
+                                                    "description": "Généré automatiquement",
+                                                    "type": "string",
+                                                    "example": "securite-routiere"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Conseils et guides pour une conduite sécuritaire",
+                                                    "nullable": true
+                                                },
+                                                "icon": {
+                                                    "type": "string",
+                                                    "example": "shield",
+                                                    "nullable": true
+                                                },
+                                                "color": {
+                                                    "type": "string",
+                                                    "example": "#4CAF50",
+                                                    "nullable": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-01-15 10:30:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "errors": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Le champ name est requis."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -8520,20 +8704,89 @@
                     "Guide Categories"
                 ],
                 "summary": "Afficher les détails d'une catégorie",
+                "description": "Récupère les informations détaillées d'une catégorie spécifique avec le nombre de guides associés",
                 "operationId": "dea57fd4f7ecb11e824e127e3f05158d",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "ID de la catégorie",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Détails de la catégorie"
+                        "description": "Détails de la catégorie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Entretien"
+                                        },
+                                        "slug": {
+                                            "type": "string",
+                                            "example": "entretien"
+                                        },
+                                        "description": {
+                                            "type": "string",
+                                            "example": "Guides d'entretien pour motos",
+                                            "nullable": true
+                                        },
+                                        "icon": {
+                                            "type": "string",
+                                            "example": "wrench",
+                                            "nullable": true
+                                        },
+                                        "color": {
+                                            "type": "string",
+                                            "example": "#FF5722",
+                                            "nullable": true
+                                        },
+                                        "guides_count": {
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2025-01-15 10:30:00"
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2025-01-15 10:30:00"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Catégorie non trouvée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Catégorie non trouvée"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -8542,20 +8795,165 @@
                     "Guide Categories"
                 ],
                 "summary": "Mettre à jour une catégorie",
+                "description": "Met à jour les informations d'une catégorie existante. Si le nom est modifié, le slug sera automatiquement régénéré. Nécessite une authentification.",
                 "operationId": "c9a82abd851b94d1b910a3fc0739f6c7",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "ID de la catégorie à mettre à jour",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "description": "Nom de la catégorie (le slug sera régénéré automatiquement)",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Entretien Moto"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Guides complets d'entretien pour motos",
+                                        "nullable": true
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "tool",
+                                        "nullable": true
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "maxLength": 50,
+                                        "example": "#2196F3",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Catégorie mise à jour"
+                        "description": "Catégorie mise à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Catégorie mise à jour avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Entretien Moto"
+                                                },
+                                                "slug": {
+                                                    "description": "Régénéré automatiquement si le nom change",
+                                                    "type": "string",
+                                                    "example": "entretien-moto"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Guides complets d'entretien pour motos",
+                                                    "nullable": true
+                                                },
+                                                "icon": {
+                                                    "type": "string",
+                                                    "example": "tool",
+                                                    "nullable": true
+                                                },
+                                                "color": {
+                                                    "type": "string",
+                                                    "example": "#2196F3",
+                                                    "nullable": true
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-01-15 10:30:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Catégorie non trouvée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Catégorie non trouvée"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "errors": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Ce nom de catégorie existe déjà."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -8569,20 +8967,68 @@
                     "Guide Categories"
                 ],
                 "summary": "Supprimer une catégorie",
+                "description": "Supprime une catégorie de guide. Nécessite une authentification.",
                 "operationId": "83c6368e6bca8f4041f188f0453b9cd0",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "ID de la catégorie à supprimer",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Catégorie supprimée"
+                        "description": "Catégorie supprimée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Catégorie supprimée avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Catégorie non trouvée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Catégorie non trouvée"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -8598,20 +9044,128 @@
                     "Guide Categories"
                 ],
                 "summary": "Obtenir tous les guides d'une catégorie",
+                "description": "Récupère la liste de tous les guides publiés appartenant à une catégorie spécifique, triés par date de publication décroissante",
                 "operationId": "fb7059fc5050458876fdbf88a3244986",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "ID de la catégorie",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Liste des guides"
+                        "description": "Liste des guides de la catégorie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 10
+                                            },
+                                            "title": {
+                                                "type": "string",
+                                                "example": "Comment changer l'huile de votre moto"
+                                            },
+                                            "slug": {
+                                                "type": "string",
+                                                "example": "comment-changer-huile-moto"
+                                            },
+                                            "excerpt": {
+                                                "type": "string",
+                                                "example": "Guide complet pour la vidange d'huile moteur",
+                                                "nullable": true
+                                            },
+                                            "featured_image": {
+                                                "type": "string",
+                                                "example": "https://example.com/images/guide.jpg",
+                                                "nullable": true
+                                            },
+                                            "views_count": {
+                                                "type": "integer",
+                                                "example": 1250
+                                            },
+                                            "likes_count": {
+                                                "type": "integer",
+                                                "example": 85
+                                            },
+                                            "comments_count": {
+                                                "type": "integer",
+                                                "example": 23
+                                            },
+                                            "published_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2025-01-10 14:30:00"
+                                            },
+                                            "author": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Ahmed Benali"
+                                                    },
+                                                    "profile_picture": {
+                                                        "type": "string",
+                                                        "example": "https://example.com/profiles/ahmed.jpg",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "tags": {
+                                                "type": "array",
+                                                "items": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Maintenance"
+                                                        },
+                                                        "slug": {
+                                                            "type": "string",
+                                                            "example": "maintenance"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Catégorie non trouvée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Catégorie non trouvée"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
