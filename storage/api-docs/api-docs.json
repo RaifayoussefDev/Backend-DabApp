@@ -9550,11 +9550,58 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Liste tous les guides avec filtres",
+                "summary": "List all guides with filters",
                 "operationId": "5925d903e77ac2895e3a78a86aea5655",
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Filter by category ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "tag",
+                        "in": "query",
+                        "description": "Filter by tag slug",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search in title and excerpt",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_featured",
+                        "in": "query",
+                        "description": "Filter featured guides (1 or 0)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sort order",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "latest",
+                                "popular",
+                                "views"
+                            ]
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Liste des guides"
+                        "description": "List of guides"
                     }
                 }
             },
@@ -9562,7 +9609,7 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Créer un nouveau guide",
+                "summary": "Create a new guide",
                 "operationId": "0abfb96706973527a28536a11e02be8b",
                 "requestBody": {
                     "required": true,
@@ -9570,17 +9617,12 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "title",
-                                    "content"
+                                    "title"
                                 ],
                                 "properties": {
                                     "title": {
                                         "type": "string",
                                         "example": "Complete Motorcycle Maintenance Guide"
-                                    },
-                                    "content": {
-                                        "type": "string",
-                                        "example": "This comprehensive guide covers all aspects of motorcycle maintenance..."
                                     },
                                     "excerpt": {
                                         "type": "string",
@@ -9609,21 +9651,46 @@
                                         "type": "boolean",
                                         "example": false
                                     },
-                                    "images": {
+                                    "sections": {
                                         "type": "array",
                                         "items": {
                                             "properties": {
-                                                "image_url": {
+                                                "type": {
                                                     "type": "string",
-                                                    "example": "https://example.com/image1.jpg"
+                                                    "enum": [
+                                                        "text",
+                                                        "image",
+                                                        "text_image",
+                                                        "gallery",
+                                                        "video"
+                                                    ]
                                                 },
-                                                "caption": {
+                                                "title": {
+                                                    "type": "string"
+                                                },
+                                                "description": {
+                                                    "type": "string"
+                                                },
+                                                "image_url": {
+                                                    "type": "string"
+                                                },
+                                                "image_position": {
                                                     "type": "string",
-                                                    "example": "Oil change procedure"
+                                                    "enum": [
+                                                        "top",
+                                                        "right",
+                                                        "left",
+                                                        "bottom"
+                                                    ]
+                                                },
+                                                "media": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
                                                 },
                                                 "order_position": {
-                                                    "type": "integer",
-                                                    "example": 0
+                                                    "type": "integer"
                                                 }
                                             },
                                             "type": "object"
@@ -9637,10 +9704,10 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Guide créé avec succès"
+                        "description": "Guide created successfully"
                     },
                     "422": {
-                        "description": "Erreur de validation"
+                        "description": "Validation error"
                     }
                 },
                 "security": [
@@ -9655,7 +9722,7 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Afficher les détails d'un guide",
+                "summary": "Show guide details by slug",
                 "operationId": "3def2a2b674d267256f5000120f78789",
                 "parameters": [
                     {
@@ -9669,7 +9736,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Détails du guide"
+                        "description": "Guide details"
+                    },
+                    "404": {
+                        "description": "Guide not found"
                     }
                 }
             }
@@ -9679,7 +9749,7 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Mettre à jour un guide",
+                "summary": "Update a guide",
                 "operationId": "e1dc1c6b10d1890d4812b5dbf0f052f1",
                 "parameters": [
                     {
@@ -9691,9 +9761,97 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "excerpt": {
+                                        "type": "string"
+                                    },
+                                    "featured_image": {
+                                        "type": "string"
+                                    },
+                                    "category_id": {
+                                        "type": "integer"
+                                    },
+                                    "tags": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "is_featured": {
+                                        "type": "boolean"
+                                    },
+                                    "sections": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "id": {
+                                                    "description": "Section ID for update, omit for new section",
+                                                    "type": "integer"
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "text",
+                                                        "image",
+                                                        "text_image",
+                                                        "gallery",
+                                                        "video"
+                                                    ]
+                                                },
+                                                "title": {
+                                                    "type": "string"
+                                                },
+                                                "description": {
+                                                    "type": "string"
+                                                },
+                                                "image_url": {
+                                                    "type": "string"
+                                                },
+                                                "image_position": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "top",
+                                                        "right",
+                                                        "left",
+                                                        "bottom"
+                                                    ]
+                                                },
+                                                "media": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "order_position": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Guide mis à jour"
+                        "description": "Guide updated successfully"
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Guide not found"
                     }
                 },
                 "security": [
@@ -9706,7 +9864,7 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Supprimer un guide",
+                "summary": "Delete a guide",
                 "operationId": "dc4abf952eb4abf688a099b642b84751",
                 "parameters": [
                     {
@@ -9720,7 +9878,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Guide supprimé"
+                        "description": "Guide deleted successfully"
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Guide not found"
                     }
                 },
                 "security": [
@@ -9735,11 +9899,11 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Guides mis en avant",
+                "summary": "Get featured guides",
                 "operationId": "67d9d778da3ccccd7880227dce8278be",
                 "responses": {
                     "200": {
-                        "description": "Guides featured"
+                        "description": "Featured guides"
                     }
                 }
             }
@@ -9749,11 +9913,11 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Guides populaires",
+                "summary": "Get popular guides",
                 "operationId": "f8015f1ef5e34813d0e1e4ec24c875c2",
                 "responses": {
                     "200": {
-                        "description": "Guides populaires"
+                        "description": "Popular guides"
                     }
                 }
             }
@@ -9763,11 +9927,11 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Derniers guides",
+                "summary": "Get latest guides",
                 "operationId": "34717a09e14f3d7b2371210b689708c2",
                 "responses": {
                     "200": {
-                        "description": "Derniers guides"
+                        "description": "Latest guides"
                     }
                 }
             }
@@ -9777,7 +9941,7 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Publier un guide",
+                "summary": "Publish a guide",
                 "operationId": "a143c91571e8f8c4d9efb2cd1b0c0216",
                 "parameters": [
                     {
@@ -9791,7 +9955,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Guide publié"
+                        "description": "Guide published successfully"
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Guide not found"
                     }
                 },
                 "security": [
@@ -9806,7 +9976,7 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Archiver un guide",
+                "summary": "Archive a guide",
                 "operationId": "ada5334f84c02e9f15467cbd6c39a3bc",
                 "parameters": [
                     {
@@ -9820,7 +9990,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Guide archivé"
+                        "description": "Guide archived successfully"
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Guide not found"
                     }
                 },
                 "security": [
@@ -9835,11 +10011,11 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Mes guides",
+                "summary": "Get my guides",
                 "operationId": "46747724ab63fa0fef7a5e7f5ecf739a",
                 "responses": {
                     "200": {
-                        "description": "Mes guides"
+                        "description": "My guides"
                     }
                 },
                 "security": [
@@ -9854,7 +10030,7 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Afficher les détails d'un guide par ID",
+                "summary": "Show guide details by ID",
                 "operationId": "f4d1bfed474b5ad96928e6c56262aa8d",
                 "parameters": [
                     {
@@ -9868,10 +10044,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Détails du guide"
+                        "description": "Guide details"
                     },
                     "404": {
-                        "description": "Guide non trouvé"
+                        "description": "Guide not found"
                     }
                 }
             }
@@ -9881,7 +10057,7 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Liste des guides par catégorie",
+                "summary": "Get guides by category",
                 "operationId": "15c4ebac030bf00ec6b4609def75238e",
                 "parameters": [
                     {
@@ -9895,10 +10071,9 @@
                     {
                         "name": "sort",
                         "in": "query",
-                        "description": "Tri: latest, popular",
+                        "description": "Sort order",
                         "schema": {
                             "type": "string",
-                            "default": "latest",
                             "enum": [
                                 "latest",
                                 "popular"
@@ -9908,7 +10083,7 @@
                     {
                         "name": "limit",
                         "in": "query",
-                        "description": "Nombre de résultats",
+                        "description": "Number of results",
                         "schema": {
                             "type": "integer",
                             "default": 10
@@ -9917,7 +10092,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Liste des guides de la catégorie"
+                        "description": "Guides by category"
                     }
                 }
             }
@@ -9927,7 +10102,7 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Liste des guides par tag (slug)",
+                "summary": "Get guides by tag slug",
                 "operationId": "2ecc9d06685e23de6cb3f93d20582bb4",
                 "parameters": [
                     {
@@ -9941,10 +10116,8 @@
                     {
                         "name": "sort",
                         "in": "query",
-                        "description": "Tri: latest, popular",
                         "schema": {
                             "type": "string",
-                            "default": "latest",
                             "enum": [
                                 "latest",
                                 "popular"
@@ -9954,7 +10127,6 @@
                     {
                         "name": "limit",
                         "in": "query",
-                        "description": "Nombre de résultats",
                         "schema": {
                             "type": "integer",
                             "default": 10
@@ -9963,7 +10135,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Liste des guides du tag"
+                        "description": "Guides by tag"
                     }
                 }
             }
@@ -9973,7 +10145,7 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Liste des guides par tag ID",
+                "summary": "Get guides by tag ID",
                 "operationId": "dc6ce8becb88f80222ccae3233c5cde3",
                 "parameters": [
                     {
@@ -9987,10 +10159,8 @@
                     {
                         "name": "sort",
                         "in": "query",
-                        "description": "Tri: latest, popular",
                         "schema": {
                             "type": "string",
-                            "default": "latest",
                             "enum": [
                                 "latest",
                                 "popular"
@@ -10000,7 +10170,6 @@
                     {
                         "name": "limit",
                         "in": "query",
-                        "description": "Nombre de résultats",
                         "schema": {
                             "type": "integer",
                             "default": 10
@@ -10009,7 +10178,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Liste des guides du tag"
+                        "description": "Guides by tag ID"
                     }
                 }
             }
@@ -23383,7 +23552,7 @@
         },
         {
             "name": "Guides",
-            "description": "API Endpoints pour la gestion des guides"
+            "description": "API Endpoints for guide management"
         },
         {
             "name": "Guide Images",

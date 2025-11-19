@@ -96,12 +96,13 @@ class GuideController extends Controller
      *                 property="sections",
      *                 type="array",
      *                 @OA\Items(
+     *                     type="object",
      *                     @OA\Property(property="type", type="string", enum={"text", "image", "text_image", "gallery", "video"}),
      *                     @OA\Property(property="title", type="string"),
      *                     @OA\Property(property="description", type="string"),
      *                     @OA\Property(property="image_url", type="string"),
      *                     @OA\Property(property="image_position", type="string", enum={"top", "right", "left", "bottom"}),
-     *                     @OA\Property(property="media", type="array"),
+     *                     @OA\Property(property="media", type="array", @OA\Items(type="object")),
      *                     @OA\Property(property="order_position", type="integer")
      *                 )
      *             )
@@ -140,6 +141,7 @@ class GuideController extends Controller
         try {
             $guide = Guide::create([
                 'title' => $request->title,
+                'content' => '',
                 'excerpt' => $request->excerpt,
                 'featured_image' => $request->featured_image,
                 'category_id' => $request->category_id,
@@ -227,13 +229,14 @@ class GuideController extends Controller
      *                 property="sections",
      *                 type="array",
      *                 @OA\Items(
+     *                     type="object",
      *                     @OA\Property(property="id", type="integer", description="Section ID for update, omit for new section"),
      *                     @OA\Property(property="type", type="string", enum={"text", "image", "text_image", "gallery", "video"}),
      *                     @OA\Property(property="title", type="string"),
      *                     @OA\Property(property="description", type="string"),
      *                     @OA\Property(property="image_url", type="string"),
      *                     @OA\Property(property="image_position", type="string", enum={"top", "right", "left", "bottom"}),
-     *                     @OA\Property(property="media", type="array"),
+     *                     @OA\Property(property="media", type="array", @OA\Items(type="object")),
      *                     @OA\Property(property="order_position", type="integer")
      *                 )
      *             )

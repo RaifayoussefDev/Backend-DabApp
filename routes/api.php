@@ -610,6 +610,12 @@ Route::prefix('guides')->group(function () {
     Route::get('/popular', [GuideController::class, 'popular']);
     Route::get('/latest', [GuideController::class, 'latest']);
 
+    // Routes avec paramètres spécifiques AVANT {slug}
+    Route::get('/id/{id}', [GuideController::class, 'showById']);
+    Route::get('/category/{category_id}', [GuideController::class, 'getByCategory']);
+    Route::get('/tag/{tag_slug}', [GuideController::class, 'getByTag']);
+    Route::get('/tag/id/{tag_id}', [GuideController::class, 'getByTagId']);
+
     // Public routes
     Route::get('/', [GuideController::class, 'index']);
     Route::get('/{slug}', [GuideController::class, 'show']);
@@ -626,11 +632,6 @@ Route::prefix('guides')->group(function () {
         Route::delete('/{id}', [GuideController::class, 'destroy']);
         Route::post('/{id}/publish', [GuideController::class, 'publish']);
         Route::post('/{id}/archive', [GuideController::class, 'archive']);
-
-        Route::get('/guides/id/{id}', [GuideController::class, 'showById']);
-        Route::get('/guides/category/{category_id}', [GuideController::class, 'getByCategory']);
-        Route::get('/guides/tag/{tag_slug}', [GuideController::class, 'getByTag']);
-        Route::get('/guides/tag/id/{tag_id}', [GuideController::class, 'getByTagId']);
 
         // ========================================
         // GUIDE IMAGES ROUTES
