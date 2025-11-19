@@ -10675,11 +10675,45 @@
                 "tags": [
                     "Guide Tags"
                 ],
-                "summary": "Liste tous les tags",
+                "summary": "List all tags",
+                "description": "Retrieve the complete list of tags with associated guide counts",
                 "operationId": "2eaf3f4483f20c20e309d4c201a69f44",
                 "responses": {
                     "200": {
-                        "description": "Liste des tags"
+                        "description": "List of tags retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Oil Change"
+                                            },
+                                            "slug": {
+                                                "type": "string",
+                                                "example": "oil-change"
+                                            },
+                                            "guides_count": {
+                                                "type": "integer",
+                                                "example": 12
+                                            },
+                                            "created_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2025-01-15 10:30:00"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -10687,11 +10721,109 @@
                 "tags": [
                     "Guide Tags"
                 ],
-                "summary": "Créer un nouveau tag",
+                "summary": "Create a new tag",
+                "description": "Create a new guide tag. The slug is automatically generated from the name. Requires authentication.",
                 "operationId": "8d50db3be21680e78304c7d3a56d5aeb",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Tag name (slug will be auto-generated)",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Chain Maintenance"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "201": {
-                        "description": "Tag créé"
+                        "description": "Tag created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tag créé avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Chain Maintenance"
+                                                },
+                                                "slug": {
+                                                    "description": "Auto-generated",
+                                                    "type": "string",
+                                                    "example": "chain-maintenance"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-01-15 10:30:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "errors": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The name field is required."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -10706,21 +10838,70 @@
                 "tags": [
                     "Guide Tags"
                 ],
-                "summary": "Afficher les détails d'un tag",
+                "summary": "Show tag details",
+                "description": "Retrieve detailed information of a specific tag by slug with associated guide count",
                 "operationId": "45819c20fc78b9bece2e51f4fbb02899",
                 "parameters": [
                     {
                         "name": "slug",
                         "in": "path",
+                        "description": "Tag slug",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "example": "oil-change"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Détails du tag"
+                        "description": "Tag details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Oil Change"
+                                        },
+                                        "slug": {
+                                            "type": "string",
+                                            "example": "oil-change"
+                                        },
+                                        "guides_count": {
+                                            "type": "integer",
+                                            "example": 12
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2025-01-15 10:30:00"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tag not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tag non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -10730,21 +10911,134 @@
                 "tags": [
                     "Guide Tags"
                 ],
-                "summary": "Mettre à jour un tag",
+                "summary": "Update a tag",
+                "description": "Update an existing tag information. If the name is changed, the slug will be automatically regenerated. Requires authentication.",
                 "operationId": "5081a447489190f4e865f1f19bc0f108",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "Tag ID to update",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "description": "Tag name (slug will be auto-regenerated)",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Engine Oil Change"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Tag mis à jour"
+                        "description": "Tag updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tag mis à jour avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Engine Oil Change"
+                                                },
+                                                "slug": {
+                                                    "description": "Auto-regenerated if name changes",
+                                                    "type": "string",
+                                                    "example": "engine-oil-change"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-01-15 10:30:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tag not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tag non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "errors": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "This tag name already exists."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -10757,21 +11051,69 @@
                 "tags": [
                     "Guide Tags"
                 ],
-                "summary": "Supprimer un tag",
+                "summary": "Delete a tag",
+                "description": "Delete a guide tag. Requires authentication.",
                 "operationId": "754af4a0687f9dc68cb409107f3449a5",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "Tag ID to delete",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Tag supprimé"
+                        "description": "Tag deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tag supprimé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tag not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tag non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -10786,21 +11128,120 @@
                 "tags": [
                     "Guide Tags"
                 ],
-                "summary": "Obtenir tous les guides avec un tag spécifique",
+                "summary": "Get all guides with a specific tag",
+                "description": "Retrieve all published guides associated with a specific tag, sorted by publication date in descending order",
                 "operationId": "d74c65a4982fda16ff6c3d72852a5bdd",
                 "parameters": [
                     {
                         "name": "slug",
                         "in": "path",
+                        "description": "Tag slug",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "example": "oil-change"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Liste des guides"
+                        "description": "List of guides with the tag",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 10
+                                            },
+                                            "title": {
+                                                "type": "string",
+                                                "example": "How to change your motorcycle oil"
+                                            },
+                                            "slug": {
+                                                "type": "string",
+                                                "example": "how-to-change-motorcycle-oil"
+                                            },
+                                            "excerpt": {
+                                                "type": "string",
+                                                "example": "Complete guide for engine oil change",
+                                                "nullable": true
+                                            },
+                                            "featured_image": {
+                                                "type": "string",
+                                                "example": "https://example.com/images/guide.jpg",
+                                                "nullable": true
+                                            },
+                                            "views_count": {
+                                                "type": "integer",
+                                                "example": 1250
+                                            },
+                                            "published_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2025-01-10 14:30:00",
+                                                "nullable": true
+                                            },
+                                            "author": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Ahmed Benali"
+                                                    },
+                                                    "profile_picture": {
+                                                        "type": "string",
+                                                        "example": "https://example.com/profiles/ahmed.jpg",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "category": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Maintenance"
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "example": "maintenance"
+                                                    }
+                                                },
+                                                "type": "object",
+                                                "nullable": true
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tag not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tag non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -10810,11 +11251,40 @@
                 "tags": [
                     "Guide Tags"
                 ],
-                "summary": "Obtenir les tags les plus utilisés",
+                "summary": "Get the most popular tags",
+                "description": "Retrieve the top 10 most used tags sorted by guide count in descending order",
                 "operationId": "6c0e4eec38e37a9b402948def5ae99ce",
                 "responses": {
                     "200": {
-                        "description": "Tags populaires"
+                        "description": "Popular tags retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Oil Change"
+                                            },
+                                            "slug": {
+                                                "type": "string",
+                                                "example": "oil-change"
+                                            },
+                                            "guides_count": {
+                                                "type": "integer",
+                                                "example": 25
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -23564,7 +24034,7 @@
         },
         {
             "name": "Guide Tags",
-            "description": "API Endpoints pour la gestion des tags de guides"
+            "description": "API Endpoints for managing guide tags"
         },
         {
             "name": "License Plates",
