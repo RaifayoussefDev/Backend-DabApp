@@ -25,6 +25,9 @@ return [
 
     ],
 
+    'allowed_origins_patterns' => [
+        '/^https?:\/\/([\w-]+\.)?dabapp\.co$/',  // Accepte dabapp.co et tous ses sous-domaines (http et https)
+    ],
 
     'allowed_headers' => ['*'],  // Allow all headers
 
