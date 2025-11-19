@@ -627,6 +627,11 @@ Route::prefix('guides')->group(function () {
         Route::post('/{id}/publish', [GuideController::class, 'publish']);
         Route::post('/{id}/archive', [GuideController::class, 'archive']);
 
+        Route::get('/guides/id/{id}', [GuideController::class, 'showById']);
+        Route::get('/guides/category/{category_id}', [GuideController::class, 'getByCategory']);
+        Route::get('/guides/tag/{tag_slug}', [GuideController::class, 'getByTag']);
+        Route::get('/guides/tag/id/{tag_id}', [GuideController::class, 'getByTagId']);
+
         // ========================================
         // GUIDE IMAGES ROUTES
         // ========================================

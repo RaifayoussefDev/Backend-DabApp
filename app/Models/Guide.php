@@ -34,7 +34,6 @@ class Guide extends Model
         'published_at' => 'datetime',
     ];
 
-    // Relations
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'author_id');
@@ -48,6 +47,12 @@ class Guide extends Model
     public function images(): HasMany
     {
         return $this->hasMany(GuideImage::class)->orderBy('order_position');
+    }
+
+    // ✅ NOUVELLE RELATION
+    public function sections(): HasMany
+    {
+        return $this->hasMany(GuideSection::class)->orderBy('order_position');
     }
 
     public function tags(): BelongsToMany
@@ -78,14 +83,12 @@ class Guide extends Model
         return $this->hasMany(GuideBookmark::class);
     }
 
-    // Mutators
     public function setTitleAttribute($value): void
     {
         $this->attributes['title'] = $value;
         $this->attributes['slug'] = Str::slug($value);
     }
 
-    // Scopes
     public function scopePublished($query)
     {
         return $query->where('status', 'published')
