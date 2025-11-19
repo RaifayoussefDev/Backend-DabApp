@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Validator;
 /**
  * @OA\Tag(
  *     name="Guide Categories",
- *     description="API Endpoints pour la gestion des catégories de guides"
+ *     description="API Endpoints for managing guide categories"
  * )
  */
 class GuideCategoryController extends Controller
@@ -17,20 +17,20 @@ class GuideCategoryController extends Controller
     /**
      * @OA\Get(
      *     path="/api/guides/categories",
-     *     summary="Liste toutes les catégories de guides",
-     *     description="Récupère la liste complète des catégories avec le nombre de guides associés",
+     *     summary="List all guide categories",
+     *     description="Retrieve the complete list of categories with associated guide counts",
      *     tags={"Guide Categories"},
      *     @OA\Response(
      *         response=200,
-     *         description="Liste des catégories récupérée avec succès",
+     *         description="List of categories retrieved successfully",
      *         @OA\JsonContent(
      *             type="array",
      *             @OA\Items(
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="name", type="string", example="Entretien"),
-     *                 @OA\Property(property="slug", type="string", example="entretien"),
-     *                 @OA\Property(property="description", type="string", nullable=true, example="Guides d'entretien pour motos"),
+     *                 @OA\Property(property="name", type="string", example="Maintenance"),
+     *                 @OA\Property(property="slug", type="string", example="maintenance"),
+     *                 @OA\Property(property="description", type="string", nullable=true, example="Motorcycle maintenance guides"),
      *                 @OA\Property(property="icon", type="string", nullable=true, example="wrench"),
      *                 @OA\Property(property="color", type="string", nullable=true, example="#FF5722"),
      *                 @OA\Property(property="guides_count", type="integer", example=15),
@@ -63,8 +63,8 @@ class GuideCategoryController extends Controller
     /**
      * @OA\Post(
      *     path="/api/guides/categories",
-     *     summary="Créer une nouvelle catégorie",
-     *     description="Crée une nouvelle catégorie de guide. Le slug est généré automatiquement à partir du nom. Nécessite une authentification.",
+     *     summary="Create a new category",
+     *     description="Create a new guide category. The slug is automatically generated from the name. Requires authentication.",
      *     tags={"Guide Categories"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
@@ -75,14 +75,14 @@ class GuideCategoryController extends Controller
      *                 property="name",
      *                 type="string",
      *                 maxLength=255,
-     *                 example="Sécurité Routière",
-     *                 description="Nom de la catégorie (le slug sera généré automatiquement)"
+     *                 example="Road Safety",
+     *                 description="Category name (slug will be auto-generated)"
      *             ),
      *             @OA\Property(
      *                 property="description",
      *                 type="string",
      *                 nullable=true,
-     *                 example="Conseils et guides pour une conduite sécuritaire"
+     *                 example="Tips and guides for safe riding"
      *             ),
      *             @OA\Property(
      *                 property="icon",
@@ -102,16 +102,16 @@ class GuideCategoryController extends Controller
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Catégorie créée avec succès",
+     *         description="Category created successfully",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Catégorie créée avec succès"),
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=5),
-     *                 @OA\Property(property="name", type="string", example="Sécurité Routière"),
-     *                 @OA\Property(property="slug", type="string", example="securite-routiere", description="Généré automatiquement"),
-     *                 @OA\Property(property="description", type="string", nullable=true, example="Conseils et guides pour une conduite sécuritaire"),
+     *                 @OA\Property(property="name", type="string", example="Road Safety"),
+     *                 @OA\Property(property="slug", type="string", example="road-safety", description="Auto-generated"),
+     *                 @OA\Property(property="description", type="string", nullable=true, example="Tips and guides for safe riding"),
      *                 @OA\Property(property="icon", type="string", nullable=true, example="shield"),
      *                 @OA\Property(property="color", type="string", nullable=true, example="#4CAF50"),
      *                 @OA\Property(property="created_at", type="string", format="date-time", example="2025-01-15 10:30:00")
@@ -120,7 +120,7 @@ class GuideCategoryController extends Controller
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Erreur de validation",
+     *         description="Validation error",
      *         @OA\JsonContent(
      *             @OA\Property(
      *                 property="errors",
@@ -128,14 +128,14 @@ class GuideCategoryController extends Controller
      *                 @OA\Property(
      *                     property="name",
      *                     type="array",
-     *                     @OA\Items(type="string", example="Le champ name est requis.")
+     *                     @OA\Items(type="string", example="The name field is required.")
      *                 )
      *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="Non authentifié",
+     *         description="Unauthenticated",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
@@ -176,24 +176,24 @@ class GuideCategoryController extends Controller
     /**
      * @OA\Get(
      *     path="/api/guides/categories/{id}",
-     *     summary="Afficher les détails d'une catégorie",
-     *     description="Récupère les informations détaillées d'une catégorie spécifique avec le nombre de guides associés",
+     *     summary="Show category details",
+     *     description="Retrieve detailed information of a specific category with associated guide count",
      *     tags={"Guide Categories"},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
-     *         description="ID de la catégorie",
+     *         description="Category ID",
      *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Détails de la catégorie",
+     *         description="Category details",
      *         @OA\JsonContent(
      *             @OA\Property(property="id", type="integer", example=1),
-     *             @OA\Property(property="name", type="string", example="Entretien"),
-     *             @OA\Property(property="slug", type="string", example="entretien"),
-     *             @OA\Property(property="description", type="string", nullable=true, example="Guides d'entretien pour motos"),
+     *             @OA\Property(property="name", type="string", example="Maintenance"),
+     *             @OA\Property(property="slug", type="string", example="maintenance"),
+     *             @OA\Property(property="description", type="string", nullable=true, example="Motorcycle maintenance guides"),
      *             @OA\Property(property="icon", type="string", nullable=true, example="wrench"),
      *             @OA\Property(property="color", type="string", nullable=true, example="#FF5722"),
      *             @OA\Property(property="guides_count", type="integer", example=15),
@@ -203,7 +203,7 @@ class GuideCategoryController extends Controller
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Catégorie non trouvée",
+     *         description="Category not found",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Catégorie non trouvée")
      *         )
@@ -236,15 +236,15 @@ class GuideCategoryController extends Controller
     /**
      * @OA\Put(
      *     path="/api/guides/categories/{id}",
-     *     summary="Mettre à jour une catégorie",
-     *     description="Met à jour les informations d'une catégorie existante. Si le nom est modifié, le slug sera automatiquement régénéré. Nécessite une authentification.",
+     *     summary="Update a category",
+     *     description="Update an existing category information. If the name is changed, the slug will be automatically regenerated. Requires authentication.",
      *     tags={"Guide Categories"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
-     *         description="ID de la catégorie à mettre à jour",
+     *         description="Category ID to update",
      *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\RequestBody(
@@ -254,14 +254,14 @@ class GuideCategoryController extends Controller
      *                 property="name",
      *                 type="string",
      *                 maxLength=255,
-     *                 example="Entretien Moto",
-     *                 description="Nom de la catégorie (le slug sera régénéré automatiquement)"
+     *                 example="Motorcycle Maintenance",
+     *                 description="Category name (slug will be auto-regenerated)"
      *             ),
      *             @OA\Property(
      *                 property="description",
      *                 type="string",
      *                 nullable=true,
-     *                 example="Guides complets d'entretien pour motos"
+     *                 example="Complete maintenance guides for motorcycles"
      *             ),
      *             @OA\Property(
      *                 property="icon",
@@ -281,16 +281,16 @@ class GuideCategoryController extends Controller
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Catégorie mise à jour avec succès",
+     *         description="Category updated successfully",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Catégorie mise à jour avec succès"),
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="name", type="string", example="Entretien Moto"),
-     *                 @OA\Property(property="slug", type="string", example="entretien-moto", description="Régénéré automatiquement si le nom change"),
-     *                 @OA\Property(property="description", type="string", nullable=true, example="Guides complets d'entretien pour motos"),
+     *                 @OA\Property(property="name", type="string", example="Motorcycle Maintenance"),
+     *                 @OA\Property(property="slug", type="string", example="motorcycle-maintenance", description="Auto-regenerated if name changes"),
+     *                 @OA\Property(property="description", type="string", nullable=true, example="Complete maintenance guides for motorcycles"),
      *                 @OA\Property(property="icon", type="string", nullable=true, example="tool"),
      *                 @OA\Property(property="color", type="string", nullable=true, example="#2196F3"),
      *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2025-01-15 10:30:00")
@@ -299,14 +299,14 @@ class GuideCategoryController extends Controller
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Catégorie non trouvée",
+     *         description="Category not found",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Catégorie non trouvée")
      *         )
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Erreur de validation",
+     *         description="Validation error",
      *         @OA\JsonContent(
      *             @OA\Property(
      *                 property="errors",
@@ -314,14 +314,14 @@ class GuideCategoryController extends Controller
      *                 @OA\Property(
      *                     property="name",
      *                     type="array",
-     *                     @OA\Items(type="string", example="Ce nom de catégorie existe déjà.")
+     *                     @OA\Items(type="string", example="This category name already exists.")
      *                 )
      *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="Non authentifié",
+     *         description="Unauthenticated",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
@@ -370,34 +370,34 @@ class GuideCategoryController extends Controller
     /**
      * @OA\Delete(
      *     path="/api/guides/categories/{id}",
-     *     summary="Supprimer une catégorie",
-     *     description="Supprime une catégorie de guide. Nécessite une authentification.",
+     *     summary="Delete a category",
+     *     description="Delete a guide category. Requires authentication.",
      *     tags={"Guide Categories"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
-     *         description="ID de la catégorie à supprimer",
+     *         description="Category ID to delete",
      *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Catégorie supprimée avec succès",
+     *         description="Category deleted successfully",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Catégorie supprimée avec succès")
      *         )
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Catégorie non trouvée",
+     *         description="Category not found",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Catégorie non trouvée")
      *         )
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="Non authentifié",
+     *         description="Unauthenticated",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
@@ -424,27 +424,27 @@ class GuideCategoryController extends Controller
     /**
      * @OA\Get(
      *     path="/api/guides/categories/{id}/guides",
-     *     summary="Obtenir tous les guides d'une catégorie",
-     *     description="Récupère la liste de tous les guides publiés appartenant à une catégorie spécifique, triés par date de publication décroissante",
+     *     summary="Get all guides from a category",
+     *     description="Retrieve all published guides belonging to a specific category, sorted by publication date in descending order",
      *     tags={"Guide Categories"},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
-     *         description="ID de la catégorie",
+     *         description="Category ID",
      *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Liste des guides de la catégorie",
+     *         description="List of guides from the category",
      *         @OA\JsonContent(
      *             type="array",
      *             @OA\Items(
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=10),
-     *                 @OA\Property(property="title", type="string", example="Comment changer l'huile de votre moto"),
-     *                 @OA\Property(property="slug", type="string", example="comment-changer-huile-moto"),
-     *                 @OA\Property(property="excerpt", type="string", nullable=true, example="Guide complet pour la vidange d'huile moteur"),
+     *                 @OA\Property(property="title", type="string", example="How to change your motorcycle oil"),
+     *                 @OA\Property(property="slug", type="string", example="how-to-change-motorcycle-oil"),
+     *                 @OA\Property(property="excerpt", type="string", nullable=true, example="Complete guide for engine oil change"),
      *                 @OA\Property(property="featured_image", type="string", nullable=true, example="https://example.com/images/guide.jpg"),
      *                 @OA\Property(property="views_count", type="integer", example=1250),
      *                 @OA\Property(property="likes_count", type="integer", example=85),
@@ -472,7 +472,7 @@ class GuideCategoryController extends Controller
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Catégorie non trouvée",
+     *         description="Category not found",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Catégorie non trouvée")
      *         )

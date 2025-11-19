@@ -8488,12 +8488,12 @@
                 "tags": [
                     "Guide Categories"
                 ],
-                "summary": "Liste toutes les catégories de guides",
-                "description": "Récupère la liste complète des catégories avec le nombre de guides associés",
+                "summary": "List all guide categories",
+                "description": "Retrieve the complete list of categories with associated guide counts",
                 "operationId": "4ba8df2b3bc886b0e5a7e88598a24101",
                 "responses": {
                     "200": {
-                        "description": "Liste des catégories récupérée avec succès",
+                        "description": "List of categories retrieved successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -8506,15 +8506,15 @@
                                             },
                                             "name": {
                                                 "type": "string",
-                                                "example": "Entretien"
+                                                "example": "Maintenance"
                                             },
                                             "slug": {
                                                 "type": "string",
-                                                "example": "entretien"
+                                                "example": "maintenance"
                                             },
                                             "description": {
                                                 "type": "string",
-                                                "example": "Guides d'entretien pour motos",
+                                                "example": "Motorcycle maintenance guides",
                                                 "nullable": true
                                             },
                                             "icon": {
@@ -8554,8 +8554,8 @@
                 "tags": [
                     "Guide Categories"
                 ],
-                "summary": "Créer une nouvelle catégorie",
-                "description": "Crée une nouvelle catégorie de guide. Le slug est généré automatiquement à partir du nom. Nécessite une authentification.",
+                "summary": "Create a new category",
+                "description": "Create a new guide category. The slug is automatically generated from the name. Requires authentication.",
                 "operationId": "53f7a1adbe3118aeeee7c5ba226d350d",
                 "requestBody": {
                     "required": true,
@@ -8567,14 +8567,14 @@
                                 ],
                                 "properties": {
                                     "name": {
-                                        "description": "Nom de la catégorie (le slug sera généré automatiquement)",
+                                        "description": "Category name (slug will be auto-generated)",
                                         "type": "string",
                                         "maxLength": 255,
-                                        "example": "Sécurité Routière"
+                                        "example": "Road Safety"
                                     },
                                     "description": {
                                         "type": "string",
-                                        "example": "Conseils et guides pour une conduite sécuritaire",
+                                        "example": "Tips and guides for safe riding",
                                         "nullable": true
                                     },
                                     "icon": {
@@ -8597,7 +8597,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Catégorie créée avec succès",
+                        "description": "Category created successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -8614,16 +8614,16 @@
                                                 },
                                                 "name": {
                                                     "type": "string",
-                                                    "example": "Sécurité Routière"
+                                                    "example": "Road Safety"
                                                 },
                                                 "slug": {
-                                                    "description": "Généré automatiquement",
+                                                    "description": "Auto-generated",
                                                     "type": "string",
-                                                    "example": "securite-routiere"
+                                                    "example": "road-safety"
                                                 },
                                                 "description": {
                                                     "type": "string",
-                                                    "example": "Conseils et guides pour une conduite sécuritaire",
+                                                    "example": "Tips and guides for safe riding",
                                                     "nullable": true
                                                 },
                                                 "icon": {
@@ -8651,7 +8651,7 @@
                         }
                     },
                     "422": {
-                        "description": "Erreur de validation",
+                        "description": "Validation error",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -8662,7 +8662,7 @@
                                                     "type": "array",
                                                     "items": {
                                                         "type": "string",
-                                                        "example": "Le champ name est requis."
+                                                        "example": "The name field is required."
                                                     }
                                                 }
                                             },
@@ -8675,7 +8675,7 @@
                         }
                     },
                     "401": {
-                        "description": "Non authentifié",
+                        "description": "Unauthenticated",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -8703,14 +8703,14 @@
                 "tags": [
                     "Guide Categories"
                 ],
-                "summary": "Afficher les détails d'une catégorie",
-                "description": "Récupère les informations détaillées d'une catégorie spécifique avec le nombre de guides associés",
+                "summary": "Show category details",
+                "description": "Retrieve detailed information of a specific category with associated guide count",
                 "operationId": "dea57fd4f7ecb11e824e127e3f05158d",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "ID de la catégorie",
+                        "description": "Category ID",
                         "required": true,
                         "schema": {
                             "type": "integer",
@@ -8720,7 +8720,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Détails de la catégorie",
+                        "description": "Category details",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -8731,15 +8731,15 @@
                                         },
                                         "name": {
                                             "type": "string",
-                                            "example": "Entretien"
+                                            "example": "Maintenance"
                                         },
                                         "slug": {
                                             "type": "string",
-                                            "example": "entretien"
+                                            "example": "maintenance"
                                         },
                                         "description": {
                                             "type": "string",
-                                            "example": "Guides d'entretien pour motos",
+                                            "example": "Motorcycle maintenance guides",
                                             "nullable": true
                                         },
                                         "icon": {
@@ -8773,7 +8773,7 @@
                         }
                     },
                     "404": {
-                        "description": "Catégorie non trouvée",
+                        "description": "Category not found",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -8794,14 +8794,14 @@
                 "tags": [
                     "Guide Categories"
                 ],
-                "summary": "Mettre à jour une catégorie",
-                "description": "Met à jour les informations d'une catégorie existante. Si le nom est modifié, le slug sera automatiquement régénéré. Nécessite une authentification.",
+                "summary": "Update a category",
+                "description": "Update an existing category information. If the name is changed, the slug will be automatically regenerated. Requires authentication.",
                 "operationId": "c9a82abd851b94d1b910a3fc0739f6c7",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "ID de la catégorie à mettre à jour",
+                        "description": "Category ID to update",
                         "required": true,
                         "schema": {
                             "type": "integer",
@@ -8816,14 +8816,14 @@
                             "schema": {
                                 "properties": {
                                     "name": {
-                                        "description": "Nom de la catégorie (le slug sera régénéré automatiquement)",
+                                        "description": "Category name (slug will be auto-regenerated)",
                                         "type": "string",
                                         "maxLength": 255,
-                                        "example": "Entretien Moto"
+                                        "example": "Motorcycle Maintenance"
                                     },
                                     "description": {
                                         "type": "string",
-                                        "example": "Guides complets d'entretien pour motos",
+                                        "example": "Complete maintenance guides for motorcycles",
                                         "nullable": true
                                     },
                                     "icon": {
@@ -8846,7 +8846,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Catégorie mise à jour avec succès",
+                        "description": "Category updated successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -8863,16 +8863,16 @@
                                                 },
                                                 "name": {
                                                     "type": "string",
-                                                    "example": "Entretien Moto"
+                                                    "example": "Motorcycle Maintenance"
                                                 },
                                                 "slug": {
-                                                    "description": "Régénéré automatiquement si le nom change",
+                                                    "description": "Auto-regenerated if name changes",
                                                     "type": "string",
-                                                    "example": "entretien-moto"
+                                                    "example": "motorcycle-maintenance"
                                                 },
                                                 "description": {
                                                     "type": "string",
-                                                    "example": "Guides complets d'entretien pour motos",
+                                                    "example": "Complete maintenance guides for motorcycles",
                                                     "nullable": true
                                                 },
                                                 "icon": {
@@ -8900,7 +8900,7 @@
                         }
                     },
                     "404": {
-                        "description": "Catégorie non trouvée",
+                        "description": "Category not found",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -8916,7 +8916,7 @@
                         }
                     },
                     "422": {
-                        "description": "Erreur de validation",
+                        "description": "Validation error",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -8927,7 +8927,7 @@
                                                     "type": "array",
                                                     "items": {
                                                         "type": "string",
-                                                        "example": "Ce nom de catégorie existe déjà."
+                                                        "example": "This category name already exists."
                                                     }
                                                 }
                                             },
@@ -8940,7 +8940,7 @@
                         }
                     },
                     "401": {
-                        "description": "Non authentifié",
+                        "description": "Unauthenticated",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -8966,14 +8966,14 @@
                 "tags": [
                     "Guide Categories"
                 ],
-                "summary": "Supprimer une catégorie",
-                "description": "Supprime une catégorie de guide. Nécessite une authentification.",
+                "summary": "Delete a category",
+                "description": "Delete a guide category. Requires authentication.",
                 "operationId": "83c6368e6bca8f4041f188f0453b9cd0",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "ID de la catégorie à supprimer",
+                        "description": "Category ID to delete",
                         "required": true,
                         "schema": {
                             "type": "integer",
@@ -8983,7 +8983,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Catégorie supprimée avec succès",
+                        "description": "Category deleted successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -8999,7 +8999,7 @@
                         }
                     },
                     "404": {
-                        "description": "Catégorie non trouvée",
+                        "description": "Category not found",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -9015,7 +9015,7 @@
                         }
                     },
                     "401": {
-                        "description": "Non authentifié",
+                        "description": "Unauthenticated",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -9043,14 +9043,14 @@
                 "tags": [
                     "Guide Categories"
                 ],
-                "summary": "Obtenir tous les guides d'une catégorie",
-                "description": "Récupère la liste de tous les guides publiés appartenant à une catégorie spécifique, triés par date de publication décroissante",
+                "summary": "Get all guides from a category",
+                "description": "Retrieve all published guides belonging to a specific category, sorted by publication date in descending order",
                 "operationId": "fb7059fc5050458876fdbf88a3244986",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "ID de la catégorie",
+                        "description": "Category ID",
                         "required": true,
                         "schema": {
                             "type": "integer",
@@ -9060,7 +9060,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Liste des guides de la catégorie",
+                        "description": "List of guides from the category",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -9073,15 +9073,15 @@
                                             },
                                             "title": {
                                                 "type": "string",
-                                                "example": "Comment changer l'huile de votre moto"
+                                                "example": "How to change your motorcycle oil"
                                             },
                                             "slug": {
                                                 "type": "string",
-                                                "example": "comment-changer-huile-moto"
+                                                "example": "how-to-change-motorcycle-oil"
                                             },
                                             "excerpt": {
                                                 "type": "string",
-                                                "example": "Guide complet pour la vidange d'huile moteur",
+                                                "example": "Complete guide for engine oil change",
                                                 "nullable": true
                                             },
                                             "featured_image": {
@@ -9152,7 +9152,7 @@
                         }
                     },
                     "404": {
-                        "description": "Catégorie non trouvée",
+                        "description": "Category not found",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -23375,7 +23375,7 @@
         },
         {
             "name": "Guide Categories",
-            "description": "API Endpoints pour la gestion des catégories de guides"
+            "description": "API Endpoints for managing guide categories"
         },
         {
             "name": "Guide Comments",
