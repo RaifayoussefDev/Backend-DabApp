@@ -18,15 +18,15 @@ return [
     'allowed_methods' => ['*'],  // Allow all HTTP methods (GET, POST, etc.)
 
     'allowed_origins' => [
-        'https://dabapp.co',
         'http://localhost:4200',
-        'http://192.168.11.184:5500',  // Specify the trusted origin(s)
+        'http://192.168.11.184:5500',
         'http://localhost:5500',
-        'https://old.dabapp.co',
-        'https://new.dabapp.co',
-        'https://cf.dabapp.co',
-        'https://as.dabapp.co',
         'https://dabapp-frontend-new.pages.dev'
+
+    ],
+
+    'allowed_origins_patterns' => [
+        '/^https?:\/\/([\w-]+\.)?dabapp\.co$/',  // Accepte dabapp.co et tous ses sous-domaines (http et https)
     ],
 
     'allowed_headers' => ['*'],  // Allow all headers
@@ -35,5 +35,5 @@ return [
 
     'max_age' => 0,  // Pre-flight request cache for 0 seconds
 
-    'supports_credentials' => true,  // Disable sending credentials (cookies, HTTP authentication)
+    'supports_credentials' => true,  // Enable sending credentials (cookies, HTTP authentication)
 ];
