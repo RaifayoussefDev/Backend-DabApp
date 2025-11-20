@@ -62,7 +62,6 @@ class RouteController extends Controller
             $query->featured();
         }
 
-        $query->verified();
 
         $routes = $query->latest()->paginate(20);
 
