@@ -34,6 +34,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
+use App\Services\PayTabsConfigService;
 
 
 class ListingController extends Controller
@@ -514,15 +515,26 @@ class ListingController extends Controller
                     'payment_status'  => 'pending',
                     'cart_id'         => 'cart_' . time(),
                 ]);
+                // 🔥 GET DYNAMIC PAYTABS CONFIG
+                $config = PayTabsConfigService::getConfig();
+                $baseUrl = PayTabsConfigService::getBaseUrl();
+                $environment = PayTabsConfigService::isTestMode() ? 'TEST' : 'LIVE';
+
+                \Log::info("Creating payment in {$environment} mode", [
+                    'profile_id' => $config['profile_id'],
+                    'amount' => $aedAmount,
+                    'listing_id' => $listing->id,
+                    'base_url' => $baseUrl
+                ]);
 
                 // Payload PayTabs
                 $payload = [
-                    'profile_id' => (int) config('paytabs.profile_id'),
+                    'profile_id' => (int) $config['profile_id'],  // ← UTILISEZ $config, PAS config()
                     'tran_type' => 'sale',
                     'tran_class' => 'ecom',
                     'cart_id' => $payment->cart_id,
                     'cart_description' => 'Payment for Listing #' . $listing->id,
-                    'cart_currency' => 'AED',
+                    'cart_currency' => $config['currency'],  // ← UTILISEZ $config['currency']
                     'cart_amount' => $aedAmount,
                     'customer_details' => [
                         'name' => Auth::user()->name,
@@ -531,7 +543,7 @@ class ListingController extends Controller
                         'street1' => 'N/A',
                         'city' => 'N/A',
                         'state' => 'N/A',
-                        'country' => 'ARE',
+                        'country' => $config['region'],  // ← UTILISEZ $config['region']
                         'zip' => '00000',
                         'ip' => $request->ip()
                     ],
@@ -539,18 +551,27 @@ class ListingController extends Controller
                     'return' => route('paytabs.return'),
                 ];
 
-                $baseUrl = 'https://secure.paytabs.com/';
+                // ← SUPPRIMEZ CETTE LIGNE: $baseUrl = 'https://secure.paytabs.com/';
+                // ← ON UTILISE $baseUrl DÉJÀ DÉFINI AU DÉBUT
 
                 $response = Http::withHeaders([
-                    'Authorization' => config('paytabs.server_key'),
+                    'Authorization' => $config['server_key'],  // ← UTILISEZ $config['server_key']
                     'Content-Type'  => 'application/json',
                     'Accept'        => 'application/json'
                 ])->post($baseUrl . 'payment/request', $payload);
 
                 if (!$response->successful()) {
                     DB::rollBack();
+
+                    \Log::error("PayTabs payment request failed ({$environment})", [
+                        'response' => $response->json(),
+                        'status' => $response->status(),
+                        'payload' => $payload
+                    ]);
+
                     return response()->json([
                         'error' => 'Payment request failed',
+                        'environment' => strtolower($environment),
                         'details' => $response->json()
                     ], 400);
                 }
@@ -564,14 +585,15 @@ class ListingController extends Controller
                 DB::commit();
 
                 return response()->json([
-                    'message' => 'Listing saved, waiting for payment',
+                    'message' => "Listing saved, waiting for payment ({$environment} mode)",
+                    'environment' => strtolower($environment),
                     'listing_id' => $listing->id,
                     'payment_id' => $payment->id,
                     'amount_aed' => $aedAmount,
                     'original_amount' => $originalAmount,
                     'original_currency' => $originalCurrency,
                     'exchange_rate' => "1 AED = {$exchangeRate} {$originalCurrency}",
-                    'currency' => 'AED',
+                    'currency' => $config['currency'],  // ← UTILISEZ $config['currency']
                     'redirect_url' => $data['redirect_url'] ?? null,
                     'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate']),
                 ], 201);

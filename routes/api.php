@@ -76,7 +76,8 @@ use App\Http\Controllers\{
     RouteWaypointController,
     RouteReviewController,
     RouteWarningController,
-    RouteCompletionController
+    RouteCompletionController,
+    SvgGeneratorController
 };
 
 Route::post('/register', [AuthController::class, 'register']);

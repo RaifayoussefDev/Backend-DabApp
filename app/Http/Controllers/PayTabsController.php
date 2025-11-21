@@ -7,6 +7,8 @@ use App\Models\Listing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Services\PayTabsConfigService;
+
 
 class PayTabsController extends Controller
 {
@@ -18,25 +20,36 @@ class PayTabsController extends Controller
 
     public function __construct()
     {
-        $this->baseUrl   = config('paytabs.base_url', 'https://secure.paytabs.com/');
-        $this->profileId = config('paytabs.profile_id');
-        $this->serverKey = config('paytabs.server_key');
-        $this->currency  = config('paytabs.currency', 'AED');
-        $this->region    = config('paytabs.region', 'ARE');
+        // Get active configuration (test or live)
+        $config = PayTabsConfigService::getConfig();
 
-        // Endpoint selon la région
-        $endpoints = [
-            'ARE' => 'https://secure.paytabs.com/',
-            'SAU' => 'https://secure.paytabs.sa/',
-            'OMN' => 'https://secure-oman.paytabs.com/',
-            'JOR' => 'https://secure-jordan.paytabs.com/',
-            'EGY' => 'https://secure-egypt.paytabs.com/',
-            'GLOBAL' => 'https://secure-global.paytabs.com/',
-        ];
+        $this->profileId = $config['profile_id'];
+        $this->serverKey = $config['server_key'];
+        $this->currency  = $config['currency'];
+        $this->region    = $config['region'];
+        $this->baseUrl   = PayTabsConfigService::getBaseUrl();
 
-        $this->baseUrl = $endpoints[$this->region] ?? $endpoints['ARE'];
+        // Log which environment is active
+        $environment = PayTabsConfigService::isTestMode() ? 'TEST' : 'LIVE';
+        Log::info("PayTabsController initialized in {$environment} mode", [
+            'profile_id' => $this->profileId,
+            'region' => $this->region,
+            'base_url' => $this->baseUrl
+        ]);
     }
 
+    public function getEnvironmentInfo()
+    {
+        return response()->json([
+            'environment' => PayTabsConfigService::isTestMode() ? 'test' : 'live',
+            'profile_id' => $this->profileId,
+            'currency' => $this->currency,
+            'region' => $this->region,
+            'base_url' => $this->baseUrl,
+            'is_test_mode' => PayTabsConfigService::isTestMode(),
+            'is_live_mode' => PayTabsConfigService::isLiveMode(),
+        ]);
+    }
     /**
      * Créer un paiement (méthode générique)
      */
