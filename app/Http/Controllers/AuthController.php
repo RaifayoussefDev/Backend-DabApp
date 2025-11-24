@@ -1824,7 +1824,7 @@ class AuthController extends Controller
      * @OA\Get(
      *     path="/api/countries",
      *     summary="Get all countries list with flags and dial codes",
-     *     tags={"Countries"},
+     *     tags={"Authentification"},
      *     @OA\Response(
      *         response=200,
      *         description="List of all countries retrieved successfully",

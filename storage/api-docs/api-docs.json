@@ -618,7 +618,7 @@
         "/api/countries": {
             "get": {
                 "tags": [
-                    "Countries"
+                    "Authentification"
                 ],
                 "summary": "Get all countries list with flags and dial codes",
                 "operationId": "9228517f0ed7bb13e1d54c1eb08ddf41",
@@ -24179,10 +24179,6 @@
         {
             "name": "Authentification",
             "description": "Authentification"
-        },
-        {
-            "name": "Countries",
-            "description": "Countries"
         },
         {
             "name": "Bike Part Categories",
