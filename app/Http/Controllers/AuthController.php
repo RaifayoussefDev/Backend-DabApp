@@ -1820,6 +1820,7 @@ class AuthController extends Controller
         ]);
     }
 
+    
     /**
      * @OA\Get(
      *     path="/api/countries",
