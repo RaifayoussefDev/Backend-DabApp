@@ -48,7 +48,9 @@ class RouteController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Route::with(['creator', 'category', 'tags']);
+        $query = Route::with(['creator', 'category', 'tags', 'waypoints' => function ($query) {
+            $query->orderBy('order_position', 'asc')->limit(1);
+        }]);
 
         if ($request->has('category_id')) {
             $query->inCategory($request->category_id);
@@ -62,8 +64,14 @@ class RouteController extends Controller
             $query->featured();
         }
 
-
         $routes = $query->latest()->paginate(20);
+
+        // Ajouter le starter_point à chaque route
+        $routes->getCollection()->transform(function ($route) {
+            $route->starter_point = $route->waypoints->first();
+            unset($route->waypoints); // Optionnel : pour ne pas retourner tous les waypoints
+            return $route;
+        });
 
         return response()->json([
             'success' => true,
