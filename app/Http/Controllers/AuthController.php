@@ -1840,10 +1840,12 @@ class AuthController extends Controller
      *                     @OA\Property(property="name", type="string", example="Morocco"),
      *                     @OA\Property(property="dial_code", type="string", example="+212"),
      *                     @OA\Property(property="code", type="string", example="MA"),
-     *                     @OA\Property(property="flag", type="string", example="https://flagcdn.com/w320/ma.png")
+     *                     @OA\Property(property="flag", type="string", example="https://flagcdn.com/w320/ma.png"),
+     *                     @OA\Property(property="default", type="boolean", example=true)
      *                 )
      *             ),
-     *             @OA\Property(property="total", type="integer", example=249)
+     *             @OA\Property(property="total", type="integer", example=249),
+     *             @OA\Property(property="detected_country", type="string", example="Morocco")
      *         )
      *     ),
      *     @OA\Response(
@@ -1879,13 +1881,45 @@ class AuthController extends Controller
                 ], 500);
             }
 
-            Log::info('Countries list retrieved', ['count' => count($countries)]);
+            // ✅ Detect user's country from proxy headers
+            $detectedCountryName = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Morocco';
+
+            // ✅ Find the detected country and mark it as default
+            $detectedCountry = null;
+            $otherCountries = [];
+
+            foreach ($countries as $country) {
+                if (strcasecmp($country['name'], $detectedCountryName) === 0) {
+                    $country['default'] = true;
+                    $detectedCountry = $country;
+                } else {
+                    $country['default'] = false;
+                    $otherCountries[] = $country;
+                }
+            }
+
+            // ✅ Put detected country first in the list
+            if ($detectedCountry) {
+                $sortedCountries = array_merge([$detectedCountry], $otherCountries);
+            } else {
+                // If detected country not found, just mark all as non-default
+                $sortedCountries = $otherCountries;
+                Log::warning('Detected country not found in list', [
+                    'detected_country' => $detectedCountryName
+                ]);
+            }
+
+            Log::info('Countries list retrieved', [
+                'count' => count($sortedCountries),
+                'detected_country' => $detectedCountryName
+            ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Countries retrieved successfully',
-                'data' => $countries,
-                'total' => count($countries)
+                'data' => $sortedCountries,
+                'total' => count($sortedCountries),
+                'detected_country' => $detectedCountryName
             ], 200);
         } catch (\Exception $e) {
             Log::error('Error retrieving countries', [
