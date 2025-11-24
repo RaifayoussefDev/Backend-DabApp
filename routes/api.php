@@ -65,6 +65,7 @@ use App\Http\Controllers\EventUpdateController;
 use App\Http\Controllers\{
     NewsletterController,
     NewsletterCampaignController,
+    PlateGeneratorController,
     PointOfInterestController,
     PoiTypeController,
     PoiServiceController,
@@ -1033,3 +1034,8 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/user/completions', [RouteCompletionController::class, 'userCompletions']);
     Route::get('/user/completion-stats', [RouteCompletionController::class, 'userStats']);
 });
+// Route pour générer la plaque
+Route::post('/generate-plate', [PlateGeneratorController::class, 'generatePlate']);
+
+// Route pour télécharger la plaque
+Route::get('/download-plate/{filename}', [PlateGeneratorController::class, 'downloadPlate']);
