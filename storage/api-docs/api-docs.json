@@ -615,6 +615,121 @@
                 }
             }
         },
+        "/api/countries": {
+            "get": {
+                "tags": [
+                    "Countries"
+                ],
+                "summary": "Get all countries list with flags and dial codes",
+                "operationId": "9228517f0ed7bb13e1d54c1eb08ddf41",
+                "responses": {
+                    "200": {
+                        "description": "List of all countries retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Countries retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Morocco"
+                                                    },
+                                                    "dial_code": {
+                                                        "type": "string",
+                                                        "example": "+212"
+                                                    },
+                                                    "code": {
+                                                        "type": "string",
+                                                        "example": "MA"
+                                                    },
+                                                    "flag": {
+                                                        "type": "string",
+                                                        "example": "https://flagcdn.com/w320/ma.png"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 249
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to load countries"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "locations"
+                ],
+                "summary": "Create a new country",
+                "description": "Store a new country",
+                "operationId": "storeCountry",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "France"
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "example": "FR"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Country created successfully"
+                    }
+                }
+            }
+        },
         "/api/test-email": {
             "post": {
                 "tags": [
@@ -14703,44 +14818,6 @@
                 ]
             }
         },
-        "/api/countries": {
-            "post": {
-                "tags": [
-                    "locations"
-                ],
-                "summary": "Create a new country",
-                "description": "Store a new country",
-                "operationId": "storeCountry",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "name"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "France"
-                                    },
-                                    "code": {
-                                        "type": "string",
-                                        "example": "FR"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Country created successfully"
-                    }
-                }
-            }
-        },
         "/api/countries/{id}": {
             "put": {
                 "tags": [
@@ -24102,6 +24179,10 @@
         {
             "name": "Authentification",
             "description": "Authentification"
+        },
+        {
+            "name": "Countries",
+            "description": "Countries"
         },
         {
             "name": "Bike Part Categories",

@@ -538,6 +538,7 @@ Route::middleware(['auth:api'])->group(function () {
 
 
 Route::get('/get-country', [AuthController::class, 'getCountry'])->name('get.country');
+Route::get('/countries', [AuthController::class, 'getAllCountries']);
 
 // Route::post('/test-email', [AuthController::class, 'testEmail']);
 

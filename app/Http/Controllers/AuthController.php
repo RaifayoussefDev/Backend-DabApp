@@ -1821,6 +1821,87 @@ class AuthController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/countries",
+     *     summary="Get all countries list with flags and dial codes",
+     *     tags={"Countries"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of all countries retrieved successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Countries retrieved successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="name", type="string", example="Morocco"),
+     *                     @OA\Property(property="dial_code", type="string", example="+212"),
+     *                     @OA\Property(property="code", type="string", example="MA"),
+     *                     @OA\Property(property="flag", type="string", example="https://flagcdn.com/w320/ma.png")
+     *                 )
+     *             ),
+     *             @OA\Property(property="total", type="integer", example=249)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="error", type="string", example="Failed to load countries")
+     *         )
+     *     )
+     * )
+     */
+    public function getAllCountries()
+    {
+        try {
+            $path = storage_path('app/countries.json');
+
+            if (!file_exists($path)) {
+                Log::error('Countries JSON file not found', ['path' => $path]);
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Countries file not found'
+                ], 404);
+            }
+
+            $countries = json_decode(file_get_contents($path), true);
+
+            if (!$countries) {
+                Log::error('Failed to parse countries JSON');
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Failed to load countries'
+                ], 500);
+            }
+
+            Log::info('Countries list retrieved', ['count' => count($countries)]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Countries retrieved successfully',
+                'data' => $countries,
+                'total' => count($countries)
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Error retrieving countries', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to retrieve countries',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * @OA\Post(
      *     path="/api/test-email",
      *     summary="Test email sending (development only)",
