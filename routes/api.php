@@ -630,6 +630,8 @@ Route::prefix('guides')->group(function () {
     Route::middleware('auth:api')->group(function () {
         // Gestion des guides
         Route::get('/my/guides', [GuideController::class, 'myGuides']);
+        Route::get('starter', [GuideController::class, 'starter']);
+
         Route::post('/', [GuideController::class, 'store']);
         Route::put('/{id}', [GuideController::class, 'update']);
         Route::delete('/{id}', [GuideController::class, 'destroy']);
@@ -680,9 +682,6 @@ Route::prefix('guides')->group(function () {
         Route::post('/comments/{commentId}/approve', [GuideCommentController::class, 'approve']);
         Route::post('/comments/{commentId}/reject', [GuideCommentController::class, 'reject']);
         Route::get('/comments/pending', [GuideCommentController::class, 'pending']);
-
-        Route::get('starter', [GuideController::class, 'starter']);
-
     });
 });
 
