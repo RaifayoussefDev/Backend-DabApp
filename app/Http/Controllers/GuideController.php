@@ -740,27 +740,32 @@ class GuideController extends Controller
     public function starter(Request $request)
     {
         $user = Auth::user();
-        $query = Guide::with(['author', 'category', 'tags', 'sections'])
-            ->where('status', 'published')
-            ->whereNotNull('published_at')
-            ->whereHas('category', function ($q) {
-                $q->where('slug', 'guide-starter');
-            });
+
+        // Utilisation de JOIN explicite au lieu de whereHas pour éviter les problèmes de backticks
+        $query = Guide::select('guides.*')
+            ->join('guide_categories', 'guides.category_id', '=', 'guide_categories.id')
+            ->with(['author', 'category', 'tags', 'sections'])
+            ->where('guides.status', 'published')
+            ->whereNotNull('guides.published_at')
+            ->where('guide_categories.slug', 'guide-starter');
 
         $sort = $request->get('sort', 'latest');
         if ($sort === 'popular') {
-            $query->orderBy('views_count', 'desc');
+            $query->orderBy('guides.views_count', 'desc');
         } else {
-            $query->orderBy('published_at', 'desc');
+            $query->orderBy('guides.published_at', 'desc');
         }
 
         $limit = $request->get('limit', 20);
         $query->limit($limit);
 
-        // 🔍 RETOURNER LA REQUÊTE SQL DIRECTEMENT
+        $guides = $query->get()->map(function ($guide) use ($user) {
+            return $this->formatGuideList($guide, $user);
+        });
+
         return response()->json([
-            'sql' => $query->toSql(),
-            'bindings' => $query->getBindings()
+            'total' => $guides->count(),
+            'guides' => $guides
         ]);
     }
 
