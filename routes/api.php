@@ -680,6 +680,9 @@ Route::prefix('guides')->group(function () {
         Route::post('/comments/{commentId}/approve', [GuideCommentController::class, 'approve']);
         Route::post('/comments/{commentId}/reject', [GuideCommentController::class, 'reject']);
         Route::get('/comments/pending', [GuideCommentController::class, 'pending']);
+
+        Route::get('starter', [GuideController::class, 'starter']);
+
     });
 });
 
