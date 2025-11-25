@@ -608,7 +608,8 @@ Route::prefix('guides')->group(function () {
     // GUIDES ROUTES
     // ========================================
 
-    // Routes spéciales AVANT le slug (important pour éviter les conflits)
+    // ⭐ ROUTES SPÉCIALES EN PREMIER (AVANT {slug} et {id})
+    Route::get('/starter', [GuideController::class, 'starter']); // ← NOUVELLE ROUTE ICI
     Route::get('/featured', [GuideController::class, 'featured']);
     Route::get('/popular', [GuideController::class, 'popular']);
     Route::get('/latest', [GuideController::class, 'latest']);
@@ -630,7 +631,6 @@ Route::prefix('guides')->group(function () {
     Route::middleware('auth:api')->group(function () {
         // Gestion des guides
         Route::get('/my/guides', [GuideController::class, 'myGuides']);
-        Route::get('starter', [GuideController::class, 'starter']);
 
         Route::post('/', [GuideController::class, 'store']);
         Route::put('/{id}', [GuideController::class, 'update']);
