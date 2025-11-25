@@ -757,20 +757,10 @@ class GuideController extends Controller
         $limit = $request->get('limit', 20);
         $query->limit($limit);
 
-        // 🔍 AFFICHER LA REQUÊTE SQL
-        \Log::info('SQL Query: ' . $query->toSql());
-        \Log::info('SQL Bindings: ' . json_encode($query->getBindings()));
-
-        $guides = $query->get()->map(function ($guide) use ($user) {
-            return $this->formatGuideList($guide, $user);
-        });
-
-        // 🔍 AFFICHER LE RÉSULTAT
-        \Log::info('Guides found: ' . $guides->count());
-
+        // 🔍 RETOURNER LA REQUÊTE SQL DIRECTEMENT
         return response()->json([
-            'total' => $guides->count(),
-            'guides' => $guides
+            'sql' => $query->toSql(),
+            'bindings' => $query->getBindings()
         ]);
     }
 
