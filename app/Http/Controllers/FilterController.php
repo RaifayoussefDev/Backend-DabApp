@@ -77,10 +77,9 @@ class FilterController extends Controller
         $showingAllCountries = false;
         $message = '';
 
-        $page = $request->get('page');
+        $page = $request->get('page', 1); // ✅ Default to page 1
         $perPage = $request->get('per_page', 15);
         $perPage = min($perPage, 100);
-        $usePagination = !is_null($page);
 
         $categoryId = $request->input('category_id', 1);
         $query->where('category_id', $categoryId)->where('status', 'published');
@@ -181,13 +180,17 @@ class FilterController extends Controller
             }
         }
 
-        if ($usePagination) {
-            $motorcycles = $query->select(['id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid', 'created_at', 'seller_type', 'country_id', 'city_id', 'category_id', DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')])->paginate($perPage, ['*'], 'page', $page);
-        } else {
-            $motorcycles = $query->select(['id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid', 'created_at', 'seller_type', 'country_id', 'city_id', 'category_id', DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')])->get();
-        }
+        // ✅ Tri par date DESC (plus récent en premier)
+        $query->orderBy('created_at', 'desc');
 
-        $motorcyclesCollection = $usePagination ? $motorcycles->getCollection() : $motorcycles;
+        // ✅ Pagination
+        $motorcycles = $query->select([
+            'id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid',
+            'created_at', 'seller_type', 'country_id', 'city_id', 'category_id',
+            DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
+        ])->paginate($perPage, ['*'], 'page', $page);
+
+        $motorcyclesCollection = $motorcycles->getCollection();
 
         $motorcyclesCollection->load([
             'images' => function ($query) { $query->select('listing_id', 'image_url')->limit(1); },
@@ -235,18 +238,15 @@ class FilterController extends Controller
             'message' => $message ?: 'Showing all listings.',
             'searched_country' => $countryName,
             'showing_all_countries' => $showingAllCountries,
-            'total_listings' => $usePagination ? $motorcycles->total() : $formattedMotorcycles->count(),
+            'total_listings' => $motorcycles->total(),
+            'current_page' => $motorcycles->currentPage(),
+            'per_page' => $motorcycles->perPage(),
+            'last_page' => $motorcycles->lastPage(),
+            'from' => $motorcycles->firstItem(),
+            'to' => $motorcycles->lastItem(),
+            'motorcycles' => $formattedMotorcycles
         ];
 
-        if ($usePagination) {
-            $response['current_page'] = $motorcycles->currentPage();
-            $response['per_page'] = $motorcycles->perPage();
-            $response['last_page'] = $motorcycles->lastPage();
-            $response['from'] = $motorcycles->firstItem();
-            $response['to'] = $motorcycles->lastItem();
-        }
-
-        $response['motorcycles'] = $formattedMotorcycles;
         return response()->json($response);
     }
 
@@ -280,10 +280,9 @@ class FilterController extends Controller
         $showingAllCountries = false;
         $message = '';
 
-        $page = $request->get('page');
+        $page = $request->get('page', 1); // ✅ Default to page 1
         $perPage = $request->get('per_page', 15);
         $perPage = min($perPage, 100);
-        $usePagination = !is_null($page);
 
         $query->where('category_id', 2)->where('status', 'published');
 
@@ -363,13 +362,17 @@ class FilterController extends Controller
             }
         }
 
-        if ($usePagination) {
-            $spareParts = $query->select(['id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid', 'created_at', 'seller_type', 'country_id', 'city_id', 'category_id', DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')])->paginate($perPage, ['*'], 'page', $page);
-        } else {
-            $spareParts = $query->select(['id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid', 'created_at', 'seller_type', 'country_id', 'city_id', 'category_id', DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')])->get();
-        }
+        // ✅ Tri par date DESC (plus récent en premier)
+        $query->orderBy('created_at', 'desc');
 
-        $sparePartsCollection = $usePagination ? $spareParts->getCollection() : $spareParts;
+        // ✅ Pagination
+        $spareParts = $query->select([
+            'id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid',
+            'created_at', 'seller_type', 'country_id', 'city_id', 'category_id',
+            DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
+        ])->paginate($perPage, ['*'], 'page', $page);
+
+        $sparePartsCollection = $spareParts->getCollection();
 
         $sparePartsCollection->load([
             'images' => function ($query) { $query->select('listing_id', 'image_url')->limit(1); },
@@ -416,18 +419,15 @@ class FilterController extends Controller
             'message' => $message ?: 'Showing all listings.',
             'searched_country' => $countryName,
             'showing_all_countries' => $showingAllCountries,
-            'total_listings' => $usePagination ? $spareParts->total() : $formattedSpareParts->count(),
+            'total_listings' => $spareParts->total(),
+            'current_page' => $spareParts->currentPage(),
+            'per_page' => $spareParts->perPage(),
+            'last_page' => $spareParts->lastPage(),
+            'from' => $spareParts->firstItem(),
+            'to' => $spareParts->lastItem(),
+            'spare_parts' => $formattedSpareParts
         ];
 
-        if ($usePagination) {
-            $response['current_page'] = $spareParts->currentPage();
-            $response['per_page'] = $spareParts->perPage();
-            $response['last_page'] = $spareParts->lastPage();
-            $response['from'] = $spareParts->firstItem();
-            $response['to'] = $spareParts->lastItem();
-        }
-
-        $response['spare_parts'] = $formattedSpareParts;
         return response()->json($response);
     }
 
@@ -462,10 +462,9 @@ class FilterController extends Controller
         $showingAllCountries = false;
         $message = '';
 
-        $page = $request->get('page');
+        $page = $request->get('page', 1); // ✅ Default to page 1
         $perPage = $request->get('per_page', 15);
         $perPage = min($perPage, 100);
-        $usePagination = !is_null($page);
 
         $query->where('category_id', 3)->where('status', 'published');
 
@@ -553,13 +552,17 @@ class FilterController extends Controller
             }
         }
 
-        if ($usePagination) {
-            $results = $query->select(['id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid', 'created_at', 'seller_type', 'country_id', 'city_id', 'category_id', DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')])->paginate($perPage, ['*'], 'page', $page);
-        } else {
-            $results = $query->select(['id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid', 'created_at', 'seller_type', 'country_id', 'city_id', 'category_id', DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')])->get();
-        }
+        // ✅ Tri par date DESC (plus récent en premier)
+        $query->orderBy('created_at', 'desc');
 
-        $resultsCollection = $usePagination ? $results->getCollection() : $results;
+        // ✅ Pagination
+        $results = $query->select([
+            'id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid',
+            'created_at', 'seller_type', 'country_id', 'city_id', 'category_id',
+            DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
+        ])->paginate($perPage, ['*'], 'page', $page);
+
+        $resultsCollection = $results->getCollection();
 
         $resultsCollection->load([
             'images' => function ($q) { $q->select('listing_id', 'image_url')->limit(1); },
@@ -619,19 +622,16 @@ class FilterController extends Controller
             'message' => $message ?: 'Showing all listings.',
             'searched_country' => $countryName,
             'showing_all_countries' => $showingAllCountries,
-            'total_listings' => $usePagination ? $results->total() : $formattedResults->count(),
+            'total_listings' => $results->total(),
             'success' => true,
+            'current_page' => $results->currentPage(),
+            'per_page' => $results->perPage(),
+            'last_page' => $results->lastPage(),
+            'from' => $results->firstItem(),
+            'to' => $results->lastItem(),
+            'results' => $formattedResults
         ];
 
-        if ($usePagination) {
-            $response['current_page'] = $results->currentPage();
-            $response['per_page'] = $results->perPage();
-            $response['last_page'] = $results->lastPage();
-            $response['from'] = $results->firstItem();
-            $response['to'] = $results->lastItem();
-        }
-
-        $response['results'] = $formattedResults;
         return response()->json($response);
     }
 
