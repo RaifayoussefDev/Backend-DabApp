@@ -179,7 +179,6 @@ class GuideController extends Controller
                 'message' => 'Guide created successfully',
                 'data' => $this->formatGuideResponse($guide)
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Error creating guide', 'error' => $e->getMessage()], 500);
@@ -336,7 +335,6 @@ class GuideController extends Controller
                 'message' => 'Guide updated successfully',
                 'data' => $this->formatGuideResponse($guide)
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Error updating guide', 'error' => $e->getMessage()], 500);
@@ -759,9 +757,16 @@ class GuideController extends Controller
         $limit = $request->get('limit', 20);
         $query->limit($limit);
 
+        // 🔍 AFFICHER LA REQUÊTE SQL
+        \Log::info('SQL Query: ' . $query->toSql());
+        \Log::info('SQL Bindings: ' . json_encode($query->getBindings()));
+
         $guides = $query->get()->map(function ($guide) use ($user) {
             return $this->formatGuideList($guide, $user);
         });
+
+        // 🔍 AFFICHER LE RÉSULTAT
+        \Log::info('Guides found: ' . $guides->count());
 
         return response()->json([
             'total' => $guides->count(),
