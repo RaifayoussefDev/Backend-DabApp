@@ -106,7 +106,21 @@ class AuthController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name'  => 'required|string|max:255',
             'email'      => 'required|email',
-            'phone'      => 'required|string',
+            'phone'      => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    // Le numéro doit commencer par +
+                    if (!str_starts_with($value, '+')) {
+                        $fail('Phone number must include country code (e.g., +212...)');
+                    }
+
+                    // Vérifier le format : + suivi de 10 à 15 chiffres
+                    if (!preg_match('/^\+\d{10,15}$/', $value)) {
+                        $fail('Invalid phone number format. Must be: +[country code][number]');
+                    }
+                }
+            ],
             'password'   => 'required|string|min:6|confirmed',
         ]);
 
@@ -117,9 +131,10 @@ class AuthController extends Controller
         // Get country from proxy headers
         $countryName = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Morocco';
 
-        // Use helper to process country and phone
+        // ✅ Récupérer country_id et infos depuis la base de données
         $countryData = CountryHelper::processCountryAndPhoneByName($request->phone, $countryName);
-        $formattedPhone = $countryData['formatted_phone'];
+
+        $formattedPhone = $request->phone; // On garde le téléphone tel quel (envoyé par frontend)
 
         Log::info('Registration attempt', [
             'original_phone' => $request->phone,
@@ -210,7 +225,7 @@ class AuthController extends Controller
                 'password'   => Hash::make($request->password),
                 'role_id'    => $request->role_id ?? 1,
                 'verified'   => false,
-                'is_active'  => false, // ⚠️ IMPORTANT : désactivé jusqu'à vérification
+                'is_active'  => false,
                 'is_online'  => false,
                 'language'   => 'fr',
                 'timezone'   => 'Africa/Casablanca',
@@ -254,15 +269,16 @@ class AuthController extends Controller
             ], 500);
         }
 
+        // ✅ RETURN EXACTEMENT IDENTIQUE à avant
         return response()->json([
             'message' => 'Registration successful, OTP required for verification',
             'user' => $user->only(['id', 'first_name', 'last_name', 'email', 'phone']),
             'requiresOTP' => true,
             'user_id' => $user->id,
-            'country' => $countryData['country_name'],
-            'country_code' => $countryData['country_code'],
-            'country_id' => $countryData['country_id'],
-            'formatted_phone' => $formattedPhone,
+            'country' => $countryData['country_name'],      // ✅ Depuis CountryHelper
+            'country_code' => $countryData['country_code'], // ✅ Depuis CountryHelper
+            'country_id' => $countryData['country_id'],     // ✅ Depuis CountryHelper
+            'formatted_phone' => $formattedPhone,           // ✅ Le phone tel quel (+212688808238)
             'otp_sent_via' => $otpSentVia
         ], 202);
     }
@@ -308,7 +324,26 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'login' => 'required|string',
+            'login' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    // Si c'est un email, on passe
+                    if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                        return;
+                    }
+
+                    // Si c'est un numéro de téléphone, il doit commencer par +
+                    if (!str_starts_with($value, '+')) {
+                        $fail('Phone number must include country code (e.g., +212...)');
+                    }
+
+                    // Vérifier que c'est bien un format de téléphone valide (+ suivi de chiffres)
+                    if (!preg_match('/^\+\d{10,15}$/', $value)) {
+                        $fail('Invalid phone number format. Must be: +[country code][number]');
+                    }
+                }
+            ],
             'password' => 'required|string'
         ]);
 
@@ -331,32 +366,10 @@ class AuthController extends Controller
             $user = User::where('email', $login)->first();
             Log::info('Login attempt with email', ['email' => $login]);
         } else {
-            // Login is potentially a phone number - try different formats
+            // Login is potentially a phone number - try direct match or with/without + prefix
 
             // First, try exact match
             $user = User::where('phone', $login)->first();
-
-            if (!$user) {
-                // If no exact match, try with country processing
-                $countryName = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Morocco';
-
-                try {
-                    $countryData = CountryHelper::processCountryAndPhoneByName($login, $countryName);
-                    $formattedPhone = $countryData['formatted_phone'];
-
-                    Log::info('Trying login with formatted phone', [
-                        'original' => $login,
-                        'formatted' => $formattedPhone
-                    ]);
-
-                    $user = User::where('phone', $formattedPhone)->first();
-                } catch (\Exception $e) {
-                    Log::warning('Failed to format phone for login', [
-                        'phone' => $login,
-                        'error' => $e->getMessage()
-                    ]);
-                }
-            }
 
             if (!$user) {
                 // Try removing/adding + prefix
@@ -374,6 +387,9 @@ class AuthController extends Controller
                 'user_found' => $user ? true : false
             ]);
         }
+
+        // ✅ On garde la détection du pays pour le retour dans la réponse
+        $countryName = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Morocco';
 
         if (!$user || !Hash::check($password, $user->password)) {
             Log::warning('Login failed - invalid credentials', [
@@ -488,7 +504,7 @@ class AuthController extends Controller
                 'first_name' => $user->first_name,
                 'last_name' => $user->last_name,
                 'phone' => $user->phone,
-                'country' => $country,
+                'country' => $countryName,
                 'otp_sent_via' => $otpSentVia
             ], 202);
         }
@@ -726,35 +742,13 @@ class AuthController extends Controller
             // Login is an email
             return User::where('email', $login)->first();
         } else {
-            // Login is potentially a phone number - try different formats
+            // Login is a phone number - try with/without + prefix ONLY
 
             // First, try exact match
             $user = User::where('phone', $login)->first();
 
             if (!$user) {
-                // If no exact match, try with country processing
-                $countryName = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Morocco';
-
-                try {
-                    $countryData = CountryHelper::processCountryAndPhoneByName($login, $countryName);
-                    $formattedPhone = $countryData['formatted_phone'];
-
-                    Log::info('Trying to find user with formatted phone', [
-                        'original' => $login,
-                        'formatted' => $formattedPhone
-                    ]);
-
-                    $user = User::where('phone', $formattedPhone)->first();
-                } catch (\Exception $e) {
-                    Log::warning('Failed to format phone for user search', [
-                        'phone' => $login,
-                        'error' => $e->getMessage()
-                    ]);
-                }
-            }
-
-            if (!$user) {
-                // Try removing/adding + prefix
+                // Try removing/adding + prefix (for database compatibility)
                 if (str_starts_with($login, '+')) {
                     $phoneWithoutPlus = substr($login, 1);
                     $user = User::where('phone', $phoneWithoutPlus)->first();
@@ -790,7 +784,26 @@ class AuthController extends Controller
     public function resendOtp(Request $request)
     {
         $request->validate([
-            'login' => 'required|string',
+            'login' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    // Si c'est un email, on passe
+                    if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                        return;
+                    }
+
+                    // Si c'est un numéro de téléphone, il DOIT commencer par +
+                    if (!str_starts_with($value, '+')) {
+                        $fail('Phone number must include country code (e.g., +212...)');
+                    }
+
+                    // Vérifier le format valide
+                    if (!preg_match('/^\+\d{10,15}$/', $value)) {
+                        $fail('Invalid phone number format. Must be: +[country code][number]');
+                    }
+                }
+            ],
             'method' => 'nullable|string|in:whatsapp,email'
         ]);
 
@@ -932,7 +945,26 @@ class AuthController extends Controller
     public function resendOtpEmail(Request $request)
     {
         $request->validate([
-            'login' => 'required|string'
+            'login' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    // Si c'est un email, on passe
+                    if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                        return;
+                    }
+
+                    // Si c'est un numéro de téléphone, il DOIT commencer par +
+                    if (!str_starts_with($value, '+')) {
+                        $fail('Phone number must include country code (e.g., +212...)');
+                    }
+
+                    // Vérifier le format valide
+                    if (!preg_match('/^\+\d{10,15}$/', $value)) {
+                        $fail('Invalid phone number format. Must be: +[country code][number]');
+                    }
+                }
+            ]
         ]);
 
         // Rate limiting
@@ -1064,7 +1096,26 @@ class AuthController extends Controller
     public function verifyOtp(Request $request)
     {
         $request->validate([
-            'login' => 'required|string',
+            'login' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    // Si c'est un email, on passe
+                    if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                        return;
+                    }
+
+                    // Si c'est un numéro de téléphone, il doit commencer par +
+                    if (!str_starts_with($value, '+')) {
+                        $fail('Phone number must include country code (e.g., +212...)');
+                    }
+
+                    // Vérifier le format valide
+                    if (!preg_match('/^\+\d{10,15}$/', $value)) {
+                        $fail('Invalid phone number format. Must be: +[country code][number]');
+                    }
+                }
+            ],
             'otp' => 'required|string|size:4',
         ]);
 
@@ -1385,7 +1436,26 @@ class AuthController extends Controller
     public function forgotPassword(Request $request)
     {
         $request->validate([
-            'login' => 'required|string',
+            'login' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    // Si c'est un email, on passe
+                    if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                        return;
+                    }
+
+                    // Si c'est un numéro de téléphone, il DOIT commencer par +
+                    if (!str_starts_with($value, '+')) {
+                        $fail('Phone number must include country code (e.g., +212...)');
+                    }
+
+                    // Vérifier le format valide
+                    if (!preg_match('/^\+\d{10,15}$/', $value)) {
+                        $fail('Invalid phone number format. Must be: +[country code][number]');
+                    }
+                }
+            ],
             'method' => 'nullable|string|in:whatsapp,email'
         ]);
 
@@ -1629,7 +1699,26 @@ class AuthController extends Controller
     public function resetPassword(Request $request)
     {
         $request->validate([
-            'login' => 'required|string',
+            'login' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    // Si c'est un email, on passe
+                    if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                        return;
+                    }
+
+                    // Si c'est un numéro de téléphone, il DOIT commencer par +
+                    if (!str_starts_with($value, '+')) {
+                        $fail('Phone number must include country code (e.g., +212...)');
+                    }
+
+                    // Vérifier le format valide
+                    if (!preg_match('/^\+\d{10,15}$/', $value)) {
+                        $fail('Invalid phone number format. Must be: +[country code][number]');
+                    }
+                }
+            ],
             'code' => 'required|string',
             'password' => 'required|string|min:6|confirmed',
         ]);
@@ -1820,7 +1909,7 @@ class AuthController extends Controller
         ]);
     }
 
-    
+
     /**
      * @OA\Get(
      *     path="/api/countries",
