@@ -19094,6 +19094,448 @@
                 ]
             }
         },
+        "/api/poi-types": {
+            "get": {
+                "tags": [
+                    "POI Types"
+                ],
+                "summary": "Get all POI types",
+                "operationId": "c72e2bd637e111c6d84a1363ac498d7e",
+                "parameters": [
+                    {
+                        "name": "with_count",
+                        "in": "query",
+                        "description": "Include POI count",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    },
+                    {
+                        "name": "with_services",
+                        "in": "query",
+                        "description": "Include services",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Gas Station"
+                                                    },
+                                                    "icon": {
+                                                        "type": "string",
+                                                        "example": "fas fa-gas-pump"
+                                                    },
+                                                    "color": {
+                                                        "type": "string",
+                                                        "example": "#FF5733"
+                                                    },
+                                                    "pois_count": {
+                                                        "type": "integer",
+                                                        "example": 15
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "POI Types"
+                ],
+                "summary": "Create a new POI type",
+                "operationId": "a91bc5717b72d41599b55e22d1b04df8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Gas Station"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "fas fa-gas-pump"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "example": "#FF5733"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "POI type created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "POI type created successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Gas Station"
+                                                },
+                                                "icon": {
+                                                    "type": "string",
+                                                    "example": "fas fa-gas-pump"
+                                                },
+                                                "color": {
+                                                    "type": "string",
+                                                    "example": "#FF5733"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/poi-types/{id}": {
+            "get": {
+                "tags": [
+                    "POI Types"
+                ],
+                "summary": "Get a specific POI type",
+                "operationId": "90c264c7054db5c18e25fe5f21fd063b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "with_pois",
+                        "in": "query",
+                        "description": "Include related POIs",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "POI type not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "POI Types"
+                ],
+                "summary": "Update a POI type",
+                "operationId": "e1649f77bcac63ba6042b40a7c566ef0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Gas Station"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "fas fa-gas-pump"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "example": "#FF5733"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "POI type updated successfully"
+                    },
+                    "404": {
+                        "description": "POI type not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "POI Types"
+                ],
+                "summary": "Delete a POI type",
+                "operationId": "47cca5200750aad17f510a9d15dfd325",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "force",
+                        "in": "query",
+                        "description": "Force delete even with associated POIs (admin only)",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "POI type deleted successfully"
+                    },
+                    "404": {
+                        "description": "POI type not found"
+                    },
+                    "409": {
+                        "description": "Cannot delete POI type with associated POIs"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/poi-types/{id}/pois": {
+            "get": {
+                "tags": [
+                    "POI Types"
+                ],
+                "summary": "Get all POIs of a specific type",
+                "operationId": "fa64e0178ff1f7e26ba39fd5a2fe0a5d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "POI type not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/poi-types/stats": {
+            "get": {
+                "tags": [
+                    "POI Types"
+                ],
+                "summary": "Get statistics for all POI types",
+                "operationId": "44dd929aebce348e781ca3adfcee0ca8",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_types": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "total_pois": {
+                                                    "type": "integer",
+                                                    "example": 150
+                                                },
+                                                "types_with_counts": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "pois_count": {
+                                                                "type": "integer"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/pois": {
             "get": {
                 "tags": [
@@ -24216,6 +24658,10 @@
         {
             "name": "POI Reviews",
             "description": "API Endpoints for POI Reviews"
+        },
+        {
+            "name": "POI Types",
+            "description": "API Endpoints for POI Types management"
         },
         {
             "name": "Points of Interest",
