@@ -873,12 +873,17 @@ Route::middleware(['auth:api'])->prefix('newsletter')->group(function () {
 // POI TYPE ROUTES
 // ============================================
 
+// Public routes - anyone can view POI types
 Route::get('/poi-types', [PoiTypeController::class, 'index']);
+Route::get('/poi-types/stats', [PoiTypeController::class, 'stats']);
 Route::get('/poi-types/{id}', [PoiTypeController::class, 'show']);
+Route::get('/poi-types/{id}/pois', [PoiTypeController::class, 'getPois']);
 
+// Protected routes - require authentication
 Route::middleware(['auth:api'])->group(function () {
     Route::post('/poi-types', [PoiTypeController::class, 'store']);
     Route::put('/poi-types/{id}', [PoiTypeController::class, 'update']);
+    Route::patch('/poi-types/{id}', [PoiTypeController::class, 'update']); // Support PATCH as well
     Route::delete('/poi-types/{id}', [PoiTypeController::class, 'destroy']);
 });
 

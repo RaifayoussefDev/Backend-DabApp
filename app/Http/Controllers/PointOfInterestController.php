@@ -359,20 +359,27 @@ class PointOfInterestController extends Controller
         }
 
         $user = auth()->user();
-        $isFavorited = $poi->favoritedBy()->where('user_id', $user->id)->exists();
+        $favorite = PoiFavorite::where('poi_id', $id)
+            ->where('user_id', $user->id)
+            ->first();
 
-        if ($isFavorited) {
-            $poi->favoritedBy()->detach($user->id);
+        if ($favorite) {
+            $favorite->delete();
             $message = 'POI removed from favorites';
+            $isFavorited = false;
         } else {
-            $poi->favoritedBy()->attach($user->id);
+            PoiFavorite::create([
+                'poi_id' => $id,
+                'user_id' => $user->id,
+            ]);
             $message = 'POI added to favorites';
+            $isFavorited = true;
         }
 
         return response()->json([
             'success' => true,
             'message' => $message,
-            'is_favorited' => !$isFavorited,
+            'is_favorited' => $isFavorited,
         ]);
     }
 

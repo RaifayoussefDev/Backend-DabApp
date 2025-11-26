@@ -25,6 +25,14 @@ class PoiType extends Model
     }
 
     /**
+     * Alias for pointsOfInterest relationship
+     */
+    public function pois(): HasMany
+    {
+        return $this->pointsOfInterest();
+    }
+
+    /**
      * Get the services for this type.
      */
     public function services(): HasMany
