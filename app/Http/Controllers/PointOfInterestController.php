@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\PoiFavorite;
 use App\Models\PointOfInterest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
