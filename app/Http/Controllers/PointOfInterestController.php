@@ -127,15 +127,12 @@ class PointOfInterestController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        // Debug: Log what we're receiving
-        \Log::info('POI Store Request:', [
-            'all' => $request->all(),
-            'json' => $request->json()->all(),
-            'content' => $request->getContent(),
-            'content_type' => $request->header('Content-Type')
-        ]);
+        // Try to get data from JSON first, then fall back to request data
+        $data = $request->json()->all() ?: $request->all();
 
-        $validator = Validator::make($request->all(), [
+        \Log::info('Received data:', $data);
+
+        $validator = Validator::make($data, [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'type_id' => 'required|exists:poi_types,id',
@@ -157,10 +154,10 @@ class PointOfInterestController extends Controller
             ], 422);
         }
 
-        $data = $validator->validated();
-        $data['owner_id'] = auth()->id();
+        $validatedData = $validator->validated();
+        $validatedData['owner_id'] = auth()->id();
 
-        $poi = PointOfInterest::create($data);
+        $poi = PointOfInterest::create($validatedData);
         $poi->load(['type', 'city', 'country']);
 
         return response()->json([
