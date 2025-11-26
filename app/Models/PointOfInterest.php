@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class PointOfInterest extends Model
 {
     use HasFactory, SoftDeletes;
-
+    protected $table = 'points_of_interest'; 
     protected $fillable = [
         'name',
         'description',
