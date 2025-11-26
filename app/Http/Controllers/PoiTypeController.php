@@ -7,14 +7,72 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * @OA\Tag(
+ *     name="POI Types",
+ *     description="API Endpoints for POI Types management"
+ * )
+ */
 class PoiTypeController extends Controller
 {
     /**
-     * Display a listing of POI types.
+     * @OA\Get(
+     *     path="/api/poi-types",
+     *     summary="Get all POI types",
+     *     tags={"POI Types"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="with_count",
+     *         in="query",
+     *         description="Include POI count",
+     *         required=false,
+     *         @OA\Schema(type="boolean", default=true)
+     *     ),
+     *     @OA\Parameter(
+     *         name="with_services",
+     *         in="query",
+     *         description="Include services",
+     *         required=false,
+     *         @OA\Schema(type="boolean", default=false)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Gas Station"),
+     *                     @OA\Property(property="icon", type="string", example="fas fa-gas-pump"),
+     *                     @OA\Property(property="color", type="string", example="#FF5733"),
+     *                     @OA\Property(property="pois_count", type="integer", example=15),
+     *                     @OA\Property(property="created_at", type="string", format="date-time"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $poiTypes = PoiType::withCount('pois')->get();
+        $query = PoiType::query();
+
+        // Include POI count by default
+        if ($request->boolean('with_count', true)) {
+            $query->withCount('pointsOfInterest');
+        }
+
+        // Optionally include services
+        if ($request->boolean('with_services', false)) {
+            $query->with('services');
+        }
+
+        $poiTypes = $query->orderBy('name')->get();
 
         return response()->json([
             'success' => true,
@@ -23,14 +81,47 @@ class PoiTypeController extends Controller
     }
 
     /**
-     * Store a newly created POI type.
+     * @OA\Post(
+     *     path="/api/poi-types",
+     *     summary="Create a new POI type",
+     *     tags={"POI Types"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="Gas Station"),
+     *             @OA\Property(property="icon", type="string", example="fas fa-gas-pump"),
+     *             @OA\Property(property="color", type="string", example="#FF5733")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="POI type created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="POI type created successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="Gas Station"),
+     *                 @OA\Property(property="icon", type="string", example="fas fa-gas-pump"),
+     *                 @OA\Property(property="color", type="string", example="#FF5733")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:poi_types,name',
             'icon' => 'nullable|string|max:255',
-            'color' => 'nullable|string|max:50',
+            'color' => 'nullable|string|max:50|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
+        ], [
+            'color.regex' => 'The color must be a valid hex color code (e.g., #FF5733)',
         ]);
 
         if ($validator->fails()) {
@@ -50,11 +141,46 @@ class PoiTypeController extends Controller
     }
 
     /**
-     * Display the specified POI type.
+     * @OA\Get(
+     *     path="/api/poi-types/{id}",
+     *     summary="Get a specific POI type",
+     *     tags={"POI Types"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="with_pois",
+     *         in="query",
+     *         description="Include related POIs",
+     *         required=false,
+     *         @OA\Schema(type="boolean", default=false)
+     *     ),
+     *     @OA\Response(response=200, description="Success"),
+     *     @OA\Response(response=404, description="POI type not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
-        $poiType = PoiType::withCount('pois')->find($id);
+        $query = PoiType::withCount('pointsOfInterest');
+
+        // Optionally include related POIs
+        if ($request->boolean('with_pois', false)) {
+            $query->with(['pointsOfInterest' => function ($q) {
+                $q->active()->with(['mainImage', 'city', 'country'])->limit(10);
+            }]);
+        }
+
+        // Optionally include services
+        if ($request->boolean('with_services', false)) {
+            $query->with('services');
+        }
+
+        $poiType = $query->find($id);
 
         if (!$poiType) {
             return response()->json([
@@ -70,7 +196,30 @@ class PoiTypeController extends Controller
     }
 
     /**
-     * Update the specified POI type.
+     * @OA\Put(
+     *     path="/api/poi-types/{id}",
+     *     summary="Update a POI type",
+     *     tags={"POI Types"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", example="Gas Station"),
+     *             @OA\Property(property="icon", type="string", example="fas fa-gas-pump"),
+     *             @OA\Property(property="color", type="string", example="#FF5733")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="POI type updated successfully"),
+     *     @OA\Response(response=404, description="POI type not found"),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function update(Request $request, int $id): JsonResponse
     {
@@ -86,7 +235,9 @@ class PoiTypeController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255|unique:poi_types,name,' . $id,
             'icon' => 'nullable|string|max:255',
-            'color' => 'nullable|string|max:50',
+            'color' => 'nullable|string|max:50|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
+        ], [
+            'color.regex' => 'The color must be a valid hex color code (e.g., #FF5733)',
         ]);
 
         if ($validator->fails()) {
@@ -106,11 +257,33 @@ class PoiTypeController extends Controller
     }
 
     /**
-     * Remove the specified POI type.
+     * @OA\Delete(
+     *     path="/api/poi-types/{id}",
+     *     summary="Delete a POI type",
+     *     tags={"POI Types"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="force",
+     *         in="query",
+     *         description="Force delete even with associated POIs (admin only)",
+     *         required=false,
+     *         @OA\Schema(type="boolean", default=false)
+     *     ),
+     *     @OA\Response(response=200, description="POI type deleted successfully"),
+     *     @OA\Response(response=404, description="POI type not found"),
+     *     @OA\Response(response=409, description="Cannot delete POI type with associated POIs"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
-        $poiType = PoiType::withCount('pois')->find($id);
+        $poiType = PoiType::withCount('pointsOfInterest')->find($id);
 
         if (!$poiType) {
             return response()->json([
@@ -119,11 +292,16 @@ class PoiTypeController extends Controller
             ], 404);
         }
 
-        if ($poiType->pois_count > 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot delete POI type with associated POIs',
-            ], 409);
+        // Check if there are associated POIs
+        if ($poiType->points_of_interest_count > 0) {
+            // Only allow force delete if user is admin
+            if (!$request->boolean('force', false) || !auth()->user()->hasRole('admin')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete POI type with associated POIs',
+                    'pois_count' => $poiType->points_of_interest_count,
+                ], 409);
+            }
         }
 
         $poiType->delete();
@@ -131,6 +309,106 @@ class PoiTypeController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'POI type deleted successfully',
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/poi-types/{id}/pois",
+     *     summary="Get all POIs of a specific type",
+     *     tags={"POI Types"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=20)
+     *     ),
+     *     @OA\Response(response=200, description="Success"),
+     *     @OA\Response(response=404, description="POI type not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function getPois(Request $request, int $id): JsonResponse
+    {
+        $poiType = PoiType::find($id);
+
+        if (!$poiType) {
+            return response()->json([
+                'success' => false,
+                'message' => 'POI type not found',
+            ], 404);
+        }
+
+        $perPage = $request->input('per_page', 20);
+
+        $pois = $poiType->pointsOfInterest()
+            ->with(['mainImage', 'city', 'country'])
+            ->active()
+            ->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $pois,
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/poi-types/stats",
+     *     summary="Get statistics for all POI types",
+     *     tags={"POI Types"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 @OA\Property(property="total_types", type="integer", example=10),
+     *                 @OA\Property(property="total_pois", type="integer", example=150),
+     *                 @OA\Property(
+     *                     property="types_with_counts",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="id", type="integer"),
+     *                         @OA\Property(property="name", type="string"),
+     *                         @OA\Property(property="pois_count", type="integer")
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function stats(): JsonResponse
+    {
+        $types = PoiType::withCount('pointsOfInterest')->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total_types' => $types->count(),
+                'total_pois' => $types->sum('points_of_interest_count'),
+                'types_with_counts' => $types->map(function ($type) {
+                    return [
+                        'id' => $type->id,
+                        'name' => $type->name,
+                        'icon' => $type->icon,
+                        'color' => $type->color,
+                        'pois_count' => $type->points_of_interest_count,
+                    ];
+                }),
+            ],
         ]);
     }
 }
