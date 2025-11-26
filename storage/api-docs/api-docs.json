@@ -656,6 +656,10 @@
                                                     "flag": {
                                                         "type": "string",
                                                         "example": "https://flagcdn.com/w320/ma.png"
+                                                    },
+                                                    "default": {
+                                                        "type": "boolean",
+                                                        "example": true
                                                     }
                                                 },
                                                 "type": "object"
@@ -664,6 +668,10 @@
                                         "total": {
                                             "type": "integer",
                                             "example": 249
+                                        },
+                                        "detected_country": {
+                                            "type": "string",
+                                            "example": "Morocco"
                                         }
                                     },
                                     "type": "object"
@@ -9665,7 +9673,7 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "List all guides with filters",
+                "summary": "List all guides with filters (excludes starter guides)",
                 "operationId": "5925d903e77ac2895e3a78a86aea5655",
                 "parameters": [
                     {
@@ -10014,7 +10022,7 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Get featured guides",
+                "summary": "Get featured guides (excludes starter guides)",
                 "operationId": "67d9d778da3ccccd7880227dce8278be",
                 "responses": {
                     "200": {
@@ -10028,7 +10036,7 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Get popular guides",
+                "summary": "Get popular guides (excludes starter guides)",
                 "operationId": "f8015f1ef5e34813d0e1e4ec24c875c2",
                 "responses": {
                     "200": {
@@ -10042,7 +10050,7 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Get latest guides",
+                "summary": "Get latest guides (excludes starter guides)",
                 "operationId": "34717a09e14f3d7b2371210b689708c2",
                 "responses": {
                     "200": {
@@ -10172,7 +10180,7 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Get guides by category",
+                "summary": "Get guides by category (excludes starter guides)",
                 "operationId": "15c4ebac030bf00ec6b4609def75238e",
                 "parameters": [
                     {
@@ -10217,7 +10225,7 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Get guides by tag slug",
+                "summary": "Get guides by tag slug (excludes starter guides)",
                 "operationId": "2ecc9d06685e23de6cb3f93d20582bb4",
                 "parameters": [
                     {
@@ -10260,7 +10268,7 @@
                 "tags": [
                     "Guides"
                 ],
-                "summary": "Get guides by tag ID",
+                "summary": "Get guides by tag ID (excludes starter guides)",
                 "operationId": "dc6ce8becb88f80222ccae3233c5cde3",
                 "parameters": [
                     {
@@ -10294,6 +10302,63 @@
                 "responses": {
                     "200": {
                         "description": "Guides by tag ID"
+                    }
+                }
+            }
+        },
+        "/api/guides/starter": {
+            "get": {
+                "tags": [
+                    "Guides"
+                ],
+                "summary": "Get starter guides only",
+                "description": "Retrieve all guides from the 'Guide starter' category",
+                "operationId": "fe1229a27bc20c8ffb2309e1c490db99",
+                "parameters": [
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sort order",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "latest",
+                                "popular"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of results",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Starter guides",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 8
+                                        },
+                                        "guides": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }

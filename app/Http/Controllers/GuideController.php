@@ -20,7 +20,7 @@ class GuideController extends Controller
     /**
      * @OA\Get(
      *     path="/api/guides",
-     *     summary="List all guides with filters",
+     *     summary="List all guides with filters (excludes starter guides)",
      *     tags={"Guides"},
      *     @OA\Parameter(name="category_id", in="query", @OA\Schema(type="integer"), description="Filter by category ID"),
      *     @OA\Parameter(name="tag", in="query", @OA\Schema(type="string"), description="Filter by tag slug"),
@@ -36,7 +36,10 @@ class GuideController extends Controller
 
         $query = Guide::with(['author', 'category', 'tags', 'sections'])
             ->where('status', 'published')
-            ->whereNotNull('published_at');
+            ->whereNotNull('published_at')
+            ->whereDoesntHave('category', function ($q) {
+                $q->where('slug', 'guide-starter');
+            });
 
         if ($request->has('category_id')) {
             $query->where('category_id', $request->category_id);
@@ -176,7 +179,6 @@ class GuideController extends Controller
                 'message' => 'Guide created successfully',
                 'data' => $this->formatGuideResponse($guide)
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Error creating guide', 'error' => $e->getMessage()], 500);
@@ -199,6 +201,9 @@ class GuideController extends Controller
         $guide = Guide::with(['author', 'category', 'tags', 'sections'])
             ->where('slug', $slug)
             ->where('status', 'published')
+            ->whereDoesntHave('category', function ($q) {
+                $q->where('slug', 'guide-starter');
+            })
             ->first();
 
         if (!$guide) {
@@ -330,7 +335,6 @@ class GuideController extends Controller
                 'message' => 'Guide updated successfully',
                 'data' => $this->formatGuideResponse($guide)
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Error updating guide', 'error' => $e->getMessage()], 500);
@@ -368,7 +372,7 @@ class GuideController extends Controller
     /**
      * @OA\Get(
      *     path="/api/guides/featured",
-     *     summary="Get featured guides",
+     *     summary="Get featured guides (excludes starter guides)",
      *     tags={"Guides"},
      *     @OA\Response(response=200, description="Featured guides")
      * )
@@ -378,6 +382,9 @@ class GuideController extends Controller
         $guides = Guide::with(['author', 'category', 'tags'])
             ->where('status', 'published')
             ->where('is_featured', true)
+            ->whereDoesntHave('category', function ($q) {
+                $q->where('slug', 'guide-starter');
+            })
             ->orderBy('published_at', 'desc')
             ->limit(6)
             ->get()
@@ -400,7 +407,7 @@ class GuideController extends Controller
     /**
      * @OA\Get(
      *     path="/api/guides/popular",
-     *     summary="Get popular guides",
+     *     summary="Get popular guides (excludes starter guides)",
      *     tags={"Guides"},
      *     @OA\Response(response=200, description="Popular guides")
      * )
@@ -409,6 +416,9 @@ class GuideController extends Controller
     {
         $guides = Guide::with(['author', 'category'])
             ->where('status', 'published')
+            ->whereDoesntHave('category', function ($q) {
+                $q->where('slug', 'guide-starter');
+            })
             ->orderBy('views_count', 'desc')
             ->limit(10)
             ->get()
@@ -430,7 +440,7 @@ class GuideController extends Controller
     /**
      * @OA\Get(
      *     path="/api/guides/latest",
-     *     summary="Get latest guides",
+     *     summary="Get latest guides (excludes starter guides)",
      *     tags={"Guides"},
      *     @OA\Response(response=200, description="Latest guides")
      * )
@@ -439,6 +449,9 @@ class GuideController extends Controller
     {
         $guides = Guide::with(['author', 'category'])
             ->where('status', 'published')
+            ->whereDoesntHave('category', function ($q) {
+                $q->where('slug', 'guide-starter');
+            })
             ->orderBy('published_at', 'desc')
             ->limit(10)
             ->get()
@@ -568,6 +581,9 @@ class GuideController extends Controller
             ->where('id', $id)
             ->where('status', 'published')
             ->whereNotNull('published_at')
+            ->whereDoesntHave('category', function ($q) {
+                $q->where('slug', 'guide-starter');
+            })
             ->first();
 
         if (!$guide) {
@@ -581,7 +597,7 @@ class GuideController extends Controller
     /**
      * @OA\Get(
      *     path="/api/guides/category/{category_id}",
-     *     summary="Get guides by category",
+     *     summary="Get guides by category (excludes starter guides)",
      *     tags={"Guides"},
      *     @OA\Parameter(name="category_id", in="path", required=true, @OA\Schema(type="integer")),
      *     @OA\Parameter(name="sort", in="query", @OA\Schema(type="string", enum={"latest", "popular"}), description="Sort order"),
@@ -595,7 +611,10 @@ class GuideController extends Controller
         $query = Guide::with(['author', 'category', 'tags', 'sections'])
             ->where('status', 'published')
             ->whereNotNull('published_at')
-            ->where('category_id', $category_id);
+            ->where('category_id', $category_id)
+            ->whereDoesntHave('category', function ($q) {
+                $q->where('slug', 'guide-starter');
+            });
 
         $sort = $request->get('sort', 'latest');
         if ($sort === 'popular') {
@@ -621,7 +640,7 @@ class GuideController extends Controller
     /**
      * @OA\Get(
      *     path="/api/guides/tag/{tag_slug}",
-     *     summary="Get guides by tag slug",
+     *     summary="Get guides by tag slug (excludes starter guides)",
      *     tags={"Guides"},
      *     @OA\Parameter(name="tag_slug", in="path", required=true, @OA\Schema(type="string")),
      *     @OA\Parameter(name="sort", in="query", @OA\Schema(type="string", enum={"latest", "popular"})),
@@ -637,6 +656,9 @@ class GuideController extends Controller
             ->whereNotNull('published_at')
             ->whereHas('tags', function ($q) use ($tag_slug) {
                 $q->where('slug', $tag_slug);
+            })
+            ->whereDoesntHave('category', function ($q) {
+                $q->where('slug', 'guide-starter');
             });
 
         $sort = $request->get('sort', 'latest');
@@ -659,7 +681,7 @@ class GuideController extends Controller
     /**
      * @OA\Get(
      *     path="/api/guides/tag/id/{tag_id}",
-     *     summary="Get guides by tag ID",
+     *     summary="Get guides by tag ID (excludes starter guides)",
      *     tags={"Guides"},
      *     @OA\Parameter(name="tag_id", in="path", required=true, @OA\Schema(type="integer")),
      *     @OA\Parameter(name="sort", in="query", @OA\Schema(type="string", enum={"latest", "popular"})),
@@ -675,6 +697,9 @@ class GuideController extends Controller
             ->whereNotNull('published_at')
             ->whereHas('tags', function ($q) use ($tag_id) {
                 $q->where('guide_tags.id', $tag_id);
+            })
+            ->whereDoesntHave('category', function ($q) {
+                $q->where('slug', 'guide-starter');
             });
 
         $sort = $request->get('sort', 'latest');
@@ -692,6 +717,56 @@ class GuideController extends Controller
         });
 
         return response()->json(['tag_id' => (int) $tag_id, 'total' => $guides->count(), 'guides' => $guides]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/guides/starter",
+     *     summary="Get starter guides only",
+     *     description="Retrieve all guides from the 'Guide starter' category",
+     *     tags={"Guides"},
+     *     @OA\Parameter(name="sort", in="query", @OA\Schema(type="string", enum={"latest", "popular"}), description="Sort order"),
+     *     @OA\Parameter(name="limit", in="query", @OA\Schema(type="integer", default=20), description="Number of results"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Starter guides",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="integer", example=8),
+     *             @OA\Property(property="guides", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
+    public function starter(Request $request)
+    {
+        $user = Auth::user();
+
+        // Utilisation de JOIN explicite au lieu de whereHas pour éviter les problèmes de backticks
+        $query = Guide::select('guides.*')
+            ->join('guide_categories', 'guides.category_id', '=', 'guide_categories.id')
+            ->with(['author', 'category', 'tags', 'sections'])
+            ->where('guides.status', 'published')
+            ->whereNotNull('guides.published_at')
+            ->where('guide_categories.slug', 'guide-starter');
+
+        $sort = $request->get('sort', 'latest');
+        if ($sort === 'popular') {
+            $query->orderBy('guides.views_count', 'desc');
+        } else {
+            $query->orderBy('guides.published_at', 'desc');
+        }
+
+        $limit = $request->get('limit', 20);
+        $query->limit($limit);
+
+        $guides = $query->get()->map(function ($guide) use ($user) {
+            return $this->formatGuideList($guide, $user);
+        });
+
+        return response()->json([
+            'total' => $guides->count(),
+            'guides' => $guides
+        ]);
     }
 
     // Helper methods
