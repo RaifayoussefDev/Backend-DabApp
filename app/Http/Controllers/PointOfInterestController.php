@@ -127,6 +127,14 @@ class PointOfInterestController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // Debug: Log what we're receiving
+        \Log::info('POI Store Request:', [
+            'all' => $request->all(),
+            'json' => $request->json()->all(),
+            'content' => $request->getContent(),
+            'content_type' => $request->header('Content-Type')
+        ]);
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
