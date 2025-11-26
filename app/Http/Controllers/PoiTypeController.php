@@ -119,9 +119,7 @@ class PoiTypeController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:poi_types,name',
             'icon' => 'nullable|string|max:255',
-            'color' => 'nullable|string|max:50|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
-        ], [
-            'color.regex' => 'The color must be a valid hex color code (e.g., #FF5733)',
+            'color' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -235,9 +233,7 @@ class PoiTypeController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255|unique:poi_types,name,' . $id,
             'icon' => 'nullable|string|max:255',
-            'color' => 'nullable|string|max:50|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
-        ], [
-            'color.regex' => 'The color must be a valid hex color code (e.g., #FF5733)',
+            'color' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
