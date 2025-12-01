@@ -1129,20 +1129,17 @@ class PayTabsController extends Controller
     }
 
     /**
-     * Test de connexion PayTabs
-     */
-    /**
      * @OA\Post(
      *     path="/api/paytabs/verify-and-publish",
      *     summary="Verify payment and publish listing (Mobile SDK)",
-     *     description="After mobile receives payment confirmation from PayTabs SDK, call this to verify and publish listing",
+     *     description="After mobile receives payment confirmation from PayTabs SDK, call this to verify and publish listing using listing_id",
      *     operationId="verifyAndPublishListing",
      *     tags={"PayTabs Mobile"},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"payment_id", "tran_ref"},
-     *             @OA\Property(property="payment_id", type="integer", example=123, description="Payment ID from listing creation"),
+     *             required={"listing_id", "tran_ref"},
+     *             @OA\Property(property="listing_id", type="integer", example=456, description="Listing ID from listing creation"),
      *             @OA\Property(property="tran_ref", type="string", example="TST2123456789", description="Transaction reference from PayTabs SDK")
      *         )
      *     ),
@@ -1190,10 +1187,10 @@ class PayTabsController extends Controller
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Payment not found",
+     *         description="Listing or payment not found",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="error", type="string", example="Payment not found")
+     *             @OA\Property(property="error", type="string", example="Listing not found or no pending payment")
      *         )
      *     ),
      *     @OA\Response(
@@ -1209,23 +1206,37 @@ class PayTabsController extends Controller
     public function verifyAndPublish(Request $request)
     {
         $request->validate([
-            'payment_id' => 'required|exists:payments,id',
+            'listing_id' => 'required|exists:listings,id',
             'tran_ref' => 'required|string',
         ]);
 
         try {
-            // 1️⃣ Récupérer le paiement
-            $payment = Payment::with('listing')->find($request->payment_id);
+            // 1️⃣ Récupérer le listing
+            $listing = Listing::find($request->listing_id);
+
+            if (!$listing) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Listing not found'
+                ], 404);
+            }
+
+            // 2️⃣ Récupérer le paiement associé au listing
+            $payment = Payment::where('listing_id', $listing->id)
+                ->whereIn('payment_status', ['pending', 'initiated'])
+                ->orderBy('created_at', 'desc')
+                ->first();
 
             if (!$payment) {
                 return response()->json([
                     'success' => false,
-                    'error' => 'Payment not found'
+                    'error' => 'No pending payment found for this listing'
                 ], 404);
             }
 
-            // 2️⃣ Vérifier le paiement auprès de PayTabs
-            Log::info("Mobile app verifying payment", [
+            // 3️⃣ Vérifier le paiement auprès de PayTabs
+            Log::info("Mobile app verifying payment for listing", [
+                'listing_id' => $listing->id,
                 'payment_id' => $payment->id,
                 'tran_ref' => $request->tran_ref
             ]);
@@ -1245,15 +1256,14 @@ class PayTabsController extends Controller
             $responseCode = $paymentResult['response_code'] ?? '';
 
             Log::info("PayTabs verification result", [
+                'listing_id' => $listing->id,
                 'payment_id' => $payment->id,
                 'response_status' => $responseStatus,
                 'response_message' => $responseMessage
             ]);
 
-            // 3️⃣ Si le paiement est approuvé (A = Approved)
             if ($responseStatus === 'A') {
 
-                // Mettre à jour le paiement
                 $payment->update([
                     'payment_status' => 'completed',
                     'tran_ref' => $request->tran_ref,
@@ -1262,10 +1272,7 @@ class PayTabsController extends Controller
                     'completed_at' => now()
                 ]);
 
-                // 4️⃣ PUBLIER LE LISTING
-                $listing = $payment->listing;
-
-                if ($listing && $listing->status !== 'published') {
+                if ($listing->status !== 'published') {
                     $listing->update([
                         'status' => 'published',
                         'published_at' => now()
@@ -1293,7 +1300,6 @@ class PayTabsController extends Controller
                     ]
                 ]);
             }
-            // 4️⃣ Si le paiement a échoué
             elseif (in_array($responseStatus, ['D', 'F', 'E'])) {
 
                 $payment->update([
@@ -1312,10 +1318,14 @@ class PayTabsController extends Controller
                         'status' => 'failed',
                         'error_code' => $responseCode,
                         'error_message' => $responseMessage
+                    ],
+                    'listing' => [
+                        'id' => $listing->id,
+                        'status' => $listing->status // Reste en draft
                     ]
                 ], 400);
             }
-            // 5️⃣ Statut inconnu
+            // 7️⃣ Statut inconnu
             else {
                 return response()->json([
                     'success' => false,
@@ -1326,6 +1336,8 @@ class PayTabsController extends Controller
             }
         } catch (\Exception $e) {
             Log::error('Mobile verify and publish error: ' . $e->getMessage(), [
+                'listing_id' => $request->listing_id,
+                'tran_ref' => $request->tran_ref,
                 'exception' => $e->getTraceAsString()
             ]);
 

@@ -18469,7 +18469,7 @@
                     "PayTabs Mobile"
                 ],
                 "summary": "Verify payment and publish listing (Mobile SDK)",
-                "description": "After mobile receives payment confirmation from PayTabs SDK, call this to verify and publish listing",
+                "description": "After mobile receives payment confirmation from PayTabs SDK, call this to verify and publish listing using listing_id",
                 "operationId": "verifyAndPublishListing",
                 "requestBody": {
                     "required": true,
@@ -18477,14 +18477,14 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "payment_id",
+                                    "listing_id",
                                     "tran_ref"
                                 ],
                                 "properties": {
-                                    "payment_id": {
-                                        "description": "Payment ID from listing creation",
+                                    "listing_id": {
+                                        "description": "Listing ID from listing creation",
                                         "type": "integer",
-                                        "example": 123
+                                        "example": 456
                                     },
                                     "tran_ref": {
                                         "description": "Transaction reference from PayTabs SDK",
@@ -18610,7 +18610,7 @@
                         }
                     },
                     "404": {
-                        "description": "Payment not found",
+                        "description": "Listing or payment not found",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -18621,7 +18621,7 @@
                                         },
                                         "error": {
                                             "type": "string",
-                                            "example": "Payment not found"
+                                            "example": "Listing not found or no pending payment"
                                         }
                                     },
                                     "type": "object"
