@@ -1131,6 +1131,210 @@ class PayTabsController extends Controller
     /**
      * Test de connexion PayTabs
      */
+    /**
+     * @OA\Post(
+     *     path="/api/paytabs/verify-and-publish",
+     *     summary="Verify payment and publish listing (Mobile SDK)",
+     *     description="After mobile receives payment confirmation from PayTabs SDK, call this to verify and publish listing",
+     *     operationId="verifyAndPublishListing",
+     *     tags={"PayTabs Mobile"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"payment_id", "tran_ref"},
+     *             @OA\Property(property="payment_id", type="integer", example=123, description="Payment ID from listing creation"),
+     *             @OA\Property(property="tran_ref", type="string", example="TST2123456789", description="Transaction reference from PayTabs SDK")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Payment verified and listing published",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Payment verified and listing published successfully"),
+     *             @OA\Property(
+     *                 property="payment",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=123),
+     *                 @OA\Property(property="status", type="string", example="completed"),
+     *                 @OA\Property(property="amount", type="number", example=100.00),
+     *                 @OA\Property(property="currency", type="string", example="AED"),
+     *                 @OA\Property(property="tran_ref", type="string", example="TST2123456789"),
+     *                 @OA\Property(property="completed_at", type="string", example="2024-01-15 10:32:00")
+     *             ),
+     *             @OA\Property(
+     *                 property="listing",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=456),
+     *                 @OA\Property(property="title", type="string", example="Honda CBR 600"),
+     *                 @OA\Property(property="status", type="string", example="published"),
+     *                 @OA\Property(property="published_at", type="string", example="2024-01-15 10:32:00")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Payment declined or verification failed",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Payment was declined"),
+     *             @OA\Property(
+     *                 property="payment",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=123),
+     *                 @OA\Property(property="status", type="string", example="failed"),
+     *                 @OA\Property(property="error_code", type="string", example="400"),
+     *                 @OA\Property(property="error_message", type="string", example="Insufficient funds")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Payment not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="error", type="string", example="Payment not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="error", type="string", example="Internal server error")
+     *         )
+     *     )
+     * )
+     */
+    public function verifyAndPublish(Request $request)
+    {
+        $request->validate([
+            'payment_id' => 'required|exists:payments,id',
+            'tran_ref' => 'required|string',
+        ]);
+
+        try {
+            // 1️⃣ Récupérer le paiement
+            $payment = Payment::with('listing')->find($request->payment_id);
+
+            if (!$payment) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Payment not found'
+                ], 404);
+            }
+
+            // 2️⃣ Vérifier le paiement auprès de PayTabs
+            Log::info("Mobile app verifying payment", [
+                'payment_id' => $payment->id,
+                'tran_ref' => $request->tran_ref
+            ]);
+
+            $verificationResult = $this->verifyPayment($request->tran_ref);
+
+            if (!$verificationResult) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Unable to verify payment with PayTabs'
+                ], 400);
+            }
+
+            $paymentResult = $verificationResult['payment_result'] ?? [];
+            $responseStatus = $paymentResult['response_status'] ?? '';
+            $responseMessage = $paymentResult['response_message'] ?? '';
+            $responseCode = $paymentResult['response_code'] ?? '';
+
+            Log::info("PayTabs verification result", [
+                'payment_id' => $payment->id,
+                'response_status' => $responseStatus,
+                'response_message' => $responseMessage
+            ]);
+
+            // 3️⃣ Si le paiement est approuvé (A = Approved)
+            if ($responseStatus === 'A') {
+
+                // Mettre à jour le paiement
+                $payment->update([
+                    'payment_status' => 'completed',
+                    'tran_ref' => $request->tran_ref,
+                    'response_code' => $responseCode,
+                    'payment_result' => $responseMessage ?: 'Payment approved',
+                    'completed_at' => now()
+                ]);
+
+                // 4️⃣ PUBLIER LE LISTING
+                $listing = $payment->listing;
+
+                if ($listing && $listing->status !== 'published') {
+                    $listing->update([
+                        'status' => 'published',
+                        'published_at' => now()
+                    ]);
+
+                    Log::info("🚀 Listing #{$listing->id} PUBLISHED by mobile app after payment #{$payment->id}");
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Payment verified and listing published successfully',
+                    'payment' => [
+                        'id' => $payment->id,
+                        'status' => 'completed',
+                        'amount' => $payment->amount,
+                        'currency' => $payment->currency ?? 'AED',
+                        'tran_ref' => $payment->tran_ref,
+                        'completed_at' => $payment->completed_at
+                    ],
+                    'listing' => [
+                        'id' => $listing->id,
+                        'title' => $listing->title,
+                        'status' => 'published',
+                        'published_at' => $listing->published_at
+                    ]
+                ]);
+            }
+            // 4️⃣ Si le paiement a échoué
+            elseif (in_array($responseStatus, ['D', 'F', 'E'])) {
+
+                $payment->update([
+                    'payment_status' => 'failed',
+                    'tran_ref' => $request->tran_ref,
+                    'response_code' => $responseCode,
+                    'payment_result' => $responseMessage ?: 'Payment declined',
+                    'failed_at' => now()
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment was declined',
+                    'payment' => [
+                        'id' => $payment->id,
+                        'status' => 'failed',
+                        'error_code' => $responseCode,
+                        'error_message' => $responseMessage
+                    ]
+                ], 400);
+            }
+            // 5️⃣ Statut inconnu
+            else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment status is unclear',
+                    'payment_status' => $responseStatus,
+                    'details' => $verificationResult
+                ], 400);
+            }
+        } catch (\Exception $e) {
+            Log::error('Mobile verify and publish error: ' . $e->getMessage(), [
+                'exception' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Internal server error'
+            ], 500);
+        }
+    }
     public function testConnection()
     {
         if (!$this->baseUrl || !$this->profileId || !$this->serverKey) {

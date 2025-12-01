@@ -446,4 +446,64 @@ class PointOfInterestController extends Controller
             'data' => $pois,
         ]);
     }
+    /**
+     * @OA\Get(
+     *     path="/api/pois/favorites",
+     *     summary="Get user's favorite points of interest",
+     *     tags={"Points of Interest"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="type_id",
+     *         in="query",
+     *         description="Filter by POI type",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=20)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="current_page", type="integer"),
+     *                 @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="total", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function favorites(Request $request): JsonResponse
+    {
+        $user = auth()->user();
+
+        $query = PointOfInterest::with(['type', 'city', 'country', 'images', 'mainImage'])
+            ->whereHas('favorites', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->active();
+
+        // Filter by type if provided
+        if ($request->has('type_id')) {
+            $query->ofType($request->type_id);
+        }
+
+        $perPage = $request->input('per_page', 20);
+        $pois = $query->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $pois,
+        ]);
+    }
 }

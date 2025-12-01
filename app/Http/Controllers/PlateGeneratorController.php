@@ -12,38 +12,83 @@ class PlateGeneratorController extends Controller
     {
         // 1. Valider les données
         $validated = $request->validate([
-            'cell1' => 'required|string',
-            'cell2' => 'required|string',
-            'cell3' => 'required|string',
-            'cell4' => 'required|string',
+            'country' => 'required|in:ksa,uae,dubai',
             'format' => 'nullable|in:png,jpg',
+            // Champs KSA
+            'top_left' => 'required_if:country,ksa|string',
+            'top_right' => 'required_if:country,ksa|string',
+            'bottom_left' => 'required_if:country,ksa|string',
+            'bottom_right' => 'required_if:country,ksa|string',
+            // Champs UAE et Dubai
+            'category_number' => 'required_if:country,uae,dubai|string',
+            'plate_number' => 'required_if:country,uae,dubai|string',
         ]);
 
+        $country = $validated['country'];
         $format = $validated['format'] ?? 'png';
 
-        // 2. Convertir le logo en base64
-        $logoPath = storage_path('app/public/logo.png');
+        // 2. Charger les logos
+        $logoBase64 = null;
+        $motoLogoBase64 = null;
 
-        if (file_exists($logoPath)) {
-            $logoData = base64_encode(file_get_contents($logoPath));
-            $logoBase64 = 'data:image/png;base64,' . $logoData;
-        } else {
-            // Logo par défaut si le fichier n'existe pas
-            $logoBase64 = $this->getDefaultLogo();
+        if ($country === 'ksa') {
+            $logoPath = storage_path('app/public/logo.png');
+            if (file_exists($logoPath)) {
+                $logoData = base64_encode(file_get_contents($logoPath));
+                $mimeType = mime_content_type($logoPath);
+                $logoBase64 = 'data:' . $mimeType . ';base64,' . $logoData;
+            } else {
+                $logoBase64 = $this->getDefaultLogo('ksa');
+            }
+        } elseif ($country === 'uae') {
+            $logoPath = storage_path('app/public/abudhabi.png');
+            if (file_exists($logoPath)) {
+                $logoData = base64_encode(file_get_contents($logoPath));
+                $mimeType = mime_content_type($logoPath);
+                $logoBase64 = 'data:' . $mimeType . ';base64,' . $logoData;
+            } else {
+                $logoBase64 = $this->getDefaultLogo('uae');
+            }
+        } else { // dubai
+            $logoPath = storage_path('app/public/dubai-moto.png');
+            if (file_exists($logoPath)) {
+                $logoData = base64_encode(file_get_contents($logoPath));
+                $mimeType = mime_content_type($logoPath);
+                $motoLogoBase64 = 'data:' . $mimeType . ';base64,' . $logoData;
+            } else {
+                $motoLogoBase64 = $this->getDefaultLogo('dubai');
+            }
         }
 
-        // 3. Générer le HTML
-        $html = view('templates.plate', [
-            'cell1' => $validated['cell1'],
-            'cell2' => $validated['cell2'],
-            'cell3' => $validated['cell3'],
-            'cell4' => strtoupper($validated['cell4']),
-            'logoBase64' => $logoBase64,
-        ])->render();
+        // 3. Générer le HTML selon le pays
+        if ($country === 'ksa') {
+            $html = view('templates.plate', [
+                'topLeft' => $validated['top_left'],
+                'topRight' => $validated['top_right'],
+                'bottomLeft' => $validated['bottom_left'],
+                'bottomRight' => strtoupper($validated['bottom_right']),
+                'logoBase64' => $logoBase64,
+            ])->render();
+            $windowSize = [700, 500];
+        } elseif ($country === 'uae') {
+            $html = view('templates.plate_uae', [
+                'categoryNumber' => $validated['category_number'],
+                'plateNumber' => $validated['plate_number'],
+                'logoBase64' => $logoBase64,
+            ])->render();
+            $windowSize = [700, 500];
+        } else { // dubai
+            $html = view('templates.plate_dubai', [
+                'categoryNumber' => $validated['category_number'],
+                'plateNumber' => $validated['plate_number'],
+                'motoLogoBase64' => $motoLogoBase64,
+            ])->render();
+            $windowSize = [700, 500];
+        }
 
         // 4. Générer le fichier
         $uniqueId = time() . '_' . uniqid();
-        $filename = 'plate_' . $uniqueId . '.' . $format;
+        $filename = 'plate_' . $country . '_' . $uniqueId . '.' . $format;
         $filePath = storage_path('app/public/plates/' . $filename);
 
         if (!file_exists(storage_path('app/public/plates'))) {
@@ -54,10 +99,10 @@ class PlateGeneratorController extends Controller
             Browsershot::html($html)
                 ->setNodeBinary('C:\Program Files\nodejs\node.exe')
                 ->setNpmBinary('C:\Program Files\nodejs\npm.cmd')
-                ->windowSize(700, 350)
+                ->windowSize($windowSize[0], $windowSize[1])
                 ->deviceScaleFactor(3)
-                ->timeout(60) // Augmenter le timeout
-                ->noSandbox() // Ajouter cette option pour Windows
+                ->timeout(60)
+                ->noSandbox()
                 ->format($format)
                 ->save($filePath);
 
@@ -65,13 +110,13 @@ class PlateGeneratorController extends Controller
                 'success' => true,
                 'message' => 'Plaque générée avec succès',
                 'data' => [
+                    'country' => $country,
                     'filename' => $filename,
                     'url' => url('storage/plates/' . $filename),
                     'path' => $filePath,
                     'format' => $format
                 ]
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -81,22 +126,35 @@ class PlateGeneratorController extends Controller
         }
     }
 
-    private function getDefaultLogo()
+    private function getDefaultLogo($country)
     {
-        // Logo SVG par défaut du blason saoudien
-        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-            <g fill="#006c35">
-                <path d="M256 64c-16 0-32 16-32 32 0 32 16 48 32 48s32-16 32-48c0-16-16-32-32-32z"/>
-                <ellipse cx="200" cy="120" rx="60" ry="24" transform="rotate(-35 200 120)"/>
-                <ellipse cx="312" cy="120" rx="60" ry="24" transform="rotate(35 312 120)"/>
-                <ellipse cx="180" cy="100" rx="50" ry="20" transform="rotate(-50 180 100)"/>
-                <ellipse cx="332" cy="100" rx="50" ry="20" transform="rotate(50 332 100)"/>
-                <rect x="246" y="100" width="20" height="180" rx="4"/>
-                <path d="M120 240c40-60 90-100 136-100s96 40 136 100c-40 30-90 50-136 50s-96-20-136-50z"/>
-                <path d="M100 280c50-80 100-120 156-120s106 40 156 120l-156 80-156-80z"/>
-                <path d="M180 200l76 60-76 40zm152 0l-76 60 76 40z"/>
-            </g>
-        </svg>';
+        if ($country === 'ksa') {
+            $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+                <g fill="#006c35">
+                    <path d="M256 64c-16 0-32 16-32 32 0 32 16 48 32 48s32-16 32-48c0-16-16-32-32-32z"/>
+                    <ellipse cx="200" cy="120" rx="60" ry="24" transform="rotate(-35 200 120)"/>
+                    <ellipse cx="312" cy="120" rx="60" ry="24" transform="rotate(35 312 120)"/>
+                    <rect x="246" y="100" width="20" height="180" rx="4"/>
+                    <path d="M120 240c40-60 90-100 136-100s96 40 136 100c-40 30-90 50-136 50s-96-20-136-50z"/>
+                </g>
+            </svg>';
+        } elseif ($country === 'dubai') {
+            $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150">
+                <g fill="#000">
+                    <circle cx="45" cy="90" r="25"/>
+                    <circle cx="155" cy="70" r="20"/>
+                    <path d="M45 90 Q80 40 120 50 Q140 55 155 70"/>
+                    <path d="M155 70 Q165 50 180 45"/>
+                    <path d="M120 50 Q125 35 135 30"/>
+                    <ellipse cx="100" cy="60" rx="40" ry="25" transform="rotate(-20 100 60)"/>
+                </g>
+            </svg>';
+        } else {
+            $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="#C41E3A"/>
+                <text x="50" y="60" font-size="30" fill="white" text-anchor="middle" font-weight="bold">AD</text>
+            </svg>';
+        }
 
         return 'data:image/svg+xml;base64,' . base64_encode($svg);
     }

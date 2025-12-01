@@ -912,6 +912,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::delete('/pois/{id}', [PointOfInterestController::class, 'destroy']);
     Route::post('/pois/{id}/favorite', [PointOfInterestController::class, 'toggleFavorite']);
     Route::get('/pois/nearby', [PointOfInterestController::class, 'nearby']);
+    Route::get('/pois/favorites', [PointOfInterestController::class, 'favorites']);
 });
 
 // ============================================

@@ -18,168 +18,209 @@
             align-items: center;
             min-height: 100vh;
             background: #e0e0e0;
-            font-family: 'Arial Black', 'Arial', sans-serif;
+            font-family: 'Arial Black', 'Helvetica', sans-serif;
         }
 
         .plate {
             width: 600px;
-            height: 280px;
-            background: linear-gradient(to bottom, #f5f5f5 0%, #e8e8e8 100%);
-            border: 8px solid #1a1a1a;
+            height: 300px;
+            background: #eff0eb;
+            border: 6px solid #000;
             border-radius: 30px;
             display: flex;
             position: relative;
-            box-shadow:
-                0 10px 30px rgba(0, 0, 0, 0.5),
-                inset 0 2px 5px rgba(255, 255, 255, 0.3);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
         }
 
-        /* Section principale avec la grille */
+        /* Section principale avec grille 2x2 */
         .main-section {
             flex: 1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 0;
-            padding: 15px;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Ligne horizontale centrale */
-        .main-section::before {
-            content: '';
-            position: absolute;
-            left: 15px;
-            right: 105px;
-            top: 50%;
-            height: 5px;
-            background: #1a1a1a;
-            transform: translateY(-50%);
+        /* Ligne du haut */
+        .top-row {
+            flex: 1;
+            display: flex;
+            border-bottom: 4px solid #000;
         }
 
-        /* Ligne verticale centrale */
-        .main-section::after {
-            content: '';
-            position: absolute;
-            left: 50%;
-            top: 15px;
-            bottom: 15px;
-            width: 5px;
-            background: #1a1a1a;
-            transform: translateX(-210%);
+        /* Ligne du bas */
+        .bottom-row {
+            flex: 1;
+            display: flex;
         }
 
-        /* Cases de la grille */
+        /* Cellules */
         .cell {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 90px;
+            background: #eff0eb;
+        }
+
+        .cell-top-left {
+            border-right: 4px solid #000;
+        }
+
+        .cell-bottom-left {
+            border-right: 4px solid #000;
+        }
+
+        /* Textes */
+        .arabic-number {
+            font-size: 70px;
+            font-weight: 900;
+            color: #000;
+            direction: rtl;
+            line-height: 1;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .latin-number {
+            font-size: 80px;
             font-weight: 900;
             color: #000;
             line-height: 1;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
         }
 
-        .cell-1 {
-            grid-column: 1;
-            grid-row: 1;
+        .latin-letters {
+            font-size: 70px;
+            font-weight: 900;
+            color: #000;
+            line-height: 1;
+            letter-spacing: 8px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
         }
 
-        .cell-2 {
-            grid-column: 2;
-            grid-row: 1;
-        }
-
-        .cell-3 {
-            grid-column: 1;
-            grid-row: 2;
-        }
-
-        .cell-4 {
-            grid-column: 2;
-            grid-row: 2;
-        }
-
-        /* Texte arabe (direction RTL) */
-        .arabic {
-            direction: rtl;
-        }
-
-        /* Section droite avec logo et texte */
-        .right-section {
-            width: 90px;
-            background: linear-gradient(to bottom, #f5f5f5 0%, #e8e8e8 100%);
-            border-left: 5px solid #1a1a1a;
+        /* Section bleue à droite - COULEUR UNIE */
+        .blue-section {
+            width: 80px;
+            background: #eff0eb;
+            border-left: 4px solid #000;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-between;
-            padding: 20px 0;
+            padding: 12px 0 0 0;
+            position: relative;
         }
 
+        /* Logo container */
         .logo-container {
-            width: 70px;
-            height: 70px;
+            width: 55px;
+            height: 45px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 10px;
+            margin-TOP: 20px;
         }
 
         .logo {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            /* filter: brightness(0) invert(1); */
         }
 
-        .country-text-arabic {
-            font-size: 16px;
+        /* Texte السعودية */
+        .saudi-text {
+            font-size: 13px;
             font-weight: bold;
-            color: #000;
+            color: black;
             direction: rtl;
             text-align: center;
             line-height: 1.2;
-            margin-bottom: 15px;
+            margin-bottom: 5px;
         }
 
-        .ksa-letters {
+        /* Ligne blanche horizontale */
+        .white-line {
+            width: 60px;
+            height: 2px;
+            background: white;
+            margin: 5px 0;
+        }
+
+        /* K S A lettres */
+        .ksa-container {
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            align-items: center;
+            gap: 3px;
+            flex: 1;
+            justify-content: center;
+            margin-bottom: 25px;
         }
 
         .ksa-letter {
-            font-size: 32px;
-            font-weight: 900;
-            color: #000;
+            font-size: 30px;
+            /* font-weight: 100; */
+            color: black;
             line-height: 1;
             text-align: center;
+        }
+
+        /* Triangle noir en bas */
+        .triangle {
+            width: 0;
+            height: 0;
+            border-left: 40px solid transparent;
+            border-right: 40px solid transparent;
+            border-bottom: 18px solid #000;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
         }
     </style>
 </head>
 
 <body>
     <div class="plate">
-        <!-- Section principale avec 4 cases -->
+        <!-- Section principale avec grille 2x2 -->
         <div class="main-section">
-            <div class="cell cell-1 arabic">{{ $cell1 }}</div>
-            <div class="cell cell-2 arabic">{{ $cell2 }}</div>
-            <div class="cell cell-3 arabic">{{ $cell3 }}</div>
-            <div class="cell cell-4">{{ $cell4 }}</div>
+            <!-- Ligne du haut -->
+            <div class="top-row">
+                <div class="cell cell-top-left">
+                    <div class="arabic-number">{{ $topLeft }}</div>
+                </div>
+                <div class="cell">
+                    <div class="arabic-number">{{ $topRight }}</div>
+                </div>
+            </div>
+
+            <!-- Ligne du bas -->
+            <div class="bottom-row">
+                <div class="cell cell-bottom-left">
+                    <div class="latin-number">{{ $bottomLeft }}</div>
+                </div>
+                <div class="cell">
+                    <div class="latin-letters">{{ $bottomRight }}</div>
+                </div>
+            </div>
         </div>
 
-        <!-- Section droite -->
-        <div class="right-section">
+        <!-- Section bleue -->
+        <div class="blue-section">
             <div class="logo-container">
                 <img src="{{ $logoBase64 }}" alt="KSA Logo" class="logo">
             </div>
 
-            <div class="country-text-arabic">السعودية</div>
+            <div class="saudi-text">السعودية</div>
 
-            <div class="ksa-letters">
+            <!-- <div class="white-line"></div> -->
+
+            <div class="ksa-container">
                 <div class="ksa-letter">K</div>
                 <div class="ksa-letter">S</div>
                 <div class="ksa-letter">A</div>
             </div>
+
+            <!-- <div class="triangle"></div> -->
         </div>
     </div>
 </body>

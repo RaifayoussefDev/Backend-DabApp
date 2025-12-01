@@ -18463,6 +18463,195 @@
                 ]
             }
         },
+        "/api/paytabs/verify-and-publish": {
+            "post": {
+                "tags": [
+                    "PayTabs Mobile"
+                ],
+                "summary": "Verify payment and publish listing (Mobile SDK)",
+                "description": "After mobile receives payment confirmation from PayTabs SDK, call this to verify and publish listing",
+                "operationId": "verifyAndPublishListing",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "payment_id",
+                                    "tran_ref"
+                                ],
+                                "properties": {
+                                    "payment_id": {
+                                        "description": "Payment ID from listing creation",
+                                        "type": "integer",
+                                        "example": 123
+                                    },
+                                    "tran_ref": {
+                                        "description": "Transaction reference from PayTabs SDK",
+                                        "type": "string",
+                                        "example": "TST2123456789"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Payment verified and listing published",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Payment verified and listing published successfully"
+                                        },
+                                        "payment": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 123
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "completed"
+                                                },
+                                                "amount": {
+                                                    "type": "number",
+                                                    "example": 100
+                                                },
+                                                "currency": {
+                                                    "type": "string",
+                                                    "example": "AED"
+                                                },
+                                                "tran_ref": {
+                                                    "type": "string",
+                                                    "example": "TST2123456789"
+                                                },
+                                                "completed_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15 10:32:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "listing": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 456
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Honda CBR 600"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "published"
+                                                },
+                                                "published_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15 10:32:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Payment declined or verification failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Payment was declined"
+                                        },
+                                        "payment": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 123
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "failed"
+                                                },
+                                                "error_code": {
+                                                    "type": "string",
+                                                    "example": "400"
+                                                },
+                                                "error_message": {
+                                                    "type": "string",
+                                                    "example": "Insufficient funds"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Payment not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Payment not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Internal server error"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/plate-formats": {
             "post": {
                 "tags": [
@@ -19899,6 +20088,79 @@
                     },
                     "422": {
                         "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/pois/favorites": {
+            "get": {
+                "tags": [
+                    "Points of Interest"
+                ],
+                "summary": "Get user's favorite points of interest",
+                "operationId": "42259433e1c9521fe7618ae64f148d95",
+                "parameters": [
+                    {
+                        "name": "type_id",
+                        "in": "query",
+                        "description": "Filter by POI type",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -24774,6 +25036,10 @@
         {
             "name": "My Garage",
             "description": "My Garage"
+        },
+        {
+            "name": "PayTabs Mobile",
+            "description": "PayTabs Mobile"
         },
         {
             "name": "Plate Formats",
