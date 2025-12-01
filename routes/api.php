@@ -484,6 +484,8 @@ Route::prefix('paytabs')->name('paytabs.')->group(function () {
     Route::match(['GET', 'POST'], '/error', [PayTabsController::class, 'paymentError'])->name('error');
     Route::match(['GET', 'POST'], '/pending', [PayTabsController::class, 'paymentPending'])->name('pending');
     Route::match(['GET', 'POST'], '/cancel', [PayTabsController::class, 'paymentCancel'])->name('cancel');
+
+    Route::post('verify-and-publish', [PayTabsController::class, 'verifyAndPublish']);
 });
 
 // Routes additionnelles pour accès direct style dabapp.co
