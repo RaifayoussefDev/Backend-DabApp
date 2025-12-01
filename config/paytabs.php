@@ -6,20 +6,13 @@ return [
     |--------------------------------------------------------------------------
     | PayTabs Active Environment
     |--------------------------------------------------------------------------
-    |
-    | This value determines which PayTabs configuration to use.
-    | Supported: "test", "live"
-    |
     */
     'environment' => env('PAYTABS_ENVIRONMENT', 'test'),
 
     /*
     |--------------------------------------------------------------------------
-    | PayTabs Test Configuration
+    | PayTabs Test Configuration (Backend)
     |--------------------------------------------------------------------------
-    |
-    | Configuration for testing and development
-    |
     */
     'test' => [
         'profile_id' => env('PAYTABS_TEST_PROFILE_ID'),
@@ -31,11 +24,8 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | PayTabs Live Configuration
+    | PayTabs Live Configuration (Backend)
     |--------------------------------------------------------------------------
-    |
-    | Configuration for production
-    |
     */
     'live' => [
         'profile_id' => env('PAYTABS_LIVE_PROFILE_ID'),
@@ -47,28 +37,35 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | PayTabs Mobile SDK Configuration (Separate Keys)
+    |--------------------------------------------------------------------------
+    */
+    'mobile' => [
+        'profile_id' => env('PAYTABS_MOBILE_PROFILE_ID'),
+        'server_key' => env('PAYTABS_MOBILE_SERVER_KEY'),
+        'client_key' => env('PAYTABS_MOBILE_CLIENT_KEY'),
+        'currency'   => env('PAYTABS_MOBILE_CURRENCY', 'AED'),
+        'region'     => env('PAYTABS_MOBILE_REGION', 'ARE'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | PayTabs Regional Endpoints
     |--------------------------------------------------------------------------
-    |
-    | Base URLs for different PayTabs regions
-    |
     */
     'endpoints' => [
-        'ARE'    => 'https://secure.paytabs.com/',      // United Arab Emirates
-        'SAU'    => 'https://secure.paytabs.sa/',       // Saudi Arabia
-        'OMN'    => 'https://secure-oman.paytabs.com/', // Oman
-        'JOR'    => 'https://secure-jordan.paytabs.com/', // Jordan
-        'EGY'    => 'https://secure-egypt.paytabs.com/', // Egypt
-        'GLOBAL' => 'https://secure-global.paytabs.com/', // Global
+        'ARE'    => 'https://secure.paytabs.com/',
+        'SAU'    => 'https://secure.paytabs.sa/',
+        'OMN'    => 'https://secure-oman.paytabs.com/',
+        'JOR'    => 'https://secure-jordan.paytabs.com/',
+        'EGY'    => 'https://secure-egypt.paytabs.com/',
+        'GLOBAL' => 'https://secure-global.paytabs.com/',
     ],
 
     /*
     |--------------------------------------------------------------------------
     | Supported Payment Methods by Currency
     |--------------------------------------------------------------------------
-    |
-    | Available payment methods for each currency
-    |
     */
     'payment_methods' => [
         'AED' => [
