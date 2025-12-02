@@ -9,6 +9,8 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\UserCreatedMail;
+use App\Models\Payment;
+use App\Models\Submission;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -133,40 +135,126 @@ class UserController extends Controller
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
 
+        // ⭐ NOUVEAUX FILTRES
+        $isOnline = $request->get('is_online');
+        $twoFactorEnabled = $request->get('two_factor_enabled');
+        $gender = $request->get('gender');
+        $language = $request->get('language');
+        $createdFrom = $request->get('created_from');
+        $createdTo = $request->get('created_to');
+        $lastLoginFrom = $request->get('last_login_from');
+        $lastLoginTo = $request->get('last_login_to');
+
         $query = User::with(['role', 'country']);
 
+        // Search filter
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'LIKE', "%{$search}%")
-                  ->orWhere('last_name', 'LIKE', "%{$search}%")
-                  ->orWhere('email', 'LIKE', "%{$search}%")
-                  ->orWhere('phone', 'LIKE', "%{$search}%");
+                    ->orWhere('last_name', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('phone', 'LIKE', "%{$search}%");
             });
         }
 
+        // Role filter
         if ($roleId) {
             $query->where('role_id', $roleId);
         }
 
-        if ($isActive !== null) {
-            $query->where('is_active', $isActive);
+        // ⭐ FIX: is_active filter (gère string et boolean)
+        if ($isActive !== null && $isActive !== '') {
+            // Convertir "true"/"false" string en boolean
+            $isActiveBool = filter_var($isActive, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($isActiveBool !== null) {
+                $query->where('is_active', $isActiveBool);
+            }
         }
 
-        if ($verified !== null) {
-            $query->where('verified', $verified);
+        // ⭐ FIX: verified filter (gère string et boolean)
+        if ($verified !== null && $verified !== '') {
+            // Convertir "true"/"false" string en boolean
+            $verifiedBool = filter_var($verified, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($verifiedBool !== null) {
+                $query->where('verified', $verifiedBool);
+            }
         }
 
+        // Country filter
         if ($countryId) {
             $query->where('country_id', $countryId);
         }
 
+        // ⭐ NOUVEAU: is_online filter
+        if ($isOnline !== null && $isOnline !== '') {
+            $isOnlineBool = filter_var($isOnline, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($isOnlineBool !== null) {
+                $query->where('is_online', $isOnlineBool);
+            }
+        }
+
+        // ⭐ NOUVEAU: two_factor_enabled filter
+        if ($twoFactorEnabled !== null && $twoFactorEnabled !== '') {
+            $twoFactorBool = filter_var($twoFactorEnabled, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($twoFactorBool !== null) {
+                $query->where('two_factor_enabled', $twoFactorBool);
+            }
+        }
+
+        // ⭐ NOUVEAU: Gender filter
+        if ($gender) {
+            $query->where('gender', $gender);
+        }
+
+        // ⭐ NOUVEAU: Language filter
+        if ($language) {
+            $query->where('language', $language);
+        }
+
+        // ⭐ NOUVEAU: Created date range filter
+        if ($createdFrom) {
+            $query->whereDate('created_at', '>=', $createdFrom);
+        }
+        if ($createdTo) {
+            $query->whereDate('created_at', '<=', $createdTo);
+        }
+
+        // ⭐ NOUVEAU: Last login date range filter
+        if ($lastLoginFrom) {
+            $query->whereDate('last_login', '>=', $lastLoginFrom);
+        }
+        if ($lastLoginTo) {
+            $query->whereDate('last_login', '<=', $lastLoginTo);
+        }
+
+        // Sorting
         $query->orderBy($sortBy, $sortOrder);
 
+        // Pagination
         $users = $query->paginate($perPage);
 
         return response()->json([
             'success' => true,
-            'data' => $users
+            'data' => $users,
+            // ⭐ DEBUG (à retirer en production)
+            'debug' => [
+                'filters_applied' => [
+                    'search' => $search,
+                    'role_id' => $roleId,
+                    'is_active' => $isActive,
+                    'verified' => $verified,
+                    'is_online' => $isOnline,
+                    'two_factor_enabled' => $twoFactorEnabled,
+                    'gender' => $gender,
+                    'language' => $language,
+                    'country_id' => $countryId,
+                    'created_from' => $createdFrom,
+                    'created_to' => $createdTo,
+                    'last_login_from' => $lastLoginFrom,
+                    'last_login_to' => $lastLoginTo,
+                ],
+                'total_results' => $users->total()
+            ]
         ]);
     }
 
@@ -262,8 +350,8 @@ class UserController extends Controller
      *     path="/api/admin/users/{id}",
      *     operationId="getUserById",
      *     tags={"Users Management"},
-     *     summary="Get user details by ID",
-     *     description="Returns detailed user information including role, country, bank cards, wishlists, listings, and statistics.",
+     *     summary="Get complete user details by ID",
+     *     description="Returns detailed user information including role, country, bank cards, wishlists, listings, payments, sooms sent/received, and comprehensive statistics.",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
@@ -271,6 +359,13 @@ class UserController extends Controller
      *         required=true,
      *         description="User ID",
      *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="with_trashed",
+     *         in="query",
+     *         description="Include soft-deleted users",
+     *         required=false,
+     *         @OA\Schema(type="boolean", example=false)
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -283,21 +378,54 @@ class UserController extends Controller
      *                 @OA\Property(
      *                     property="user",
      *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="first_name", type="string", example="John"),
-     *                     @OA\Property(property="last_name", type="string", example="Doe"),
-     *                     @OA\Property(property="email", type="string", example="john@example.com")
+     *                     description="Complete user information with relations"
      *                 ),
      *                 @OA\Property(
      *                     property="stats",
      *                     type="object",
      *                     @OA\Property(property="total_listings", type="integer", example=5),
      *                     @OA\Property(property="active_listings", type="integer", example=3),
+     *                     @OA\Property(property="published_listings", type="integer", example=2),
+     *                     @OA\Property(property="draft_listings", type="integer", example=1),
+     *                     @OA\Property(property="sold_listings", type="integer", example=1),
      *                     @OA\Property(property="total_wishlists", type="integer", example=10),
      *                     @OA\Property(property="total_bank_cards", type="integer", example=2),
      *                     @OA\Property(property="auction_participations", type="integer", example=15),
-     *                     @OA\Property(property="auction_wins", type="integer", example=5)
-     *                 )
+     *                     @OA\Property(property="auction_wins", type="integer", example=5),
+     *                     @OA\Property(property="total_sooms_sent", type="integer", example=8),
+     *                     @OA\Property(property="pending_sooms", type="integer", example=2),
+     *                     @OA\Property(property="accepted_sooms", type="integer", example=4),
+     *                     @OA\Property(property="rejected_sooms", type="integer", example=2),
+     *                     @OA\Property(property="validated_sales", type="integer", example=3),
+     *                     @OA\Property(property="total_sooms_received", type="integer", example=12),
+     *                     @OA\Property(property="pending_sooms_received", type="integer", example=3),
+     *                     @OA\Property(property="accepted_sooms_received", type="integer", example=5),
+     *                     @OA\Property(property="pending_validation", type="integer", example=2),
+     *                     @OA\Property(property="total_payments", type="integer", example=4),
+     *                     @OA\Property(property="completed_payments", type="integer", example=3),
+     *                     @OA\Property(property="pending_payments", type="integer", example=1),
+     *                     @OA\Property(property="failed_payments", type="integer", example=0),
+     *                     @OA\Property(property="total_payment_amount", type="number", example=250.50)
+     *                 ),
+     *                 @OA\Property(
+     *                     property="sooms_sent",
+     *                     type="object",
+     *                     @OA\Property(property="total", type="integer", example=8),
+     *                     @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *                 ),
+     *                 @OA\Property(
+     *                     property="sooms_received",
+     *                     type="object",
+     *                     @OA\Property(property="total", type="integer", example=12),
+     *                     @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *                 ),
+     *                 @OA\Property(
+     *                     property="payments",
+     *                     type="object",
+     *                     @OA\Property(property="total", type="integer", example=4),
+     *                     @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *                 ),
+     *                 @OA\Property(property="is_deleted", type="boolean", example=false)
      *             )
      *         )
      *     ),
@@ -306,34 +434,177 @@ class UserController extends Controller
      *     @OA\Response(response=403, description="Forbidden - Missing permission")
      * )
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
-        $user = User::with([
-            'role',
-            'country',
-            'bankCards',
-            'wishlists.listing',
-            'listings' => function($query) {
-                $query->withCount('listingImages');
+        try {
+            $withTrashed = filter_var($request->get('with_trashed', false), FILTER_VALIDATE_BOOLEAN);
+
+            $query = User::query();
+
+            if ($withTrashed) {
+                $query->withTrashed();
             }
-        ])->findOrFail($id);
 
-        $userStats = [
-            'total_listings' => $user->listings()->count(),
-            'active_listings' => $user->listings()->where('status', 'active')->count(),
-            'total_wishlists' => $user->wishlists()->count(),
-            'total_bank_cards' => $user->bankCards()->count(),
-            'auction_participations' => DB::table('auction_histories')->where('buyer_id', $id)->count(),
-            'auction_wins' => DB::table('auction_histories')->where('buyer_id', $id)->where('validated', 1)->count(),
-        ];
+            // ⭐ Charger TOUTES les relations avec les BONS noms de colonnes
+            $user = $query->with([
+                // Relations de base
+                'role',
+                'country',
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'user' => $user,
-                'stats' => $userStats
-            ]
-        ]);
+                // Bank Cards
+                'bankCards.cardType',
+
+                // Wishlists
+                'wishlists.listing',
+
+                // ⭐ Listings avec toutes leurs relations
+                'listings' => function ($query) {
+                    $query->with([
+                        'category',
+                        'country',
+                        'city',
+                        'images', // ← Laravel va automatiquement charger toutes les colonnes
+                        'motorcycle',
+                        'sparePart',
+                        'licensePlate',
+                        'listingType'
+                    ])->withCount([
+                        'images',
+                        'auctionHistories',
+                        'payments'
+                    ]);
+                }
+            ])->findOrFail($id);
+
+            // ⭐ Charger les SOOMs (Submissions) envoyés par l'utilisateur
+            $userSubmissions = Submission::with([
+                'listing' => function ($query) {
+                    $query->with([
+                        'seller',
+                        'images' // ← Pas besoin de spécifier les colonnes
+                    ]);
+                }
+            ])
+                ->where('user_id', $id)
+                ->orderBy('submission_date', 'desc')
+                ->get();
+
+            // ⭐ Charger les SOOMs reçus sur les listings de l'utilisateur
+            $receivedSubmissions = Submission::with([
+                'user',
+                'listing'
+            ])
+                ->whereHas('listing', function ($query) use ($id) {
+                    $query->where('seller_id', $id);
+                })
+                ->orderBy('submission_date', 'desc')
+                ->get();
+
+            // ⭐ Charger les paiements de l'utilisateur
+            $userPayments = \App\Models\Payment::with([
+                'listing.category'
+            ])
+                ->whereHas('listing', function ($query) use ($id) {
+                    $query->where('seller_id', $id);
+                })
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // ⭐ Statistiques complètes
+            $userStats = [
+                // Listings stats
+                'total_listings' => $user->listings->count(),
+                'active_listings' => $user->listings->where('status', 'active')->count(),
+                'published_listings' => $user->listings->where('status', 'published')->count(),
+                'draft_listings' => $user->listings->where('status', 'draft')->count(),
+                'sold_listings' => $user->listings->where('status', 'sold')->count(),
+
+                // Wishlist stats
+                'total_wishlists' => $user->wishlists->count(),
+
+                // Bank cards stats
+                'total_bank_cards' => $user->bankCards->count(),
+
+                // Auction stats
+                'auction_participations' => DB::table('auction_histories')
+                    ->where('buyer_id', $id)
+                    ->count(),
+                'auction_wins' => DB::table('auction_histories')
+                    ->where('buyer_id', $id)
+                    ->where('validated', 1)
+                    ->count(),
+
+                // ⭐ SOOM stats (comme acheteur)
+                'total_sooms_sent' => $userSubmissions->count(),
+                'pending_sooms' => $userSubmissions->where('status', 'pending')->count(),
+                'accepted_sooms' => $userSubmissions->where('status', 'accepted')->count(),
+                'rejected_sooms' => $userSubmissions->where('status', 'rejected')->count(),
+                'validated_sales' => $userSubmissions->where('sale_validated', true)->count(),
+
+                // ⭐ SOOM stats (comme vendeur)
+                'total_sooms_received' => $receivedSubmissions->count(),
+                'pending_sooms_received' => $receivedSubmissions->where('status', 'pending')->count(),
+                'accepted_sooms_received' => $receivedSubmissions->where('status', 'accepted')->count(),
+                'pending_validation' => $receivedSubmissions->where('status', 'accepted')
+                    ->where('sale_validated', false)
+                    ->count(),
+
+                // ⭐ Payment stats
+                'total_payments' => $userPayments->count(),
+                'completed_payments' => $userPayments->where('payment_status', 'completed')->count(),
+                'pending_payments' => $userPayments->where('payment_status', 'pending')->count(),
+                'failed_payments' => $userPayments->where('payment_status', 'failed')->count(),
+                'total_payment_amount' => $userPayments->where('payment_status', 'completed')
+                    ->sum('amount'),
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'user' => $user,
+                    'stats' => $userStats,
+
+                    // ⭐ SOOMs envoyés par l'utilisateur (comme acheteur)
+                    'sooms_sent' => [
+                        'total' => $userSubmissions->count(),
+                        'data' => $userSubmissions
+                    ],
+
+                    // ⭐ SOOMs reçus par l'utilisateur (comme vendeur)
+                    'sooms_received' => [
+                        'total' => $receivedSubmissions->count(),
+                        'data' => $receivedSubmissions
+                    ],
+
+                    // ⭐ Paiements de l'utilisateur
+                    'payments' => [
+                        'total' => $userPayments->count(),
+                        'data' => $userPayments
+                    ],
+
+                    'is_deleted' => $user->trashed()
+                ]
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "User with ID {$id} not found"
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error in UserController@show', [
+                'user_id' => $id,
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving user details',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -966,12 +1237,28 @@ class UserController extends Controller
      *     path="/api/admin/users/{id}/listings",
      *     operationId="getUserListings",
      *     tags={"Users Management"},
-     *     summary="Get user's listings",
+     *     summary="Get user's listings with complete details",
+     *     description="Returns all listings of a specific user with complete details including images, category-specific data, and statistics",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
+     *         description="User ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="Filter by listing status",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"draft", "published", "active", "sold", "closed"}, example="published")
+     *     ),
+     *     @OA\Parameter(
+     *         name="category_id",
+     *         in="query",
+     *         description="Filter by category ID",
+     *         required=false,
      *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
@@ -979,94 +1266,323 @@ class UserController extends Controller
      *         description="Successfully retrieved listings",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="title", type="string", example="Honda CBR 600RR"),
+     *                     @OA\Property(property="description", type="string", example="Excellent condition"),
+     *                     @OA\Property(property="price", type="number", example=50000),
+     *                     @OA\Property(property="display_price", type="number", example=50000),
+     *                     @OA\Property(property="status", type="string", example="published"),
+     *                     @OA\Property(property="category_id", type="integer", example=1),
+     *                     @OA\Property(property="created_at", type="string", example="2024-12-02 10:30:00"),
+     *                     @OA\Property(property="images", type="array", @OA\Items(type="string")),
+     *                     @OA\Property(property="city", type="string", example="Casablanca"),
+     *                     @OA\Property(property="country", type="string", example="Morocco"),
+     *                     @OA\Property(property="motorcycle", type="object", nullable=true),
+     *                     @OA\Property(property="spare_part", type="object", nullable=true),
+     *                     @OA\Property(property="license_plate", type="object", nullable=true),
+     *                     @OA\Property(property="stats", type="object")
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="summary",
+     *                 type="object",
+     *                 @OA\Property(property="total_listings", type="integer", example=10),
+     *                 @OA\Property(property="published", type="integer", example=5),
+     *                 @OA\Property(property="draft", type="integer", example=2),
+     *                 @OA\Property(property="sold", type="integer", example=3)
+     *             )
      *         )
-     *     )
-     * )
-     */
-    public function getUserListings(string $id)
-    {
-        $user = User::findOrFail($id);
-        $listings = $user->listings()->with(['category', 'listingImages'])->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $listings
-        ]);
-    }
-
-    /**
-     * @OA\Get(
-     *     path="/api/admin/users/{id}/bank-cards",
-     *     operationId="getUserBankCards",
-     *     tags={"Users Management"},
-     *     summary="Get user's bank cards",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successfully retrieved bank cards",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
-     *         )
-     *     )
+     *     @OA\Response(response=404, description="User not found"),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=403, description="Forbidden")
      * )
      */
-    public function getUserBankCards(string $id)
+    public function getUserListings(Request $request, string $id)
     {
-        $user = User::findOrFail($id);
-        $bankCards = $user->bankCards()->with('cardType')->get();
+        try {
+            $user = User::findOrFail($id);
 
-        return response()->json([
-            'success' => true,
-            'data' => $bankCards
-        ]);
+            // Filtres
+            $status = $request->get('status');
+            $categoryId = $request->get('category_id');
+
+            $query = $user->listings()->with([
+                'images',
+                'city',
+                'country',
+                'country.currencyExchangeRate',
+                'category',
+                'listingType',
+                'motorcycle.brand',
+                'motorcycle.model',
+                'motorcycle.year',
+                'sparePart.bikePartBrand',
+                'sparePart.bikePartCategory',
+                'sparePart.motorcycleAssociations.brand',
+                'sparePart.motorcycleAssociations.model',
+                'sparePart.motorcycleAssociations.year',
+                'licensePlate.format',
+                'licensePlate.city',
+                'licensePlate.fieldValues.formatField'
+            ]);
+
+            // Appliquer les filtres
+            if ($status) {
+                $query->where('status', $status);
+            }
+
+            if ($categoryId) {
+                $query->where('category_id', $categoryId);
+            }
+
+            $listings = $query->orderBy('created_at', 'desc')->get();
+
+            // Formater chaque listing
+            $formattedListings = $listings->map(function ($listing) {
+                // Récupérer current_bid pour les enchères
+                $currentBid = null;
+                if ($listing->auction_enabled) {
+                    $currentBid = DB::table('auction_histories')
+                        ->where('listing_id', $listing->id)
+                        ->max('bid_amount');
+                }
+
+                // Déterminer le prix à afficher
+                $displayPrice = $listing->price;
+                $isAuction = false;
+
+                if (!$displayPrice && $listing->auction_enabled) {
+                    $displayPrice = $currentBid ?: $listing->minimum_bid;
+                    $isAuction = true;
+                }
+
+                // Récupérer le symbole de devise
+                $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+
+                $data = [
+                    'id' => $listing->id,
+                    'title' => $listing->title,
+                    'description' => $listing->description,
+                    'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
+                    'updated_at' => $listing->updated_at->format('Y-m-d H:i:s'),
+                    'city' => $listing->city?->name,
+                    'country' => $listing->country?->name,
+                    'images' => $listing->images->pluck('image_url'),
+                    'category_id' => $listing->category_id,
+                    'category_name' => $listing->category?->name,
+                    'allow_submission' => $listing->allow_submission,
+                    'auction_enabled' => $listing->auction_enabled,
+                    'minimum_bid' => $listing->minimum_bid,
+                    'listing_type_id' => $listing->listing_type_id,
+                    'listing_type_name' => $listing->listingType?->name,
+                    'contacting_channel' => $listing->contacting_channel,
+                    'seller_type' => $listing->seller_type,
+                    'status' => $listing->status,
+                    'currency' => $currencySymbol,
+                    'display_price' => $displayPrice,
+                    'is_auction' => $isAuction,
+                    'current_bid' => $currentBid,
+                ];
+
+                if (!$listing->allow_submission) {
+                    $data['price'] = $listing->price ?? $listing->minimum_bid;
+                }
+
+                // Stats du listing
+                $data['stats'] = [
+                    'views' => 0, // À implémenter si vous avez un système de vues
+                    'wishlists' => DB::table('wishlists')->where('listing_id', $listing->id)->count(),
+                    'submissions' => DB::table('submissions')->where('listing_id', $listing->id)->count(),
+                    'images_count' => $listing->images->count(),
+                    'payments_count' => $listing->payments()->count(),
+                    'completed_payments' => $listing->payments()->where('payment_status', 'completed')->count(),
+                ];
+
+                // Motorcycle category
+                if ($listing->category_id == 1 && $listing->motorcycle) {
+                    $data['motorcycle'] = [
+                        'brand' => $listing->motorcycle->brand?->name,
+                        'model' => $listing->motorcycle->model?->name,
+                        'year' => $listing->motorcycle->year?->year,
+                        'engine' => $listing->motorcycle->engine,
+                        'mileage' => $listing->motorcycle->mileage,
+                        'body_condition' => $listing->motorcycle->body_condition,
+                        'modified' => $listing->motorcycle->modified,
+                        'insurance' => $listing->motorcycle->insurance,
+                        'general_condition' => $listing->motorcycle->general_condition,
+                        'vehicle_care' => $listing->motorcycle->vehicle_care,
+                        'transmission' => $listing->motorcycle->transmission,
+                    ];
+                }
+
+                // Spare part category
+                if ($listing->category_id == 2 && $listing->sparePart) {
+                    $data['spare_part'] = [
+                        'condition' => $listing->sparePart->condition,
+                        'brand' => $listing->sparePart->bikePartBrand?->name,
+                        'category' => $listing->sparePart->bikePartCategory?->name,
+                        'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
+                            return [
+                                'brand' => $association->brand?->name,
+                                'model' => $association->model?->name,
+                                'year' => $association->year?->year,
+                            ];
+                        }),
+                    ];
+                }
+
+                // License plate category
+                if ($listing->category_id == 3 && $listing->licensePlate) {
+                    $licensePlate = $listing->licensePlate;
+
+                    $data['license_plate'] = [
+                        'plate_format' => [
+                            'id' => $licensePlate->format?->id,
+                            'name' => $licensePlate->format?->name,
+                            'pattern' => $licensePlate->format?->pattern ?? null,
+                            'country' => $licensePlate->format?->country ?? null,
+                        ],
+                        'city' => $licensePlate->city?->name,
+                        'country_id' => $licensePlate->country_id,
+                        'fields' => $licensePlate->fieldValues->map(function ($fieldValue) {
+                            return [
+                                'field_id' => $fieldValue->formatField?->id,
+                                'field_name' => $fieldValue->formatField?->field_name,
+                                'position' => $fieldValue->formatField?->position,
+                                'character_type' => $fieldValue->formatField?->character_type,
+                                'is_required' => $fieldValue->formatField?->is_required,
+                                'min_length' => $fieldValue->formatField?->min_length,
+                                'max_length' => $fieldValue->formatField?->max_length,
+                                'value' => $fieldValue->field_value,
+                            ];
+                        })->toArray(),
+                    ];
+                }
+
+                return $data;
+            });
+
+            // Résumé des listings
+            $summary = [
+                'total_listings' => $listings->count(),
+                'by_status' => [
+                    'draft' => $listings->where('status', 'draft')->count(),
+                    'published' => $listings->where('status', 'published')->count(),
+                    'active' => $listings->where('status', 'active')->count(),
+                    'sold' => $listings->where('status', 'sold')->count(),
+                    'closed' => $listings->where('status', 'closed')->count(),
+                ],
+                'by_category' => [
+                    'motorcycles' => $listings->where('category_id', 1)->count(),
+                    'spare_parts' => $listings->where('category_id', 2)->count(),
+                    'license_plates' => $listings->where('category_id', 3)->count(),
+                ],
+                'total_with_auctions' => $listings->where('auction_enabled', true)->count(),
+                'total_with_submissions' => $listings->where('allow_submission', true)->count(),
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $formattedListings,
+                'summary' => $summary
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "User with ID {$id} not found"
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error in UserController@getUserListings', [
+                'user_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving user listings',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/admin/users/{id}/auction-history",
-     *     operationId="getUserAuctionHistory",
-     *     tags={"Users Management"},
-     *     summary="Get user's auction history",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successfully retrieved auction history",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
-     *         )
-     *     )
-     * )
-     */
-    public function getUserAuctionHistory(string $id)
-    {
-        $user = User::findOrFail($id);
-        $auctionHistory = DB::table('auction_histories')
-            ->where('buyer_id', $id)
-            ->join('listings', 'auction_histories.listing_id', '=', 'listings.id')
-            ->select('auction_histories.*', 'listings.title as listing_title')
-            ->orderBy('bid_date', 'desc')
-            ->get();
+    // /**
+    //  * @OA\Get(
+    //  *     path="/api/admin/users/{id}/bank-cards",
+    //  *     operationId="getUserBankCards",
+    //  *     tags={"Users Management"},
+    //  *     summary="Get user's bank cards",
+    //  *     security={{"bearerAuth":{}}},
+    //  *     @OA\Parameter(
+    //  *         name="id",
+    //  *         in="path",
+    //  *         required=true,
+    //  *         @OA\Schema(type="integer", example=1)
+    //  *     ),
+    //  *     @OA\Response(
+    //  *         response=200,
+    //  *         description="Successfully retrieved bank cards",
+    //  *         @OA\JsonContent(
+    //  *             @OA\Property(property="success", type="boolean", example=true),
+    //  *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+    //  *         )
+    //  *     )
+    //  * )
+    //  */
+    // public function getUserBankCards(string $id)
+    // {
+    //     $user = User::findOrFail($id);
+    //     $bankCards = $user->bankCards()->with('cardType')->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $auctionHistory
-        ]);
-    }
+    //     return response()->json([
+    //         'success' => true,
+    //         'data' => $bankCards
+    //     ]);
+    // }
+
+    // /**
+    //  * @OA\Get(
+    //  *     path="/api/admin/users/{id}/auction-history",
+    //  *     operationId="getUserAuctionHistory",
+    //  *     tags={"Users Management"},
+    //  *     summary="Get user's auction history",
+    //  *     security={{"bearerAuth":{}}},
+    //  *     @OA\Parameter(
+    //  *         name="id",
+    //  *         in="path",
+    //  *         required=true,
+    //  *         @OA\Schema(type="integer", example=1)
+    //  *     ),
+    //  *     @OA\Response(
+    //  *         response=200,
+    //  *         description="Successfully retrieved auction history",
+    //  *         @OA\JsonContent(
+    //  *             @OA\Property(property="success", type="boolean", example=true),
+    //  *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+    //  *         )
+    //  *     )
+    //  * )
+    //  */
+    // public function getUserAuctionHistory(string $id)
+    // {
+    //     $user = User::findOrFail($id);
+    //     $auctionHistory = DB::table('auction_histories')
+    //         ->where('buyer_id', $id)
+    //         ->join('listings', 'auction_histories.listing_id', '=', 'listings.id')
+    //         ->select('auction_histories.*', 'listings.title as listing_title')
+    //         ->orderBy('bid_date', 'desc')
+    //         ->get();
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'data' => $auctionHistory
+    //     ]);
+    // }
 
     /**
      * @OA\Get(
@@ -1103,7 +1619,7 @@ class UserController extends Controller
             ->with('role:id,name')
             ->groupBy('role_id')
             ->get()
-            ->map(function($item) {
+            ->map(function ($item) {
                 return [
                     'role_id' => $item->role_id,
                     'role_name' => $item->role->name ?? 'Unknown',
@@ -1124,7 +1640,7 @@ class UserController extends Controller
             ->orderBy('count', 'desc')
             ->limit(10)
             ->get()
-            ->map(function($item) {
+            ->map(function ($item) {
                 return [
                     'country_id' => $item->country_id,
                     'country_name' => $item->country->name ?? 'Unknown',
@@ -1196,9 +1712,9 @@ class UserController extends Controller
         ])->count();
 
         $usersByDay = User::select(
-                DB::raw('DAY(created_at) as day'),
-                DB::raw('COUNT(*) as count')
-            )
+            DB::raw('DAY(created_at) as day'),
+            DB::raw('COUNT(*) as count')
+        )
             ->whereYear('created_at', $year)
             ->whereMonth('created_at', $month)
             ->groupBy('day')
@@ -1206,18 +1722,18 @@ class UserController extends Controller
             ->get();
 
         $usersByMonth = User::select(
-                DB::raw('MONTH(created_at) as month'),
-                DB::raw('COUNT(*) as count')
-            )
+            DB::raw('MONTH(created_at) as month'),
+            DB::raw('COUNT(*) as count')
+        )
             ->whereYear('created_at', $year)
             ->groupBy('month')
             ->orderBy('month')
             ->get();
 
         $usersByYear = User::select(
-                DB::raw('YEAR(created_at) as year'),
-                DB::raw('COUNT(*) as count')
-            )
+            DB::raw('YEAR(created_at) as year'),
+            DB::raw('COUNT(*) as count')
+        )
             ->where('created_at', '>=', Carbon::now()->subYears(5))
             ->groupBy('year')
             ->orderBy('year')
@@ -1260,6 +1776,7 @@ class UserController extends Controller
      *     operationId="usersBulkAction",
      *     tags={"Users Management"},
      *     summary="Perform bulk actions on multiple users",
+     *     description="Execute actions (activate, deactivate, delete, verify, assign role) on multiple users at once",
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
@@ -1269,13 +1786,33 @@ class UserController extends Controller
      *                 property="user_ids",
      *                 type="array",
      *                 @OA\Items(type="integer"),
-     *                 example={1, 2, 3, 4, 5}
+     *                 example={2, 3, 4, 5},
+     *                 description="Array of user IDs to perform action on"
      *             ),
      *             @OA\Property(
      *                 property="action",
      *                 type="string",
-     *                 enum={"activate", "deactivate", "delete", "verify"},
-     *                 example="activate"
+     *                 enum={"activate", "deactivate", "delete", "verify", "unverify", "assign_role", "send_email"},
+     *                 example="activate",
+     *                 description="Action to perform"
+     *             ),
+     *             @OA\Property(
+     *                 property="role_id",
+     *                 type="integer",
+     *                 example=2,
+     *                 description="Required when action is 'assign_role'"
+     *             ),
+     *             @OA\Property(
+     *                 property="email_subject",
+     *                 type="string",
+     *                 example="Important Update",
+     *                 description="Required when action is 'send_email'"
+     *             ),
+     *             @OA\Property(
+     *                 property="email_message",
+     *                 type="string",
+     *                 example="Hello, this is an important message...",
+     *                 description="Required when action is 'send_email'"
      *             )
      *         )
      *     ),
@@ -1284,41 +1821,139 @@ class UserController extends Controller
      *         description="Bulk action completed successfully",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Bulk activate completed successfully")
+     *             @OA\Property(property="message", type="string", example="Bulk activate completed successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="affected_users", type="integer", example=5),
+     *                 @OA\Property(property="failed_users", type="array", @OA\Items(type="integer")),
+     *                 @OA\Property(property="action", type="string", example="activate")
+     *             )
      *         )
-     *     )
+     *     ),
+     *     @OA\Response(response=400, description="Validation error"),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=403, description="Forbidden")
      * )
      */
     public function bulkAction(Request $request)
     {
-        $validated = $request->validate([
-            'user_ids' => 'required|array',
-            'user_ids.*' => 'exists:users,id',
-            'action' => 'required|string|in:activate,deactivate,delete,verify'
-        ]);
+        try {
+            $validated = $request->validate([
+                'user_ids' => 'required|array|min:1',
+                'user_ids.*' => 'integer|exists:users,id',
+                'action' => 'required|string|in:activate,deactivate,delete,verify,unverify,assign_role,send_email',
+                'role_id' => 'required_if:action,assign_role|exists:roles,id',
+                'email_subject' => 'required_if:action,send_email|string|max:255',
+                'email_message' => 'required_if:action,send_email|string',
+            ]);
 
-        $userIds = $validated['user_ids'];
-        $action = $validated['action'];
+            $userIds = $validated['user_ids'];
+            $action = $validated['action'];
 
-        switch ($action) {
-            case 'activate':
-                User::whereIn('id', $userIds)->update(['is_active' => true]);
-                break;
-            case 'deactivate':
-                User::whereIn('id', $userIds)->update(['is_active' => false]);
-                break;
-            case 'delete':
-                User::whereIn('id', $userIds)->delete();
-                break;
-            case 'verify':
-                User::whereIn('id', $userIds)->update(['verified' => true]);
-                break;
+            // ⭐ Empêcher la modification de l'admin principal (ID 1)
+            if (in_array(1, $userIds)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot perform bulk actions on the main administrator account (ID: 1)'
+                ], 403);
+            }
+
+            // ⭐ Empêcher l'admin de se modifier lui-même
+            $currentUserId = auth()->id();
+            if (in_array($currentUserId, $userIds)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot perform bulk actions on your own account'
+                ], 403);
+            }
+
+            $affectedUsers = 0;
+            $failedUsers = [];
+
+            switch ($action) {
+                case 'activate':
+                    $affectedUsers = User::whereIn('id', $userIds)->update(['is_active' => true]);
+                    break;
+
+                case 'deactivate':
+                    $affectedUsers = User::whereIn('id', $userIds)->update(['is_active' => false]);
+                    break;
+
+                case 'delete':
+                    // Soft delete
+                    $affectedUsers = User::whereIn('id', $userIds)->delete();
+                    break;
+
+                case 'verify':
+                    $affectedUsers = User::whereIn('id', $userIds)->update(['verified' => true]);
+                    break;
+
+                case 'unverify':
+                    $affectedUsers = User::whereIn('id', $userIds)->update(['verified' => false]);
+                    break;
+
+                case 'assign_role':
+                    $affectedUsers = User::whereIn('id', $userIds)
+                        ->update(['role_id' => $validated['role_id']]);
+                    break;
+
+                case 'send_email':
+                    $users = User::whereIn('id', $userIds)->get();
+                    foreach ($users as $user) {
+                        try {
+                            Mail::raw($validated['email_message'], function ($message) use ($user, $validated) {
+                                $message->to($user->email)
+                                    ->subject($validated['email_subject']);
+                            });
+                            $affectedUsers++;
+                        } catch (\Exception $e) {
+                            $failedUsers[] = $user->id;
+                            \Log::error('Failed to send bulk email to user ' . $user->id, [
+                                'error' => $e->getMessage()
+                            ]);
+                        }
+                    }
+                    break;
+            }
+
+            // ⭐ Logger l'action
+            \Log::info('Bulk action performed', [
+                'action' => $action,
+                'performed_by' => auth()->id(),
+                'affected_users' => $affectedUsers,
+                'user_ids' => $userIds,
+                'failed_users' => $failedUsers
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Bulk {$action} completed successfully",
+                'data' => [
+                    'action' => $action,
+                    'affected_users' => $affectedUsers,
+                    'failed_users' => $failedUsers,
+                    'total_requested' => count($userIds)
+                ]
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $e->errors()
+            ], 400);
+        } catch (\Exception $e) {
+            \Log::error('Error in bulkAction', [
+                'error' => $e->getMessage(),
+                'action' => $request->action ?? 'unknown'
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error performing bulk action',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => "Bulk {$action} completed successfully"
-        ]);
     }
 
     /**
@@ -1344,13 +1979,23 @@ class UserController extends Controller
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        $callback = function() use ($users) {
+        $callback = function () use ($users) {
             $file = fopen('php://output', 'w');
 
             fputcsv($file, [
-                'ID', 'First Name', 'Last Name', 'Email', 'Phone',
-                'Birthday', 'Gender', 'Address', 'Postal Code',
-                'Role', 'Country ID', 'Is Active', 'Verified',
+                'ID',
+                'First Name',
+                'Last Name',
+                'Email',
+                'Phone',
+                'Birthday',
+                'Gender',
+                'Address',
+                'Postal Code',
+                'Role',
+                'Country ID',
+                'Is Active',
+                'Verified',
                 'Created At'
             ]);
 
@@ -1451,10 +2096,10 @@ class UserController extends Controller
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'LIKE', "%{$search}%")
-                  ->orWhere('last_name', 'LIKE', "%{$search}%")
-                  ->orWhere('email', 'LIKE', "%{$search}%");
+                    ->orWhere('last_name', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%");
             });
         }
 

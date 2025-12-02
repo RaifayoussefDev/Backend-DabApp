@@ -332,7 +332,54 @@ class User extends Authenticatable implements JWTSubject
      */
     public function hasPermission($permissionName)
     {
-        return $this->role && $this->role->hasPermission($permissionName);
+        // Admin role (role_id = 1) has all permissions
+        if ($this->role_id === 1) {
+            return true;
+        }
+
+        // Load role with permissions if not already loaded
+        if (!$this->relationLoaded('role')) {
+            $this->load('role.permissions');
+        }
+
+        // Check if role exists and has the permission
+        if ($this->role) {
+            return $this->role->permissions->contains('name', $permissionName);
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the user has a specific permission.
+     *
+     * @param string $permissionName
+     * @return bool
+     */
+    public function hasAnyPermission(array $permissions)
+    {
+        foreach ($permissions as $permission) {
+            if ($this->hasPermission($permission)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if user has all of the given permissions
+     *
+     * @param array $permissions
+     * @return bool
+     */
+    public function hasAllPermissions(array $permissions)
+    {
+        foreach ($permissions as $permission) {
+            if (!$this->hasPermission($permission)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -342,7 +389,37 @@ class User extends Authenticatable implements JWTSubject
      */
     public function getPermissions()
     {
+        // Admin role (role_id = 1) has all permissions
+        if ($this->role_id === 1) {
+            return Permission::pluck('name')->toArray();
+        }
+
+        // Load role with permissions if not already loaded
+        if (!$this->relationLoaded('role')) {
+            $this->load('role.permissions');
+        }
+
         return $this->role ? $this->role->permissions->pluck('name')->toArray() : [];
+    }
+
+    /**
+     * Get all permission objects for the user.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getPermissionObjects()
+    {
+        // Admin role (role_id = 1) has all permissions
+        if ($this->role_id === 1) {
+            return Permission::all();
+        }
+
+        // Load role with permissions if not already loaded
+        if (!$this->relationLoaded('role')) {
+            $this->load('role.permissions');
+        }
+
+        return $this->role ? $this->role->permissions : collect();
     }
 
     // ==========================================

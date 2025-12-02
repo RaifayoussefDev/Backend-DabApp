@@ -6,10 +6,11 @@ use App\Models\Role;
 use App\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class RolePermissionController extends Controller
 {
-    /**
+   /**
      * @OA\Get(
      *     path="/api/admin/roles/{roleId}/permissions",
      *     operationId="getRolePermissions",
@@ -58,15 +59,41 @@ class RolePermissionController extends Controller
      */
     public function index($roleId)
     {
-        $role = Role::with('permissions')->findOrFail($roleId);
+        try {
+            Log::info('Getting permissions for role', ['role_id' => $roleId]);
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'role' => $role->only(['id', 'name']),
-                'permissions' => $role->permissions
-            ]
-        ]);
+            $role = Role::with('permissions')->findOrFail($roleId);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'role' => [
+                        'id' => $role->id,
+                        'name' => $role->name,
+                        'created_at' => $role->created_at,
+                        'updated_at' => $role->updated_at,
+                    ],
+                    'permissions' => $role->permissions->map(function($permission) {
+                        return [
+                            'id' => $permission->id,
+                            'name' => $permission->name,
+                            'description' => $permission->description,
+                        ];
+                    })
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting role permissions', [
+                'role_id' => $roleId,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving role permissions',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

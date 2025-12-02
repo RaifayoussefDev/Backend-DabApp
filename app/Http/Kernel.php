@@ -67,7 +67,8 @@ class Kernel extends HttpKernel
         'cors' => \App\Http\Middleware\OwnCors::class,  // If you have a custom CORS middleware, ensure it's correctly placed here
         'swagger.auth' => \App\Http\Middleware\SwaggerAuth::class,
 
-
+        'permission' => \App\Http\Middleware\CheckPermission::class,
+        'admin.access' => \App\Http\Middleware\CheckAdminAccess::class,
 
     ];
 }

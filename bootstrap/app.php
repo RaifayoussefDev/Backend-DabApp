@@ -2,6 +2,8 @@
 
 use App\Http\Middleware\OwnCors;
 use App\Http\Middleware\SwaggerAuth;
+use App\Http\Middleware\CheckPermission;
+use App\Http\Middleware\CheckAdminAccess;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,11 +16,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Ajouter OwnCors globalement
         $middleware->append(OwnCors::class);
 
-        // Enregistrer l'alias pour le middleware Swagger
+        // Enregistrer tous les aliases de middleware
         $middleware->alias([
             'swagger.auth' => SwaggerAuth::class,
+            'permission' => CheckPermission::class,
+            'admin.access' => CheckAdminAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
