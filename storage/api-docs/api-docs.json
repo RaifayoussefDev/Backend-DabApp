@@ -25707,7 +25707,7 @@
                     "Users Management"
                 ],
                 "summary": "Get complete user details by ID",
-                "description": "Returns detailed user information including role, country, bank cards, wishlists, listings (formatted like getById), payments, sooms sent/received, and comprehensive statistics.",
+                "description": "Returns detailed user information including role, country, bank cards, wishlists, listings, payments, sooms sent/received, and comprehensive statistics.",
                 "operationId": "getUserById",
                 "parameters": [
                     {
@@ -25745,28 +25745,154 @@
                                         "data": {
                                             "properties": {
                                                 "user": {
+                                                    "description": "Complete user information with relations",
                                                     "type": "object"
                                                 },
                                                 "stats": {
+                                                    "properties": {
+                                                        "total_listings": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "active_listings": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "published_listings": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "draft_listings": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "sold_listings": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "total_wishlists": {
+                                                            "type": "integer",
+                                                            "example": 10
+                                                        },
+                                                        "total_bank_cards": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "auction_participations": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        },
+                                                        "auction_wins": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "total_sooms_sent": {
+                                                            "type": "integer",
+                                                            "example": 8
+                                                        },
+                                                        "pending_sooms": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "accepted_sooms": {
+                                                            "type": "integer",
+                                                            "example": 4
+                                                        },
+                                                        "rejected_sooms": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "validated_sales": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "total_sooms_received": {
+                                                            "type": "integer",
+                                                            "example": 12
+                                                        },
+                                                        "pending_sooms_received": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "accepted_sooms_received": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "pending_validation": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "total_payments": {
+                                                            "type": "integer",
+                                                            "example": 4
+                                                        },
+                                                        "completed_payments": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "pending_payments": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "failed_payments": {
+                                                            "type": "integer",
+                                                            "example": 0
+                                                        },
+                                                        "total_payment_amount": {
+                                                            "type": "number",
+                                                            "example": 250.5
+                                                        }
+                                                    },
                                                     "type": "object"
                                                 },
-                                                "listings": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "object"
-                                                    }
-                                                },
                                                 "sooms_sent": {
+                                                    "properties": {
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 8
+                                                        },
+                                                        "data": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object"
+                                                            }
+                                                        }
+                                                    },
                                                     "type": "object"
                                                 },
                                                 "sooms_received": {
+                                                    "properties": {
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 12
+                                                        },
+                                                        "data": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object"
+                                                            }
+                                                        }
+                                                    },
                                                     "type": "object"
                                                 },
                                                 "payments": {
+                                                    "properties": {
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 4
+                                                        },
+                                                        "data": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object"
+                                                            }
+                                                        }
+                                                    },
                                                     "type": "object"
                                                 },
                                                 "is_deleted": {
-                                                    "type": "boolean"
+                                                    "type": "boolean",
+                                                    "example": false
                                                 }
                                             },
                                             "type": "object"
