@@ -65,12 +65,15 @@ use App\Http\Controllers\EventUpdateController;
 use App\Http\Controllers\{
     NewsletterController,
     NewsletterCampaignController,
+    PermissionController,
     PlateGeneratorController,
     PointOfInterestController,
     PoiTypeController,
     PoiServiceController,
     PoiReviewController,
     PoiReportController,
+    RoleController,
+    RolePermissionController,
     RouteController,
     RouteCategoryController,
     RouteTagController,
@@ -97,64 +100,83 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/user/two-factor-toggle', [AuthController::class, 'toggleTwoFactor']);
 
 
-    // Users
-    // Basic CRUD (apiResource)
-    Route::prefix('users')->group(function () {
-        Route::get('/', [UserController::class, 'index']);
-        Route::post('/', [UserController::class, 'store']);
-        Route::get('/stats', [UserController::class, 'stats']);
-        Route::get('/export', [UserController::class, 'export']);
-        Route::post('/search', [UserController::class, 'search']);
-        Route::post('/bulk-action', [UserController::class, 'bulkAction']);
+    // ============================================
+    // USERS MANAGEMENT
+    // ============================================
+    Route::prefix('admin/users')->group(function () {
+        // List & Statistics
+        Route::get('/', [UserController::class, 'index'])
+            ->middleware('permission:users.view');
+        Route::get('/stats', [UserController::class, 'stats'])
+            ->middleware('permission:users.view');
+        Route::get('/stats/detailed', [UserController::class, 'detailedStats'])
+            ->middleware('permission:users.view');
+        Route::get('/trashed', [UserController::class, 'getTrashed'])
+            ->middleware('permission:users.view');
+        Route::get('/export', [UserController::class, 'export'])
+            ->middleware('permission:users.view');
 
-        Route::get('/{id}', [UserController::class, 'show']);
-        Route::put('/{id}', [UserController::class, 'update']);
-        Route::delete('/{id}', [UserController::class, 'destroy']);
+        // Search
+        Route::post('/search', [UserController::class, 'search'])
+            ->middleware('permission:users.view');
 
-        Route::put('/{id}/activate', [UserController::class, 'activate']);
-        Route::put('/{id}/deactivate', [UserController::class, 'deactivate']);
-        Route::post('/{id}/reset-password', [UserController::class, 'resetPassword']);
+        // Bulk Actions
+        Route::post('/bulk-action', [UserController::class, 'bulkAction'])
+            ->middleware('permission:users.delete');
 
-        Route::post('/{id}/two-factor/enable', [UserController::class, 'enableTwoFactor']);
-        Route::post('/{id}/two-factor/disable', [UserController::class, 'disableTwoFactor']);
+        // CRUD Operations
+        Route::post('/', [UserController::class, 'store'])
+            ->middleware('permission:users.create');
+        Route::get('/{id}', [UserController::class, 'show'])
+            ->middleware('permission:users.view');
+        Route::put('/{id}', [UserController::class, 'update'])
+            ->middleware('permission:users.update');
+        Route::delete('/{id}', [UserController::class, 'destroy'])
+            ->middleware('permission:users.delete');
 
-        Route::put('/{id}/last-login', [UserController::class, 'updateLastLogin']);
-        Route::put('/{id}/online-status', [UserController::class, 'updateOnlineStatus']);
+        // User Account Management
+        Route::post('/{id}/activate', [UserController::class, 'activate'])
+            ->middleware('permission:users.update');
+        Route::post('/{id}/deactivate', [UserController::class, 'deactivate'])
+            ->middleware('permission:users.update');
+        Route::post('/{id}/verify', [UserController::class, 'verifyUser'])
+            ->middleware('permission:users.update');
+        Route::post('/{id}/restore', [UserController::class, 'restore'])
+            ->middleware('permission:users.update');
+        Route::delete('/{id}/force-delete', [UserController::class, 'forceDelete'])
+            ->middleware('permission:users.delete');
+
+        // Password Management
+        Route::post('/{id}/reset-password', [UserController::class, 'resetPassword'])
+            ->middleware('permission:users.update');
+        Route::put('/{id}/change-password', [UserController::class, 'changePassword'])
+            ->middleware('permission:users.update');
+
+        // Profile Management
+        Route::post('/{id}/profile-picture', [UserController::class, 'updateProfilePicture'])
+            ->middleware('permission:users.update');
+        Route::put('/{id}/last-login', [UserController::class, 'updateLastLogin'])
+            ->middleware('permission:users.update');
+        Route::put('/{id}/online-status', [UserController::class, 'updateOnlineStatus'])
+            ->middleware('permission:users.update');
+
+        // Two-Factor Authentication
+        Route::post('/{id}/two-factor/enable', [UserController::class, 'enableTwoFactor'])
+            ->middleware('permission:users.update');
+        Route::post('/{id}/two-factor/disable', [UserController::class, 'disableTwoFactor'])
+            ->middleware('permission:users.update');
+
+        // User Relations
+        Route::get('/{id}/wishlists', [UserController::class, 'getUserWishlists'])
+            ->middleware('permission:users.view');
+        Route::get('/{id}/listings', [UserController::class, 'getUserListings'])
+            ->middleware('permission:users.view');
+        Route::get('/{id}/bank-cards', [UserController::class, 'getUserBankCards'])
+            ->middleware('permission:users.view');
+        Route::get('/{id}/auction-history', [UserController::class, 'getUserAuctionHistory'])
+            ->middleware('permission:users.view');
     });
-    // Routes additionnelles
-    Route::prefix('users')->group(function () {
-        // Gestion de compte
-        Route::post('/{id}/activate', [UserController::class, 'activateUser']);
-        Route::post('/{id}/deactivate', [UserController::class, 'deactivateUser']);
-        Route::post('/{id}/verify', [UserController::class, 'verifyUser']);
-        Route::post('/{id}/reset-password', [UserController::class, 'resetPassword']);
-        Route::put('/{id}/change-password', [UserController::class, 'changePassword']);
 
-        // Gestion du profil
-        Route::put('/{id}/profile-picture', [UserController::class, 'updateProfilePicture']);
-        Route::put('/{id}/last-login', [UserController::class, 'updateLastLogin']);
-        Route::put('/{id}/online-status', [UserController::class, 'updateOnlineStatus']);
-
-        // Authentification à deux facteurs
-        Route::post('/{id}/two-factor/enable', [UserController::class, 'enableTwoFactor']);
-        Route::post('/{id}/two-factor/disable', [UserController::class, 'disableTwoFactor']);
-
-        // Relations utilisateur
-        Route::get('/{id}/wishlists', [UserController::class, 'getUserWishlists']);
-        Route::get('/{id}/listings', [UserController::class, 'getUserListings']);
-        Route::get('/{id}/bank-cards', [UserController::class, 'getUserBankCards']);
-        Route::get('/{id}/auction-history', [UserController::class, 'getUserAuctionHistory']);
-
-        // Gestion avancée
-        Route::post('/{id}/restore', [UserController::class, 'restore']);
-        Route::delete('/{id}/force-delete', [UserController::class, 'forceDelete']);
-    });
-
-    // Statistiques & opérations en masse
-    Route::get('/users-statistics', [UserController::class, 'getStatistics']);
-    Route::get('/users-trashed', [UserController::class, 'getTrashed']);
-    Route::post('/users-bulk-action', [UserController::class, 'bulkAction']);
-    Route::get('/users-export', [UserController::class, 'export']);
     // Cards
     Route::apiResource('BankCards', CardController::class);
 
@@ -1044,6 +1066,138 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/user/completions', [RouteCompletionController::class, 'userCompletions']);
     Route::get('/user/completion-stats', [RouteCompletionController::class, 'userStats']);
 });
+
+
+Route::middleware(['auth:api'])->prefix('admin')->group(function () {
+
+    // ============================================
+    // PERMISSIONS MANAGEMENT
+    // ============================================
+    Route::prefix('permissions')->group(function () {
+        Route::get('/', [PermissionController::class, 'index'])
+            ->middleware('permission:permissions.view');
+        Route::post('/', [PermissionController::class, 'store'])
+            ->middleware('permission:permissions.create');
+        Route::get('/grouped', [PermissionController::class, 'grouped'])
+            ->middleware('permission:permissions.view');
+        Route::get('/{id}', [PermissionController::class, 'show'])
+            ->middleware('permission:permissions.view');
+        Route::put('/{id}', [PermissionController::class, 'update'])
+            ->middleware('permission:permissions.update');
+        Route::delete('/{id}', [PermissionController::class, 'destroy'])
+            ->middleware('permission:permissions.delete');
+    });
+
+    // ============================================
+    // ROLES MANAGEMENT
+    // ============================================
+    Route::prefix('roles')->group(function () {
+        Route::get('/', [RoleController::class, 'index'])
+            ->middleware('permission:roles.view');
+        Route::post('/', [RoleController::class, 'store'])
+            ->middleware('permission:roles.create');
+        Route::get('/{id}', [RoleController::class, 'show'])
+            ->middleware('permission:roles.view');
+        Route::put('/{id}', [RoleController::class, 'update'])
+            ->middleware('permission:roles.update');
+        Route::delete('/{id}', [RoleController::class, 'destroy'])
+            ->middleware('permission:roles.delete');
+    });
+
+    // ============================================
+    // ROLE PERMISSIONS
+    // ============================================
+    Route::prefix('roles/{roleId}/permissions')->group(function () {
+        Route::get('/', [RolePermissionController::class, 'index'])
+            ->middleware('permission:roles.view');
+        Route::post('/', [RolePermissionController::class, 'store'])
+            ->middleware('permission:roles.update');
+        Route::post('/sync', [RolePermissionController::class, 'sync'])
+            ->middleware('permission:roles.update');
+        Route::delete('/{permissionId}', [RolePermissionController::class, 'destroy'])
+            ->middleware('permission:roles.update');
+    });
+
+    // // ============================================
+    // // USERS MANAGEMENT
+    // // ============================================
+    // Route::prefix('users')->group(function () {
+    //     // List & Statistics
+    //     Route::get('/', [UserController::class, 'index'])
+    //         ->middleware('permission:users.view');
+    //     Route::get('/stats', [UserController::class, 'stats'])
+    //         ->middleware('permission:users.view');
+    //     Route::get('/stats/detailed', [UserController::class, 'detailedStats'])
+    //         ->middleware('permission:users.view');
+    //     Route::get('/trashed', [UserController::class, 'getTrashed'])
+    //         ->middleware('permission:users.view');
+    //     Route::get('/export', [UserController::class, 'export'])
+    //         ->middleware('permission:users.view');
+
+    //     // Search
+    //     Route::post('/search', [UserController::class, 'search'])
+    //         ->middleware('permission:users.view');
+
+    //     // Bulk Actions
+    //     Route::post('/bulk-action', [UserController::class, 'bulkAction'])
+    //         ->middleware('permission:users.delete');
+
+    //     // CRUD Operations
+    //     Route::post('/', [UserController::class, 'store'])
+    //         ->middleware('permission:users.create');
+    //     Route::get('/{id}', [UserController::class, 'show'])
+    //         ->middleware('permission:users.view');
+    //     Route::put('/{id}', [UserController::class, 'update'])
+    //         ->middleware('permission:users.update');
+    //     Route::delete('/{id}', [UserController::class, 'destroy'])
+    //         ->middleware('permission:users.delete');
+
+    //     // User Account Management
+    //     Route::post('/{id}/activate', [UserController::class, 'activate'])
+    //         ->middleware('permission:users.update');
+    //     Route::post('/{id}/deactivate', [UserController::class, 'deactivate'])
+    //         ->middleware('permission:users.update');
+    //     Route::post('/{id}/verify', [UserController::class, 'verifyUser'])
+    //         ->middleware('permission:users.update');
+    //     Route::post('/{id}/restore', [UserController::class, 'restore'])
+    //         ->middleware('permission:users.update');
+    //     Route::delete('/{id}/force-delete', [UserController::class, 'forceDelete'])
+    //         ->middleware('permission:users.delete');
+
+    //     // Password Management
+    //     Route::post('/{id}/reset-password', [UserController::class, 'resetPassword'])
+    //         ->middleware('permission:users.update');
+    //     Route::put('/{id}/change-password', [UserController::class, 'changePassword'])
+    //         ->middleware('permission:users.update');
+
+    //     // Profile Management
+    //     Route::post('/{id}/profile-picture', [UserController::class, 'updateProfilePicture'])
+    //         ->middleware('permission:users.update');
+    //     Route::put('/{id}/last-login', [UserController::class, 'updateLastLogin'])
+    //         ->middleware('permission:users.update');
+    //     Route::put('/{id}/online-status', [UserController::class, 'updateOnlineStatus'])
+    //         ->middleware('permission:users.update');
+
+    //     // Two-Factor Authentication
+    //     Route::post('/{id}/two-factor/enable', [UserController::class, 'enableTwoFactor'])
+    //         ->middleware('permission:users.update');
+    //     Route::post('/{id}/two-factor/disable', [UserController::class, 'disableTwoFactor'])
+    //         ->middleware('permission:users.update');
+
+    //     // User Relations
+    //     Route::get('/{id}/wishlists', [UserController::class, 'getUserWishlists'])
+    //         ->middleware('permission:users.view');
+    //     Route::get('/{id}/listings', [UserController::class, 'getUserListings'])
+    //         ->middleware('permission:users.view');
+    //     Route::get('/{id}/bank-cards', [UserController::class, 'getUserBankCards'])
+    //         ->middleware('permission:users.view');
+    //     Route::get('/{id}/auction-history', [UserController::class, 'getUserAuctionHistory'])
+    //         ->middleware('permission:users.view');
+    // });
+
+
+});
+
 // Route pour générer la plaque
 Route::post('/generate-plate', [PlateGeneratorController::class, 'generatePlate']);
 
