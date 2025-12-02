@@ -351,7 +351,7 @@ class UserController extends Controller
      *     operationId="getUserById",
      *     tags={"Users Management"},
      *     summary="Get complete user details by ID",
-     *     description="Returns detailed user information including role, country, bank cards, wishlists, listings, payments, sooms sent/received, and comprehensive statistics.",
+     *     description="Returns detailed user information including role, country, bank cards, wishlists, listings (formatted like getById), payments, sooms sent/received, and comprehensive statistics.",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
@@ -375,57 +375,13 @@ class UserController extends Controller
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
-     *                 @OA\Property(
-     *                     property="user",
-     *                     type="object",
-     *                     description="Complete user information with relations"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="stats",
-     *                     type="object",
-     *                     @OA\Property(property="total_listings", type="integer", example=5),
-     *                     @OA\Property(property="active_listings", type="integer", example=3),
-     *                     @OA\Property(property="published_listings", type="integer", example=2),
-     *                     @OA\Property(property="draft_listings", type="integer", example=1),
-     *                     @OA\Property(property="sold_listings", type="integer", example=1),
-     *                     @OA\Property(property="total_wishlists", type="integer", example=10),
-     *                     @OA\Property(property="total_bank_cards", type="integer", example=2),
-     *                     @OA\Property(property="auction_participations", type="integer", example=15),
-     *                     @OA\Property(property="auction_wins", type="integer", example=5),
-     *                     @OA\Property(property="total_sooms_sent", type="integer", example=8),
-     *                     @OA\Property(property="pending_sooms", type="integer", example=2),
-     *                     @OA\Property(property="accepted_sooms", type="integer", example=4),
-     *                     @OA\Property(property="rejected_sooms", type="integer", example=2),
-     *                     @OA\Property(property="validated_sales", type="integer", example=3),
-     *                     @OA\Property(property="total_sooms_received", type="integer", example=12),
-     *                     @OA\Property(property="pending_sooms_received", type="integer", example=3),
-     *                     @OA\Property(property="accepted_sooms_received", type="integer", example=5),
-     *                     @OA\Property(property="pending_validation", type="integer", example=2),
-     *                     @OA\Property(property="total_payments", type="integer", example=4),
-     *                     @OA\Property(property="completed_payments", type="integer", example=3),
-     *                     @OA\Property(property="pending_payments", type="integer", example=1),
-     *                     @OA\Property(property="failed_payments", type="integer", example=0),
-     *                     @OA\Property(property="total_payment_amount", type="number", example=250.50)
-     *                 ),
-     *                 @OA\Property(
-     *                     property="sooms_sent",
-     *                     type="object",
-     *                     @OA\Property(property="total", type="integer", example=8),
-     *                     @OA\Property(property="data", type="array", @OA\Items(type="object"))
-     *                 ),
-     *                 @OA\Property(
-     *                     property="sooms_received",
-     *                     type="object",
-     *                     @OA\Property(property="total", type="integer", example=12),
-     *                     @OA\Property(property="data", type="array", @OA\Items(type="object"))
-     *                 ),
-     *                 @OA\Property(
-     *                     property="payments",
-     *                     type="object",
-     *                     @OA\Property(property="total", type="integer", example=4),
-     *                     @OA\Property(property="data", type="array", @OA\Items(type="object"))
-     *                 ),
-     *                 @OA\Property(property="is_deleted", type="boolean", example=false)
+     *                 @OA\Property(property="user", type="object"),
+     *                 @OA\Property(property="stats", type="object"),
+     *                 @OA\Property(property="listings", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="sooms_sent", type="object"),
+     *                 @OA\Property(property="sooms_received", type="object"),
+     *                 @OA\Property(property="payments", type="object"),
+     *                 @OA\Property(property="is_deleted", type="boolean")
      *             )
      *         )
      *     ),
@@ -445,44 +401,165 @@ class UserController extends Controller
                 $query->withTrashed();
             }
 
-            // ⭐ Charger TOUTES les relations avec les BONS noms de colonnes
+            // ⭐ Charger l'utilisateur avec relations de base
             $user = $query->with([
-                // Relations de base
                 'role',
                 'country',
-
-                // Bank Cards
                 'bankCards.cardType',
-
-                // Wishlists
-                'wishlists.listing',
-
-                // ⭐ Listings avec toutes leurs relations
-                'listings' => function ($query) {
-                    $query->with([
-                        'category',
-                        'country',
-                        'city',
-                        'images', // ← Laravel va automatiquement charger toutes les colonnes
-                        'motorcycle',
-                        'sparePart',
-                        'licensePlate',
-                        'listingType'
-                    ])->withCount([
-                        'images',
-                        'auctionHistories',
-                        'payments'
-                    ]);
-                }
+                'wishlists.listing'
             ])->findOrFail($id);
+
+            // ⭐ Charger les listings avec TOUTES les relations (comme dans getById)
+            $listings = Listing::with([
+                'images',
+                'city',
+                'country',
+                'country.currencyExchangeRate',
+                'category',
+                'listingType',
+                'motorcycle.brand',
+                'motorcycle.model',
+                'motorcycle.year',
+                'sparePart.bikePartBrand',
+                'sparePart.bikePartCategory',
+                'sparePart.motorcycleAssociations.brand',
+                'sparePart.motorcycleAssociations.model',
+                'sparePart.motorcycleAssociations.year',
+                'licensePlate.format',
+                'licensePlate.city',
+                'licensePlate.fieldValues.formatField'
+            ])
+                ->where('seller_id', $id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // ⭐ Formater les listings exactement comme getById
+            $formattedListings = $listings->map(function ($listing) {
+                // Récupérer current_bid pour les enchères
+                $currentBid = null;
+                if ($listing->auction_enabled) {
+                    $currentBid = DB::table('auction_histories')
+                        ->where('listing_id', $listing->id)
+                        ->max('bid_amount');
+                }
+
+                // Déterminer le prix à afficher
+                $displayPrice = $listing->price;
+                $isAuction = false;
+
+                if (!$displayPrice && $listing->auction_enabled) {
+                    $displayPrice = $currentBid ?: $listing->minimum_bid;
+                    $isAuction = true;
+                }
+
+                // Symbole de devise
+                $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+
+                $data = [
+                    'id' => $listing->id,
+                    'title' => $listing->title,
+                    'description' => $listing->description,
+                    'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
+                    'updated_at' => $listing->updated_at->format('Y-m-d H:i:s'),
+                    'city' => $listing->city?->name,
+                    'country' => $listing->country?->name,
+                    'images' => $listing->images->pluck('image_url'),
+                    'category_id' => $listing->category_id,
+                    'category_name' => $listing->category?->name,
+                    'allow_submission' => $listing->allow_submission,
+                    'auction_enabled' => $listing->auction_enabled,
+                    'minimum_bid' => $listing->minimum_bid,
+                    'listing_type_id' => $listing->listing_type_id,
+                    'listing_type_name' => $listing->listingType?->name,
+                    'contacting_channel' => $listing->contacting_channel,
+                    'seller_type' => $listing->seller_type,
+                    'status' => $listing->status,
+                    'currency' => $currencySymbol,
+                    'display_price' => $displayPrice,
+                    'is_auction' => $isAuction,
+                    'current_bid' => $currentBid,
+                ];
+
+                if (!$listing->allow_submission) {
+                    $data['price'] = $listing->price ?? $listing->minimum_bid;
+                }
+
+                // Motorcycle category
+                if ($listing->category_id == 1 && $listing->motorcycle) {
+                    $data['motorcycle'] = [
+                        'brand' => $listing->motorcycle->brand?->name,
+                        'model' => $listing->motorcycle->model?->name,
+                        'year' => $listing->motorcycle->year?->year,
+                        'engine' => $listing->motorcycle->engine,
+                        'mileage' => $listing->motorcycle->mileage,
+                        'body_condition' => $listing->motorcycle->body_condition,
+                        'modified' => $listing->motorcycle->modified,
+                        'insurance' => $listing->motorcycle->insurance,
+                        'general_condition' => $listing->motorcycle->general_condition,
+                        'vehicle_care' => $listing->motorcycle->vehicle_care,
+                        'transmission' => $listing->motorcycle->transmission,
+                    ];
+                }
+
+                // Spare part category
+                if ($listing->category_id == 2 && $listing->sparePart) {
+                    $data['spare_part'] = [
+                        'condition' => $listing->sparePart->condition,
+                        'brand' => $listing->sparePart->bikePartBrand?->name,
+                        'category' => $listing->sparePart->bikePartCategory?->name,
+                        'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
+                            return [
+                                'brand' => $association->brand?->name,
+                                'model' => $association->model?->name,
+                                'year' => $association->year?->year,
+                            ];
+                        }),
+                    ];
+                }
+
+                // License plate category
+                if ($listing->category_id == 3 && $listing->licensePlate) {
+                    $licensePlate = $listing->licensePlate;
+
+                    $data['license_plate'] = [
+                        'plate_format' => [
+                            'id' => $licensePlate->format?->id,
+                            'name' => $licensePlate->format?->name,
+                            'pattern' => $licensePlate->format?->pattern ?? null,
+                            'country' => $licensePlate->format?->country ?? null,
+                        ],
+                        'city' => $licensePlate->city?->name,
+                        'country_id' => $licensePlate->country_id,
+                        'fields' => $licensePlate->fieldValues->map(function ($fieldValue) {
+                            return [
+                                'field_id' => $fieldValue->formatField?->id,
+                                'field_name' => $fieldValue->formatField?->field_name,
+                                'position' => $fieldValue->formatField?->position,
+                                'character_type' => $fieldValue->formatField?->character_type,
+                                'is_required' => $fieldValue->formatField?->is_required,
+                                'min_length' => $fieldValue->formatField?->min_length,
+                                'max_length' => $fieldValue->formatField?->max_length,
+                                'value' => $fieldValue->field_value,
+                            ];
+                        })->toArray(),
+                    ];
+                }
+
+                // Stats du listing
+                $data['stats'] = [
+                    'wishlists' => DB::table('wishlists')->where('listing_id', $listing->id)->count(),
+                    'submissions' => DB::table('submissions')->where('listing_id', $listing->id)->count(),
+                    'images_count' => $listing->images->count(),
+                    'auction_bids' => DB::table('auction_histories')->where('listing_id', $listing->id)->count(),
+                ];
+
+                return $data;
+            });
 
             // ⭐ Charger les SOOMs (Submissions) envoyés par l'utilisateur
             $userSubmissions = Submission::with([
                 'listing' => function ($query) {
-                    $query->with([
-                        'seller',
-                        'images' // ← Pas besoin de spécifier les colonnes
-                    ]);
+                    $query->with(['seller', 'images']);
                 }
             ])
                 ->where('user_id', $id)
@@ -490,10 +567,7 @@ class UserController extends Controller
                 ->get();
 
             // ⭐ Charger les SOOMs reçus sur les listings de l'utilisateur
-            $receivedSubmissions = Submission::with([
-                'user',
-                'listing'
-            ])
+            $receivedSubmissions = Submission::with(['user', 'listing'])
                 ->whereHas('listing', function ($query) use ($id) {
                     $query->where('seller_id', $id);
                 })
@@ -501,9 +575,7 @@ class UserController extends Controller
                 ->get();
 
             // ⭐ Charger les paiements de l'utilisateur
-            $userPayments = \App\Models\Payment::with([
-                'listing.category'
-            ])
+            $userPayments = \App\Models\Payment::with(['listing.category'])
                 ->whereHas('listing', function ($query) use ($id) {
                     $query->where('seller_id', $id);
                 })
@@ -513,11 +585,11 @@ class UserController extends Controller
             // ⭐ Statistiques complètes
             $userStats = [
                 // Listings stats
-                'total_listings' => $user->listings->count(),
-                'active_listings' => $user->listings->where('status', 'active')->count(),
-                'published_listings' => $user->listings->where('status', 'published')->count(),
-                'draft_listings' => $user->listings->where('status', 'draft')->count(),
-                'sold_listings' => $user->listings->where('status', 'sold')->count(),
+                'total_listings' => $listings->count(),
+                'active_listings' => $listings->where('status', 'active')->count(),
+                'published_listings' => $listings->where('status', 'published')->count(),
+                'draft_listings' => $listings->where('status', 'draft')->count(),
+                'sold_listings' => $listings->where('status', 'sold')->count(),
 
                 // Wishlist stats
                 'total_wishlists' => $user->wishlists->count(),
@@ -563,6 +635,9 @@ class UserController extends Controller
                 'data' => [
                     'user' => $user,
                     'stats' => $userStats,
+
+                    // ⭐ Listings formatés exactement comme getById
+                    'listings' => $formattedListings,
 
                     // ⭐ SOOMs envoyés par l'utilisateur (comme acheteur)
                     'sooms_sent' => [
