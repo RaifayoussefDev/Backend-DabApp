@@ -2,23 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PricingRulesMotorcycle;
+use App\Models\PricingRulesSparepart;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
  * @OA\Tag(
- *     name="Pricing Rules Motorcycle Management",
- *     description="API Endpoints for managing motorcycle pricing rules"
+ *     name="Pricing Rules Sparepart Management",
+ *     description="API Endpoints for managing sparepart pricing rules"
  * )
  */
-class PricingRulesMotorcycleController extends Controller
+class PricingRulesSparepartController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/api/admin/pricing-rules-motorcycle",
-     *     summary="List all motorcycle pricing rules",
-     *     tags={"Pricing Rules Motorcycle Management"},
+     *     path="/api/admin/pricing-rules-sparepart",
+     *     summary="List all sparepart pricing rules",
+     *     tags={"Pricing Rules Sparepart Management"},
      *     security={{"bearerAuth": {}}},
      *     @OA\Response(
      *         response=200,
@@ -27,17 +27,15 @@ class PricingRulesMotorcycleController extends Controller
      *             @OA\Property(property="data", type="array",
      *                 @OA\Items(
      *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="motorcycle_type_id", type="integer", example=2),
-     *                     @OA\Property(property="price", type="string", example="150.00"),
+     *                     @OA\Property(property="bike_part_category_id", type="integer", example=3),
+     *                     @OA\Property(property="price", type="string", example="50.00"),
      *                     @OA\Property(property="created_at", type="string", example="2024-01-15T10:30:00.000000Z"),
      *                     @OA\Property(property="updated_at", type="string", example="2024-01-15T10:30:00.000000Z"),
-     *                     @OA\Property(property="motorcycle_type", type="object",
-     *                         @OA\Property(property="id", type="integer", example=2),
-     *                         @OA\Property(property="name_en", type="string", example="Sport"),
-     *                         @OA\Property(property="name_ar", type="string", example="رياضية"),
-     *                         @OA\Property(property="name_fr", type="string", example="Sport"),
-     *                         @OA\Property(property="created_at", type="string", example="2024-01-10T08:00:00.000000Z"),
-     *                         @OA\Property(property="updated_at", type="string", example="2024-01-10T08:00:00.000000Z")
+     *                     @OA\Property(property="category", type="object",
+     *                         @OA\Property(property="id", type="integer", example=3),
+     *                         @OA\Property(property="name_en", type="string", example="Engine Parts"),
+     *                         @OA\Property(property="name_ar", type="string", example="قطع المحرك"),
+     *                         @OA\Property(property="name_fr", type="string", example="Pièces moteur")
      *                     )
      *                 )
      *             )
@@ -47,7 +45,7 @@ class PricingRulesMotorcycleController extends Controller
      */
     public function index()
     {
-        $rules = PricingRulesMotorcycle::with('motorcycleType')->get();
+        $rules = PricingRulesSparepart::with('category')->get();
 
         return response()->json([
             'data' => $rules
@@ -56,16 +54,16 @@ class PricingRulesMotorcycleController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/admin/pricing-rules-motorcycle",
-     *     summary="Create a new motorcycle pricing rule",
-     *     tags={"Pricing Rules Motorcycle Management"},
+     *     path="/api/admin/pricing-rules-sparepart",
+     *     summary="Create a new sparepart pricing rule",
+     *     tags={"Pricing Rules Sparepart Management"},
      *     security={{"bearerAuth": {}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"motorcycle_type_id", "price"},
-     *             @OA\Property(property="motorcycle_type_id", type="integer", example=2, description="ID of motorcycle type"),
-     *             @OA\Property(property="price", type="number", format="float", example=150.00, description="Price for this motorcycle type")
+     *             required={"bike_part_category_id", "price"},
+     *             @OA\Property(property="bike_part_category_id", type="integer", example=3, description="ID of bike part category"),
+     *             @OA\Property(property="price", type="number", format="float", example=50.00, description="Price for this category")
      *         )
      *     ),
      *     @OA\Response(
@@ -74,8 +72,8 @@ class PricingRulesMotorcycleController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Pricing rule created successfully"),
      *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="motorcycle_type_id", type="integer", example=2),
-     *                 @OA\Property(property="price", type="string", example="150.00"),
+     *                 @OA\Property(property="bike_part_category_id", type="integer", example=3),
+     *                 @OA\Property(property="price", type="string", example="50.00"),
      *                 @OA\Property(property="updated_at", type="string", example="2024-01-15T10:30:00.000000Z"),
      *                 @OA\Property(property="created_at", type="string", example="2024-01-15T10:30:00.000000Z"),
      *                 @OA\Property(property="id", type="integer", example=1)
@@ -91,11 +89,11 @@ class PricingRulesMotorcycleController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'motorcycle_type_id' => 'required|exists:motorcycle_types,id',
+            'bike_part_category_id' => 'required|exists:bike_part_categories,id',
             'price' => 'required|numeric|min:0',
         ]);
 
-        $rule = PricingRulesMotorcycle::create($validated);
+        $rule = PricingRulesSparepart::create($validated);
 
         return response()->json([
             'message' => 'Pricing rule created successfully',
@@ -105,9 +103,9 @@ class PricingRulesMotorcycleController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/admin/pricing-rules-motorcycle/{id}",
-     *     summary="Get a specific motorcycle pricing rule",
-     *     tags={"Pricing Rules Motorcycle Management"},
+     *     path="/api/admin/pricing-rules-sparepart/{id}",
+     *     summary="Get a specific sparepart pricing rule",
+     *     tags={"Pricing Rules Sparepart Management"},
      *     security={{"bearerAuth": {}}},
      *     @OA\Parameter(
      *         name="id",
@@ -122,15 +120,14 @@ class PricingRulesMotorcycleController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="motorcycle_type_id", type="integer", example=2),
-     *                 @OA\Property(property="price", type="string", example="150.00"),
+     *                 @OA\Property(property="bike_part_category_id", type="integer", example=3),
+     *                 @OA\Property(property="price", type="string", example="50.00"),
      *                 @OA\Property(property="created_at", type="string", example="2024-01-15T10:30:00.000000Z"),
      *                 @OA\Property(property="updated_at", type="string", example="2024-01-15T10:30:00.000000Z"),
-     *                 @OA\Property(property="motorcycle_type", type="object",
-     *                     @OA\Property(property="id", type="integer", example=2),
-     *                     @OA\Property(property="name_en", type="string", example="Sport"),
-     *                     @OA\Property(property="name_ar", type="string", example="رياضية"),
-     *                     @OA\Property(property="name_fr", type="string", example="Sport")
+     *                 @OA\Property(property="category", type="object",
+     *                     @OA\Property(property="id", type="integer", example=3),
+     *                     @OA\Property(property="name_en", type="string", example="Engine Parts"),
+     *                     @OA\Property(property="name_ar", type="string", example="قطع المحرك")
      *                 )
      *             )
      *         )
@@ -141,18 +138,18 @@ class PricingRulesMotorcycleController extends Controller
      *     )
      * )
      */
-    public function show(PricingRulesMotorcycle $pricingRulesMotorcycle)
+    public function show(PricingRulesSparepart $pricingRulesSparepart)
     {
         return response()->json([
-            'data' => $pricingRulesMotorcycle->load('motorcycleType')
+            'data' => $pricingRulesSparepart->load('category')
         ]);
     }
 
     /**
      * @OA\Put(
-     *     path="/api/admin/pricing-rules-motorcycle/{id}",
-     *     summary="Update a motorcycle pricing rule",
-     *     tags={"Pricing Rules Motorcycle Management"},
+     *     path="/api/admin/pricing-rules-sparepart/{id}",
+     *     summary="Update a sparepart pricing rule",
+     *     tags={"Pricing Rules Sparepart Management"},
      *     security={{"bearerAuth": {}}},
      *     @OA\Parameter(
      *         name="id",
@@ -164,9 +161,9 @@ class PricingRulesMotorcycleController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"motorcycle_type_id", "price"},
-     *             @OA\Property(property="motorcycle_type_id", type="integer", example=2),
-     *             @OA\Property(property="price", type="number", format="float", example=200.00)
+     *             required={"bike_part_category_id", "price"},
+     *             @OA\Property(property="bike_part_category_id", type="integer", example=3),
+     *             @OA\Property(property="price", type="number", format="float", example=75.00)
      *         )
      *     ),
      *     @OA\Response(
@@ -176,8 +173,8 @@ class PricingRulesMotorcycleController extends Controller
      *             @OA\Property(property="message", type="string", example="Pricing rule updated successfully"),
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="motorcycle_type_id", type="integer", example=2),
-     *                 @OA\Property(property="price", type="string", example="200.00"),
+     *                 @OA\Property(property="bike_part_category_id", type="integer", example=3),
+     *                 @OA\Property(property="price", type="string", example="75.00"),
      *                 @OA\Property(property="created_at", type="string", example="2024-01-15T10:30:00.000000Z"),
      *                 @OA\Property(property="updated_at", type="string", example="2024-01-15T11:45:00.000000Z")
      *             )
@@ -193,26 +190,26 @@ class PricingRulesMotorcycleController extends Controller
      *     )
      * )
      */
-    public function update(Request $request, PricingRulesMotorcycle $pricingRulesMotorcycle)
+    public function update(Request $request, PricingRulesSparepart $pricingRulesSparepart)
     {
         $validated = $request->validate([
-            'motorcycle_type_id' => 'required|exists:motorcycle_types,id',
+            'bike_part_category_id' => 'required|exists:bike_part_categories,id',
             'price' => 'required|numeric|min:0',
         ]);
 
-        $pricingRulesMotorcycle->update($validated);
+        $pricingRulesSparepart->update($validated);
 
         return response()->json([
             'message' => 'Pricing rule updated successfully',
-            'data' => $pricingRulesMotorcycle,
+            'data' => $pricingRulesSparepart,
         ]);
     }
 
     /**
      * @OA\Delete(
-     *     path="/api/admin/pricing-rules-motorcycle/{id}",
-     *     summary="Delete a motorcycle pricing rule",
-     *     tags={"Pricing Rules Motorcycle Management"},
+     *     path="/api/admin/pricing-rules-sparepart/{id}",
+     *     summary="Delete a sparepart pricing rule",
+     *     tags={"Pricing Rules Sparepart Management"},
      *     security={{"bearerAuth": {}}},
      *     @OA\Parameter(
      *         name="id",
@@ -234,9 +231,9 @@ class PricingRulesMotorcycleController extends Controller
      *     )
      * )
      */
-    public function destroy(PricingRulesMotorcycle $pricingRulesMotorcycle)
+    public function destroy(PricingRulesSparepart $pricingRulesSparepart)
     {
-        $pricingRulesMotorcycle->delete();
+        $pricingRulesSparepart->delete();
 
         return response()->json([
             'message' => 'Pricing rule deleted successfully',

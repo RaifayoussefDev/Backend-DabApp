@@ -72,6 +72,9 @@ use App\Http\Controllers\{
     PoiServiceController,
     PoiReviewController,
     PoiReportController,
+    PricingRulesLicencePlateController,
+    PricingRulesMotorcycleController,
+    PricingRulesSparepartController,
     RoleController,
     RolePermissionController,
     RouteController,
@@ -175,6 +178,42 @@ Route::middleware('auth:api')->group(function () {
             ->middleware('permission:users.view');
         Route::get('/{id}/auction-history', [UserController::class, 'getUserAuctionHistory'])
             ->middleware('permission:users.view');
+    });
+
+    // Pricing Rules Motorcycle
+    Route::prefix('admin/pricing-rules-motorcycle')->group(function () {
+        Route::get('/', [PricingRulesMotorcycleController::class, 'index'])
+            ->middleware('permission:pricing-rules-motorcycle.view');
+        Route::post('/', [PricingRulesMotorcycleController::class, 'store'])
+            ->middleware('permission:pricing-rules-motorcycle.create');
+        Route::get('/{pricingRulesMotorcycle}', [PricingRulesMotorcycleController::class, 'show'])
+            ->middleware('permission:pricing-rules-motorcycle.view');
+        Route::put('/{pricingRulesMotorcycle}', [PricingRulesMotorcycleController::class, 'update'])
+            ->middleware('permission:pricing-rules-motorcycle.update');
+        Route::delete('/{pricingRulesMotorcycle}', [PricingRulesMotorcycleController::class, 'destroy'])
+            ->middleware('permission:pricing-rules-motorcycle.delete');
+    });
+
+    // Pricing Rules Sparepart
+    Route::prefix('admin/pricing-rules-sparepart')->group(function () {
+        Route::get('/', [PricingRulesSparepartController::class, 'index'])
+            ->middleware('permission:pricing-rules-sparepart.view');
+        Route::post('/', [PricingRulesSparepartController::class, 'store'])
+            ->middleware('permission:pricing-rules-sparepart.create');
+        Route::get('/{pricingRulesSparepart}', [PricingRulesSparepartController::class, 'show'])
+            ->middleware('permission:pricing-rules-sparepart.view');
+        Route::put('/{pricingRulesSparepart}', [PricingRulesSparepartController::class, 'update'])
+            ->middleware('permission:pricing-rules-sparepart.update');
+        Route::delete('/{pricingRulesSparepart}', [PricingRulesSparepartController::class, 'destroy'])
+            ->middleware('permission:pricing-rules-sparepart.delete');
+    });
+
+    // Pricing Rules Licence Plate (Readonly - only GET and UPDATE)
+    Route::prefix('admin/pricing-rules-licence-plate')->group(function () {
+        Route::get('/', [PricingRulesLicencePlateController::class, 'show'])
+            ->middleware('permission:pricing-rules-licence-plate.view');
+        Route::put('/', [PricingRulesLicencePlateController::class, 'update'])
+            ->middleware('permission:pricing-rules-licence-plate.update');
     });
 
     // Cards
@@ -1117,7 +1156,6 @@ Route::middleware(['auth:api'])->prefix('admin')->group(function () {
         Route::delete('/{permissionId}', [RolePermissionController::class, 'destroy'])
             ->middleware('permission:roles.update');
     });
-
 });
 
 // Route pour générer la plaque
@@ -1125,5 +1163,3 @@ Route::post('/generate-plate', [PlateGeneratorController::class, 'generatePlate'
 
 // Route pour télécharger la plaque
 Route::get('/download-plate/{filename}', [PlateGeneratorController::class, 'downloadPlate']);
-
-

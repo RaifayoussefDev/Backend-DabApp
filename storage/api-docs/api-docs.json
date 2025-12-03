@@ -20384,6 +20384,922 @@
                 ]
             }
         },
+        "/api/admin/pricing-rules-licence-plate": {
+            "get": {
+                "tags": [
+                    "Pricing Rules Licence Plate Management"
+                ],
+                "summary": "Get the global licence plate price",
+                "operationId": "64653961508b98d00f84f1b32e653cb3",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "price": {
+                                                    "type": "string",
+                                                    "example": "100.00"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15T10:30:00.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15T10:30:00.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Pricing not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Pricing Rules Licence Plate Management"
+                ],
+                "summary": "Update the global licence plate price",
+                "operationId": "7dec3592f1551726cca9b6cea995faea",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "price"
+                                ],
+                                "properties": {
+                                    "price": {
+                                        "description": "New global price for licence plates",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 120
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Pricing updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Licence plate price updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "price": {
+                                                    "type": "string",
+                                                    "example": "120.00"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15T10:30:00.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15T12:00:00.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Pricing not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/pricing-rules-motorcycle": {
+            "get": {
+                "tags": [
+                    "Pricing Rules Motorcycle Management"
+                ],
+                "summary": "List all motorcycle pricing rules",
+                "operationId": "59243e5bd497ede7e016c105fa96289b",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "motorcycle_type_id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "price": {
+                                                        "type": "string",
+                                                        "example": "150.00"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "example": "2024-01-15T10:30:00.000000Z"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "example": "2024-01-15T10:30:00.000000Z"
+                                                    },
+                                                    "motorcycle_type": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "name_en": {
+                                                                "type": "string",
+                                                                "example": "Sport"
+                                                            },
+                                                            "name_ar": {
+                                                                "type": "string",
+                                                                "example": "رياضية"
+                                                            },
+                                                            "name_fr": {
+                                                                "type": "string",
+                                                                "example": "Sport"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "example": "2024-01-10T08:00:00.000000Z"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "example": "2024-01-10T08:00:00.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Pricing Rules Motorcycle Management"
+                ],
+                "summary": "Create a new motorcycle pricing rule",
+                "operationId": "036f5f80e0b82c66f409b033b886f960",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "motorcycle_type_id",
+                                    "price"
+                                ],
+                                "properties": {
+                                    "motorcycle_type_id": {
+                                        "description": "ID of motorcycle type",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "price": {
+                                        "description": "Price for this motorcycle type",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 150
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Pricing rule created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pricing rule created successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "motorcycle_type_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "price": {
+                                                    "type": "string",
+                                                    "example": "150.00"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15T10:30:00.000000Z"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15T10:30:00.000000Z"
+                                                },
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/pricing-rules-motorcycle/{id}": {
+            "get": {
+                "tags": [
+                    "Pricing Rules Motorcycle Management"
+                ],
+                "summary": "Get a specific motorcycle pricing rule",
+                "operationId": "57109c025742390ca937b9bec0ba7485",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Pricing rule ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "motorcycle_type_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "price": {
+                                                    "type": "string",
+                                                    "example": "150.00"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15T10:30:00.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15T10:30:00.000000Z"
+                                                },
+                                                "motorcycle_type": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "name_en": {
+                                                            "type": "string",
+                                                            "example": "Sport"
+                                                        },
+                                                        "name_ar": {
+                                                            "type": "string",
+                                                            "example": "رياضية"
+                                                        },
+                                                        "name_fr": {
+                                                            "type": "string",
+                                                            "example": "Sport"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Pricing rule not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Pricing Rules Motorcycle Management"
+                ],
+                "summary": "Update a motorcycle pricing rule",
+                "operationId": "040599989a46acc6041b48c03fd9c1db",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Pricing rule ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "motorcycle_type_id",
+                                    "price"
+                                ],
+                                "properties": {
+                                    "motorcycle_type_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 200
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Pricing rule updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pricing rule updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "motorcycle_type_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "price": {
+                                                    "type": "string",
+                                                    "example": "200.00"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15T10:30:00.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15T11:45:00.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Pricing rule not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Pricing Rules Motorcycle Management"
+                ],
+                "summary": "Delete a motorcycle pricing rule",
+                "operationId": "0df1bb9de64d9cbba770b64d6a757c51",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Pricing rule ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Pricing rule deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pricing rule deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Pricing rule not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/pricing-rules-sparepart": {
+            "get": {
+                "tags": [
+                    "Pricing Rules Sparepart Management"
+                ],
+                "summary": "List all sparepart pricing rules",
+                "operationId": "fb3d4127029f6c42a800a6ad5ee3cc86",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "bike_part_category_id": {
+                                                        "type": "integer",
+                                                        "example": 3
+                                                    },
+                                                    "price": {
+                                                        "type": "string",
+                                                        "example": "50.00"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "example": "2024-01-15T10:30:00.000000Z"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "example": "2024-01-15T10:30:00.000000Z"
+                                                    },
+                                                    "category": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 3
+                                                            },
+                                                            "name_en": {
+                                                                "type": "string",
+                                                                "example": "Engine Parts"
+                                                            },
+                                                            "name_ar": {
+                                                                "type": "string",
+                                                                "example": "قطع المحرك"
+                                                            },
+                                                            "name_fr": {
+                                                                "type": "string",
+                                                                "example": "Pièces moteur"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Pricing Rules Sparepart Management"
+                ],
+                "summary": "Create a new sparepart pricing rule",
+                "operationId": "98992caf6998059f1595f98d2917e49d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "bike_part_category_id",
+                                    "price"
+                                ],
+                                "properties": {
+                                    "bike_part_category_id": {
+                                        "description": "ID of bike part category",
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "price": {
+                                        "description": "Price for this category",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 50
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Pricing rule created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pricing rule created successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "bike_part_category_id": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "price": {
+                                                    "type": "string",
+                                                    "example": "50.00"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15T10:30:00.000000Z"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15T10:30:00.000000Z"
+                                                },
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/pricing-rules-sparepart/{id}": {
+            "get": {
+                "tags": [
+                    "Pricing Rules Sparepart Management"
+                ],
+                "summary": "Get a specific sparepart pricing rule",
+                "operationId": "af3540b7f84ca6637a4d25f0ae63574d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Pricing rule ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "bike_part_category_id": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "price": {
+                                                    "type": "string",
+                                                    "example": "50.00"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15T10:30:00.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15T10:30:00.000000Z"
+                                                },
+                                                "category": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "name_en": {
+                                                            "type": "string",
+                                                            "example": "Engine Parts"
+                                                        },
+                                                        "name_ar": {
+                                                            "type": "string",
+                                                            "example": "قطع المحرك"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Pricing rule not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Pricing Rules Sparepart Management"
+                ],
+                "summary": "Update a sparepart pricing rule",
+                "operationId": "8132e735860d87afe6cf2178522f5dff",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Pricing rule ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "bike_part_category_id",
+                                    "price"
+                                ],
+                                "properties": {
+                                    "bike_part_category_id": {
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 75
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Pricing rule updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pricing rule updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "bike_part_category_id": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "price": {
+                                                    "type": "string",
+                                                    "example": "75.00"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15T10:30:00.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15T11:45:00.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Pricing rule not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Pricing Rules Sparepart Management"
+                ],
+                "summary": "Delete a sparepart pricing rule",
+                "operationId": "590b6380b2df5682740ace24757f9dbd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Pricing rule ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Pricing rule deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pricing rule deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Pricing rule not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/check-promo": {
             "post": {
                 "tags": [
@@ -27703,6 +28619,18 @@
         {
             "name": "Points of Interest",
             "description": "API Endpoints for Points of Interest"
+        },
+        {
+            "name": "Pricing Rules Licence Plate Management",
+            "description": "API Endpoints for managing licence plate pricing (single global price)"
+        },
+        {
+            "name": "Pricing Rules Motorcycle Management",
+            "description": "API Endpoints for managing motorcycle pricing rules"
+        },
+        {
+            "name": "Pricing Rules Sparepart Management",
+            "description": "API Endpoints for managing sparepart pricing rules"
         },
         {
             "name": "Route Completions",
