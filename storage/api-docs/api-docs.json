@@ -9,6 +9,574 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/admin/menus": {
+            "get": {
+                "tags": [
+                    "Admin Menus Management"
+                ],
+                "summary": "Get admin menu tree for authenticated user",
+                "description": "Returns the complete menu tree filtered by user permissions. Menus are cached for 1 hour per user.",
+                "operationId": "getAdminMenus",
+                "parameters": [
+                    {
+                        "name": "force_refresh",
+                        "in": "query",
+                        "description": "Clear cache and fetch fresh data",
+                        "schema": {
+                            "type": "boolean",
+                            "example": false
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved menu tree",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Dashboard"
+                                                    },
+                                                    "icon": {
+                                                        "type": "string",
+                                                        "example": "dashboard"
+                                                    },
+                                                    "route": {
+                                                        "type": "string",
+                                                        "example": "/admin/dashboard"
+                                                    },
+                                                    "permission": {
+                                                        "type": "string",
+                                                        "example": "view_dashboard"
+                                                    },
+                                                    "order": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "children": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 21
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "All Users"
+                                                                },
+                                                                "route": {
+                                                                    "type": "string",
+                                                                    "example": "/admin/users"
+                                                                },
+                                                                "permission": {
+                                                                    "type": "string",
+                                                                    "example": "view_users"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Menus Management"
+                ],
+                "summary": "Create a new menu item",
+                "description": "Creates a new menu item (parent or child)",
+                "operationId": "createAdminMenu",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "order"
+                                ],
+                                "properties": {
+                                    "parent_id": {
+                                        "description": "Parent menu ID (null for top-level)",
+                                        "type": "integer",
+                                        "example": null,
+                                        "nullable": true
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "New Menu"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "settings",
+                                        "nullable": true
+                                    },
+                                    "route": {
+                                        "type": "string",
+                                        "example": "/admin/new-feature",
+                                        "nullable": true
+                                    },
+                                    "permission": {
+                                        "type": "string",
+                                        "example": "view_new_feature",
+                                        "nullable": true
+                                    },
+                                    "order": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Menu created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Menu created successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/menus/all": {
+            "get": {
+                "tags": [
+                    "Admin Menus Management"
+                ],
+                "summary": "Get all admin menus (Admin only)",
+                "description": "Returns all menus without permission filtering. For admin management purposes.",
+                "operationId": "getAllAdminMenus",
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved all menus",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "parent_id": {
+                                                        "type": "integer",
+                                                        "nullable": true
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "icon": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "route": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "permission": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "order": {
+                                                        "type": "integer"
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "children": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin only"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/menus/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Menus Management"
+                ],
+                "summary": "Get menu by ID",
+                "description": "Returns a single menu item with its children",
+                "operationId": "getAdminMenuById",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Menu ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved menu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Menu not found"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Menus Management"
+                ],
+                "summary": "Update a menu item",
+                "description": "Updates an existing menu item",
+                "operationId": "updateAdminMenu",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Menu ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "parent_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "route": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "permission": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "order": {
+                                        "type": "integer"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Menu updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Menu updated successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "404": {
+                        "description": "Menu not found"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Menus Management"
+                ],
+                "summary": "Delete a menu item",
+                "description": "Deletes a menu item and all its children (cascade)",
+                "operationId": "deleteAdminMenu",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Menu ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Menu deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Menu deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Menu not found"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/menus/reorder": {
+            "post": {
+                "tags": [
+                    "Admin Menus Management"
+                ],
+                "summary": "Reorder menu items",
+                "description": "Updates the order of multiple menu items at once",
+                "operationId": "reorderAdminMenus",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "menus"
+                                ],
+                                "properties": {
+                                    "menus": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "order": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "example": [
+                                            {
+                                                "id": 1,
+                                                "order": 2
+                                            },
+                                            {
+                                                "id": 2,
+                                                "order": 1
+                                            },
+                                            {
+                                                "id": 3,
+                                                "order": 3
+                                            }
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Menus reordered successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Menus reordered successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/register": {
             "post": {
                 "tags": [
@@ -28464,6 +29032,336 @@
                 ]
             }
         },
+        "/api/admin/users/authentication-logs": {
+            "get": {
+                "tags": [
+                    "Users Management"
+                ],
+                "summary": "Get authentication logs with filters",
+                "description": "Returns paginated authentication logs. Supports filtering by user, date range, online status, and searching.",
+                "operationId": "getAuthenticationLogs",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "example": 15
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Filter by user ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "is_online",
+                        "in": "query",
+                        "description": "Filter by online status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by user name or email",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "john"
+                        }
+                    },
+                    {
+                        "name": "connection_from",
+                        "in": "query",
+                        "description": "Filter by connection date from",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2024-01-01"
+                        }
+                    },
+                    {
+                        "name": "connection_to",
+                        "in": "query",
+                        "description": "Filter by connection date to",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2024-12-31"
+                        }
+                    },
+                    {
+                        "name": "token_expired",
+                        "in": "query",
+                        "description": "Filter by token expiration status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": false
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Field to sort by",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "connection_date",
+                            "example": "connection_date"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Sort order (asc or desc)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "desc",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ],
+                            "example": "desc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved authentication logs",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "user_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "user": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "first_name": {
+                                                                        "type": "string",
+                                                                        "example": "John"
+                                                                    },
+                                                                    "last_name": {
+                                                                        "type": "string",
+                                                                        "example": "Doe"
+                                                                    },
+                                                                    "email": {
+                                                                        "type": "string",
+                                                                        "example": "john@example.com"
+                                                                    },
+                                                                    "profile_picture": {
+                                                                        "type": "string",
+                                                                        "example": "profiles/user.jpg"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "is_online": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "connection_date": {
+                                                                "type": "string",
+                                                                "example": "2024-12-04 18:44:52"
+                                                            },
+                                                            "token_expiration": {
+                                                                "type": "string",
+                                                                "example": "2024-12-04 19:44:52"
+                                                            },
+                                                            "refresh_token_expiration": {
+                                                                "type": "string",
+                                                                "example": "2026-01-03 18:44:52"
+                                                            },
+                                                            "is_token_expired": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "is_refresh_token_expired": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "session_duration": {
+                                                                "type": "string",
+                                                                "example": "2 hours 15 minutes"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "example": "2024-12-04 18:44:52"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "example": "2024-12-04 18:44:52"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "stats": {
+                                            "properties": {
+                                                "total_logs": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "online_users": {
+                                                    "type": "integer",
+                                                    "example": 45
+                                                },
+                                                "expired_tokens": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "active_sessions": {
+                                                    "type": "integer",
+                                                    "example": 90
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden - Missing permission"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/users/{id}/authentication-logs": {
+            "get": {
+                "tags": [
+                    "Users Management"
+                ],
+                "summary": "Get authentication logs for a specific user",
+                "description": "Returns all authentication logs for a specific user with statistics",
+                "operationId": "getUserAuthenticationLogs",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "example": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved user authentication logs",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/wishlists": {
             "get": {
                 "tags": [
@@ -28849,6 +29747,10 @@
         {
             "name": "Wishlist",
             "description": "Operations related to wishlists"
+        },
+        {
+            "name": "Admin Menus Management",
+            "description": "Admin Menus Management"
         },
         {
             "name": "Authentification",

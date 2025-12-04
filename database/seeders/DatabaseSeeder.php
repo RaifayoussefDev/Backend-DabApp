@@ -17,9 +17,9 @@ class DatabaseSeeder extends Seeder
 
 
         $this->call([
-            PromoCodesTableSeeder::class,
+
+            AdminMenuSeeder::class,
+
         ]);
-
-
     }
 }

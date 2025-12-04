@@ -2284,4 +2284,397 @@ class UserController extends Controller
             ], 500);
         }
     }
+    /**
+     * @OA\Get(
+     *     path="/api/admin/users/authentication-logs",
+     *     operationId="getAuthenticationLogs",
+     *     tags={"Users Management"},
+     *     summary="Get authentication logs with filters",
+     *     description="Returns paginated authentication logs. Supports filtering by user, date range, online status, and searching.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number for pagination",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=15, default=15)
+     *     ),
+     *     @OA\Parameter(
+     *         name="user_id",
+     *         in="query",
+     *         description="Filter by user ID",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="is_online",
+     *         in="query",
+     *         description="Filter by online status",
+     *         required=false,
+     *         @OA\Schema(type="boolean", example=true)
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search by user name or email",
+     *         required=false,
+     *         @OA\Schema(type="string", example="john")
+     *     ),
+     *     @OA\Parameter(
+     *         name="connection_from",
+     *         in="query",
+     *         description="Filter by connection date from",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date", example="2024-01-01")
+     *     ),
+     *     @OA\Parameter(
+     *         name="connection_to",
+     *         in="query",
+     *         description="Filter by connection date to",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date", example="2024-12-31")
+     *     ),
+     *     @OA\Parameter(
+     *         name="token_expired",
+     *         in="query",
+     *         description="Filter by token expiration status",
+     *         required=false,
+     *         @OA\Schema(type="boolean", example=false)
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort_by",
+     *         in="query",
+     *         description="Field to sort by",
+     *         required=false,
+     *         @OA\Schema(type="string", example="connection_date", default="connection_date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort_order",
+     *         in="query",
+     *         description="Sort order (asc or desc)",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"asc", "desc"}, example="desc", default="desc")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successfully retrieved authentication logs",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="current_page", type="integer", example=1),
+     *                 @OA\Property(property="per_page", type="integer", example=15),
+     *                 @OA\Property(property="total", type="integer", example=100),
+     *                 @OA\Property(
+     *                     property="data",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="user_id", type="integer", example=1),
+     *                         @OA\Property(
+     *                             property="user",
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=1),
+     *                             @OA\Property(property="first_name", type="string", example="John"),
+     *                             @OA\Property(property="last_name", type="string", example="Doe"),
+     *                             @OA\Property(property="email", type="string", example="john@example.com"),
+     *                             @OA\Property(property="profile_picture", type="string", example="profiles/user.jpg")
+     *                         ),
+     *                         @OA\Property(property="is_online", type="boolean", example=true),
+     *                         @OA\Property(property="connection_date", type="string", example="2024-12-04 18:44:52"),
+     *                         @OA\Property(property="token_expiration", type="string", example="2024-12-04 19:44:52"),
+     *                         @OA\Property(property="refresh_token_expiration", type="string", example="2026-01-03 18:44:52"),
+     *                         @OA\Property(property="is_token_expired", type="boolean", example=false),
+     *                         @OA\Property(property="is_refresh_token_expired", type="boolean", example=false),
+     *                         @OA\Property(property="session_duration", type="string", example="2 hours 15 minutes"),
+     *                         @OA\Property(property="created_at", type="string", example="2024-12-04 18:44:52"),
+     *                         @OA\Property(property="updated_at", type="string", example="2024-12-04 18:44:52")
+     *                     )
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="stats",
+     *                 type="object",
+     *                 @OA\Property(property="total_logs", type="integer", example=100),
+     *                 @OA\Property(property="online_users", type="integer", example=45),
+     *                 @OA\Property(property="expired_tokens", type="integer", example=10),
+     *                 @OA\Property(property="active_sessions", type="integer", example=90)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=403, description="Forbidden - Missing permission")
+     * )
+     */
+    public function getAuthenticationLogs(Request $request)
+    {
+        try {
+            $perPage = $request->get('per_page', 15);
+            $search = $request->get('search');
+            $userId = $request->get('user_id');
+            $isOnline = $request->get('is_online');
+            $connectionFrom = $request->get('connection_from');
+            $connectionTo = $request->get('connection_to');
+            $tokenExpired = $request->get('token_expired');
+            $sortBy = $request->get('sort_by', 'connection_date');
+            $sortOrder = $request->get('sort_order', 'desc');
+
+            $query = Authentication::with([
+                'user:id,first_name,last_name,email,profile_picture,role_id',
+                'user.role:id,name'
+            ]);
+
+            // Filter by user ID
+            if ($userId) {
+                $query->where('user_id', $userId);
+            }
+
+            // Filter by online status
+            if ($isOnline !== null && $isOnline !== '') {
+                $isOnlineBool = filter_var($isOnline, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                if ($isOnlineBool !== null) {
+                    $query->where('is_online', $isOnlineBool);
+                }
+            }
+
+            // Search by user name or email
+            if ($search) {
+                $query->whereHas('user', function ($q) use ($search) {
+                    $q->where('first_name', 'LIKE', "%{$search}%")
+                        ->orWhere('last_name', 'LIKE', "%{$search}%")
+                        ->orWhere('email', 'LIKE', "%{$search}%");
+                });
+            }
+
+            // Filter by connection date range
+            if ($connectionFrom) {
+                $query->whereDate('connection_date', '>=', $connectionFrom);
+            }
+            if ($connectionTo) {
+                $query->whereDate('connection_date', '<=', $connectionTo);
+            }
+
+            // Filter by token expiration status
+            if ($tokenExpired !== null && $tokenExpired !== '') {
+                $tokenExpiredBool = filter_var($tokenExpired, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                if ($tokenExpiredBool !== null) {
+                    if ($tokenExpiredBool) {
+                        // Token expiré
+                        $query->where('token_expiration', '<', Carbon::now());
+                    } else {
+                        // Token valide
+                        $query->where('token_expiration', '>=', Carbon::now());
+                    }
+                }
+            }
+
+            // Sorting
+            $query->orderBy($sortBy, $sortOrder);
+
+            // Pagination
+            $logs = $query->paginate($perPage);
+
+            // Format les données
+            $formattedLogs = $logs->map(function ($log) {
+                $tokenExpiration = Carbon::parse($log->token_expiration);
+                $refreshTokenExpiration = Carbon::parse($log->refresh_token_expiration);
+                $now = Carbon::now();
+
+                return [
+                    'id' => $log->id,
+                    'user_id' => $log->user_id,
+                    'user' => $log->user ? [
+                        'id' => $log->user->id,
+                        'first_name' => $log->user->first_name,
+                        'last_name' => $log->user->last_name,
+                        'full_name' => $log->user->first_name . ' ' . $log->user->last_name,
+                        'email' => $log->user->email,
+                        'profile_picture' => $log->user->profile_picture,
+                        'role' => $log->user->role?->name,
+                    ] : null,
+                    'is_online' => $log->is_online,
+                    'connection_date' => $log->connection_date ? $log->connection_date->format('Y-m-d H:i:s') : null,
+                    'token_expiration' => $tokenExpiration->format('Y-m-d H:i:s'),
+                    'refresh_token_expiration' => $refreshTokenExpiration->format('Y-m-d H:i:s'),
+                    'is_token_expired' => $tokenExpiration->isPast(),
+                    'is_refresh_token_expired' => $refreshTokenExpiration->isPast(),
+                    'token_expires_in' => $tokenExpiration->isFuture()
+                        ? $tokenExpiration->diffForHumans($now, true)
+                        : 'Expired',
+                    'refresh_token_expires_in' => $refreshTokenExpiration->isFuture()
+                        ? $refreshTokenExpiration->diffForHumans($now, true)
+                        : 'Expired',
+                    'session_duration' => $log->connection_date
+                        ? $log->connection_date->diffForHumans($now, true)
+                        : null,
+                    'created_at' => $log->created_at->format('Y-m-d H:i:s'),
+                    'updated_at' => $log->updated_at->format('Y-m-d H:i:s'),
+                ];
+            });
+
+            // Statistiques
+            $stats = [
+                'total_logs' => Authentication::count(),
+                'online_users' => Authentication::where('is_online', true)->count(),
+                'expired_tokens' => Authentication::where('token_expiration', '<', Carbon::now())->count(),
+                'active_sessions' => Authentication::where('token_expiration', '>=', Carbon::now())
+                    ->where('is_online', true)
+                    ->count(),
+                'total_unique_users' => Authentication::distinct('user_id')->count('user_id'),
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'current_page' => $logs->currentPage(),
+                    'per_page' => $logs->perPage(),
+                    'total' => $logs->total(),
+                    'last_page' => $logs->lastPage(),
+                    'from' => $logs->firstItem(),
+                    'to' => $logs->lastItem(),
+                    'data' => $formattedLogs,
+                ],
+                'stats' => $stats
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in UserController@getAuthenticationLogs', [
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving authentication logs',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/admin/users/{id}/authentication-logs",
+     *     operationId="getUserAuthenticationLogs",
+     *     tags={"Users Management"},
+     *     summary="Get authentication logs for a specific user",
+     *     description="Returns all authentication logs for a specific user with statistics",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="User ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=15, default=15)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successfully retrieved user authentication logs",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="User not found"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function getUserAuthenticationLogs(Request $request, string $id)
+    {
+        try {
+            $user = User::findOrFail($id);
+            $perPage = $request->get('per_page', 15);
+
+            $logs = Authentication::where('user_id', $id)
+                ->orderBy('connection_date', 'desc')
+                ->paginate($perPage);
+
+            // Format les données
+            $formattedLogs = $logs->map(function ($log) {
+                $tokenExpiration = Carbon::parse($log->token_expiration);
+                $refreshTokenExpiration = Carbon::parse($log->refresh_token_expiration);
+                $now = Carbon::now();
+
+                return [
+                    'id' => $log->id,
+                    'is_online' => $log->is_online,
+                    'connection_date' => $log->connection_date ? $log->connection_date->format('Y-m-d H:i:s') : null,
+                    'token_expiration' => $tokenExpiration->format('Y-m-d H:i:s'),
+                    'refresh_token_expiration' => $refreshTokenExpiration->format('Y-m-d H:i:s'),
+                    'is_token_expired' => $tokenExpiration->isPast(),
+                    'is_refresh_token_expired' => $refreshTokenExpiration->isPast(),
+                    'token_expires_in' => $tokenExpiration->isFuture()
+                        ? $tokenExpiration->diffForHumans($now, true)
+                        : 'Expired',
+                    'session_duration' => $log->connection_date
+                        ? $log->connection_date->diffForHumans($now, true)
+                        : null,
+                    'created_at' => $log->created_at->format('Y-m-d H:i:s'),
+                    'updated_at' => $log->updated_at->format('Y-m-d H:i:s'),
+                ];
+            });
+
+            // Statistiques pour cet utilisateur
+            $stats = [
+                'total_logins' => Authentication::where('user_id', $id)->count(),
+                'currently_online' => $user->is_online,
+                'last_login' => $user->last_login ? $user->last_login->format('Y-m-d H:i:s') : null,
+                'active_sessions' => Authentication::where('user_id', $id)
+                    ->where('token_expiration', '>=', Carbon::now())
+                    ->where('is_online', true)
+                    ->count(),
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'user' => [
+                        'id' => $user->id,
+                        'first_name' => $user->first_name,
+                        'last_name' => $user->last_name,
+                        'email' => $user->email,
+                    ],
+                    'logs' => [
+                        'current_page' => $logs->currentPage(),
+                        'per_page' => $logs->perPage(),
+                        'total' => $logs->total(),
+                        'last_page' => $logs->lastPage(),
+                        'data' => $formattedLogs,
+                    ],
+                    'stats' => $stats
+                ]
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "User with ID {$id} not found"
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error in UserController@getUserAuthenticationLogs', [
+                'user_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving user authentication logs',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

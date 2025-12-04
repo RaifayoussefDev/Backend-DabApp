@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 // CONTROLLERS IMPORTS
 // ============================================
 use App\Http\Controllers\{
+    AdminMenuController,
     AuthController,
     BikePartBrandController,
     BikePartCategoryController,
@@ -380,6 +381,9 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/{id}/listings', [UserController::class, 'getUserListings'])->middleware('permission:users.view');
         Route::get('/{id}/bank-cards', [UserController::class, 'getUserBankCards'])->middleware('permission:users.view');
         Route::get('/{id}/auction-history', [UserController::class, 'getUserAuctionHistory'])->middleware('permission:users.view');
+
+        Route::get('users/authentication-logs', [UserController::class, 'getAuthenticationLogs']);
+        Route::get('users/{id}/authentication-logs', [UserController::class, 'getUserAuthenticationLogs']);
     });
 
     Route::patch('/users/{id}/activate', [UserController::class, 'activateUser']);
@@ -823,6 +827,17 @@ Route::middleware('auth:api')->group(function () {
             Route::post('/', [RolePermissionController::class, 'store'])->middleware('permission:roles.update');
             Route::post('/sync', [RolePermissionController::class, 'sync'])->middleware('permission:roles.update');
             Route::delete('/{permissionId}', [RolePermissionController::class, 'destroy'])->middleware('permission:roles.update');
+        });
+        Route::get('/menus', [AdminMenuController::class, 'index']);
+
+        // Admin-only menu management routes
+        Route::middleware(['permission:manage_menus'])->prefix('menus')->group(function () {
+            Route::get('/all', [AdminMenuController::class, 'all']);
+            Route::post('/', [AdminMenuController::class, 'store']);
+            Route::get('/{id}', [AdminMenuController::class, 'show']);
+            Route::put('/{id}', [AdminMenuController::class, 'update']);
+            Route::delete('/{id}', [AdminMenuController::class, 'destroy']);
+            Route::post('/reorder', [AdminMenuController::class, 'reorder']);
         });
     });
 });

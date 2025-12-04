@@ -468,4 +468,14 @@ class User extends Authenticatable implements JWTSubject
     {
         return $query->where('is_online', true);
     }
+    /**
+     * Get all permissions for the user (alias for getPermissions).
+     * Used by AdminMenu system.
+     *
+     * @return array
+     */
+    public function getAllPermissions()
+    {
+        return $this->getPermissions();
+    }
 }
