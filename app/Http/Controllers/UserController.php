@@ -2134,4 +2134,154 @@ class UserController extends Controller
             'data' => $users
         ]);
     }
+    /**
+     * @OA\Post(
+     *     path="/api/admin/users/{id}/toggle-verified",
+     *     operationId="toggleUserVerified",
+     *     tags={"Users Management"},
+     *     summary="Toggle user's verified status",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successfully toggled verified status",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="verified", type="boolean", example=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="User with ID 1 not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Error toggling verified status"),
+     *             @OA\Property(property="error", type="string")
+     *         )
+     *     )
+     * )
+     */
+    public function toggleVerified($id)
+    {
+        try {
+            $user = User::findOrFail($id);
+            $user->verified = !$user->verified;
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $user->id,
+                    'verified' => $user->verified
+                ]
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "User with ID {$id} not found"
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error in UserController@toggleVerified', [
+                'user_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error toggling verified status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    //swagger for api for toggle actif or not actif
+    /**
+     * @OA\Post(
+     *     path="/api/admin/users/{id}/toggle-active",
+     *     operationId="toggleUserActive",
+     *     tags={"Users Management"},
+     *     summary="Toggle user's active status",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successfully toggled active status",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="is_active", type="boolean", example=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="User with ID 1 not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Error toggling active status"),
+     *             @OA\Property(property="error", type="string")
+     *         )
+     *     )
+     * )
+     */
+    public function toggleActive($id)
+    {
+        try {
+            $user = User::findOrFail($id);
+            $user->is_active = !$user->is_active;
+            $user->save();
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $user->id,
+                    'is_active' => $user->is_active
+                ]
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "User with ID {$id} not found"
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error in UserController@toggleActive', [
+                'user_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error toggling active status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

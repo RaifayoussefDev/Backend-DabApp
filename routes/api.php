@@ -178,6 +178,10 @@ Route::middleware('auth:api')->group(function () {
             ->middleware('permission:users.view');
         Route::get('/{id}/auction-history', [UserController::class, 'getUserAuctionHistory'])
             ->middleware('permission:users.view');
+        Route::post('{id}/toggle-verified', [UserController::class, 'toggleVerified'])
+            ->middleware('permission:users.update');
+        Route::post('{id}/toggle-active', [UserController::class, 'toggleActive'])
+            ->middleware('permission:users.update');
     });
 
     // Pricing Rules Motorcycle
@@ -1163,3 +1167,19 @@ Route::post('/generate-plate', [PlateGeneratorController::class, 'generatePlate'
 
 // Route pour télécharger la plaque
 Route::get('/download-plate/{filename}', [PlateGeneratorController::class, 'downloadPlate']);
+
+
+Route::get('/server-time', function () {
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'datetime' => now()->toDateTimeString(),
+            'date' => now()->toDateString(),
+            'time' => now()->toTimeString(),
+            'timezone' => config('app.timezone'),
+            'timestamp' => now()->timestamp,
+            'formatted' => now()->format('Y-m-d H:i:s'),
+            'human' => now()->diffForHumans(),
+        ]
+    ]);
+});
