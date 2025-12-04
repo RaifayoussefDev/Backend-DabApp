@@ -345,20 +345,28 @@ Route::middleware('auth:api')->group(function () {
     // USERS MANAGEMENT (ADMIN)
     // ============================================
     Route::prefix('admin/users')->group(function () {
-        Route::get('/', [UserController::class, 'index'])->middleware('permission:users.view');
+
         Route::get('/stats', [UserController::class, 'stats'])->middleware('permission:users.view');
         Route::get('/stats/detailed', [UserController::class, 'detailedStats'])->middleware('permission:users.view');
         Route::get('/trashed', [UserController::class, 'getTrashed'])->middleware('permission:users.view');
         Route::get('/export', [UserController::class, 'export'])->middleware('permission:users.view');
 
+        Route::get('/authentication-logs', [UserController::class, 'getAuthenticationLogs'])->middleware('permission:users.view');
+
+        // Routes POST sans ID
         Route::post('/search', [UserController::class, 'search'])->middleware('permission:users.view');
         Route::post('/bulk-action', [UserController::class, 'bulkAction'])->middleware('permission:users.delete');
 
+        // Routes de liste et création
+        Route::get('/', [UserController::class, 'index'])->middleware('permission:users.view');
         Route::post('/', [UserController::class, 'store'])->middleware('permission:users.create');
+
+        // ⭐ ROUTES AVEC {id} - EN DERNIER
         Route::get('/{id}', [UserController::class, 'show'])->middleware('permission:users.view');
         Route::put('/{id}', [UserController::class, 'update'])->middleware('permission:users.update');
         Route::delete('/{id}', [UserController::class, 'destroy'])->middleware('permission:users.delete');
 
+        // Actions sur utilisateur spécifique
         Route::post('/{id}/activate', [UserController::class, 'activate'])->middleware('permission:users.update');
         Route::post('/{id}/deactivate', [UserController::class, 'deactivate'])->middleware('permission:users.update');
         Route::post('/{id}/verify', [UserController::class, 'verifyUser'])->middleware('permission:users.update');
@@ -367,23 +375,26 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/{id}/toggle-verified', [UserController::class, 'toggleVerified'])->middleware('permission:users.update');
         Route::post('/{id}/toggle-active', [UserController::class, 'toggleActive'])->middleware('permission:users.update');
 
+        // Password management
         Route::post('/{id}/reset-password', [UserController::class, 'resetPassword'])->middleware('permission:users.update');
         Route::put('/{id}/change-password', [UserController::class, 'changePassword'])->middleware('permission:users.update');
 
+        // Profile management
         Route::post('/{id}/profile-picture', [UserController::class, 'updateProfilePicture'])->middleware('permission:users.update');
         Route::put('/{id}/last-login', [UserController::class, 'updateLastLogin'])->middleware('permission:users.update');
         Route::put('/{id}/online-status', [UserController::class, 'updateOnlineStatus'])->middleware('permission:users.update');
 
+        // Two-factor authentication
         Route::post('/{id}/two-factor/enable', [UserController::class, 'enableTwoFactor'])->middleware('permission:users.update');
         Route::post('/{id}/two-factor/disable', [UserController::class, 'disableTwoFactor'])->middleware('permission:users.update');
 
+        // Relations
         Route::get('/{id}/wishlists', [UserController::class, 'getUserWishlists'])->middleware('permission:users.view');
         Route::get('/{id}/listings', [UserController::class, 'getUserListings'])->middleware('permission:users.view');
         Route::get('/{id}/bank-cards', [UserController::class, 'getUserBankCards'])->middleware('permission:users.view');
         Route::get('/{id}/auction-history', [UserController::class, 'getUserAuctionHistory'])->middleware('permission:users.view');
 
-        Route::get('users/authentication-logs', [UserController::class, 'getAuthenticationLogs']);
-        Route::get('users/{id}/authentication-logs', [UserController::class, 'getUserAuthenticationLogs']);
+        Route::get('/{id}/authentication-logs', [UserController::class, 'getUserAuthenticationLogs'])->middleware('permission:users.view');
     });
 
     Route::patch('/users/{id}/activate', [UserController::class, 'activateUser']);

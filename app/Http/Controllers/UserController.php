@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\UserCreatedMail;
+use App\Models\Authentication;
 use App\Models\Payment;
 use App\Models\Submission;
 use Illuminate\Support\Facades\Mail;
