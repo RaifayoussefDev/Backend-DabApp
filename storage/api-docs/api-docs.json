@@ -1339,6 +1339,302 @@
                 }
             }
         },
+        "/api/banners": {
+            "get": {
+                "tags": [
+                    "Banners"
+                ],
+                "summary": "Get active banners for mobile app (USER)",
+                "operationId": "ef6e2a0694446d424bc4d5fa2458f5b1",
+                "responses": {
+                    "200": {
+                        "description": "List of active banners",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "10% cashback on your first order"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Get 10% back"
+                                                    },
+                                                    "image": {
+                                                        "type": "string",
+                                                        "example": "https://dabapp.com/storage/banners/banner1.jpg"
+                                                    },
+                                                    "link": {
+                                                        "type": "string",
+                                                        "example": "/promotions/first-order"
+                                                    },
+                                                    "order": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/banners": {
+            "get": {
+                "tags": [
+                    "Admin - Banners"
+                ],
+                "summary": "Get all banners (ADMIN - tous les banners)",
+                "operationId": "bc3b8e74c9adf55f0d1f4780e3ee02c7",
+                "responses": {
+                    "200": {
+                        "description": "List of all banners"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Banners"
+                ],
+                "summary": "Create new banner",
+                "operationId": "a89cd602cdbbc67d31b5dd46c9d8840d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "image"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "10% cashback"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Get 10% back on first order"
+                                    },
+                                    "image": {
+                                        "type": "string",
+                                        "example": "https://dabapp.com/storage/uploads/banner123.jpg"
+                                    },
+                                    "link": {
+                                        "type": "string",
+                                        "example": "/promotions/cashback"
+                                    },
+                                    "order": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-01-01"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-12-31"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Banner created successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/banners/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Banners"
+                ],
+                "summary": "Get single banner",
+                "operationId": "8ef616272b2e4d9f4f15fbd5d5da38f1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Banner details"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Banners"
+                ],
+                "summary": "Update banner",
+                "operationId": "1abb0923e5bafa6e121862156f4a3737",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "image": {
+                                        "type": "string",
+                                        "example": "https://dabapp.com/storage/uploads/new-banner.jpg"
+                                    },
+                                    "link": {
+                                        "type": "string"
+                                    },
+                                    "order": {
+                                        "type": "integer"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    },
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Banner updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Banners"
+                ],
+                "summary": "Delete banner",
+                "operationId": "91e03ff318664a68424d9e454bb37b29",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Banner deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/banners/{id}/toggle": {
+            "post": {
+                "tags": [
+                    "Admin - Banners"
+                ],
+                "summary": "Toggle banner active status",
+                "operationId": "4ecfcad139ab1485d829f6e33bc07909",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Banner status toggled"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/bike-part-brands": {
             "get": {
                 "tags": [
@@ -29755,6 +30051,14 @@
         {
             "name": "Authentification",
             "description": "Authentification"
+        },
+        {
+            "name": "Banners",
+            "description": "Banners"
+        },
+        {
+            "name": "Admin - Banners",
+            "description": "Admin - Banners"
         },
         {
             "name": "Bike Part Categories",

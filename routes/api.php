@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
     AdminMenuController,
     AuthController,
+    BannerController,
     BikePartBrandController,
     BikePartCategoryController,
     CardController,
@@ -329,6 +330,7 @@ Route::get('/test-email', [SoomController::class, 'testEmail']);
 // AUTHENTICATED ROUTES (JWT REQUIRED)
 // ============================================
 // ============================================
+Route::get('/banners', [BannerController::class, 'index']);
 
 Route::middleware('auth:api')->group(function () {
 
@@ -423,6 +425,17 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/', [PricingRulesLicencePlateController::class, 'show'])->middleware('permission:pricing-rules-licence-plate.view');
         Route::put('/', [PricingRulesLicencePlateController::class, 'update'])->middleware('permission:pricing-rules-licence-plate.update');
     });
+
+    Route::prefix('admin')->group(function () {
+        Route::get('/banners', [BannerController::class, 'adminIndex']);
+        Route::get('/banners/{id}', [BannerController::class, 'show']);
+        Route::post('/banners', [BannerController::class, 'store']);
+        Route::put('/banners/{id}', [BannerController::class, 'update']);
+        Route::delete('/banners/{id}', [BannerController::class, 'destroy']);
+        Route::post('/banners/{id}/toggle', [BannerController::class, 'toggleStatus']);
+    });
+
+
 
     // ============================================
     // LISTINGS MANAGEMENT
