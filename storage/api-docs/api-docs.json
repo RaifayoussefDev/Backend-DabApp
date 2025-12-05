@@ -1401,7 +1401,7 @@
         "/api/admin/banners": {
             "get": {
                 "tags": [
-                    "Admin - Banners"
+                    "Banners Management"
                 ],
                 "summary": "Get all banners (ADMIN - tous les banners)",
                 "operationId": "bc3b8e74c9adf55f0d1f4780e3ee02c7",
@@ -1418,7 +1418,7 @@
             },
             "post": {
                 "tags": [
-                    "Admin - Banners"
+                    "Banners Management"
                 ],
                 "summary": "Create new banner",
                 "operationId": "a89cd602cdbbc67d31b5dd46c9d8840d",
@@ -1487,7 +1487,7 @@
         "/api/admin/banners/{id}": {
             "get": {
                 "tags": [
-                    "Admin - Banners"
+                    "Banners Management"
                 ],
                 "summary": "Get single banner",
                 "operationId": "8ef616272b2e4d9f4f15fbd5d5da38f1",
@@ -1514,7 +1514,7 @@
             },
             "put": {
                 "tags": [
-                    "Admin - Banners"
+                    "Banners Management"
                 ],
                 "summary": "Update banner",
                 "operationId": "1abb0923e5bafa6e121862156f4a3737",
@@ -1580,7 +1580,7 @@
             },
             "delete": {
                 "tags": [
-                    "Admin - Banners"
+                    "Banners Management"
                 ],
                 "summary": "Delete banner",
                 "operationId": "91e03ff318664a68424d9e454bb37b29",
@@ -1609,7 +1609,7 @@
         "/api/admin/banners/{id}/toggle": {
             "post": {
                 "tags": [
-                    "Admin - Banners"
+                    "Banners Management"
                 ],
                 "summary": "Toggle banner active status",
                 "operationId": "4ecfcad139ab1485d829f6e33bc07909",
@@ -30057,8 +30057,8 @@
             "description": "Banners"
         },
         {
-            "name": "Admin - Banners",
-            "description": "Admin - Banners"
+            "name": "Banners Management",
+            "description": "Banners Management"
         },
         {
             "name": "Bike Part Categories",
