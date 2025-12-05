@@ -14,6 +14,7 @@ use App\Http\Controllers\{
     CardController,
     CardTypeController,
     CurrencyExchangeRateController,
+    DashboardController,
     EventActivityController,
     EventCategoryController,
     EventContactController,
@@ -333,6 +334,7 @@ Route::get('/test-email', [SoomController::class, 'testEmail']);
 Route::get('/banners', [BannerController::class, 'index']);
 
 Route::middleware('auth:api')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 
     // ============================================
     // AUTH MANAGEMENT
