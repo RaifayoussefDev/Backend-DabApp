@@ -2968,6 +2968,76 @@
                 }
             }
         },
+        "/api/admin/dashboard": {
+            "get": {
+                "tags": [
+                    "Admin - Dashboard"
+                ],
+                "summary": "Get complete dashboard statistics",
+                "operationId": "acfff5cb2372e9486204f0dbfe4ab221",
+                "responses": {
+                    "200": {
+                        "description": "Complete dashboard data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "overview": {
+                                                    "type": "object"
+                                                },
+                                                "listings": {
+                                                    "type": "object"
+                                                },
+                                                "motorcycles": {
+                                                    "type": "object"
+                                                },
+                                                "spare_parts": {
+                                                    "type": "object"
+                                                },
+                                                "license_plates": {
+                                                    "type": "object"
+                                                },
+                                                "auctions": {
+                                                    "type": "object"
+                                                },
+                                                "payments": {
+                                                    "type": "object"
+                                                },
+                                                "engagement": {
+                                                    "type": "object"
+                                                },
+                                                "content": {
+                                                    "type": "object"
+                                                },
+                                                "moderation": {
+                                                    "type": "object"
+                                                },
+                                                "charts": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/events/{eventId}/activities": {
             "get": {
                 "tags": [
@@ -30079,6 +30149,10 @@
         {
             "name": "Colors",
             "description": "Colors"
+        },
+        {
+            "name": "Admin - Dashboard",
+            "description": "Admin - Dashboard"
         },
         {
             "name": "Event Activities",
