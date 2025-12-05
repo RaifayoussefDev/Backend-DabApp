@@ -67,7 +67,7 @@ class BannerController extends Controller
     /**
      * @OA\Get(
      *     path="/api/admin/banners",
-     *     tags={"Admin - Banners"},
+     *     tags={"Banners Management"},
      *     summary="Get all banners (ADMIN - tous les banners)",
      *     security={{"bearerAuth":{}}},
      *     @OA\Response(
@@ -103,7 +103,7 @@ class BannerController extends Controller
     /**
      * @OA\Post(
      *     path="/api/admin/banners",
-     *     tags={"Admin - Banners"},
+     *     tags={"Banners Management"},
      *     summary="Create new banner",
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
@@ -173,7 +173,7 @@ class BannerController extends Controller
     /**
      * @OA\Get(
      *     path="/api/admin/banners/{id}",
-     *     tags={"Admin - Banners"},
+     *     tags={"Banners Management"},
      *     summary="Get single banner",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
@@ -219,7 +219,7 @@ class BannerController extends Controller
     /**
      * @OA\Put(
      *     path="/api/admin/banners/{id}",
-     *     tags={"Admin - Banners"},
+     *     tags={"Banners Management"},
      *     summary="Update banner",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
@@ -294,7 +294,7 @@ class BannerController extends Controller
     /**
      * @OA\Delete(
      *     path="/api/admin/banners/{id}",
-     *     tags={"Admin - Banners"},
+     *     tags={"Banners Management"},
      *     summary="Delete banner",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
@@ -331,7 +331,7 @@ class BannerController extends Controller
     /**
      * @OA\Post(
      *     path="/api/admin/banners/{id}/toggle",
-     *     tags={"Admin - Banners"},
+     *     tags={"Banners Management"},
      *     summary="Toggle banner active status",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
