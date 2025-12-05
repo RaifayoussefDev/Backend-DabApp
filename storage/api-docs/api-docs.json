@@ -2987,41 +2987,6 @@
                                             "example": true
                                         },
                                         "data": {
-                                            "properties": {
-                                                "overview": {
-                                                    "type": "object"
-                                                },
-                                                "listings": {
-                                                    "type": "object"
-                                                },
-                                                "motorcycles": {
-                                                    "type": "object"
-                                                },
-                                                "spare_parts": {
-                                                    "type": "object"
-                                                },
-                                                "license_plates": {
-                                                    "type": "object"
-                                                },
-                                                "auctions": {
-                                                    "type": "object"
-                                                },
-                                                "payments": {
-                                                    "type": "object"
-                                                },
-                                                "engagement": {
-                                                    "type": "object"
-                                                },
-                                                "content": {
-                                                    "type": "object"
-                                                },
-                                                "moderation": {
-                                                    "type": "object"
-                                                },
-                                                "charts": {
-                                                    "type": "object"
-                                                }
-                                            },
                                             "type": "object"
                                         }
                                     },

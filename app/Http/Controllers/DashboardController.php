@@ -15,8 +15,6 @@ use App\Models\Event;
 use App\Models\Route;
 use App\Models\PointOfInterest;
 use App\Models\Wishlist;
-use App\Models\MotorcycleBrand;
-use App\Models\City;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -33,19 +31,7 @@ class DashboardController extends Controller
      *         description="Complete dashboard data",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="overview", type="object"),
-     *                 @OA\Property(property="listings", type="object"),
-     *                 @OA\Property(property="motorcycles", type="object"),
-     *                 @OA\Property(property="spare_parts", type="object"),
-     *                 @OA\Property(property="license_plates", type="object"),
-     *                 @OA\Property(property="auctions", type="object"),
-     *                 @OA\Property(property="payments", type="object"),
-     *                 @OA\Property(property="engagement", type="object"),
-     *                 @OA\Property(property="content", type="object"),
-     *                 @OA\Property(property="moderation", type="object"),
-     *                 @OA\Property(property="charts", type="object")
-     *             )
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
@@ -98,15 +84,15 @@ class DashboardController extends Controller
             ],
             'revenue' => [
                 'today' => Payment::whereDate('created_at', $today)
-                    ->where('payment_status', 'completed')
+                    ->completed()
                     ->sum('amount'),
                 'this_week' => Payment::where('created_at', '>=', $thisWeek)
-                    ->where('payment_status', 'completed')
+                    ->completed()
                     ->sum('amount'),
                 'this_month' => Payment::where('created_at', '>=', $thisMonth)
-                    ->where('payment_status', 'completed')
+                    ->completed()
                     ->sum('amount'),
-                'total' => Payment::where('payment_status', 'completed')->sum('amount'),
+                'total' => Payment::completed()->sum('amount'),
             ]
         ];
     }
@@ -136,10 +122,11 @@ class DashboardController extends Controller
             ],
             'by_category' => Listing::join('categories', 'listings.category_id', '=', 'categories.id')
                 ->select('categories.name', DB::raw('count(*) as count'))
-                ->groupBy('categories.name')
+                ->groupBy('categories.id', 'categories.name')
                 ->get(),
             'pending_moderation' => Listing::where('status', 'pending')->count(),
             'with_auction' => Listing::where('auction_enabled', true)->count(),
+            'payment_pending' => Listing::where('payment_pending', true)->count(),
         ];
     }
 
@@ -155,25 +142,35 @@ class DashboardController extends Controller
             })->count(),
             'by_brand' => Motorcycle::join('motorcycle_brands', 'motorcycles.brand_id', '=', 'motorcycle_brands.id')
                 ->select('motorcycle_brands.name', DB::raw('count(*) as count'))
-                ->groupBy('motorcycle_brands.name')
+                ->groupBy('motorcycle_brands.id', 'motorcycle_brands.name')
                 ->orderByDesc('count')
                 ->limit(10)
                 ->get(),
             'by_type' => Motorcycle::join('motorcycle_types', 'motorcycles.type_id', '=', 'motorcycle_types.id')
                 ->select('motorcycle_types.name', DB::raw('count(*) as count'))
-                ->groupBy('motorcycle_types.name')
+                ->groupBy('motorcycle_types.id', 'motorcycle_types.name')
+                ->orderByDesc('count')
                 ->get(),
             'by_city' => Motorcycle::join('listings', 'motorcycles.listing_id', '=', 'listings.id')
                 ->join('cities', 'listings.city_id', '=', 'cities.id')
                 ->select('cities.name', DB::raw('count(*) as count'))
                 ->whereNotNull('listings.city_id')
-                ->groupBy('cities.name')
+                ->groupBy('cities.id', 'cities.name')
                 ->orderByDesc('count')
                 ->limit(10)
+                ->get(),
+            'by_condition' => Motorcycle::select('general_condition', DB::raw('count(*) as count'))
+                ->whereNotNull('general_condition')
+                ->groupBy('general_condition')
+                ->get(),
+            'by_transmission' => Motorcycle::select('transmission', DB::raw('count(*) as count'))
+                ->whereNotNull('transmission')
+                ->groupBy('transmission')
                 ->get(),
             'average_price' => Motorcycle::join('listings', 'motorcycles.listing_id', '=', 'listings.id')
                 ->where('listings.status', 'active')
                 ->avg('listings.price'),
+            'average_mileage' => Motorcycle::whereNotNull('mileage')->avg('mileage'),
             'most_recent' => Motorcycle::join('listings', 'motorcycles.listing_id', '=', 'listings.id')
                 ->join('motorcycle_brands', 'motorcycles.brand_id', '=', 'motorcycle_brands.id')
                 ->join('motorcycle_models', 'motorcycles.model_id', '=', 'motorcycle_models.id')
@@ -204,13 +201,13 @@ class DashboardController extends Controller
             })->count(),
             'by_category' => SparePart::join('bike_part_categories', 'spare_parts.bike_part_category_id', '=', 'bike_part_categories.id')
                 ->select('bike_part_categories.name', DB::raw('count(*) as count'))
-                ->groupBy('bike_part_categories.name')
+                ->groupBy('bike_part_categories.id', 'bike_part_categories.name')
                 ->orderByDesc('count')
                 ->limit(10)
                 ->get(),
             'by_brand' => SparePart::join('bike_part_brands', 'spare_parts.bike_part_brand_id', '=', 'bike_part_brands.id')
                 ->select('bike_part_brands.name', DB::raw('count(*) as count'))
-                ->groupBy('bike_part_brands.name')
+                ->groupBy('bike_part_brands.id', 'bike_part_brands.name')
                 ->orderByDesc('count')
                 ->limit(10)
                 ->get(),
@@ -236,14 +233,20 @@ class DashboardController extends Controller
             })->count(),
             'by_country' => LicensePlate::join('countries', 'license_plates.country_id', '=', 'countries.id')
                 ->select('countries.name', DB::raw('count(*) as count'))
-                ->groupBy('countries.name')
+                ->groupBy('countries.id', 'countries.name')
+                ->orderByDesc('count')
                 ->get(),
             'by_city' => LicensePlate::join('cities', 'license_plates.city_id', '=', 'cities.id')
                 ->select('cities.name', DB::raw('count(*) as count'))
                 ->whereNotNull('license_plates.city_id')
-                ->groupBy('cities.name')
+                ->groupBy('cities.id', 'cities.name')
                 ->orderByDesc('count')
                 ->limit(10)
+                ->get(),
+            'by_format' => LicensePlate::join('plate_formats', 'license_plates.plate_format_id', '=', 'plate_formats.id')
+                ->select('plate_formats.name', DB::raw('count(*) as count'))
+                ->whereNotNull('license_plates.plate_format_id')
+                ->groupBy('plate_formats.id', 'plate_formats.name')
                 ->get(),
             'average_price' => LicensePlate::join('listings', 'license_plates.listing_id', '=', 'listings.id')
                 ->where('listings.status', 'active')
@@ -256,18 +259,33 @@ class DashboardController extends Controller
      */
     private function getAuctionsStats()
     {
+        $today = Carbon::today();
+        $thisWeek = Carbon::now()->startOfWeek();
+        $thisMonth = Carbon::now()->startOfMonth();
+
         return [
             'active_listings' => Listing::where('auction_enabled', true)
                 ->where('status', 'active')
                 ->count(),
             'total_submissions' => Submission::count(),
             'by_status' => [
-                'pending' => Submission::where('status', 'pending')->count(),
-                'accepted' => Submission::where('status', 'accepted')->count(),
-                'rejected' => Submission::where('status', 'rejected')->count(),
+                'pending' => Submission::pending()->count(),
+                'accepted' => Submission::accepted()->count(),
+                'rejected' => Submission::rejected()->count(),
             ],
-            'validated_sales' => Submission::where('sale_validated', true)->count(),
-            'total_bid_value' => Submission::where('status', 'accepted')->sum('amount'),
+            'validated_sales' => Submission::validated()->count(),
+            'pending_validation' => Submission::pendingValidation()->count(),
+            'expired_validations' => Submission::accepted()
+                ->where('sale_validated', false)
+                ->whereNotNull('acceptance_date')
+                ->where('acceptance_date', '<=', Carbon::now()->subDays(5))
+                ->count(),
+            'new_submissions' => [
+                'today' => Submission::whereDate('submission_date', $today)->count(),
+                'this_week' => Submission::where('submission_date', '>=', $thisWeek)->count(),
+                'this_month' => Submission::where('submission_date', '>=', $thisMonth)->count(),
+            ],
+            'total_bid_value' => Submission::accepted()->sum('amount'),
             'average_bid' => Submission::avg('amount'),
             'conversion_rate' => $this->calculateConversionRate(),
             'top_bidders' => Submission::join('users', 'submissions.user_id', '=', 'users.id')
@@ -275,10 +293,12 @@ class DashboardController extends Controller
                     'users.id',
                     'users.first_name',
                     'users.last_name',
+                    'users.email',
                     DB::raw('count(*) as total_bids'),
-                    DB::raw('sum(case when status = "accepted" then 1 else 0 end) as accepted_bids')
+                    DB::raw('sum(case when submissions.status = "accepted" then 1 else 0 end) as accepted_bids'),
+                    DB::raw('sum(case when submissions.sale_validated = 1 then 1 else 0 end) as validated_sales')
                 )
-                ->groupBy('users.id', 'users.first_name', 'users.last_name')
+                ->groupBy('users.id', 'users.first_name', 'users.last_name', 'users.email')
                 ->orderByDesc('total_bids')
                 ->limit(10)
                 ->get(),
@@ -294,26 +314,33 @@ class DashboardController extends Controller
         $thisYear = Carbon::now()->startOfYear();
 
         return [
-            'total_revenue' => Payment::where('payment_status', 'completed')->sum('amount'),
+            'total_revenue' => Payment::completed()->sum('amount'),
             'this_month_revenue' => Payment::where('created_at', '>=', $thisMonth)
-                ->where('payment_status', 'completed')
+                ->completed()
                 ->sum('amount'),
             'this_year_revenue' => Payment::where('created_at', '>=', $thisYear)
-                ->where('payment_status', 'completed')
+                ->completed()
                 ->sum('amount'),
             'total_transactions' => Payment::count(),
             'by_status' => [
-                'completed' => Payment::where('payment_status', 'completed')->count(),
-                'pending' => Payment::where('payment_status', 'pending')->count(),
-                'failed' => Payment::where('payment_status', 'failed')->count(),
+                'completed' => Payment::completed()->count(),
+                'pending' => Payment::pending()->count(),
+                'failed' => Payment::failed()->count(),
+                'initiated' => Payment::where('payment_status', 'initiated')->count(),
             ],
-            'average_transaction' => Payment::where('payment_status', 'completed')->avg('amount'),
+            'average_transaction' => Payment::completed()->avg('amount'),
             'promo_codes_used' => Payment::whereNotNull('promo_code_id')
-                ->where('payment_status', 'completed')
+                ->completed()
                 ->count(),
-            'total_discounts' => Payment::where('payment_status', 'completed')
+            'total_discounts' => Payment::completed()
                 ->whereNotNull('discounted_amount')
+                ->whereNotNull('total_amount')
                 ->sum(DB::raw('total_amount - discounted_amount')),
+            'by_payment_method' => Payment::join('card_types', 'payments.payment_method_id', '=', 'card_types.id')
+                ->select('card_types.name', DB::raw('count(*) as count'))
+                ->whereNotNull('payments.payment_method_id')
+                ->groupBy('card_types.id', 'card_types.name')
+                ->get(),
         ];
     }
 
@@ -324,20 +351,33 @@ class DashboardController extends Controller
     {
         return [
             'total_wishlists' => Wishlist::count(),
+            'users_with_wishlist' => Wishlist::distinct('user_id')->count('user_id'),
             'users_with_garage' => DB::table('my_garage')
-                ->select('user_id')
-                ->distinct()
-                ->count(),
+                ->distinct('user_id')
+                ->count('user_id'),
             'top_sellers' => Listing::join('users', 'listings.seller_id', '=', 'users.id')
                 ->select(
                     'users.id',
                     'users.first_name',
                     'users.last_name',
+                    'users.email',
                     DB::raw('count(*) as total_listings'),
-                    DB::raw('sum(case when listings.status = "sold" then 1 else 0 end) as sold_listings')
+                    DB::raw('sum(case when listings.status = "sold" then 1 else 0 end) as sold_listings'),
+                    DB::raw('sum(case when listings.status = "active" then 1 else 0 end) as active_listings')
                 )
-                ->groupBy('users.id', 'users.first_name', 'users.last_name')
+                ->groupBy('users.id', 'users.first_name', 'users.last_name', 'users.email')
                 ->orderByDesc('total_listings')
+                ->limit(10)
+                ->get(),
+            'most_wishlisted' => Listing::join('wishlists', 'listings.id', '=', 'wishlists.listing_id')
+                ->select(
+                    'listings.id',
+                    'listings.title',
+                    'listings.price',
+                    DB::raw('count(*) as wishlist_count')
+                )
+                ->groupBy('listings.id', 'listings.title', 'listings.price')
+                ->orderByDesc('wishlist_count')
                 ->limit(10)
                 ->get(),
         ];
@@ -353,6 +393,7 @@ class DashboardController extends Controller
                 'total' => Guide::count(),
                 'published' => Guide::where('status', 'published')->count(),
                 'draft' => Guide::where('status', 'draft')->count(),
+                'archived' => Guide::where('status', 'archived')->count(),
                 'total_views' => Guide::sum('views_count'),
                 'most_viewed' => Guide::where('status', 'published')
                     ->orderByDesc('views_count')
@@ -361,21 +402,29 @@ class DashboardController extends Controller
             ],
             'events' => [
                 'total' => Event::count(),
-                'upcoming' => Event::where('event_date', '>=', Carbon::today())->count(),
-                'completed' => Event::where('event_date', '<', Carbon::today())->count(),
-                'total_participants' => DB::table('event_participants')->count(),
+                'upcoming' => Event::where('event_date', '>=', Carbon::today())
+                    ->where('status', 'upcoming')
+                    ->count(),
+                'completed' => Event::where('status', 'completed')->count(),
+                'cancelled' => Event::where('status', 'cancelled')->count(),
+                'total_participants' => DB::table('event_participants')
+                    ->where('status', 'registered')
+                    ->count(),
             ],
             'routes' => [
                 'total' => Route::count(),
                 'verified' => Route::where('is_verified', true)->count(),
+                'featured' => Route::where('is_featured', true)->count(),
                 'total_completions' => DB::table('route_completions')->count(),
+                'total_likes' => DB::table('route_likes')->count(),
             ],
             'poi' => [
                 'total' => PointOfInterest::count(),
                 'verified' => PointOfInterest::where('is_verified', true)->count(),
+                'active' => PointOfInterest::where('is_active', true)->count(),
                 'by_type' => PointOfInterest::join('poi_types', 'points_of_interest.type_id', '=', 'poi_types.id')
                     ->select('poi_types.name', DB::raw('count(*) as count'))
-                    ->groupBy('poi_types.name')
+                    ->groupBy('poi_types.id', 'poi_types.name')
                     ->get(),
             ],
         ];
@@ -391,14 +440,18 @@ class DashboardController extends Controller
             'pending_comments' => DB::table('guide_comments')
                 ->where('is_approved', false)
                 ->count(),
-            'poi_reports' => DB::table('poi_reports')
+            'poi_reports_pending' => DB::table('poi_reports')
                 ->where('status', 'pending')
                 ->count(),
             'recent_pending_listings' => Listing::where('status', 'pending')
-                ->with(['seller:id,first_name,last_name', 'category:id,name'])
+                ->with([
+                    'seller:id,first_name,last_name,email',
+                    'category:id,name',
+                    'city:id,name'
+                ])
                 ->orderByDesc('created_at')
                 ->limit(10)
-                ->get(['id', 'title', 'created_at', 'seller_id', 'category_id']),
+                ->get(['id', 'title', 'price', 'created_at', 'seller_id', 'category_id', 'city_id']),
         ];
     }
 
@@ -421,6 +474,7 @@ class DashboardController extends Controller
             'listings_by_status' => $this->getListingsByStatusChart(),
             'payments_by_status' => $this->getPaymentsByStatusChart(),
             'auctions_by_status' => $this->getAuctionsByStatusChart(),
+            'motorcycles_by_type' => $this->getMotorcyclesByTypeChart(),
         ];
     }
 
@@ -475,7 +529,7 @@ class DashboardController extends Controller
                 DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
                 DB::raw('sum(amount) as total')
             )
-            ->where('payment_status', 'completed')
+            ->completed()
             ->where('created_at', '>=', Carbon::now()->subMonths(12))
             ->groupBy('month')
             ->orderBy('month')
@@ -495,7 +549,8 @@ class DashboardController extends Controller
     {
         $data = Listing::join('categories', 'listings.category_id', '=', 'categories.id')
             ->select('categories.name', DB::raw('count(*) as count'))
-            ->groupBy('categories.name')
+            ->groupBy('categories.id', 'categories.name')
+            ->orderByDesc('count')
             ->get();
 
         return [
@@ -512,13 +567,31 @@ class DashboardController extends Controller
     {
         $data = Motorcycle::join('motorcycle_brands', 'motorcycles.brand_id', '=', 'motorcycle_brands.id')
             ->select('motorcycle_brands.name', DB::raw('count(*) as count'))
-            ->groupBy('motorcycle_brands.name')
+            ->groupBy('motorcycle_brands.id', 'motorcycle_brands.name')
             ->orderByDesc('count')
             ->limit(5)
             ->get();
 
         return [
             'type' => 'bar',
+            'labels' => $data->pluck('name'),
+            'values' => $data->pluck('count'),
+        ];
+    }
+
+    /**
+     * Graphique: Motos par type
+     */
+    private function getMotorcyclesByTypeChart()
+    {
+        $data = Motorcycle::join('motorcycle_types', 'motorcycles.type_id', '=', 'motorcycle_types.id')
+            ->select('motorcycle_types.name', DB::raw('count(*) as count'))
+            ->groupBy('motorcycle_types.id', 'motorcycle_types.name')
+            ->orderByDesc('count')
+            ->get();
+
+        return [
+            'type' => 'doughnut',
             'labels' => $data->pluck('name'),
             'values' => $data->pluck('count'),
         ];
@@ -532,7 +605,7 @@ class DashboardController extends Controller
         $data = Listing::join('cities', 'listings.city_id', '=', 'cities.id')
             ->select('cities.name', DB::raw('count(*) as count'))
             ->whereNotNull('listings.city_id')
-            ->groupBy('cities.name')
+            ->groupBy('cities.id', 'cities.name')
             ->orderByDesc('count')
             ->limit(10)
             ->get();
@@ -551,7 +624,7 @@ class DashboardController extends Controller
     {
         $data = SparePart::join('bike_part_categories', 'spare_parts.bike_part_category_id', '=', 'bike_part_categories.id')
             ->select('bike_part_categories.name', DB::raw('count(*) as count'))
-            ->groupBy('bike_part_categories.name')
+            ->groupBy('bike_part_categories.id', 'bike_part_categories.name')
             ->orderByDesc('count')
             ->limit(10)
             ->get();
@@ -570,6 +643,7 @@ class DashboardController extends Controller
     {
         $data = Listing::select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
+            ->orderByDesc('count')
             ->get();
 
         return [
@@ -586,6 +660,7 @@ class DashboardController extends Controller
     {
         $data = Payment::select('payment_status', DB::raw('count(*) as count'))
             ->groupBy('payment_status')
+            ->orderByDesc('count')
             ->get();
 
         return [
@@ -602,6 +677,7 @@ class DashboardController extends Controller
     {
         $data = Submission::select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
+            ->orderByDesc('count')
             ->get();
 
         return [
@@ -619,7 +695,7 @@ class DashboardController extends Controller
         $total = Submission::count();
         if ($total == 0) return 0;
 
-        $accepted = Submission::where('status', 'accepted')->count();
+        $accepted = Submission::accepted()->count();
         return round(($accepted / $total) * 100, 2);
     }
 }
