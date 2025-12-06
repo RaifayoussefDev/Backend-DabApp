@@ -21,8 +21,8 @@ return [
         'http://localhost:4200',
         'http://192.168.11.184:5500',
         'http://localhost:5500',
-        'https://dabapp-frontend-new.pages.dev'
-
+        'https://dabapp-frontend-new.pages.dev',
+        'http://localhost:8000',
     ],
 
     'allowed_origins_patterns' => [
