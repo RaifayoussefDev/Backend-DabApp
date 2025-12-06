@@ -19551,13 +19551,13 @@
                 }
             }
         },
-        "/api/permissions": {
+        "/api/admin/permissions": {
             "get": {
                 "tags": [
                     "Permissions"
                 ],
                 "summary": "Get all permissions",
-                "operationId": "27bb1606a7b293d1d49f57bb94ae71f7",
+                "operationId": "66964f4ed60f317abd1c7070b1e2de5b",
                 "parameters": [
                     {
                         "name": "page",
@@ -19600,7 +19600,7 @@
                     "Permissions"
                 ],
                 "summary": "Create a new permission",
-                "operationId": "37c918c86b5085b0eb088fa760c7175d",
+                "operationId": "4965fc66cbb6212b752f01ad05e65c3e",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -19639,13 +19639,13 @@
                 ]
             }
         },
-        "/api/permissions/{id}": {
+        "/api/admin/permissions/{id}": {
             "get": {
                 "tags": [
                     "Permissions"
                 ],
                 "summary": "Get a permission by ID",
-                "operationId": "397983813683c0c602fc1a036992367a",
+                "operationId": "0057e45a8c3e7ce90673ca1780d05af3",
                 "parameters": [
                     {
                         "name": "id",
@@ -19675,7 +19675,7 @@
                     "Permissions"
                 ],
                 "summary": "Update a permission",
-                "operationId": "db11d4d00da3ece5b99187df6f1e86e7",
+                "operationId": "4af99fb2f9a1ca9d1c26b4d4084cb575",
                 "parameters": [
                     {
                         "name": "id",
@@ -19720,7 +19720,7 @@
                     "Permissions"
                 ],
                 "summary": "Delete a permission",
-                "operationId": "f0afbd22579524a5bb83b653f7dd18dc",
+                "operationId": "767f7296059c1a8e8e1500db6c5bb6fd",
                 "parameters": [
                     {
                         "name": "id",
@@ -19743,13 +19743,13 @@
                 ]
             }
         },
-        "/api/permissions/grouped": {
+        "/api/admin/permissions/grouped": {
             "get": {
                 "tags": [
                     "Permissions"
                 ],
                 "summary": "Get permissions grouped by module",
-                "operationId": "8d249ebdfaa43adebabcc3da71afab4a",
+                "operationId": "9bd2106765c855bd80ab4f9b164e0b6d",
                 "responses": {
                     "200": {
                         "description": "Grouped permissions"
