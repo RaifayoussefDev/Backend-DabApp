@@ -412,6 +412,7 @@
                 <input type="number" id="displayRouteId" placeholder="1">
             </div>
             <button class="btn" onclick="displayRouteOnMap()">Display on Map</button>
+            <button class="btn btn-success" onclick="openItinerary()">🧭 Open Navigation Itinerary</button>
             <div class="response-box" id="displayResponse"></div>
             <div class="map-container">
                 <div id="displayMap"></div>
@@ -1721,6 +1722,24 @@
         } catch (error) {
             responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
         }
+    }
+
+    function openItinerary() {
+        if (!authToken) {
+            alert('⚠️ Please login first!');
+            return;
+        }
+
+        const routeId = document.getElementById('displayRouteId').value;
+
+        if (!routeId) {
+            alert('⚠️ Please enter a route ID!');
+            return;
+        }
+
+        // Ouvrir la page itinéraire avec le token et route_id
+        const url = `route-itinerary-with-auth.html?id=${routeId}&token=${authToken}`;
+        window.open(url, '_blank');
     }
 
     window.onclick = function(event) {
