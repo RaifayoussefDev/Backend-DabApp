@@ -11,7 +11,7 @@ class PermissionController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/api/permissions",
+     *     path="/api/admin/permissions",
      *     summary="Get all permissions",
      *     tags={"Permissions"},
      *     security={{"bearerAuth":{}}},
@@ -64,7 +64,7 @@ class PermissionController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/permissions",
+     *     path="/api/admin/permissions",
      *     summary="Create a new permission",
      *     tags={"Permissions"},
      *     security={{"bearerAuth":{}}},
@@ -106,7 +106,7 @@ class PermissionController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/permissions/{id}",
+     *     path="/api/admin/permissions/{id}",
      *     summary="Get a permission by ID",
      *     tags={"Permissions"},
      *     security={{"bearerAuth":{}}},
@@ -132,7 +132,7 @@ class PermissionController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/api/permissions/{id}",
+     *     path="/api/admin/permissions/{id}",
      *     summary="Update a permission",
      *     tags={"Permissions"},
      *     security={{"bearerAuth":{}}},
@@ -180,7 +180,7 @@ class PermissionController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/api/permissions/{id}",
+     *     path="/api/admin/permissions/{id}",
      *     summary="Delete a permission",
      *     tags={"Permissions"},
      *     security={{"bearerAuth":{}}},
@@ -210,7 +210,7 @@ class PermissionController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/permissions/grouped",
+     *     path="/api/admin/permissions/grouped",
      *     summary="Get permissions grouped by module",
      *     tags={"Permissions"},
      *     security={{"bearerAuth":{}}},
