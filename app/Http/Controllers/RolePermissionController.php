@@ -432,4 +432,118 @@ class RolePermissionController extends Controller
             ], 500);
         }
     }
+    /**
+     * @OA\Get(
+     *     path="/api/admin/roles/{roleId}/permissions/interface/{interface}",
+     *     operationId="getRolePermissionsByInterface",
+     *     tags={"Role Permissions"},
+     *     summary="Get permissions for a specific interface",
+     *     description="Returns permissions for a specific interface (users, roles, etc.) with boolean values for each CRUD action",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="roleId",
+     *         in="path",
+     *         required=true,
+     *         description="Role ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="interface",
+     *         in="path",
+     *         required=true,
+     *         description="Interface name (users, roles, dashboard, etc.)",
+     *         @OA\Schema(type="string", example="users")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successfully retrieved interface permissions",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="role",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Admin")
+     *                 ),
+     *                 @OA\Property(property="interface", type="string", example="users"),
+     *                 @OA\Property(
+     *                     property="permissions",
+     *                     type="object",
+     *                     @OA\Property(property="view", type="boolean", example=true),
+     *                     @OA\Property(property="create", type="boolean", example=true),
+     *                     @OA\Property(property="update", type="boolean", example=false),
+     *                     @OA\Property(property="delete", type="boolean", example=false)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Role not found or interface not found"),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function getPermissionsByInterface($roleId, $interface)
+    {
+        try {
+            Log::info('Getting permissions for interface', [
+                'role_id' => $roleId,
+                'interface' => $interface
+            ]);
+
+            $role = Role::with('permissions')->findOrFail($roleId);
+
+            // Récupérer les noms de toutes les permissions du rôle
+            $rolePermissions = $role->permissions->pluck('name')->toArray();
+
+            // Récupérer toutes les permissions pour cette interface
+            $interfacePermissions = Permission::where('name', 'LIKE', $interface . '.%')->get();
+
+            if ($interfacePermissions->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "No permissions found for interface: {$interface}"
+                ], 404);
+            }
+
+            // Construire l'objet des permissions avec des booléens
+            $permissions = [];
+
+            foreach ($interfacePermissions as $permission) {
+                // Extraire l'action (ex: "users.view" -> "view")
+                $parts = explode('.', $permission->name);
+                if (count($parts) === 2) {
+                    $action = $parts[1]; // view, create, update, delete, manage
+
+                    // Vérifier si le rôle a cette permission
+                    $permissions[$action] = in_array($permission->name, $rolePermissions);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'role' => [
+                        'id' => $role->id,
+                        'name' => $role->name,
+                    ],
+                    'interface' => $interface,
+                    'permissions' => $permissions
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting interface permissions', [
+                'role_id' => $roleId,
+                'interface' => $interface,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving interface permissions',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

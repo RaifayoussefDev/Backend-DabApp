@@ -854,6 +854,7 @@ Route::middleware('auth:api')->group(function () {
             Route::post('/', [RolePermissionController::class, 'store'])->middleware('permission:roles.update');
             Route::post('/sync', [RolePermissionController::class, 'sync'])->middleware('permission:roles.update');
             Route::delete('/{permissionId}', [RolePermissionController::class, 'destroy'])->middleware('permission:roles.update');
+            Route::get('/interface/{interface}', [RolePermissionController::class, 'getPermissionsByInterface'])->middleware('permission:roles.view');
         });
         Route::get('/menus', [AdminMenuController::class, 'index']);
 

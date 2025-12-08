@@ -23256,6 +23256,110 @@
                 ]
             }
         },
+        "/api/admin/roles/{roleId}/permissions/interface/{interface}": {
+            "get": {
+                "tags": [
+                    "Role Permissions"
+                ],
+                "summary": "Get permissions for a specific interface",
+                "description": "Returns permissions for a specific interface (users, roles, etc.) with boolean values for each CRUD action",
+                "operationId": "getRolePermissionsByInterface",
+                "parameters": [
+                    {
+                        "name": "roleId",
+                        "in": "path",
+                        "description": "Role ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "interface",
+                        "in": "path",
+                        "description": "Interface name (users, roles, dashboard, etc.)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "users"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved interface permissions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "role": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Admin"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "interface": {
+                                                    "type": "string",
+                                                    "example": "users"
+                                                },
+                                                "permissions": {
+                                                    "properties": {
+                                                        "view": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "create": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "update": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "delete": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Role not found or interface not found"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/routes/{route_id}/completions": {
             "get": {
                 "tags": [
