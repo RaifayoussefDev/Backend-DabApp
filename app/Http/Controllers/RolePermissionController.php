@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 class RolePermissionController extends Controller
 {
-   /**
+    /**
      * @OA\Get(
      *     path="/api/admin/roles/{roleId}/permissions",
      *     operationId="getRolePermissions",
@@ -73,7 +73,7 @@ class RolePermissionController extends Controller
                         'created_at' => $role->created_at,
                         'updated_at' => $role->updated_at,
                     ],
-                    'permissions' => $role->permissions->map(function($permission) {
+                    'permissions' => $role->permissions->map(function ($permission) {
                         return [
                             'id' => $permission->id,
                             'name' => $permission->name,
@@ -300,5 +300,136 @@ class RolePermissionController extends Controller
             'success' => true,
             'message' => 'Permission removed successfully'
         ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/admin/roles/{roleId}/permissions/grouped",
+     *     operationId="getRolePermissionsGrouped",
+     *     tags={"Role Permissions"},
+     *     summary="Get permissions grouped by interface",
+     *     description="Returns permissions organized by interface (users, roles, etc.) with boolean values for each action",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="roleId",
+     *         in="path",
+     *         required=true,
+     *         description="Role ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successfully retrieved grouped permissions",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="role",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Admin")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="permissions",
+     *                     type="object",
+     *                     @OA\Property(
+     *                         property="users",
+     *                         type="object",
+     *                         @OA\Property(property="view", type="boolean", example=true),
+     *                         @OA\Property(property="create", type="boolean", example=true),
+     *                         @OA\Property(property="update", type="boolean", example=true),
+     *                         @OA\Property(property="delete", type="boolean", example=false)
+     *                     ),
+     *                     @OA\Property(
+     *                         property="roles",
+     *                         type="object",
+     *                         @OA\Property(property="view", type="boolean", example=true),
+     *                         @OA\Property(property="create", type="boolean", example=false),
+     *                         @OA\Property(property="update", type="boolean", example=false),
+     *                         @OA\Property(property="delete", type="boolean", example=false)
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Role not found"),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=403, description="Forbidden - Missing permission")
+     * )
+     */
+    public function getGroupedPermissions($roleId)
+    {
+        try {
+            Log::info('Getting grouped permissions for role', ['role_id' => $roleId]);
+
+            $role = Role::with('permissions')->findOrFail($roleId);
+
+            // Récupérer les noms de toutes les permissions du rôle
+            $rolePermissions = $role->permissions->pluck('name')->toArray();
+
+            // Récupérer toutes les permissions disponibles
+            $allPermissions = Permission::all();
+
+            // Grouper les permissions par interface
+            $grouped = [];
+
+            foreach ($allPermissions as $permission) {
+                // Extraire l'interface et l'action (ex: "users.view" -> interface="users", action="view")
+                $parts = explode('.', $permission->name);
+
+                if (count($parts) === 2) {
+                    $interface = $parts[0];
+                    $action = $parts[1];
+
+                    // Initialiser l'interface si elle n'existe pas
+                    if (!isset($grouped[$interface])) {
+                        $grouped[$interface] = [
+                            'view' => false,
+                            'create' => false,
+                            'update' => false,
+                            'delete' => false,
+                            'manage' => false, // Pour les permissions spéciales comme pricing.manage
+                        ];
+                    }
+
+                    // Vérifier si le rôle a cette permission
+                    $grouped[$interface][$action] = in_array($permission->name, $rolePermissions);
+                }
+            }
+
+            // Nettoyer les interfaces qui n'ont que des valeurs false inutiles
+            foreach ($grouped as $interface => &$actions) {
+                // Supprimer les actions qui n'existent pas pour cette interface
+                $actions = array_filter($actions, function ($value, $key) use ($allPermissions, $interface) {
+                    return $allPermissions->contains('name', $interface . '.' . $key);
+                }, ARRAY_FILTER_USE_BOTH);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'role' => [
+                        'id' => $role->id,
+                        'name' => $role->name,
+                        'created_at' => $role->created_at,
+                        'updated_at' => $role->updated_at,
+                    ],
+                    'permissions' => $grouped
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting grouped permissions', [
+                'role_id' => $roleId,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving grouped permissions',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

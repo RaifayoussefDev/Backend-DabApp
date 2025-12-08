@@ -23137,6 +23137,125 @@
                 ]
             }
         },
+        "/api/admin/roles/{roleId}/permissions/grouped": {
+            "get": {
+                "tags": [
+                    "Role Permissions"
+                ],
+                "summary": "Get permissions grouped by interface",
+                "description": "Returns permissions organized by interface (users, roles, etc.) with boolean values for each action",
+                "operationId": "getRolePermissionsGrouped",
+                "parameters": [
+                    {
+                        "name": "roleId",
+                        "in": "path",
+                        "description": "Role ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved grouped permissions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "role": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Admin"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "permissions": {
+                                                    "properties": {
+                                                        "users": {
+                                                            "properties": {
+                                                                "view": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                },
+                                                                "create": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                },
+                                                                "update": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                },
+                                                                "delete": {
+                                                                    "type": "boolean",
+                                                                    "example": false
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "roles": {
+                                                            "properties": {
+                                                                "view": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                },
+                                                                "create": {
+                                                                    "type": "boolean",
+                                                                    "example": false
+                                                                },
+                                                                "update": {
+                                                                    "type": "boolean",
+                                                                    "example": false
+                                                                },
+                                                                "delete": {
+                                                                    "type": "boolean",
+                                                                    "example": false
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Role not found"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden - Missing permission"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/routes/{route_id}/completions": {
             "get": {
                 "tags": [

@@ -850,6 +850,7 @@ Route::middleware('auth:api')->group(function () {
 
         Route::prefix('roles/{roleId}/permissions')->group(function () {
             Route::get('/', [RolePermissionController::class, 'index'])->middleware('permission:roles.view');
+            Route::get('/grouped', [RolePermissionController::class, 'getGroupedPermissions'])->middleware('permission:roles.view');
             Route::post('/', [RolePermissionController::class, 'store'])->middleware('permission:roles.update');
             Route::post('/sync', [RolePermissionController::class, 'sync'])->middleware('permission:roles.update');
             Route::delete('/{permissionId}', [RolePermissionController::class, 'destroy'])->middleware('permission:roles.update');
