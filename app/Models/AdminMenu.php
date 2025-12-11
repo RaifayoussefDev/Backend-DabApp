@@ -48,11 +48,13 @@ class AdminMenu extends Model
         'roles' => 'array'
     ];
 
-    // RENOMMER $hidden en $hiddenFields pour éviter le conflit
-    protected $hiddenFields = [
-        'created_at',
-        'updated_at'
-    ];
+    /**
+     * Get the attributes that should be hidden for serialization.
+     */
+    protected function getHidden(): array
+    {
+        return ['created_at', 'updated_at'];
+    }
 
     /**
      * Parent menu relationship
@@ -225,7 +227,8 @@ class AdminMenu extends Model
             ->map(function($menu) {
                 return $menu->formatForFrontend();
             })
-            ->values();
+            ->values()
+            ->toArray(); // Convertir en array pur
     }
 
     /**
@@ -250,9 +253,9 @@ class AdminMenu extends Model
             $data['translate'] = $this->translate;
         }
 
-        // IMPORTANT: Récupérer l'attribut 'hidden' depuis la base de données, pas $hidden de Laravel
-        if ($this->attributes['hidden'] ?? false) {
-            $data['hidden'] = (bool)$this->attributes['hidden'];
+        // CORRECTION: Accéder directement à l'attribut de la base de données
+        if (isset($this->attributes['hidden']) && $this->attributes['hidden']) {
+            $data['hidden'] = true;
         }
 
         if ($this->url ?? $this->route ?? $this->link) {
@@ -268,19 +271,19 @@ class AdminMenu extends Model
         }
 
         if ($this->exact_match) {
-            $data['exactMatch'] = (bool)$this->exact_match;
+            $data['exactMatch'] = true;
         }
 
         if ($this->external) {
-            $data['external'] = (bool)$this->external;
+            $data['external'] = true;
         }
 
         if ($this->target) {
-            $data['target'] = (bool)$this->target;
+            $data['target'] = true;
         }
 
-        if ($this->breadcrumbs !== null) {
-            $data['breadcrumbs'] = (bool)$this->breadcrumbs;
+        if ($this->breadcrumbs) {
+            $data['breadcrumbs'] = true;
         }
 
         if ($this->link) {
@@ -300,11 +303,11 @@ class AdminMenu extends Model
         }
 
         if ($this->disabled) {
-            $data['disabled'] = (bool)$this->disabled;
+            $data['disabled'] = true;
         }
 
         if ($this->is_main_parent) {
-            $data['isMainParent'] = (bool)$this->is_main_parent;
+            $data['isMainParent'] = true;
         }
 
         // Add children if exists
@@ -329,19 +332,5 @@ class AdminMenu extends Model
             }])
             ->orderBy('order')
             ->get();
-    }
-
-    /**
-     * Override toArray to exclude timestamps
-     */
-    public function toArray()
-    {
-        $array = parent::toArray();
-
-        // Remove created_at and updated_at
-        unset($array['created_at']);
-        unset($array['updated_at']);
-
-        return $array;
     }
 }
