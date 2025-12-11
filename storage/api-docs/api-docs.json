@@ -15,7 +15,7 @@
                     "Admin Menus Management"
                 ],
                 "summary": "Get admin menu tree for authenticated user",
-                "description": "Returns the complete menu tree filtered by user permissions. Menus are cached for 1 hour per user.",
+                "description": "Returns the complete menu tree filtered by user permissions and roles. Menus are cached for 1 hour per user.",
                 "operationId": "getAdminMenus",
                 "parameters": [
                     {
@@ -44,24 +44,88 @@
                                             "items": {
                                                 "properties": {
                                                     "id": {
-                                                        "type": "integer",
-                                                        "example": 1
+                                                        "type": "string",
+                                                        "example": "1"
                                                     },
-                                                    "name": {
+                                                    "title": {
                                                         "type": "string",
                                                         "example": "Dashboard"
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "item",
+                                                            "collapse",
+                                                            "group"
+                                                        ],
+                                                        "example": "collapse"
+                                                    },
+                                                    "translate": {
+                                                        "type": "string",
+                                                        "example": "NAV.DASHBOARD"
                                                     },
                                                     "icon": {
                                                         "type": "string",
                                                         "example": "dashboard"
                                                     },
-                                                    "route": {
+                                                    "url": {
                                                         "type": "string",
                                                         "example": "/admin/dashboard"
                                                     },
-                                                    "permission": {
+                                                    "classes": {
                                                         "type": "string",
-                                                        "example": "view_dashboard"
+                                                        "example": "nav-item"
+                                                    },
+                                                    "groupClasses": {
+                                                        "type": "string",
+                                                        "example": "group-item"
+                                                    },
+                                                    "hidden": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "exactMatch": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "external": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "target": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "breadcrumbs": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "link": {
+                                                        "type": "string",
+                                                        "example": "/dashboard"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Main dashboard"
+                                                    },
+                                                    "path": {
+                                                        "type": "string",
+                                                        "example": "dashboard"
+                                                    },
+                                                    "role": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "example": "admin"
+                                                        }
+                                                    },
+                                                    "disabled": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "isMainParent": {
+                                                        "type": "boolean",
+                                                        "example": true
                                                     },
                                                     "order": {
                                                         "type": "integer",
@@ -72,20 +136,24 @@
                                                         "items": {
                                                             "properties": {
                                                                 "id": {
-                                                                    "type": "integer",
-                                                                    "example": 21
+                                                                    "type": "string",
+                                                                    "example": "21"
                                                                 },
-                                                                "name": {
+                                                                "title": {
                                                                     "type": "string",
                                                                     "example": "All Users"
                                                                 },
-                                                                "route": {
+                                                                "type": {
+                                                                    "type": "string",
+                                                                    "example": "item"
+                                                                },
+                                                                "url": {
                                                                     "type": "string",
                                                                     "example": "/admin/users"
                                                                 },
-                                                                "permission": {
+                                                                "icon": {
                                                                     "type": "string",
-                                                                    "example": "view_users"
+                                                                    "example": "users"
                                                                 }
                                                             },
                                                             "type": "object"
@@ -116,7 +184,7 @@
                     "Admin Menus Management"
                 ],
                 "summary": "Create a new menu item",
-                "description": "Creates a new menu item (parent or child)",
+                "description": "Creates a new menu item (parent or child) with all available properties",
                 "operationId": "createAdminMenu",
                 "requestBody": {
                     "required": true,
@@ -125,6 +193,7 @@
                             "schema": {
                                 "required": [
                                     "name",
+                                    "type",
                                     "order"
                                 ],
                                 "properties": {
@@ -135,31 +204,139 @@
                                         "nullable": true
                                     },
                                     "name": {
+                                        "description": "Internal name",
                                         "type": "string",
                                         "example": "New Menu"
                                     },
+                                    "title": {
+                                        "description": "Display title",
+                                        "type": "string",
+                                        "example": "New Menu Item",
+                                        "nullable": true
+                                    },
+                                    "type": {
+                                        "description": "Menu type",
+                                        "type": "string",
+                                        "enum": [
+                                            "item",
+                                            "collapse",
+                                            "group"
+                                        ],
+                                        "example": "item"
+                                    },
+                                    "translate": {
+                                        "description": "Translation key",
+                                        "type": "string",
+                                        "example": "NAV.NEW_MENU",
+                                        "nullable": true
+                                    },
                                     "icon": {
+                                        "description": "Icon name",
                                         "type": "string",
                                         "example": "settings",
                                         "nullable": true
                                     },
                                     "route": {
+                                        "description": "Route path",
                                         "type": "string",
                                         "example": "/admin/new-feature",
                                         "nullable": true
                                     },
+                                    "link": {
+                                        "description": "Alternative link",
+                                        "type": "string",
+                                        "example": "/new-feature",
+                                        "nullable": true
+                                    },
+                                    "url": {
+                                        "description": "Direct URL",
+                                        "type": "string",
+                                        "example": "https://example.com",
+                                        "nullable": true
+                                    },
+                                    "path": {
+                                        "description": "Path reference",
+                                        "type": "string",
+                                        "example": "new-feature",
+                                        "nullable": true
+                                    },
                                     "permission": {
+                                        "description": "Required permission",
                                         "type": "string",
                                         "example": "view_new_feature",
                                         "nullable": true
                                     },
+                                    "description": {
+                                        "description": "Menu description",
+                                        "type": "string",
+                                        "example": "This is a new feature",
+                                        "nullable": true
+                                    },
+                                    "classes": {
+                                        "description": "CSS classes",
+                                        "type": "string",
+                                        "example": "custom-class",
+                                        "nullable": true
+                                    },
+                                    "group_classes": {
+                                        "description": "Group CSS classes",
+                                        "type": "string",
+                                        "example": "group-custom",
+                                        "nullable": true
+                                    },
+                                    "hidden": {
+                                        "description": "Is hidden",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "exact_match": {
+                                        "description": "Exact route match",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "external": {
+                                        "description": "Is external link",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "target": {
+                                        "description": "Open in new tab",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "breadcrumbs": {
+                                        "description": "Show in breadcrumbs",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "disabled": {
+                                        "description": "Is disabled",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "is_main_parent": {
+                                        "description": "Is main parent",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
                                     "order": {
+                                        "description": "Display order",
                                         "type": "integer",
                                         "example": 10
                                     },
                                     "is_active": {
+                                        "description": "Is active",
                                         "type": "boolean",
                                         "example": true
+                                    },
+                                    "roles": {
+                                        "description": "Allowed roles",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "example": "admin"
+                                        },
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -241,6 +418,22 @@
                                                     "name": {
                                                         "type": "string"
                                                     },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "item",
+                                                            "collapse",
+                                                            "group"
+                                                        ]
+                                                    },
+                                                    "translate": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
                                                     "icon": {
                                                         "type": "string",
                                                         "nullable": true
@@ -249,15 +442,66 @@
                                                         "type": "string",
                                                         "nullable": true
                                                     },
+                                                    "link": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "url": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "path": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
                                                     "permission": {
                                                         "type": "string",
                                                         "nullable": true
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "classes": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "group_classes": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "hidden": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "exact_match": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "external": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "target": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "breadcrumbs": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "disabled": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "is_main_parent": {
+                                                        "type": "boolean"
                                                     },
                                                     "order": {
                                                         "type": "integer"
                                                     },
                                                     "is_active": {
                                                         "type": "boolean"
+                                                    },
+                                                    "roles": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
                                                     },
                                                     "children": {
                                                         "type": "array",
@@ -295,7 +539,7 @@
                     "Admin Menus Management"
                 ],
                 "summary": "Get menu by ID",
-                "description": "Returns a single menu item with its children",
+                "description": "Returns a single menu item with its children and all properties",
                 "operationId": "getAdminMenuById",
                 "parameters": [
                     {
@@ -346,7 +590,7 @@
                     "Admin Menus Management"
                 ],
                 "summary": "Update a menu item",
-                "description": "Updates an existing menu item",
+                "description": "Updates an existing menu item with any of the available properties",
                 "operationId": "updateAdminMenu",
                 "parameters": [
                     {
@@ -372,6 +616,22 @@
                                     "name": {
                                         "type": "string"
                                     },
+                                    "title": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "item",
+                                            "collapse",
+                                            "group"
+                                        ]
+                                    },
+                                    "translate": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
                                     "icon": {
                                         "type": "string",
                                         "nullable": true
@@ -380,15 +640,66 @@
                                         "type": "string",
                                         "nullable": true
                                     },
+                                    "link": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "url": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "path": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
                                     "permission": {
                                         "type": "string",
                                         "nullable": true
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "classes": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "group_classes": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "hidden": {
+                                        "type": "boolean"
+                                    },
+                                    "exact_match": {
+                                        "type": "boolean"
+                                    },
+                                    "external": {
+                                        "type": "boolean"
+                                    },
+                                    "target": {
+                                        "type": "boolean"
+                                    },
+                                    "breadcrumbs": {
+                                        "type": "boolean"
+                                    },
+                                    "disabled": {
+                                        "type": "boolean"
+                                    },
+                                    "is_main_parent": {
+                                        "type": "boolean"
                                     },
                                     "order": {
                                         "type": "integer"
                                     },
                                     "is_active": {
                                         "type": "boolean"
+                                    },
+                                    "roles": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
                                     }
                                 },
                                 "type": "object"
@@ -441,7 +752,7 @@
                     "Admin Menus Management"
                 ],
                 "summary": "Delete a menu item",
-                "description": "Deletes a menu item and all its children (cascade)",
+                "description": "Deletes a menu item and all its children (cascade delete)",
                 "operationId": "deleteAdminMenu",
                 "parameters": [
                     {
@@ -556,6 +867,79 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Menus reordered successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/menus/bulk-delete": {
+            "post": {
+                "tags": [
+                    "Admin Menus Management"
+                ],
+                "summary": "Bulk delete menu items",
+                "description": "Delete multiple menu items at once",
+                "operationId": "bulkDeleteAdminMenus",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ids"
+                                ],
+                                "properties": {
+                                    "ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Menus deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "3 menus deleted successfully"
+                                        },
+                                        "deleted_count": {
+                                            "type": "integer",
+                                            "example": 3
                                         }
                                     },
                                     "type": "object"
@@ -12368,13 +12752,13 @@
                 }
             }
         },
-        "/api/upload": {
+        "/api/upload-image": {
             "post": {
                 "tags": [
                     "Image Upload"
                 ],
                 "summary": "Upload multiple images",
-                "description": "Allows users to upload multiple images to the server with automatic resizing.",
+                "description": "Allows users to upload multiple images to the server with automatic resizing and watermark.",
                 "operationId": "uploadImages",
                 "requestBody": {
                     "required": true,
@@ -12386,7 +12770,7 @@
                                 ],
                                 "properties": {
                                     "images[]": {
-                                        "description": "Multiple image files to upload (will be automatically resized)",
+                                        "description": "Multiple image files to upload (will be automatically resized and watermarked)",
                                         "type": "array",
                                         "items": {
                                             "type": "string",
@@ -12483,7 +12867,7 @@
                 }
             }
         },
-        "/api/upload/{filename}": {
+        "/api/delete-image/{filename}": {
             "delete": {
                 "tags": [
                     "Image Upload"
