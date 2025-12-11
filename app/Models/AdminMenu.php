@@ -232,7 +232,7 @@ class AdminMenu extends Model
     }
 
     /**
-     * Format menu item for frontend
+     * Format menu item for frontend - RETOURNE TOUS LES CHAMPS
      */
     public function formatForFrontend(): array
     {
@@ -240,75 +240,24 @@ class AdminMenu extends Model
             'id' => (string)$this->id,
             'title' => $this->title ?? $this->name,
             'type' => $this->type,
+            'translate' => $this->translate,
+            'icon' => $this->icon,
+            'hidden' => (bool)($this->attributes['hidden'] ?? false),
+            'url' => $this->url ?? $this->route ?? $this->link,
+            'classes' => $this->classes,
+            'groupClasses' => $this->group_classes,
+            'exactMatch' => (bool)$this->exact_match,
+            'external' => (bool)$this->external,
+            'target' => (bool)$this->target,
+            'breadcrumbs' => (bool)$this->breadcrumbs,
+            'link' => $this->link,
+            'description' => $this->description,
+            'path' => $this->path,
+            'role' => $this->roles,
+            'disabled' => (bool)$this->disabled,
+            'isMainParent' => (bool)$this->is_main_parent,
             'order' => $this->order,
         ];
-
-        // Add icon only if not null
-        if ($this->icon !== null) {
-            $data['icon'] = $this->icon;
-        }
-
-        // Add optional fields only if they have values
-        if ($this->translate) {
-            $data['translate'] = $this->translate;
-        }
-
-        // CORRECTION: Accéder directement à l'attribut de la base de données
-        if (isset($this->attributes['hidden']) && $this->attributes['hidden']) {
-            $data['hidden'] = true;
-        }
-
-        if ($this->url ?? $this->route ?? $this->link) {
-            $data['url'] = $this->url ?? $this->route ?? $this->link;
-        }
-
-        if ($this->classes) {
-            $data['classes'] = $this->classes;
-        }
-
-        if ($this->group_classes) {
-            $data['groupClasses'] = $this->group_classes;
-        }
-
-        if ($this->exact_match) {
-            $data['exactMatch'] = true;
-        }
-
-        if ($this->external) {
-            $data['external'] = true;
-        }
-
-        if ($this->target) {
-            $data['target'] = true;
-        }
-
-        if ($this->breadcrumbs) {
-            $data['breadcrumbs'] = true;
-        }
-
-        if ($this->link) {
-            $data['link'] = $this->link;
-        }
-
-        if ($this->description) {
-            $data['description'] = $this->description;
-        }
-
-        if ($this->path) {
-            $data['path'] = $this->path;
-        }
-
-        if ($this->roles && !empty($this->roles)) {
-            $data['role'] = $this->roles;
-        }
-
-        if ($this->disabled) {
-            $data['disabled'] = true;
-        }
-
-        if ($this->is_main_parent) {
-            $data['isMainParent'] = true;
-        }
 
         // Add children if exists
         if ($this->relationLoaded('activeChildren') && $this->activeChildren->isNotEmpty()) {
