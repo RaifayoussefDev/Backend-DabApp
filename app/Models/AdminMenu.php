@@ -48,13 +48,8 @@ class AdminMenu extends Model
         'roles' => 'array'
     ];
 
-    /**
-     * Get the attributes that should be hidden for serialization.
-     */
-    protected function getHidden(): array
-    {
-        return ['created_at', 'updated_at'];
-    }
+    // CORRECTION: Utiliser $hidden comme propriété
+    protected $hidden = ['created_at', 'updated_at'];
 
     /**
      * Parent menu relationship
@@ -233,6 +228,7 @@ class AdminMenu extends Model
 
     /**
      * Format menu item for frontend - RETOURNE TOUS LES CHAMPS
+     * Utilise getRawOriginal() pour éviter le conflit avec $hidden
      */
     public function formatForFrontend(): array
     {
@@ -242,7 +238,7 @@ class AdminMenu extends Model
             'type' => $this->type,
             'translate' => $this->translate,
             'icon' => $this->icon,
-            'hidden' => (bool)($this->attributes['hidden'] ?? false),
+            'hidden' => (bool)$this->getRawOriginal('hidden'), // Utiliser getRawOriginal au lieu de $this->attributes
             'url' => $this->url ?? $this->route ?? $this->link,
             'classes' => $this->classes,
             'groupClasses' => $this->group_classes,
