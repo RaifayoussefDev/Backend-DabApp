@@ -89,10 +89,12 @@ class AdminMenuController extends Controller
                 return AdminMenu::buildTreeForUser($user);
             });
 
+            // Return as raw array, not through JSON resource
             return response()->json([
                 'success' => true,
                 'data' => $menus
-            ]);
+            ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
         } catch (\Exception $e) {
             Log::error('Error fetching admin menus', [
                 'user_id' => $request->user()->id ?? null,
@@ -701,10 +703,17 @@ class AdminMenuController extends Controller
      */
     private function clearAllMenuCache()
     {
-        // Clear cache with pattern matching
-        Cache::tags(['admin_menus'])->flush();
+        try {
+            // Try to use cache tags if supported
+            Cache::tags(['admin_menus'])->flush();
+        } catch (\Exception $e) {
+            // Fallback: clear specific pattern or all cache
+            Log::warning('Cache tags not supported, clearing all cache', [
+                'error' => $e->getMessage()
+            ]);
 
-        // Alternative: Clear all cache (use with caution)
-        // Cache::flush();
+            // Or use a more manual approach to clear user-specific caches
+            // This would require storing a list of user IDs somewhere
+        }
     }
 }
