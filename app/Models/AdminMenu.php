@@ -109,16 +109,40 @@ class AdminMenu extends Model
     /**
      * Check if user has permission to access this menu
      */
+    /**
+     * Check if user has permission to access this menu
+     */
     public function userHasAccess($user): bool
     {
         // Check permission
-        if ($this->permission && !$user->hasPermissionTo($this->permission)) {
-            return false;
+        if ($this->permission) {
+            $userPermissions = $user->getAllPermissions();
+
+            if (is_object($userPermissions) && method_exists($userPermissions, 'pluck')) {
+                $userPermissions = $userPermissions->pluck('name')->toArray();
+            } elseif (!is_array($userPermissions)) {
+                $userPermissions = [];
+            }
+
+            if (!in_array($this->permission, $userPermissions)) {
+                return false;
+            }
         }
 
         // Check roles
         if ($this->roles && !empty($this->roles)) {
-            $userRoles = $user->roles->pluck('name')->toArray();
+            $userRoles = [];
+
+            if ($user->roles) {
+                if (is_object($user->roles) && method_exists($user->roles, 'pluck')) {
+                    $userRoles = $user->roles->pluck('name')->toArray();
+                } elseif (is_array($user->roles)) {
+                    $userRoles = array_map(function ($role) {
+                        return is_object($role) ? $role->name : $role;
+                    }, $user->roles);
+                }
+            }
+
             $hasRole = false;
 
             foreach ($this->roles as $role) {
@@ -141,34 +165,53 @@ class AdminMenu extends Model
      */
     public static function buildTreeForUser($user)
     {
-        $userPermissions = $user->getAllPermissions()->pluck('name')->toArray();
-        $userRoles = $user->roles->pluck('name')->toArray();
+        // Récupérer les permissions et rôles de l'utilisateur
+        $userPermissions = $user->getAllPermissions();
+
+        // Si c'est une collection, convertir en array
+        if (is_object($userPermissions) && method_exists($userPermissions, 'pluck')) {
+            $userPermissions = $userPermissions->pluck('name')->toArray();
+        } elseif (!is_array($userPermissions)) {
+            $userPermissions = [];
+        }
+
+        // Récupérer les rôles
+        $userRoles = [];
+        if ($user->roles) {
+            if (is_object($user->roles) && method_exists($user->roles, 'pluck')) {
+                $userRoles = $user->roles->pluck('name')->toArray();
+            } elseif (is_array($user->roles)) {
+                $userRoles = array_map(function ($role) {
+                    return is_object($role) ? $role->name : $role;
+                }, $user->roles);
+            }
+        }
 
         return self::active()
             ->parents()
-            ->with(['activeChildren' => function($query) use ($userPermissions, $userRoles) {
-                $query->where(function($q) use ($userPermissions) {
+            ->with(['activeChildren' => function ($query) use ($userPermissions, $userRoles) {
+                $query->where(function ($q) use ($userPermissions) {
                     // Check permission
-                    $q->whereNull('permission')
-                      ->orWhere(function($subQ) use ($userPermissions) {
-                          foreach ($userPermissions as $permission) {
-                              $subQ->orWhere('permission', $permission);
-                          }
-                      });
+                    $q->whereNull('permission');
+
+                    if (!empty($userPermissions)) {
+                        $q->orWhereIn('permission', $userPermissions);
+                    }
                 })
-                ->where(function($q) use ($userRoles) {
-                    // Check roles
-                    $q->whereNull('roles')
-                      ->orWhere(function($subQ) use ($userRoles) {
-                          foreach ($userRoles as $role) {
-                              $subQ->orWhereJsonContains('roles', $role);
-                          }
-                      });
-                });
+                    ->where(function ($q) use ($userRoles) {
+                        // Check roles
+                        $q->whereNull('roles');
+
+                        if (!empty($userRoles)) {
+                            foreach ($userRoles as $role) {
+                                $q->orWhereJsonContains('roles', $role);
+                            }
+                        }
+                    });
             }])
             ->orderBy('order')
             ->get()
-            ->filter(function($menu) use ($user) {
+            ->filter(function ($menu) use ($user) {
                 // Filter parent if user doesn't have access
                 if (!$menu->userHasAccess($user)) {
                     return false;
@@ -181,7 +224,7 @@ class AdminMenu extends Model
 
                 return true;
             })
-            ->map(function($menu) {
+            ->map(function ($menu) {
                 return $menu->formatForFrontend();
             })
             ->values();
@@ -221,7 +264,7 @@ class AdminMenu extends Model
 
         // Add children if exists
         if ($this->relationLoaded('activeChildren') && $this->activeChildren->isNotEmpty()) {
-            $data['children'] = $this->activeChildren->map(function($child) {
+            $data['children'] = $this->activeChildren->map(function ($child) {
                 return $child->formatForFrontend();
             })->toArray();
         }
@@ -236,7 +279,7 @@ class AdminMenu extends Model
     {
         return self::where('is_active', true)
             ->parents()
-            ->with(['children' => function($query) {
+            ->with(['children' => function ($query) {
                 $query->where('is_active', true)->orderBy('order');
             }])
             ->orderBy('order')
