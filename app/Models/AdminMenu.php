@@ -48,7 +48,8 @@ class AdminMenu extends Model
         'roles' => 'array'
     ];
 
-    protected $hidden = [
+    // RENOMMER $hidden en $hiddenFields pour éviter le conflit
+    protected $hiddenFields = [
         'created_at',
         'updated_at'
     ];
@@ -109,9 +110,6 @@ class AdminMenu extends Model
     /**
      * Check if user has permission to access this menu
      */
-    /**
-     * Check if user has permission to access this menu
-     */
     public function userHasAccess($user): bool
     {
         // Check permission
@@ -137,7 +135,7 @@ class AdminMenu extends Model
                 if (is_object($user->roles) && method_exists($user->roles, 'pluck')) {
                     $userRoles = $user->roles->pluck('name')->toArray();
                 } elseif (is_array($user->roles)) {
-                    $userRoles = array_map(function ($role) {
+                    $userRoles = array_map(function($role) {
                         return is_object($role) ? $role->name : $role;
                     }, $user->roles);
                 }
@@ -181,7 +179,7 @@ class AdminMenu extends Model
             if (is_object($user->roles) && method_exists($user->roles, 'pluck')) {
                 $userRoles = $user->roles->pluck('name')->toArray();
             } elseif (is_array($user->roles)) {
-                $userRoles = array_map(function ($role) {
+                $userRoles = array_map(function($role) {
                     return is_object($role) ? $role->name : $role;
                 }, $user->roles);
             }
@@ -189,8 +187,8 @@ class AdminMenu extends Model
 
         return self::active()
             ->parents()
-            ->with(['activeChildren' => function ($query) use ($userPermissions, $userRoles) {
-                $query->where(function ($q) use ($userPermissions) {
+            ->with(['activeChildren' => function($query) use ($userPermissions, $userRoles) {
+                $query->where(function($q) use ($userPermissions) {
                     // Check permission
                     $q->whereNull('permission');
 
@@ -198,20 +196,20 @@ class AdminMenu extends Model
                         $q->orWhereIn('permission', $userPermissions);
                     }
                 })
-                    ->where(function ($q) use ($userRoles) {
-                        // Check roles
-                        $q->whereNull('roles');
+                ->where(function($q) use ($userRoles) {
+                    // Check roles
+                    $q->whereNull('roles');
 
-                        if (!empty($userRoles)) {
-                            foreach ($userRoles as $role) {
-                                $q->orWhereJsonContains('roles', $role);
-                            }
+                    if (!empty($userRoles)) {
+                        foreach ($userRoles as $role) {
+                            $q->orWhereJsonContains('roles', $role);
                         }
-                    });
+                    }
+                });
             }])
             ->orderBy('order')
             ->get()
-            ->filter(function ($menu) use ($user) {
+            ->filter(function($menu) use ($user) {
                 // Filter parent if user doesn't have access
                 if (!$menu->userHasAccess($user)) {
                     return false;
@@ -224,7 +222,7 @@ class AdminMenu extends Model
 
                 return true;
             })
-            ->map(function ($menu) {
+            ->map(function($menu) {
                 return $menu->formatForFrontend();
             })
             ->values();
@@ -239,32 +237,79 @@ class AdminMenu extends Model
             'id' => (string)$this->id,
             'title' => $this->title ?? $this->name,
             'type' => $this->type,
-            'icon' => $this->icon,
             'order' => $this->order,
         ];
 
+        // Add icon only if not null
+        if ($this->icon !== null) {
+            $data['icon'] = $this->icon;
+        }
+
         // Add optional fields only if they have values
-        if ($this->translate) $data['translate'] = $this->translate;
-        if ($this->hidden !== null) $data['hidden'] = $this->hidden;
+        if ($this->translate) {
+            $data['translate'] = $this->translate;
+        }
+
+        // IMPORTANT: Récupérer l'attribut 'hidden' depuis la base de données, pas $hidden de Laravel
+        if ($this->attributes['hidden'] ?? false) {
+            $data['hidden'] = (bool)$this->attributes['hidden'];
+        }
+
         if ($this->url ?? $this->route ?? $this->link) {
             $data['url'] = $this->url ?? $this->route ?? $this->link;
         }
-        if ($this->classes) $data['classes'] = $this->classes;
-        if ($this->group_classes) $data['groupClasses'] = $this->group_classes;
-        if ($this->exact_match) $data['exactMatch'] = $this->exact_match;
-        if ($this->external) $data['external'] = $this->external;
-        if ($this->target) $data['target'] = $this->target;
-        if ($this->breadcrumbs !== null) $data['breadcrumbs'] = $this->breadcrumbs;
-        if ($this->link) $data['link'] = $this->link;
-        if ($this->description) $data['description'] = $this->description;
-        if ($this->path) $data['path'] = $this->path;
-        if ($this->roles) $data['role'] = $this->roles;
-        if ($this->disabled) $data['disabled'] = $this->disabled;
-        if ($this->is_main_parent) $data['isMainParent'] = $this->is_main_parent;
+
+        if ($this->classes) {
+            $data['classes'] = $this->classes;
+        }
+
+        if ($this->group_classes) {
+            $data['groupClasses'] = $this->group_classes;
+        }
+
+        if ($this->exact_match) {
+            $data['exactMatch'] = (bool)$this->exact_match;
+        }
+
+        if ($this->external) {
+            $data['external'] = (bool)$this->external;
+        }
+
+        if ($this->target) {
+            $data['target'] = (bool)$this->target;
+        }
+
+        if ($this->breadcrumbs !== null) {
+            $data['breadcrumbs'] = (bool)$this->breadcrumbs;
+        }
+
+        if ($this->link) {
+            $data['link'] = $this->link;
+        }
+
+        if ($this->description) {
+            $data['description'] = $this->description;
+        }
+
+        if ($this->path) {
+            $data['path'] = $this->path;
+        }
+
+        if ($this->roles && !empty($this->roles)) {
+            $data['role'] = $this->roles;
+        }
+
+        if ($this->disabled) {
+            $data['disabled'] = (bool)$this->disabled;
+        }
+
+        if ($this->is_main_parent) {
+            $data['isMainParent'] = (bool)$this->is_main_parent;
+        }
 
         // Add children if exists
         if ($this->relationLoaded('activeChildren') && $this->activeChildren->isNotEmpty()) {
-            $data['children'] = $this->activeChildren->map(function ($child) {
+            $data['children'] = $this->activeChildren->map(function($child) {
                 return $child->formatForFrontend();
             })->toArray();
         }
@@ -279,10 +324,24 @@ class AdminMenu extends Model
     {
         return self::where('is_active', true)
             ->parents()
-            ->with(['children' => function ($query) {
+            ->with(['children' => function($query) {
                 $query->where('is_active', true)->orderBy('order');
             }])
             ->orderBy('order')
             ->get();
+    }
+
+    /**
+     * Override toArray to exclude timestamps
+     */
+    public function toArray()
+    {
+        $array = parent::toArray();
+
+        // Remove created_at and updated_at
+        unset($array['created_at']);
+        unset($array['updated_at']);
+
+        return $array;
     }
 }
