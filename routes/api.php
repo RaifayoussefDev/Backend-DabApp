@@ -548,6 +548,7 @@ Route::middleware('auth:api')->group(function () {
     // IMAGE UPLOAD
     // ============================================
     Route::post('/upload-image', [ImageUploadController::class, 'upload']);
+    Route::delete('/delete-image', [ImageUploadController::class, 'delete']);
 
     // ============================================
     // PAYMENT HISTORY

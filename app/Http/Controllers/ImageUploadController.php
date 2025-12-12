@@ -17,11 +17,18 @@ class ImageUploadController extends Controller
     private const QUALITY = 85;
     private const THUMBNAIL_SIZE = 300;
 
+    // Configuration du watermark
+    private const WATERMARK_PATH = 'watermark/logo.png'; // Chemin relatif dans storage/app/public
+    private const WATERMARK_OPACITY = 50; // Opacité du watermark (0-100)
+    private const WATERMARK_POSITION = 'center'; // Position: bottom-right, bottom-left, top-right, top-left, center
+    private const WATERMARK_PADDING = 20; // Padding depuis les bords en pixels
+    private const WATERMARK_MAX_WIDTH_PERCENT = 70; // Taille max du watermark en % de la largeur de l'image
+
     /**
      * @OA\Post(
-     *     path="/api/upload",
+     *     path="/api/upload-image",
      *     summary="Upload multiple images",
-     *     description="Allows users to upload multiple images to the server with automatic resizing.",
+     *     description="Allows users to upload multiple images to the server with automatic resizing and watermark.",
      *     operationId="uploadImages",
      *     tags={"Image Upload"},
      *     @OA\RequestBody(
@@ -37,7 +44,7 @@ class ImageUploadController extends Controller
      *                         type="string",
      *                         format="binary"
      *                     ),
-     *                     description="Multiple image files to upload (will be automatically resized)"
+     *                     description="Multiple image files to upload (will be automatically resized and watermarked)"
      *                 )
      *             )
      *         )
@@ -85,68 +92,188 @@ class ImageUploadController extends Controller
     {
         try {
             Log::info('Upload request received', ['files_count' => count($request->allFiles())]);
-    
+
             $request->validate([
                 'images.*' => 'required|image|mimes:jpeg,jpg,png,webp|max:10240'
             ]);
-    
+
             if (!$request->hasFile('images')) {
                 return response()->json(['error' => 'No images found in request.'], 400);
             }
-    
+
             $paths = [];
-    
+
             foreach ($request->file('images') as $index => $uploadedFile) {
                 Log::info("Processing image {$index}", [
                     'original_name' => $uploadedFile->getClientOriginalName(),
                     'size' => $uploadedFile->getSize(),
                     'mime_type' => $uploadedFile->getMimeType()
                 ]);
-    
+
                 // Nom de fichier aléatoire
                 $filename = Str::random(20) . '.' . $uploadedFile->getClientOriginalExtension();
-    
-                // Redimensionner l’image (par ex. max largeur 1200px)
-                $processedImage = $this->processImage($uploadedFile); // Tu peux adapter cette méthode pour resize
-    
+
+                // Redimensionner l'image
+                $processedImage = $this->processImage($uploadedFile);
+
+                // Ajouter le watermark
+                $processedImage = $this->addWatermark($processedImage);
+
                 // Sauvegarder dans listings/
                 $imagePath = $this->saveImage($processedImage, "listings/{$filename}");
-    
+
                 // Ajouter le chemin public
                 $paths[] = asset('storage/' . $imagePath);
-    
+
                 Log::info("Image saved successfully", [
                     'filename' => $filename,
                     'path' => $imagePath
                 ]);
             }
-    
+
             return response()->json([
                 'message' => 'Images uploaded successfully',
                 'paths' => $paths
             ]);
-    
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Validation failed', ['errors' => $e->errors()]);
             return response()->json([
                 'error' => 'Validation failed',
                 'details' => $e->errors()
             ], 422);
-    
+
         } catch (\Exception $e) {
             Log::error('Image upload failed', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-    
+
             return response()->json([
                 'error' => 'An error occurred while uploading images.',
                 'message' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
     }
-    
 
+    /**
+     * Ajoute un watermark à l'image
+     */
+    private function addWatermark($image)
+    {
+        try {
+            // Vérifier si le fichier watermark existe
+            $watermarkPath = storage_path('app/public/' . self::WATERMARK_PATH);
+
+            if (!file_exists($watermarkPath)) {
+                Log::warning('Watermark file not found', ['path' => $watermarkPath]);
+                return $image; // Retourner l'image sans watermark
+            }
+
+            // Charger le watermark
+            $manager = new ImageManager(new Driver());
+            $watermark = $manager->read($watermarkPath);
+
+            // Calculer la taille du watermark (proportionnelle à l'image)
+            $maxWatermarkWidth = ($image->width() * self::WATERMARK_MAX_WIDTH_PERCENT) / 100;
+            $maxWatermarkHeight = ($image->height() * self::WATERMARK_MAX_WIDTH_PERCENT) / 100;
+
+            // Redimensionner le watermark pour qu'il soit toujours à la bonne taille
+            $ratio = min($maxWatermarkWidth / $watermark->width(), $maxWatermarkHeight / $watermark->height());
+            $newWidth = (int)($watermark->width() * $ratio);
+            $newHeight = (int)($watermark->height() * $ratio);
+            $watermark->resize($newWidth, $newHeight);
+
+            Log::info('Watermark resized', [
+                'original_width' => $watermark->width(),
+                'original_height' => $watermark->height(),
+                'new_width' => $newWidth,
+                'new_height' => $newHeight,
+                'image_width' => $image->width(),
+                'image_height' => $image->height()
+            ]);
+
+            // Calculer la position du watermark
+            $position = $this->calculateWatermarkPosition(
+                $image->width(),
+                $image->height(),
+                $watermark->width(),
+                $watermark->height()
+            );
+
+            // Placer le watermark sur l'image avec opacité
+            $image->place(
+                $watermark,
+                $position['position'],
+                $position['x'],
+                $position['y'],
+                self::WATERMARK_OPACITY
+            );
+
+            Log::info('Watermark applied successfully');
+
+            return $image;
+
+        } catch (\Exception $e) {
+            Log::error('Failed to apply watermark', [
+                'message' => $e->getMessage()
+            ]);
+            // En cas d'erreur, retourner l'image sans watermark
+            return $image;
+        }
+    }
+
+    /**
+     * Calcule la position du watermark
+     */
+    private function calculateWatermarkPosition($imageWidth, $imageHeight, $watermarkWidth, $watermarkHeight)
+    {
+        $padding = self::WATERMARK_PADDING;
+
+        switch (self::WATERMARK_POSITION) {
+            case 'top-left':
+                return [
+                    'position' => 'top-left',
+                    'x' => $padding,
+                    'y' => $padding
+                ];
+
+            case 'top-right':
+                return [
+                    'position' => 'top-right',
+                    'x' => $padding,
+                    'y' => $padding
+                ];
+
+            case 'bottom-left':
+                return [
+                    'position' => 'bottom-left',
+                    'x' => $padding,
+                    'y' => $padding
+                ];
+
+            case 'bottom-right':
+                return [
+                    'position' => 'bottom-right',
+                    'x' => $padding,
+                    'y' => $padding
+                ];
+
+            case 'center':
+                return [
+                    'position' => 'center',
+                    'x' => 0,
+                    'y' => 0
+                ];
+
+            default:
+                return [
+                    'position' => 'bottom-right',
+                    'x' => $padding,
+                    'y' => $padding
+                ];
+        }
+    }
 
     /**
      * Traite et redimensionne l'image principale
@@ -241,7 +368,7 @@ class ImageUploadController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/api/upload/{filename}",
+     *     path="/api/delete-image/{filename}",
      *     summary="Delete an uploaded image",
      *     description="Delete an uploaded image and its thumbnail",
      *     operationId="deleteImage",
