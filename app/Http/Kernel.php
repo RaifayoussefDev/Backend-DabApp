@@ -22,6 +22,7 @@ class Kernel extends HttpKernel
         \Illuminate\Session\Middleware\StartSession::class,
         \Illuminate\View\Middleware\ShareErrorsFromSession::class,
         \Illuminate\Routing\Middleware\SubstituteBindings::class,
+
     ];
 
     /**
@@ -69,6 +70,8 @@ class Kernel extends HttpKernel
 
         'permission' => \App\Http\Middleware\CheckPermission::class,
         'admin.access' => \App\Http\Middleware\CheckAdminAccess::class,
+
+        'auth.admin' => \App\Http\Middleware\AdminAuth::class,
 
     ];
 }

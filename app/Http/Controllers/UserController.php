@@ -2031,37 +2031,176 @@ class UserController extends Controller
      *     operationId="getTrashedUsers",
      *     tags={"Users Management"},
      *     summary="Get soft-deleted users",
+     *     description="Returns paginated list of soft-deleted users with their role and country information",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
+     *         description="Number of items per page (default: 15, max: 100)",
      *         required=false,
-     *         @OA\Schema(type="integer", example=15)
+     *         @OA\Schema(type="integer", example=15, minimum=1, maximum=100)
+     *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=1, minimum=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search by name, email or phone",
+     *         required=false,
+     *         @OA\Schema(type="string", example="john")
+     *     ),
+     *     @OA\Parameter(
+     *         name="role_id",
+     *         in="query",
+     *         description="Filter by role ID",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=2)
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort_by",
+     *         in="query",
+     *         description="Sort by field (deleted_at, first_name, email)",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"deleted_at", "first_name", "email"}, example="deleted_at")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort_order",
+     *         in="query",
+     *         description="Sort order",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"asc", "desc"}, example="desc")
      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Successfully retrieved trashed users",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", type="object")
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="data",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="first_name", type="string", example="John"),
+     *                         @OA\Property(property="last_name", type="string", example="Doe"),
+     *                         @OA\Property(property="email", type="string", example="john@example.com"),
+     *                         @OA\Property(property="phone", type="string", example="+212695388904"),
+     *                         @OA\Property(property="role_id", type="integer", example=2),
+     *                         @OA\Property(property="is_active", type="boolean", example=false),
+     *                         @OA\Property(property="verified", type="boolean", example=true),
+     *                         @OA\Property(property="deleted_at", type="string", format="date-time", example="2025-01-13T14:30:00.000000Z"),
+     *                         @OA\Property(property="created_at", type="string", format="date-time"),
+     *                         @OA\Property(property="updated_at", type="string", format="date-time"),
+     *                         @OA\Property(
+     *                             property="role",
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=2),
+     *                             @OA\Property(property="name", type="string", example="Admin")
+     *                         ),
+     *                         @OA\Property(
+     *                             property="country",
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=1),
+     *                             @OA\Property(property="name", type="string", example="Morocco"),
+     *                             @OA\Property(property="code", type="string", example="MA")
+     *                         )
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="current_page", type="integer", example=1),
+     *                 @OA\Property(property="per_page", type="integer", example=15),
+     *                 @OA\Property(property="total", type="integer", example=45),
+     *                 @OA\Property(property="last_page", type="integer", example=3),
+     *                 @OA\Property(property="from", type="integer", example=1),
+     *                 @OA\Property(property="to", type="integer", example=15)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Unauthenticated")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden - Missing permission",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="You don't have permission to view trashed users")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="per_page",
+     *                     type="array",
+     *                     @OA\Items(type="string", example="The per page must not be greater than 100.")
+     *                 )
+     *             )
      *         )
      *     )
      * )
      */
     public function getTrashed(Request $request)
     {
+        // Validation
+        $request->validate([
+            'per_page' => 'nullable|integer|min:1|max:100',
+            'page' => 'nullable|integer|min:1',
+            'search' => 'nullable|string|max:255',
+            'role_id' => 'nullable|integer|exists:roles,id',
+            'sort_by' => 'nullable|string|in:deleted_at,first_name,email,created_at',
+            'sort_order' => 'nullable|string|in:asc,desc'
+        ]);
+
         $perPage = $request->get('per_page', 15);
-        $trashedUsers = User::onlyTrashed()
-            ->with(['role', 'country'])
-            ->orderBy('deleted_at', 'desc')
-            ->paginate($perPage);
+        $search = $request->get('search');
+        $roleId = $request->get('role_id');
+        $sortBy = $request->get('sort_by', 'deleted_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+
+        $query = User::onlyTrashed()
+            ->with(['role', 'role.permissions', 'country']);
+
+        // Search filter
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        // Role filter
+        if ($roleId) {
+            $query->where('role_id', $roleId);
+        }
+
+        // Sorting
+        $query->orderBy($sortBy, $sortOrder);
+
+        $trashedUsers = $query->paginate($perPage);
 
         return response()->json([
             'success' => true,
             'data' => $trashedUsers
         ]);
     }
-
     /**
      * @OA\Post(
      *     path="/api/admin/users/search",

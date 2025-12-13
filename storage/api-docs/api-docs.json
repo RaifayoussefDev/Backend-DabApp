@@ -961,6 +961,502 @@
                 ]
             }
         },
+        "/api/admin/login": {
+            "post": {
+                "tags": [
+                    "Authentification - admin"
+                ],
+                "summary": "User login",
+                "operationId": "17d93603effdb9c9bc9f8ff71f148793",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "login",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "login": {
+                                        "type": "string",
+                                        "example": "john.doe@example.com or +123456789"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "secret123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful login without 2FA",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "type": "object"
+                                        },
+                                        "token": {
+                                            "type": "string"
+                                        },
+                                        "token_expiration": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Login with OTP required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "OTP required"
+                                        },
+                                        "requiresOTP": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "user_id": {
+                                            "type": "integer"
+                                        },
+                                        "otp_sent_via": {
+                                            "type": "string",
+                                            "example": "whatsapp"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    }
+                }
+            }
+        },
+        "/api/admin/resend-otp": {
+            "post": {
+                "tags": [
+                    "Authentification - admin"
+                ],
+                "summary": "Resend OTP code",
+                "operationId": "5448a78c6bcce8521e87fb55e50ae622",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "login"
+                                ],
+                                "properties": {
+                                    "login": {
+                                        "type": "string",
+                                        "example": "john.doe@example.com or +123456789"
+                                    },
+                                    "method": {
+                                        "type": "string",
+                                        "enum": [
+                                            "whatsapp",
+                                            "email"
+                                        ],
+                                        "example": "email"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP resent successfully"
+                    }
+                }
+            }
+        },
+        "/api/admin/resend-otp-email": {
+            "post": {
+                "tags": [
+                    "Authentification - admin"
+                ],
+                "summary": "Resend OTP via email only",
+                "operationId": "236ffbe9e2fdc608c43bb334451b6f1a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "login"
+                                ],
+                                "properties": {
+                                    "login": {
+                                        "type": "string",
+                                        "example": "john.doe@example.com or +123456789"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP resent via email successfully"
+                    }
+                }
+            }
+        },
+        "/api/admin/verify-otp": {
+            "post": {
+                "tags": [
+                    "Authentification - admin"
+                ],
+                "summary": "Verify OTP code",
+                "operationId": "31d2d7b3b927ab911416150f14ce2c58",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "login",
+                                    "otp"
+                                ],
+                                "properties": {
+                                    "login": {
+                                        "description": "User email or phone number",
+                                        "type": "string",
+                                        "example": "john.doe@example.com or +212695388904"
+                                    },
+                                    "otp": {
+                                        "description": "4-digit OTP code",
+                                        "type": "string",
+                                        "example": "1234"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP valid, authentication successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "description": "User information",
+                                            "type": "object"
+                                        },
+                                        "token": {
+                                            "description": "JWT authentication token",
+                                            "type": "string"
+                                        },
+                                        "token_expiration": {
+                                            "description": "Token expiration timestamp",
+                                            "type": "string",
+                                            "format": "date-time"
+                                        },
+                                        "country": {
+                                            "type": "string",
+                                            "example": "Morocco"
+                                        },
+                                        "continent": {
+                                            "type": "string",
+                                            "example": "Africa"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired OTP",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Invalid or expired OTP"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "User not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/me": {
+            "get": {
+                "tags": [
+                    "Authentification - admin"
+                ],
+                "summary": "Get authenticated user information",
+                "operationId": "9d4e5a4dbf72ee92e767081f51313a19",
+                "responses": {
+                    "200": {
+                        "description": "User information retrieved successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/logout": {
+            "post": {
+                "tags": [
+                    "Authentification - admin"
+                ],
+                "summary": "User logout",
+                "operationId": "d71ceb4e760437f46b10622e7a6d7fb7",
+                "responses": {
+                    "200": {
+                        "description": "Successfully logged out"
+                    }
+                }
+            }
+        },
+        "/api/admin/refresh": {
+            "post": {
+                "tags": [
+                    "Authentification - admin"
+                ],
+                "summary": "Refresh JWT access token using refresh token",
+                "operationId": "80a29c982e392cf5686307a584ce8158",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "refresh_token"
+                                ],
+                                "properties": {
+                                    "refresh_token": {
+                                        "type": "string",
+                                        "example": "abc123..."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "New access token generated"
+                    }
+                }
+            }
+        },
+        "/api/admin/user/update": {
+            "put": {
+                "tags": [
+                    "Authentification - admin"
+                ],
+                "summary": "Update user profile",
+                "operationId": "6d05c31ad97ac84553b78c2c35754bef",
+                "responses": {
+                    "200": {
+                        "description": "Profile updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/user/two-factor-toggle": {
+            "put": {
+                "tags": [
+                    "Authentification - admin"
+                ],
+                "summary": "Toggle two-factor authentication",
+                "operationId": "86a133c8b055f861fab689d79ec9c6bd",
+                "responses": {
+                    "200": {
+                        "description": "Two-factor authentication toggled"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/forgot-password": {
+            "post": {
+                "tags": [
+                    "Authentification - admin"
+                ],
+                "summary": "Send password reset OTP",
+                "operationId": "d33d9c4aae221d765d316ebc9385e842",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "login"
+                                ],
+                                "properties": {
+                                    "login": {
+                                        "type": "string",
+                                        "example": "john.doe@example.com"
+                                    },
+                                    "method": {
+                                        "type": "string",
+                                        "enum": [
+                                            "whatsapp",
+                                            "email"
+                                        ],
+                                        "example": "email"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset OTP sent successfully"
+                    }
+                }
+            }
+        },
+        "/api/admin/reset-password": {
+            "post": {
+                "tags": [
+                    "Authentification - admin"
+                ],
+                "summary": "Reset password using OTP code",
+                "operationId": "4ca5da990a2f8c6ec72a1a02d7431070",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "login",
+                                    "code",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "login": {
+                                        "type": "string",
+                                        "example": "john.doe@example.com"
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "example": "1234"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "newpassword123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "newpassword123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset successfully"
+                    }
+                }
+            }
+        },
+        "/api/admin/change-password": {
+            "put": {
+                "tags": [
+                    "Authentification - admin"
+                ],
+                "summary": "Change current password",
+                "operationId": "e5db1b3b8d3bfa839ee92f8098cd50fd",
+                "responses": {
+                    "200": {
+                        "description": "Password changed successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/register": {
             "post": {
                 "tags": [
@@ -23008,7 +23504,7 @@
                     "Roles"
                 ],
                 "summary": "Get all roles",
-                "description": "Returns list of all roles with their permissions",
+                "description": "Returns paginated list of all roles with their permissions",
                 "operationId": "getRoles",
                 "parameters": [
                     {
@@ -23018,6 +23514,24 @@
                         "schema": {
                             "type": "boolean",
                             "example": true
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page (default: 15, max: 100)",
+                        "schema": {
+                            "type": "integer",
+                            "example": 15
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
@@ -23033,36 +23547,113 @@
                                             "example": true
                                         },
                                         "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "name": {
-                                                        "type": "string",
-                                                        "example": "Admin"
-                                                    },
-                                                    "permissions": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "properties": {
-                                                                "id": {
-                                                                    "type": "integer",
-                                                                    "example": 1
-                                                                },
-                                                                "name": {
-                                                                    "type": "string",
-                                                                    "example": "users.view"
-                                                                }
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
                                                             },
-                                                            "type": "object"
-                                                        }
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Admin"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "permissions": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "name": {
+                                                                            "type": "string",
+                                                                            "example": "users.view"
+                                                                        },
+                                                                        "description": {
+                                                                            "type": "string",
+                                                                            "example": "View users"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            }
+                                                        },
+                                                        "type": "object"
                                                     }
                                                 },
-                                                "type": "object"
-                                            }
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "first_page_url": {
+                                                    "type": "string",
+                                                    "example": "http://localhost:8000/api/admin/roles?page=1"
+                                                },
+                                                "last_page_url": {
+                                                    "type": "string",
+                                                    "example": "http://localhost:8000/api/admin/roles?page=4"
+                                                },
+                                                "next_page_url": {
+                                                    "type": "string",
+                                                    "example": "http://localhost:8000/api/admin/roles?page=2"
+                                                },
+                                                "prev_page_url": {
+                                                    "type": "string",
+                                                    "example": null
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": "string",
+                                                                "example": "http://localhost:8000/api/admin/roles?page=1"
+                                                            },
+                                                            "label": {
+                                                                "type": "string",
+                                                                "example": "1"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -29917,15 +30508,79 @@
                     "Users Management"
                 ],
                 "summary": "Get soft-deleted users",
+                "description": "Returns paginated list of soft-deleted users with their role and country information",
                 "operationId": "getTrashedUsers",
                 "parameters": [
                     {
                         "name": "per_page",
                         "in": "query",
+                        "description": "Number of items per page (default: 15, max: 100)",
                         "required": false,
                         "schema": {
                             "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
                             "example": 15
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by name, email or phone",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "john"
+                        }
+                    },
+                    {
+                        "name": "role_id",
+                        "in": "query",
+                        "description": "Filter by role ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Sort by field (deleted_at, first_name, email)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "deleted_at",
+                                "first_name",
+                                "email"
+                            ],
+                            "example": "deleted_at"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Sort order",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ],
+                            "example": "desc"
                         }
                     }
                 ],
@@ -29941,6 +30596,175 @@
                                             "example": true
                                         },
                                         "data": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "first_name": {
+                                                                "type": "string",
+                                                                "example": "John"
+                                                            },
+                                                            "last_name": {
+                                                                "type": "string",
+                                                                "example": "Doe"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "john@example.com"
+                                                            },
+                                                            "phone": {
+                                                                "type": "string",
+                                                                "example": "+212695388904"
+                                                            },
+                                                            "role_id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "is_active": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "verified": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "deleted_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-01-13T14:30:00.000000Z"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "role": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 2
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Admin"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "country": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Morocco"
+                                                                    },
+                                                                    "code": {
+                                                                        "type": "string",
+                                                                        "example": "MA"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 45
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - Missing permission",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "You don't have permission to view trashed users"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "per_page": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The per page must not be greater than 100."
+                                                    }
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
@@ -30951,6 +31775,10 @@
         {
             "name": "Admin Menus Management",
             "description": "Admin Menus Management"
+        },
+        {
+            "name": "Authentification - admin",
+            "description": "Authentification - admin"
         },
         {
             "name": "Authentification",

@@ -77,8 +77,10 @@ use App\Http\Controllers\{
     SoomController,
     UserController,
     WhatsAppOtpController,
-    WishlistController
+    WishlistController,
+    AuthAdminController
 };
+use PhpOffice\PhpSpreadsheet\Reader\Xls\RC4;
 
 // ============================================
 // ============================================
@@ -101,6 +103,38 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/firebase-login', [FirebaseAuthController::class, 'loginWithFirebase']);
 Route::get('/get-country', [AuthController::class, 'getCountry'])->name('get.country');
 Route::get('/countries', [AuthController::class, 'getAllCountries']);
+
+
+Route::prefix('admin')->group(function () {
+
+    // ============================================
+    // PUBLIC ADMIN ROUTES (sans authentification)
+    // ============================================
+    Route::post('/login', [AuthAdminController::class, 'login'])->name('admin.login');
+    Route::post('/verify-otp', [AuthAdminController::class, 'verifyOtp']);
+    Route::post('/refresh', [AuthAdminController::class, 'refresh']);
+    Route::post('/send-otp', [WhatsAppOtpController::class, 'sendOtp']);
+    Route::post('/resend-otp', [AuthAdminController::class, 'resendOtp']);
+    Route::post('/resend-otp-email', [AuthAdminController::class, 'resendOtpEmail']);
+    Route::post('/forgot-password', [AuthAdminController::class, 'forgotPassword']);
+    Route::post('/reset-password', [AuthAdminController::class, 'resetPassword']);
+
+    // ============================================
+    // PROTECTED ADMIN ROUTES (authentification requise)
+    // ============================================
+    Route::middleware(['auth.admin'])->group(function () {
+        // Authentication & Session
+        Route::get('/me', [AuthAdminController::class, 'me']);
+        Route::post('/logout', [AuthAdminController::class, 'logout']);
+
+        // Profile Management
+        Route::put('/user/update', [AuthAdminController::class, 'updateProfile']);
+        Route::put('/user/two-factor-toggle', [AuthAdminController::class, 'toggleTwoFactor']);
+        Route::put('/change-password', [AuthAdminController::class, 'changePassword']); // ✅ Changé de AuthController à AuthAdminController
+
+
+    });
+});
 
 // ============================================
 // LOCATIONS (PUBLIC)
@@ -365,6 +399,8 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/user/update', [AuthController::class, 'updateProfile']);
     Route::put('/user/two-factor-toggle', [AuthController::class, 'toggleTwoFactor']);
     Route::put('/change-password', [AuthController::class, 'changePassword']);
+
+
 
     // ============================================
     // USERS MANAGEMENT (ADMIN)
@@ -852,7 +888,9 @@ Route::middleware('auth:api')->group(function () {
     // ============================================
     // PERMISSIONS & ROLES (ADMIN)
     // ============================================
+
     Route::prefix('admin')->group(function () {
+
         Route::prefix('permissions')->group(function () {
             Route::get('/', [PermissionController::class, 'index'])->middleware('permission:permissions.view');
             Route::post('/', [PermissionController::class, 'store'])->middleware('permission:permissions.create');

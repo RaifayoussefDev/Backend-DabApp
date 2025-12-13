@@ -15,13 +15,25 @@ class RoleController extends Controller
      *     operationId="getRoles",
      *     tags={"Roles"},
      *     summary="Get all roles",
-     *     description="Returns list of all roles with their permissions",
+     *     description="Returns paginated list of all roles with their permissions",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="with_permissions",
      *         in="query",
      *         description="Include permissions in response",
      *         @OA\Schema(type="boolean", example=true)
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of items per page (default: 15, max: 100)",
+     *         @OA\Schema(type="integer", example=15)
+     *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -30,19 +42,46 @@ class RoleController extends Controller
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="data",
-     *                 type="array",
-     *                 @OA\Items(
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="Admin"),
-     *                     @OA\Property(
-     *                         property="permissions",
-     *                         type="array",
-     *                         @OA\Items(
-     *                             type="object",
-     *                             @OA\Property(property="id", type="integer", example=1),
-     *                             @OA\Property(property="name", type="string", example="users.view")
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="data",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="name", type="string", example="Admin"),
+     *                         @OA\Property(property="created_at", type="string", format="date-time"),
+     *                         @OA\Property(property="updated_at", type="string", format="date-time"),
+     *                         @OA\Property(
+     *                             property="permissions",
+     *                             type="array",
+     *                             @OA\Items(
+     *                                 type="object",
+     *                                 @OA\Property(property="id", type="integer", example=1),
+     *                                 @OA\Property(property="name", type="string", example="users.view"),
+     *                                 @OA\Property(property="description", type="string", example="View users")
+     *                             )
      *                         )
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="current_page", type="integer", example=1),
+     *                 @OA\Property(property="per_page", type="integer", example=15),
+     *                 @OA\Property(property="total", type="integer", example=50),
+     *                 @OA\Property(property="last_page", type="integer", example=4),
+     *                 @OA\Property(property="from", type="integer", example=1),
+     *                 @OA\Property(property="to", type="integer", example=15),
+     *                 @OA\Property(property="first_page_url", type="string", example="http://localhost:8000/api/admin/roles?page=1"),
+     *                 @OA\Property(property="last_page_url", type="string", example="http://localhost:8000/api/admin/roles?page=4"),
+     *                 @OA\Property(property="next_page_url", type="string", example="http://localhost:8000/api/admin/roles?page=2"),
+     *                 @OA\Property(property="prev_page_url", type="string", example=null),
+     *                 @OA\Property(
+     *                     property="links",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="url", type="string", example="http://localhost:8000/api/admin/roles?page=1"),
+     *                         @OA\Property(property="label", type="string", example="1"),
+     *                         @OA\Property(property="active", type="boolean", example=true)
      *                     )
      *                 )
      *             )
@@ -54,20 +93,28 @@ class RoleController extends Controller
      */
     public function index(Request $request)
     {
+        // Validation
+        $request->validate([
+            'per_page' => 'nullable|integer|min:1|max:100',
+            'page' => 'nullable|integer|min:1',
+            'with_permissions' => 'nullable|boolean'
+        ]);
+
+        $perPage = $request->get('per_page', 15); // Default: 15 items per page
+
         $query = Role::query();
 
         if ($request->get('with_permissions')) {
             $query->with('permissions');
         }
 
-        $roles = $query->get();
+        $roles = $query->paginate($perPage);
 
         return response()->json([
             'success' => true,
             'data' => $roles
         ]);
     }
-
     /**
      * @OA\Post(
      *     path="/api/admin/roles",
