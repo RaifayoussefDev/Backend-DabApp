@@ -5482,6 +5482,268 @@
                 ]
             }
         },
+        "/api/events/{id}/toggle-interest": {
+            "post": {
+                "tags": [
+                    "Events - Interests"
+                ],
+                "summary": "Add or remove user interest in an event",
+                "description": "Toggle user's interest status for an event. If interested, removes interest. If not interested, adds interest.",
+                "operationId": "5205f995bb32ecae4c577f6656044980",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Event ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Interest toggled successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Interest added successfully"
+                                        },
+                                        "is_interested": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "interests_count": {
+                                            "type": "integer",
+                                            "example": 25
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Event not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/events/{id}/interested-users": {
+            "get": {
+                "tags": [
+                    "Events - Interests"
+                ],
+                "summary": "Get list of users interested in an event",
+                "description": "Retrieve paginated list of all users who marked their interest in this event",
+                "operationId": "5d195ca43cd1afda8c911dc3db5a3465",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Event ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20,
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Interested users retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Interested users retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 45
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "first_name": {
+                                                                "type": "string",
+                                                                "example": "John"
+                                                            },
+                                                            "last_name": {
+                                                                "type": "string",
+                                                                "example": "Doe"
+                                                            },
+                                                            "profile_picture": {
+                                                                "type": "string",
+                                                                "example": "https://example.com/avatar.jpg"
+                                                            },
+                                                            "interested_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2024-12-12 10:30:00"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Event not found"
+                    }
+                }
+            }
+        },
+        "/api/events/my-interests": {
+            "get": {
+                "tags": [
+                    "Events - Interests"
+                ],
+                "summary": "Get events current user is interested in",
+                "description": "Retrieve list of all events that the authenticated user has marked as interested",
+                "operationId": "aa14db740f9c050508300677163c5329",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "example": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User interested events retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Your interested events retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 8
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "title": {
+                                                                "type": "string",
+                                                                "example": "Tech Conference 2024"
+                                                            },
+                                                            "title_ar": {
+                                                                "type": "string",
+                                                                "example": "مؤتمر التقنية 2024"
+                                                            },
+                                                            "event_date": {
+                                                                "type": "string",
+                                                                "format": "date",
+                                                                "example": "2024-12-25"
+                                                            },
+                                                            "venue_name": {
+                                                                "type": "string",
+                                                                "example": "Convention Center"
+                                                            },
+                                                            "interests_count": {
+                                                                "type": "integer",
+                                                                "example": 25
+                                                            },
+                                                            "participants_count": {
+                                                                "type": "integer",
+                                                                "example": 150
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/events/{eventId}/faqs": {
             "get": {
                 "tags": [
@@ -30741,6 +31003,10 @@
         {
             "name": "Events",
             "description": "Events"
+        },
+        {
+            "name": "Events - Interests",
+            "description": "Events - Interests"
         },
         {
             "name": "Event FAQs",

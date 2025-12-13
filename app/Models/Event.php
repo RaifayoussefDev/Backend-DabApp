@@ -15,6 +15,12 @@ class Event extends Model
         'slug',
         'description',
         'short_description',
+        'title_ar',
+        'description_ar',
+        'short_description_ar',
+        'venue_name_ar',
+        'address_ar',
+        'interests_count',
         'featured_image',
         'category_id',
         'organizer_id',
@@ -154,4 +160,17 @@ class Event extends Model
 
         return !$this->isFull();
     }
+    public function interests()
+   {
+       return $this->hasMany(EventInterest::class);
+   }
+
+   public function interestedUsers()
+   {
+       return $this->belongsToMany(User::class, 'event_interests');
+   }
+   public function isInterestedBy(User $user): bool
+   {
+       return $this->interests()->where('user_id', $user->id)->exists();
+   }
 }

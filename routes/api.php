@@ -273,22 +273,43 @@ Route::prefix('event-categories')->group(function () {
     Route::get('/{id}/events', [EventCategoryController::class, 'events']);
 });
 
-Route::prefix('events')->group(function () {
+Route::middleware('auth:api')->prefix('events')->group(function () {
+    // Public info routes
     Route::get('/', [EventController::class, 'index']);
     Route::get('/upcoming', [EventController::class, 'upcoming']);
     Route::get('/featured', [EventController::class, 'featured']);
+    Route::get('/my-interests', [EventController::class, 'myInterests']);
+
     Route::get('/{id}', [EventController::class, 'show']);
+
+    // Interested users
+    Route::get('/{id}/interested-users', [EventController::class, 'getInterestedUsers']);
+    Route::post('/{id}/toggle-interest', [EventController::class, 'toggleInterest']);
+
+    // Participants
     Route::get('/{eventId}/participants', [EventParticipantController::class, 'index']);
+
+    // Reviews
     Route::get('/{eventId}/reviews', [EventReviewController::class, 'index']);
     Route::get('/{eventId}/reviews/{reviewId}', [EventReviewController::class, 'show']);
+
+    // Activities
     Route::get('/{eventId}/activities', [EventActivityController::class, 'index']);
     Route::get('/{eventId}/activities/{activityId}', [EventActivityController::class, 'show']);
+
+    // Tickets
     Route::get('/{eventId}/tickets', [EventTicketController::class, 'index']);
     Route::get('/{eventId}/tickets/{ticketId}', [EventTicketController::class, 'show']);
+
+    // Contacts
     Route::get('/{eventId}/contacts', [EventContactController::class, 'index']);
     Route::get('/{eventId}/contacts/{contactId}', [EventContactController::class, 'show']);
+
+    // FAQs
     Route::get('/{eventId}/faqs', [EventFaqController::class, 'index']);
     Route::get('/{eventId}/faqs/{faqId}', [EventFaqController::class, 'show']);
+
+    // Updates
     Route::get('/{eventId}/updates', [EventUpdateController::class, 'index']);
     Route::get('/{eventId}/updates/{updateId}', [EventUpdateController::class, 'show']);
     Route::get('/{eventId}/updates/important', [EventUpdateController::class, 'important']);

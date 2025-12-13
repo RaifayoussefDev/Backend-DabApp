@@ -8,6 +8,7 @@ use App\Models\EventImage;
 use App\Models\EventActivity;
 use App\Models\EventContact;
 use App\Models\EventFaq;
+use App\Models\EventInterest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
@@ -139,10 +140,10 @@ class EventController extends Controller
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('venue_name', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('venue_name', 'like', "%{$search}%");
             });
         }
 
@@ -189,21 +190,21 @@ class EventController extends Controller
             'city',
             'country',
             'images',
-            'activities' => function($q) {
+            'activities' => function ($q) {
                 $q->orderBy('order_position')->orderBy('start_time');
             },
-            'tickets' => function($q) {
+            'tickets' => function ($q) {
                 $q->where('is_active', 1);
             },
             'sponsors',
             'contacts',
-            'faqs' => function($q) {
+            'faqs' => function ($q) {
                 $q->orderBy('order_position');
             },
-            'reviews' => function($query) {
+            'reviews' => function ($query) {
                 $query->approved()->with('user')->latest()->limit(10);
             },
-            'updates' => function($q) {
+            'updates' => function ($q) {
                 $q->latest()->limit(5);
             }
         ]);
@@ -325,14 +326,19 @@ class EventController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'title_ar' => 'nullable|string|max:255',
             'description' => 'required|string',
+            'description_ar' => 'nullable|string',
             'short_description' => 'nullable|string|max:500',
+            'short_description_ar' => 'nullable|string|max:500',
             'category_id' => 'required|exists:event_categories,id',
             'event_date' => 'required|date',
             'start_time' => 'required',
             'end_time' => 'nullable',
             'venue_name' => 'nullable|string|max:255',
+            'venue_name_ar' => 'nullable|string|max:255',
             'address' => 'nullable|string',
+            'address_ar' => 'nullable|string',
             'city_id' => 'nullable|exists:cities,id',
             'country_id' => 'nullable|exists:countries,id',
             'latitude' => 'nullable|numeric',
@@ -349,18 +355,24 @@ class EventController extends Controller
             'sponsors.*.sponsorship_level' => 'nullable|in:platinum,gold,silver,bronze',
             'activities' => 'nullable|array',
             'activities.*.title' => 'required|string|max:255',
+            'activities.*.title_ar' => 'nullable|string|max:255',
             'activities.*.description' => 'nullable|string',
+            'activities.*.description_ar' => 'nullable|string',
             'activities.*.start_time' => 'nullable',
             'activities.*.end_time' => 'nullable',
             'activities.*.location' => 'nullable|string|max:255',
+            'activities.*.location_ar' => 'nullable|string|max:255',
             'contacts' => 'nullable|array',
             'contacts.*.contact_type' => 'required|in:organizer,support,emergency',
             'contacts.*.name' => 'nullable|string|max:255',
+            'contacts.*.name_ar' => 'nullable|string|max:255',
             'contacts.*.phone' => 'nullable|string|max:50',
             'contacts.*.email' => 'nullable|email|max:255',
             'faqs' => 'nullable|array',
             'faqs.*.question' => 'required|string',
+            'faqs.*.question_ar' => 'nullable|string',
             'faqs.*.answer' => 'required|string',
+            'faqs.*.answer_ar' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -461,7 +473,6 @@ class EventController extends Controller
                 'message' => 'Event created successfully with all relations',
                 'data' => $event
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -537,14 +548,19 @@ class EventController extends Controller
 
         $validated = $request->validate([
             'title' => 'sometimes|required|string|max:255',
+            'title_ar' => 'nullable|string|max:255',
             'description' => 'sometimes|required|string',
+            'description_ar' => 'nullable|string',
             'short_description' => 'nullable|string|max:500',
+            'short_description_ar' => 'nullable|string|max:500',
             'category_id' => 'sometimes|required|exists:event_categories,id',
             'event_date' => 'sometimes|required|date',
             'start_time' => 'sometimes|required',
             'end_time' => 'nullable',
             'venue_name' => 'nullable|string|max:255',
+            'venue_name_ar' => 'nullable|string|max:255',
             'address' => 'nullable|string',
+            'address_ar' => 'nullable|string',
             'city_id' => 'nullable|exists:cities,id',
             'country_id' => 'nullable|exists:countries,id',
             'latitude' => 'nullable|numeric',
@@ -561,18 +577,24 @@ class EventController extends Controller
             'sponsors.*.sponsorship_level' => 'nullable|in:platinum,gold,silver,bronze',
             'activities' => 'nullable|array',
             'activities.*.title' => 'required|string|max:255',
+            'activities.*.title_ar' => 'nullable|string|max:255',
             'activities.*.description' => 'nullable|string',
+            'activities.*.description_ar' => 'nullable|string',
             'activities.*.start_time' => 'nullable',
             'activities.*.end_time' => 'nullable',
             'activities.*.location' => 'nullable|string|max:255',
+            'activities.*.location_ar' => 'nullable|string|max:255',
             'contacts' => 'nullable|array',
             'contacts.*.contact_type' => 'required|in:organizer,support,emergency',
             'contacts.*.name' => 'nullable|string|max:255',
+            'contacts.*.name_ar' => 'nullable|string|max:255',
             'contacts.*.phone' => 'nullable|string|max:50',
             'contacts.*.email' => 'nullable|email|max:255',
             'faqs' => 'nullable|array',
             'faqs.*.question' => 'required|string',
+            'faqs.*.question_ar' => 'nullable|string',
             'faqs.*.answer' => 'required|string',
+            'faqs.*.answer_ar' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -674,7 +696,6 @@ class EventController extends Controller
                 'message' => 'Event updated successfully with all relations',
                 'data' => $event
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -1036,6 +1057,190 @@ class EventController extends Controller
         return response()->json([
             'message' => $message,
             'data' => $event
+        ]);
+    }
+    /**
+     * @OA\Post(
+     *     path="/api/events/{id}/toggle-interest",
+     *     summary="Add or remove user interest in an event",
+     *     description="Toggle user's interest status for an event. If interested, removes interest. If not interested, adds interest.",
+     *     tags={"Events - Interests"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Event ID",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Interest toggled successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Interest added successfully"),
+     *             @OA\Property(property="is_interested", type="boolean", example=true),
+     *             @OA\Property(property="interests_count", type="integer", example=25)
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=404, description="Event not found")
+     * )
+     */
+    public function toggleInterest($id)
+    {
+        $user = Auth::user();
+        $event = Event::findOrFail($id);
+
+        $interest = EventInterest::where('event_id', $event->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($interest) {
+            // Remove interest
+            $interest->delete();
+            $event->decrement('interests_count');
+            $message = 'Interest removed successfully';
+            $isInterested = false;
+        } else {
+            // Add interest
+            EventInterest::create([
+                'event_id' => $event->id,
+                'user_id' => $user->id,
+            ]);
+            $event->increment('interests_count');
+            $message = 'Interest added successfully';
+            $isInterested = true;
+        }
+
+        return response()->json([
+            'message' => $message,
+            'is_interested' => $isInterested,
+            'interests_count' => $event->fresh()->interests_count
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/events/{id}/interested-users",
+     *     summary="Get list of users interested in an event",
+     *     description="Retrieve paginated list of all users who marked their interest in this event",
+     *     tags={"Events - Interests"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Event ID",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=20, example=20)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Interested users retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Interested users retrieved successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="current_page", type="integer", example=1),
+     *                 @OA\Property(property="per_page", type="integer", example=20),
+     *                 @OA\Property(property="total", type="integer", example=45),
+     *                 @OA\Property(
+     *                     property="data",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="first_name", type="string", example="John"),
+     *                         @OA\Property(property="last_name", type="string", example="Doe"),
+     *                         @OA\Property(property="profile_picture", type="string", example="https://example.com/avatar.jpg"),
+     *                         @OA\Property(property="interested_at", type="string", format="date-time", example="2024-12-12 10:30:00")
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Event not found")
+     * )
+     */
+    public function getInterestedUsers($id, Request $request)
+    {
+        $event = Event::findOrFail($id);
+        $perPage = $request->get('per_page', 20);
+
+        $interestedUsers = $event->interestedUsers()
+            ->select('users.*', 'event_interests.created_at as interested_at')
+            ->paginate($perPage);
+
+        return response()->json([
+            'message' => 'Interested users retrieved successfully',
+            'data' => $interestedUsers
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/events/my-interests",
+     *     summary="Get events current user is interested in",
+     *     description="Retrieve list of all events that the authenticated user has marked as interested",
+     *     tags={"Events - Interests"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=15, example=15)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User interested events retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Your interested events retrieved successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="current_page", type="integer", example=1),
+     *                 @OA\Property(property="per_page", type="integer", example=15),
+     *                 @OA\Property(property="total", type="integer", example=8),
+     *                 @OA\Property(
+     *                     property="data",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="title", type="string", example="Tech Conference 2024"),
+     *                         @OA\Property(property="title_ar", type="string", example="مؤتمر التقنية 2024"),
+     *                         @OA\Property(property="event_date", type="string", format="date", example="2024-12-25"),
+     *                         @OA\Property(property="venue_name", type="string", example="Convention Center"),
+     *                         @OA\Property(property="interests_count", type="integer", example=25),
+     *                         @OA\Property(property="participants_count", type="integer", example=150)
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function myInterests(Request $request)
+    {
+        $user = Auth::user();
+        $perPage = $request->get('per_page', 15);
+
+        $events = Event::whereHas('interests', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })
+            ->with(['category', 'city', 'country', 'images'])
+            ->orderBy('event_date', 'asc')
+            ->paginate($perPage);
+
+        return response()->json([
+            'message' => 'Your interested events retrieved successfully',
+            'data' => $events
         ]);
     }
 }
