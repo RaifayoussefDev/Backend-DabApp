@@ -65,7 +65,8 @@ class PointOfInterestController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = PointOfInterest::with(['type', 'city', 'country', 'images', 'mainImage']);
+        // Ne charger que mainImage au lieu de images et mainImage
+        $query = PointOfInterest::with(['type', 'city', 'country', 'mainImage']);
 
         // Filter by type
         if ($request->has('type_id')) {
