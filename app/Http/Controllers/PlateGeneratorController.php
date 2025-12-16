@@ -126,6 +126,7 @@ class PlateGeneratorController extends Controller
             Browsershot::html($html)
                 ->setNodeBinary(env('NODE_BINARY_PATH', '/usr/bin/node'))
                 ->setNpmBinary(env('NPM_BINARY_PATH', '/usr/bin/npm'))
+                ->setChromePath('/home/master/.cache/puppeteer/chrome/linux-143.0.7499.42/chrome-linux64/chrome')
                 ->windowSize($windowSize[0], $windowSize[1])
                 ->deviceScaleFactor(3)
                 ->timeout(60)
@@ -140,7 +141,6 @@ class PlateGeneratorController extends Controller
                 'path' => $filePath,
                 'format' => $format
             ];
-
         } catch (\Exception $e) {
             \Log::error('Plate generation error: ' . $e->getMessage());
             return null;
