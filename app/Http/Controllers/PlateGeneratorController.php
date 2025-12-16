@@ -8,97 +8,124 @@ use Illuminate\Support\Facades\Storage;
 
 class PlateGeneratorController extends Controller
 {
+    /**
+     * Generate plate from API request
+     */
     public function generatePlate(Request $request)
     {
-        // 1. Valider les données
         $validated = $request->validate([
             'country' => 'required|in:ksa,uae,dubai',
             'format' => 'nullable|in:png,jpg',
-            // Champs KSA
             'top_left' => 'required_if:country,ksa|string',
             'top_right' => 'required_if:country,ksa|string',
             'bottom_left' => 'required_if:country,ksa|string',
             'bottom_right' => 'required_if:country,ksa|string',
-            // Champs UAE et Dubai
             'category_number' => 'required_if:country,uae,dubai|string',
             'plate_number' => 'required_if:country,uae,dubai|string',
+            'city_name_ar' => 'nullable|string',
+            'city_name_en' => 'nullable|string',
         ]);
 
-        $country = $validated['country'];
-        $format = $validated['format'] ?? 'png';
+        $result = $this->generatePlateInternal($request);
 
-        // 2. Charger les logos
-        $logoBase64 = null;
-        $motoLogoBase64 = null;
-
-        if ($country === 'ksa') {
-            $logoPath = storage_path('app/public/logo.png');
-            if (file_exists($logoPath)) {
-                $logoData = base64_encode(file_get_contents($logoPath));
-                $mimeType = mime_content_type($logoPath);
-                $logoBase64 = 'data:' . $mimeType . ';base64,' . $logoData;
-            } else {
-                $logoBase64 = $this->getDefaultLogo('ksa');
-            }
-        } elseif ($country === 'uae') {
-            $logoPath = storage_path('app/public/abudhabi.png');
-            if (file_exists($logoPath)) {
-                $logoData = base64_encode(file_get_contents($logoPath));
-                $mimeType = mime_content_type($logoPath);
-                $logoBase64 = 'data:' . $mimeType . ';base64,' . $logoData;
-            } else {
-                $logoBase64 = $this->getDefaultLogo('uae');
-            }
-        } else { // dubai
-            $logoPath = storage_path('app/public/dubai-moto.png');
-            if (file_exists($logoPath)) {
-                $logoData = base64_encode(file_get_contents($logoPath));
-                $mimeType = mime_content_type($logoPath);
-                $motoLogoBase64 = 'data:' . $mimeType . ';base64,' . $logoData;
-            } else {
-                $motoLogoBase64 = $this->getDefaultLogo('dubai');
-            }
+        if ($result) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Plaque générée avec succès',
+                'data' => $result
+            ]);
         }
 
-        // 3. Générer le HTML selon le pays
-        if ($country === 'ksa') {
-            $html = view('templates.plate', [
-                'topLeft' => $validated['top_left'],
-                'topRight' => $validated['top_right'],
-                'bottomLeft' => $validated['bottom_left'],
-                'bottomRight' => strtoupper($validated['bottom_right']),
-                'logoBase64' => $logoBase64,
-            ])->render();
-            $windowSize = [700, 500];
-        } elseif ($country === 'uae') {
-            $html = view('templates.plate_uae', [
-                'categoryNumber' => $validated['category_number'],
-                'plateNumber' => $validated['plate_number'],
-                'logoBase64' => $logoBase64,
-            ])->render();
-            $windowSize = [700, 500];
-        } else { // dubai
-            $html = view('templates.plate_dubai', [
-                'categoryNumber' => $validated['category_number'],
-                'plateNumber' => $validated['plate_number'],
-                'motoLogoBase64' => $motoLogoBase64,
-            ])->render();
-            $windowSize = [700, 500];
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors de la génération'
+        ], 500);
+    }
 
-        // 4. Générer le fichier
-        $uniqueId = time() . '_' . uniqid();
-        $filename = 'plate_' . $country . '_' . $uniqueId . '.' . $format;
-        $filePath = storage_path('app/public/plates/' . $filename);
-
-        if (!file_exists(storage_path('app/public/plates'))) {
-            mkdir(storage_path('app/public/plates'), 0755, true);
-        }
-
+    /**
+     * Internal method to generate plate (can be called from model or controller)
+     */
+    public function generatePlateInternal(Request $request, $city = null)
+    {
         try {
+            $country = $request->input('country');
+            $format = $request->input('format', 'png');
+
+            // Charger les logos
+            $logoBase64 = null;
+            $motoLogoBase64 = null;
+
+            if ($country === 'ksa') {
+                $logoPath = storage_path('app/public/logo.png');
+                if (file_exists($logoPath)) {
+                    $logoData = base64_encode(file_get_contents($logoPath));
+                    $mimeType = mime_content_type($logoPath);
+                    $logoBase64 = 'data:' . $mimeType . ';base64,' . $logoData;
+                } else {
+                    $logoBase64 = $this->getDefaultLogo('ksa');
+                }
+            } elseif ($country === 'uae') {
+                $logoPath = storage_path('app/public/abudhabi.png');
+                if (file_exists($logoPath)) {
+                    $logoData = base64_encode(file_get_contents($logoPath));
+                    $mimeType = mime_content_type($logoPath);
+                    $logoBase64 = 'data:' . $mimeType . ';base64,' . $logoData;
+                } else {
+                    $logoBase64 = $this->getDefaultLogo('uae');
+                }
+            } else { // dubai
+                $logoPath = storage_path('app/public/dubai-moto.png');
+                if (file_exists($logoPath)) {
+                    $logoData = base64_encode(file_get_contents($logoPath));
+                    $mimeType = mime_content_type($logoPath);
+                    $motoLogoBase64 = 'data:' . $mimeType . ';base64,' . $logoData;
+                } else {
+                    $motoLogoBase64 = $this->getDefaultLogo('dubai');
+                }
+            }
+
+            // Générer le HTML selon le pays
+            if ($country === 'ksa') {
+                $html = view('templates.plate', [
+                    'topLeft' => $request->input('top_left'),
+                    'topRight' => $request->input('top_right'),
+                    'bottomLeft' => $request->input('bottom_left'),
+                    'bottomRight' => strtoupper($request->input('bottom_right')),
+                    'logoBase64' => $logoBase64,
+                ])->render();
+                $windowSize = [700, 500];
+            } elseif ($country === 'uae') {
+                $html = view('templates.plate_uae', [
+                    'categoryNumber' => $request->input('category_number'),
+                    'plateNumber' => $request->input('plate_number'),
+                    'logoBase64' => $logoBase64,
+                    'cityNameAr' => $request->input('city_name_ar', $city->name_ar ?? 'أبو ظبي'),
+                    'cityNameEn' => $request->input('city_name_en', $city->name ?? 'ABU DHABI'),
+                ])->render();
+                $windowSize = [700, 500];
+            } else { // dubai
+                $html = view('templates.plate_dubai', [
+                    'categoryNumber' => $request->input('category_number'),
+                    'plateNumber' => $request->input('plate_number'),
+                    'motoLogoBase64' => $motoLogoBase64,
+                    'cityNameAr' => $request->input('city_name_ar', $city->name_ar ?? 'دبي'),
+                    'cityNameEn' => $request->input('city_name_en', $city->name ?? 'DUBAI'),
+                ])->render();
+                $windowSize = [700, 500];
+            }
+
+            // Générer le fichier
+            $uniqueId = time() . '_' . uniqid();
+            $filename = 'plate_' . $country . '_' . $uniqueId . '.' . $format;
+            $filePath = storage_path('app/public/plates/' . $filename);
+
+            if (!file_exists(storage_path('app/public/plates'))) {
+                mkdir(storage_path('app/public/plates'), 0755, true);
+            }
+
             Browsershot::html($html)
-                ->setNodeBinary('C:\Program Files\nodejs\node.exe')
-                ->setNpmBinary('C:\Program Files\nodejs\npm.cmd')
+                ->setNodeBinary(env('NODE_BINARY_PATH', '/usr/bin/node'))
+                ->setNpmBinary(env('NPM_BINARY_PATH', '/usr/bin/npm'))
                 ->windowSize($windowSize[0], $windowSize[1])
                 ->deviceScaleFactor(3)
                 ->timeout(60)
@@ -106,23 +133,17 @@ class PlateGeneratorController extends Controller
                 ->format($format)
                 ->save($filePath);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Plaque générée avec succès',
-                'data' => [
-                    'country' => $country,
-                    'filename' => $filename,
-                    'url' => url('storage/plates/' . $filename),
-                    'path' => $filePath,
-                    'format' => $format
-                ]
-            ]);
+            return [
+                'country' => $country,
+                'filename' => $filename,
+                'url' => url('storage/plates/' . $filename),
+                'path' => $filePath,
+                'format' => $format
+            ];
+
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de la génération',
-                'error' => $e->getMessage()
-            ], 500);
+            \Log::error('Plate generation error: ' . $e->getMessage());
+            return null;
         }
     }
 
