@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ListingImage extends Model
 {
-    protected $fillable = ['image_url', 'listing_id'];
+    protected $fillable = ['image_url', 'listing_id','is_plate_image'];
 
     public function listing()
     {
