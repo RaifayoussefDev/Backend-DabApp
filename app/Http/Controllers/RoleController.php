@@ -110,9 +110,14 @@ class RoleController extends Controller
             $query->with('permissions');
         }
 
-        // Ajouter la pagination
-        $perPage = $request->get('per_page', 15);
-        $roles = $query->paginate($perPage);
+        // Si per_page est fourni, paginer. Sinon, récupérer tout
+        if ($request->has('per_page')) {
+            $perPage = $request->get('per_page', 15);
+            $roles = $query->paginate($perPage);
+        } else {
+            // Récupérer tous les résultats sans pagination
+            $roles = $query->get();
+        }
 
         return response()->json([
             'success' => true,
