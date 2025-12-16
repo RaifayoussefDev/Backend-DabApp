@@ -18,11 +18,14 @@ class ImageUploadController extends Controller
     private const THUMBNAIL_SIZE = 300;
 
     // Configuration du watermark
-    private const WATERMARK_PATH = 'watermark/logo.png'; // Chemin relatif dans storage/app/public
-    private const WATERMARK_OPACITY = 50; // Opacité du watermark (0-100)
-    private const WATERMARK_POSITION = 'center'; // Position: bottom-right, bottom-left, top-right, top-left, center
+    private const WATERMARK_PATH = 'watermark/LogoDabApp.png'; // Chemin relatif dans storage/app/public
+    private const WATERMARK_OPACITY = 100; // Opacité du watermark (0-100)
+    private const WATERMARK_POSITION = 'bottom-right'; // Position: bottom-right, bottom-left, top-right, top-left, center
     private const WATERMARK_PADDING = 20; // Padding depuis les bords en pixels
-    private const WATERMARK_MAX_WIDTH_PERCENT = 70; // Taille max du watermark en % de la largeur de l'image
+    private const WATERMARK_MAX_WIDTH_PERCENT = 20; // Taille max du watermark en % de la largeur de l'image
+
+    // Configuration des icônesS
+    private const ICON_SIZE = 16; // Taille des icônes en pixels
 
     /**
      * @OA\Post(
@@ -151,6 +154,122 @@ class ImageUploadController extends Controller
 
             return response()->json([
                 'error' => 'An error occurred while uploading images.',
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/upload-icon",
+     *     summary="Upload an icon (16x16)",
+     *     description="Allows users to upload an icon that will be automatically resized to 16x16 pixels",
+     *     operationId="uploadIcon",
+     *     tags={"Image Upload"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"icon"},
+     *                 @OA\Property(
+     *                     property="icon",
+     *                     type="string",
+     *                     format="binary",
+     *                     description="Icon file to upload (will be resized to 16x16)"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Icon uploaded successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Icon uploaded successfully"),
+     *             @OA\Property(property="path", type="string", example="http://yourdomain.com/storage/icons/icon_abc123.png")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad Request",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="No icon found in request.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Invalid icon format.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="An error occurred while uploading icon.")
+     *         )
+     *     )
+     * )
+     */
+    public function uploadIcon(Request $request)
+    {
+        try {
+            Log::info('Icon upload request received');
+
+            $request->validate([
+                'icon' => 'required|image|mimes:jpeg,jpg,png,webp,ico|max:2048'
+            ]);
+
+            if (!$request->hasFile('icon')) {
+                return response()->json(['error' => 'No icon found in request.'], 400);
+            }
+
+            $uploadedFile = $request->file('icon');
+
+            Log::info("Processing icon", [
+                'original_name' => $uploadedFile->getClientOriginalName(),
+                'size' => $uploadedFile->getSize(),
+                'mime_type' => $uploadedFile->getMimeType()
+            ]);
+
+            // Nom de fichier aléatoire
+            $filename = 'icon_' . Str::random(15) . '.png'; // Toujours sauvegarder en PNG pour préserver la transparence
+
+            // Redimensionner l'icône à 16x16
+            $processedIcon = $this->processIcon($uploadedFile);
+
+            // Sauvegarder dans icons/
+            $iconPath = $this->saveImage($processedIcon, "icons/{$filename}");
+
+            // Ajouter le chemin public
+            $publicPath = asset('storage/' . $iconPath);
+
+            Log::info("Icon saved successfully", [
+                'filename' => $filename,
+                'path' => $iconPath
+            ]);
+
+            return response()->json([
+                'message' => 'Icon uploaded successfully',
+                'path' => $publicPath
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Icon validation failed', ['errors' => $e->errors()]);
+            return response()->json([
+                'error' => 'Validation failed',
+                'details' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            Log::error('Icon upload failed', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'error' => 'An error occurred while uploading icon.',
                 'message' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
@@ -312,6 +431,35 @@ class ImageUploadController extends Controller
     }
 
     /**
+     * Traite et redimensionne l'icône à 16x16
+     */
+    private function processIcon($uploadedFile)
+    {
+        // Créer le manager avec le driver GD
+        $manager = new ImageManager(new Driver());
+        $icon = $manager->read($uploadedFile);
+
+        // Obtenir les dimensions originales
+        $originalWidth = $icon->width();
+        $originalHeight = $icon->height();
+
+        Log::info('Original icon dimensions', [
+            'width' => $originalWidth,
+            'height' => $originalHeight
+        ]);
+
+        // Redimensionner à 16x16 en gardant le ratio et en ajoutant un crop si nécessaire
+        $icon = $icon->cover(self::ICON_SIZE, self::ICON_SIZE);
+
+        Log::info('Icon resized', [
+            'new_width' => $icon->width(),
+            'new_height' => $icon->height()
+        ]);
+
+        return $icon;
+    }
+
+    /**
      * Crée une miniature de l'image
      */
     private function createThumbnail($uploadedFile)
@@ -429,6 +577,62 @@ class ImageUploadController extends Controller
 
             return response()->json([
                 'error' => 'An error occurred while deleting the image.'
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/delete-icon/{filename}",
+     *     summary="Delete an uploaded icon",
+     *     description="Delete an uploaded icon",
+     *     operationId="deleteIcon",
+     *     tags={"Image Upload"},
+     *     @OA\Parameter(
+     *         name="filename",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="string"),
+     *         description="The filename of the icon to delete"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Icon deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Icon deleted successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Icon not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Icon not found")
+     *         )
+     *     )
+     * )
+     */
+    public function deleteIcon(string $filename)
+    {
+        try {
+            $iconPath = "icons/{$filename}";
+
+            if (!Storage::disk('public')->exists($iconPath)) {
+                return response()->json(['error' => 'Icon not found'], 404);
+            }
+
+            Storage::disk('public')->delete($iconPath);
+
+            Log::info('Icon deleted successfully', ['filename' => $filename]);
+
+            return response()->json(['message' => 'Icon deleted successfully']);
+        } catch (\Exception $e) {
+            Log::error('Icon deletion failed', [
+                'filename' => $filename,
+                'message' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'error' => 'An error occurred while deleting the icon.'
             ], 500);
         }
     }
