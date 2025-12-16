@@ -144,10 +144,9 @@
 
         <!-- Section principale -->
         <div class="main-section">
-            <!-- Texte DUBAI à gauche -->
             <div class="dubai-text-container">
-                <div class="dubai-arabic">دبي</div>
-                <div class="dubai-english">DUBAI</div>
+                <div class="dubai-arabic">{{ $cityNameAr ?? 'دبي' }}</div>
+                <div class="dubai-english">{{ strtoupper($cityNameEn ?? 'DUBAI') }}</div>
             </div>
 
             <!-- Numéros de plaque -->

@@ -93,22 +93,31 @@ class RoleController extends Controller
      */
     public function index(Request $request)
     {
-        // Validation
-        $request->validate([
-            'per_page' => 'nullable|integer|min:1|max:100',
-            'page' => 'nullable|integer|min:1',
-            'with_permissions' => 'nullable|boolean'
+        // Valider ici directement (plus flexible)
+        $validated = $request->validate([
+            'with_permissions' => 'sometimes|in:true,false,1,0',
+            'per_page' => 'sometimes|integer|min:1|max:100',
+            'page' => 'sometimes|integer|min:1'
         ]);
-
-        $perPage = $request->get('per_page', 15); // Default: 15 items per page
 
         $query = Role::query();
 
-        if ($request->get('with_permissions')) {
+        // Accepter true, "true", 1, "1"
+        if (
+            $request->filled('with_permissions') &&
+            in_array($request->get('with_permissions'), [true, 'true', '1', 1], true)
+        ) {
             $query->with('permissions');
         }
 
-        $roles = $query->paginate($perPage);
+        // Si per_page est fourni, paginer. Sinon, récupérer tout
+        if ($request->has('per_page')) {
+            $perPage = $request->get('per_page', 15);
+            $roles = $query->paginate($perPage);
+        } else {
+            // Récupérer tous les résultats sans pagination
+            $roles = $query->get();
+        }
 
         return response()->json([
             'success' => true,

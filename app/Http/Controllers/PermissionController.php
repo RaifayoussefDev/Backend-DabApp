@@ -41,20 +41,28 @@ class PermissionController extends Controller
      */
     public function index(Request $request)
     {
-        $perPage = $request->get('per_page', 15);
+        $perPage = $request->get('per_page');
         $search = $request->get('search');
 
         $query = Permission::query();
 
         // Search
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('description', 'LIKE', "%{$search}%");
+                    ->orWhere('description', 'LIKE', "%{$search}%");
             });
         }
 
-        $permissions = $query->orderBy('name', 'asc')->paginate($perPage);
+        // Ordre alphabétique
+        $query->orderBy('name', 'asc');
+
+        // Si per_page est fourni, paginer. Sinon, récupérer tout
+        if ($perPage) {
+            $permissions = $query->paginate($perPage);
+        } else {
+            $permissions = $query->get();
+        }
 
         return response()->json([
             'success' => true,
@@ -222,7 +230,7 @@ class PermissionController extends Controller
         $permissions = Permission::all();
 
         // Group by module (e.g., "users.view" -> "users")
-        $grouped = $permissions->groupBy(function($permission) {
+        $grouped = $permissions->groupBy(function ($permission) {
             return explode('.', $permission->name)[0];
         });
 
