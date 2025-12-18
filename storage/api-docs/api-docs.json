@@ -13625,6 +13625,106 @@
                 }
             }
         },
+        "/api/upload-icon": {
+            "post": {
+                "tags": [
+                    "Image Upload"
+                ],
+                "summary": "Upload an icon (16x16)",
+                "description": "Allows users to upload an icon that will be automatically resized to 16x16 pixels",
+                "operationId": "uploadIcon",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "icon"
+                                ],
+                                "properties": {
+                                    "icon": {
+                                        "description": "Icon file to upload (will be resized to 16x16)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Icon uploaded successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Icon uploaded successfully"
+                                        },
+                                        "path": {
+                                            "type": "string",
+                                            "example": "http://yourdomain.com/storage/icons/icon_abc123.png"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "No icon found in request."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Invalid icon format."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "An error occurred while uploading icon."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/delete-image/{filename}": {
             "delete": {
                 "tags": [
@@ -13670,6 +13770,61 @@
                                         "error": {
                                             "type": "string",
                                             "example": "Image not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/delete-icon/{filename}": {
+            "delete": {
+                "tags": [
+                    "Image Upload"
+                ],
+                "summary": "Delete an uploaded icon",
+                "description": "Delete an uploaded icon",
+                "operationId": "deleteIcon",
+                "parameters": [
+                    {
+                        "name": "filename",
+                        "in": "path",
+                        "description": "The filename of the icon to delete",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Icon deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Icon deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Icon not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Icon not found"
                                         }
                                     },
                                     "type": "object"
