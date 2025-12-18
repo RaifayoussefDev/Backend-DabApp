@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test API POI - DabApp Style (avec Google Places)</title>
+    <title>Test API POI - Enhanced with Search & Dynamic Types</title>
     <style>
         * {
             margin: 0;
@@ -143,11 +143,39 @@
             border-radius: 10px;
             overflow: hidden;
             margin-top: 20px;
+            position: relative;
         }
 
         #map, #displayMap {
             width: 100%;
-            height: 500px;
+            height: 600px;
+        }
+
+        /* Search Box Styling */
+        .search-box-container {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        #searchBox {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 16px;
+            border: 3px solid #ff6b00;
+            border-radius: 10px;
+            background: white;
+            color: #000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+
+        #searchBox:focus {
+            outline: none;
+            border-color: #ff8c00;
         }
 
         .grid-2 {
@@ -255,49 +283,6 @@
             color: white;
         }
 
-        .poi-card {
-            background: #1a1a1a;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border-left: 4px solid #ff6b00;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .poi-card:hover {
-            background: #333;
-            transform: translateX(5px);
-        }
-
-        .poi-card h4 {
-            color: #ff6b00;
-            margin-bottom: 10px;
-        }
-
-        .poi-card .location {
-            color: #999;
-            font-size: 12px;
-            margin-bottom: 10px;
-        }
-
-        .poi-card .description {
-            color: #ccc;
-            font-size: 13px;
-            margin-bottom: 10px;
-        }
-
-        .poi-type-badge {
-            display: inline-block;
-            padding: 5px 10px;
-            background: #ff6b00;
-            color: white;
-            border-radius: 5px;
-            font-size: 11px;
-            font-weight: bold;
-            margin-right: 5px;
-        }
-
         .place-info-box {
             background: linear-gradient(135deg, #1a3a1a 0%, #2c4c2c 100%);
             padding: 20px;
@@ -311,9 +296,6 @@
             color: #4caf50;
             margin-bottom: 15px;
             font-size: 18px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
 
         .rating-stars {
@@ -337,42 +319,6 @@
             min-width: 120px;
         }
 
-        .review-item {
-            background: #1a1a1a;
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border-left: 3px solid #ffc107;
-        }
-
-        .review-author {
-            color: #ff6b00;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .review-text {
-            color: #ccc;
-            font-size: 13px;
-        }
-
-        .use-place-data-btn {
-            background: linear-gradient(90deg, #4caf50 0%, #388e3c 100%);
-            color: white;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 14px;
-            text-transform: uppercase;
-            margin-top: 15px;
-        }
-
-        .use-place-data-btn:hover {
-            opacity: 0.9;
-        }
-
         .info-note {
             background: #1a3a5a;
             padding: 15px;
@@ -387,34 +333,48 @@
             margin: 5px 0;
         }
 
-        /* Pulse animation for better marker visibility */
-        @keyframes markerPulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7);
-            }
-            50% {
-                box-shadow: 0 0 0 10px rgba(66, 133, 244, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(66, 133, 244, 0);
-            }
-        }
-
-        .clickable-hint {
-            background: linear-gradient(135deg, #ff6b00 0%, #ff8c00 100%);
-            padding: 10px 20px;
-            border-radius: 8px;
-            margin: 15px 0;
-            text-align: center;
-            border: 2px solid #fff;
-            box-shadow: 0 3px 10px rgba(255, 107, 0, 0.5);
-        }
-
-        .clickable-hint p {
-            color: #fff;
+        .use-place-data-btn {
+            background: linear-gradient(90deg, #4caf50 0%, #388e3c 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
             font-weight: bold;
+            cursor: pointer;
             font-size: 14px;
-            margin: 0;
+            text-transform: uppercase;
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .use-place-data-btn:hover {
+            opacity: 0.9;
+        }
+
+        .poi-card {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ff6b00;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .poi-card:hover {
+            background: #333;
+            transform: translateX(5px);
+        }
+
+        .poi-type-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #ff6b00;
+            color: white;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 5px;
         }
 
         @keyframes slideInRight {
@@ -443,27 +403,9 @@
             .grid-2, .grid-3 {
                 grid-template-columns: 1fr;
             }
-        }
 
-        @keyframes slideInRight {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideOutRight {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(400px);
-                opacity: 0;
+            .search-box-container {
+                width: 95%;
             }
         }
     </style>
@@ -471,8 +413,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎯 Test API POI - DabApp (avec Google Places)</h1>
-            <p>Complete testing interface with Google Places integration</p>
+            <h1>🎯 Test API POI - Recherche Google Maps Intégrée</h1>
+            <p>Recherchez et cliquez sur n'importe quel lieu Google Maps!</p>
             <div id="authStatus"></div>
         </div>
 
@@ -494,33 +436,31 @@
             <button class="btn btn-danger" onclick="logout()" id="logoutBtn" style="display: none;">🚪 Logout</button>
         </div>
 
-        <!-- Interactive Map for POI Selection with Google Places -->
+        <!-- Interactive Map with Search -->
         <div class="section" id="mapSection" style="display: none;">
-            <h2>🗺️ Step 1: Select Location & Get Google Places Info</h2>
+            <h2>🗺️ Recherche de Lieux Google Maps</h2>
 
             <div class="info-note">
-                <p><strong>💡 Comment ça marche:</strong></p>
-                <p>• <strong>Cliquez sur la carte</strong> → Des <strong>cercles bleus</strong> (lieux Google) apparaissent dans 1km de rayon</p>
-                <p>• <strong>Survolez un cercle bleu</strong> → Il devient <strong>ORANGE et PLUS GRAND</strong> + aperçu s'affiche</p>
-                <p>• <strong>Cliquez sur un cercle orange</strong> → Toutes les infos sont récupérées et le formulaire se remplit automatiquement ✨</p>
-                <p>• Ou cliquez sur "Show Nearby Places" pour charger les lieux autour du centre de la carte</p>
-                <p>• Les infos incluent: nom, adresse, rating, avis, photos, horaires, téléphone, site web</p>
+                <p><strong>💡 Comment utiliser:</strong></p>
+                <p>• <strong>Tapez dans la barre de recherche</strong> sur la carte (ex: "Station Total Casablanca", "Restaurant", "Ferme Équestre")</p>
+                <p>• <strong>Sélectionnez un lieu</strong> dans les suggestions → Un marqueur apparaît automatiquement</p>
+                <p>• <strong>Cliquez sur le marqueur</strong> pour récupérer TOUTES les informations (nom, adresse, téléphone, site, rating, avis, photos, horaires)</p>
+                <p>• Les informations sont automatiquement pré-remplies dans le formulaire ci-dessous ✨</p>
+                <p>• Vous pouvez aussi <strong>cliquer directement sur n'importe quel lieu visible</strong> sur la carte!</p>
             </div>
 
-            <div class="clickable-hint">
-                <p>🎯 ASTUCE: Les cercles BLEUS deviennent ORANGE quand vous les survolez - c'est là que vous devez cliquer!</p>
-            </div>
-
-            <button class="btn" onclick="initMap()">📍 Load Map</button>
-            <button class="btn btn-secondary" onclick="showNearbyPlacesAroundCenter()">🔍 Show Nearby Places</button>
-            <button class="btn btn-secondary" onclick="clearMarker()">🗑️ Clear Markers</button>
+            <button class="btn" onclick="initMap()">📍 Load Map with Search</button>
+            <button class="btn btn-secondary" onclick="clearMarker()">🗑️ Clear Selection</button>
 
             <div class="map-container">
+                <div class="search-box-container">
+                    <input id="searchBox" type="text" placeholder="🔍 Recherchez un lieu... (ex: Ferme Équestre, Station Total, Restaurant...)" />
+                </div>
                 <div id="map"></div>
             </div>
 
             <div id="selectedLocation" style="background: #1a1a1a; padding: 15px; border-radius: 5px; margin-top: 15px; display: none;">
-                <h4 style="color: #ff6b00; margin-bottom: 10px;">📍 Coordonnées sélectionnées</h4>
+                <h4 style="color: #ff6b00; margin-bottom: 10px;">📍 Lieu sélectionné</h4>
                 <p style="color: #ccc; margin: 5px 0;">
                     <strong style="color: #ff6b00;">Latitude:</strong> <span id="selectedLat">-</span>
                 </p>
@@ -535,7 +475,7 @@
 
         <!-- Create POI Form -->
         <div class="section" id="createSection" style="display: none;">
-            <h2>🎯 Step 2: Create New POI</h2>
+            <h2>🎯 Créer un nouveau POI</h2>
 
             <div class="grid-2">
                 <div class="form-group">
@@ -543,17 +483,9 @@
                     <input type="text" id="poiName" placeholder="Gas Station Casablanca Center">
                 </div>
                 <div class="form-group">
-                    <label>POI Type *</label>
+                    <label>POI Type * (Chargé depuis l'API)</label>
                     <select id="poiType">
-                        <option value="">Select a type</option>
-                        <option value="1">⛽ Gas Station</option>
-                        <option value="2">🔧 Repair Shop</option>
-                        <option value="3">🏪 Moto Store</option>
-                        <option value="4">🏨 Accommodation</option>
-                        <option value="5">🍽️ Restaurant</option>
-                        <option value="6">🌄 Viewpoint</option>
-                        <option value="7">🏛️ Tourist Attraction</option>
-                        <option value="8">🅿️ Parking</option>
+                        <option value="">Chargement...</option>
                     </select>
                 </div>
             </div>
@@ -607,123 +539,12 @@
             <div class="response-box" id="createResponse"></div>
         </div>
 
-        <!-- List All POIs -->
+        <!-- Other sections remain the same... -->
         <div class="section" id="listSection" style="display: none;">
             <h2>📋 List All POIs</h2>
-            <div class="grid-3">
-                <div class="form-group">
-                    <label>Filter by Type ID</label>
-                    <input type="number" id="filterTypeId" placeholder="Leave empty for all">
-                </div>
-                <div class="form-group">
-                    <label>Latitude (for nearby)</label>
-                    <input type="number" id="filterLatitude" step="0.000001" placeholder="33.5731">
-                </div>
-                <div class="form-group">
-                    <label>Longitude (for nearby)</label>
-                    <input type="number" id="filterLongitude" step="0.000001" placeholder="-7.5898">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Radius (km)</label>
-                <input type="number" id="filterRadius" placeholder="10" value="10">
-            </div>
             <button class="btn" onclick="listPOIs()">📋 Get All POIs</button>
-            <button class="btn btn-secondary" onclick="listNearbyPOIs()">📍 Get Nearby POIs</button>
             <div class="response-box" id="listResponse"></div>
             <div id="poisList" style="margin-top: 20px;"></div>
-        </div>
-
-        <!-- Get POI by ID + Display on Map -->
-        <div class="section" id="showSection" style="display: none;">
-            <h2>🔍 Get POI Details & Display on Map</h2>
-            <div class="form-group">
-                <label>POI ID</label>
-                <input type="number" id="showPoiId" placeholder="1">
-            </div>
-            <button class="btn" onclick="showPOI()">🔍 Get POI Details</button>
-            <button class="btn btn-secondary" onclick="displayPOIOnMap()">🗺️ Display on Map</button>
-            <div class="response-box" id="showResponse"></div>
-            <div class="map-container">
-                <div id="displayMap"></div>
-            </div>
-        </div>
-
-        <!-- Update POI -->
-        <div class="section" id="updateSection" style="display: none;">
-            <h2>✏️ Update POI</h2>
-            <div class="form-group">
-                <label>POI ID *</label>
-                <input type="number" id="updatePoiId" placeholder="1">
-            </div>
-            <button class="btn btn-secondary" onclick="loadPOIForUpdate()">📥 Load POI Data</button>
-
-            <div id="updateForm" style="display: none; margin-top: 20px;">
-                <div class="grid-2">
-                    <div class="form-group">
-                        <label>Name</label>
-                        <input type="text" id="updatePoiName">
-                    </div>
-                    <div class="form-group">
-                        <label>Type ID</label>
-                        <input type="number" id="updatePoiType">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea id="updatePoiDescription" rows="4"></textarea>
-                </div>
-
-                <div class="grid-2">
-                    <div class="form-group">
-                        <label>Phone</label>
-                        <input type="text" id="updatePoiPhone">
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="updatePoiEmail">
-                    </div>
-                </div>
-
-                <button class="btn" onclick="updatePOI()">💾 Update POI</button>
-            </div>
-
-            <div class="response-box" id="updateResponse"></div>
-        </div>
-
-        <!-- Delete POI -->
-        <div class="section" id="deleteSection" style="display: none;">
-            <h2>🗑️ Delete POI</h2>
-            <div class="form-group">
-                <label>POI ID</label>
-                <input type="number" id="deletePoiId" placeholder="1">
-            </div>
-            <button class="btn btn-danger" onclick="deletePOI()">🗑️ Delete POI</button>
-            <div class="response-box" id="deleteResponse"></div>
-        </div>
-
-        <!-- Toggle Favorite -->
-        <div class="section" id="favoriteSection" style="display: none;">
-            <h2>⭐ Toggle Favorite</h2>
-            <div class="form-group">
-                <label>POI ID</label>
-                <input type="number" id="favoritePoiId" placeholder="1">
-            </div>
-            <button class="btn" onclick="toggleFavorite()">⭐ Toggle Favorite</button>
-            <div class="response-box" id="favoriteResponse"></div>
-        </div>
-
-        <!-- Get Favorites -->
-        <div class="section" id="favoritesListSection" style="display: none;">
-            <h2>⭐ My Favorite POIs</h2>
-            <div class="form-group">
-                <label>Filter by Type ID (optional)</label>
-                <input type="number" id="favoritesTypeId" placeholder="Leave empty for all">
-            </div>
-            <button class="btn" onclick="getFavorites()">⭐ Get My Favorites</button>
-            <div class="response-box" id="favoritesListResponse"></div>
-            <div id="favoritesList" style="margin-top: 20px;"></div>
         </div>
     </div>
 
@@ -758,13 +579,11 @@
     let currentUser = null;
     let authToken = null;
     let map;
-    let displayMap;
     let marker = null;
-    let displayMarker = null;
     let placesService;
     let currentPlaceData = null;
-    let placeMarkers = []; // Array to store markers for nearby places
-    let activeInfoWindow = null; // Track currently open info window
+    let poiTypesData = [];
+    let searchBox;
 
     const GOOGLE_MAPS_API_KEY = 'AIzaSyBznLyPEvm9nm3LerujutDMx1F6zNSpk2E';
 
@@ -833,9 +652,11 @@
                 localStorage.setItem('dabapp_user', JSON.stringify(currentUser));
                 document.getElementById('authToken').value = authToken;
                 responseBox.innerHTML = '<pre class="success">✅ Login successful!</pre>';
+
                 setTimeout(() => {
                     closeLoginModal();
                     updateAuthUI();
+                    loadPOITypes(); // Load POI types after login
                 }, 2000);
             } else {
                 responseBox.innerHTML = '<pre class="error">❌ Login failed!<br><br>' + JSON.stringify(result, null, 2) + '</pre>';
@@ -897,13 +718,49 @@
     }
 
     function enableAllSections() {
-        const sections = ['mapSection', 'createSection', 'listSection', 'showSection', 'updateSection', 'deleteSection', 'favoriteSection', 'favoritesListSection'];
+        const sections = ['mapSection', 'createSection', 'listSection'];
         sections.forEach(id => document.getElementById(id).style.display = 'block');
     }
 
     function disableAllSections() {
-        const sections = ['mapSection', 'createSection', 'listSection', 'showSection', 'updateSection', 'deleteSection', 'favoriteSection', 'favoritesListSection'];
+        const sections = ['mapSection', 'createSection', 'listSection'];
         sections.forEach(id => document.getElementById(id).style.display = 'none');
+    }
+
+    // ===== LOAD POI TYPES FROM API =====
+    async function loadPOITypes() {
+        if (!authToken) return;
+
+        try {
+            const response = await fetch('https://be.dabapp.co/api/poi-types', {
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                poiTypesData = result.data;
+                populatePOITypeSelect();
+            }
+        } catch (error) {
+            console.error('Error loading POI types:', error);
+        }
+    }
+
+    function populatePOITypeSelect() {
+        const select = document.getElementById('poiType');
+        select.innerHTML = '<option value="">Sélectionnez un type</option>';
+
+        poiTypesData.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type.id;
+            option.textContent = `${type.icon || '📍'} ${type.name}`;
+            option.setAttribute('data-types', JSON.stringify(type));
+            select.appendChild(option);
+        });
     }
 
     // ===== GOOGLE MAPS & PLACES =====
@@ -917,17 +774,17 @@
             const script = document.createElement('script');
             script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,geometry`;
             script.onload = () => {
-                setupMaps();
+                setupMap();
                 getUserLocation();
             };
             document.head.appendChild(script);
         } else {
-            setupMaps();
+            setupMap();
             getUserLocation();
         }
     }
 
-    function setupMaps() {
+    function setupMap() {
         const center = { lat: 33.5731, lng: -7.5898 };
 
         map = new google.maps.Map(document.getElementById('map'), {
@@ -938,245 +795,37 @@
             streetViewControl: false
         });
 
-        displayMap = new google.maps.Map(document.getElementById('displayMap'), {
-            zoom: 12,
-            center: center,
-            styles: mapStyles,
-            mapTypeControl: false,
-            streetViewControl: false
-        });
-
         placesService = new google.maps.places.PlacesService(map);
 
-        // Show nearby places on the map with hover tooltips
-        map.addListener('idle', function() {
-            showNearbyPlacesOnMap();
+        // Setup Search Box
+        const input = document.getElementById('searchBox');
+        searchBox = new google.maps.places.SearchBox(input);
+
+        // Bias results to map viewport
+        map.addListener('bounds_changed', () => {
+            searchBox.setBounds(map.getBounds());
         });
 
-        map.addListener('click', function(event) {
-            selectLocation(event.latLng);
-        });
-    }
+        // Listen for place selection
+        searchBox.addListener('places_changed', () => {
+            const places = searchBox.getPlaces();
 
-    function getUserLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    const userPos = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                    map.setCenter(userPos);
-                    displayMap.setCenter(userPos);
-                },
-                function(error) {
-                    console.warn('Geolocation disabled:', error);
-                }
-            );
-        }
-    }
+            if (places.length === 0) return;
 
-    function selectLocation(location) {
-        const position = {
-            lat: location.lat(),
-            lng: location.lng()
-        };
-
-        if (marker) {
-            marker.setMap(null);
-        }
-
-        marker = new google.maps.Marker({
-            position: position,
-            map: map,
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 12,
-                fillColor: '#ff6b00',
-                fillOpacity: 1,
-                strokeColor: '#fff',
-                strokeWeight: 2
-            }
-        });
-
-        document.getElementById('poiLatitude').value = position.lat.toFixed(6);
-        document.getElementById('poiLongitude').value = position.lng.toFixed(6);
-
-        document.getElementById('selectedLocation').style.display = 'block';
-        document.getElementById('selectedLat').textContent = position.lat.toFixed(6);
-        document.getElementById('selectedLng').textContent = position.lng.toFixed(6);
-
-        // Search for nearby places using Google Places API
-        searchNearbyPlace(position);
-
-        // Also display nearby places markers for hover
-        searchAndDisplayNearbyPlaces(position);
-    }
-
-    function searchNearbyPlace(position) {
-        const request = {
-            location: position,
-            radius: 100, // Search within 100 meters
-            rankBy: google.maps.places.RankBy.DISTANCE
-        };
-
-        placesService.nearbySearch(request, function(results, status) {
-            if (status === google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
-                // Get details of the nearest place
-                getPlaceDetails(results[0].place_id);
-            } else {
-                // No place found, just geocode
-                geocodeLocation(position);
-            }
-        });
-    }
-
-    // Search and display nearby places with markers
-    let nearbyPlacesMarkers = [];
-
-    function searchAndDisplayNearbyPlaces(center) {
-        // Clear existing nearby markers
-        nearbyPlacesMarkers.forEach(m => m.marker.setMap(null));
-        nearbyPlacesMarkers = [];
-
-        const request = {
-            location: center,
-            radius: 1000, // Increased to 1000 meters for more results
-            type: ['restaurant', 'gas_station', 'cafe', 'hotel', 'tourist_attraction', 'store', 'parking', 'bank', 'hospital', 'pharmacy']
-        };
-
-        placesService.nearbySearch(request, function(results, status) {
-            if (status === google.maps.places.PlacesServiceStatus.OK) {
-                console.log(`Found ${results.length} nearby places`);
-
-                results.forEach((place, index) => {
-                    if (index < 50) { // Increased limit to 50 places
-                        createPlaceMarker(place);
-                    }
-                });
-
-                // Show a notification
-                if (results.length > 0) {
-                    showTemporaryNotification(`✅ ${results.length} lieux trouvés! Survolez-les pour voir les infos.`);
-                }
-            } else {
-                showTemporaryNotification('❌ Aucun lieu trouvé dans cette zone.');
-            }
-        });
-    }
-
-    function showTemporaryNotification(message) {
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 100px;
-            right: 20px;
-            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            z-index: 10000;
-            font-weight: bold;
-            animation: slideInRight 0.3s ease-out;
-        `;
-        notification.textContent = message;
-        document.body.appendChild(notification);
-
-        setTimeout(() => {
-            notification.style.animation = 'slideOutRight 0.3s ease-in';
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
-    }
-
-    function createPlaceMarker(place) {
-        // Create a larger, more visible custom icon
-        const placeMarker = new google.maps.Marker({
-            position: place.geometry.location,
-            map: map,
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 10, // Larger size
-                fillColor: '#4285F4', // Google blue
-                fillOpacity: 0.9,
-                strokeColor: '#fff',
-                strokeWeight: 3
-            },
-            title: place.name,
-            animation: google.maps.Animation.DROP,
-            optimized: false, // Better for custom styling
-            zIndex: 100 // Ensure markers are above other elements
-        });
-
-        const previewInfoWindow = new google.maps.InfoWindow();
-
-        // Hover effect - show preview AND enlarge marker
-        placeMarker.addListener('mouseover', function() {
-            // Enlarge marker on hover
-            placeMarker.setIcon({
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 15, // Bigger on hover
-                fillColor: '#ff6b00', // DabApp orange
-                fillOpacity: 1,
-                strokeColor: '#fff',
-                strokeWeight: 4
-            });
-
-            placeMarker.setZIndex(1000); // Bring to front
-
-            const previewContent = `
-                <div style="color: #000; padding: 12px; max-width: 280px;">
-                    <h4 style="margin: 0 0 10px 0; color: #ff6b00; font-size: 16px;">${place.name}</h4>
-                    <p style="margin: 5px 0; font-size: 13px; color: #555;">${place.vicinity}</p>
-                    ${place.rating ? `
-                        <div style="margin: 8px 0; padding: 8px; background: #f5f5f5; border-radius: 5px;">
-                            <span style="color: #ffc107; font-size: 18px;">★</span>
-                            <strong style="font-size: 16px;">${place.rating}</strong>
-                            <span style="color: #666; font-size: 12px;">(${place.user_ratings_total || 0} avis)</span>
-                        </div>
-                    ` : ''}
-                    ${place.opening_hours ? `
-                        <p style="margin: 8px 0; font-size: 13px; padding: 5px 10px; background: ${place.opening_hours.open_now ? '#e8f5e9' : '#ffebee'}; border-radius: 5px;">
-                            ${place.opening_hours.open_now ?
-                                '<span style="color: #4caf50;">✓ Ouvert maintenant</span>' :
-                                '<span style="color: #d32f2f;">✗ Fermé</span>'}
-                        </p>
-                    ` : ''}
-                    <div style="margin: 12px 0 5px 0; padding: 10px; background: #fff3e0; border-left: 3px solid #ff6b00; border-radius: 3px;">
-                        <p style="margin: 0; font-size: 12px; color: #ff6b00; font-weight: bold;">
-                            👆 CLIQUEZ ICI pour récupérer toutes les infos et pré-remplir le formulaire
-                        </p>
-                    </div>
-                </div>
-            `;
-            previewInfoWindow.setContent(previewContent);
-            previewInfoWindow.open(map, placeMarker);
-        });
-
-        // Mouse out - restore original marker size
-        placeMarker.addListener('mouseout', function() {
-            placeMarker.setIcon({
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 10,
-                fillColor: '#4285F4',
-                fillOpacity: 0.9,
-                strokeColor: '#fff',
-                strokeWeight: 3
-            });
-
-            placeMarker.setZIndex(100);
-            previewInfoWindow.close();
-        });
-
-        // Click - get full details and fill form
-        placeMarker.addListener('click', function() {
-            previewInfoWindow.close();
-
-            // Set the main marker position
+            // Clear existing marker
             if (marker) {
                 marker.setMap(null);
             }
 
+            // Get the first place
+            const place = places[0];
+
+            if (!place.geometry || !place.geometry.location) {
+                console.log("Place has no geometry");
+                return;
+            }
+
+            // Create marker
             marker = new google.maps.Marker({
                 position: place.geometry.location,
                 map: map,
@@ -1188,13 +837,10 @@
                     strokeColor: '#fff',
                     strokeWeight: 3
                 },
-                animation: google.maps.Animation.BOUNCE
+                animation: google.maps.Animation.DROP
             });
 
-            setTimeout(() => {
-                marker.setAnimation(null);
-            }, 2000);
-
+            // Set coordinates
             const lat = place.geometry.location.lat();
             const lng = place.geometry.location.lng();
 
@@ -1206,14 +852,87 @@
             document.getElementById('selectedLng').textContent = lng.toFixed(6);
 
             // Get full place details
-            getPlaceDetails(place.place_id, true);
+            if (place.place_id) {
+                getPlaceDetails(place.place_id, true);
+            }
 
-            // Center map on selected place
-            map.panTo(place.geometry.location);
-            map.setZoom(16);
+            // Center and zoom to place
+            map.setCenter(place.geometry.location);
+            map.setZoom(15);
+
+            // Add click listener to marker
+            marker.addListener('click', () => {
+                if (place.place_id) {
+                    getPlaceDetails(place.place_id, true);
+                }
+            });
         });
 
-        nearbyPlacesMarkers.push({ marker: placeMarker, place: place });
+        // Allow clicking on places directly on the map
+        map.addListener('click', (event) => {
+            selectLocationFromClick(event.latLng);
+        });
+    }
+
+    function selectLocationFromClick(latLng) {
+        // Search for nearby place at click location
+        const request = {
+            location: latLng,
+            radius: 50
+        };
+
+        placesService.nearbySearch(request, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
+                const place = results[0];
+
+                if (marker) {
+                    marker.setMap(null);
+                }
+
+                marker = new google.maps.Marker({
+                    position: place.geometry.location,
+                    map: map,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 15,
+                        fillColor: '#ff6b00',
+                        fillOpacity: 1,
+                        strokeColor: '#fff',
+                        strokeWeight: 3
+                    },
+                    animation: google.maps.Animation.BOUNCE
+                });
+
+                setTimeout(() => marker.setAnimation(null), 2000);
+
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
+
+                document.getElementById('poiLatitude').value = lat.toFixed(6);
+                document.getElementById('poiLongitude').value = lng.toFixed(6);
+
+                document.getElementById('selectedLocation').style.display = 'block';
+                document.getElementById('selectedLat').textContent = lat.toFixed(6);
+                document.getElementById('selectedLng').textContent = lng.toFixed(6);
+
+                getPlaceDetails(place.place_id, true);
+            }
+        });
+    }
+
+    function getUserLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const userPos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    map.setCenter(userPos);
+                },
+                (error) => console.warn('Geolocation disabled:', error)
+            );
+        }
     }
 
     function getPlaceDetails(placeId, autoFillForm = false) {
@@ -1227,16 +946,13 @@
             ]
         };
 
-        placesService.getDetails(request, function(place, status) {
+        placesService.getDetails(request, (place, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK) {
                 currentPlaceData = place;
                 displayPlaceInfo(place);
 
-                // Auto-fill form if requested (when clicking on a marker)
                 if (autoFillForm) {
                     usePlaceData();
-
-                    // Scroll to form section
                     setTimeout(() => {
                         window.scrollTo({
                             top: document.getElementById('createSection').offsetTop - 20,
@@ -1244,15 +960,6 @@
                         });
                     }, 500);
                 }
-            }
-        });
-    }
-
-    function geocodeLocation(position) {
-        const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ location: position }, function(results, status) {
-            if (status === 'OK' && results[0]) {
-                document.getElementById('poiAddress').value = results[0].formatted_address;
             }
         });
     }
@@ -1274,51 +981,9 @@
             }
         }
 
-        let openingHoursHtml = '';
-        if (place.opening_hours && place.opening_hours.weekday_text) {
-            openingHoursHtml = `
-                <div class="place-detail">
-                    <strong>🕐 Horaires d'ouverture:</strong><br>
-                    ${place.opening_hours.weekday_text.map(day => `<div style="margin: 3px 0; padding-left: 10px;">${day}</div>`).join('')}
-                </div>
-            `;
-        }
-
-        let photosHtml = '';
-        if (place.photos && place.photos.length > 0) {
-            photosHtml = `
-                <div class="place-detail">
-                    <strong>📷 Photos:</strong><br>
-                    <div style="display: flex; gap: 10px; margin-top: 10px; overflow-x: auto;">
-                        ${place.photos.slice(0, 3).map(photo =>
-                            `<img src="${photo.getUrl({maxWidth: 200})}" style="max-width: 200px; border-radius: 5px;">`
-                        ).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        let reviewsHtml = '';
-        if (place.reviews && place.reviews.length > 0) {
-            reviewsHtml = `
-                <div class="place-detail">
-                    <strong>💬 Avis récents:</strong><br>
-                    ${place.reviews.slice(0, 3).map(review => `
-                        <div class="review-item">
-                            <div class="review-author">${review.author_name} - ${'⭐'.repeat(review.rating)}</div>
-                            <div class="review-text">${review.text}</div>
-                            <div style="color: #999; font-size: 11px; margin-top: 5px;">${review.relative_time_description}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-
         infoBox.innerHTML = `
             <div class="place-info-box">
-                <h4>
-                    <span>🎯 Lieu Google Maps trouvé!</span>
-                </h4>
+                <h4>🎯 Informations Google Maps récupérées!</h4>
 
                 <div class="place-detail">
                     <strong>📍 Nom:</strong> ${place.name}
@@ -1347,24 +1012,6 @@
                     </div>
                 ` : ''}
 
-                ${place.types ? `
-                    <div class="place-detail">
-                        <strong>🏷️ Types:</strong> ${place.types.slice(0, 5).join(', ')}
-                    </div>
-                ` : ''}
-
-                ${place.business_status ? `
-                    <div class="place-detail">
-                        <strong>🏪 Statut:</strong> ${place.business_status === 'OPERATIONAL' ? '✅ Opérationnel' : place.business_status}
-                    </div>
-                ` : ''}
-
-                ${openingHoursHtml}
-
-                ${photosHtml}
-
-                ${reviewsHtml}
-
                 ${place.url ? `
                     <div class="place-detail">
                         <strong>🔗 Google Maps:</strong> <a href="${place.url}" target="_blank" style="color: #4caf50;">Voir sur Google Maps</a>
@@ -1376,9 +1023,6 @@
                 </button>
             </div>
         `;
-
-        // Auto-fill address
-        document.getElementById('poiAddress').value = place.formatted_address || '';
     }
 
     function usePlaceData() {
@@ -1386,191 +1030,69 @@
 
         const place = currentPlaceData;
 
-        // Fill ALL form fields with Google data
         document.getElementById('poiName').value = place.name || '';
         document.getElementById('poiAddress').value = place.formatted_address || '';
-
-        // Phone number
-        if (place.formatted_phone_number) {
-            document.getElementById('poiPhone').value = place.formatted_phone_number;
-        } else if (place.international_phone_number) {
-            document.getElementById('poiPhone').value = place.international_phone_number;
-        }
-
-        // Website
+        document.getElementById('poiPhone').value = place.formatted_phone_number || '';
         document.getElementById('poiWebsite').value = place.website || '';
 
-        // Create comprehensive description from Google data
         let description = '';
-
-        // Add rating and reviews count
         if (place.rating) {
-            description += `⭐ Note Google: ${place.rating}/5 (${place.user_ratings_total || 0} avis)\n\n`;
+            description += `Note Google: ${place.rating}/5 (${place.user_ratings_total} avis)\n\n`;
         }
-
-        // Add business status
-        if (place.business_status) {
-            description += `📊 Statut: ${place.business_status === 'OPERATIONAL' ? 'Opérationnel' : place.business_status}\n\n`;
-        }
-
-        // Add types
         if (place.types && place.types.length > 0) {
-            description += `🏷️ Types: ${place.types.slice(0, 5).join(', ')}\n\n`;
+            description += `Types: ${place.types.slice(0, 5).join(', ')}\n\n`;
         }
-
-        // Add price level
-        if (place.price_level) {
-            description += `💰 Niveau de prix: ${'💵'.repeat(place.price_level)}\n\n`;
-        }
-
-        // Add opening hours status
-        if (place.opening_hours) {
-            if (place.opening_hours.isOpen !== undefined) {
-                description += `🕐 Actuellement: ${place.opening_hours.isOpen() ? 'Ouvert ✅' : 'Fermé ❌'}\n\n`;
-            }
-        }
-
-        // Add a sample review if available
-        if (place.reviews && place.reviews.length > 0) {
-            const topReview = place.reviews[0];
-            description += `💬 Avis récent (${topReview.rating}⭐):\n"${topReview.text.substring(0, 150)}${topReview.text.length > 150 ? '...' : ''}"\n- ${topReview.author_name}\n\n`;
-        }
-
-        // Add Google Maps URL
-        if (place.url) {
-            description += `🔗 Voir sur Google Maps: ${place.url}`;
-        }
-
         document.getElementById('poiDescription').value = description;
 
-        // Opening hours as JSON (properly formatted)
         if (place.opening_hours && place.opening_hours.weekday_text) {
             const openingHoursObj = {};
-            const daysMap = {
-                'Monday': 'monday',
-                'Tuesday': 'tuesday',
-                'Wednesday': 'wednesday',
-                'Thursday': 'thursday',
-                'Friday': 'friday',
-                'Saturday': 'saturday',
-                'Sunday': 'sunday',
-                'Lundi': 'monday',
-                'Mardi': 'tuesday',
-                'Mercredi': 'wednesday',
-                'Jeudi': 'thursday',
-                'Vendredi': 'friday',
-                'Samedi': 'saturday',
-                'Dimanche': 'sunday'
-            };
-
+            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
             place.opening_hours.weekday_text.forEach((text, index) => {
-                // Split on colon or French colon
-                const parts = text.split(/:\s*/);
-                if (parts.length >= 2) {
-                    const dayName = parts[0].trim();
-                    const hours = parts.slice(1).join(':').trim();
-
-                    // Try to find matching day
-                    const matchedDay = Object.keys(daysMap).find(key =>
-                        dayName.toLowerCase().includes(key.toLowerCase())
-                    );
-
-                    if (matchedDay) {
-                        openingHoursObj[daysMap[matchedDay]] = hours;
-                    }
-                } else {
-                    // Fallback to index-based mapping
-                    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-                    openingHoursObj[days[index]] = text;
-                }
+                openingHoursObj[days[index]] = text.split(': ')[1] || 'Closed';
             });
-
             document.getElementById('poiOpeningHours').value = JSON.stringify(openingHoursObj, null, 2);
         }
 
-        // Auto-select POI type based on Google types (with more mapping)
-        if (place.types) {
-            const typeMapping = {
-                'gas_station': '1',
-                'car_repair': '2',
-                'car_dealer': '2',
-                'store': '3',
-                'shopping_mall': '3',
-                'lodging': '4',
-                'hotel': '4',
-                'restaurant': '5',
-                'cafe': '5',
-                'bar': '5',
-                'food': '5',
-                'tourist_attraction': '7',
-                'museum': '7',
-                'park': '6',
-                'natural_feature': '6',
-                'parking': '8'
-            };
+        // Auto-select POI type
+        autoSelectPOIType(place.types);
 
-            // Find first matching type
-            for (const googleType of place.types) {
-                if (typeMapping[googleType]) {
-                    document.getElementById('poiType').value = typeMapping[googleType];
+        window.scrollTo({ top: document.getElementById('createSection').offsetTop - 20, behavior: 'smooth' });
+
+        showTemporaryNotification('✅ Données Google Places chargées dans le formulaire!');
+    }
+
+    function autoSelectPOIType(googleTypes) {
+        if (!googleTypes || !poiTypesData.length) return;
+
+        const typeMapping = {
+            'gas_station': ['Gas Station', 'Station Service'],
+            'car_repair': ['Repair Shop', 'Garage'],
+            'store': ['Store', 'Magasin'],
+            'lodging': ['Accommodation', 'Hébergement'],
+            'hotel': ['Accommodation', 'Hôtel'],
+            'restaurant': ['Restaurant'],
+            'cafe': ['Restaurant', 'Café'],
+            'tourist_attraction': ['Tourist Attraction', 'Attraction'],
+            'museum': ['Tourist Attraction', 'Musée'],
+            'park': ['Viewpoint', 'Parc'],
+            'parking': ['Parking']
+        };
+
+        for (const googleType of googleTypes) {
+            if (typeMapping[googleType]) {
+                const matchingNames = typeMapping[googleType];
+                const matchedType = poiTypesData.find(type =>
+                    matchingNames.some(name =>
+                        type.name.toLowerCase().includes(name.toLowerCase())
+                    )
+                );
+
+                if (matchedType) {
+                    document.getElementById('poiType').value = matchedType.id;
                     break;
                 }
             }
         }
-
-        // Try to extract country from address components
-        if (place.address_components) {
-            const countryComponent = place.address_components.find(
-                comp => comp.types.includes('country')
-            );
-
-            if (countryComponent) {
-                // Morocco = 1, France = 2, etc. (adjust based on your database)
-                const countryMap = {
-                    'MA': '1', // Morocco
-                    'FR': '2', // France
-                    'ES': '3', // Spain
-                    'US': '4', // USA
-                };
-
-                const countryCode = countryComponent.short_name;
-                if (countryMap[countryCode]) {
-                    document.getElementById('poiCountryId').value = countryMap[countryCode];
-                }
-            }
-        }
-
-        // Scroll to form
-        window.scrollTo({
-            top: document.getElementById('createSection').offsetTop - 20,
-            behavior: 'smooth'
-        });
-
-        // Show success message
-        const successMsg = document.createElement('div');
-        successMsg.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
-            color: white;
-            padding: 20px 30px;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            z-index: 10000;
-            font-weight: bold;
-            animation: slideInRight 0.5s ease-out;
-        `;
-        successMsg.innerHTML = `
-            ✅ Données Google Places chargées!<br>
-            <small style="font-weight: normal;">Nom, adresse, téléphone, site web, horaires...</small>
-        `;
-        document.body.appendChild(successMsg);
-
-        setTimeout(() => {
-            successMsg.style.animation = 'slideOutRight 0.5s ease-in';
-            setTimeout(() => successMsg.remove(), 500);
-        }, 3000);
     }
 
     function clearMarker() {
@@ -1579,218 +1101,37 @@
             marker = null;
         }
 
-        // Clear nearby places markers
-        if (nearbyPlacesMarkers && nearbyPlacesMarkers.length > 0) {
-            nearbyPlacesMarkers.forEach(m => m.marker.setMap(null));
-            nearbyPlacesMarkers = [];
-        }
-
         document.getElementById('poiLatitude').value = '';
         document.getElementById('poiLongitude').value = '';
         document.getElementById('poiAddress').value = '';
         document.getElementById('selectedLocation').style.display = 'none';
         document.getElementById('placeInfoBox').style.display = 'none';
+        document.getElementById('searchBox').value = '';
         currentPlaceData = null;
     }
 
-    function showNearbyPlacesAroundCenter() {
-        if (!map) {
-            alert('⚠️ Please load the map first!');
-            return;
-        }
-
-        const center = map.getCenter();
-        searchAndDisplayNearbyPlaces({
-            lat: center.lat(),
-            lng: center.lng()
-        });
-    }
-
-    // ===== SHOW NEARBY PLACES ON MAP =====
-    function showNearbyPlacesOnMap() {
-        // Clear existing place markers
-        placeMarkers.forEach(marker => marker.setMap(null));
-        placeMarkers = [];
-
-        const center = map.getCenter();
-
-        // Search for various types of places
-        const placeTypes = [
-            'gas_station', 'restaurant', 'cafe', 'lodging', 'tourist_attraction',
-            'car_repair', 'parking', 'store', 'point_of_interest'
-        ];
-
-        const request = {
-            location: center,
-            radius: 2000, // 2km radius
-            type: placeTypes
-        };
-
-        placesService.nearbySearch(request, function(results, status) {
-            if (status === google.maps.places.PlacesServiceStatus.OK) {
-                // Limit to 20 places to avoid clutter
-                const limitedResults = results.slice(0, 20);
-
-                limitedResults.forEach(place => {
-                    createPlaceMarker(place);
-                });
-            }
-        });
-    }
-
-    function createPlaceMarker(place) {
-        const placeMarker = new google.maps.Marker({
-            position: place.geometry.location,
-            map: map,
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: '#4caf50',
-                fillOpacity: 0.8,
-                strokeColor: '#fff',
-                strokeWeight: 2
-            },
-            title: place.name,
-            zIndex: 100
-        });
-
-        // Create hover tooltip
-        const infoWindow = new google.maps.InfoWindow({
-            content: createHoverContent(place)
-        });
-
-        // Show info on hover
-        placeMarker.addListener('mouseover', function() {
-            // Close any previously open info window
-            if (activeInfoWindow) {
-                activeInfoWindow.close();
-            }
-            infoWindow.open(map, placeMarker);
-            activeInfoWindow = infoWindow;
-        });
-
-        // Close info on mouseout
-        placeMarker.addListener('mouseout', function() {
-            infoWindow.close();
-        });
-
-        // Click to get full details and auto-fill form
-        placeMarker.addListener('click', function() {
-            selectLocationFromPlace(place);
-        });
-
-        placeMarkers.push(placeMarker);
-    }
-
-    function createHoverContent(place) {
-        const rating = place.rating ? `⭐ ${place.rating}` : 'No rating';
-        const priceLevel = place.price_level ? '💰'.repeat(place.price_level) : '';
-        const openNow = place.opening_hours?.open_now ?
-            '<span style="color: #4caf50;">🟢 Open</span>' :
-            '<span style="color: #f44336;">🔴 Closed</span>';
-
-        return `
-            <div style="
-                padding: 12px;
-                min-width: 200px;
-                max-width: 300px;
-                font-family: Arial, sans-serif;
-                background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
-                border-radius: 8px;
-                border: 2px solid #4caf50;
-            ">
-                <h3 style="
-                    margin: 0 0 8px 0;
-                    color: #4caf50;
-                    font-size: 14px;
-                    font-weight: bold;
-                ">${place.name}</h3>
-
-                <div style="color: #ccc; font-size: 12px; margin: 5px 0;">
-                    📍 ${place.vicinity || 'No address'}
-                </div>
-
-                ${place.types && place.types.length > 0 ? `
-                    <div style="color: #ff6b00; font-size: 11px; margin: 5px 0;">
-                        🏷️ ${place.types[0].replace(/_/g, ' ')}
-                    </div>
-                ` : ''}
-
-                <div style="
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-top: 8px;
-                    padding-top: 8px;
-                    border-top: 1px solid #444;
-                ">
-                    <span style="color: #ffc107; font-size: 12px;">${rating}</span>
-                    ${priceLevel ? `<span style="color: #ff9800; font-size: 12px;">${priceLevel}</span>` : ''}
-                    ${place.opening_hours ? `<span style="font-size: 11px;">${openNow}</span>` : ''}
-                </div>
-
-                <div style="
-                    margin-top: 10px;
-                    padding: 6px;
-                    background: rgba(76, 175, 80, 0.1);
-                    border-radius: 4px;
-                    text-align: center;
-                    color: #4caf50;
-                    font-size: 11px;
-                    font-weight: bold;
-                ">
-                    🖱️ Click to use this place
-                </div>
-            </div>
+    function showTemporaryNotification(message) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-weight: bold;
+            animation: slideInRight 0.3s ease-out;
         `;
-    }
+        notification.textContent = message;
+        document.body.appendChild(notification);
 
-    function selectLocationFromPlace(place) {
-        const position = {
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng()
-        };
-
-        // Remove existing marker
-        if (marker) {
-            marker.setMap(null);
-        }
-
-        // Create selection marker
-        marker = new google.maps.Marker({
-            position: position,
-            map: map,
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 15,
-                fillColor: '#ff6b00',
-                fillOpacity: 1,
-                strokeColor: '#fff',
-                strokeWeight: 3
-            },
-            animation: google.maps.Animation.BOUNCE,
-            zIndex: 1000
-        });
-
-        // Stop bounce after 2 seconds
         setTimeout(() => {
-            marker.setAnimation(null);
-        }, 2000);
-
-        // Center map on selected place
-        map.panTo(position);
-        map.setZoom(16);
-
-        // Fill coordinates
-        document.getElementById('poiLatitude').value = position.lat.toFixed(6);
-        document.getElementById('poiLongitude').value = position.lng.toFixed(6);
-
-        document.getElementById('selectedLocation').style.display = 'block';
-        document.getElementById('selectedLat').textContent = position.lat.toFixed(6);
-        document.getElementById('selectedLng').textContent = position.lng.toFixed(6);
-
-        // Get full place details
-        getPlaceDetails(place.place_id);
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
     }
 
     // ===== API FUNCTIONS =====
@@ -1800,10 +1141,6 @@
             'Accept': 'application/json',
             'Authorization': authToken ? `Bearer ${authToken}` : ''
         };
-    }
-
-    function getApiUrl() {
-        return document.getElementById('apiUrl').value;
     }
 
     async function createPOI() {
@@ -1850,7 +1187,7 @@
         responseBox.innerHTML = '<pre>🔄 Creating POI...</pre>';
 
         try {
-            const response = await fetch(`${getApiUrl()}/pois`, {
+            const response = await fetch('https://be.dabapp.co/api/pois', {
                 method: 'POST',
                 headers: getHeaders(),
                 body: JSON.stringify(data)
@@ -1859,11 +1196,8 @@
             const result = await response.json();
             responseBox.innerHTML = `<pre class="${result.success ? 'success' : 'error'}">${JSON.stringify(result, null, 2)}</pre>`;
 
-            if (result.success && result.data) {
-                document.getElementById('showPoiId').value = result.data.id;
-                document.getElementById('updatePoiId').value = result.data.id;
-                document.getElementById('deletePoiId').value = result.data.id;
-                document.getElementById('favoritePoiId').value = result.data.id;
+            if (result.success) {
+                showTemporaryNotification('✅ POI créé avec succès!');
             }
         } catch (error) {
             responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
@@ -1879,58 +1213,8 @@
         const responseBox = document.getElementById('listResponse');
         responseBox.innerHTML = '<pre>🔄 Loading POIs...</pre>';
 
-        let url = `${getApiUrl()}/pois`;
-        const params = new URLSearchParams();
-
-        const typeId = document.getElementById('filterTypeId').value;
-        if (typeId) params.append('type_id', typeId);
-
-        if (params.toString()) url += '?' + params.toString();
-
         try {
-            const response = await fetch(url, { headers: getHeaders() });
-            const result = await response.json();
-            responseBox.innerHTML = `<pre class="success">${JSON.stringify(result, null, 2)}</pre>`;
-
-            if (result.success && result.data && result.data.data) {
-                displayPOIsList(result.data.data);
-            }
-        } catch (error) {
-            responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
-        }
-    }
-
-    async function listNearbyPOIs() {
-        if (!authToken) {
-            alert('⚠️ Please login first!');
-            return;
-        }
-
-        const responseBox = document.getElementById('listResponse');
-        const latitude = document.getElementById('filterLatitude').value;
-        const longitude = document.getElementById('filterLongitude').value;
-        const radius = document.getElementById('filterRadius').value;
-
-        if (!latitude || !longitude) {
-            responseBox.innerHTML = '<pre class="error">❌ Please enter latitude and longitude</pre>';
-            return;
-        }
-
-        responseBox.innerHTML = '<pre>🔄 Loading nearby POIs...</pre>';
-
-        const params = new URLSearchParams({
-            latitude: latitude,
-            longitude: longitude,
-            radius: radius || 10
-        });
-
-        const typeId = document.getElementById('filterTypeId').value;
-        if (typeId) params.append('type_id', typeId);
-
-        try {
-            const response = await fetch(`${getApiUrl()}/pois?${params.toString()}`, {
-                headers: getHeaders()
-            });
+            const response = await fetch('https://be.dabapp.co/api/pois', { headers: getHeaders() });
             const result = await response.json();
             responseBox.innerHTML = `<pre class="success">${JSON.stringify(result, null, 2)}</pre>`;
 
@@ -1954,311 +1238,15 @@
 
         pois.forEach(poi => {
             const typeName = poi.type ? poi.type.name : 'Unknown';
-            const verified = poi.is_verified ? '✅ Verified' : '⚠️ Not Verified';
-
-            html += `
-                <div class="poi-card" onclick="showPOIById(${poi.id})">
-                    <h4>${poi.name}</h4>
-                    <div style="margin-bottom: 10px;">
-                        <span class="poi-type-badge">${typeName}</span>
-                        <span style="color: ${poi.is_verified ? '#4caf50' : '#ff9800'}; font-size: 12px;">${verified}</span>
-                    </div>
-                    <p class="description">${poi.description || 'No description'}</p>
-                    <p class="location">📍 ${poi.address || 'No address'}</p>
-                    <p class="location">🌍 Lat: ${poi.latitude}, Lng: ${poi.longitude}</p>
-                    ${poi.phone ? `<p style="color: #ccc; font-size: 13px;">📞 ${poi.phone}</p>` : ''}
-                    ${poi.views_count ? `<p style="color: #999; font-size: 12px; margin-top: 5px;">👁️ ${poi.views_count} views</p>` : ''}
-                </div>
-            `;
-        });
-
-        listDiv.innerHTML = html;
-    }
-
-    function showPOIById(id) {
-        document.getElementById('showPoiId').value = id;
-        showPOI();
-        window.scrollTo({ top: document.getElementById('showSection').offsetTop - 20, behavior: 'smooth' });
-    }
-
-    async function showPOI() {
-        if (!authToken) {
-            alert('⚠️ Please login first!');
-            return;
-        }
-
-        const poiId = document.getElementById('showPoiId').value;
-        const responseBox = document.getElementById('showResponse');
-
-        if (!poiId) {
-            responseBox.innerHTML = '<pre class="error">❌ Please enter a POI ID</pre>';
-            return;
-        }
-
-        responseBox.innerHTML = '<pre>🔄 Loading POI...</pre>';
-
-        try {
-            const response = await fetch(`${getApiUrl()}/pois/${poiId}`, {
-                headers: getHeaders()
-            });
-            const result = await response.json();
-            responseBox.innerHTML = `<pre class="${result.success ? 'success' : 'error'}">${JSON.stringify(result, null, 2)}</pre>`;
-        } catch (error) {
-            responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
-        }
-    }
-
-    async function displayPOIOnMap() {
-        if (!authToken) {
-            alert('⚠️ Please login first!');
-            return;
-        }
-
-        const poiId = document.getElementById('showPoiId').value;
-
-        if (!poiId) {
-            alert('❌ Please enter a POI ID');
-            return;
-        }
-
-        try {
-            const response = await fetch(`${getApiUrl()}/pois/${poiId}`, {
-                headers: getHeaders()
-            });
-            const result = await response.json();
-
-            if (result.success && result.data) {
-                const poi = result.data;
-                const position = {
-                    lat: parseFloat(poi.latitude),
-                    lng: parseFloat(poi.longitude)
-                };
-
-                if (displayMarker) displayMarker.setMap(null);
-
-                displayMarker = new google.maps.Marker({
-                    position: position,
-                    map: displayMap,
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 15,
-                        fillColor: '#ff6b00',
-                        fillOpacity: 1,
-                        strokeColor: '#fff',
-                        strokeWeight: 3
-                    }
-                });
-
-                const infoContent = `
-                    <div style="color: #000; padding: 10px; max-width: 300px;">
-                        <h3 style="margin: 0 0 10px 0;">${poi.name}</h3>
-                        <p><strong>Type:</strong> ${poi.type ? poi.type.name : 'N/A'}</p>
-                        <p><strong>Address:</strong> ${poi.address || 'N/A'}</p>
-                        ${poi.phone ? `<p><strong>Phone:</strong> ${poi.phone}</p>` : ''}
-                        ${poi.description ? `<p style="margin-top: 10px;">${poi.description}</p>` : ''}
-                    </div>
-                `;
-
-                const infowindow = new google.maps.InfoWindow({ content: infoContent });
-                infowindow.open(displayMap, displayMarker);
-
-                displayMap.setCenter(position);
-                displayMap.setZoom(15);
-            }
-        } catch (error) {
-            alert('❌ Error: ' + error.message);
-        }
-    }
-
-    async function loadPOIForUpdate() {
-        if (!authToken) {
-            alert('⚠️ Please login first!');
-            return;
-        }
-
-        const poiId = document.getElementById('updatePoiId').value;
-        const responseBox = document.getElementById('updateResponse');
-
-        if (!poiId) {
-            responseBox.innerHTML = '<pre class="error">❌ Please enter a POI ID</pre>';
-            return;
-        }
-
-        responseBox.innerHTML = '<pre>🔄 Loading POI data...</pre>';
-
-        try {
-            const response = await fetch(`${getApiUrl()}/pois/${poiId}`, {
-                headers: getHeaders()
-            });
-            const result = await response.json();
-
-            if (result.success && result.data) {
-                const poi = result.data;
-                document.getElementById('updatePoiName').value = poi.name;
-                document.getElementById('updatePoiType').value = poi.type_id;
-                document.getElementById('updatePoiDescription').value = poi.description || '';
-                document.getElementById('updatePoiPhone').value = poi.phone || '';
-                document.getElementById('updatePoiEmail').value = poi.email || '';
-
-                document.getElementById('updateForm').style.display = 'block';
-                responseBox.innerHTML = '<pre class="success">✅ POI data loaded successfully</pre>';
-            } else {
-                responseBox.innerHTML = `<pre class="error">${JSON.stringify(result, null, 2)}</pre>`;
-            }
-        } catch (error) {
-            responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
-        }
-    }
-
-    async function updatePOI() {
-        if (!authToken) {
-            alert('⚠️ Please login first!');
-            return;
-        }
-
-        const poiId = document.getElementById('updatePoiId').value;
-        const responseBox = document.getElementById('updateResponse');
-
-        if (!poiId) {
-            responseBox.innerHTML = '<pre class="error">❌ Please enter a POI ID</pre>';
-            return;
-        }
-
-        const data = {
-            name: document.getElementById('updatePoiName').value,
-            type_id: parseInt(document.getElementById('updatePoiType').value),
-            description: document.getElementById('updatePoiDescription').value,
-            phone: document.getElementById('updatePoiPhone').value,
-            email: document.getElementById('updatePoiEmail').value,
-        };
-
-        responseBox.innerHTML = '<pre>🔄 Updating POI...</pre>';
-
-        try {
-            const response = await fetch(`${getApiUrl()}/pois/${poiId}`, {
-                method: 'PUT',
-                headers: getHeaders(),
-                body: JSON.stringify(data)
-            });
-            const result = await response.json();
-            responseBox.innerHTML = `<pre class="${result.success ? 'success' : 'error'}">${JSON.stringify(result, null, 2)}</pre>`;
-        } catch (error) {
-            responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
-        }
-    }
-
-    async function deletePOI() {
-        if (!authToken) {
-            alert('⚠️ Please login first!');
-            return;
-        }
-
-        const poiId = document.getElementById('deletePoiId').value;
-        const responseBox = document.getElementById('deleteResponse');
-
-        if (!poiId) {
-            responseBox.innerHTML = '<pre class="error">❌ Please enter a POI ID</pre>';
-            return;
-        }
-
-        if (!confirm('⚠️ Are you sure you want to delete this POI?')) {
-            return;
-        }
-
-        responseBox.innerHTML = '<pre>🔄 Deleting POI...</pre>';
-
-        try {
-            const response = await fetch(`${getApiUrl()}/pois/${poiId}`, {
-                method: 'DELETE',
-                headers: getHeaders()
-            });
-            const result = await response.json();
-            responseBox.innerHTML = `<pre class="${result.success ? 'success' : 'error'}">${JSON.stringify(result, null, 2)}</pre>`;
-        } catch (error) {
-            responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
-        }
-    }
-
-    async function toggleFavorite() {
-        if (!authToken) {
-            alert('⚠️ Please login first!');
-            return;
-        }
-
-        const poiId = document.getElementById('favoritePoiId').value;
-        const responseBox = document.getElementById('favoriteResponse');
-
-        if (!poiId) {
-            responseBox.innerHTML = '<pre class="error">❌ Please enter a POI ID</pre>';
-            return;
-        }
-
-        responseBox.innerHTML = '<pre>🔄 Toggling favorite...</pre>';
-
-        try {
-            const response = await fetch(`${getApiUrl()}/pois/${poiId}/favorite`, {
-                method: 'POST',
-                headers: getHeaders()
-            });
-            const result = await response.json();
-            responseBox.innerHTML = `<pre class="${result.success ? 'success' : 'error'}">${JSON.stringify(result, null, 2)}</pre>`;
-        } catch (error) {
-            responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
-        }
-    }
-
-    async function getFavorites() {
-        if (!authToken) {
-            alert('⚠️ Please login first!');
-            return;
-        }
-
-        const responseBox = document.getElementById('favoritesListResponse');
-        responseBox.innerHTML = '<pre>🔄 Loading favorites...</pre>';
-
-        let url = `${getApiUrl()}/pois/favorites`;
-        const params = new URLSearchParams();
-
-        const typeId = document.getElementById('favoritesTypeId').value;
-        if (typeId) params.append('type_id', typeId);
-
-        if (params.toString()) url += '?' + params.toString();
-
-        try {
-            const response = await fetch(url, { headers: getHeaders() });
-            const result = await response.json();
-            responseBox.innerHTML = `<pre class="success">${JSON.stringify(result, null, 2)}</pre>`;
-
-            if (result.success && result.data && result.data.data) {
-                displayFavoritesList(result.data.data);
-            }
-        } catch (error) {
-            responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
-        }
-    }
-
-    function displayFavoritesList(pois) {
-        const listDiv = document.getElementById('favoritesList');
-
-        if (!pois || pois.length === 0) {
-            listDiv.innerHTML = '<p style="color: #999;">No favorite POIs found</p>';
-            return;
-        }
-
-        let html = '<h3 style="color: #ff6b00; margin-bottom: 15px;">⭐ ' + pois.length + ' Favorite POI(s)</h3>';
-
-        pois.forEach(poi => {
-            const typeName = poi.type ? poi.type.name : 'Unknown';
 
             html += `
                 <div class="poi-card">
-                    <h4>⭐ ${poi.name}</h4>
+                    <h4>${poi.name}</h4>
                     <div style="margin-bottom: 10px;">
                         <span class="poi-type-badge">${typeName}</span>
                     </div>
-                    <p class="description">${poi.description || 'No description'}</p>
-                    <p class="location">📍 ${poi.address || 'No address'}</p>
-                    <p class="location">🌍 Lat: ${poi.latitude}, Lng: ${poi.longitude}</p>
+                    <p style="color: #ccc; font-size: 13px;">${poi.description || 'No description'}</p>
+                    <p style="color: #999; font-size: 12px;">📍 ${poi.address || 'No address'}</p>
                 </div>
             `;
         });
