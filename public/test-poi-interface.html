@@ -654,6 +654,9 @@
             currentUser = JSON.parse(storedUser);
             document.getElementById('authToken').value = authToken;
             updateAuthUI();
+
+            // Load POI types automatically if already logged in
+            loadPOITypes();
         } else {
             updateAuthStatus(false);
         }
@@ -778,7 +781,12 @@
 
     // ===== LOAD POI TYPES FROM API =====
     async function loadPOITypes() {
-        if (!authToken) return;
+        if (!authToken) {
+            console.log('❌ No auth token, cannot load POI types');
+            return;
+        }
+
+        console.log('🔄 Loading POI types...');
 
         try {
             const response = await fetch('https://be.dabapp.co/api/poi-types', {
@@ -787,16 +795,21 @@
 
             const result = await response.json();
 
-            console.log('POI Types loaded:', result);
+            console.log('✅ POI Types API Response:', result);
 
             if (result.success && result.data) {
                 poiTypesData = result.data;
+                console.log(`✅ ${result.data.length} POI types loaded:`, poiTypesData);
+
                 populatePOITypeSelect();
                 displayPOITypesInManagement();
                 showTemporaryNotification(`✅ ${result.data.length} types de POI chargés!`);
+            } else {
+                console.error('❌ API returned error:', result);
+                showTemporaryNotification('❌ Erreur: ' + (result.message || 'Unknown error'), 'error');
             }
         } catch (error) {
-            console.error('Error loading POI types:', error);
+            console.error('❌ Error loading POI types:', error);
             showTemporaryNotification('❌ Erreur lors du chargement des types de POI', 'error');
         }
     }
@@ -816,6 +829,12 @@
 
     function displayPOITypesInManagement() {
         const listDiv = document.getElementById('poiTypesList');
+
+        // Safety check - element might not exist yet
+        if (!listDiv) {
+            console.log('poiTypesList element not found yet');
+            return;
+        }
 
         if (!poiTypesData || poiTypesData.length === 0) {
             listDiv.innerHTML = '<p style="color: #999;">Aucun type de POI trouvé</p>';
