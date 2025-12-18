@@ -17,7 +17,7 @@
        protected $dates = ['created_at'];
 
        public function event(): BelongsTo
-       {a
+       {
            return $this->belongsTo(Event::class);
        }
 
