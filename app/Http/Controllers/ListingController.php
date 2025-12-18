@@ -1092,7 +1092,7 @@ class ListingController extends Controller
 
         return response()->json($listings);
     }
-    
+
     /**
      * @OA\Get(
      *     path="/api/listings/by-category/{category_id}",
@@ -2191,7 +2191,19 @@ class ListingController extends Controller
      *             @OA\Property(property="is_seller", type="boolean", description="True if authenticated user is the seller"),
      *             @OA\Property(property="category_id", type="integer"),
      *             @OA\Property(property="submission", type="object", nullable=true),
-     *             @OA\Property(property="seller", type="object", nullable=true),
+     *             @OA\Property(
+     *                 property="seller",
+     *                 type="object",
+     *                 nullable=true,
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="name", type="string"),
+     *                 @OA\Property(property="email", type="string"),
+     *                 @OA\Property(property="phone", type="string"),
+     *                 @OA\Property(property="address", type="string", nullable=true),
+     *                 @OA\Property(property="profile_image", type="string", nullable=true),
+     *                 @OA\Property(property="verified", type="boolean", description="Whether the seller account is verified"),
+     *                 @OA\Property(property="member_since", type="string", format="date-time")
+     *             ),
      *             @OA\Property(property="motorcycle", type="object", nullable=true),
      *             @OA\Property(property="spare_part", type="object", nullable=true),
      *             @OA\Property(property="license_plate", type="object", nullable=true)
@@ -2275,7 +2287,7 @@ class ListingController extends Controller
             'country' => $listing->country?->name,
             'images' => $listing->images->pluck('image_url'),
             'wishlist' => $isInWishlist,
-            'is_seller' => $isSeller, // ✅ NOUVEAU CHAMP AJOUTÉ
+            'is_seller' => $isSeller,
             'category_id' => $listing->category_id,
             'allow_submission' => $listing->allow_submission,
             'auction_enabled' => $listing->auction_enabled,
@@ -2317,6 +2329,7 @@ class ListingController extends Controller
                 'phone' => $listing->seller?->phone,
                 'address' => $listing->seller?->address,
                 'profile_image' => $listing->seller?->profile_image,
+                'verified' => (bool) $listing->seller?->verified, // ✅ AJOUTÉ
                 'member_since' => $listing->seller?->created_at->format('Y-m-d H:i:s'),
             ];
         }
