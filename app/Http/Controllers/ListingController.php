@@ -655,8 +655,8 @@ class ListingController extends Controller
             case 2: // Pièce détachée
                 $sparePartData = array_filter($request->only([
                     'condition',
-                    'bike_part_brand_id',      // ← Added
-                    'bike_part_category_id'    // ← Added
+                    'bike_part_brand_id',
+                    'bike_part_category_id'
                 ]));
 
                 if (!empty($sparePartData)) {
@@ -667,7 +667,7 @@ class ListingController extends Controller
 
                     // Traiter les motos compatibles
                     if ($request->has('motorcycles') && is_array($request->motorcycles)) {
-                        $sparePart->motorcycles()->delete(); // Supprimer les anciennes relations
+                        $sparePart->motorcycles()->delete();
 
                         foreach ($request->motorcycles as $moto) {
                             $sparePart->motorcycles()->create([
@@ -689,11 +689,11 @@ class ListingController extends Controller
                 }
 
                 if ($request->has('country_id_lp')) {
-                    $licensePlateData['country_id'] = $request->country_id_lp; // Map to correct field
+                    $licensePlateData['country_id'] = $request->country_id_lp;
                 }
 
                 if ($request->has('city_id_lp')) {
-                    $licensePlateData['city_id'] = $request->city_id_lp; // Map to correct field
+                    $licensePlateData['city_id'] = $request->city_id_lp;
                 }
 
                 // Remove null/empty values
@@ -707,23 +707,32 @@ class ListingController extends Controller
 
                     // Traiter les champs personnalisés
                     if ($request->has('fields') && is_array($request->fields)) {
-                        $licensePlate->fieldValues()->delete(); // Supprimer les anciens champs
+                        $licensePlate->fieldValues()->delete();
 
                         foreach ($request->fields as $field) {
-                            // Only create if we have the required field_id and it's not null
                             if (!empty($field['field_id'])) {
                                 $licensePlate->fieldValues()->create([
-                                    'plate_format_field_id' => $field['field_id'], // Map to correct field name
-                                    'field_value' => $field['value'] ?? '', // Use 'field_value' not 'value'
+                                    'plate_format_field_id' => $field['field_id'],
+                                    'field_value' => $field['value'] ?? '',
                                 ]);
                             }
+                        }
+
+                        // ✅ GÉNÉRER L'IMAGE DE LA PLAQUE APRÈS AVOIR SAUVEGARDÉ TOUS LES FIELDS
+                        try {
+                            \Log::info("Generating plate image for license_plate_id: " . $licensePlate->id);
+                            $licensePlate->generatePlateImage();
+                        } catch (\Exception $e) {
+                            \Log::error("Failed to generate plate image in handleCategorySpecificData", [
+                                'license_plate_id' => $licensePlate->id,
+                                'error' => $e->getMessage()
+                            ]);
                         }
                     }
                 }
                 break;
         }
     }
-
 
     /**
      * @OA\Put(

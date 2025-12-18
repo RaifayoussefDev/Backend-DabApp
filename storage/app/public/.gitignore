@@ -2,3 +2,7 @@
 !.gitignore
 !watermark/
 !watermark/**
+!*.png
+!*.jpg
+!*.jpeg
+!*.webp

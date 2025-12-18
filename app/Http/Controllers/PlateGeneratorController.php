@@ -51,6 +51,11 @@ class PlateGeneratorController extends Controller
             $country = $request->input('country');
             $format = $request->input('format', 'png');
 
+            \Log::info("🎨 PlateGenerator received request", [
+                'country' => $country,
+                'all_inputs' => $request->all()
+            ]);
+
             // Charger les logos
             $logoBase64 = null;
             $motoLogoBase64 = null;
@@ -86,31 +91,43 @@ class PlateGeneratorController extends Controller
 
             // Générer le HTML selon le pays
             if ($country === 'ksa') {
-                $html = view('templates.plate', [
+                $viewData = [
                     'topLeft' => $request->input('top_left'),
                     'topRight' => $request->input('top_right'),
                     'bottomLeft' => $request->input('bottom_left'),
                     'bottomRight' => strtoupper($request->input('bottom_right')),
                     'logoBase64' => $logoBase64,
-                ])->render();
+                ];
+
+                \Log::info("🎨 KSA Plate data being sent to view", $viewData);
+
+                $html = view('templates.plate', $viewData)->render();
                 $windowSize = [700, 500];
             } elseif ($country === 'uae') {
-                $html = view('templates.plate_uae', [
+                $viewData = [
                     'categoryNumber' => $request->input('category_number'),
                     'plateNumber' => $request->input('plate_number'),
                     'logoBase64' => $logoBase64,
                     'cityNameAr' => $request->input('city_name_ar', $city->name_ar ?? 'أبو ظبي'),
                     'cityNameEn' => $request->input('city_name_en', $city->name ?? 'ABU DHABI'),
-                ])->render();
+                ];
+
+                \Log::info("🎨 UAE Plate data being sent to view", $viewData);
+
+                $html = view('templates.plate_uae', $viewData)->render();
                 $windowSize = [700, 500];
             } else { // dubai
-                $html = view('templates.plate_dubai', [
+                $viewData = [
                     'categoryNumber' => $request->input('category_number'),
                     'plateNumber' => $request->input('plate_number'),
                     'motoLogoBase64' => $motoLogoBase64,
                     'cityNameAr' => $request->input('city_name_ar', $city->name_ar ?? 'دبي'),
                     'cityNameEn' => $request->input('city_name_en', $city->name ?? 'DUBAI'),
-                ])->render();
+                ];
+
+                \Log::info("🎨 Dubai Plate data being sent to view", $viewData);
+
+                $html = view('templates.plate_dubai', $viewData)->render();
                 $windowSize = [700, 500];
             }
 
@@ -133,6 +150,11 @@ class PlateGeneratorController extends Controller
                 ->format($format)
                 ->save($filePath);
 
+            \Log::info("✅ Plate file saved", [
+                'filename' => $filename,
+                'path' => $filePath
+            ]);
+
             return [
                 'country' => $country,
                 'filename' => $filename,
@@ -141,7 +163,7 @@ class PlateGeneratorController extends Controller
                 'format' => $format
             ];
         } catch (\Exception $e) {
-            \Log::error('Plate generation error: ' . $e->getMessage());
+            \Log::error('❌ Plate generation error: ' . $e->getMessage());
             return null;
         }
     }

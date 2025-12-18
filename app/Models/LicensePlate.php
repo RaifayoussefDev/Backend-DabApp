@@ -49,6 +49,11 @@ class LicensePlate extends Model
         return $this->belongsTo(PlateFormat::class, 'plate_format_id');
     }
 
+    public function plateFormat(): BelongsTo
+    {
+        return $this->belongsTo(PlateFormat::class, 'plate_format_id');
+    }
+
     public function fieldValues(): HasMany
     {
         return $this->hasMany(LicensePlateValue::class);
@@ -94,6 +99,12 @@ class LicensePlate extends Model
             // Get field values formatted for the request
             $fieldValues = $this->getFormattedFieldValues();
 
+            // 🔍 LOG: Raw field values from database
+            \Log::info("🎯 Raw field values from DB", [
+                'license_plate_id' => $this->id,
+                'field_values' => $fieldValues
+            ]);
+
             // Prepare request data
             $requestData = [
                 'country' => $countryType,
@@ -107,14 +118,28 @@ class LicensePlate extends Model
                 $requestData['bottom_left'] = $fieldValues['bottom_left'] ?? '';
                 $requestData['bottom_right'] = $fieldValues['bottom_right'] ?? '';
             } else {
-                // UAE and Dubai - MAPPER LES VRAIS NOMS DE CHAMPS
-                $requestData['category_number'] = $fieldValues['category_number'] ?? $fieldValues['top_center_digits'] ?? '';
-                $requestData['plate_number'] = $fieldValues['plate_number'] ?? $fieldValues['bottom_center_letter'] ?? '';
+                // UAE and Dubai - Map field names correctly
+                // Check all possible field name variations
+                $requestData['category_number'] = $fieldValues['category_number']
+                    ?? $fieldValues['top_center_digits']
+                    ?? $fieldValues['top_center']
+                    ?? '';
+
+                $requestData['plate_number'] = $fieldValues['plate_number']
+                    ?? $fieldValues['bottom_center_letter']
+                    ?? $fieldValues['bottom_center']
+                    ?? '';
             }
 
             // Add city names for dynamic display
             $requestData['city_name_ar'] = $city->name_ar ?? $city->name;
             $requestData['city_name_en'] = $city->name ?? '';
+
+            // 🔍 LOG: Complete request data being sent
+            \Log::info("📤 Complete request data to PlateGenerator", [
+                'license_plate_id' => $this->id,
+                'request_data' => $requestData
+            ]);
 
             // Create a mock request
             $request = Request::create('/generate-plate', 'POST', $requestData);
@@ -130,14 +155,14 @@ class LicensePlate extends Model
                     'is_plate_image' => true
                 ]);
 
-                \Log::info("Plate image generated successfully", [
+                \Log::info("✅ Plate image generated successfully", [
                     'license_plate_id' => $this->id,
                     'country_type' => $countryType,
                     'image_url' => $response['url']
                 ]);
             }
         } catch (\Exception $e) {
-            \Log::error("Failed to generate plate image", [
+            \Log::error("❌ Failed to generate plate image", [
                 'license_plate_id' => $this->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -177,12 +202,32 @@ class LicensePlate extends Model
     {
         $values = [];
 
+        // 🔍 LOG: Check what field values exist
+        \Log::info("🔍 Checking fieldValues relation", [
+            'license_plate_id' => $this->id,
+            'fieldValues_count' => $this->fieldValues->count()
+        ]);
+
         foreach ($this->fieldValues as $fieldValue) {
-            // Utiliser formatField() au lieu de plateFormatField()
-            $field = $fieldValue->formatField ?? $fieldValue->field;
+            // Use formatField() relation - handle both possible relation names
+            $field = $fieldValue->formatField ?? $fieldValue->field ?? $fieldValue->plateFormatField;
+
             if ($field) {
                 $fieldName = $field->field_name ?? $field->name;
-                $values[$fieldName] = $fieldValue->field_value ?? $fieldValue->value;
+                $fieldValueData = $fieldValue->field_value ?? $fieldValue->value;
+
+                $values[$fieldName] = $fieldValueData;
+
+                // 🔍 LOG: Each field mapping
+                \Log::info("🔍 Field mapping", [
+                    'field_name' => $fieldName,
+                    'value' => $fieldValueData
+                ]);
+            } else {
+                \Log::warning("⚠️ Field value without related field", [
+                    'field_value_id' => $fieldValue->id,
+                    'available_relations' => array_keys($fieldValue->getRelations())
+                ]);
             }
         }
 
