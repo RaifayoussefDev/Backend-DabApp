@@ -103,9 +103,25 @@ class EventController extends Controller
      */
     public function index(Request $request)
     {
+        $user = auth()->user(); // ou auth('sanctum')->user() selon ton auth
+
         $query = Event::with(['category', 'city', 'country', 'organizer', 'images'])
             ->published();
 
+        // Ajouter le compteur d'intéressés et vérifier si l'utilisateur est intéressé
+        if ($user) {
+            $query->withCount('interests')
+                ->addSelect([
+                    'is_interested' => EventInterest::selectRaw('1')
+                        ->whereColumn('event_id', 'events.id')
+                        ->where('user_id', $user->id)
+                        ->limit(1)
+                ]);
+        } else {
+            $query->withCount('interests');
+        }
+
+        // Tes filtres existants...
         if ($request->has('category_id')) {
             $query->where('category_id', $request->category_id);
         }
@@ -150,6 +166,12 @@ class EventController extends Controller
         $perPage = $request->get('per_page', 15);
         $events = $query->orderBy('event_date', 'asc')->paginate($perPage);
 
+        // Convertir is_interested en boolean
+        $events->getCollection()->transform(function ($event) {
+            $event->is_interested = (bool) $event->is_interested;
+            return $event;
+        });
+
         return response()->json([
             'message' => 'Events retrieved successfully',
             'data' => $events
@@ -184,6 +206,8 @@ class EventController extends Controller
      */
     public function show($id)
     {
+        $user = auth()->user();
+
         $query = Event::with([
             'category',
             'organizer',
@@ -207,7 +231,7 @@ class EventController extends Controller
             'updates' => function ($q) {
                 $q->latest()->limit(5);
             }
-        ]);
+        ])->withCount('interests');
 
         if (is_numeric($id)) {
             $event = $query->where('id', $id)->firstOrFail();
@@ -222,12 +246,22 @@ class EventController extends Controller
             $availableSpots = $event->max_participants - $event->participants_count;
         }
 
+        // Vérifier si l'utilisateur est intéressé
+        $isInterested = false;
+        if ($user) {
+            $isInterested = EventInterest::where('event_id', $event->id)
+                ->where('user_id', $user->id)
+                ->exists();
+        }
+
         return response()->json([
             'message' => 'Event retrieved successfully',
             'data' => $event,
             'is_registration_open' => $event->isRegistrationOpen(),
             'is_full' => $event->isFull(),
-            'available_spots' => $availableSpots
+            'available_spots' => $availableSpots,
+            'is_interested' => $isInterested,
+            'interests_count' => $event->interests_count
         ]);
     }
 

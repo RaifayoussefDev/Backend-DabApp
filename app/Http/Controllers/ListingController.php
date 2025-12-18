@@ -1092,6 +1092,7 @@ class ListingController extends Controller
 
         return response()->json($listings);
     }
+    
     /**
      * @OA\Get(
      *     path="/api/listings/by-category/{category_id}",
