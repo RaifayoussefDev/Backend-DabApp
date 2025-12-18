@@ -457,7 +457,8 @@
             </div>
 
             <button class="btn" onclick="initMap()">📍 Load Map</button>
-            <button class="btn btn-secondary" onclick="clearMarker()">🗑️ Clear Marker</button>
+            <button class="btn btn-secondary" onclick="showNearbyPlacesAroundCenter()">🔍 Show Nearby Places</button>
+            <button class="btn btn-secondary" onclick="clearMarker()">🗑️ Clear Markers</button>
 
             <div class="map-container">
                 <div id="map"></div>
@@ -952,12 +953,15 @@
 
         // Search for nearby places using Google Places API
         searchNearbyPlace(position);
+
+        // Also display nearby places markers for hover
+        searchAndDisplayNearbyPlaces(position);
     }
 
     function searchNearbyPlace(position) {
         const request = {
             location: position,
-            radius: 50, // Search within 50 meters
+            radius: 100, // Search within 100 meters
             rankBy: google.maps.places.RankBy.DISTANCE
         };
 
@@ -972,7 +976,128 @@
         });
     }
 
-    function getPlaceDetails(placeId) {
+    // Search and display nearby places with markers
+    let nearbyPlacesMarkers = [];
+
+    function searchAndDisplayNearbyPlaces(center) {
+        // Clear existing nearby markers
+        nearbyPlacesMarkers.forEach(m => m.marker.setMap(null));
+        nearbyPlacesMarkers = [];
+
+        const request = {
+            location: center,
+            radius: 500, // Search within 500 meters
+            type: ['restaurant', 'gas_station', 'cafe', 'hotel', 'tourist_attraction', 'store', 'parking']
+        };
+
+        placesService.nearbySearch(request, function(results, status) {
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                results.forEach((place, index) => {
+                    if (index < 30) { // Limit to 30 places to avoid clutter
+                        createPlaceMarker(place);
+                    }
+                });
+            }
+        });
+    }
+
+    function createPlaceMarker(place) {
+        const placeMarker = new google.maps.Marker({
+            position: place.geometry.location,
+            map: map,
+            icon: {
+                url: place.icon,
+                scaledSize: new google.maps.Size(25, 25)
+            },
+            title: place.name,
+            animation: google.maps.Animation.DROP
+        });
+
+        const previewInfoWindow = new google.maps.InfoWindow();
+
+        // Hover effect - show preview
+        placeMarker.addListener('mouseover', function() {
+            const previewContent = `
+                <div style="color: #000; padding: 10px; max-width: 250px;">
+                    <h4 style="margin: 0 0 8px 0; color: #ff6b00;">${place.name}</h4>
+                    <p style="margin: 5px 0; font-size: 12px; color: #666;">${place.vicinity}</p>
+                    ${place.rating ? `
+                        <div style="margin: 5px 0;">
+                            <span style="color: #ffc107;">★</span>
+                            <strong>${place.rating}</strong>
+                            <span style="color: #999; font-size: 11px;">(${place.user_ratings_total || 0} avis)</span>
+                        </div>
+                    ` : ''}
+                    ${place.opening_hours ? `
+                        <p style="margin: 5px 0; font-size: 12px;">
+                            ${place.opening_hours.open_now ?
+                                '<span style="color: #4caf50;">✓ Ouvert maintenant</span>' :
+                                '<span style="color: #d32f2f;">✗ Fermé</span>'}
+                        </p>
+                    ` : ''}
+                    <p style="margin: 8px 0 0 0; font-size: 11px; color: #ff6b00;">
+                        <strong>Cliquez pour récupérer toutes les infos</strong>
+                    </p>
+                </div>
+            `;
+            previewInfoWindow.setContent(previewContent);
+            previewInfoWindow.open(map, placeMarker);
+        });
+
+        // Mouse out - close preview
+        placeMarker.addListener('mouseout', function() {
+            previewInfoWindow.close();
+        });
+
+        // Click - get full details and fill form
+        placeMarker.addListener('click', function() {
+            previewInfoWindow.close();
+
+            // Set the main marker position
+            if (marker) {
+                marker.setMap(null);
+            }
+
+            marker = new google.maps.Marker({
+                position: place.geometry.location,
+                map: map,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 15,
+                    fillColor: '#ff6b00',
+                    fillOpacity: 1,
+                    strokeColor: '#fff',
+                    strokeWeight: 3
+                },
+                animation: google.maps.Animation.BOUNCE
+            });
+
+            setTimeout(() => {
+                marker.setAnimation(null);
+            }, 2000);
+
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+
+            document.getElementById('poiLatitude').value = lat.toFixed(6);
+            document.getElementById('poiLongitude').value = lng.toFixed(6);
+
+            document.getElementById('selectedLocation').style.display = 'block';
+            document.getElementById('selectedLat').textContent = lat.toFixed(6);
+            document.getElementById('selectedLng').textContent = lng.toFixed(6);
+
+            // Get full place details
+            getPlaceDetails(place.place_id, true);
+
+            // Center map on selected place
+            map.panTo(place.geometry.location);
+            map.setZoom(16);
+        });
+
+        nearbyPlacesMarkers.push({ marker: placeMarker, place: place });
+    }
+
+    function getPlaceDetails(placeId, autoFillForm = false) {
         const request = {
             placeId: placeId,
             fields: [
@@ -987,6 +1112,19 @@
             if (status === google.maps.places.PlacesServiceStatus.OK) {
                 currentPlaceData = place;
                 displayPlaceInfo(place);
+
+                // Auto-fill form if requested (when clicking on a marker)
+                if (autoFillForm) {
+                    usePlaceData();
+
+                    // Scroll to form section
+                    setTimeout(() => {
+                        window.scrollTo({
+                            top: document.getElementById('createSection').offsetTop - 20,
+                            behavior: 'smooth'
+                        });
+                    }, 500);
+                }
             }
         });
     }
@@ -1321,12 +1459,34 @@
             marker.setMap(null);
             marker = null;
         }
+
+        // Clear nearby places markers
+        if (nearbyPlacesMarkers && nearbyPlacesMarkers.length > 0) {
+            nearbyPlacesMarkers.forEach(m => m.marker.setMap(null));
+            nearbyPlacesMarkers = [];
+        }
+
         document.getElementById('poiLatitude').value = '';
         document.getElementById('poiLongitude').value = '';
         document.getElementById('poiAddress').value = '';
         document.getElementById('selectedLocation').style.display = 'none';
         document.getElementById('placeInfoBox').style.display = 'none';
         currentPlaceData = null;
+    }
+
+    function showNearbyPlacesAroundCenter() {
+        if (!map) {
+            alert('⚠️ Please load the map first!');
+            return;
+        }
+
+        const center = map.getCenter();
+        searchAndDisplayNearbyPlaces({
+            lat: center.lat(),
+            lng: center.lng()
+        });
+
+        alert('✅ Nearby places loaded! Hover over markers to see info, click to select.');
     }
 
     // ===== SHOW NEARBY PLACES ON MAP =====
