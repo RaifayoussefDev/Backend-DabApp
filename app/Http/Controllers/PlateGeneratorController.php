@@ -124,9 +124,8 @@ class PlateGeneratorController extends Controller
             }
 
             Browsershot::html($html)
-                ->setNodeBinary(env('NODE_BINARY_PATH', '/usr/bin/node'))
-                ->setNpmBinary(env('NPM_BINARY_PATH', '/usr/bin/npm'))
-                ->setChromePath('/home/master/.cache/puppeteer/chrome/linux-143.0.7499.42/chrome-linux64/chrome')
+                ->setNodeBinary(env('NODE_BINARY_PATH', 'C:\\Program Files\\nodejs\\node.exe'))
+                ->setNpmBinary(env('NPM_BINARY_PATH', 'C:\\Program Files\\nodejs\\npm.cmd'))
                 ->windowSize($windowSize[0], $windowSize[1])
                 ->deviceScaleFactor(3)
                 ->timeout(60)

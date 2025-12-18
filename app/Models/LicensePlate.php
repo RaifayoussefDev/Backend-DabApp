@@ -107,9 +107,9 @@ class LicensePlate extends Model
                 $requestData['bottom_left'] = $fieldValues['bottom_left'] ?? '';
                 $requestData['bottom_right'] = $fieldValues['bottom_right'] ?? '';
             } else {
-                // UAE and Dubai
-                $requestData['category_number'] = $fieldValues['category_number'] ?? '';
-                $requestData['plate_number'] = $fieldValues['plate_number'] ?? '';
+                // UAE and Dubai - MAPPER LES VRAIS NOMS DE CHAMPS
+                $requestData['category_number'] = $fieldValues['category_number'] ?? $fieldValues['top_center_digits'] ?? '';
+                $requestData['plate_number'] = $fieldValues['plate_number'] ?? $fieldValues['bottom_center_letter'] ?? '';
             }
 
             // Add city names for dynamic display
@@ -178,7 +178,8 @@ class LicensePlate extends Model
         $values = [];
 
         foreach ($this->fieldValues as $fieldValue) {
-            $field = $fieldValue->plateFormatField ?? $fieldValue->field;
+            // Utiliser formatField() au lieu de plateFormatField()
+            $field = $fieldValue->formatField ?? $fieldValue->field;
             if ($field) {
                 $fieldName = $field->field_name ?? $field->name;
                 $values[$fieldName] = $fieldValue->field_value ?? $fieldValue->value;
