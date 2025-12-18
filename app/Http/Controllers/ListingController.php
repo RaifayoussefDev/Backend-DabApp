@@ -2306,6 +2306,19 @@ class ListingController extends Controller
             $data['price'] = $listing->price ?? $listing->minimum_bid;
         }
 
+        // ✅ TOUJOURS afficher les infos du seller (submission ou pas)
+        $data['seller'] = [
+            'id' => $listing->seller?->id,
+            'name' => $listing->seller?->first_name . ' ' . $listing->seller?->last_name,
+            'email' => $listing->seller?->email,
+            'phone' => $listing->seller?->phone,
+            'address' => $listing->seller?->address,
+            'profile_image' => $listing->seller?->profile_image,
+            'verified' => (bool) $listing->seller?->verified, // ✅ TOUJOURS INCLUS
+            'member_since' => $listing->seller?->created_at->format('Y-m-d H:i:s'),
+        ];
+
+        // ✅ Si c'est un listing avec submissions, ajouter les submissions
         if ($listing->allow_submission) {
             $submissions = DB::table('submissions')
                 ->where('listing_id', $listing->id)
@@ -2321,17 +2334,6 @@ class ListingController extends Controller
                     'min_soom' => $submission->min_soom,
                 ];
             });
-        } else {
-            $data['seller'] = [
-                'id' => $listing->seller?->id,
-                'name' => $listing->seller?->first_name . ' ' . $listing->seller?->last_name,
-                'email' => $listing->seller?->email,
-                'phone' => $listing->seller?->phone,
-                'address' => $listing->seller?->address,
-                'profile_image' => $listing->seller?->profile_image,
-                'verified' => (bool) $listing->seller?->verified, // ✅ AJOUTÉ
-                'member_since' => $listing->seller?->created_at->format('Y-m-d H:i:s'),
-            ];
         }
 
         // Motorcycle category
