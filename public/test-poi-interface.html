@@ -387,6 +387,58 @@
             margin: 5px 0;
         }
 
+        /* Pulse animation for better marker visibility */
+        @keyframes markerPulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(66, 133, 244, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(66, 133, 244, 0);
+            }
+        }
+
+        .clickable-hint {
+            background: linear-gradient(135deg, #ff6b00 0%, #ff8c00 100%);
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            border: 2px solid #fff;
+            box-shadow: 0 3px 10px rgba(255, 107, 0, 0.5);
+        }
+
+        .clickable-hint p {
+            color: #fff;
+            font-weight: bold;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
         @media (max-width: 768px) {
             .grid-2, .grid-3 {
                 grid-template-columns: 1fr;
@@ -448,12 +500,15 @@
 
             <div class="info-note">
                 <p><strong>💡 Comment ça marche:</strong></p>
-                <p>• <strong>Points verts sur la carte</strong> = Lieux Google Maps existants</p>
-                <p>• <strong>Survolez un point vert</strong> pour voir un aperçu (nom, note, type, statut)</p>
-                <p>• <strong>Cliquez sur un point vert</strong> pour récupérer toutes les informations détaillées</p>
-                <p>• Ou cliquez n'importe où sur la carte pour créer un nouveau point</p>
-                <p>• Les informations récupérées incluent: nom, adresse, rating, avis, photos, horaires, téléphone, site web</p>
-                <p>• Cliquez sur "Utiliser ces données" pour pré-remplir automatiquement le formulaire</p>
+                <p>• <strong>Cliquez sur la carte</strong> → Des <strong>cercles bleus</strong> (lieux Google) apparaissent dans 1km de rayon</p>
+                <p>• <strong>Survolez un cercle bleu</strong> → Il devient <strong>ORANGE et PLUS GRAND</strong> + aperçu s'affiche</p>
+                <p>• <strong>Cliquez sur un cercle orange</strong> → Toutes les infos sont récupérées et le formulaire se remplit automatiquement ✨</p>
+                <p>• Ou cliquez sur "Show Nearby Places" pour charger les lieux autour du centre de la carte</p>
+                <p>• Les infos incluent: nom, adresse, rating, avis, photos, horaires, téléphone, site web</p>
+            </div>
+
+            <div class="clickable-hint">
+                <p>🎯 ASTUCE: Les cercles BLEUS deviennent ORANGE quand vous les survolez - c'est là que vous devez cliquer!</p>
             </div>
 
             <button class="btn" onclick="initMap()">📍 Load Map</button>
@@ -986,66 +1041,130 @@
 
         const request = {
             location: center,
-            radius: 500, // Search within 500 meters
-            type: ['restaurant', 'gas_station', 'cafe', 'hotel', 'tourist_attraction', 'store', 'parking']
+            radius: 1000, // Increased to 1000 meters for more results
+            type: ['restaurant', 'gas_station', 'cafe', 'hotel', 'tourist_attraction', 'store', 'parking', 'bank', 'hospital', 'pharmacy']
         };
 
         placesService.nearbySearch(request, function(results, status) {
             if (status === google.maps.places.PlacesServiceStatus.OK) {
+                console.log(`Found ${results.length} nearby places`);
+
                 results.forEach((place, index) => {
-                    if (index < 30) { // Limit to 30 places to avoid clutter
+                    if (index < 50) { // Increased limit to 50 places
                         createPlaceMarker(place);
                     }
                 });
+
+                // Show a notification
+                if (results.length > 0) {
+                    showTemporaryNotification(`✅ ${results.length} lieux trouvés! Survolez-les pour voir les infos.`);
+                }
+            } else {
+                showTemporaryNotification('❌ Aucun lieu trouvé dans cette zone.');
             }
         });
     }
 
+    function showTemporaryNotification(message) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-weight: bold;
+            animation: slideInRight 0.3s ease-out;
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
     function createPlaceMarker(place) {
+        // Create a larger, more visible custom icon
         const placeMarker = new google.maps.Marker({
             position: place.geometry.location,
             map: map,
             icon: {
-                url: place.icon,
-                scaledSize: new google.maps.Size(25, 25)
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10, // Larger size
+                fillColor: '#4285F4', // Google blue
+                fillOpacity: 0.9,
+                strokeColor: '#fff',
+                strokeWeight: 3
             },
             title: place.name,
-            animation: google.maps.Animation.DROP
+            animation: google.maps.Animation.DROP,
+            optimized: false, // Better for custom styling
+            zIndex: 100 // Ensure markers are above other elements
         });
 
         const previewInfoWindow = new google.maps.InfoWindow();
 
-        // Hover effect - show preview
+        // Hover effect - show preview AND enlarge marker
         placeMarker.addListener('mouseover', function() {
+            // Enlarge marker on hover
+            placeMarker.setIcon({
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 15, // Bigger on hover
+                fillColor: '#ff6b00', // DabApp orange
+                fillOpacity: 1,
+                strokeColor: '#fff',
+                strokeWeight: 4
+            });
+
+            placeMarker.setZIndex(1000); // Bring to front
+
             const previewContent = `
-                <div style="color: #000; padding: 10px; max-width: 250px;">
-                    <h4 style="margin: 0 0 8px 0; color: #ff6b00;">${place.name}</h4>
-                    <p style="margin: 5px 0; font-size: 12px; color: #666;">${place.vicinity}</p>
+                <div style="color: #000; padding: 12px; max-width: 280px;">
+                    <h4 style="margin: 0 0 10px 0; color: #ff6b00; font-size: 16px;">${place.name}</h4>
+                    <p style="margin: 5px 0; font-size: 13px; color: #555;">${place.vicinity}</p>
                     ${place.rating ? `
-                        <div style="margin: 5px 0;">
-                            <span style="color: #ffc107;">★</span>
-                            <strong>${place.rating}</strong>
-                            <span style="color: #999; font-size: 11px;">(${place.user_ratings_total || 0} avis)</span>
+                        <div style="margin: 8px 0; padding: 8px; background: #f5f5f5; border-radius: 5px;">
+                            <span style="color: #ffc107; font-size: 18px;">★</span>
+                            <strong style="font-size: 16px;">${place.rating}</strong>
+                            <span style="color: #666; font-size: 12px;">(${place.user_ratings_total || 0} avis)</span>
                         </div>
                     ` : ''}
                     ${place.opening_hours ? `
-                        <p style="margin: 5px 0; font-size: 12px;">
+                        <p style="margin: 8px 0; font-size: 13px; padding: 5px 10px; background: ${place.opening_hours.open_now ? '#e8f5e9' : '#ffebee'}; border-radius: 5px;">
                             ${place.opening_hours.open_now ?
                                 '<span style="color: #4caf50;">✓ Ouvert maintenant</span>' :
                                 '<span style="color: #d32f2f;">✗ Fermé</span>'}
                         </p>
                     ` : ''}
-                    <p style="margin: 8px 0 0 0; font-size: 11px; color: #ff6b00;">
-                        <strong>Cliquez pour récupérer toutes les infos</strong>
-                    </p>
+                    <div style="margin: 12px 0 5px 0; padding: 10px; background: #fff3e0; border-left: 3px solid #ff6b00; border-radius: 3px;">
+                        <p style="margin: 0; font-size: 12px; color: #ff6b00; font-weight: bold;">
+                            👆 CLIQUEZ ICI pour récupérer toutes les infos et pré-remplir le formulaire
+                        </p>
+                    </div>
                 </div>
             `;
             previewInfoWindow.setContent(previewContent);
             previewInfoWindow.open(map, placeMarker);
         });
 
-        // Mouse out - close preview
+        // Mouse out - restore original marker size
         placeMarker.addListener('mouseout', function() {
+            placeMarker.setIcon({
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: '#4285F4',
+                fillOpacity: 0.9,
+                strokeColor: '#fff',
+                strokeWeight: 3
+            });
+
+            placeMarker.setZIndex(100);
             previewInfoWindow.close();
         });
 
@@ -1485,8 +1604,6 @@
             lat: center.lat(),
             lng: center.lng()
         });
-
-        alert('✅ Nearby places loaded! Hover over markers to see info, click to select.');
     }
 
     // ===== SHOW NEARBY PLACES ON MAP =====
