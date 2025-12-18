@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test API Routes - DabApp Style</title>
+    <title>Test API POI - DabApp Style (avec Google Places)</title>
     <style>
         * {
             margin: 0;
@@ -97,6 +97,7 @@
             font-size: 14px;
             text-transform: uppercase;
             margin-right: 10px;
+            margin-bottom: 10px;
         }
 
         .btn:hover {
@@ -149,45 +150,6 @@
             height: 500px;
         }
 
-        .waypoint-card {
-            background: #1a1a1a;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border-left: 4px solid #ff6b00;
-            position: relative;
-        }
-
-        .waypoint-card h4 {
-            color: #ff6b00;
-            margin-bottom: 15px;
-            font-size: 16px;
-        }
-
-        .waypoint-card .location {
-            color: #999;
-            font-size: 12px;
-            margin-bottom: 15px;
-        }
-
-        .waypoint-card .remove-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: #d32f2f;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .waypoint-card .remove-btn:hover {
-            background: #b71c1c;
-        }
-
         .grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -196,7 +158,7 @@
 
         .grid-3 {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 15px;
         }
 
@@ -215,7 +177,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.9);
             z-index: 9999;
             overflow-y: auto;
         }
@@ -249,17 +211,6 @@
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            width: auto;
-            margin-right: 10px;
         }
 
         .user-info-box {
@@ -304,6 +255,138 @@
             color: white;
         }
 
+        .poi-card {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ff6b00;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .poi-card:hover {
+            background: #333;
+            transform: translateX(5px);
+        }
+
+        .poi-card h4 {
+            color: #ff6b00;
+            margin-bottom: 10px;
+        }
+
+        .poi-card .location {
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .poi-card .description {
+            color: #ccc;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .poi-type-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #ff6b00;
+            color: white;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .place-info-box {
+            background: linear-gradient(135deg, #1a3a1a 0%, #2c4c2c 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border: 3px solid #4caf50;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .place-info-box h4 {
+            color: #4caf50;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rating-stars {
+            color: #ffc107;
+            font-size: 20px;
+            margin: 10px 0;
+        }
+
+        .place-detail {
+            color: #ccc;
+            font-size: 13px;
+            margin: 8px 0;
+            padding: 8px;
+            background: #1a1a1a;
+            border-radius: 5px;
+        }
+
+        .place-detail strong {
+            color: #4caf50;
+            display: inline-block;
+            min-width: 120px;
+        }
+
+        .review-item {
+            background: #1a1a1a;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 3px solid #ffc107;
+        }
+
+        .review-author {
+            color: #ff6b00;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .review-text {
+            color: #ccc;
+            font-size: 13px;
+        }
+
+        .use-place-data-btn {
+            background: linear-gradient(90deg, #4caf50 0%, #388e3c 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            text-transform: uppercase;
+            margin-top: 15px;
+        }
+
+        .use-place-data-btn:hover {
+            opacity: 0.9;
+        }
+
+        .info-note {
+            background: #1a3a5a;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #2196f3;
+        }
+
+        .info-note p {
+            color: #90caf9;
+            font-size: 13px;
+            margin: 5px 0;
+        }
+
         @media (max-width: 768px) {
             .grid-2, .grid-3 {
                 grid-template-columns: 1fr;
@@ -314,8 +397,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏍️ Test API Routes - DabApp</h1>
-            <p>Complete testing interface with authentication</p>
+            <h1>🎯 Test API POI - DabApp (avec Google Places)</h1>
+            <p>Complete testing interface with Google Places integration</p>
             <div id="authStatus"></div>
         </div>
 
@@ -337,108 +420,230 @@
             <button class="btn btn-danger" onclick="logout()" id="logoutBtn" style="display: none;">🚪 Logout</button>
         </div>
 
-        <!-- Interactive Map -->
+        <!-- Interactive Map for POI Selection with Google Places -->
         <div class="section" id="mapSection" style="display: none;">
-            <h2>🗺️ Step 1: Select Points on the Map</h2>
-            <p style="color: #999; margin-bottom: 15px;">
-                Click on the map to add waypoints. Then configure each waypoint with its details.
-            </p>
-            <button class="btn" onclick="initMap()">Load Map</button>
-            <button class="btn btn-secondary" onclick="clearWaypoints()">Clear All Points</button>
+            <h2>🗺️ Step 1: Select Location & Get Google Places Info</h2>
+
+            <div class="info-note">
+                <p><strong>💡 Comment ça marche:</strong></p>
+                <p>• Cliquez sur la carte pour sélectionner un emplacement</p>
+                <p>• Si un lieu Google existe à cet endroit, ses informations seront automatiquement récupérées</p>
+                <p>• Vous verrez: nom, adresse, rating, reviews, photos, horaires, téléphone, etc.</p>
+                <p>• Cliquez sur "Utiliser ces données" pour pré-remplir le formulaire de création</p>
+            </div>
+
+            <button class="btn" onclick="initMap()">📍 Load Map</button>
+            <button class="btn btn-secondary" onclick="clearMarker()">🗑️ Clear Marker</button>
+
             <div class="map-container">
                 <div id="map"></div>
             </div>
+
+            <div id="selectedLocation" style="background: #1a1a1a; padding: 15px; border-radius: 5px; margin-top: 15px; display: none;">
+                <h4 style="color: #ff6b00; margin-bottom: 10px;">📍 Coordonnées sélectionnées</h4>
+                <p style="color: #ccc; margin: 5px 0;">
+                    <strong style="color: #ff6b00;">Latitude:</strong> <span id="selectedLat">-</span>
+                </p>
+                <p style="color: #ccc; margin: 5px 0;">
+                    <strong style="color: #ff6b00;">Longitude:</strong> <span id="selectedLng">-</span>
+                </p>
+            </div>
+
+            <!-- Google Place Information -->
+            <div id="placeInfoBox" style="display: none;"></div>
         </div>
 
-        <!-- Waypoints List -->
-        <div class="section" id="waypointsSection" style="display: none;">
-            <h2>📍 Selected Waypoints (<span id="waypointCount">0</span>)</h2>
-            <div id="waypointsList"></div>
-        </div>
+        <!-- Create POI Form -->
+        <div class="section" id="createSection" style="display: none;">
+            <h2>🎯 Step 2: Create New POI</h2>
 
-        <!-- Route Information -->
-        <div class="section" id="routeInfoSection" style="display: none;">
-            <h2>📝 Step 2: Route Information</h2>
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Route Title *</label>
-                    <input type="text" id="routeTitle" placeholder="Alps Route" value="Test API Route">
+                    <label>Name *</label>
+                    <input type="text" id="poiName" placeholder="Gas Station Casablanca Center">
                 </div>
                 <div class="form-group">
-                    <label>Difficulty</label>
-                    <select id="routeDifficulty">
-                        <option value="easy">Easy</option>
-                        <option value="moderate">Moderate</option>
-                        <option value="difficult">Difficult</option>
-                        <option value="expert">Expert</option>
+                    <label>POI Type *</label>
+                    <select id="poiType">
+                        <option value="">Select a type</option>
+                        <option value="1">⛽ Gas Station</option>
+                        <option value="2">🔧 Repair Shop</option>
+                        <option value="3">🏪 Moto Store</option>
+                        <option value="4">🏨 Accommodation</option>
+                        <option value="5">🍽️ Restaurant</option>
+                        <option value="6">🌄 Viewpoint</option>
+                        <option value="7">🏛️ Tourist Attraction</option>
+                        <option value="8">🅿️ Parking</option>
                     </select>
                 </div>
             </div>
-            <div class="form-group">
-                <label>Description *</label>
-                <textarea id="routeDescription" rows="4" placeholder="Describe your route...">This is a test route to validate the API</textarea>
-            </div>
-            <div class="grid-2">
-                <div class="form-group">
-                    <label>Estimated Duration</label>
-                    <input type="text" id="estimatedDuration" placeholder="e.g.: 3 hours">
-                </div>
-                <div class="form-group">
-                    <label>Best Season</label>
-                    <input type="text" id="bestSeason" placeholder="e.g.: Spring, Summer">
-                </div>
-            </div>
-        </div>
 
-        <!-- Test Creation -->
-        <div class="section" id="createSection" style="display: none;">
-            <h2>🚀 Step 3: Create Route (POST)</h2>
-            <button class="btn" id="createBtn" onclick="createRoute()">Create Route</button>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="poiDescription" rows="4" placeholder="Describe this point of interest..."></textarea>
+            </div>
+
+            <div class="grid-3">
+                <div class="form-group">
+                    <label>Latitude *</label>
+                    <input type="number" id="poiLatitude" step="0.000001" placeholder="33.5731" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Longitude *</label>
+                    <input type="number" id="poiLongitude" step="0.000001" placeholder="-7.5898" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Country ID</label>
+                    <input type="number" id="poiCountryId" placeholder="1 (Morocco)">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Address</label>
+                <input type="text" id="poiAddress" placeholder="123 Main Street, Casablanca">
+            </div>
+
+            <div class="grid-3">
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" id="poiPhone" placeholder="+212 5XX XX XX XX">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="poiEmail" placeholder="contact@poi.com">
+                </div>
+                <div class="form-group">
+                    <label>Website</label>
+                    <input type="url" id="poiWebsite" placeholder="https://www.poi.com">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Opening Hours (JSON format)</label>
+                <textarea id="poiOpeningHours" rows="3" placeholder='{"monday": "08:00-18:00", "tuesday": "08:00-18:00"}'></textarea>
+            </div>
+
+            <button class="btn" onclick="createPOI()">🚀 Create POI</button>
             <div class="response-box" id="createResponse"></div>
         </div>
 
-        <!-- Test List -->
+        <!-- List All POIs -->
         <div class="section" id="listSection" style="display: none;">
-            <h2>📋 API Test: List Routes (GET)</h2>
-            <button class="btn" onclick="getRoutes()">Get All Routes</button>
+            <h2>📋 List All POIs</h2>
+            <div class="grid-3">
+                <div class="form-group">
+                    <label>Filter by Type ID</label>
+                    <input type="number" id="filterTypeId" placeholder="Leave empty for all">
+                </div>
+                <div class="form-group">
+                    <label>Latitude (for nearby)</label>
+                    <input type="number" id="filterLatitude" step="0.000001" placeholder="33.5731">
+                </div>
+                <div class="form-group">
+                    <label>Longitude (for nearby)</label>
+                    <input type="number" id="filterLongitude" step="0.000001" placeholder="-7.5898">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Radius (km)</label>
+                <input type="number" id="filterRadius" placeholder="10" value="10">
+            </div>
+            <button class="btn" onclick="listPOIs()">📋 Get All POIs</button>
+            <button class="btn btn-secondary" onclick="listNearbyPOIs()">📍 Get Nearby POIs</button>
             <div class="response-box" id="listResponse"></div>
+            <div id="poisList" style="margin-top: 20px;"></div>
         </div>
 
-        <!-- Test Details + Display on Map -->
-        <div class="section" id="displaySection" style="display: none;">
-            <h2>🔍 API Test: Display Route on Map (GET by ID)</h2>
+        <!-- Get POI by ID + Display on Map -->
+        <div class="section" id="showSection" style="display: none;">
+            <h2>🔍 Get POI Details & Display on Map</h2>
             <div class="form-group">
-                <label>Route ID</label>
-                <input type="number" id="displayRouteId" placeholder="1">
+                <label>POI ID</label>
+                <input type="number" id="showPoiId" placeholder="1">
             </div>
-            <button class="btn" onclick="displayRouteOnMap()">Display on Map</button>
-            <button class="btn btn-success" onclick="openItinerary()">🧭 Open Navigation Itinerary</button>
-            <div class="response-box" id="displayResponse"></div>
+            <button class="btn" onclick="showPOI()">🔍 Get POI Details</button>
+            <button class="btn btn-secondary" onclick="displayPOIOnMap()">🗺️ Display on Map</button>
+            <div class="response-box" id="showResponse"></div>
             <div class="map-container">
                 <div id="displayMap"></div>
             </div>
         </div>
 
-        <!-- Test Like -->
-        <div class="section" id="likeSection" style="display: none;">
-            <h2>❤️ API Test: Like/Unlike (POST)</h2>
+        <!-- Update POI -->
+        <div class="section" id="updateSection" style="display: none;">
+            <h2>✏️ Update POI</h2>
             <div class="form-group">
-                <label>Route ID</label>
-                <input type="number" id="likeRouteId" placeholder="1">
+                <label>POI ID *</label>
+                <input type="number" id="updatePoiId" placeholder="1">
             </div>
-            <button class="btn" onclick="toggleLike()">Toggle Like</button>
-            <div class="response-box" id="likeResponse"></div>
+            <button class="btn btn-secondary" onclick="loadPOIForUpdate()">📥 Load POI Data</button>
+
+            <div id="updateForm" style="display: none; margin-top: 20px;">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" id="updatePoiName">
+                    </div>
+                    <div class="form-group">
+                        <label>Type ID</label>
+                        <input type="number" id="updatePoiType">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="updatePoiDescription" rows="4"></textarea>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="text" id="updatePoiPhone">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="updatePoiEmail">
+                    </div>
+                </div>
+
+                <button class="btn" onclick="updatePOI()">💾 Update POI</button>
+            </div>
+
+            <div class="response-box" id="updateResponse"></div>
         </div>
 
-        <!-- Test Favorite -->
-        <div class="section" id="favSection" style="display: none;">
-            <h2>⭐ API Test: Favorite (POST)</h2>
+        <!-- Delete POI -->
+        <div class="section" id="deleteSection" style="display: none;">
+            <h2>🗑️ Delete POI</h2>
             <div class="form-group">
-                <label>Route ID</label>
-                <input type="number" id="favRouteId" placeholder="1">
+                <label>POI ID</label>
+                <input type="number" id="deletePoiId" placeholder="1">
             </div>
-            <button class="btn" onclick="toggleFavorite()">Toggle Favorite</button>
-            <div class="response-box" id="favResponse"></div>
+            <button class="btn btn-danger" onclick="deletePOI()">🗑️ Delete POI</button>
+            <div class="response-box" id="deleteResponse"></div>
+        </div>
+
+        <!-- Toggle Favorite -->
+        <div class="section" id="favoriteSection" style="display: none;">
+            <h2>⭐ Toggle Favorite</h2>
+            <div class="form-group">
+                <label>POI ID</label>
+                <input type="number" id="favoritePoiId" placeholder="1">
+            </div>
+            <button class="btn" onclick="toggleFavorite()">⭐ Toggle Favorite</button>
+            <div class="response-box" id="favoriteResponse"></div>
+        </div>
+
+        <!-- Get Favorites -->
+        <div class="section" id="favoritesListSection" style="display: none;">
+            <h2>⭐ My Favorite POIs</h2>
+            <div class="form-group">
+                <label>Filter by Type ID (optional)</label>
+                <input type="number" id="favoritesTypeId" placeholder="Leave empty for all">
+            </div>
+            <button class="btn" onclick="getFavorites()">⭐ Get My Favorites</button>
+            <div class="response-box" id="favoritesListResponse"></div>
+            <div id="favoritesList" style="margin-top: 20px;"></div>
         </div>
     </div>
 
@@ -468,83 +673,28 @@
         </div>
     </div>
 
-    <!-- Modal to Edit Waypoint -->
-    <div id="waypointModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>📍 Configure Waypoint</h3>
-                <button class="close-modal" onclick="closeWaypointModal()">✕</button>
-            </div>
-
-            <input type="hidden" id="editWaypointIndex">
-
-            <div class="form-group">
-                <label>Location Name *</label>
-                <input type="text" id="waypointName" placeholder="Waypoint name">
-            </div>
-
-            <div class="form-group">
-                <label>Waypoint Type</label>
-                <select id="waypointType">
-                    <option value="start">🏁 Start Point</option>
-                    <option value="waypoint">📍 Waypoint</option>
-                    <option value="poi">🎯 Point of Interest</option>
-                    <option value="rest_stop">☕ Rest Stop</option>
-                    <option value="gas_station">⛽ Gas Station</option>
-                    <option value="viewpoint">🌄 Viewpoint</option>
-                    <option value="end">🏁 End Point</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Description / Notes</label>
-                <textarea id="waypointDescription" rows="3" placeholder="Add notes about this point..."></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Pause Duration (minutes)</label>
-                <input type="number" id="waypointPauseDuration" placeholder="e.g.: 15" min="0">
-            </div>
-
-            <div class="form-group">
-                <label>Pause Reason</label>
-                <input type="text" id="waypointPauseReason" placeholder="e.g.: Lunch, Gas, Photo...">
-            </div>
-
-            <div class="form-group">
-                <label style="margin-bottom: 10px;">Available Services:</label>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="hasGasStation">
-                    <label for="hasGasStation" style="color: #fff; margin: 0;">⛽ Gas Station</label>
-                </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="hasRestaurant">
-                    <label for="hasRestaurant" style="color: #fff; margin: 0;">🍽️ Restaurant</label>
-                </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="hasToilets">
-                    <label for="hasToilets" style="color: #fff; margin: 0;">🚻 Toilets</label>
-                </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="hasParking">
-                    <label for="hasParking" style="color: #fff; margin: 0;">🅿️ Parking</label>
-                </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="hasHotel">
-                    <label for="hasHotel" style="color: #fff; margin: 0;">🏨 Hotel</label>
-                </div>
-            </div>
-
-            <button class="btn" onclick="saveWaypoint()">💾 Save Waypoint</button>
-        </div>
-    </div>
-
 <script>
-    // ===== AUTHENTICATION SYSTEM =====
+    // ===== GLOBAL VARIABLES =====
     let currentUser = null;
     let authToken = null;
+    let map;
+    let displayMap;
+    let marker = null;
+    let displayMarker = null;
+    let placesService;
+    let currentPlaceData = null;
 
-    // Check if user is already logged in
+    const GOOGLE_MAPS_API_KEY = 'AIzaSyBznLyPEvm9nm3LerujutDMx1F6zNSpk2E';
+
+    const mapStyles = [
+        {"featureType": "all", "elementType": "geometry", "stylers": [{"color": "#242f3e"}]},
+        {"featureType": "road", "elementType": "geometry.fill", "stylers": [{"color": "#2b2b2b"}]},
+        {"featureType": "road", "elementType": "labels.text.fill", "stylers": [{"color": "#ff6b00"}]},
+        {"featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [{"color": "#ff6b00"}]},
+        {"featureType": "water", "elementType": "geometry", "stylers": [{"color": "#17263c"}]}
+    ];
+
+    // ===== AUTHENTICATION =====
     function checkAuth() {
         const storedToken = localStorage.getItem('dabapp_token');
         const storedUser = localStorage.getItem('dabapp_user');
@@ -589,37 +739,22 @@
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({
-                    login: login,
-                    password: password
-                })
+                body: JSON.stringify({ login: login, password: password })
             });
 
             const result = await response.json();
 
             if (result.user && result.token) {
-                // Check if role_id = 1 (admin)
-                if (result.user.role_id !== 1) {
-                    responseBox.innerHTML = '<pre class="error">❌ Access Denied! Only administrators (role_id = 1) can access this application.<br><br>Your role_id: ' + result.user.role_id + '</pre>';
-                    return;
-                }
-
-                // Save authentication data
                 currentUser = result.user;
                 authToken = result.token;
-
                 localStorage.setItem('dabapp_token', authToken);
                 localStorage.setItem('dabapp_user', JSON.stringify(currentUser));
-
                 document.getElementById('authToken').value = authToken;
-
-                responseBox.innerHTML = '<pre class="success">✅ Login successful!<br><br>' + JSON.stringify(result, null, 2) + '</pre>';
-
+                responseBox.innerHTML = '<pre class="success">✅ Login successful!</pre>';
                 setTimeout(() => {
                     closeLoginModal();
                     updateAuthUI();
                 }, 2000);
-
             } else {
                 responseBox.innerHTML = '<pre class="error">❌ Login failed!<br><br>' + JSON.stringify(result, null, 2) + '</pre>';
             }
@@ -636,6 +771,7 @@
             authToken = null;
             document.getElementById('authToken').value = '';
             updateAuthUI();
+            location.reload();
         }
     }
 
@@ -656,17 +792,9 @@
     function updateAuthStatus(isLoggedIn) {
         const statusDiv = document.getElementById('authStatus');
         if (isLoggedIn) {
-            statusDiv.innerHTML = `
-                <span class="auth-status logged-in">
-                    ✅ Authenticated as ${currentUser.first_name} ${currentUser.last_name}
-                </span>
-            `;
+            statusDiv.innerHTML = `<span class="auth-status logged-in">✅ Authenticated as ${currentUser.first_name} ${currentUser.last_name}</span>`;
         } else {
-            statusDiv.innerHTML = `
-                <span class="auth-status logged-out">
-                    ⚠️ Not Authenticated - Please Login
-                </span>
-            `;
+            statusDiv.innerHTML = `<span class="auth-status logged-out">⚠️ Not Authenticated - Please Login</span>`;
         }
     }
 
@@ -677,11 +805,7 @@
                 <h4>👤 User Information</h4>
                 <div class="user-info-item"><strong>Name:</strong> ${currentUser.first_name} ${currentUser.last_name}</div>
                 <div class="user-info-item"><strong>Email:</strong> ${currentUser.email}</div>
-                <div class="user-info-item"><strong>Phone:</strong> ${currentUser.phone}</div>
-                <div class="user-info-item"><strong>Role ID:</strong> ${currentUser.role_id} ${currentUser.role_id === 1 ? '(Admin ✅)' : ''}</div>
-                <div class="user-info-item"><strong>Country:</strong> ${currentUser.country_id}</div>
-                <div class="user-info-item"><strong>Verified:</strong> ${currentUser.verified ? '✅ Yes' : '❌ No'}</div>
-                <div class="user-info-item"><strong>2FA:</strong> ${currentUser.two_factor_enabled ? '✅ Enabled' : '❌ Disabled'}</div>
+                <div class="user-info-item"><strong>Role ID:</strong> ${currentUser.role_id}</div>
             </div>
         `;
     }
@@ -691,75 +815,357 @@
     }
 
     function enableAllSections() {
-        const sections = [
-            'mapSection',
-            'waypointsSection',
-            'routeInfoSection',
-            'createSection',
-            'listSection',
-            'displaySection',
-            'likeSection',
-            'favSection'
-        ];
-        sections.forEach(id => {
-            document.getElementById(id).style.display = 'block';
-        });
+        const sections = ['mapSection', 'createSection', 'listSection', 'showSection', 'updateSection', 'deleteSection', 'favoriteSection', 'favoritesListSection'];
+        sections.forEach(id => document.getElementById(id).style.display = 'block');
     }
 
     function disableAllSections() {
-        const sections = [
-            'mapSection',
-            'waypointsSection',
-            'routeInfoSection',
-            'createSection',
-            'listSection',
-            'displaySection',
-            'likeSection',
-            'favSection'
-        ];
-        sections.forEach(id => {
-            document.getElementById(id).style.display = 'none';
+        const sections = ['mapSection', 'createSection', 'listSection', 'showSection', 'updateSection', 'deleteSection', 'favoriteSection', 'favoritesListSection'];
+        sections.forEach(id => document.getElementById(id).style.display = 'none');
+    }
+
+    // ===== GOOGLE MAPS & PLACES =====
+    function initMap() {
+        if (!authToken) {
+            alert('⚠️ Please login first!');
+            return;
+        }
+
+        if (!window.google) {
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,geometry`;
+            script.onload = () => {
+                setupMaps();
+                getUserLocation();
+            };
+            document.head.appendChild(script);
+        } else {
+            setupMaps();
+            getUserLocation();
+        }
+    }
+
+    function setupMaps() {
+        const center = { lat: 33.5731, lng: -7.5898 };
+
+        map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 12,
+            center: center,
+            styles: mapStyles,
+            mapTypeControl: false,
+            streetViewControl: false
+        });
+
+        displayMap = new google.maps.Map(document.getElementById('displayMap'), {
+            zoom: 12,
+            center: center,
+            styles: mapStyles,
+            mapTypeControl: false,
+            streetViewControl: false
+        });
+
+        placesService = new google.maps.places.PlacesService(map);
+
+        map.addListener('click', function(event) {
+            selectLocation(event.latLng);
         });
     }
 
-    // ===== EXISTING CODE FROM ORIGINAL FILE =====
-    const GOOGLE_MAPS_API_KEY = 'AIzaSyBznLyPEvm9nm3LerujutDMx1F6zNSpk2E';
+    function getUserLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const userPos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    map.setCenter(userPos);
+                    displayMap.setCenter(userPos);
+                },
+                function(error) {
+                    console.warn('Geolocation disabled:', error);
+                }
+            );
+        }
+    }
 
-    let map;
-    let displayMap;
-    let markers = [];
-    let displayMarkers = [];
-    let waypoints = [];
-    let directionsService;
-    let directionsRenderer;
-    let displayDirectionsService;
-    let displayDirectionsRenderer;
-    let alternativeRoutes = [];
-    let selectedRouteIndex = 0;
-    let motorcycleMarker = null;
-    let animationPath = [];
-    let animationInterval = null;
-    let currentPathIndex = 0;
+    function selectLocation(location) {
+        const position = {
+            lat: location.lat(),
+            lng: location.lng()
+        };
 
-    const mapStyles = [
-        {"featureType": "all", "elementType": "geometry", "stylers": [{"color": "#242f3e"}]},
-        {"featureType": "road", "elementType": "geometry.fill", "stylers": [{"color": "#2b2b2b"}]},
-        {"featureType": "road", "elementType": "labels.text.fill", "stylers": [{"color": "#ff6b00"}]},
-        {"featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [{"color": "#ff6b00"}]},
-        {"featureType": "water", "elementType": "geometry", "stylers": [{"color": "#17263c"}]}
-    ];
+        if (marker) {
+            marker.setMap(null);
+        }
 
-    const motorcycleIcon = {
-        path: 'M17.5,9.5C17.5,10.9 16.4,12 15,12C13.6,12 12.5,10.9 12.5,9.5C12.5,8.1 13.6,7 15,7C16.4,7 17.5,8.1 17.5,9.5M6.5,9.5C6.5,10.9 5.4,12 4,12C2.6,12 1.5,10.9 1.5,9.5C1.5,8.1 2.6,7 4,7C5.4,7 6.5,8.1 6.5,9.5M10.1,6.9C9.7,7.1 9.4,7.4 9.1,7.7L7,7.7C6.7,7.7 6.5,7.9 6.5,8.2C6.5,8.5 6.7,8.7 7,8.7L8.7,8.7C8.6,9 8.5,9.2 8.5,9.5C8.5,9.6 8.5,9.7 8.5,9.8L4.8,10.8C4.5,10.9 4.4,11.2 4.5,11.5C4.6,11.7 4.8,11.9 5,11.9L8.9,10.8C9.3,11.6 10.1,12.2 11,12.4L11,15L10,15C9.7,15 9.5,15.2 9.5,15.5C9.5,15.8 9.7,16 10,16L13,16C13.3,16 13.5,15.8 13.5,15.5C13.5,15.2 13.3,15 13,15L12,15L12,12.4C12.9,12.2 13.7,11.6 14.1,10.8L18,11.9C18.2,11.9 18.4,11.7 18.5,11.5C18.6,11.2 18.5,10.9 18.2,10.8L14.5,9.8C14.5,9.7 14.5,9.6 14.5,9.5C14.5,9.2 14.4,9 14.3,8.7L16,8.7C16.3,8.7 16.5,8.5 16.5,8.2C16.5,7.9 16.3,7.7 16,7.7L13.9,7.7C13.6,7.4 13.3,7.1 12.9,6.9L13.5,5.7C13.6,5.4 13.5,5.1 13.2,5C12.9,4.9 12.6,5 12.5,5.3L11.9,6.5C11.6,6.5 11.4,6.5 11.1,6.5L10.5,5.3C10.4,5 10.1,4.9 9.8,5C9.5,5.1 9.4,5.4 9.5,5.7L10.1,6.9Z',
-        fillColor: '#ff6b00',
-        fillOpacity: 1,
-        strokeColor: '#ffffff',
-        strokeWeight: 2,
-        scale: 1.8,
-        anchor: new google.maps.Point(10, 10),
-        rotation: 0
-    };
+        marker = new google.maps.Marker({
+            position: position,
+            map: map,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 12,
+                fillColor: '#ff6b00',
+                fillOpacity: 1,
+                strokeColor: '#fff',
+                strokeWeight: 2
+            }
+        });
 
+        document.getElementById('poiLatitude').value = position.lat.toFixed(6);
+        document.getElementById('poiLongitude').value = position.lng.toFixed(6);
+
+        document.getElementById('selectedLocation').style.display = 'block';
+        document.getElementById('selectedLat').textContent = position.lat.toFixed(6);
+        document.getElementById('selectedLng').textContent = position.lng.toFixed(6);
+
+        // Search for nearby places using Google Places API
+        searchNearbyPlace(position);
+    }
+
+    function searchNearbyPlace(position) {
+        const request = {
+            location: position,
+            radius: 50, // Search within 50 meters
+            rankBy: google.maps.places.RankBy.DISTANCE
+        };
+
+        placesService.nearbySearch(request, function(results, status) {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
+                // Get details of the nearest place
+                getPlaceDetails(results[0].place_id);
+            } else {
+                // No place found, just geocode
+                geocodeLocation(position);
+            }
+        });
+    }
+
+    function getPlaceDetails(placeId) {
+        const request = {
+            placeId: placeId,
+            fields: [
+                'name', 'formatted_address', 'geometry', 'rating', 'user_ratings_total',
+                'reviews', 'formatted_phone_number', 'international_phone_number',
+                'website', 'opening_hours', 'photos', 'types', 'price_level',
+                'business_status', 'url'
+            ]
+        };
+
+        placesService.getDetails(request, function(place, status) {
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                currentPlaceData = place;
+                displayPlaceInfo(place);
+            }
+        });
+    }
+
+    function geocodeLocation(position) {
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ location: position }, function(results, status) {
+            if (status === 'OK' && results[0]) {
+                document.getElementById('poiAddress').value = results[0].formatted_address;
+            }
+        });
+    }
+
+    function displayPlaceInfo(place) {
+        const infoBox = document.getElementById('placeInfoBox');
+        infoBox.style.display = 'block';
+
+        let starsHtml = '';
+        if (place.rating) {
+            const fullStars = Math.floor(place.rating);
+            const hasHalfStar = place.rating % 1 >= 0.5;
+
+            for (let i = 0; i < fullStars; i++) {
+                starsHtml += '⭐';
+            }
+            if (hasHalfStar) {
+                starsHtml += '✨';
+            }
+        }
+
+        let openingHoursHtml = '';
+        if (place.opening_hours && place.opening_hours.weekday_text) {
+            openingHoursHtml = `
+                <div class="place-detail">
+                    <strong>🕐 Horaires d'ouverture:</strong><br>
+                    ${place.opening_hours.weekday_text.map(day => `<div style="margin: 3px 0; padding-left: 10px;">${day}</div>`).join('')}
+                </div>
+            `;
+        }
+
+        let photosHtml = '';
+        if (place.photos && place.photos.length > 0) {
+            photosHtml = `
+                <div class="place-detail">
+                    <strong>📷 Photos:</strong><br>
+                    <div style="display: flex; gap: 10px; margin-top: 10px; overflow-x: auto;">
+                        ${place.photos.slice(0, 3).map(photo =>
+                            `<img src="${photo.getUrl({maxWidth: 200})}" style="max-width: 200px; border-radius: 5px;">`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        let reviewsHtml = '';
+        if (place.reviews && place.reviews.length > 0) {
+            reviewsHtml = `
+                <div class="place-detail">
+                    <strong>💬 Avis récents:</strong><br>
+                    ${place.reviews.slice(0, 3).map(review => `
+                        <div class="review-item">
+                            <div class="review-author">${review.author_name} - ${'⭐'.repeat(review.rating)}</div>
+                            <div class="review-text">${review.text}</div>
+                            <div style="color: #999; font-size: 11px; margin-top: 5px;">${review.relative_time_description}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        infoBox.innerHTML = `
+            <div class="place-info-box">
+                <h4>
+                    <span>🎯 Lieu Google Maps trouvé!</span>
+                </h4>
+
+                <div class="place-detail">
+                    <strong>📍 Nom:</strong> ${place.name}
+                </div>
+
+                <div class="place-detail">
+                    <strong>📮 Adresse:</strong> ${place.formatted_address || 'N/A'}
+                </div>
+
+                ${place.rating ? `
+                    <div class="place-detail">
+                        <strong>⭐ Note:</strong> ${place.rating} / 5
+                        <div class="rating-stars">${starsHtml} (${place.user_ratings_total} avis)</div>
+                    </div>
+                ` : ''}
+
+                ${place.formatted_phone_number ? `
+                    <div class="place-detail">
+                        <strong>📞 Téléphone:</strong> ${place.formatted_phone_number}
+                    </div>
+                ` : ''}
+
+                ${place.website ? `
+                    <div class="place-detail">
+                        <strong>🌐 Site web:</strong> <a href="${place.website}" target="_blank" style="color: #4caf50;">${place.website}</a>
+                    </div>
+                ` : ''}
+
+                ${place.types ? `
+                    <div class="place-detail">
+                        <strong>🏷️ Types:</strong> ${place.types.slice(0, 5).join(', ')}
+                    </div>
+                ` : ''}
+
+                ${place.business_status ? `
+                    <div class="place-detail">
+                        <strong>🏪 Statut:</strong> ${place.business_status === 'OPERATIONAL' ? '✅ Opérationnel' : place.business_status}
+                    </div>
+                ` : ''}
+
+                ${openingHoursHtml}
+
+                ${photosHtml}
+
+                ${reviewsHtml}
+
+                ${place.url ? `
+                    <div class="place-detail">
+                        <strong>🔗 Google Maps:</strong> <a href="${place.url}" target="_blank" style="color: #4caf50;">Voir sur Google Maps</a>
+                    </div>
+                ` : ''}
+
+                <button class="use-place-data-btn" onclick="usePlaceData()">
+                    ✅ Utiliser ces données pour créer le POI
+                </button>
+            </div>
+        `;
+
+        // Auto-fill address
+        document.getElementById('poiAddress').value = place.formatted_address || '';
+    }
+
+    function usePlaceData() {
+        if (!currentPlaceData) return;
+
+        const place = currentPlaceData;
+
+        // Fill form fields
+        document.getElementById('poiName').value = place.name || '';
+        document.getElementById('poiAddress').value = place.formatted_address || '';
+        document.getElementById('poiPhone').value = place.formatted_phone_number || '';
+        document.getElementById('poiWebsite').value = place.website || '';
+
+        // Create description from reviews and info
+        let description = '';
+        if (place.rating) {
+            description += `Note Google: ${place.rating}/5 (${place.user_ratings_total} avis)\n\n`;
+        }
+        if (place.types && place.types.length > 0) {
+            description += `Types: ${place.types.slice(0, 5).join(', ')}\n\n`;
+        }
+        if (place.reviews && place.reviews.length > 0) {
+            description += `Avis: "${place.reviews[0].text.substring(0, 200)}..."`;
+        }
+        document.getElementById('poiDescription').value = description;
+
+        // Opening hours as JSON
+        if (place.opening_hours && place.opening_hours.weekday_text) {
+            const openingHoursObj = {};
+            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            place.opening_hours.weekday_text.forEach((text, index) => {
+                openingHoursObj[days[index]] = text.split(': ')[1] || 'Closed';
+            });
+            document.getElementById('poiOpeningHours').value = JSON.stringify(openingHoursObj, null, 2);
+        }
+
+        // Auto-select POI type based on Google types
+        if (place.types) {
+            if (place.types.includes('gas_station')) {
+                document.getElementById('poiType').value = '1';
+            } else if (place.types.includes('car_repair')) {
+                document.getElementById('poiType').value = '2';
+            } else if (place.types.includes('store')) {
+                document.getElementById('poiType').value = '3';
+            } else if (place.types.includes('lodging')) {
+                document.getElementById('poiType').value = '4';
+            } else if (place.types.includes('restaurant')) {
+                document.getElementById('poiType').value = '5';
+            } else if (place.types.includes('tourist_attraction')) {
+                document.getElementById('poiType').value = '7';
+            } else if (place.types.includes('parking')) {
+                document.getElementById('poiType').value = '8';
+            }
+        }
+
+        // Scroll to form
+        window.scrollTo({ top: document.getElementById('createSection').offsetTop - 20, behavior: 'smooth' });
+
+        alert('✅ Données Google Places chargées dans le formulaire!');
+    }
+
+    function clearMarker() {
+        if (marker) {
+            marker.setMap(null);
+            marker = null;
+        }
+        document.getElementById('poiLatitude').value = '';
+        document.getElementById('poiLongitude').value = '';
+        document.getElementById('poiAddress').value = '';
+        document.getElementById('selectedLocation').style.display = 'none';
+        document.getElementById('placeInfoBox').style.display = 'none';
+        currentPlaceData = null;
+    }
+
+    // ===== API FUNCTIONS =====
     function getHeaders() {
         return {
             'Content-Type': 'application/json',
@@ -772,925 +1178,374 @@
         return document.getElementById('apiUrl').value;
     }
 
-    // [REST OF THE ORIGINAL FUNCTIONS - initMap, getUserLocation, setupMap, etc.]
-    // ... (keeping all the original map and route functions)
-
-    function initMap() {
+    async function createPOI() {
         if (!authToken) {
             alert('⚠️ Please login first!');
             return;
         }
 
-        if (!window.google) {
-            const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,geometry`;
-            script.onload = () => {
-                setupMap();
-                setupDisplayMap();
-                getUserLocation();
-            };
-            document.head.appendChild(script);
-        } else {
-            setupMap();
-            setupDisplayMap();
-            getUserLocation();
-        }
-    }
-
-    function getUserLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    const userPos = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-
-                    map.setCenter(userPos);
-                    map.setZoom(12);
-
-                    new google.maps.Marker({
-                        position: userPos,
-                        map: map,
-                        icon: {
-                            path: google.maps.SymbolPath.CIRCLE,
-                            scale: 8,
-                            fillColor: '#4285F4',
-                            fillOpacity: 1,
-                            strokeColor: '#fff',
-                            strokeWeight: 2
-                        },
-                        title: 'Your location'
-                    });
-
-                    const geocoder = new google.maps.Geocoder();
-                    geocoder.geocode({ location: userPos }, function(results, status) {
-                        if (status === 'OK' && results[0]) {
-                            showLocationInfo(results[0].formatted_address, userPos);
-                        }
-                    });
-                },
-                function(error) {
-                    console.warn('Geolocation disabled:', error);
-                    alert('📍 Geolocation disabled. Map will be centered on Paris by default.');
-                }
-            );
-        }
-    }
-
-    function showLocationInfo(address, coords) {
-        const configSection = document.querySelector('.section');
-        let locationDiv = document.getElementById('locationInfo');
-
-        if (!locationDiv) {
-            locationDiv = document.createElement('div');
-            locationDiv.id = 'locationInfo';
-            locationDiv.style.cssText = 'background: #1a1a1a; padding: 15px; border-radius: 5px; margin-top: 15px; border: 2px solid #ff6b00;';
-            configSection.appendChild(locationDiv);
-        }
-
-        locationDiv.innerHTML = `
-            <p style="margin: 5px 0; color: #ff6b00; font-weight: bold;">📍 Your detected location:</p>
-            <p style="margin: 5px 0; color: #fff;">${address}</p>
-            <p style="margin: 5px 0; color: #999; font-size: 12px;">Lat: ${coords.lat.toFixed(6)}, Lng: ${coords.lng.toFixed(6)}</p>
-        `;
-    }
-
-    function setupMap() {
-        const center = { lat: 48.8566, lng: 2.3522 };
-
-        map = new google.maps.Map(document.getElementById('map'), {
-            zoom: 6,
-            center: center,
-            styles: mapStyles,
-            mapTypeControl: false,
-            streetViewControl: false
-        });
-
-        directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer({
-            map: map,
-            suppressMarkers: true,
-            polylineOptions: {
-                strokeColor: '#ff6b00',
-                strokeWeight: 5,
-                strokeOpacity: 0.8
-            },
-            provideRouteAlternatives: true
-        });
-
-        map.addListener('click', function(event) {
-            addWaypoint(event.latLng);
-        });
-    }
-
-    function setupDisplayMap() {
-        const center = { lat: 48.8566, lng: 2.3522 };
-
-        displayMap = new google.maps.Map(document.getElementById('displayMap'), {
-            zoom: 6,
-            center: center,
-            styles: mapStyles,
-            mapTypeControl: false,
-            streetViewControl: false
-        });
-
-        displayDirectionsService = new google.maps.DirectionsService();
-        displayDirectionsRenderer = new google.maps.DirectionsRenderer({
-            map: displayMap,
-            suppressMarkers: true,
-            polylineOptions: {
-                strokeColor: '#ff6b00',
-                strokeWeight: 5,
-                strokeOpacity: 0.8
-            }
-        });
-    }
-
-    function addWaypoint(location) {
-        const position = {
-            lat: location.lat(),
-            lng: location.lng()
-        };
-
-        const marker = new google.maps.Marker({
-            position: position,
-            map: map,
-            label: {
-                text: String(markers.length + 1),
-                color: 'white',
-                fontWeight: 'bold'
-            },
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 12,
-                fillColor: markers.length === 0 ? '#4caf50' : '#ff6b00',
-                fillOpacity: 1,
-                strokeColor: '#fff',
-                strokeWeight: 2
-            }
-        });
-
-        markers.push(marker);
-
-        const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ location: position }, function(results, status) {
-            if (status === 'OK' && results[0]) {
-                const waypointData = {
-                    name: results[0].formatted_address,
-                    latitude: position.lat,
-                    longitude: position.lng,
-                    waypoint_type: markers.length === 1 ? 'start' : 'waypoint',
-                    description: '',
-                    pause_duration: null,
-                    pause_reason: '',
-                    has_gas_station: false,
-                    has_restaurant: false,
-                    has_toilets: false,
-                    has_parking: false,
-                    has_hotel: false
-                };
-
-                waypoints.push(waypointData);
-                updateWaypointsList();
-
-                if (waypoints.length >= 2) {
-                    calculateRouteWithAlternatives();
-                }
-
-                editWaypoint(waypoints.length - 1);
-            }
-        });
-    }
-
-    function removeWaypoint(index) {
-        markers[index].setMap(null);
-        markers.splice(index, 1);
-        waypoints.splice(index, 1);
-
-        markers.forEach((marker, i) => {
-            marker.setLabel({
-                text: String(i + 1),
-                color: 'white',
-                fontWeight: 'bold'
-            });
-
-            marker.setIcon({
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 12,
-                fillColor: i === 0 ? '#4caf50' : '#ff6b00',
-                fillOpacity: 1,
-                strokeColor: '#fff',
-                strokeWeight: 2
-            });
-        });
-
-        updateWaypointsList();
-
-        if (waypoints.length >= 2) {
-            calculateRouteWithAlternatives();
-        } else {
-            directionsRenderer.setMap(null);
-            directionsRenderer.setMap(map);
-            hideRouteSelector();
-            removeMotorcycleMarker();
-        }
-    }
-
-    function clearWaypoints() {
-        if (confirm('Do you want to clear all waypoints?')) {
-            markers.forEach(marker => marker.setMap(null));
-            markers = [];
-            waypoints = [];
-            alternativeRoutes = [];
-            updateWaypointsList();
-            directionsRenderer.setMap(null);
-            directionsRenderer.setMap(map);
-            hideRouteSelector();
-            removeMotorcycleMarker();
-        }
-    }
-
-    function removeMotorcycleMarker() {
-        if (motorcycleMarker) {
-            motorcycleMarker.setMap(null);
-            motorcycleMarker = null;
-        }
-        animationPath = [];
-        stopMotorcycleAnimation();
-
-        const controlsDiv = document.getElementById('animationControls');
-        if (controlsDiv) {
-            controlsDiv.remove();
-        }
-    }
-
-    function createMotorcycleMarker(position, rotation = 0) {
-        if (motorcycleMarker) {
-            motorcycleMarker.setMap(null);
-        }
-
-        const icon = {
-            ...motorcycleIcon,
-            rotation: rotation
-        };
-
-        motorcycleMarker = new google.maps.Marker({
-            position: position,
-            map: map,
-            icon: icon,
-            title: '🏍️ DabApp Motorcycle',
-            zIndex: 1000
-        });
-
-        return motorcycleMarker;
-    }
-
-    function placeMotorcycleIcons(route) {
-        removeMotorcycleMarker();
-
-        const path = route.overview_path;
-
-        if (path.length === 0) return;
-
-        const startPosition = path[0];
-
-        let heading = 0;
-        if (path.length > 1) {
-            heading = google.maps.geometry.spherical.computeHeading(path[0], path[1]);
-        }
-
-        createMotorcycleMarker(startPosition, heading);
-
-        animationPath = path;
-
-        addAnimationControls();
-    }
-
-    function addAnimationControls() {
-        let controlsDiv = document.getElementById('animationControls');
-
-        if (!controlsDiv) {
-            controlsDiv = document.createElement('div');
-            controlsDiv.id = 'animationControls';
-            controlsDiv.style.cssText = 'background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%); padding: 20px; border-radius: 8px; margin-top: 15px; border: 3px solid #ff6b00; box-shadow: 0 5px 15px rgba(255, 107, 0, 0.3);';
-
-            const waypointsSection = document.querySelector('.section:nth-of-type(3)');
-            const routeSelector = document.getElementById('routeSelector');
-            if (routeSelector) {
-                routeSelector.after(controlsDiv);
-            } else {
-                waypointsSection.appendChild(controlsDiv);
-            }
-        }
-
-        controlsDiv.innerHTML = `
-            <h3 style="color: #ff6b00; margin-bottom: 15px; text-align: center; font-size: 18px;">
-                🏍️ Motorcycle Animation
-            </h3>
-            <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-                <button class="btn" onclick="animateMotorcycle()" style="margin: 0;">
-                    ▶️ Start
-                </button>
-                <button class="btn btn-secondary" onclick="pauseMotorcycleAnimation()" style="margin: 0;">
-                    ⏸️ Pause
-                </button>
-                <button class="btn btn-secondary" onclick="resetMotorcycle()" style="margin: 0;">
-                    🔄 Reset
-                </button>
-            </div>
-            <div id="animationProgress" style="margin-top: 15px; text-align: center; color: #fff; font-size: 14px;">
-                <p>Ready to go! 🏁</p>
-            </div>
-        `;
-    }
-
-    function animateMotorcycle() {
-        if (animationPath.length === 0) {
-            alert('⚠️ No route selected!');
-            return;
-        }
-
-        if (animationInterval) {
-            clearInterval(animationInterval);
-        }
-
-        if (currentPathIndex >= animationPath.length - 1) {
-            currentPathIndex = 0;
-        }
-
-        const progressDiv = document.getElementById('animationProgress');
-        if (progressDiv) {
-            progressDiv.innerHTML = '<p style="color: #4caf50;">🏍️ On the road... <span id="progressPercent">0%</span></p>';
-        }
-
-        animationInterval = setInterval(() => {
-            if (currentPathIndex >= animationPath.length - 1) {
-                clearInterval(animationInterval);
-                if (progressDiv) {
-                    progressDiv.innerHTML = '<p style="color: #4caf50; font-weight: bold;">🏁 Arrived! Journey completed!</p>';
-                }
-                return;
-            }
-
-            const currentPoint = animationPath[currentPathIndex];
-            const nextPoint = animationPath[currentPathIndex + 1];
-
-            const heading = google.maps.geometry.spherical.computeHeading(currentPoint, nextPoint);
-
-            motorcycleMarker.setPosition(nextPoint);
-
-            const icon = {
-                ...motorcycleIcon,
-                rotation: heading
-            };
-            motorcycleMarker.setIcon(icon);
-
-            map.panTo(nextPoint);
-
-            currentPathIndex++;
-
-            const percent = Math.round((currentPathIndex / animationPath.length) * 100);
-            const percentSpan = document.getElementById('progressPercent');
-            if (percentSpan) {
-                percentSpan.textContent = percent + '%';
-            }
-        }, 50);
-    }
-
-    function pauseMotorcycleAnimation() {
-        if (animationInterval) {
-            clearInterval(animationInterval);
-            animationInterval = null;
-
-            const progressDiv = document.getElementById('animationProgress');
-            if (progressDiv) {
-                progressDiv.innerHTML = '<p style="color: #ffa726;">⏸️ Paused</p>';
-            }
-        }
-    }
-
-    function stopMotorcycleAnimation() {
-        if (animationInterval) {
-            clearInterval(animationInterval);
-            animationInterval = null;
-        }
-    }
-
-    function resetMotorcycle() {
-        stopMotorcycleAnimation();
-
-        if (animationPath.length > 0) {
-            currentPathIndex = 0;
-            const startPosition = animationPath[0];
-
-            let heading = 0;
-            if (animationPath.length > 1) {
-                heading = google.maps.geometry.spherical.computeHeading(animationPath[0], animationPath[1]);
-            }
-
-            motorcycleMarker.setPosition(startPosition);
-
-            const icon = {
-                ...motorcycleIcon,
-                rotation: heading
-            };
-            motorcycleMarker.setIcon(icon);
-
-            map.panTo(startPosition);
-            map.setZoom(14);
-
-            const progressDiv = document.getElementById('animationProgress');
-            if (progressDiv) {
-                progressDiv.innerHTML = '<p>Ready to go! 🏁</p>';
-            }
-        }
-    }
-
-    function calculateRouteWithAlternatives() {
-        if (waypoints.length < 2) return;
-
-        const origin = new google.maps.LatLng(waypoints[0].latitude, waypoints[0].longitude);
-        const destination = new google.maps.LatLng(
-            waypoints[waypoints.length - 1].latitude,
-            waypoints[waypoints.length - 1].longitude
-        );
-
-        const waypointsForDirections = waypoints.slice(1, -1).map(wp => ({
-            location: new google.maps.LatLng(wp.latitude, wp.longitude),
-            stopover: true
-        }));
-
-        directionsService.route({
-            origin: origin,
-            destination: destination,
-            waypoints: waypointsForDirections,
-            travelMode: google.maps.TravelMode.DRIVING,
-            provideRouteAlternatives: true
-        }, function(result, status) {
-            if (status === 'OK') {
-                alternativeRoutes = result.routes;
-                selectedRouteIndex = 0;
-
-                displaySelectedRoute();
-                showRouteSelector();
-                placeMotorcycleIcons(alternativeRoutes[selectedRouteIndex]);
-            }
-        });
-    }
-
-    function displaySelectedRoute() {
-        directionsRenderer.setDirections({
-            routes: [alternativeRoutes[selectedRouteIndex]],
-            request: {
-                origin: alternativeRoutes[selectedRouteIndex].legs[0].start_location,
-                destination: alternativeRoutes[selectedRouteIndex].legs[alternativeRoutes[selectedRouteIndex].legs.length - 1].end_location,
-                travelMode: google.maps.TravelMode.DRIVING
-            }
-        });
-
-        updateRouteInfo();
-        placeMotorcycleIcons(alternativeRoutes[selectedRouteIndex]);
-    }
-
-    function showRouteSelector() {
-        let selectorDiv = document.getElementById('routeSelector');
-
-        if (!selectorDiv) {
-            selectorDiv = document.createElement('div');
-            selectorDiv.id = 'routeSelector';
-            selectorDiv.style.cssText = 'background: #1a1a1a; padding: 20px; border-radius: 8px; margin-top: 15px; border: 2px solid #ff6b00;';
-
-            const waypointsSection = document.querySelector('.section:nth-of-type(3)');
-            waypointsSection.appendChild(selectorDiv);
-        }
-
-        let html = '<h3 style="color: #ff6b00; margin-bottom: 15px;">🛣️ Available Routes (' + alternativeRoutes.length + ')</h3>';
-
-        alternativeRoutes.forEach((route, index) => {
-            const leg = route.legs[0];
-            const distance = leg.distance.text;
-            const duration = leg.duration.text;
-            const isSelected = index === selectedRouteIndex;
-
-            html += `
-                <div onclick="selectRoute(${index})" style="
-                    background: ${isSelected ? '#ff6b00' : '#2c2c2c'};
-                    padding: 15px;
-                    margin-bottom: 10px;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    border: 2px solid ${isSelected ? '#fff' : '#444'};
-                    transition: all 0.3s;
-                ">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h4 style="color: ${isSelected ? '#fff' : '#ff6b00'}; margin-bottom: 5px;">
-                                ${index === 0 ? '🏆 Recommended Route' : '📍 Alternative Route ' + index}
-                            </h4>
-                            <p style="color: ${isSelected ? '#fff' : '#ccc'}; font-size: 13px; margin: 5px 0;">
-                                📏 Distance: <strong>${distance}</strong>
-                            </p>
-                            <p style="color: ${isSelected ? '#fff' : '#ccc'}; font-size: 13px; margin: 5px 0;">
-                                ⏱️ Duration: <strong>${duration}</strong>
-                            </p>
-                            ${route.summary ? `<p style="color: ${isSelected ? '#fff' : '#999'}; font-size: 12px; margin-top: 5px;">Via: ${route.summary}</p>` : ''}
-                        </div>
-                        <div style="font-size: 24px;">
-                            ${isSelected ? '✅' : '⚪'}
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-
-        selectorDiv.innerHTML = html;
-    }
-
-    function selectRoute(index) {
-        selectedRouteIndex = index;
-        displaySelectedRoute();
-        showRouteSelector();
-    }
-
-    function hideRouteSelector() {
-        const selectorDiv = document.getElementById('routeSelector');
-        if (selectorDiv) {
-            selectorDiv.remove();
-        }
-
-        const infoDiv = document.getElementById('selectedRouteInfo');
-        if (infoDiv) {
-            infoDiv.remove();
-        }
-    }
-
-    function updateRouteInfo() {
-        const route = alternativeRoutes[selectedRouteIndex];
-        const leg = route.legs[0];
-
-        let infoDiv = document.getElementById('selectedRouteInfo');
-
-        if (!infoDiv) {
-            infoDiv = document.createElement('div');
-            infoDiv.id = 'selectedRouteInfo';
-            infoDiv.style.cssText = 'background: #4caf50; padding: 15px; border-radius: 5px; margin-top: 15px; color: #fff;';
-
-            const waypointsSection = document.querySelector('.section:nth-of-type(3)');
-            waypointsSection.appendChild(infoDiv);
-        }
-
-        infoDiv.innerHTML = `
-            <h3 style="margin-bottom: 10px; font-size: 16px;">✅ Selected Route</h3>
-            <p style="margin: 5px 0;"><strong>Total distance:</strong> ${leg.distance.text}</p>
-            <p style="margin: 5px 0;"><strong>Estimated duration:</strong> ${leg.duration.text}</p>
-            ${route.summary ? `<p style="margin: 5px 0;"><strong>Route:</strong> ${route.summary}</p>` : ''}
-        `;
-    }
-
-    function updateWaypointsList() {
-        const list = document.getElementById('waypointsList');
-        list.innerHTML = '';
-
-        waypoints.forEach((wp, index) => {
-            const services = [];
-            if (wp.has_gas_station) services.push('⛽');
-            if (wp.has_restaurant) services.push('🍽️');
-            if (wp.has_toilets) services.push('🚻');
-            if (wp.has_parking) services.push('🅿️');
-            if (wp.has_hotel) services.push('🏨');
-
-            const typeIcons = {
-                'start': '🏁',
-                'waypoint': '📍',
-                'poi': '🎯',
-                'rest_stop': '☕',
-                'gas_station': '⛽',
-                'viewpoint': '🌄',
-                'end': '🏁'
-            };
-
-            const card = document.createElement('div');
-            card.className = 'waypoint-card';
-            card.innerHTML = `
-                <button class="remove-btn" onclick="removeWaypoint(${index})">✕ Remove</button>
-                <h4>${typeIcons[wp.waypoint_type] || '📍'} Point ${index + 1}: ${wp.name}</h4>
-                <p class="location">Lat: ${wp.latitude.toFixed(6)}, Lng: ${wp.longitude.toFixed(6)}</p>
-
-                ${wp.description ? `<p style="color: #ccc; margin-bottom: 10px;">📝 ${wp.description}</p>` : ''}
-
-                ${wp.pause_duration ? `
-                    <p style="color: #ff6b00; margin-bottom: 5px;">
-                        ⏱️ Pause: ${wp.pause_duration} minutes
-                        ${wp.pause_reason ? `- ${wp.pause_reason}` : ''}
-                    </p>
-                ` : ''}
-
-                ${services.length > 0 ? `<p style="font-size: 18px; margin-top: 10px;">${services.join(' ')}</p>` : ''}
-
-                <button class="btn btn-secondary" style="margin-top: 10px;" onclick="editWaypoint(${index})">
-                    ✏️ Edit Details
-                </button>
-            `;
-            list.appendChild(card);
-        });
-
-        document.getElementById('waypointCount').textContent = waypoints.length;
-    }
-
-    function editWaypoint(index) {
-        const wp = waypoints[index];
-
-        document.getElementById('editWaypointIndex').value = index;
-        document.getElementById('waypointName').value = wp.name;
-        document.getElementById('waypointType').value = wp.waypoint_type;
-        document.getElementById('waypointDescription').value = wp.description || '';
-        document.getElementById('waypointPauseDuration').value = wp.pause_duration || '';
-        document.getElementById('waypointPauseReason').value = wp.pause_reason || '';
-        document.getElementById('hasGasStation').checked = wp.has_gas_station || false;
-        document.getElementById('hasRestaurant').checked = wp.has_restaurant || false;
-        document.getElementById('hasToilets').checked = wp.has_toilets || false;
-        document.getElementById('hasParking').checked = wp.has_parking || false;
-        document.getElementById('hasHotel').checked = wp.has_hotel || false;
-
-        document.getElementById('waypointModal').style.display = 'block';
-    }
-
-    function closeWaypointModal() {
-        document.getElementById('waypointModal').style.display = 'none';
-    }
-
-    function saveWaypoint() {
-        const index = parseInt(document.getElementById('editWaypointIndex').value);
-
-        waypoints[index].name = document.getElementById('waypointName').value;
-        waypoints[index].waypoint_type = document.getElementById('waypointType').value;
-        waypoints[index].description = document.getElementById('waypointDescription').value;
-        waypoints[index].pause_duration = document.getElementById('waypointPauseDuration').value || null;
-        waypoints[index].pause_reason = document.getElementById('waypointPauseReason').value;
-        waypoints[index].has_gas_station = document.getElementById('hasGasStation').checked;
-        waypoints[index].has_restaurant = document.getElementById('hasRestaurant').checked;
-        waypoints[index].has_toilets = document.getElementById('hasToilets').checked;
-        waypoints[index].has_parking = document.getElementById('hasParking').checked;
-        waypoints[index].has_hotel = document.getElementById('hasHotel').checked;
-
-        updateWaypointsList();
-        closeWaypointModal();
-
-        const marker = markers[index];
-        let color = '#ff6b00';
-
-        if (waypoints[index].waypoint_type === 'start' || waypoints[index].waypoint_type === 'end') {
-            color = '#4caf50';
-        } else if (waypoints[index].waypoint_type === 'gas_station') {
-            color = '#2196f3';
-        } else if (waypoints[index].waypoint_type === 'rest_stop') {
-            color = '#9c27b0';
-        } else if (waypoints[index].waypoint_type === 'viewpoint') {
-            color = '#ffc107';
-        }
-
-        marker.setIcon({
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 12,
-            fillColor: color,
-            fillOpacity: 1,
-            strokeColor: '#fff',
-            strokeWeight: 2
-        });
-    }
-
-    async function createRoute() {
-        if (!authToken) {
-            alert('⚠️ Please login first!');
-            return;
-        }
-
-        const btn = document.getElementById('createBtn');
         const responseBox = document.getElementById('createResponse');
 
-        if (waypoints.length < 2) {
-            responseBox.innerHTML = '<pre class="error">❌ Error: You must select at least 2 points on the map!</pre>';
+        const name = document.getElementById('poiName').value;
+        const type_id = document.getElementById('poiType').value;
+        const latitude = document.getElementById('poiLatitude').value;
+        const longitude = document.getElementById('poiLongitude').value;
+
+        if (!name || !type_id || !latitude || !longitude) {
+            responseBox.innerHTML = '<pre class="error">❌ Please fill all required fields (Name, Type, Location)</pre>';
             return;
-        }
-
-        waypoints[waypoints.length - 1].waypoint_type = 'end';
-
-        let selectedRouteInfo = {};
-        if (alternativeRoutes.length > 0) {
-            const route = alternativeRoutes[selectedRouteIndex];
-            selectedRouteInfo = {
-                selected_route_index: selectedRouteIndex,
-                route_summary: route.summary || '',
-                total_distance_meters: route.legs[0].distance.value,
-                total_duration_seconds: route.legs[0].duration.value
-            };
         }
 
         const data = {
-            title: document.getElementById('routeTitle').value,
-            description: document.getElementById('routeDescription').value,
-            difficulty: document.getElementById('routeDifficulty').value,
-            estimated_duration: document.getElementById('estimatedDuration').value,
-            best_season: document.getElementById('bestSeason').value,
-            waypoints: waypoints,
-            route_info: selectedRouteInfo
+            name: name,
+            description: document.getElementById('poiDescription').value,
+            type_id: parseInt(type_id),
+            latitude: parseFloat(latitude),
+            longitude: parseFloat(longitude),
+            address: document.getElementById('poiAddress').value,
+            country_id: document.getElementById('poiCountryId').value ? parseInt(document.getElementById('poiCountryId').value) : null,
+            phone: document.getElementById('poiPhone').value,
+            email: document.getElementById('poiEmail').value,
+            website: document.getElementById('poiWebsite').value,
         };
 
-        btn.disabled = true;
-        btn.textContent = '⏳ Creating...';
-        responseBox.innerHTML = '<pre>Sending request...</pre>';
+        const openingHours = document.getElementById('poiOpeningHours').value;
+        if (openingHours) {
+            try {
+                data.opening_hours = JSON.parse(openingHours);
+            } catch (e) {
+                responseBox.innerHTML = '<pre class="error">❌ Invalid JSON format for opening hours</pre>';
+                return;
+            }
+        }
+
+        responseBox.innerHTML = '<pre>🔄 Creating POI...</pre>';
 
         try {
-            const response = await fetch(`${getApiUrl()}/routes`, {
+            const response = await fetch(`${getApiUrl()}/pois`, {
                 method: 'POST',
                 headers: getHeaders(),
                 body: JSON.stringify(data)
             });
 
             const result = await response.json();
-
             responseBox.innerHTML = `<pre class="${result.success ? 'success' : 'error'}">${JSON.stringify(result, null, 2)}</pre>`;
 
             if (result.success && result.data) {
-                document.getElementById('displayRouteId').value = result.data.id;
-                document.getElementById('likeRouteId').value = result.data.id;
-                document.getElementById('favRouteId').value = result.data.id;
+                document.getElementById('showPoiId').value = result.data.id;
+                document.getElementById('updatePoiId').value = result.data.id;
+                document.getElementById('deletePoiId').value = result.data.id;
+                document.getElementById('favoritePoiId').value = result.data.id;
             }
         } catch (error) {
             responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
-        } finally {
-            btn.disabled = false;
-            btn.textContent = '🚀 Create Route';
         }
     }
 
-    async function getRoutes() {
+    async function listPOIs() {
         if (!authToken) {
             alert('⚠️ Please login first!');
             return;
         }
 
         const responseBox = document.getElementById('listResponse');
-        responseBox.innerHTML = '<pre>Loading...</pre>';
+        responseBox.innerHTML = '<pre>🔄 Loading POIs...</pre>';
+
+        let url = `${getApiUrl()}/pois`;
+        const params = new URLSearchParams();
+
+        const typeId = document.getElementById('filterTypeId').value;
+        if (typeId) params.append('type_id', typeId);
+
+        if (params.toString()) url += '?' + params.toString();
 
         try {
-            const response = await fetch(`${getApiUrl()}/routes`, {
-                headers: getHeaders()
-            });
+            const response = await fetch(url, { headers: getHeaders() });
             const result = await response.json();
             responseBox.innerHTML = `<pre class="success">${JSON.stringify(result, null, 2)}</pre>`;
+
+            if (result.success && result.data && result.data.data) {
+                displayPOIsList(result.data.data);
+            }
         } catch (error) {
             responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
         }
     }
 
-    async function displayRouteOnMap() {
+    async function listNearbyPOIs() {
         if (!authToken) {
             alert('⚠️ Please login first!');
             return;
         }
 
-        const routeId = document.getElementById('displayRouteId').value;
-        const responseBox = document.getElementById('displayResponse');
+        const responseBox = document.getElementById('listResponse');
+        const latitude = document.getElementById('filterLatitude').value;
+        const longitude = document.getElementById('filterLongitude').value;
+        const radius = document.getElementById('filterRadius').value;
 
-        if (!routeId) {
-            responseBox.innerHTML = '<pre class="error">❌ Please enter a route ID</pre>';
+        if (!latitude || !longitude) {
+            responseBox.innerHTML = '<pre class="error">❌ Please enter latitude and longitude</pre>';
             return;
         }
 
-        responseBox.innerHTML = '<pre>Loading...</pre>';
+        responseBox.innerHTML = '<pre>🔄 Loading nearby POIs...</pre>';
+
+        const params = new URLSearchParams({
+            latitude: latitude,
+            longitude: longitude,
+            radius: radius || 10
+        });
+
+        const typeId = document.getElementById('filterTypeId').value;
+        if (typeId) params.append('type_id', typeId);
 
         try {
-            const response = await fetch(`${getApiUrl()}/routes/${routeId}`, {
+            const response = await fetch(`${getApiUrl()}/pois?${params.toString()}`, {
                 headers: getHeaders()
             });
             const result = await response.json();
-
             responseBox.innerHTML = `<pre class="success">${JSON.stringify(result, null, 2)}</pre>`;
 
-            if (result.success && result.data && result.data.waypoints) {
-                displayRouteOnMapFromData(result.data);
+            if (result.success && result.data && result.data.data) {
+                displayPOIsList(result.data.data);
             }
         } catch (error) {
             responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
         }
     }
 
-    function displayRouteOnMapFromData(routeData) {
-        displayMarkers.forEach(marker => marker.setMap(null));
-        displayMarkers = [];
+    function displayPOIsList(pois) {
+        const listDiv = document.getElementById('poisList');
 
-        const waypoints = routeData.waypoints;
+        if (!pois || pois.length === 0) {
+            listDiv.innerHTML = '<p style="color: #999;">No POIs found</p>';
+            return;
+        }
 
-        if (waypoints.length < 2) return;
+        let html = '<h3 style="color: #ff6b00; margin-bottom: 15px;">Found ' + pois.length + ' POI(s)</h3>';
 
-        waypoints.forEach((wp, index) => {
-            const position = {
-                lat: parseFloat(wp.latitude),
-                lng: parseFloat(wp.longitude)
-            };
+        pois.forEach(poi => {
+            const typeName = poi.type ? poi.type.name : 'Unknown';
+            const verified = poi.is_verified ? '✅ Verified' : '⚠️ Not Verified';
 
-            let color = '#ff6b00';
-            if (wp.waypoint_type === 'start' || wp.waypoint_type === 'end') {
-                color = '#4caf50';
-            } else if (wp.waypoint_type === 'gas_station') {
-                color = '#2196f3';
-            } else if (wp.waypoint_type === 'rest_stop') {
-                color = '#9c27b0';
-            } else if (wp.waypoint_type === 'viewpoint') {
-                color = '#ffc107';
-            }
-
-            const marker = new google.maps.Marker({
-                position: position,
-                map: displayMap,
-                label: {
-                    text: String(index + 1),
-                    color: 'white',
-                    fontWeight: 'bold'
-                },
-                icon: {
-                    path: google.maps.SymbolPath.CIRCLE,
-                    scale: 12,
-                    fillColor: color,
-                    fillOpacity: 1,
-                    strokeColor: '#fff',
-                    strokeWeight: 2
-                }
-            });
-
-            const infoContent = `
-                <div style="color: #000; padding: 10px;">
-                    <h3 style="margin: 0 0 10px 0;">${wp.name}</h3>
-                    <p><strong>Type:</strong> ${wp.waypoint_type}</p>
-                    ${wp.description ? `<p><strong>Description:</strong> ${wp.description}</p>` : ''}
-                    ${wp.pause_duration ? `<p><strong>Pause:</strong> ${wp.pause_duration} min</p>` : ''}
-                    ${wp.pause_reason ? `<p><strong>Reason:</strong> ${wp.pause_reason}</p>` : ''}
+            html += `
+                <div class="poi-card" onclick="showPOIById(${poi.id})">
+                    <h4>${poi.name}</h4>
+                    <div style="margin-bottom: 10px;">
+                        <span class="poi-type-badge">${typeName}</span>
+                        <span style="color: ${poi.is_verified ? '#4caf50' : '#ff9800'}; font-size: 12px;">${verified}</span>
+                    </div>
+                    <p class="description">${poi.description || 'No description'}</p>
+                    <p class="location">📍 ${poi.address || 'No address'}</p>
+                    <p class="location">🌍 Lat: ${poi.latitude}, Lng: ${poi.longitude}</p>
+                    ${poi.phone ? `<p style="color: #ccc; font-size: 13px;">📞 ${poi.phone}</p>` : ''}
+                    ${poi.views_count ? `<p style="color: #999; font-size: 12px; margin-top: 5px;">👁️ ${poi.views_count} views</p>` : ''}
                 </div>
             `;
-
-            const infowindow = new google.maps.InfoWindow({
-                content: infoContent
-            });
-
-            marker.addListener('click', function() {
-                infowindow.open(displayMap, marker);
-            });
-
-            displayMarkers.push(marker);
         });
 
-        const origin = new google.maps.LatLng(
-            parseFloat(waypoints[0].latitude),
-            parseFloat(waypoints[0].longitude)
-        );
-
-        const destination = new google.maps.LatLng(
-            parseFloat(waypoints[waypoints.length - 1].latitude),
-            parseFloat(waypoints[waypoints.length - 1].longitude)
-        );
-
-        const waypointsForDirections = waypoints.slice(1, -1).map(wp => ({
-            location: new google.maps.LatLng(parseFloat(wp.latitude), parseFloat(wp.longitude)),
-            stopover: true
-        }));
-
-        displayDirectionsService.route({
-            origin: origin,
-            destination: destination,
-            waypoints: waypointsForDirections,
-            travelMode: google.maps.TravelMode.DRIVING
-        }, function(result, status) {
-            if (status === 'OK') {
-                displayDirectionsRenderer.setDirections(result);
-            }
-        });
+        listDiv.innerHTML = html;
     }
 
-    async function toggleLike() {
+    function showPOIById(id) {
+        document.getElementById('showPoiId').value = id;
+        showPOI();
+        window.scrollTo({ top: document.getElementById('showSection').offsetTop - 20, behavior: 'smooth' });
+    }
+
+    async function showPOI() {
         if (!authToken) {
             alert('⚠️ Please login first!');
             return;
         }
 
-        const routeId = document.getElementById('likeRouteId').value;
-        const responseBox = document.getElementById('likeResponse');
+        const poiId = document.getElementById('showPoiId').value;
+        const responseBox = document.getElementById('showResponse');
 
-        if (!routeId) {
-            responseBox.innerHTML = '<pre class="error">❌ Please enter a route ID</pre>';
+        if (!poiId) {
+            responseBox.innerHTML = '<pre class="error">❌ Please enter a POI ID</pre>';
             return;
         }
 
-        responseBox.innerHTML = '<pre>Sending...</pre>';
+        responseBox.innerHTML = '<pre>🔄 Loading POI...</pre>';
 
         try {
-            const response = await fetch(`${getApiUrl()}/routes/${routeId}/like`, {
-                method: 'POST',
+            const response = await fetch(`${getApiUrl()}/pois/${poiId}`, {
                 headers: getHeaders()
             });
             const result = await response.json();
-            responseBox.innerHTML = `<pre class="success">${JSON.stringify(result, null, 2)}</pre>`;
+            responseBox.innerHTML = `<pre class="${result.success ? 'success' : 'error'}">${JSON.stringify(result, null, 2)}</pre>`;
+        } catch (error) {
+            responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
+        }
+    }
+
+    async function displayPOIOnMap() {
+        if (!authToken) {
+            alert('⚠️ Please login first!');
+            return;
+        }
+
+        const poiId = document.getElementById('showPoiId').value;
+
+        if (!poiId) {
+            alert('❌ Please enter a POI ID');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${getApiUrl()}/pois/${poiId}`, {
+                headers: getHeaders()
+            });
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                const poi = result.data;
+                const position = {
+                    lat: parseFloat(poi.latitude),
+                    lng: parseFloat(poi.longitude)
+                };
+
+                if (displayMarker) displayMarker.setMap(null);
+
+                displayMarker = new google.maps.Marker({
+                    position: position,
+                    map: displayMap,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 15,
+                        fillColor: '#ff6b00',
+                        fillOpacity: 1,
+                        strokeColor: '#fff',
+                        strokeWeight: 3
+                    }
+                });
+
+                const infoContent = `
+                    <div style="color: #000; padding: 10px; max-width: 300px;">
+                        <h3 style="margin: 0 0 10px 0;">${poi.name}</h3>
+                        <p><strong>Type:</strong> ${poi.type ? poi.type.name : 'N/A'}</p>
+                        <p><strong>Address:</strong> ${poi.address || 'N/A'}</p>
+                        ${poi.phone ? `<p><strong>Phone:</strong> ${poi.phone}</p>` : ''}
+                        ${poi.description ? `<p style="margin-top: 10px;">${poi.description}</p>` : ''}
+                    </div>
+                `;
+
+                const infowindow = new google.maps.InfoWindow({ content: infoContent });
+                infowindow.open(displayMap, displayMarker);
+
+                displayMap.setCenter(position);
+                displayMap.setZoom(15);
+            }
+        } catch (error) {
+            alert('❌ Error: ' + error.message);
+        }
+    }
+
+    async function loadPOIForUpdate() {
+        if (!authToken) {
+            alert('⚠️ Please login first!');
+            return;
+        }
+
+        const poiId = document.getElementById('updatePoiId').value;
+        const responseBox = document.getElementById('updateResponse');
+
+        if (!poiId) {
+            responseBox.innerHTML = '<pre class="error">❌ Please enter a POI ID</pre>';
+            return;
+        }
+
+        responseBox.innerHTML = '<pre>🔄 Loading POI data...</pre>';
+
+        try {
+            const response = await fetch(`${getApiUrl()}/pois/${poiId}`, {
+                headers: getHeaders()
+            });
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                const poi = result.data;
+                document.getElementById('updatePoiName').value = poi.name;
+                document.getElementById('updatePoiType').value = poi.type_id;
+                document.getElementById('updatePoiDescription').value = poi.description || '';
+                document.getElementById('updatePoiPhone').value = poi.phone || '';
+                document.getElementById('updatePoiEmail').value = poi.email || '';
+
+                document.getElementById('updateForm').style.display = 'block';
+                responseBox.innerHTML = '<pre class="success">✅ POI data loaded successfully</pre>';
+            } else {
+                responseBox.innerHTML = `<pre class="error">${JSON.stringify(result, null, 2)}</pre>`;
+            }
+        } catch (error) {
+            responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
+        }
+    }
+
+    async function updatePOI() {
+        if (!authToken) {
+            alert('⚠️ Please login first!');
+            return;
+        }
+
+        const poiId = document.getElementById('updatePoiId').value;
+        const responseBox = document.getElementById('updateResponse');
+
+        if (!poiId) {
+            responseBox.innerHTML = '<pre class="error">❌ Please enter a POI ID</pre>';
+            return;
+        }
+
+        const data = {
+            name: document.getElementById('updatePoiName').value,
+            type_id: parseInt(document.getElementById('updatePoiType').value),
+            description: document.getElementById('updatePoiDescription').value,
+            phone: document.getElementById('updatePoiPhone').value,
+            email: document.getElementById('updatePoiEmail').value,
+        };
+
+        responseBox.innerHTML = '<pre>🔄 Updating POI...</pre>';
+
+        try {
+            const response = await fetch(`${getApiUrl()}/pois/${poiId}`, {
+                method: 'PUT',
+                headers: getHeaders(),
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            responseBox.innerHTML = `<pre class="${result.success ? 'success' : 'error'}">${JSON.stringify(result, null, 2)}</pre>`;
+        } catch (error) {
+            responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
+        }
+    }
+
+    async function deletePOI() {
+        if (!authToken) {
+            alert('⚠️ Please login first!');
+            return;
+        }
+
+        const poiId = document.getElementById('deletePoiId').value;
+        const responseBox = document.getElementById('deleteResponse');
+
+        if (!poiId) {
+            responseBox.innerHTML = '<pre class="error">❌ Please enter a POI ID</pre>';
+            return;
+        }
+
+        if (!confirm('⚠️ Are you sure you want to delete this POI?')) {
+            return;
+        }
+
+        responseBox.innerHTML = '<pre>🔄 Deleting POI...</pre>';
+
+        try {
+            const response = await fetch(`${getApiUrl()}/pois/${poiId}`, {
+                method: 'DELETE',
+                headers: getHeaders()
+            });
+            const result = await response.json();
+            responseBox.innerHTML = `<pre class="${result.success ? 'success' : 'error'}">${JSON.stringify(result, null, 2)}</pre>`;
         } catch (error) {
             responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
         }
@@ -1702,54 +1557,90 @@
             return;
         }
 
-        const routeId = document.getElementById('favRouteId').value;
-        const responseBox = document.getElementById('favResponse');
+        const poiId = document.getElementById('favoritePoiId').value;
+        const responseBox = document.getElementById('favoriteResponse');
 
-        if (!routeId) {
-            responseBox.innerHTML = '<pre class="error">❌ Please enter a route ID</pre>';
+        if (!poiId) {
+            responseBox.innerHTML = '<pre class="error">❌ Please enter a POI ID</pre>';
             return;
         }
 
-        responseBox.innerHTML = '<pre>Sending...</pre>';
+        responseBox.innerHTML = '<pre>🔄 Toggling favorite...</pre>';
 
         try {
-            const response = await fetch(`${getApiUrl()}/routes/${routeId}/favorite`, {
+            const response = await fetch(`${getApiUrl()}/pois/${poiId}/favorite`, {
                 method: 'POST',
                 headers: getHeaders()
             });
             const result = await response.json();
-            responseBox.innerHTML = `<pre class="success">${JSON.stringify(result, null, 2)}</pre>`;
+            responseBox.innerHTML = `<pre class="${result.success ? 'success' : 'error'}">${JSON.stringify(result, null, 2)}</pre>`;
         } catch (error) {
             responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
         }
     }
 
-    function openItinerary() {
+    async function getFavorites() {
         if (!authToken) {
             alert('⚠️ Please login first!');
             return;
         }
 
-        const routeId = document.getElementById('displayRouteId').value;
+        const responseBox = document.getElementById('favoritesListResponse');
+        responseBox.innerHTML = '<pre>🔄 Loading favorites...</pre>';
 
-        if (!routeId) {
-            alert('⚠️ Please enter a route ID!');
+        let url = `${getApiUrl()}/pois/favorites`;
+        const params = new URLSearchParams();
+
+        const typeId = document.getElementById('favoritesTypeId').value;
+        if (typeId) params.append('type_id', typeId);
+
+        if (params.toString()) url += '?' + params.toString();
+
+        try {
+            const response = await fetch(url, { headers: getHeaders() });
+            const result = await response.json();
+            responseBox.innerHTML = `<pre class="success">${JSON.stringify(result, null, 2)}</pre>`;
+
+            if (result.success && result.data && result.data.data) {
+                displayFavoritesList(result.data.data);
+            }
+        } catch (error) {
+            responseBox.innerHTML = `<pre class="error">❌ Error: ${error.message}</pre>`;
+        }
+    }
+
+    function displayFavoritesList(pois) {
+        const listDiv = document.getElementById('favoritesList');
+
+        if (!pois || pois.length === 0) {
+            listDiv.innerHTML = '<p style="color: #999;">No favorite POIs found</p>';
             return;
         }
 
-        // Ouvrir la page itinéraire avec le token et route_id
-        const url = `route-itinerary-with-auth.html?id=${routeId}&token=${authToken}`;
-        window.open(url, '_blank');
+        let html = '<h3 style="color: #ff6b00; margin-bottom: 15px;">⭐ ' + pois.length + ' Favorite POI(s)</h3>';
+
+        pois.forEach(poi => {
+            const typeName = poi.type ? poi.type.name : 'Unknown';
+
+            html += `
+                <div class="poi-card">
+                    <h4>⭐ ${poi.name}</h4>
+                    <div style="margin-bottom: 10px;">
+                        <span class="poi-type-badge">${typeName}</span>
+                    </div>
+                    <p class="description">${poi.description || 'No description'}</p>
+                    <p class="location">📍 ${poi.address || 'No address'}</p>
+                    <p class="location">🌍 Lat: ${poi.latitude}, Lng: ${poi.longitude}</p>
+                </div>
+            `;
+        });
+
+        listDiv.innerHTML = html;
     }
 
+    // Modal click outside to close
     window.onclick = function(event) {
-        const waypointModal = document.getElementById('waypointModal');
         const loginModal = document.getElementById('loginModal');
-
-        if (event.target === waypointModal) {
-            closeWaypointModal();
-        }
-
         if (event.target === loginModal) {
             closeLoginModal();
         }
