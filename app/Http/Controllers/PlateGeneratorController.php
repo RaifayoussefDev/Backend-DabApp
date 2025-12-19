@@ -51,9 +51,16 @@ class PlateGeneratorController extends Controller
             $country = $request->input('country');
             $format = $request->input('format', 'png');
 
-            \Log::info("🎨 PlateGenerator received request", [
+            // ✅ LOG COMPLET DES DONNÉES REÇUES
+            \Log::info("🎨 PlateGenerator COMPLETE DEBUG", [
                 'country' => $country,
-                'all_inputs' => $request->all()
+                'all_request_data' => $request->all(),
+                'top_left' => $request->input('top_left'),
+                'top_right' => $request->input('top_right'),
+                'bottom_left' => $request->input('bottom_left'),
+                'bottom_right' => $request->input('bottom_right'),
+                'category_number' => $request->input('category_number'),
+                'plate_number' => $request->input('plate_number'),
             ]);
 
             // Charger les logos
@@ -91,15 +98,30 @@ class PlateGeneratorController extends Controller
 
             // Générer le HTML selon le pays
             if ($country === 'ksa') {
+                // ✅ ENVOYER LES DEUX FORMATS (camelCase ET snake_case)
                 $viewData = [
+                    // camelCase
                     'topLeft' => $request->input('top_left'),
                     'topRight' => $request->input('top_right'),
                     'bottomLeft' => $request->input('bottom_left'),
-                    'bottomRight' => strtoupper($request->input('bottom_right')),
+                    'bottomRight' => $request->input('bottom_right'),
+
+                    // snake_case
+                    'top_left' => $request->input('top_left'),
+                    'top_right' => $request->input('top_right'),
+                    'bottom_left' => $request->input('bottom_left'),
+                    'bottom_right' => $request->input('bottom_right'),
+
                     'logoBase64' => $logoBase64,
+                    'logo_base64' => $logoBase64,
                 ];
 
-                \Log::info("🎨 KSA Plate data being sent to view", $viewData);
+                \Log::info("🎨 KSA Plate data being sent to view", [
+                    'topLeft' => $viewData['topLeft'],
+                    'topRight' => $viewData['topRight'],
+                    'bottomLeft' => $viewData['bottomLeft'],
+                    'bottomRight' => $viewData['bottomRight'],
+                ]);
 
                 $html = view('templates.plate', $viewData)->render();
                 $windowSize = [700, 500];
@@ -107,9 +129,14 @@ class PlateGeneratorController extends Controller
                 $viewData = [
                     'categoryNumber' => $request->input('category_number'),
                     'plateNumber' => $request->input('plate_number'),
+                    'category_number' => $request->input('category_number'),
+                    'plate_number' => $request->input('plate_number'),
                     'logoBase64' => $logoBase64,
+                    'logo_base64' => $logoBase64,
                     'cityNameAr' => $request->input('city_name_ar', $city->name_ar ?? 'أبو ظبي'),
                     'cityNameEn' => $request->input('city_name_en', $city->name ?? 'ABU DHABI'),
+                    'city_name_ar' => $request->input('city_name_ar', $city->name_ar ?? 'أبو ظبي'),
+                    'city_name_en' => $request->input('city_name_en', $city->name ?? 'ABU DHABI'),
                 ];
 
                 \Log::info("🎨 UAE Plate data being sent to view", $viewData);
@@ -120,9 +147,14 @@ class PlateGeneratorController extends Controller
                 $viewData = [
                     'categoryNumber' => $request->input('category_number'),
                     'plateNumber' => $request->input('plate_number'),
+                    'category_number' => $request->input('category_number'),
+                    'plate_number' => $request->input('plate_number'),
                     'motoLogoBase64' => $motoLogoBase64,
+                    'moto_logo_base64' => $motoLogoBase64,
                     'cityNameAr' => $request->input('city_name_ar', $city->name_ar ?? 'دبي'),
                     'cityNameEn' => $request->input('city_name_en', $city->name ?? 'DUBAI'),
+                    'city_name_ar' => $request->input('city_name_ar', $city->name_ar ?? 'دبي'),
+                    'city_name_en' => $request->input('city_name_en', $city->name ?? 'DUBAI'),
                 ];
 
                 \Log::info("🎨 Dubai Plate data being sent to view", $viewData);
@@ -140,6 +172,13 @@ class PlateGeneratorController extends Controller
                 mkdir(storage_path('app/public/plates'), 0755, true);
             }
 
+            \Log::info("🎨 About to generate screenshot with Browsershot", [
+                'html_length' => strlen($html),
+                'window_size' => $windowSize,
+                'file_path' => $filePath
+            ]);
+
+            // ✅ SOLUTION: Attendre que le contenu soit complètement rendu
             Browsershot::html($html)
                 ->setNodeBinary(env('NODE_BINARY_PATH', 'C:\\Program Files\\nodejs\\node.exe'))
                 ->setNpmBinary(env('NPM_BINARY_PATH', 'C:\\Program Files\\nodejs\\npm.cmd'))
@@ -147,12 +186,19 @@ class PlateGeneratorController extends Controller
                 ->deviceScaleFactor(3)
                 ->timeout(60)
                 ->noSandbox()
+                ->waitUntilNetworkIdle()  // ✅ Attendre que tout soit chargé
+                ->setDelay(2000)           // ✅ AUGMENTÉ à 2 secondes
+                ->showBackground()         // ✅ Afficher l'arrière-plan
+                ->emulateMedia('screen')   // ✅ Émuler l'affichage écran
+                ->setOption('args', ['--disable-web-security', '--font-render-hinting=none'])  // ✅ Désactiver CORS + Meilleur rendu des fonts
                 ->format($format)
                 ->save($filePath);
 
             \Log::info("✅ Plate file saved", [
                 'filename' => $filename,
-                'path' => $filePath
+                'path' => $filePath,
+                'file_exists' => file_exists($filePath),
+                'file_size' => file_exists($filePath) ? filesize($filePath) : 0
             ]);
 
             return [
@@ -164,6 +210,7 @@ class PlateGeneratorController extends Controller
             ];
         } catch (\Exception $e) {
             \Log::error('❌ Plate generation error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
             return null;
         }
     }

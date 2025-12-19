@@ -18,7 +18,8 @@
             align-items: center;
             min-height: 100vh;
             background: #e0e0e0;
-            font-family: 'Arial Black', 'Helvetica', sans-serif;
+            /* ✅ POLICES SYSTEM GARANTIES */
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
         }
 
         .plate {
@@ -70,7 +71,7 @@
             border-right: 4px solid #000;
         }
 
-        /* Textes */
+        /* Textes - ✅ POLICES BOLD GARANTIES */
         .arabic-number {
             font-size: 70px;
             font-weight: 900;
@@ -78,6 +79,8 @@
             direction: rtl;
             line-height: 1;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            /* ✅ FALLBACK POUR ARABE */
+            font-family: 'Traditional Arabic', 'Arabic Typesetting', 'Arial', sans-serif;
         }
 
         .latin-number {
@@ -86,6 +89,7 @@
             color: #000;
             line-height: 1;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            font-family: 'Helvetica Neue', 'Arial', sans-serif;
         }
 
         .latin-letters {
@@ -95,9 +99,10 @@
             line-height: 1;
             letter-spacing: 8px;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            font-family: 'Helvetica Neue', 'Arial', sans-serif;
         }
 
-        /* Section bleue à droite - COULEUR UNIE */
+        /* Section bleue à droite */
         .blue-section {
             width: 80px;
             background: #eff0eb;
@@ -116,14 +121,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-TOP: 20px;
+            margin-top: 20px;
         }
 
         .logo {
             width: 100%;
             height: 100%;
             object-fit: contain;
-            /* filter: brightness(0) invert(1); */
         }
 
         /* Texte السعودية */
@@ -135,14 +139,7 @@
             text-align: center;
             line-height: 1.2;
             margin-bottom: 5px;
-        }
-
-        /* Ligne blanche horizontale */
-        .white-line {
-            width: 60px;
-            height: 2px;
-            background: white;
-            margin: 5px 0;
+            font-family: 'Traditional Arabic', 'Arabic Typesetting', 'Arial', sans-serif;
         }
 
         /* K S A lettres */
@@ -158,23 +155,11 @@
 
         .ksa-letter {
             font-size: 30px;
-            /* font-weight: 100; */
+            font-weight: bold;
             color: black;
             line-height: 1;
             text-align: center;
-        }
-
-        /* Triangle noir en bas */
-        .triangle {
-            width: 0;
-            height: 0;
-            border-left: 40px solid transparent;
-            border-right: 40px solid transparent;
-            border-bottom: 18px solid #000;
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
+            font-family: 'Helvetica Neue', 'Arial', sans-serif;
         }
     </style>
 </head>
@@ -186,20 +171,20 @@
             <!-- Ligne du haut -->
             <div class="top-row">
                 <div class="cell cell-top-left">
-                    <div class="arabic-number">{{ $topLeft }}</div>
+                    <div class="arabic-number">{{ $topLeft ?? $top_left ?? '' }}</div>
                 </div>
                 <div class="cell">
-                    <div class="arabic-number">{{ $topRight }}</div>
+                    <div class="arabic-number">{{ $topRight ?? $top_right ?? '' }}</div>
                 </div>
             </div>
 
             <!-- Ligne du bas -->
             <div class="bottom-row">
                 <div class="cell cell-bottom-left">
-                    <div class="latin-number">{{ $bottomLeft }}</div>
+                    <div class="latin-number">{{ $bottomLeft ?? $bottom_left ?? '' }}</div>
                 </div>
                 <div class="cell">
-                    <div class="latin-letters">{{ $bottomRight }}</div>
+                    <div class="latin-letters">{{ $bottomRight ?? $bottom_right ?? '' }}</div>
                 </div>
             </div>
         </div>
@@ -207,20 +192,16 @@
         <!-- Section bleue -->
         <div class="blue-section">
             <div class="logo-container">
-                <img src="{{ $logoBase64 }}" alt="KSA Logo" class="logo">
+                <img src="{{ $logoBase64 ?? $logo_base64 ?? '' }}" alt="KSA Logo" class="logo">
             </div>
 
             <div class="saudi-text">السعودية</div>
-
-            <!-- <div class="white-line"></div> -->
 
             <div class="ksa-container">
                 <div class="ksa-letter">K</div>
                 <div class="ksa-letter">S</div>
                 <div class="ksa-letter">A</div>
             </div>
-
-            <!-- <div class="triangle"></div> -->
         </div>
     </div>
 </body>
