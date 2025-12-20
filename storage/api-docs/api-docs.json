@@ -3883,6 +3883,375 @@
                 ]
             }
         },
+        "/api/notifications/send": {
+            "post": {
+                "tags": [
+                    "Email Notifications"
+                ],
+                "summary": "Envoyer une notification",
+                "description": "Envoie une notification par email à un utilisateur",
+                "operationId": "da2d925719ced28d688cc4a63be9bd39",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id",
+                                    "type",
+                                    "data"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "example": "listing_approved"
+                                    },
+                                    "data": {
+                                        "type": "object",
+                                        "example": {
+                                            "listing_title": "Yamaha R1",
+                                            "listing_id": 123
+                                        }
+                                    },
+                                    "action_url": {
+                                        "type": "string",
+                                        "example": "https://dabapp.ma/listings/123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Notification envoyée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/send-custom": {
+            "post": {
+                "tags": [
+                    "Email Notifications"
+                ],
+                "summary": "Envoyer une notification personnalisée",
+                "description": "Envoie une notification personnalisée par email (pour admins)",
+                "operationId": "66b31e1c5a904ee046b53af4865e6cf9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id",
+                                    "title",
+                                    "message"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "مرحبا بك!"
+                                    },
+                                    "message": {
+                                        "type": "string",
+                                        "example": "نحن سعداء بانضمامك"
+                                    },
+                                    "action_url": {
+                                        "type": "string",
+                                        "example": "https://dabapp.ma"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "celebration"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "example": "#4CAF50"
+                                    },
+                                    "priority": {
+                                        "type": "string",
+                                        "enum": [
+                                            "low",
+                                            "normal",
+                                            "high",
+                                            "urgent"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Notification personnalisée envoyée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/send-multiple": {
+            "post": {
+                "tags": [
+                    "Email Notifications"
+                ],
+                "summary": "Envoyer à plusieurs utilisateurs",
+                "description": "Envoie une notification à plusieurs utilisateurs",
+                "operationId": "c2794c0653f634dbd490df481a85fc23",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_ids",
+                                    "type",
+                                    "data"
+                                ],
+                                "properties": {
+                                    "user_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3,
+                                            4,
+                                            5
+                                        ]
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "example": "system_updates"
+                                    },
+                                    "data": {
+                                        "type": "object",
+                                        "example": {
+                                            "update_title": "Nouvelle fonctionnalité",
+                                            "update_message": "..."
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Notifications envoyées",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "results": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/broadcast": {
+            "post": {
+                "tags": [
+                    "Email Notifications"
+                ],
+                "summary": "Broadcast à tous les utilisateurs",
+                "description": "Envoie une notification à tous les utilisateurs (avec filtres optionnels)",
+                "operationId": "cec4115549134c32dee0731303daf150",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "type",
+                                    "data"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "example": "promotional"
+                                    },
+                                    "data": {
+                                        "type": "object",
+                                        "example": {
+                                            "promo_title": "Soldes!",
+                                            "promo_message": "20% de réduction"
+                                        }
+                                    },
+                                    "filters": {
+                                        "type": "object",
+                                        "example": {
+                                            "is_verified": 1,
+                                            "city": "Casablanca"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Broadcast envoyé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "sent": {
+                                                    "type": "integer"
+                                                },
+                                                "skipped": {
+                                                    "type": "integer"
+                                                },
+                                                "failed": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/test-email": {
+            "post": {
+                "tags": [
+                    "Email Notifications"
+                ],
+                "summary": "Tester l'envoi d'email",
+                "description": "Envoie un email de test à l'utilisateur connecté",
+                "operationId": "b7270dffbf231475248f58d8913ce0fa",
+                "responses": {
+                    "200": {
+                        "description": "Email de test envoyé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/events/{eventId}/activities": {
             "get": {
                 "tags": [
@@ -20659,6 +21028,847 @@
                 ]
             }
         },
+        "/api/notifications": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Lister mes notifications",
+                "description": "Récupère toutes les notifications de l'utilisateur connecté",
+                "operationId": "911565ad9aff9ba7eded3f189509e578",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filtrer par type de notification",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "unread_only",
+                        "in": "query",
+                        "description": "Afficher uniquement les non lues",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre par page",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des notifications",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "notifications": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "type": {
+                                                                "type": "string"
+                                                            },
+                                                            "title": {
+                                                                "type": "string"
+                                                            },
+                                                            "message": {
+                                                                "type": "string"
+                                                            },
+                                                            "is_read": {
+                                                                "type": "boolean"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "time_ago": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "unread_count": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Supprimer toutes les notifications",
+                "description": "Marque toutes les notifications comme supprimées",
+                "operationId": "cfefd4d70591e56e5f10ceb20c782bec",
+                "responses": {
+                    "200": {
+                        "description": "Toutes les notifications supprimées",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "deleted_count": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/unread-count": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Compter les non lues",
+                "description": "Récupère le nombre de notifications non lues",
+                "operationId": "0272623bed30dd4d72141741fb3f25da",
+                "responses": {
+                    "200": {
+                        "description": "Nombre de notifications non lues",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "unread_count": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/{id}": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Détails d'une notification",
+                "description": "Récupère les détails d'une notification et la marque comme lue",
+                "operationId": "f2edf725f41dd6c9a9338a6a7b39d779",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails de la notification",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "type": {
+                                                    "type": "string"
+                                                },
+                                                "title": {
+                                                    "type": "string"
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                },
+                                                "data": {
+                                                    "type": "object"
+                                                },
+                                                "action_url": {
+                                                    "type": "string"
+                                                },
+                                                "is_read": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Supprimer une notification",
+                "description": "Marque une notification comme supprimée",
+                "operationId": "54c4eb5ec5dc0d1e2916cec2fced1056",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notification supprimée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/{id}/read": {
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Marquer comme lue",
+                "description": "Marque une notification comme lue",
+                "operationId": "ccc13a8ee59dfc08e9b1f80e075ebfc1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notification marquée comme lue",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/read-all": {
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Marquer toutes comme lues",
+                "description": "Marque toutes les notifications comme lues",
+                "operationId": "80760dfd47d7dd101c507f26ca9f0de9",
+                "responses": {
+                    "200": {
+                        "description": "Toutes les notifications marquées comme lues",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "updated_count": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notification-preferences": {
+            "get": {
+                "tags": [
+                    "Notification Preferences"
+                ],
+                "summary": "Récupérer mes préférences",
+                "description": "Récupère les préférences de notifications de l'utilisateur",
+                "operationId": "2e41c0036d76355cf0f417817314bd44",
+                "responses": {
+                    "200": {
+                        "description": "Préférences récupérées",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "listing_approved": {
+                                                    "type": "boolean"
+                                                },
+                                                "bid_placed": {
+                                                    "type": "boolean"
+                                                },
+                                                "push_enabled": {
+                                                    "type": "boolean"
+                                                },
+                                                "quiet_hours_enabled": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Notification Preferences"
+                ],
+                "summary": "Mettre à jour mes préférences",
+                "description": "Met à jour les préférences de notifications",
+                "operationId": "5c8cafe16aab7c2d955eb413cdb90703",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "listing_approved": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "listing_rejected": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "bid_placed": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "new_message": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "push_enabled": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "quiet_hours_enabled": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "quiet_hours_start": {
+                                        "type": "string",
+                                        "example": "22:00:00"
+                                    },
+                                    "quiet_hours_end": {
+                                        "type": "string",
+                                        "example": "08:00:00"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Préférences mises à jour",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notification-preferences/enable-all": {
+            "post": {
+                "tags": [
+                    "Notification Preferences"
+                ],
+                "summary": "Activer toutes les notifications",
+                "description": "Active toutes les préférences de notifications",
+                "operationId": "095b8d7789ab657049c9e438a2f75f84",
+                "responses": {
+                    "200": {
+                        "description": "Toutes les notifications activées",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notification-preferences/disable-all": {
+            "post": {
+                "tags": [
+                    "Notification Preferences"
+                ],
+                "summary": "Désactiver toutes les notifications",
+                "description": "Désactive toutes les préférences de notifications",
+                "operationId": "e6f864e534ebb733f53779faffc5d84d",
+                "responses": {
+                    "200": {
+                        "description": "Toutes les notifications désactivées",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notification-tokens": {
+            "get": {
+                "tags": [
+                    "Notification Tokens"
+                ],
+                "summary": "Lister mes tokens",
+                "description": "Récupère tous les tokens FCM de l'utilisateur connecté",
+                "operationId": "2b49b908afe416f866492e535d9d7b07",
+                "responses": {
+                    "200": {
+                        "description": "Liste des tokens",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "device_type": {
+                                                        "type": "string"
+                                                    },
+                                                    "device_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "last_used_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Notification Tokens"
+                ],
+                "summary": "Enregistrer un token FCM",
+                "description": "Enregistre ou met à jour le token FCM pour recevoir les notifications push",
+                "operationId": "1d4b6db6abf8324fd82988e9629f222f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "fcm_token",
+                                    "device_type"
+                                ],
+                                "properties": {
+                                    "fcm_token": {
+                                        "type": "string",
+                                        "example": "fX7Yk...token..."
+                                    },
+                                    "device_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ios",
+                                            "android",
+                                            "web",
+                                            "huawei"
+                                        ]
+                                    },
+                                    "device_name": {
+                                        "type": "string",
+                                        "example": "iPhone 14 Pro"
+                                    },
+                                    "device_id": {
+                                        "type": "string",
+                                        "example": "ABC123"
+                                    },
+                                    "device_model": {
+                                        "type": "string",
+                                        "example": "iPhone14,3"
+                                    },
+                                    "os_version": {
+                                        "type": "string",
+                                        "example": "16.4"
+                                    },
+                                    "app_version": {
+                                        "type": "string",
+                                        "example": "1.0.0"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token enregistré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "device_type": {
+                                                    "type": "string"
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notification-tokens/{id}": {
+            "delete": {
+                "tags": [
+                    "Notification Tokens"
+                ],
+                "summary": "Supprimer un token",
+                "description": "Désactive un token FCM (déconnexion de l'appareil)",
+                "operationId": "3bd21d060d308d5513fa9ab85da3a05f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token supprimé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notification-tokens/test": {
+            "post": {
+                "tags": [
+                    "Notification Tokens"
+                ],
+                "summary": "Tester une notification push",
+                "description": "Envoie une notification de test à l'utilisateur connecté",
+                "operationId": "0025f19277f3f80d39858270dc41f1fe",
+                "responses": {
+                    "200": {
+                        "description": "Notification de test envoyée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "tokens_count": {
+                                                    "type": "integer"
+                                                },
+                                                "sent_count": {
+                                                    "type": "integer"
+                                                },
+                                                "failed_count": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/paytabs/verify-and-publish": {
             "post": {
                 "tags": [
@@ -31817,6 +33027,10 @@
             "description": "API Endpoints for managing bike part brands"
         },
         {
+            "name": "Email Notifications",
+            "description": "Envoyer des notifications par email"
+        },
+        {
             "name": "Filters",
             "description": "API endpoints for filtering listings"
         },
@@ -31878,6 +33092,18 @@
         {
             "name": "Newsletter",
             "description": "API Endpoints for Newsletter Subscription"
+        },
+        {
+            "name": "Notifications",
+            "description": "Gestion des notifications utilisateur"
+        },
+        {
+            "name": "Notification Preferences",
+            "description": "Gestion des préférences de notifications"
+        },
+        {
+            "name": "Notification Tokens",
+            "description": "Gestion des tokens FCM pour les notifications push"
         },
         {
             "name": "POI Reports",

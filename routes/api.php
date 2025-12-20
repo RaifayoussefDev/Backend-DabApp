@@ -78,8 +78,12 @@ use App\Http\Controllers\{
     UserController,
     WhatsAppOtpController,
     WishlistController,
-    AuthAdminController
+    AuthAdminController,
+    EmailNotificationController,
+    NotificationController,
+    NotificationPreferenceController,
 };
+use App\Http\Controllerss\NotificationPreferenceController as ControllerssNotificationPreferenceController;
 use PhpOffice\PhpSpreadsheet\Reader\Xls\RC4;
 
 // ============================================
@@ -937,4 +941,38 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::post('/listings/republish-paid', [ListingController::class, 'checkAndRepublishPaidListings']);
     Route::get('/listings/payment-stats', [ListingController::class, 'getListingPaymentStats']);
     Route::post('/payments/{paymentId}/force-verify', [ListingController::class, 'forcePaymentVerification']);
+});
+
+Route::middleware('auth:api')->group(function () {
+
+    // ========================================
+    // ENVOI DE NOTIFICATIONS EMAIL
+    // ========================================
+    Route::prefix('notifications')->group(function () {
+        // Envoyer des notifications
+        Route::post('/send', [EmailNotificationController::class, 'send']);
+        Route::post('/send-custom', [EmailNotificationController::class, 'sendCustom']);
+        Route::post('/send-multiple', [EmailNotificationController::class, 'sendMultiple']);
+        Route::post('/broadcast', [EmailNotificationController::class, 'broadcast']);
+        Route::post('/test-email', [EmailNotificationController::class, 'testEmail']);
+
+        // Gestion des notifications (lecture, suppression)
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+        Route::get('/{id}', [NotificationController::class, 'show']);
+        Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
+        Route::post('/read-all', [NotificationController::class, 'markAllAsRead']);
+        Route::delete('/{id}', [NotificationController::class, 'destroy']);
+        Route::delete('/', [NotificationController::class, 'destroyAll']);
+    });
+
+    // ========================================
+    // PRÉFÉRENCES DE NOTIFICATIONS
+    // ========================================
+    Route::prefix('notification-preferences')->group(function () {
+        Route::get('/', [ControllerssNotificationPreferenceController::class, 'show']);
+        Route::put('/', [ControllerssNotificationPreferenceController::class, 'update']);
+        Route::post('/enable-all', [ControllerssNotificationPreferenceController::class, 'enableAll']);
+        Route::post('/disable-all', [ControllerssNotificationPreferenceController::class, 'disableAll']);
+    });
 });

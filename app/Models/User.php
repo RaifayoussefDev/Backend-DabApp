@@ -7,6 +7,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @OA\Schema(
@@ -477,5 +479,39 @@ class User extends Authenticatable implements JWTSubject
     public function getAllPermissions()
     {
         return $this->getPermissions();
+    }
+    /**
+     * Get all notifications for the user
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    /**
+     * Get the notification preference for the user
+     */
+    public function notificationPreference(): HasOne
+    {
+        return $this->hasOne(NotificationPreference::class);
+    }
+
+    /**
+     * Get all notification tokens for the user
+     */
+    public function notificationTokens(): HasMany
+    {
+        return $this->hasMany(NotificationToken::class);
+    }
+
+    /**
+     * Get the user's full name (accessor)
+     */
+    public function getNameAttribute()
+    {
+        if (!isset($this->attributes['name'])) {
+            return "{$this->first_name} {$this->last_name}";
+        }
+        return $this->attributes['name'];
     }
 }
