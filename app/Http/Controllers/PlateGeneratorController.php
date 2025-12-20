@@ -178,19 +178,28 @@ class PlateGeneratorController extends Controller
                 'file_path' => $filePath
             ]);
 
-            // ✅ SOLUTION: Attendre que le contenu soit complètement rendu
             Browsershot::html($html)
-                ->setNodeBinary(env('NODE_BINARY_PATH', 'C:\\Program Files\\nodejs\\node.exe'))
-                ->setNpmBinary(env('NPM_BINARY_PATH', 'C:\\Program Files\\nodejs\\npm.cmd'))
+                ->setNodeBinary(env('NODE_BINARY_PATH', '/home/master/.nvm/versions/node/v22.12.0/bin/node'))
+                ->setNpmBinary(env('NPM_BINARY_PATH', '/home/master/.nvm/versions/node/v22.12.0/bin/npm'))
                 ->windowSize($windowSize[0], $windowSize[1])
                 ->deviceScaleFactor(3)
                 ->timeout(60)
                 ->noSandbox()
-                ->waitUntilNetworkIdle()  // ✅ Attendre que tout soit chargé
-                ->setDelay(2000)           // ✅ AUGMENTÉ à 2 secondes
-                ->showBackground()         // ✅ Afficher l'arrière-plan
-                ->emulateMedia('screen')   // ✅ Émuler l'affichage écran
-                ->setOption('args', ['--disable-web-security', '--font-render-hinting=none'])  // ✅ Désactiver CORS + Meilleur rendu des fonts
+                ->waitUntilNetworkIdle()
+                ->setDelay(2000)
+                ->showBackground()
+                ->emulateMedia('screen')
+                ->setOption('args', [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--disable-gpu',
+                    '--disable-web-security',
+                    '--font-render-hinting=none'
+                ])
                 ->format($format)
                 ->save($filePath);
 

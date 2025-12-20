@@ -227,7 +227,7 @@
     <div class="email-container">
         <!-- Header -->
         <div class="email-header">
-            <img src="https://dabapp.co/assets/images/logo-header.svg" alt="DabApp Logo" class="logo">
+            <img src="https://be.dabapp.co/LogoDabApp.png" alt="DabApp Logo" class="logo">
         </div>
 
         <!-- Body -->
