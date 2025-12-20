@@ -189,6 +189,7 @@ class PlateGeneratorController extends Controller
                 ->setDelay(2000)
                 ->showBackground()
                 ->emulateMedia('screen')
+                ->setOption('executablePath', '/home/master/.cache/puppeteer/chrome/linux-143.0.7499.42/chrome-linux64/chrome')
                 ->setOption('args', [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
@@ -198,7 +199,9 @@ class PlateGeneratorController extends Controller
                     '--no-zygote',
                     '--disable-gpu',
                     '--disable-web-security',
-                    '--font-render-hinting=none'
+                    '--font-render-hinting=none',
+                    '--crash-dumps-dir=' . storage_path('app/chrome-crashpad'),
+                    '--disable-crash-reporter'
                 ])
                 ->format($format)
                 ->save($filePath);
