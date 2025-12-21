@@ -190,23 +190,30 @@ class LicensePlate extends Model
             $response = $controller->generatePlateInternal($request, $city);
 
             if ($response && isset($response['url'])) {
+                // ... après $response = $controller->generatePlateInternal($request, $city);
+
                 if ($response && isset($response['url'])) {
-                    // 1. On récupère l'ID du listing directement
-                    $listingId = $this->listing_id;
-
-                    
-                    \Illuminate\Support\Facades\DB::table('listing_images')->insert([
-                        'listing_id' => $listingId,
-                        'image_url'  => $response['url'],
-                        'is_plate_image' => true,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-
-                    \Log::info("✅ IMAGE INSERTED IN DB", [
-                        'listing_id' => $listingId,
+                    \Log::info("💾 Attempting to save image to database", [
+                        'listing_id' => $this->listing_id,
                         'url' => $response['url']
                     ]);
+
+                    // Utilisation de DB::table pour éviter les problèmes de protection mass-assignment ou de relations non chargées
+                    $inserted = \Illuminate\Support\Facades\DB::table('listing_images')->insert([
+                        'listing_id'     => $this->listing_id,
+                        'image_url'      => $response['url'],
+                        'is_plate_image' => true,
+                        'created_at'     => now(),
+                        'updated_at'     => now(),
+                    ]);
+
+                    if ($inserted) {
+                        \Log::info("✅ SUCCESS: Image record created in listing_images table.");
+                    } else {
+                        \Log::error("❌ DATABASE ERROR: Insert failed for listing_id " . $this->listing_id);
+                    }
+                } else {
+                    \Log::error("❌ PlateGenerator returned null response - check Controller logs");
                 }
 
                 \Log::info("✅ Plate image generated successfully", [
