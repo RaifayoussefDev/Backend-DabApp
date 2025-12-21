@@ -108,7 +108,7 @@ class LicensePlate extends Model
             ]);
 
             // ✅ FORCE RELOAD avec la clé corrigée
-            $this->load(['fieldValues' => function($query) {
+            $this->load(['fieldValues' => function ($query) {
                 $query->with('formatField');
             }]);
 
@@ -190,11 +190,24 @@ class LicensePlate extends Model
             $response = $controller->generatePlateInternal($request, $city);
 
             if ($response && isset($response['url'])) {
-                // Save image to listing
-                $this->listing->images()->create([
-                    'image_url' => $response['url'],
-                    'is_plate_image' => true
-                ]);
+                if ($response && isset($response['url'])) {
+                    // 1. On récupère l'ID du listing directement
+                    $listingId = $this->listing_id;
+
+                    
+                    \Illuminate\Support\Facades\DB::table('listing_images')->insert([
+                        'listing_id' => $listingId,
+                        'image_url'  => $response['url'],
+                        'is_plate_image' => true,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    \Log::info("✅ IMAGE INSERTED IN DB", [
+                        'listing_id' => $listingId,
+                        'url' => $response['url']
+                    ]);
+                }
 
                 \Log::info("✅ Plate image generated successfully", [
                     'license_plate_id' => $this->id,
@@ -206,7 +219,6 @@ class LicensePlate extends Model
             }
 
             \Log::info("🎯 ========== END PLATE GENERATION ==========");
-
         } catch (\Exception $e) {
             \Log::error("❌ Failed to generate plate image", [
                 'license_plate_id' => $this->id,
