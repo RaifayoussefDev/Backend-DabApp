@@ -718,36 +718,12 @@ class ListingController extends Controller
                             }
                         }
 
-                        // ✅ GÉNÉRER L'IMAGE DE LA PLAQUE EN ARRIÈRE-PLAN
+                        // ✅ GÉNÉRER L'IMAGE DE LA PLAQUE APRÈS AVOIR SAUVEGARDÉ TOUS LES FIELDS
                         try {
-                            \Log::info("🚀 Dispatching plate generation to background", [
-                                'license_plate_id' => $licensePlate->id
-                            ]);
-
-                            // Génération après la réponse HTTP
-                            dispatch(function () use ($licensePlate) {
-                                sleep(2); // Attendre que la transaction soit complète
-
-                                try {
-                                    \Log::info("🎨 Background: Starting plate generation", [
-                                        'license_plate_id' => $licensePlate->id
-                                    ]);
-
-                                    $licensePlate->fresh()->load(['fieldValues.formatField', 'country', 'city'])
-                                        ->generatePlateImage();
-
-                                    \Log::info("✅ Background: Plate generated successfully", [
-                                        'license_plate_id' => $licensePlate->id
-                                    ]);
-                                } catch (\Exception $e) {
-                                    \Log::error("❌ Background: Failed to generate plate", [
-                                        'license_plate_id' => $licensePlate->id,
-                                        'error' => $e->getMessage()
-                                    ]);
-                                }
-                            })->afterResponse();
+                            \Log::info("Generating plate image for license_plate_id: " . $licensePlate->id);
+                            $licensePlate->generatePlateImage();
                         } catch (\Exception $e) {
-                            \Log::error("Failed to dispatch plate generation job", [
+                            \Log::error("Failed to generate plate image in handleCategorySpecificData", [
                                 'license_plate_id' => $licensePlate->id,
                                 'error' => $e->getMessage()
                             ]);
