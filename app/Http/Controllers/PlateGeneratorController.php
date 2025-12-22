@@ -184,7 +184,19 @@ class PlateGeneratorController extends Controller
                 mkdir($userDataDir, 0755, true);
             }
 
-            $browsershot = Browsershot::html($html)
+            // Create temp file in storage instead of /tmp to avoid permission/isolation issues
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+            
+            $tempHtmlFile = $tempDir . '/plate_' . uniqid() . '.html';
+            file_put_contents($tempHtmlFile, $html);
+            
+            // Use file:// protocol with absolute path
+            $fileUrl = 'file://' . $tempHtmlFile;
+
+            $browsershot = Browsershot::url($fileUrl)
                 ->setNodeBinary(env('NODE_BINARY_PATH', '/home/master/.nvm/versions/node/v22.12.0/bin/node'))
                 ->setNodeModulePath(base_path('node_modules')) // Use local node_modules
                 ->windowSize($windowSize[0], $windowSize[1])
