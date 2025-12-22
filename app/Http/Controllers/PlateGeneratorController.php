@@ -196,10 +196,11 @@ class PlateGeneratorController extends Controller
             // Use file:// protocol with absolute path
             $fileUrl = 'file://' . $tempHtmlFile;
 
-            $browsershot = Browsershot::url($fileUrl)
+            $browsershot = (new Browsershot())
+                ->setIncludePath($tempDir) // ALLOW reading files in this directory BEFORE setting URL
+                ->setUrl($fileUrl)
                 ->setNodeBinary(env('NODE_BINARY_PATH', '/home/master/.nvm/versions/node/v22.12.0/bin/node'))
                 ->setNodeModulePath(base_path('node_modules')) // Use local node_modules
-                ->setIncludePath($tempDir) // ALLOW reading files in this directory
                 ->windowSize($windowSize[0], $windowSize[1])
                 ->deviceScaleFactor(3)
                 ->timeout(120) // Increase timeout
