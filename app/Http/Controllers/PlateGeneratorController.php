@@ -188,10 +188,14 @@ class PlateGeneratorController extends Controller
                 ->ignoreHttpsErrors()
                 ->dismissDialogs()
                 ->waitUntilNetworkIdle()
-                ->setDelay(2000)
-                ->showBackground()
-                ->emulateMedia('screen');
+            // Ensure user data dir exists
+            $userDataDir = storage_path('app/chrome-user-data');
+            if (!file_exists($userDataDir)) {
+                mkdir($userDataDir, 0755, true);
+            }
 
+            $browsershot->setOption('userDataDir', $userDataDir);
+            
             // Add Chrome path if configured
             $chromePath = env('CHROME_PATH') ?? env('PUPPETEER_EXECUTABLE_PATH');
             if ($chromePath) {
