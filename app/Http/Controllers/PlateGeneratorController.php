@@ -254,8 +254,62 @@ class PlateGeneratorController extends Controller
                  $browsershot->setOption('executablePath', '/home/master/.cache/puppeteer/chrome/linux-143.0.7499.42/chrome-linux64/chrome');
             }
 
-            // Save directly
-            $browsershot->format($format)->save($filePath);
+            // Save directly - with enhanced error logging
+            try {
+                $browsershot->format($format)->save($filePath);
+            } catch (\Exception $e) {
+                // Log the full error and try to get more details
+                \Log::error("🔍 Browsershot execution failed", [
+                    'error_message' => $e->getMessage(),
+                    'node_binary' => $nodeBinary,
+                    'chrome_path' => $chromePath ?? '/home/master/.cache/puppeteer/chrome/linux-143.0.7499.42/chrome-linux64/chrome'
+                ]);
+                
+                // Try running the command manually to capture stderr
+                $testCommand = sprintf(
+                    '%s %s 2>&1',
+                    escapeshellarg($nodeBinary),
+                    escapeshellarg(base_path('vendor/spatie/browsershot/bin/browser.cjs'))
+                );
+                
+                $testInput = json_encode([
+                    'url' => 'https://google.com',
+                    'action' => 'screenshot',
+                    'options' => [
+                        'type' => 'png',
+                        'path' => storage_path('app/test_stderr.png'),
+                        'args' => ['--no-sandbox', '--disable-gpu'],
+                        'executablePath' => $chromePath ?? '/home/master/.cache/puppeteer/chrome/linux-143.0.7499.42/chrome-linux64/chrome'
+                    ]
+                ]);
+                
+                $descriptors = [
+                    0 => ['pipe', 'r'], // stdin
+                    1 => ['pipe', 'w'], // stdout
+                    2 => ['pipe', 'w']  // stderr
+                ];
+                
+                $process = proc_open($testCommand, $descriptors, $pipes);
+                if (is_resource($process)) {
+                    fwrite($pipes[0], $testInput);
+                    fclose($pipes[0]);
+                    
+                    $stdout = stream_get_contents($pipes[1]);
+                    $stderr = stream_get_contents($pipes[2]);
+                    fclose($pipes[1]);
+                    fclose($pipes[2]);
+                    
+                    $exitCode = proc_close($process);
+                    
+                    \Log::error("🔍 Manual command execution results", [
+                        'exit_code' => $exitCode,
+                        'stdout' => substr($stdout, 0, 500),
+                        'stderr' => $stderr  // This is what we need!
+                    ]);
+                }
+                
+                throw $e; // Re-throw the original exception
+            }
             
             // Clean up: delete the temp file
             \Storage::disk('public')->delete('temp_plates/' . $tempFileName);
