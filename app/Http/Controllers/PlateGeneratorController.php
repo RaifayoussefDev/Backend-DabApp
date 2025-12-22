@@ -184,28 +184,12 @@ class PlateGeneratorController extends Controller
                 mkdir($userDataDir, 0755, true);
             }
 
-            // Create temp file in storage instead of /tmp to avoid permission/isolation issues
-            $tempDir = storage_path('app/temp');
-            if (!file_exists($tempDir)) {
-                mkdir($tempDir, 0755, true);
-            }
-            
-            // Create temp file in storage instead of /tmp to avoid permission/isolation issues
-            $tempDir = storage_path('app/temp');
-            if (!file_exists($tempDir)) {
-                mkdir($tempDir, 0755, true);
-            }
-            
-            $tempHtmlFile = $tempDir . '/plate_' . uniqid() . '.html';
-            file_put_contents($tempHtmlFile, $html);
-            
-            // Use file:// protocol with absolute path
-            $fileUrl = 'file://' . $tempHtmlFile;
+            // Strategy change: Use Data URI to bypass file system permissions and validation entirely
+            $base64Html = base64_encode($html);
+            $dataUrl = 'data:text/html;charset=utf-8;base64,' . $base64Html;
 
-            // Instantiate manually to set options BEFORE setUrl
             $browsershot = (new Browsershot())
-                ->setIncludePath('file://' . $tempDir) // Fix: Must match the protocol prefix of the URL
-                ->setUrl($fileUrl)
+                ->setUrl($dataUrl)
                 ->setNodeBinary(env('NODE_BINARY_PATH', '/home/master/.nvm/versions/node/v22.12.0/bin/node'))
                 ->setNodeModulePath(base_path('node_modules'))
                 ->windowSize($windowSize[0], $windowSize[1])
