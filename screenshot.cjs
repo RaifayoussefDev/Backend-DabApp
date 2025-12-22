@@ -15,16 +15,21 @@ const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 // Disable Chrome's crash reporter via environment variable
 process.env.CHROME_CRASHPAD_PIPE_NAME = '';
 process.env.BREAKPAD_DUMP_LOCATION = '';
+process.env.HOME = '/tmp';
 
 (async () => {
     const browser = await puppeteer.launch({
         executablePath: config.chromePath,
         args: [
             '--no-sandbox', 
-            '--disable-gpu', 
-            '--disable-dev-shm-usage',
             '--disable-setuid-sandbox',
-            '--disable-crash-reporter'
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--disable-gpu',
+            '--disable-crash-reporter',
+            '--single-process'
         ],
         userDataDir: config.userDataDir || '/tmp/chrome-user-data',
         headless: true
