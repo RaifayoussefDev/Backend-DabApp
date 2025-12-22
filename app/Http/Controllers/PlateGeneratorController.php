@@ -190,14 +190,27 @@ class PlateGeneratorController extends Controller
                 mkdir($tempDir, 0755, true);
             }
             
-            // Revenir à la méthode html() mais avec un dossier temporaire custom
-            $browsershot = Browsershot::html($html)
-                ->setTemporaryDirectory($tempDir) // Use project storage for temp files
+            // Create temp file in storage instead of /tmp to avoid permission/isolation issues
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+            
+            $tempHtmlFile = $tempDir . '/plate_' . uniqid() . '.html';
+            file_put_contents($tempHtmlFile, $html);
+            
+            // Use file:// protocol with absolute path
+            $fileUrl = 'file://' . $tempHtmlFile;
+
+            // Instantiate manually to set options BEFORE setUrl
+            $browsershot = (new Browsershot())
+                ->setIncludePath([$tempDir, 'file://' . $tempDir]) // Allow both paths
+                ->setUrl($fileUrl)
                 ->setNodeBinary(env('NODE_BINARY_PATH', '/home/master/.nvm/versions/node/v22.12.0/bin/node'))
-                ->setNodeModulePath(base_path('node_modules')) // Use local node_modules
+                ->setNodeModulePath(base_path('node_modules'))
                 ->windowSize($windowSize[0], $windowSize[1])
                 ->deviceScaleFactor(3)
-                ->timeout(120) // Increase timeout
+                ->timeout(120)
                 ->noSandbox()
                 ->ignoreHttpsErrors()
                 ->dismissDialogs()
@@ -207,30 +220,34 @@ class PlateGeneratorController extends Controller
                 ->showBackground()
                 ->emulateMedia('screen');
 
+            // Add arguments for stability on Cloudways
+            $browsershot->addChromiumArguments([
+                'no-sandbox', 
+                'disable-setuid-sandbox', 
+                'disable-dev-shm-usage', 
+                'disable-accelerated-2d-canvas',
+                'no-first-run', 
+                'no-zygote', 
+                'single-process', // CRITICAL for some containerized envs
+                'disable-gpu'
+            ]);
+
             // Add Chrome path if configured
             $chromePath = env('CHROME_PATH') ?? env('PUPPETEER_EXECUTABLE_PATH');
             if ($chromePath) {
                 $browsershot->setOption('executablePath', $chromePath);
             } else {
-                 // Fallback to the known path just in case, or remove if we want to rely on Puppeteer default
+                 // Fallback
                  $browsershot->setOption('executablePath', '/home/master/.cache/puppeteer/chrome/linux-143.0.7499.42/chrome-linux64/chrome');
             }
 
-            $browsershot->setOption('args', [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-accelerated-2d-canvas',
-                    '--no-first-run',
-                    '--no-zygote',
-                    '--disable-gpu',
-                    '--disable-web-security',
-                    '--font-render-hinting=none',
-                    '--crash-dumps-dir=' . storage_path('app/chrome-crashpad'),
-                    '--disable-crash-reporter'
-                ])
-                ->format($format)
-                ->save($filePath);
+            // Save directly
+            $browsershot->format($format)->save($filePath);
+
+            // Clean up temp file
+            if (file_exists($tempHtmlFile)) {
+                unlink($tempHtmlFile);
+            }
 
             \Log::info("✅ Plate file saved", [
                 'filename' => $filename,
