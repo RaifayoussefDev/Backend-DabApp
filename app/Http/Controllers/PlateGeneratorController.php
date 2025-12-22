@@ -184,12 +184,22 @@ class PlateGeneratorController extends Controller
                 mkdir($userDataDir, 0755, true);
             }
 
-            // Strategy change: Use Data URI to bypass file system permissions and validation entirely
-            $base64Html = base64_encode($html);
-            $dataUrl = 'data:text/html;charset=utf-8;base64,' . $base64Html;
+            // Strategy change: Manual file + FORCE include path 
+            // Browsershot validates if URL starts with include path. 
+            // 'file:///' matches almost any local file path structure.
+            
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+            
+            $tempHtmlFile = $tempDir . '/plate_' . uniqid() . '.html';
+            file_put_contents($tempHtmlFile, $html);
+            $fileUrl = 'file://' . $tempHtmlFile;
 
             $browsershot = (new Browsershot())
-                ->setUrl($dataUrl)
+                ->setIncludePath('file:///') // BRUTE FORCE PERMISSION: Allow any local file
+                ->setUrl($fileUrl)
                 ->setNodeBinary(env('NODE_BINARY_PATH', '/home/master/.nvm/versions/node/v22.12.0/bin/node'))
                 ->setNodeModulePath(base_path('node_modules'))
                 ->windowSize($windowSize[0], $windowSize[1])
