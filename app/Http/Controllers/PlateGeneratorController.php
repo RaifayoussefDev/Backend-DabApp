@@ -184,21 +184,20 @@ class PlateGeneratorController extends Controller
                 mkdir($userDataDir, 0755, true);
             }
 
-            // Strategy change: Manual file + FORCE include path 
-            // Browsershot validates if URL starts with include path. 
-            // 'file:///' matches almost any local file path structure.
-            
+            // Strategy change: Resolve REAL path to avoid symlink mismatches
             $tempDir = storage_path('app/temp');
             if (!file_exists($tempDir)) {
                 mkdir($tempDir, 0755, true);
             }
+            $tempDir = realpath($tempDir); // Resolve absolute path
             
             $tempHtmlFile = $tempDir . '/plate_' . uniqid() . '.html';
             file_put_contents($tempHtmlFile, $html);
+            
             $fileUrl = 'file://' . $tempHtmlFile;
 
             $browsershot = (new Browsershot())
-                ->setIncludePath('file:///') // BRUTE FORCE PERMISSION: Allow any local file
+                ->setIncludePath($fileUrl) // TRICK: Allow exact URL as path to guarantee passing 'startsWith' check
                 ->setUrl($fileUrl)
                 ->setNodeBinary(env('NODE_BINARY_PATH', '/home/master/.nvm/versions/node/v22.12.0/bin/node'))
                 ->setNodeModulePath(base_path('node_modules'))
