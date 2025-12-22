@@ -236,7 +236,7 @@ class PlateGeneratorController extends Controller
             file_put_contents($configFile, json_encode($config));
             
             // Run custom Puppeteer script with config file
-            $screenshotScript = base_path('screenshot.js');
+            $screenshotScript = base_path('screenshot.cjs');
             $command = sprintf(
                 '%s %s %s 2>&1',
                 escapeshellarg($nodeBinary),
