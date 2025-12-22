@@ -15,7 +15,14 @@ const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 (async () => {
     const browser = await puppeteer.launch({
         executablePath: config.chromePath,
-        args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+        args: [
+            '--no-sandbox', 
+            '--disable-gpu', 
+            '--disable-dev-shm-usage',
+            '--disable-setuid-sandbox',
+            '--disable-crash-reporter'
+        ],
+        userDataDir: config.userDataDir || '/tmp/chrome-user-data',
         headless: true
     });
 

@@ -230,7 +230,8 @@ class PlateGeneratorController extends Controller
                 'height' => $windowSize[1],
                 'deviceScaleFactor' => 3,
                 'format' => $format,
-                'chromePath' => base_path('.cache/puppeteer/chrome/linux-143.0.7499.169/chrome-linux64/chrome')
+                'chromePath' => base_path('.cache/puppeteer/chrome/linux-143.0.7499.169/chrome-linux64/chrome'),
+                'userDataDir' => storage_path('app/chrome-user-data')
             ];
             
             file_put_contents($configFile, json_encode($config));
