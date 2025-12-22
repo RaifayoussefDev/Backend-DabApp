@@ -204,7 +204,7 @@ class PlateGeneratorController extends Controller
 
             // Instantiate manually to set options BEFORE setUrl
             $browsershot = (new Browsershot())
-                ->setIncludePath($tempDir) // Allow reading files in this directory
+                ->setIncludePath('file://' . $tempDir) // Fix: Must match the protocol prefix of the URL
                 ->setUrl($fileUrl)
                 ->setNodeBinary(env('NODE_BINARY_PATH', '/home/master/.nvm/versions/node/v22.12.0/bin/node'))
                 ->setNodeModulePath(base_path('node_modules'))
