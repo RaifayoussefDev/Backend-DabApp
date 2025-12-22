@@ -178,7 +178,7 @@ class PlateGeneratorController extends Controller
                 'file_path' => $filePath
             ]);
 
-            Browsershot::html($html)
+            $browsershot = Browsershot::html($html)
                 ->setNodeBinary(env('NODE_BINARY_PATH', '/home/master/.nvm/versions/node/v22.12.0/bin/node'))
                 ->setNpmBinary(env('NPM_BINARY_PATH', '/home/master/.nvm/versions/node/v22.12.0/bin/npm'))
                 ->windowSize($windowSize[0], $windowSize[1])
@@ -188,9 +188,18 @@ class PlateGeneratorController extends Controller
                 ->waitUntilNetworkIdle()
                 ->setDelay(2000)
                 ->showBackground()
-                ->emulateMedia('screen')
-                ->setOption('executablePath', '/home/master/.cache/puppeteer/chrome/linux-143.0.7499.42/chrome-linux64/chrome')
-                ->setOption('args', [
+                ->emulateMedia('screen');
+
+            // Add Chrome path if configured
+            $chromePath = env('CHROME_PATH') ?? env('PUPPETEER_EXECUTABLE_PATH');
+            if ($chromePath) {
+                $browsershot->setOption('executablePath', $chromePath);
+            } else {
+                 // Fallback to the known path just in case, or remove if we want to rely on Puppeteer default
+                 $browsershot->setOption('executablePath', '/home/master/.cache/puppeteer/chrome/linux-143.0.7499.42/chrome-linux64/chrome');
+            }
+
+            $browsershot->setOption('args', [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
                     '--disable-dev-shm-usage',
