@@ -250,7 +250,7 @@ class PlateGeneratorController extends Controller
             ]);
             
             try {
-                $output = shell_exec($command);
+                $output = \shell_exec($command);
                 \Log::info("✅ Puppeteer output", ['output' => $output]);
                 
                 // Clean up config file
