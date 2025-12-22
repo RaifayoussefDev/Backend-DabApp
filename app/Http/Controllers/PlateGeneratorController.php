@@ -190,15 +190,9 @@ class PlateGeneratorController extends Controller
                 mkdir($tempDir, 0755, true);
             }
             
-            $tempHtmlFile = $tempDir . '/plate_' . uniqid() . '.html';
-            file_put_contents($tempHtmlFile, $html);
-            
-            // Use file:// protocol with absolute path
-            $fileUrl = 'file://' . $tempHtmlFile;
-
-            $browsershot = (new Browsershot())
-                ->setIncludePath($tempDir) // ALLOW reading files in this directory BEFORE setting URL
-                ->setUrl($fileUrl)
+            // Revenir à la méthode html() mais avec un dossier temporaire custom
+            $browsershot = Browsershot::html($html)
+                ->setTemporaryDirectory($tempDir) // Use project storage for temp files
                 ->setNodeBinary(env('NODE_BINARY_PATH', '/home/master/.nvm/versions/node/v22.12.0/bin/node'))
                 ->setNodeModulePath(base_path('node_modules')) // Use local node_modules
                 ->windowSize($windowSize[0], $windowSize[1])
