@@ -250,13 +250,31 @@ class PlateGeneratorController extends Controller
             ]);
             
             try {
-                $output = [];
-                $exitCode = 0;
-                \exec($command, $output, $exitCode);
+                // Use proc_open since shell_exec/exec are disabled on Cloudways
+                $descriptors = [
+                    0 => ['pipe', 'r'], // stdin
+                    1 => ['pipe', 'w'], // stdout
+                    2 => ['pipe', 'w']  // stderr
+                ];
                 
-                $outputStr = implode("\n", $output);
+                $process = \proc_open($command, $descriptors, $pipes);
+                
+                if (!\is_resource($process)) {
+                    throw new \Exception("Failed to spawn process");
+                }
+                
+                \fclose($pipes[0]); // Close stdin
+                
+                $stdout = \stream_get_contents($pipes[1]);
+                $stderr = \stream_get_contents($pipes[2]);
+                \fclose($pipes[1]);
+                \fclose($pipes[2]);
+                
+                $exitCode = \proc_close($process);
+                
                 \Log::info("✅ Puppeteer output", [
-                    'output' => $outputStr,
+                    'stdout' => $stdout,
+                    'stderr' => $stderr,
                     'exit_code' => $exitCode
                 ]);
                 
