@@ -220,39 +220,18 @@ class PlateGeneratorController extends Controller
                 $nodeBinary = $nodeBinary ?: '/usr/bin/node';
             }
 
+            // SIMPLIFIED CONFIGURATION to reduce command-line argument length
+            // The issue is that PHP-FPM cannot pass very long arguments to shell commands
+            $chromePath = base_path('.cache/puppeteer/chrome/linux-143.0.7499.169/chrome-linux64/chrome');
+            
             $browsershot = (new Browsershot())
-                ->setUrl($httpUrl) // HTTP URL -> No "FileUrlNotAllowed" error!
+                ->setUrl($httpUrl)
                 ->setNodeBinary($nodeBinary)
                 ->setNodeModulePath(base_path('node_modules'))
                 ->windowSize($windowSize[0], $windowSize[1])
-                ->deviceScaleFactor(3)
-                ->timeout(120)
                 ->noSandbox()
-                ->ignoreHttpsErrors()
-                ->dismissDialogs()
-                ->waitUntilNetworkIdle()
-                ->setOption('userDataDir', $userDataDir)
-                ->setDelay(2000)
-                ->showBackground()
-                ->emulateMedia('screen');
-
-            // Add arguments for stability on Cloudways
-            // Removed 'single-process' as it can cause crashes on newer Chrome versions
-            $browsershot->addChromiumArguments([
-                'disable-dev-shm-usage', 
-                'disable-accelerated-2d-canvas',
-                'no-first-run', 
-                'no-zygote', 
-                'disable-gpu'
-            ]);
-
-            // Add Chrome path if configured
-            $chromePath = env('CHROME_PATH') ?? env('PUPPETEER_EXECUTABLE_PATH');
-            if ($chromePath) {
-                $browsershot->setOption('executablePath', $chromePath);
-            } else {
-                 $browsershot->setOption('executablePath', '/home/master/.cache/puppeteer/chrome/linux-143.0.7499.42/chrome-linux64/chrome');
-            }
+                ->setOption('executablePath', $chromePath)
+                ->addChromiumArguments(['disable-gpu']);
 
             // Save directly - with enhanced error logging
             try {
