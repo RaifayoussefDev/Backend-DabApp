@@ -12,6 +12,10 @@ if (!configPath) {
 
 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
+// Disable Chrome's crash reporter via environment variable
+process.env.CHROME_CRASHPAD_PIPE_NAME = '';
+process.env.BREAKPAD_DUMP_LOCATION = '';
+
 (async () => {
     const browser = await puppeteer.launch({
         executablePath: config.chromePath,
