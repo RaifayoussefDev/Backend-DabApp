@@ -183,8 +183,10 @@ class PlateGeneratorController extends Controller
                 ->setNodeModulePath(base_path('node_modules')) // Use local node_modules
                 ->windowSize($windowSize[0], $windowSize[1])
                 ->deviceScaleFactor(3)
-                ->timeout(60)
+                ->timeout(120) // Increase timeout
                 ->noSandbox()
+                ->ignoreHttpsErrors()
+                ->dismissDialogs()
                 ->waitUntilNetworkIdle()
                 ->setDelay(2000)
                 ->showBackground()
