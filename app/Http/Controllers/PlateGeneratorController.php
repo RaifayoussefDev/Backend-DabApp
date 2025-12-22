@@ -178,6 +178,12 @@ class PlateGeneratorController extends Controller
                 'file_path' => $filePath
             ]);
 
+            // Ensure user data dir exists
+            $userDataDir = storage_path('app/chrome-user-data');
+            if (!file_exists($userDataDir)) {
+                mkdir($userDataDir, 0755, true);
+            }
+
             $browsershot = Browsershot::html($html)
                 ->setNodeBinary(env('NODE_BINARY_PATH', '/home/master/.nvm/versions/node/v22.12.0/bin/node'))
                 ->setNodeModulePath(base_path('node_modules')) // Use local node_modules
@@ -188,14 +194,8 @@ class PlateGeneratorController extends Controller
                 ->ignoreHttpsErrors()
                 ->dismissDialogs()
                 ->waitUntilNetworkIdle()
-            // Ensure user data dir exists
-            $userDataDir = storage_path('app/chrome-user-data');
-            if (!file_exists($userDataDir)) {
-                mkdir($userDataDir, 0755, true);
-            }
+                ->setOption('userDataDir', $userDataDir);
 
-            $browsershot->setOption('userDataDir', $userDataDir);
-            
             // Add Chrome path if configured
             $chromePath = env('CHROME_PATH') ?? env('PUPPETEER_EXECUTABLE_PATH');
             if ($chromePath) {
