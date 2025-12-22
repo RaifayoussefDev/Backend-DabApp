@@ -220,74 +220,54 @@ class PlateGeneratorController extends Controller
                 $nodeBinary = $nodeBinary ?: '/usr/bin/node';
             }
 
-            // SIMPLIFIED CONFIGURATION to reduce command-line argument length
-            // The issue is that PHP-FPM cannot pass very long arguments to shell commands
-            $chromePath = base_path('.cache/puppeteer/chrome/linux-143.0.7499.169/chrome-linux64/chrome');
+            // CUSTOM PUPPETEER APPROACH - Bypass Browsershot's argument passing
+            // Write config to a temp JSON file
+            $configFile = storage_path('app/screenshot_config_' . uniqid() . '.json');
+            $config = [
+                'url' => $httpUrl,
+                'outputPath' => $filePath,
+                'width' => $windowSize[0],
+                'height' => $windowSize[1],
+                'deviceScaleFactor' => 3,
+                'format' => $format,
+                'chromePath' => base_path('.cache/puppeteer/chrome/linux-143.0.7499.169/chrome-linux64/chrome')
+            ];
             
-            $browsershot = (new Browsershot())
-                ->setUrl($httpUrl)
-                ->setNodeBinary($nodeBinary)
-                ->setNodeModulePath(base_path('node_modules'))
-                ->windowSize($windowSize[0], $windowSize[1])
-                ->noSandbox()
-                ->setOption('executablePath', $chromePath)
-                ->addChromiumArguments(['disable-gpu']);
-
-            // Save directly - with enhanced error logging
+            file_put_contents($configFile, json_encode($config));
+            
+            // Run custom Puppeteer script with config file
+            $screenshotScript = base_path('screenshot.js');
+            $command = sprintf(
+                '%s %s %s 2>&1',
+                escapeshellarg($nodeBinary),
+                escapeshellarg($screenshotScript),
+                escapeshellarg($configFile)
+            );
+            
+            \Log::info("🚀 Running custom Puppeteer script", [
+                'command' => $command,
+                'config_file' => $configFile
+            ]);
+            
             try {
-                $browsershot->format($format)->save($filePath);
-            } catch (\Exception $e) {
-                // Log the full error and try to get more details
-                \Log::error("🔍 Browsershot execution failed", [
-                    'error_message' => $e->getMessage(),
-                    'node_binary' => $nodeBinary,
-                    'chrome_path' => $chromePath ?? '/home/master/.cache/puppeteer/chrome/linux-143.0.7499.42/chrome-linux64/chrome'
-                ]);
+                $output = shell_exec($command);
+                \Log::info("✅ Puppeteer output", ['output' => $output]);
                 
-                // Try running the command manually to capture stderr
-                $testCommand = sprintf(
-                    '%s %s 2>&1',
-                    escapeshellarg($nodeBinary),
-                    escapeshellarg(base_path('vendor/spatie/browsershot/bin/browser.cjs'))
-                );
-                
-                $testInput = json_encode([
-                    'url' => 'https://google.com',
-                    'action' => 'screenshot',
-                    'options' => [
-                        'type' => 'png',
-                        'path' => storage_path('app/test_stderr.png'),
-                        'args' => ['--no-sandbox', '--disable-gpu'],
-                        'executablePath' => $chromePath ?? '/home/master/.cache/puppeteer/chrome/linux-143.0.7499.42/chrome-linux64/chrome'
-                    ]
-                ]);
-                
-                $descriptors = [
-                    0 => ['pipe', 'r'], // stdin
-                    1 => ['pipe', 'w'], // stdout
-                    2 => ['pipe', 'w']  // stderr
-                ];
-                
-                $process = proc_open($testCommand, $descriptors, $pipes);
-                if (is_resource($process)) {
-                    fwrite($pipes[0], $testInput);
-                    fclose($pipes[0]);
-                    
-                    $stdout = stream_get_contents($pipes[1]);
-                    $stderr = stream_get_contents($pipes[2]);
-                    fclose($pipes[1]);
-                    fclose($pipes[2]);
-                    
-                    $exitCode = proc_close($process);
-                    
-                    \Log::error("🔍 Manual command execution results", [
-                        'exit_code' => $exitCode,
-                        'stdout' => substr($stdout, 0, 500),
-                        'stderr' => $stderr  // This is what we need!
-                    ]);
+                // Clean up config file
+                if (file_exists($configFile)) {
+                    unlink($configFile);
                 }
                 
-                throw $e; // Re-throw the original exception
+                // Check if screenshot was created
+                if (!file_exists($filePath)) {
+                    throw new \Exception("Screenshot file was not created. Output: " . $output);
+                }
+            } catch (\Exception $e) {
+                // Clean up config file on error
+                if (file_exists($configFile)) {
+                    unlink($configFile);
+                }
+                throw $e;
             }
             
             // Clean up: delete the temp file
