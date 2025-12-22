@@ -202,9 +202,27 @@ class PlateGeneratorController extends Controller
             // Log the URL for debugging
             \Log::info("🌍 Generating plate from HTTP URL: " . $httpUrl);
 
+            // NODE BINARY SELECTION
+            // 1. Try local project binary (most robust for permission/version issues)
+            $localNodeBin = base_path('node_bin');
+            // 2. Try the specific NVM path discovered
+            $nvmNodeBin = '/home/master/.nvm/versions/node/v22.12.0/bin/node';
+            
+            $nodeBinary = env('NODE_BINARY_PATH');
+            
+            if (file_exists($localNodeBin)) {
+                $nodeBinary = $localNodeBin;
+                \Log::info("Using local node binary: " . $nodeBinary);
+            } elseif (!$nodeBinary && file_exists($nvmNodeBin)) {
+                $nodeBinary = $nvmNodeBin;
+            } else {
+                // Fallback or keep env value
+                $nodeBinary = $nodeBinary ?: '/usr/bin/node';
+            }
+
             $browsershot = (new Browsershot())
                 ->setUrl($httpUrl) // HTTP URL -> No "FileUrlNotAllowed" error!
-                ->setNodeBinary(env('NODE_BINARY_PATH', '/home/master/.nvm/versions/node/v22.12.0/bin/node'))
+                ->setNodeBinary($nodeBinary)
                 ->setNodeModulePath(base_path('node_modules'))
                 ->windowSize($windowSize[0], $windowSize[1])
                 ->deviceScaleFactor(3)
