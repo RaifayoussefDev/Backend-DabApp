@@ -285,7 +285,7 @@ class PlateGeneratorController extends Controller
                 
                 // Check if screenshot was created
                 if (!file_exists($filePath)) {
-                    throw new \Exception("Screenshot file was not created. Output: " . $output);
+                    throw new \Exception("Screenshot file was not created. Stdout: " . $stdout . " Stderr: " . $stderr);
                 }
             } catch (\Exception $e) {
                 // Clean up config file on error
