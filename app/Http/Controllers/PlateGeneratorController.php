@@ -184,21 +184,26 @@ class PlateGeneratorController extends Controller
                 mkdir($userDataDir, 0755, true);
             }
 
-            // Strategy change: Resolve REAL path to avoid symlink mismatches
-            $tempDir = storage_path('app/temp');
-            if (!file_exists($tempDir)) {
-                mkdir($tempDir, 0755, true);
+            // Strategy change: Use PUBLIC URL (HTTP) to bypass filesystem/symlink restrictions entirely.
+            // We save the HTML as a public file, access it via HTTP, then delete it.
+            
+            $tempFileName = 'plate_' . uniqid() . '.html';
+            // Ensure directory exists in public disk
+            if (!\Storage::disk('public')->exists('temp_plates')) {
+                \Storage::disk('public')->makeDirectory('temp_plates');
             }
-            $tempDir = realpath($tempDir); // Resolve absolute path
             
-            $tempHtmlFile = $tempDir . '/plate_' . uniqid() . '.html';
-            file_put_contents($tempHtmlFile, $html);
+            // Save HTML to storage/app/public/temp_plates
+            \Storage::disk('public')->put('temp_plates/' . $tempFileName, $html);
             
-            $fileUrl = 'file://' . $tempHtmlFile;
+            // Generate HTTP URL - assumes APP_URL is set correctly in .env
+            $httpUrl = asset('storage/temp_plates/' . $tempFileName);
+            
+            // Log the URL for debugging
+            \Log::info("🌍 Generating plate from HTTP URL: " . $httpUrl);
 
             $browsershot = (new Browsershot())
-                ->setIncludePath($fileUrl) // TRICK: Allow exact URL as path to guarantee passing 'startsWith' check
-                ->setUrl($fileUrl)
+                ->setUrl($httpUrl) // HTTP URL -> No "FileUrlNotAllowed" error!
                 ->setNodeBinary(env('NODE_BINARY_PATH', '/home/master/.nvm/versions/node/v22.12.0/bin/node'))
                 ->setNodeModulePath(base_path('node_modules'))
                 ->windowSize($windowSize[0], $windowSize[1])
@@ -221,7 +226,7 @@ class PlateGeneratorController extends Controller
                 'disable-accelerated-2d-canvas',
                 'no-first-run', 
                 'no-zygote', 
-                'single-process', // CRITICAL for some containerized envs
+                'single-process',
                 'disable-gpu'
             ]);
 
@@ -230,12 +235,14 @@ class PlateGeneratorController extends Controller
             if ($chromePath) {
                 $browsershot->setOption('executablePath', $chromePath);
             } else {
-                 // Fallback
                  $browsershot->setOption('executablePath', '/home/master/.cache/puppeteer/chrome/linux-143.0.7499.42/chrome-linux64/chrome');
             }
 
             // Save directly
             $browsershot->format($format)->save($filePath);
+            
+            // Clean up: delete the temp file
+            \Storage::disk('public')->delete('temp_plates/' . $tempFileName);
 
             // Clean up temp file
             if (file_exists($tempHtmlFile)) {
