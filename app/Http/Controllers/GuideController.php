@@ -203,9 +203,6 @@ class GuideController extends Controller
         $guide = Guide::with(['author', 'category', 'tags', 'sections'])
             ->where('slug', $slug)
             ->where('status', 'published')
-            ->whereDoesntHave('category', function ($q) {
-                $q->where('slug', 'guide-starter');
-            })
             ->first();
 
         if (!$guide) {
@@ -583,9 +580,6 @@ class GuideController extends Controller
             ->where('id', $id)
             ->where('status', 'published')
             ->whereNotNull('published_at')
-            ->whereDoesntHave('category', function ($q) {
-                $q->where('slug', 'guide-starter');
-            })
             ->first();
 
         if (!$guide) {
