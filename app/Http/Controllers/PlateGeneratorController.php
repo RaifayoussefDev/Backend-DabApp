@@ -98,20 +98,15 @@ class PlateGeneratorController extends Controller
 
             // Générer le HTML selon le pays
             if ($country === 'ksa') {
-                // ✅ ENVOYER LES DEUX FORMATS (camelCase ET snake_case)
                 $viewData = [
-                    // camelCase
                     'topLeft' => $request->input('top_left'),
                     'topRight' => $request->input('top_right'),
                     'bottomLeft' => $request->input('bottom_left'),
                     'bottomRight' => $request->input('bottom_right'),
-
-                    // snake_case
                     'top_left' => $request->input('top_left'),
                     'top_right' => $request->input('top_right'),
                     'bottom_left' => $request->input('bottom_left'),
                     'bottom_right' => $request->input('bottom_right'),
-
                     'logoBase64' => $logoBase64,
                     'logo_base64' => $logoBase64,
                 ];
@@ -184,44 +179,38 @@ class PlateGeneratorController extends Controller
                 mkdir($userDataDir, 0755, true);
             }
 
-            // Strategy change: Use PUBLIC URL (HTTP) to bypass filesystem/symlink restrictions entirely.
-            // We save the HTML as a public file, access it via HTTP, then delete it.
-            
+            // Strategy: Use PUBLIC URL (HTTP) to bypass filesystem/symlink restrictions
             $tempFileName = 'plate_' . uniqid() . '.html';
+
             // Ensure directory exists in public disk
             if (!\Storage::disk('public')->exists('temp_plates')) {
                 \Storage::disk('public')->makeDirectory('temp_plates');
             }
-            
+
             // Save HTML to storage/app/public/temp_plates
             \Storage::disk('public')->put('temp_plates/' . $tempFileName, $html);
-            
-            // Generate HTTP URL - assumes APP_URL is set correctly in .env
+
+            // Generate HTTP URL
             $httpUrl = asset('storage/temp_plates/' . $tempFileName);
-            
-            // Log the URL for debugging
+
             \Log::info("🌍 Generating plate from HTTP URL: " . $httpUrl);
 
             // NODE BINARY SELECTION
-            // 1. Try local project binary (most robust for permission/version issues)
             $localNodeBin = base_path('node_bin');
-            // 2. Try the specific NVM path discovered
             $nvmNodeBin = '/home/master/.nvm/versions/node/v22.12.0/bin/node';
-            
+
             $nodeBinary = env('NODE_BINARY_PATH');
-            
+
             if (file_exists($localNodeBin)) {
                 $nodeBinary = $localNodeBin;
                 \Log::info("Using local node binary: " . $nodeBinary);
             } elseif (!$nodeBinary && file_exists($nvmNodeBin)) {
                 $nodeBinary = $nvmNodeBin;
             } else {
-                // Fallback or keep env value
                 $nodeBinary = $nodeBinary ?: '/usr/bin/node';
             }
 
-            // CUSTOM PUPPETEER APPROACH - Bypass Browsershot's argument passing
-            // Write config to a temp JSON file
+            // CUSTOM PUPPETEER APPROACH
             $configFile = storage_path('app/screenshot_config_' . uniqid() . '.json');
             $config = [
                 'url' => $httpUrl,
@@ -233,10 +222,10 @@ class PlateGeneratorController extends Controller
                 'chromePath' => base_path('.cache/puppeteer/chrome/linux-143.0.7499.169/chrome-linux64/chrome'),
                 'userDataDir' => storage_path('app/chrome-user-data')
             ];
-            
+
             file_put_contents($configFile, json_encode($config));
-            
-            // Run custom Puppeteer script with config file
+
+            // Run custom Puppeteer script
             $screenshotScript = base_path('screenshot.cjs');
             $command = sprintf(
                 '%s %s %s 2>&1',
@@ -244,12 +233,12 @@ class PlateGeneratorController extends Controller
                 escapeshellarg($screenshotScript),
                 escapeshellarg($configFile)
             );
-            
+
             \Log::info("🚀 Running custom Puppeteer script", [
                 'command' => $command,
                 'config_file' => $configFile
             ]);
-            
+
             try {
                 // Use proc_open since shell_exec/exec are disabled on Cloudways
                 $descriptors = [
@@ -257,33 +246,33 @@ class PlateGeneratorController extends Controller
                     1 => ['pipe', 'w'], // stdout
                     2 => ['pipe', 'w']  // stderr
                 ];
-                
+
                 $process = \proc_open($command, $descriptors, $pipes);
-                
+
                 if (!\is_resource($process)) {
                     throw new \Exception("Failed to spawn process");
                 }
-                
+
                 \fclose($pipes[0]); // Close stdin
-                
+
                 $stdout = \stream_get_contents($pipes[1]);
                 $stderr = \stream_get_contents($pipes[2]);
                 \fclose($pipes[1]);
                 \fclose($pipes[2]);
-                
+
                 $exitCode = \proc_close($process);
-                
+
                 \Log::info("✅ Puppeteer output", [
                     'stdout' => $stdout,
                     'stderr' => $stderr,
                     'exit_code' => $exitCode
                 ]);
-                
+
                 // Clean up config file
                 if (file_exists($configFile)) {
                     unlink($configFile);
                 }
-                
+
                 // Check if screenshot was created
                 if (!file_exists($filePath)) {
                     throw new \Exception("Screenshot file was not created. Stdout: " . $stdout . " Stderr: " . $stderr);
@@ -295,14 +284,9 @@ class PlateGeneratorController extends Controller
                 }
                 throw $e;
             }
-            
-            // Clean up: delete the temp file
-            \Storage::disk('public')->delete('temp_plates/' . $tempFileName);
 
-            // Clean up temp file
-            if (file_exists($tempHtmlFile)) {
-                unlink($tempHtmlFile);
-            }
+            // ✅ Clean up: delete the temp HTML file
+            \Storage::disk('public')->delete('temp_plates/' . $tempFileName);
 
             \Log::info("✅ Plate file saved", [
                 'filename' => $filename,

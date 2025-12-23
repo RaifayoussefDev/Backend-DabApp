@@ -54,49 +54,39 @@ class LicensePlate extends Model
         return $this->belongsTo(PlateFormat::class, 'plate_format_id');
     }
 
-    /**
-     * ✅ CORRECTION CRITIQUE : Spécifier explicitement les clés
-     *
-     * La table license_plates a comme PK : id
-     * La table license_plate_values a comme FK : license_plate_id
-     */
     public function fieldValues(): HasMany
     {
         return $this->hasMany(
             LicensePlateValue::class,
-            'license_plate_id',  // ← Foreign key dans license_plate_values
-            'id'                 // ← Local key dans license_plates (PK)
+            'license_plate_id',
+            'id'
         );
     }
 
-    /**
-     * Alias pour la relation (si utilisé ailleurs dans le code)
-     */
     public function values(): HasMany
     {
         return $this->fieldValues();
     }
 
     /**
-     * Generate plate image automatically after creation/update
+     * ✅ NE PLUS générer automatiquement
+     * La génération doit être appelée APRÈS la sauvegarde des fieldValues
      */
     protected static function booted()
     {
-        // ✅ NE PLUS générer automatiquement ici
-        // La génération sera appelée depuis handleCategorySpecificData() APRÈS la sauvegarde des fieldValues
-
-        static::saved(function ($licensePlate) {
-            // Generate plate image after save
-            $licensePlate->generatePlateImage();
-        });
+        // Vide - pas de génération automatique
     }
 
     /**
-     * 🔥 Generate the license plate image automatically
+     * 🔥 Generate the license plate image
      */
     public function generatePlateImage()
     {
         try {
+            \Log::info("🎯 ========== START PLATE GENERATION ==========", [
+                'license_plate_id' => $this->id
+            ]);
+
             $country = $this->country;
             $city = $this->city;
 
@@ -106,7 +96,7 @@ class LicensePlate extends Model
                     'country_id' => $this->country_id,
                     'city_id' => $this->city_id
                 ]);
-                return;
+                return false;
             }
 
             // Determine country type
@@ -118,10 +108,9 @@ class LicensePlate extends Model
                 'city_name' => $city->name
             ]);
 
-            // 🔥 Get field values formatted for the request
+            // Get field values formatted for the request
             $fieldValues = $this->getFormattedFieldValues();
 
-            // 🔍 LOG: Raw field values from database
             \Log::info("🎯 Raw field values from DB", [
                 'license_plate_id' => $this->id,
                 'country_type' => $countryType,
@@ -129,13 +118,13 @@ class LicensePlate extends Model
                 'field_values' => $fieldValues
             ]);
 
-            // 🔥 VÉRIFIER QUE LES VALEURS NE SONT PAS VIDES
+            // Vérifier que les valeurs ne sont pas vides
             if (empty($fieldValues)) {
                 \Log::error("❌ Field values are empty after formatting", [
                     'license_plate_id' => $this->id,
                     'raw_fieldValues' => $this->fieldValues->toArray()
                 ]);
-                return;
+                return false;
             }
 
             // Prepare request data
@@ -151,7 +140,7 @@ class LicensePlate extends Model
                 $requestData['bottom_left'] = $fieldValues['bottom_left'] ?? '';
                 $requestData['bottom_right'] = $fieldValues['bottom_right'] ?? '';
             } else {
-                // UAE and Dubai - Map field names correctly
+                // UAE and Dubai
                 $requestData['category_number'] = $fieldValues['category_number']
                     ?? $fieldValues['top_center_digits']
                     ?? $fieldValues['top_center']
@@ -163,11 +152,10 @@ class LicensePlate extends Model
                     ?? '';
             }
 
-            // Add city names for dynamic display
+            // Add city names
             $requestData['city_name_ar'] = $city->name_ar ?? $city->name;
             $requestData['city_name_en'] = $city->name ?? '';
 
-            // 🔍 LOG: Complete request data being sent
             \Log::info("📤 Complete request data to PlateGenerator", [
                 'license_plate_id' => $this->id,
                 'request_data' => $requestData
@@ -181,30 +169,24 @@ class LicensePlate extends Model
             $response = $controller->generatePlateInternal($request, $city);
 
             if ($response && isset($response['url'])) {
-                // ... après $response = $controller->generatePlateInternal($request, $city);
+                \Log::info("💾 Attempting to save image to database", [
+                    'listing_id' => $this->listing_id,
+                    'url' => $response['url']
+                ]);
 
-                if ($response && isset($response['url'])) {
-                    \Log::info("💾 Attempting to save image to database", [
-                        'listing_id' => $this->listing_id,
-                        'url' => $response['url']
-                    ]);
+                // Save to listing_images
+                $inserted = \Illuminate\Support\Facades\DB::table('listing_images')->insert([
+                    'listing_id'     => $this->listing_id,
+                    'image_url'      => $response['url'],
+                    'is_plate_image' => true,
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ]);
 
-                    // Utilisation de DB::table pour éviter les problèmes de protection mass-assignment ou de relations non chargées
-                    $inserted = \Illuminate\Support\Facades\DB::table('listing_images')->insert([
-                        'listing_id'     => $this->listing_id,
-                        'image_url'      => $response['url'],
-                        'is_plate_image' => true,
-                        'created_at'     => now(),
-                        'updated_at'     => now(),
-                    ]);
-
-                    if ($inserted) {
-                        \Log::info("✅ SUCCESS: Image record created in listing_images table.");
-                    } else {
-                        \Log::error("❌ DATABASE ERROR: Insert failed for listing_id " . $this->listing_id);
-                    }
+                if ($inserted) {
+                    \Log::info("✅ SUCCESS: Image record created in listing_images table");
                 } else {
-                    \Log::error("❌ PlateGenerator returned null response - check Controller logs");
+                    \Log::error("❌ DATABASE ERROR: Insert failed for listing_id " . $this->listing_id);
                 }
 
                 \Log::info("✅ Plate image generated successfully", [
@@ -212,15 +194,21 @@ class LicensePlate extends Model
                     'country_type' => $countryType,
                     'image_url' => $response['url']
                 ]);
-            }
 
-            \Log::info("🎯 ========== END PLATE GENERATION ==========");
+                return true;
+            } else {
+                \Log::error("❌ PlateGenerator returned null or invalid response");
+                return false;
+            }
         } catch (\Exception $e) {
             \Log::error("❌ Failed to generate plate image", [
                 'license_plate_id' => $this->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
+            return false;
+        } finally {
+            \Log::info("🎯 ========== END PLATE GENERATION ==========");
         }
     }
 
@@ -256,14 +244,12 @@ class LicensePlate extends Model
     {
         $values = [];
 
-        // 🔍 LOG: Check what field values exist
         \Log::info("🔍 Checking fieldValues relation", [
             'license_plate_id' => $this->id,
             'fieldValues_count' => $this->fieldValues->count()
         ]);
 
         foreach ($this->fieldValues as $fieldValue) {
-            // Use formatField() relation - handle both possible relation names
             $field = $fieldValue->formatField ?? $fieldValue->field ?? $fieldValue->plateFormatField;
 
             if ($field) {
@@ -272,8 +258,8 @@ class LicensePlate extends Model
 
                 $values[$fieldName] = $fieldValueData;
 
-                // 🔍 LOG: Each field mapping
-                \Log::info("🔍 Field mapping", [
+                \Log::info("✅ Mapped field successfully", [
+                    'field_id' => $field->id,
                     'field_name' => $fieldName,
                     'position' => $field->position ?? 'N/A',
                     'value' => $fieldValueData,
