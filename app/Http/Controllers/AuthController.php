@@ -2212,10 +2212,25 @@ class AuthController extends Controller
 
         // Send confirmation email about 30-day reactivation
         // Sent before deletion to ensure delivery if notifications are queued
+        Log::info('Attempting to send account deletion confirmation email', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'first_name' => $user->first_name
+        ]);
+
         try {
             $user->notify(new AccountDeletionStatusNotification());
+            Log::info('Account deletion confirmation email sent successfully', [
+                'user_id' => $user->id,
+                'email' => $user->email
+            ]);
         } catch (\Exception $e) {
-            Log::error('Failed to send deletion confirmation email', ['error' => $e->getMessage()]);
+            Log::error('Failed to send deletion confirmation email', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
 
         // Perform Soft Delete
