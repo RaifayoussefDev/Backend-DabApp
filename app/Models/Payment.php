@@ -20,7 +20,8 @@
             'cart_id',
             'resp_code',
             'resp_message',
-            'verification_data'
+            'verification_data',
+            'promo_code_id'
         ];
 
         protected $casts = [
@@ -60,6 +61,14 @@
         public function bankCard(): BelongsTo
         {
             return $this->belongsTo(BankCard::class);
+        }
+
+        /**
+         * Le code promo utilisé pour ce paiement.
+         */
+        public function promoCode(): BelongsTo
+        {
+            return $this->belongsTo(PromoCode::class, 'promo_code_id');
         }
 
         /**

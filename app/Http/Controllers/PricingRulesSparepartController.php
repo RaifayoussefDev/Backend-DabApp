@@ -89,7 +89,7 @@ class PricingRulesSparepartController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'bike_part_category_id' => 'required|exists:bike_part_categories,id',
+            'bike_part_category_id' => 'required|exists:bike_part_categories,id|unique:pricing_rules_sparepart,bike_part_category_id',
             'price' => 'required|numeric|min:0',
         ]);
 
@@ -193,7 +193,7 @@ class PricingRulesSparepartController extends Controller
     public function update(Request $request, PricingRulesSparepart $pricingRulesSparepart)
     {
         $validated = $request->validate([
-            'bike_part_category_id' => 'required|exists:bike_part_categories,id',
+            'bike_part_category_id' => 'required|exists:bike_part_categories,id|unique:pricing_rules_sparepart,bike_part_category_id,' . $pricingRulesSparepart->id,
             'price' => 'required|numeric|min:0',
         ]);
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\PoiFavorite;
 use App\Models\PointOfInterest;
+use App\Models\View;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -205,8 +206,18 @@ class PointOfInterestController extends Controller
             ], 404);
         }
 
-        // Increment views count
-        $poi->increment('views_count');
+        $user = Auth::user();
+        $this->recordView($poi, $user);
+
+        $isFavorited = false;
+        if ($user) {
+            $isFavorited = DB::table('poi_favorites')
+                ->where('poi_id', $poi->id)
+                ->where('user_id', $user->id)
+                ->exists();
+        }
+
+        $poi->is_favorited = $isFavorited;
 
         return response()->json([
             'success' => true,
@@ -506,5 +517,33 @@ class PointOfInterestController extends Controller
             'success' => true,
             'data' => $pois,
         ]);
+    }
+
+    private function recordView($viewable, $user)
+    {
+        if (!$user) {
+            $viewable->increment('views_count');
+            return;
+        }
+
+        $exists = View::where('user_id', $user->id)
+            ->where('viewable_id', $viewable->id)
+            ->where('viewable_type', get_class($viewable))
+            ->exists();
+
+        if (!$exists) {
+            try {
+                View::create([
+                    'user_id' => $user->id,
+                    'viewable_id' => $viewable->id,
+                    'viewable_type' => get_class($viewable),
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                ]);
+                $viewable->increment('views_count');
+            } catch (\Exception $e) {
+                // Ignore unique constraint violation
+            }
+        }
     }
 }

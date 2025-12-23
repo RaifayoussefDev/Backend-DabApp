@@ -96,7 +96,8 @@ class ListingController extends Controller
      *             @OA\Property(property="auction_enabled", type="boolean", example=false, description="Step 2: Enable auction"),
      *             @OA\Property(property="minimum_bid", type="number", example=null, description="Step 2: Required if auction_enabled=true"),
      *
-     *             @OA\Property(property="amount", type="number", example=599, description="Step 3: Payment amount in local currency")
+     *             @OA\Property(property="amount", type="number", example=599, description="Step 3: Payment amount in local currency"),
+     *             @OA\Property(property="promo_code", type="string", example="WELCOME10", description="Step 3: Optional promo code")
      *         )
      *     ),
      *     @OA\Response(
@@ -410,7 +411,7 @@ class ListingController extends Controller
      *   "amount": 599
      * }
      */
-    public function store(Request $request)
+    public function store(Request $request, \App\Services\PromoCodeService $promoService)
     {
         DB::beginTransaction();
 
@@ -438,9 +439,9 @@ class ListingController extends Controller
 
             // ✅ Validation selon le step
             if ($step >= 3) {
-                // Step paiement
                 $request->validate([
                     'amount' => 'required|numeric|min:1',
+                    'promo_code' => 'sometimes|nullable|string'
                 ]);
             } else {
                 // Step 1 & 2 : validation des données de base
@@ -505,6 +506,35 @@ class ListingController extends Controller
                     }
                 }
 
+                // ✅ Handle Promo Code
+                $appliedPromoId = null;
+                if ($request->filled('promo_code')) {
+                    $promoResult = $promoService->validatePromoCode(
+                        $request->promo_code,
+                        Auth::user(),
+                        (float)$originalAmount
+                    );
+
+                    if (!$promoResult['valid']) {
+                        DB::rollBack();
+                        return response()->json(['error' => $promoResult['message']], $promoResult['status']);
+                    }
+
+                    // Apply discount to both original and AED amounts
+                    $discount = $promoResult['discount'];
+                    $originalAmount = max($originalAmount - $discount, 0);
+                    
+                    // Recalculate aedAmount based on the new originalAmount
+                    if ($countryId && $countryId != 2 && $exchangeRate > 0) {
+                        $aedAmount = round($originalAmount / $exchangeRate, 2);
+                    } else {
+                        $aedAmount = $originalAmount;
+                    }
+
+                    $appliedPromoId = $promoResult['promo']->id;
+                    \Log::info("Promo Code Applied: {$request->promo_code}. Discount: {$discount}. New Amounts: {$originalAmount} / {$aedAmount}");
+                }
+
                 $payment = Payment::create([
                     'user_id'         => $sellerId,
                     'listing_id'      => $listing->id,
@@ -514,6 +544,7 @@ class ListingController extends Controller
                     'currency'        => 'AED',
                     'payment_status'  => 'pending',
                     'cart_id'         => 'cart_' . time(),
+                    'promo_code_id'   => $appliedPromoId,
                 ]);
                 // 🔥 GET DYNAMIC PAYTABS CONFIG
                 $config = PayTabsConfigService::getConfig();
@@ -601,6 +632,22 @@ class ListingController extends Controller
 
             // ✅ Step 1 & 2 : pas de paiement
             DB::commit();
+
+            // 🔥 DÉPLACER L'APPEL ICI (APRÈS LE COMMIT)
+            if ($listing->category_id == 3 && $listing->licensePlate) {
+                try {
+                    $listing->licensePlate->generatePlateImage();
+                } catch (\Exception $e) {
+                    \Log::error("Async generation failed: " . $e->getMessage());
+                }
+            }
+
+            return response()->json([
+                'message' => 'Listing saved (no payment yet)',
+                'listing_id' => $listing->id,
+                'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate']),
+            ], 201);
+
             return response()->json([
                 'message' => 'Listing saved (no payment yet)',
                 'listing_id' => $listing->id,

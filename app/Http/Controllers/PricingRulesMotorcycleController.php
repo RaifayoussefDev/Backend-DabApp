@@ -91,7 +91,7 @@ class PricingRulesMotorcycleController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'motorcycle_type_id' => 'required|exists:motorcycle_types,id',
+            'motorcycle_type_id' => 'required|exists:motorcycle_types,id|unique:pricing_rules_motorcycle,motorcycle_type_id',
             'price' => 'required|numeric|min:0',
         ]);
 
@@ -196,7 +196,7 @@ class PricingRulesMotorcycleController extends Controller
     public function update(Request $request, PricingRulesMotorcycle $pricingRulesMotorcycle)
     {
         $validated = $request->validate([
-            'motorcycle_type_id' => 'required|exists:motorcycle_types,id',
+            'motorcycle_type_id' => 'required|exists:motorcycle_types,id|unique:pricing_rules_motorcycle,motorcycle_type_id,' . $pricingRulesMotorcycle->id,
             'price' => 'required|numeric|min:0',
         ]);
 

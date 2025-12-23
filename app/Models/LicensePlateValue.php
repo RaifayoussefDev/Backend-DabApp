@@ -15,7 +15,7 @@ class LicensePlateValue extends Model
 
     /**
      * ✅ CORRECTION : Spécifier les clés explicitement
-     * 
+     *
      * Foreign key : license_plate_id (dans cette table)
      * Owner key : id (dans la table license_plates)
      */
@@ -53,6 +53,6 @@ class LicensePlateValue extends Model
      */
     public function plateFormatField(): BelongsTo
     {
-        return $this->formatField();
+        return $this->belongsTo(PlateFormat::class, 'plate_format_id');
     }
 }

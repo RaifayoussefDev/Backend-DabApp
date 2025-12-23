@@ -2219,6 +2219,181 @@
                 }
             }
         },
+        "/api/user/delete-request": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Request account deletion (Step 1)",
+                "description": "Initiates account deletion process. Requires password. Sends OTP via Email and WhatsApp.",
+                "operationId": "c37586dc0029e510e993acb9237c4104",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "password"
+                                ],
+                                "properties": {
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "secret123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP sent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "تم إرسال رمز التحقق / OTP has been sent"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized or invalid password",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "كلمة المرور غير صحيحة / Invalid password"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/delete-confirm": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Confirm account deletion (Step 2)",
+                "operationId": "7f2c671c88f482a9aea57110b5972e3e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "otp"
+                                ],
+                                "properties": {
+                                    "otp": {
+                                        "type": "string",
+                                        "example": "1234"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Account deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "تم حذف الحساب بنجاح / Account deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or expired OTP",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "رمز تحقق غير صحيح أو منتهي الصلاحية / Invalid or expired OTP"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/delete-resend-otp": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Resend account deletion OTP",
+                "operationId": "b75882d80f9451f6495af6678c4281ae",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP resent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "تم إعادة إرسال رمز التحقق / OTP has been resent"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/banners": {
             "get": {
                 "tags": [
@@ -13994,6 +14169,73 @@
                 }
             }
         },
+        "/api/upload-image-no-watermark": {
+            "post": {
+                "tags": [
+                    "Image Upload"
+                ],
+                "summary": "Upload multiple images without watermark",
+                "description": "Allows users to upload multiple images to the server with automatic resizing but WITHOUT watermark.",
+                "operationId": "uploadImagesNoWatermark",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "images[]"
+                                ],
+                                "properties": {
+                                    "images[]": {
+                                        "description": "Multiple image files to upload (will be automatically resized but NOT watermarked)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Images uploaded successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Images uploaded successfully"
+                                        },
+                                        "paths": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string",
+                                                "example": "http://yourdomain.com/storage/listings/random_name.jpg"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "422": {
+                        "description": "Validation Error"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/api/upload-icon": {
             "post": {
                 "tags": [
@@ -14876,6 +15118,11 @@
                                         "description": "Step 3: Payment amount in local currency",
                                         "type": "number",
                                         "example": 599
+                                    },
+                                    "promo_code": {
+                                        "description": "Step 3: Optional promo code",
+                                        "type": "string",
+                                        "example": "WELCOME10"
                                     }
                                 },
                                 "type": "object"
@@ -24706,7 +24953,318 @@
                 ]
             }
         },
-        "/api/check-promo": {
+        "/api/admin/promo-codes": {
+            "get": {
+                "tags": [
+                    "Promo Code - Management"
+                ],
+                "summary": "List all promo codes",
+                "operationId": "37b7fbdf731518ed8a56a57680f84ae8",
+                "responses": {
+                    "200": {
+                        "description": "List of promo codes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "code": {
+                                                "type": "string",
+                                                "example": "WELCOME10"
+                                            },
+                                            "discount_type": {
+                                                "type": "string",
+                                                "example": "percentage"
+                                            },
+                                            "discount_value": {
+                                                "type": "number",
+                                                "example": 10
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Promo Code - Management"
+                ],
+                "summary": "Create a new promo code",
+                "operationId": "365759564c8b9a31f1fa071a61015d31",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "code",
+                                    "discount_type",
+                                    "discount_value"
+                                ],
+                                "properties": {
+                                    "code": {
+                                        "type": "string",
+                                        "example": "SAVE20"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Get 20% off"
+                                    },
+                                    "discount_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "percentage",
+                                            "fixed"
+                                        ]
+                                    },
+                                    "discount_value": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "max_discount": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "min_listing_price": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "usage_limit": {
+                                        "type": "integer"
+                                    },
+                                    "per_user_limit": {
+                                        "type": "integer",
+                                        "default": 1
+                                    },
+                                    "valid_from": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "valid_until": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "default": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Promo code created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Promo code created successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/promo-codes/{id}": {
+            "get": {
+                "tags": [
+                    "Promo Code - Management"
+                ],
+                "summary": "Get promo code details",
+                "operationId": "28757587a4aff0519d1b07cfeb47efaa",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Promo code details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "SAVE20"
+                                        },
+                                        "discount_type": {
+                                            "type": "string",
+                                            "example": "percentage"
+                                        },
+                                        "discount_value": {
+                                            "type": "number",
+                                            "example": 20
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Promo code not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Promo Code - Management"
+                ],
+                "summary": "Update a promo code",
+                "operationId": "a4b84994c421443258c0a648c522497f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "code": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "discount_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "percentage",
+                                            "fixed"
+                                        ]
+                                    },
+                                    "discount_value": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Promo code updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Promo code updated successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Promo code not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Promo Code - Management"
+                ],
+                "summary": "Delete a promo code",
+                "operationId": "479966c27ed17f3cf31378dd10a5e9c6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Promo code deleted successfully"
+                    },
+                    "404": {
+                        "description": "Promo code not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/promo/check": {
             "post": {
                 "tags": [
                     "Promo Codes"
@@ -24851,6 +25409,94 @@
                                         }
                                     },
                                     "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/promo-codes/usages": {
+            "get": {
+                "tags": [
+                    "Promo Code - Management"
+                ],
+                "summary": "List all promo code usages",
+                "description": "Returns a list of all promo code usage records with associated user and listing details.",
+                "operationId": "837f09292f42a0807a962efe9e55f532",
+                "responses": {
+                    "200": {
+                        "description": "List of promo code usages",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "promo_code_id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "user_id": {
+                                                "type": "integer",
+                                                "example": 5
+                                            },
+                                            "listing_id": {
+                                                "type": "integer",
+                                                "example": 10
+                                            },
+                                            "used_at": {
+                                                "type": "string",
+                                                "format": "date-time"
+                                            },
+                                            "user": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "email": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "listing": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "title": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "promo_code": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "code": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
                                 }
                             }
                         }
@@ -33132,6 +33778,10 @@
         {
             "name": "Pricing Rules Sparepart Management",
             "description": "API Endpoints for managing sparepart pricing rules"
+        },
+        {
+            "name": "Promo Code - Management",
+            "description": "API Endpoints for managing Promo Codes"
         },
         {
             "name": "Route Completions",

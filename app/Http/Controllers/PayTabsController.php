@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Services\PayTabsConfigService;
+use App\Services\PromoCodeService;
 
 
 class PayTabsController extends Controller
@@ -17,9 +18,11 @@ class PayTabsController extends Controller
     private $serverKey;
     private $currency;
     private $region;
+    private $promoService;
 
-    public function __construct()
+    public function __construct(PromoCodeService $promoService)
     {
+        $this->promoService = $promoService;
         // Get active configuration (test or live)
         $config = PayTabsConfigService::getConfig();
 
@@ -301,6 +304,16 @@ class PayTabsController extends Controller
             // PUBLIER LE LISTING AUTOMATIQUEMENT
             $this->autoPublishListing($payment);
 
+            // ✅ RECORD PROMO CODE USAGE
+            if ($payment->promo_code_id && $payment->promoCode) {
+                $this->promoService->recordUsage(
+                    $payment->promoCode,
+                    $payment->user_id,
+                    $payment->listing_id
+                );
+                Log::info("✅ Promo code usage recorded for payment #{$payment->id}");
+            }
+
             Log::info("✅ Payment #{$payment->id} completed via callback data");
             return true;
         } elseif (
@@ -361,6 +374,16 @@ class PayTabsController extends Controller
 
             // PUBLIER LE LISTING
             $this->autoPublishListing($payment);
+
+            // ✅ RECORD PROMO CODE USAGE
+            if ($payment->promo_code_id && $payment->promoCode) {
+                $this->promoService->recordUsage(
+                    $payment->promoCode,
+                    $payment->user_id,
+                    $payment->listing_id
+                );
+                Log::info("✅ Promo code usage recorded for payment #{$payment->id} (API verification)");
+            }
 
             Log::info("✅ Payment #{$payment->id} completed via API verification");
             return true;

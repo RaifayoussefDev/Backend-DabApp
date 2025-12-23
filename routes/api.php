@@ -403,6 +403,13 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/user/update', [AuthController::class, 'updateProfile']);
     Route::put('/user/two-factor-toggle', [AuthController::class, 'toggleTwoFactor']);
     Route::put('/change-password', [AuthController::class, 'changePassword']);
+    
+    // Account Deletion
+    Route::prefix('user')->group(function () {
+        Route::post('/delete-request', [AuthController::class, 'deleteAccountRequest']);
+        Route::post('/delete-confirm', [AuthController::class, 'confirmDeleteAccount']);
+        Route::post('/delete-resend-otp', [AuthController::class, 'resendDeletionOtp']);
+    });
 
 
 
@@ -488,6 +495,9 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/', [PricingRulesLicencePlateController::class, 'show'])->middleware('permission:pricing-rules-licence-plate.view');
         Route::put('/', [PricingRulesLicencePlateController::class, 'update'])->middleware('permission:pricing-rules-licence-plate.update');
     });
+
+    Route::get('admin/promo-codes/usages', [PromoCodeController::class, 'usages'])->middleware('permission:promo-codes.manage');
+    Route::apiResource('admin/promo-codes', PromoCodeController::class)->middleware('permission:promo-codes.manage');
 
     Route::prefix('admin')->group(function () {
         Route::get('/banners', [BannerController::class, 'adminIndex']);
@@ -609,6 +619,7 @@ Route::middleware('auth:api')->group(function () {
     // IMAGE UPLOAD
     // ============================================
     Route::post('/upload-image', [ImageUploadController::class, 'upload']);
+    Route::post('/upload-image-no-watermark', [ImageUploadController::class, 'uploadNoWatermark']);
     Route::delete('/delete-image', [ImageUploadController::class, 'delete']);
 
     // ============================================

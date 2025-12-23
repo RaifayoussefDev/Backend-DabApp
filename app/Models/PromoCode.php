@@ -8,18 +8,25 @@ class PromoCode extends Model
 {
     protected $fillable = [
         'code',
+        'description',
         'discount_type',
         'discount_value',
-        'start_date',
-        'end_date',
-        'max_uses',
-        'used_count',
-        'status',
+        'max_discount',
+        'min_listing_price',
+        'usage_limit',
+        'per_user_limit',
+        'valid_from',
+        'valid_until',
+        'is_active',
     ];
 
     protected $casts = [
-        'start_date' => 'datetime',
-        'end_date' => 'datetime',
+        'valid_from' => 'datetime',
+        'valid_until' => 'datetime',
+        'is_active' => 'boolean',
+        'discount_value' => 'float',
+        'max_discount' => 'float',
+        'min_listing_price' => 'float',
     ];
 
     public function isValid()

@@ -8,12 +8,211 @@ use App\Models\PromoCode;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use App\Models\PromoCodeUsage;
 
+/**
+ * @OA\Tag(
+ *     name="Promo Code - Management",
+ *     description="API Endpoints for managing Promo Codes"
+ * )
+ */
 class PromoCodeController extends Controller
 {
     /**
+     * @OA\Get(
+     *     path="/api/admin/promo-codes",
+     *     summary="List all promo codes",
+     *     tags={"Promo Code - Management"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of promo codes",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="code", type="string", example="WELCOME10"),
+     *                 @OA\Property(property="discount_type", type="string", example="percentage"),
+     *                 @OA\Property(property="discount_value", type="number", example=10)
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function index()
+    {
+        return response()->json(PromoCode::all());
+    }
+
+    /**
      * @OA\Post(
-     *     path="/api/check-promo",
+     *     path="/api/admin/promo-codes",
+     *     summary="Create a new promo code",
+     *     tags={"Promo Code - Management"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"code", "discount_type", "discount_value"},
+     *             @OA\Property(property="code", type="string", example="SAVE20"),
+     *             @OA\Property(property="description", type="string", example="Get 20% off"),
+     *             @OA\Property(property="discount_type", type="string", enum={"percentage", "fixed"}),
+     *             @OA\Property(property="discount_value", type="number", format="float"),
+     *             @OA\Property(property="max_discount", type="number", format="float"),
+     *             @OA\Property(property="min_listing_price", type="number", format="float"),
+     *             @OA\Property(property="usage_limit", type="integer"),
+     *             @OA\Property(property="per_user_limit", type="integer", default=1),
+     *             @OA\Property(property="valid_from", type="string", format="date-time"),
+     *             @OA\Property(property="valid_until", type="string", format="date-time"),
+     *             @OA\Property(property="is_active", type="boolean", default=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Promo code created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Promo code created successfully"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
+     */
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'code' => 'required|string|unique:promo_codes',
+            'discount_type' => 'required|in:percentage,fixed',
+            'discount_value' => 'required|numeric|min:0',
+            'max_discount' => 'nullable|numeric|min:0',
+            'min_listing_price' => 'nullable|numeric|min:0',
+            'usage_limit' => 'nullable|integer|min:1',
+            'per_user_limit' => 'nullable|integer|min:1',
+            'valid_from' => 'nullable|date',
+            'valid_until' => 'nullable|date|after_or_equal:valid_from',
+            'is_active' => 'boolean'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $promo = PromoCode::create($request->all());
+
+        return response()->json([
+            'message' => 'Promo code created successfully',
+            'data' => $promo
+        ], 201);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/admin/promo-codes/{id}",
+     *     summary="Get promo code details",
+     *     tags={"Promo Code - Management"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Promo code details",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="code", type="string", example="SAVE20"),
+     *             @OA\Property(property="discount_type", type="string", example="percentage"),
+     *             @OA\Property(property="discount_value", type="number", example=20)
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Promo code not found")
+     * )
+     */
+    public function show($id)
+    {
+        $promo = PromoCode::find($id);
+        if (!$promo) {
+            return response()->json(['message' => 'Promo code not found'], 404);
+        }
+        return response()->json($promo);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/admin/promo-codes/{id}",
+     *     summary="Update a promo code",
+     *     tags={"Promo Code - Management"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="code", type="string"),
+     *             @OA\Property(property="description", type="string"),
+     *             @OA\Property(property="discount_type", type="string", enum={"percentage", "fixed"}),
+     *             @OA\Property(property="discount_value", type="number", format="float"),
+     *             @OA\Property(property="is_active", type="boolean")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Promo code updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Promo code updated successfully"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Promo code not found")
+     * )
+     */
+    public function update(Request $request, $id)
+    {
+        $promo = PromoCode::find($id);
+        if (!$promo) {
+            return response()->json(['message' => 'Promo code not found'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'code' => 'sometimes|string|unique:promo_codes,code,' . $id,
+            'discount_type' => 'sometimes|in:percentage,fixed',
+            'discount_value' => 'sometimes|numeric|min:0',
+            'is_active' => 'boolean'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $promo->update($request->all());
+
+        return response()->json([
+            'message' => 'Promo code updated successfully',
+            'data' => $promo
+        ]);
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/admin/promo-codes/{id}",
+     *     summary="Delete a promo code",
+     *     tags={"Promo Code - Management"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Promo code deleted successfully"),
+     *     @OA\Response(response=404, description="Promo code not found")
+     * )
+     */
+    public function destroy($id)
+    {
+        $promo = PromoCode::find($id);
+        if (!$promo) {
+            return response()->json(['message' => 'Promo code not found'], 404);
+        }
+        $promo->delete();
+        return response()->json(['message' => 'Promo code deleted successfully']);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/promo/check",
      *     summary="Check promo code validity and calculate discount",
      *     description="Validates a promo code and calculates the new price after applying the discount.",
      *     operationId="checkPromo",
@@ -71,77 +270,82 @@ class PromoCodeController extends Controller
      * )
      */
 
-    public function checkPromo(Request $request)
+    public function checkPromo(Request $request, \App\Services\PromoCodeService $promoService)
     {
         $request->validate([
             'code' => 'required|string',
             'total_price' => 'required|numeric|min:0',
         ]);
 
-        $user = Auth::user();
-        $now = Carbon::now();
+        $result = $promoService->validatePromoCode(
+            $request->code,
+            Auth::user(),
+            $request->total_price
+        );
 
-        $promo = PromoCode::where('code', $request->code)->first();
-
-        if (!$promo || !$promo->is_active) {
-            return response()->json(['message' => 'Promo code not found or inactive.'], 404);
+        if (!$result['valid']) {
+            return response()->json(['message' => $result['message']], $result['status']);
         }
-
-        // Vérifier la validité temporelle
-        if (($promo->valid_from && $promo->valid_from > $now) ||
-            ($promo->valid_until && $promo->valid_until < $now)
-        ) {
-            return response()->json(['message' => 'Promo code is not valid at this time.'], 403);
-        }
-
-        // Vérifier le minimum de prix requis
-        if ($promo->min_listing_price && $request->total_price < $promo->min_listing_price) {
-            return response()->json(['message' => 'Total price is too low for this promo code.'], 403);
-        }
-
-        // Vérifier nombre d'utilisation global
-        $totalUsages = DB::table('promo_code_usages')
-            ->where('promo_code_id', $promo->id)
-            ->count();
-
-        if ($promo->usage_limit !== null && $totalUsages >= $promo->usage_limit) {
-            return response()->json(['message' => 'Promo code has reached its global usage limit.'], 403);
-        }
-
-        // Vérifier nombre d'utilisations par user
-        $userUsages = DB::table('promo_code_usages')
-            ->where('promo_code_id', $promo->id)
-            ->where('user_id', $user->id)
-            ->count();
-
-        if ($userUsages >= $promo->per_user_limit) {
-            return response()->json(['message' => 'You have reached the usage limit for this promo code.'], 403);
-        }
-
-        // Appliquer la réduction
-        $oldPrice = $request->total_price;
-        $discount = 0;
-
-        if ($promo->discount_type === 'percentage') {
-            $discount = ($oldPrice * $promo->discount_value) / 100;
-            if ($promo->max_discount && $discount > $promo->max_discount) {
-                $discount = $promo->max_discount;
-            }
-        } elseif ($promo->discount_type === 'fixed') {
-            $discount = $promo->discount_value;
-        }
-
-        $newPrice = max($oldPrice - $discount, 0);
 
         return response()->json([
-            'old_price' => $oldPrice,
-            'new_price' => $newPrice,
-            'discount' => $discount,
-            'discount_type' => $promo->discount_type,
-            'discount_value' => $promo->discount_value,
-            'description' => $promo->description,
-            'usage_count' => $userUsages,
-            'total_usage_count' => $totalUsages,
+            'old_price' => $result['old_price'],
+            'new_price' => $result['new_price'],
+            'discount' => $result['discount'],
+            'discount_type' => $result['promo']->discount_type,
+            'discount_value' => $result['promo']->discount_value,
+            'description' => $result['promo']->description,
+            'usage_count' => $result['user_usages'],
+            'total_usage_count' => $result['total_usages'],
         ]);
+    }
+    /**
+     * @OA\Get(
+     *     path="/api/admin/promo-codes/usages",
+     *     summary="List all promo code usages",
+     *     description="Returns a list of all promo code usage records with associated user and listing details.",
+     *     tags={"Promo Code - Management"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of promo code usages",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="promo_code_id", type="integer", example=1),
+     *                 @OA\Property(property="user_id", type="integer", example=5),
+     *                 @OA\Property(property="listing_id", type="integer", example=10),
+     *                 @OA\Property(property="used_at", type="string", format="date-time"),
+     *                 @OA\Property(
+     *                     property="user",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer"),
+     *                     @OA\Property(property="name", type="string"),
+     *                     @OA\Property(property="email", type="string")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="listing",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer"),
+     *                     @OA\Property(property="title", type="string")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="promo_code",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer"),
+     *                     @OA\Property(property="code", type="string")
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function usages()
+    {
+        $usages = PromoCodeUsage::with(['user:id,name,email', 'listing:id,title', 'promoCode:id,code'])
+            ->orderBy('used_at', 'desc')
+            ->get();
+
+        return response()->json($usages);
     }
 }

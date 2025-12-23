@@ -9,6 +9,7 @@ use App\Models\EventActivity;
 use App\Models\EventContact;
 use App\Models\EventFaq;
 use App\Models\EventInterest;
+use App\Models\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
@@ -239,7 +240,7 @@ class EventController extends Controller
             $event = $query->where('slug', $id)->firstOrFail();
         }
 
-        $event->increment('views_count');
+        $this->recordView($event, $user);
 
         $availableSpots = null;
         if ($event->max_participants) {
@@ -1276,5 +1277,33 @@ class EventController extends Controller
             'message' => 'Your interested events retrieved successfully',
             'data' => $events
         ]);
+    }
+
+    private function recordView($viewable, $user)
+    {
+        if (!$user) {
+            $viewable->increment('views_count');
+            return;
+        }
+
+        $exists = View::where('user_id', $user->id)
+            ->where('viewable_id', $viewable->id)
+            ->where('viewable_type', get_class($viewable))
+            ->exists();
+
+        if (!$exists) {
+            try {
+                View::create([
+                    'user_id' => $user->id,
+                    'viewable_id' => $viewable->id,
+                    'viewable_type' => get_class($viewable),
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                ]);
+                $viewable->increment('views_count');
+            } catch (\Exception $e) {
+                // Ignore unique constraint violation
+            }
+        }
     }
 }

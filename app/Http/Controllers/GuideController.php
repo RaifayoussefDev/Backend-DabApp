@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Guide;
 use App\Models\GuideSection;
+use App\Models\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -210,7 +211,7 @@ class GuideController extends Controller
             return response()->json(['message' => 'Guide not found'], 404);
         }
 
-        $guide->increment('views_count');
+        $this->recordView($guide, $user);
         return response()->json($this->formatGuideDetail($guide, $user));
     }
 
@@ -590,7 +591,7 @@ class GuideController extends Controller
             return response()->json(['message' => 'Guide not found'], 404);
         }
 
-        $guide->increment('views_count');
+        $this->recordView($guide, $user);
         return response()->json($this->formatGuideDetail($guide, $user));
     }
 
@@ -805,6 +806,7 @@ class GuideController extends Controller
                 return ['id' => $tag->id, 'name' => $tag->name, 'slug' => $tag->slug];
             }),
             'liked' => $isLiked,
+            'is_liked' => $isLiked,
             'bookmarked' => $isBookmarked,
         ];
     }
@@ -857,9 +859,39 @@ class GuideController extends Controller
                 ];
             }),
             'liked' => $isLiked,
+            'is_liked' => $isLiked,
             'bookmarked' => $isBookmarked,
         ];
     }
+
+    private function recordView($viewable, $user)
+    {
+        if (!$user) {
+            $viewable->increment('views_count');
+            return;
+        }
+
+        $exists = View::where('user_id', $user->id)
+            ->where('viewable_id', $viewable->id)
+            ->where('viewable_type', get_class($viewable))
+            ->exists();
+
+        if (!$exists) {
+            try {
+                View::create([
+                    'user_id' => $user->id,
+                    'viewable_id' => $viewable->id,
+                    'viewable_type' => get_class($viewable),
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                ]);
+                $viewable->increment('views_count');
+            } catch (\Exception $e) {
+                // Ignore unique constraint violation
+            }
+        }
+    }
+
 
     private function formatGuideResponse($guide)
     {

@@ -161,6 +161,73 @@ class ImageUploadController extends Controller
 
     /**
      * @OA\Post(
+     *     path="/api/upload-image-no-watermark",
+     *     summary="Upload multiple images without watermark",
+     *     description="Allows users to upload multiple images to the server with automatic resizing but WITHOUT watermark.",
+     *     operationId="uploadImagesNoWatermark",
+     *     tags={"Image Upload"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"images[]"},
+     *                 @OA\Property(
+     *                     property="images[]",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="string",
+     *                         format="binary"
+     *                     ),
+     *                     description="Multiple image files to upload (will be automatically resized but NOT watermarked)"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Images uploaded successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Images uploaded successfully"),
+     *             @OA\Property(property="paths", type="array", @OA\Items(type="string", example="http://yourdomain.com/storage/listings/random_name.jpg"))
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Bad Request"),
+     *     @OA\Response(response=422, description="Validation Error"),
+     *     @OA\Response(response=500, description="Internal Server Error")
+     * )
+     */
+    public function uploadNoWatermark(Request $request)
+    {
+        try {
+            $request->validate([
+                'images.*' => 'required|image|mimes:jpeg,jpg,png,webp|max:10240'
+            ]);
+
+            if (!$request->hasFile('images')) {
+                return response()->json(['error' => 'No images found in request.'], 400);
+            }
+
+            $paths = [];
+            foreach ($request->file('images') as $uploadedFile) {
+                $filename = Str::random(20) . '.' . $uploadedFile->getClientOriginalExtension();
+                $processedImage = $this->processImage($uploadedFile);
+                $imagePath = $this->saveImage($processedImage, "listings/{$filename}");
+                $paths[] = asset('storage/' . $imagePath);
+            }
+
+            return response()->json([
+                'message' => 'Images uploaded successfully without watermark',
+                'paths' => $paths
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Image upload (no watermark) failed: ' . $e->getMessage());
+            return response()->json(['error' => 'An error occurred while uploading images.'], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
      *     path="/api/upload-icon",
      *     summary="Upload an icon (16x16)",
      *     description="Allows users to upload an icon that will be automatically resized to 16x16 pixels",

@@ -7,6 +7,7 @@ use App\Models\Authentication;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Notifications\SendOtpNotification;
+use App\Notifications\DeletionOtpNotification;
 use App\Notifications\PasswordResetNotification;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -2083,6 +2084,193 @@ class AuthController extends Controller
             return response()->json([
                 'error' => 'Failed to send test email: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/user/delete-request",
+     *     summary="Request account deletion (Step 1)",
+     *     description="Initiates account deletion process. Requires password. Sends OTP via Email and WhatsApp.",
+     *     tags={"Authentification"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"password"},
+     *             @OA\Property(property="password", type="string", format="password", example="secret123")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OTP sent successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="تم إرسال رمز التحقق / OTP has been sent")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized or invalid password", @OA\JsonContent(@OA\Property(property="error", type="string", example="كلمة المرور غير صحيحة / Invalid password")))
+     * )
+     */
+    public function deleteAccountRequest(Request $request)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $request->validate([
+            'password' => 'required|string'
+        ]);
+
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json(['error' => 'كلمة المرور غير صحيحة / Invalid password'], 401);
+        }
+
+        $otp = rand(1000, 9999);
+        $this->sendDeletionOtp($user, $otp);
+
+        return response()->json(['message' => 'تم إرسال رمز التحقق / OTP has been sent to your email and WhatsApp']);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/user/delete-confirm",
+     *     summary="Confirm account deletion (Step 2)",
+     *     tags={"Authentification"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"otp"},
+     *             @OA\Property(property="otp", type="string", example="1234")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200, 
+     *         description="Account deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="تم حذف الحساب بنجاح / Account deleted successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400, 
+     *         description="Invalid or expired OTP",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="رمز تحقق غير صحيح أو منتهي الصلاحية / Invalid or expired OTP")
+     *         )
+     *     )
+     * )
+     */
+    public function confirmDeleteAccount(Request $request)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $request->validate([
+            'otp' => 'required|string|size:4'
+        ]);
+
+        $otpRecord = DB::table('otps')
+            ->where('user_id', $user->id)
+            ->where('code', $request->otp)
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (!$otpRecord) {
+            return response()->json(['error' => 'رمز تحقق غير صحيح أو منتهي الصلاحية / Invalid or expired OTP'], 400);
+        }
+
+        DB::table('otps')->where('id', $otpRecord->id)->delete();
+
+        // Perform Soft Delete
+        $user->delete();
+
+        return response()->json(['message' => 'تم حذف الحساب بنجاح / Account deleted successfully']);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/user/delete-resend-otp",
+     *     summary="Resend account deletion OTP",
+     *     tags={"Authentification"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OTP resent successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="تم إعادة إرسال رمز التحقق / OTP has been resent")
+     *         )
+     *     )
+     * )
+     */
+    public function resendDeletionOtp(Request $request)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $otp = rand(1000, 9999);
+
+        DB::table('otps')->updateOrInsert(
+            ['user_id' => $user->id],
+            [
+                'code' => $otp,
+                'expires_at' => now()->addMinutes(5),
+                'updated_at' => now()
+            ]
+        );
+
+        $this->sendDeletionOtp($user, $otp);
+
+        return response()->json(['message' => 'تم إعادة إرسال رمز التحقق / OTP has been resent']);
+    }
+
+    private function sendDeletionOtp($user, $otp)
+    {
+        // 1. Send via Email
+        try {
+            $user->notify(new DeletionOtpNotification($otp));
+        } catch (\Exception $e) {
+            Log::error('Failed to send deletion email', ['error' => $e->getMessage()]);
+        }
+
+        // 2. Send via WhatsApp if phone exists
+        if (!empty($user->phone)) {
+            $this->sendDeletionWhatsApp($user->phone, $otp);
+        }
+    }
+
+    private function sendDeletionWhatsApp($phone, $otp)
+    {
+        try {
+            $phoneNumber = $this->formatPhoneNumber($phone);
+            
+            $textEn = "⚠️ Your OTP for account deletion from dabapp.co is: {$otp}\n\n⏳ Valid for 5 minutes.\n❌ If you didn't request this, ignore this message.";
+            $textAr = "⚠️ رمز التحقق الخاص بك لحذف الحساب من dabapp.co هو: {$otp}\n\n⏳ هذا المركز صالح لمدة 5 دقائق.\n❌ إذا لم تطلب ذلك، يرجى تجاهل هذه الرسالة.";
+            
+            $text = $textAr . "\n\n" . $textEn;
+
+            $payload = [
+                'phonenumber' => '+' . $phoneNumber,
+                'text' => $text
+            ];
+
+            $response = Http::timeout(10)->withHeaders([
+                'Authorization' => "Bearer {$this->whatsappApiToken}",
+                'Content-Type' => 'application/json',
+            ])->post($this->whatsappApiUrl, $payload);
+
+            return $response->successful();
+        } catch (\Exception $e) {
+            Log::error('WhatsApp deletion OTP send failed', ['error' => $e->getMessage()]);
+            return false;
         }
     }
 }
