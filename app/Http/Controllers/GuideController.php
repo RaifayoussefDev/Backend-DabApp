@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 /**
  * @OA\Tag(
@@ -33,7 +34,7 @@ class GuideController extends Controller
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
+        $user = $this->getAuthenticatedUser();
 
         $query = Guide::with(['author', 'category', 'tags', 'sections'])
             ->where('status', 'published')
@@ -198,7 +199,7 @@ class GuideController extends Controller
      */
     public function show($slug)
     {
-        $user = Auth::user();
+        $user = $this->getAuthenticatedUser();
         $guide = Guide::with(['author', 'category', 'tags', 'sections'])
             ->where('slug', $slug)
             ->where('status', 'published')
@@ -577,7 +578,7 @@ class GuideController extends Controller
      */
     public function showById($id)
     {
-        $user = Auth::user();
+        $user = $this->getAuthenticatedUser();
         $guide = Guide::with(['author', 'category', 'tags', 'sections'])
             ->where('id', $id)
             ->where('status', 'published')
@@ -608,7 +609,7 @@ class GuideController extends Controller
      */
     public function getByCategory($category_id, Request $request)
     {
-        $user = Auth::user();
+        $user = $this->getAuthenticatedUser();
         $query = Guide::with(['author', 'category', 'tags', 'sections'])
             ->where('status', 'published')
             ->whereNotNull('published_at')
@@ -651,7 +652,7 @@ class GuideController extends Controller
      */
     public function getByTag($tag_slug, Request $request)
     {
-        $user = Auth::user();
+        $user = $this->getAuthenticatedUser();
         $query = Guide::with(['author', 'category', 'tags', 'sections'])
             ->where('status', 'published')
             ->whereNotNull('published_at')
@@ -692,7 +693,7 @@ class GuideController extends Controller
      */
     public function getByTagId($tag_id, Request $request)
     {
-        $user = Auth::user();
+        $user = $this->getAuthenticatedUser();
         $query = Guide::with(['author', 'category', 'tags', 'sections'])
             ->where('status', 'published')
             ->whereNotNull('published_at')
@@ -740,7 +741,7 @@ class GuideController extends Controller
      */
     public function starter(Request $request)
     {
-        $user = Auth::user();
+        $user = $this->getAuthenticatedUser();
 
         // Utilisation de JOIN explicite au lieu de whereHas pour éviter les problèmes de backticks
         $query = Guide::select('guides.*')
@@ -806,7 +807,6 @@ class GuideController extends Controller
                 return ['id' => $tag->id, 'name' => $tag->name, 'slug' => $tag->slug];
             }),
             'liked' => $isLiked,
-            'is_liked' => $isLiked,
             'bookmarked' => $isBookmarked,
         ];
     }
@@ -859,7 +859,6 @@ class GuideController extends Controller
                 ];
             }),
             'liked' => $isLiked,
-            'is_liked' => $isLiked,
             'bookmarked' => $isBookmarked,
         ];
     }
@@ -892,6 +891,18 @@ class GuideController extends Controller
         }
     }
 
+
+    private function getAuthenticatedUser()
+    {
+        try {
+            if ($user = JWTAuth::parseToken()->authenticate()) {
+                return $user;
+            }
+        } catch (\Exception $e) {
+            // Token is missing or invalid
+        }
+        return null;
+    }
 
     private function formatGuideResponse($guide)
     {
