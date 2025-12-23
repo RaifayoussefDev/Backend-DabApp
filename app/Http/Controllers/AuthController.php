@@ -2127,6 +2127,16 @@ class AuthController extends Controller
         }
 
         $otp = rand(1000, 9999);
+
+        DB::table('otps')->updateOrInsert(
+            ['user_id' => $user->id],
+            [
+                'code' => $otp,
+                'expires_at' => now()->addMinutes(5),
+                'updated_at' => now()
+            ]
+        );
+
         $this->sendDeletionOtp($user, $otp);
 
         return response()->json(['message' => 'OTP has been sent to your email and WhatsApp']);
