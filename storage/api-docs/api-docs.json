@@ -1860,12 +1860,68 @@
                     "Authentification"
                 ],
                 "summary": "User logout",
+                "description": "Logout user and deactivate FCM token for push notifications",
                 "operationId": "fe8f3429cd6979b3b4517e186505f9f9",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "fcm_token": {
+                                        "description": "Firebase Cloud Messaging token to deactivate (optional). If not provided, all user tokens will be deactivated.",
+                                        "type": "string",
+                                        "example": "fX7YkR4dT9eB2Hf5Jk8LmN3Pq1Rs6Tv0..."
+                                    },
+                                    "logout_all_devices": {
+                                        "description": "If true, deactivate all FCM tokens for this user",
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Successfully logged out"
+                        "description": "Successfully logged out",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Successfully logged out"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "tokens_deactivated": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/refresh": {
@@ -2249,14 +2305,14 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "OTP sent successfully",
+                        "description": "OTP has been sent",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "تم إرسال رمز التحقق / OTP has been sent"
+                                            "example": "OTP has been sent to your email and WhatsApp / تم إرسال رمز التحقق إلى بريدك الإلكتروني و واتساب"
                                         }
                                     },
                                     "type": "object"
@@ -2272,7 +2328,7 @@
                                     "properties": {
                                         "error": {
                                             "type": "string",
-                                            "example": "كلمة المرور غير صحيحة / Invalid password"
+                                            "example": "Invalid password"
                                         }
                                     },
                                     "type": "object"
@@ -2323,7 +2379,7 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "تم حذف الحساب بنجاح / Account deleted successfully"
+                                            "example": "Account deleted successfully"
                                         }
                                     },
                                     "type": "object"
@@ -2339,7 +2395,7 @@
                                     "properties": {
                                         "error": {
                                             "type": "string",
-                                            "example": "رمز تحقق غير صحيح أو منتهي الصلاحية / Invalid or expired OTP"
+                                            "example": "Invalid or expired OTP"
                                         }
                                     },
                                     "type": "object"
@@ -2378,7 +2434,7 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "تم إعادة إرسال رمز التحقق / OTP has been resent"
+                                            "example": "OTP has been resent / تم إعادة إرسال رمز التحقق"
                                         }
                                     },
                                     "type": "object"
@@ -22521,7 +22577,7 @@
                 "tags": [
                     "Plate Formats"
                 ],
-                "summary": "Créer un nouveau format de plaque",
+                "summary": "Create a new plate format",
                 "operationId": "96c0503d8d665eea176686c34eb611a6",
                 "requestBody": {
                     "required": true,
@@ -22565,7 +22621,7 @@
                                     },
                                     "description": {
                                         "type": "string",
-                                        "example": "Plaque moto Ajman réelle : chiffres (1‑5) en haut centre, lettre latine en bas centre"
+                                        "example": "Real Ajman motorcycle plate: digits (1-5) top center, latin letter bottom center"
                                     },
                                     "fields": {
                                         "type": "array",
@@ -22633,14 +22689,14 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Format créé avec succès",
+                        "description": "Format created successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Format créé avec succès"
+                                            "example": "Format created successfully"
                                         },
                                         "format": {
                                             "type": "object"
@@ -22652,7 +22708,7 @@
                         }
                     },
                     "422": {
-                        "description": "Erreur de validation"
+                        "description": "Validation error"
                     }
                 }
             }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\CountryHelper;
 use App\Models\Authentication;
+use App\Models\NotificationToken;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Notifications\SendOtpNotification;
@@ -405,7 +406,7 @@ class AuthController extends Controller
         // ⭐ HANDLE SOFT DELETED USER (30-day reactivation)
         if ($user->trashed()) {
             $daysSinceDeletion = $user->deleted_at->diffInDays(now());
-            
+
             if ($daysSinceDeletion > 30) {
                 Log::warning('Login failed - account permanently deleted (past 30 days)', [
                     'user_id' => $user->id,
@@ -417,7 +418,7 @@ class AuthController extends Controller
             // Restore account
             $user->restore();
             Log::info('Account reactivated on login', ['user_id' => $user->id]);
-            
+
             // Note: We continue the login flow after restoration
             $reactivationMessage = "Your account has been reactivated / تم إعادة تفعيل حسابك";
         }
@@ -1278,17 +1279,74 @@ class AuthController extends Controller
      * @OA\Post(
      *     path="/api/logout",
      *     summary="User logout",
+     *     description="Logout user and deactivate FCM token for push notifications",
      *     tags={"Authentification"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="fcm_token",
+     *                 type="string",
+     *                 description="Firebase Cloud Messaging token to deactivate (optional). If not provided, all user tokens will be deactivated.",
+     *                 example="fX7YkR4dT9eB2Hf5Jk8LmN3Pq1Rs6Tv0..."
+     *             ),
+     *             @OA\Property(
+     *                 property="logout_all_devices",
+     *                 type="boolean",
+     *                 description="If true, deactivate all FCM tokens for this user",
+     *                 example=false
+     *             )
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Successfully logged out"
+     *         description="Successfully logged out",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Successfully logged out"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="tokens_deactivated", type="integer", example=1)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
      *     )
      * )
      */
-    public function logout()
+    public function logout(Request $request)
     {
+        $user = auth()->user();
+        $tokensDeactivated = 0;
+
+        if ($user) {
+            // Si un fcm_token est fourni, désactiver celui-là uniquement
+            if ($request->filled('fcm_token')) {
+                $tokensDeactivated = NotificationToken::where('user_id', $user->id)
+                    ->where('fcm_token', $request->fcm_token)
+                    ->update(['is_active' => false]);
+            }
+            // Si logout_all_devices = true, tout désactiver
+            elseif ($request->boolean('logout_all_devices')) {
+                $tokensDeactivated = NotificationToken::where('user_id', $user->id)
+                    ->update(['is_active' => false]);
+            }
+            // SINON: Ne rien faire avec les tokens FCM
+            // Le web logout n'affecte pas les apps mobiles ✅
+        }
+
         auth()->logout();
-        return response()->json(['message' => 'Successfully logged out']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Successfully logged out',
+            'data' => [
+                'tokens_deactivated' => $tokensDeactivated
+            ]
+        ]);
     }
 
     /**
@@ -2172,14 +2230,14 @@ class AuthController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=200, 
+     *         response=200,
      *         description="Account deleted successfully",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Account deleted successfully")
      *         )
      *     ),
      *     @OA\Response(
-     *         response=400, 
+     *         response=400,
      *         description="Invalid or expired OTP",
      *         @OA\JsonContent(
      *             @OA\Property(property="error", type="string", example="Invalid or expired OTP")
@@ -2300,9 +2358,9 @@ class AuthController extends Controller
     {
         try {
             $phoneNumber = $this->formatPhoneNumber($phone);
-            
+
             $text = "⚠️ Your OTP for account deletion from dabapp.co is: {$otp}\n\n⏳ Valid for 5 minutes.\n❌ If you didn't request this, ignore this message.\n\n" .
-                    "⚠️ رمز التحقق الخاص بك لحذف الحساب من dabapp.co هو: {$otp}\n\n⏳ صالح لمدة 5 دقائق.\n❌ إذا لم تطلب هذا، فتجاهل هذه الرسالة.";
+                "⚠️ رمز التحقق الخاص بك لحذف الحساب من dabapp.co هو: {$otp}\n\n⏳ صالح لمدة 5 دقائق.\n❌ إذا لم تطلب هذا، فتجاهل هذه الرسالة.";
 
             $payload = [
                 'phonenumber' => '+' . $phoneNumber,
