@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Notifications\SendOtpNotification;
 use App\Notifications\DeletionOtpNotification;
+use App\Notifications\AccountDeletionStatusNotification;
 use App\Notifications\PasswordResetNotification;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -350,6 +351,7 @@ class AuthController extends Controller
 
         $login = $request->input('login');
         $password = $request->input('password');
+        $reactivationMessage = null;
 
         // ⭐ DÉTERMINER LE TYPE DE LOGIN DÈS LE DÉBUT
         $isEmailLogin = filter_var($login, FILTER_VALIDATE_EMAIL);
@@ -364,22 +366,22 @@ class AuthController extends Controller
 
         if ($isEmailLogin) {
             // Login is an email
-            $user = User::where('email', $login)->first();
+            $user = User::withTrashed()->where('email', $login)->first();
             Log::info('Login attempt with email', ['email' => $login]);
         } else {
             // Login is potentially a phone number - try direct match or with/without + prefix
 
             // First, try exact match
-            $user = User::where('phone', $login)->first();
+            $user = User::withTrashed()->where('phone', $login)->first();
 
             if (!$user) {
                 // Try removing/adding + prefix
                 if (str_starts_with($login, '+')) {
                     $phoneWithoutPlus = substr($login, 1);
-                    $user = User::where('phone', $phoneWithoutPlus)->first();
+                    $user = User::withTrashed()->where('phone', $phoneWithoutPlus)->first();
                 } else {
                     $phoneWithPlus = '+' . $login;
-                    $user = User::where('phone', $phoneWithPlus)->first();
+                    $user = User::withTrashed()->where('phone', $phoneWithPlus)->first();
                 }
             }
 
@@ -398,6 +400,26 @@ class AuthController extends Controller
                 'user_found' => $user ? true : false
             ]);
             return response()->json(['error' => 'Invalid credentials'], 401);
+        }
+
+        // ⭐ HANDLE SOFT DELETED USER (30-day reactivation)
+        if ($user->trashed()) {
+            $daysSinceDeletion = $user->deleted_at->diffInDays(now());
+            
+            if ($daysSinceDeletion > 30) {
+                Log::warning('Login failed - account permanently deleted (past 30 days)', [
+                    'user_id' => $user->id,
+                    'deleted_at' => $user->deleted_at
+                ]);
+                return response()->json(['error' => 'Invalid credentials'], 401);
+            }
+
+            // Restore account
+            $user->restore();
+            Log::info('Account reactivated on login', ['user_id' => $user->id]);
+            
+            // Note: We continue the login flow after restoration
+            $reactivationMessage = "Your account has been reactivated / تم إعادة تفعيل حسابك";
         }
 
         // ✅ VÉRIFIER SI L'UTILISATEUR EST VÉRIFIÉ
@@ -2197,7 +2219,14 @@ class AuthController extends Controller
         // Perform Soft Delete
         $user->delete();
 
-        return response()->json(['message' => 'Account deleted successfully']);
+        // Send confirmation email about 30-day reactivation
+        try {
+            $user->notify(new AccountDeletionStatusNotification());
+        } catch (\Exception $e) {
+            Log::error('Failed to send deletion confirmation email', ['error' => $e->getMessage()]);
+        }
+
+        return response()->json(['message' => 'Account deleted successfully. You have 30 days to reactivate your account by logging in. / تم حذف الحساب بنجاح. لديك 30 يوماً لإعادة تفعيل حسابك عن طريق تسجيل الدخول.']);
     }
 
     /**
