@@ -77,7 +77,7 @@ class GuideCommentController extends Controller
 
         if (!$guide) {
             return response()->json([
-                'message' => 'Guide non trouvé'
+                'message' => 'Guide not found'
             ], 404);
         }
 
@@ -157,7 +157,7 @@ class GuideCommentController extends Controller
 
         if (!$guide) {
             return response()->json([
-                'message' => 'Guide non trouvé'
+                'message' => 'Guide not found'
             ], 404);
         }
 
@@ -177,7 +177,7 @@ class GuideCommentController extends Controller
             $parentComment = GuideComment::find($request->parent_id);
             if ($parentComment->guide_id != $id) {
                 return response()->json([
-                    'message' => 'Le commentaire parent n\'appartient pas à ce guide'
+                    'message' => 'The parent comment does not belong to this guide'
                 ], 422);
             }
         }
@@ -193,7 +193,7 @@ class GuideCommentController extends Controller
         $comment->load('user');
 
         return response()->json([
-            'message' => 'Commentaire ajouté avec succès',
+            'message' => 'Comment added successfully',
             'data' => $this->formatComment($comment)
         ], 201);
     }
@@ -238,7 +238,7 @@ class GuideCommentController extends Controller
 
         if (!$comment) {
             return response()->json([
-                'message' => 'Commentaire non trouvé'
+                'message' => 'Comment not found'
             ], 404);
         }
 
@@ -247,7 +247,7 @@ class GuideCommentController extends Controller
         // Vérifier autorisation (auteur du commentaire ou admin)
         if ($comment->user_id !== $user->id && $user->role_id != 1) {
             return response()->json([
-                'message' => 'Non autorisé'
+                'message' => 'Unauthorized'
             ], 403);
         }
 
@@ -266,7 +266,7 @@ class GuideCommentController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Commentaire mis à jour avec succès',
+            'message' => 'Comment updated successfully',
             'data' => $this->formatComment($comment)
         ]);
     }
@@ -304,7 +304,7 @@ class GuideCommentController extends Controller
 
         if (!$comment) {
             return response()->json([
-                'message' => 'Commentaire non trouvé'
+                'message' => 'Comment not found'
             ], 404);
         }
 
@@ -313,14 +313,14 @@ class GuideCommentController extends Controller
         // Vérifier autorisation (auteur du commentaire ou admin)
         if ($comment->user_id !== $user->id && $user->role_id != 1) {
             return response()->json([
-                'message' => 'Non autorisé'
+                'message' => 'Unauthorized'
             ], 403);
         }
 
         $comment->delete();
 
         return response()->json([
-            'message' => 'Commentaire supprimé avec succès'
+            'message' => 'Comment deleted successfully'
         ]);
     }
 
@@ -353,7 +353,7 @@ class GuideCommentController extends Controller
 
         if (!$comment) {
             return response()->json([
-                'message' => 'Commentaire non trouvé'
+                'message' => 'Comment not found'
             ], 404);
         }
 
@@ -362,14 +362,14 @@ class GuideCommentController extends Controller
         // Seulement admin
         if ($user->role_id != 1) {
             return response()->json([
-                'message' => 'Non autorisé - Admin uniquement'
+                'message' => 'Unauthorized - Admin only'
             ], 403);
         }
 
         $comment->update(['is_approved' => true]);
 
         return response()->json([
-            'message' => 'Commentaire approuvé avec succès',
+            'message' => 'Comment approved successfully',
             'data' => $this->formatComment($comment)
         ]);
     }
@@ -399,7 +399,7 @@ class GuideCommentController extends Controller
 
         if (!$comment) {
             return response()->json([
-                'message' => 'Commentaire non trouvé'
+                'message' => 'Comment not found'
             ], 404);
         }
 
@@ -407,14 +407,14 @@ class GuideCommentController extends Controller
 
         if ($user->role_id != 1) {
             return response()->json([
-                'message' => 'Non autorisé - Admin uniquement'
+                'message' => 'Unauthorized - Admin only'
             ], 403);
         }
 
         $comment->update(['is_approved' => false]);
 
         return response()->json([
-            'message' => 'Commentaire rejeté avec succès'
+            'message' => 'Comment rejected successfully'
         ]);
     }
 
@@ -436,7 +436,7 @@ class GuideCommentController extends Controller
 
         if ($user->role_id != 1) {
             return response()->json([
-                'message' => 'Non autorisé - Admin uniquement'
+                'message' => 'Unauthorized - Admin only'
             ], 403);
         }
 

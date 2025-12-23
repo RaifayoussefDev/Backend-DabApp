@@ -12,7 +12,7 @@ class PlateFormatController extends Controller
     /**
      * @OA\Post(
      *     path="/api/plate-formats",
-     *     summary="Créer un nouveau format de plaque",
+     *     summary="Create a new plate format",
      *     tags={"Plate Formats"},
      *     @OA\RequestBody(
      *         required=true,
@@ -25,7 +25,7 @@ class PlateFormatController extends Controller
      *             @OA\Property(property="text_color", type="string", example="#000000"),
      *             @OA\Property(property="width_mm", type="integer", example=250),
      *             @OA\Property(property="height_mm", type="integer", example=130),
-     *             @OA\Property(property="description", type="string", example="Plaque moto Ajman réelle : chiffres (1‑5) en haut centre, lettre latine en bas centre"),
+     *             @OA\Property(property="description", type="string", example="Real Ajman motorcycle plate: digits (1-5) top center, latin letter bottom center"),
      *             @OA\Property(
      *                 property="fields",
      *                 type="array",
@@ -48,15 +48,15 @@ class PlateFormatController extends Controller
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Format créé avec succès",
+     *         description="Format created successfully",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Format créé avec succès"),
+     *             @OA\Property(property="message", type="string", example="Format created successfully"),
      *             @OA\Property(property="format", type="object")
      *         )
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Erreur de validation"
+     *         description="Validation error"
      *     )
      * )
      */

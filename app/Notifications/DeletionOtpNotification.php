@@ -25,13 +25,10 @@ class DeletionOtpNotification extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-            ->subject('رمز التحقق لحذف الحساب / Account Deletion OTP')
-            ->greeting('مرحباً / Hello ' . $notifiable->first_name)
-            ->line('رمز التحقق الخاص بك لحذف الحساب هو: **' . $this->otp . '**')
+            ->subject('Account Deletion OTP')
+            ->greeting('Hello ' . $notifiable->first_name)
             ->line('Your OTP for account deletion is: **' . $this->otp . '**')
-            ->line('هذا الرمز صالح لمدة 5 دقائق.')
             ->line('It will expire in 5 minutes.')
-            ->line('إن لم تكن أنت من طلب حذف الحساب، يرجى تجاهل هذا البريد.')
             ->line('If you did not request this, please ignore this email.');
     }
 }

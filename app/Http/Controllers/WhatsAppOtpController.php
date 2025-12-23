@@ -26,7 +26,7 @@ class WhatsAppOtpController extends Controller
         // 360messenger API correct format (tested with Postman)
         $payload = [
             'phonenumber' => '+' . $phoneNumber, // Add + prefix as required
-            'text' => "Votre code OTP est : {$otp}"
+            'text' => "Your OTP code is: {$otp}"
         ];
 
         Log::info('Sending WhatsApp OTP', [
@@ -48,7 +48,7 @@ class WhatsAppOtpController extends Controller
         if ($response->successful()) {
             return response()->json([
                 'success' => true,
-                'message' => 'OTP envoyé avec succès'
+                'message' => 'OTP sent successfully'
             ]);
         } else {
             return response()->json([
@@ -88,13 +88,13 @@ class WhatsAppOtpController extends Controller
             session()->forget('otp'); // Clear OTP after successful verification
             return response()->json([
                 'success' => true,
-                'message' => 'OTP vérifié avec succès'
+                'message' => 'OTP verified successfully'
             ]);
         }
 
         return response()->json([
             'success' => false,
-            'message' => 'Code OTP invalide'
+            'message' => 'Invalid OTP code'
         ], 422);
     }
 }

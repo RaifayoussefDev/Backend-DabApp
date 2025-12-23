@@ -58,7 +58,7 @@ class GuideLikeController extends Controller
 
         if (!$guide) {
             return response()->json([
-                'message' => 'Guide non trouvé'
+                'message' => 'Guide not found'
             ], 404);
         }
 
@@ -72,7 +72,7 @@ class GuideLikeController extends Controller
 
         if ($existingLike) {
             return response()->json([
-                'message' => 'Vous avez déjà liké ce guide',
+                'message' => 'You have already liked this guide',
                 'data' => [
                     'guide_id' => (int) $id,
                     'liked' => true,
@@ -89,7 +89,7 @@ class GuideLikeController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Guide liké avec succès',
+            'message' => 'Guide liked successfully',
             'data' => [
                 'guide_id' => (int) $id,
                 'liked' => true,
@@ -137,7 +137,7 @@ class GuideLikeController extends Controller
 
         if (!$guide) {
             return response()->json([
-                'message' => 'Guide non trouvé'
+                'message' => 'Guide not found'
             ], 404);
         }
 
@@ -150,7 +150,7 @@ class GuideLikeController extends Controller
 
         if (!$deleted) {
             return response()->json([
-                'message' => 'Vous n\'avez pas liké ce guide',
+                'message' => 'You have not liked this guide',
                 'data' => [
                     'guide_id' => (int) $id,
                     'liked' => false,
@@ -160,7 +160,7 @@ class GuideLikeController extends Controller
         }
 
         return response()->json([
-            'message' => 'Like retiré avec succès',
+            'message' => 'Like removed successfully',
             'data' => [
                 'guide_id' => (int) $id,
                 'liked' => false,
@@ -208,7 +208,7 @@ class GuideLikeController extends Controller
 
         if (!$guide) {
             return response()->json([
-                'message' => 'Guide non trouvé'
+                'message' => 'Guide not found'
             ], 404);
         }
 
@@ -227,7 +227,7 @@ class GuideLikeController extends Controller
                 ->delete();
 
             return response()->json([
-                'message' => 'Like retiré avec succès',
+                'message' => 'Like removed successfully',
                 'data' => [
                     'guide_id' => (int) $id,
                     'liked' => false,
@@ -243,7 +243,7 @@ class GuideLikeController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Guide liké avec succès',
+                'message' => 'Guide liked successfully',
                 'data' => [
                     'guide_id' => (int) $id,
                     'liked' => true,
@@ -361,7 +361,7 @@ class GuideLikeController extends Controller
 
         if (!$guide) {
             return response()->json([
-                'message' => 'Guide non trouvé'
+                'message' => 'Guide not found'
             ], 404);
         }
 

@@ -160,7 +160,7 @@ class GuideCategoryController extends Controller
         $category = GuideCategory::create($request->all());
 
         return response()->json([
-            'message' => 'Catégorie créée avec succès',
+            'message' => 'Category created successfully',
             'data' => [
                 'id' => $category->id,
                 'name' => $category->name,
@@ -216,7 +216,7 @@ class GuideCategoryController extends Controller
 
         if (!$category) {
             return response()->json([
-                'message' => 'Catégorie non trouvée'
+                'message' => 'Category not found'
             ], 404);
         }
 
@@ -334,7 +334,7 @@ class GuideCategoryController extends Controller
 
         if (!$category) {
             return response()->json([
-                'message' => 'Catégorie non trouvée'
+                'message' => 'Category not found'
             ], 404);
         }
 
@@ -354,7 +354,7 @@ class GuideCategoryController extends Controller
         $category->update($request->all());
 
         return response()->json([
-            'message' => 'Catégorie mise à jour avec succès',
+            'message' => 'Category updated successfully',
             'data' => [
                 'id' => $category->id,
                 'name' => $category->name,
@@ -410,14 +410,14 @@ class GuideCategoryController extends Controller
 
         if (!$category) {
             return response()->json([
-                'message' => 'Catégorie non trouvée'
+                'message' => 'Category not found'
             ], 404);
         }
 
         $category->delete();
 
         return response()->json([
-            'message' => 'Catégorie supprimée avec succès'
+            'message' => 'Category deleted successfully'
         ]);
     }
 
@@ -485,7 +485,7 @@ class GuideCategoryController extends Controller
 
         if (!$category) {
             return response()->json([
-                'message' => 'Catégorie non trouvée'
+                'message' => 'Category not found'
             ], 404);
         }
 

@@ -58,7 +58,7 @@ class GuideBookmarkController extends Controller
 
         if (!$guide) {
             return response()->json([
-                'message' => 'Guide non trouvé'
+                'message' => 'Guide not found'
             ], 404);
         }
 
@@ -72,7 +72,7 @@ class GuideBookmarkController extends Controller
 
         if ($existingBookmark) {
             return response()->json([
-                'message' => 'Ce guide est déjà dans vos favoris',
+                'message' => 'This guide is already in your bookmarks',
                 'data' => [
                     'guide_id' => (int) $id,
                     'bookmarked' => true,
@@ -90,7 +90,7 @@ class GuideBookmarkController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Guide ajouté aux favoris avec succès',
+            'message' => 'Guide added to bookmarks successfully',
             'data' => [
                 'guide_id' => (int) $id,
                 'bookmarked' => true,
@@ -137,7 +137,7 @@ class GuideBookmarkController extends Controller
 
         if (!$guide) {
             return response()->json([
-                'message' => 'Guide non trouvé'
+                'message' => 'Guide not found'
             ], 404);
         }
 
@@ -150,7 +150,7 @@ class GuideBookmarkController extends Controller
 
         if (!$deleted) {
             return response()->json([
-                'message' => 'Ce guide n\'est pas dans vos favoris',
+                'message' => 'This guide is not in your bookmarks',
                 'data' => [
                     'guide_id' => (int) $id,
                     'bookmarked' => false
@@ -159,7 +159,7 @@ class GuideBookmarkController extends Controller
         }
 
         return response()->json([
-            'message' => 'Guide retiré des favoris avec succès',
+            'message' => 'Guide removed from bookmarks successfully',
             'data' => [
                 'guide_id' => (int) $id,
                 'bookmarked' => false
@@ -205,7 +205,7 @@ class GuideBookmarkController extends Controller
 
         if (!$guide) {
             return response()->json([
-                'message' => 'Guide non trouvé'
+                'message' => 'Guide not found'
             ], 404);
         }
 
@@ -224,7 +224,7 @@ class GuideBookmarkController extends Controller
                 ->delete();
 
             return response()->json([
-                'message' => 'Guide retiré des favoris avec succès',
+                'message' => 'Guide removed from bookmarks successfully',
                 'data' => [
                     'guide_id' => (int) $id,
                     'bookmarked' => false
@@ -240,7 +240,7 @@ class GuideBookmarkController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Guide ajouté aux favoris avec succès',
+                'message' => 'Guide added to bookmarks successfully',
                 'data' => [
                     'guide_id' => (int) $id,
                     'bookmarked' => true,
@@ -412,7 +412,7 @@ class GuideBookmarkController extends Controller
             ->delete();
 
         return response()->json([
-            'message' => 'Tous les favoris ont été supprimés avec succès',
+            'message' => 'All bookmarks have been cleared successfully',
             'deleted_count' => $deletedCount
         ]);
     }
@@ -451,7 +451,7 @@ class GuideBookmarkController extends Controller
 
         if (!$guide) {
             return response()->json([
-                'message' => 'Guide non trouvé'
+                'message' => 'Guide not found'
             ], 404);
         }
 

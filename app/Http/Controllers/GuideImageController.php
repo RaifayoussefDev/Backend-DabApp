@@ -31,7 +31,7 @@ class GuideImageController extends Controller
 
         if (!$guide) {
             return response()->json([
-                'message' => 'Guide non trouvé'
+                'message' => 'Guide not found'
             ], 404);
         }
 
@@ -64,7 +64,7 @@ class GuideImageController extends Controller
 
         if (!$guide) {
             return response()->json([
-                'message' => 'Guide non trouvé'
+                'message' => 'Guide not found'
             ], 404);
         }
 
@@ -72,7 +72,7 @@ class GuideImageController extends Controller
         $user = Auth::user();
         if ($guide->author_id !== $user->id && $user->role_id != 1) {
             return response()->json([
-                'message' => 'Non autorisé'
+                'message' => 'Unauthorized'
             ], 403);
         }
 
@@ -99,7 +99,7 @@ class GuideImageController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Image ajoutée avec succès',
+            'message' => 'Image added successfully',
             'data' => [
                 'id' => $image->id,
                 'image_url' => $image->image_url,
@@ -127,7 +127,7 @@ class GuideImageController extends Controller
 
         if (!$guide) {
             return response()->json([
-                'message' => 'Guide non trouvé'
+                'message' => 'Guide not found'
             ], 404);
         }
 
@@ -135,7 +135,7 @@ class GuideImageController extends Controller
         $user = Auth::user();
         if ($guide->author_id !== $user->id && $user->role_id != 1) {
             return response()->json([
-                'message' => 'Non autorisé'
+                'message' => 'Unauthorized'
             ], 403);
         }
 
@@ -143,7 +143,7 @@ class GuideImageController extends Controller
 
         if (!$image) {
             return response()->json([
-                'message' => 'Image non trouvée'
+                'message' => 'Image not found'
             ], 404);
         }
 
@@ -162,7 +162,7 @@ class GuideImageController extends Controller
         $image->update($request->only(['image_url', 'caption', 'order_position']));
 
         return response()->json([
-            'message' => 'Image mise à jour avec succès',
+            'message' => 'Image updated successfully',
             'data' => [
                 'id' => $image->id,
                 'image_url' => $image->image_url,
@@ -190,7 +190,7 @@ class GuideImageController extends Controller
 
         if (!$guide) {
             return response()->json([
-                'message' => 'Guide non trouvé'
+                'message' => 'Guide not found'
             ], 404);
         }
 
@@ -198,7 +198,7 @@ class GuideImageController extends Controller
         $user = Auth::user();
         if ($guide->author_id !== $user->id && $user->role_id != 1) {
             return response()->json([
-                'message' => 'Non autorisé'
+                'message' => 'Unauthorized'
             ], 403);
         }
 
@@ -206,14 +206,14 @@ class GuideImageController extends Controller
 
         if (!$image) {
             return response()->json([
-                'message' => 'Image non trouvée'
+                'message' => 'Image not found'
             ], 404);
         }
 
         $image->delete();
 
         return response()->json([
-            'message' => 'Image supprimée avec succès'
+            'message' => 'Image deleted successfully'
         ]);
     }
 
@@ -233,7 +233,7 @@ class GuideImageController extends Controller
 
         if (!$guide) {
             return response()->json([
-                'message' => 'Guide non trouvé'
+                'message' => 'Guide not found'
             ], 404);
         }
 
@@ -241,7 +241,7 @@ class GuideImageController extends Controller
         $user = Auth::user();
         if ($guide->author_id !== $user->id && $user->role_id != 1) {
             return response()->json([
-                'message' => 'Non autorisé'
+                'message' => 'Unauthorized'
             ], 403);
         }
 
@@ -264,7 +264,7 @@ class GuideImageController extends Controller
         }
 
         return response()->json([
-            'message' => 'Ordre des images mis à jour avec succès'
+            'message' => 'Image order updated successfully'
         ]);
     }
 }

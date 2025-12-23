@@ -171,7 +171,7 @@ class PayTabsController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Paiement créé avec succès',
+                    'message' => 'Payment created successfully',
                     'payment_id' => $payment->id,
                     'payment_url' => $responseData['redirect_url'] ?? null,
                     'tran_ref' => $responseData['tran_ref'] ?? null
@@ -189,7 +189,7 @@ class PayTabsController extends Controller
 
                 return response()->json([
                     'success' => false,
-                    'error' => 'Erreur lors de la création du paiement',
+                    'error' => 'Error during payment creation',
                     'details' => $response->json()
                 ], $response->status());
             }
@@ -200,7 +200,7 @@ class PayTabsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => 'Erreur interne du serveur'
+                'error' => 'Internal Server Error'
             ], 500);
         }
     }
@@ -220,7 +220,7 @@ class PayTabsController extends Controller
 
         if (!$tranRef && !$cartId) {
             Log::error('PayTabs Callback: Missing tran_ref and cart_id');
-            return response()->json(['error' => 'Données manquantes'], 400);
+            return response()->json(['error' => 'Missing data'], 400);
         }
 
         // Trouver le paiement
@@ -234,7 +234,7 @@ class PayTabsController extends Controller
                 'tran_ref' => $tranRef,
                 'cart_id' => $cartId
             ]);
-            return response()->json(['error' => 'Paiement non trouvé'], 404);
+            return response()->json(['error' => 'Payment not found'], 404);
         }
 
         Log::info("Processing callback for payment #{$payment->id}", [
@@ -576,7 +576,7 @@ class PayTabsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => 'Paiement non trouvé',
+                'error' => 'Payment not found',
                 'debug_info' => [
                     'tran_ref' => $tranRef,
                     'cart_id' => $cartId,
@@ -679,10 +679,10 @@ class PayTabsController extends Controller
         if ($isSuccess) {
             $redirectParams['success'] = 1;
             $redirectParams['published'] = $isListingPublished ? 1 : 0;
-            $redirectParams['message'] = 'Paiement réussi';
+            $redirectParams['message'] = 'Payment successful';
         } else {
             $redirectParams['error'] = 'payment_' . $payment->payment_status;
-            $redirectParams['message'] = 'Paiement échoué';
+            $redirectParams['message'] = 'Payment failed';
         }
 
         // URL de redirection selon l'environnement
@@ -747,15 +747,15 @@ class PayTabsController extends Controller
     {
         switch ($status) {
             case 'completed':
-                return 'SUCCÈS - Paiement confirmé et listing publié automatiquement';
+                return 'SUCCESS - Payment confirmed and listing published automatically';
             case 'failed':
-                return 'ÉCHEC - Paiement échoué, listing restera en draft';
+                return 'FAILED - Payment failed, listing will remain in draft';
             case 'pending':
-                return 'EN ATTENTE - Paiement en cours de traitement';
+                return 'PENDING - Payment is being processed';
             case 'initiated':
-                return 'INITIÉ - Paiement initié mais pas encore confirmé';
+                return 'INITIATED - Payment initiated but not yet confirmed';
             default:
-                return 'INCONNU - Statut de paiement : ' . $status;
+                return 'UNKNOWN - Payment status: ' . $status;
         }
     }
 
@@ -771,16 +771,16 @@ class PayTabsController extends Controller
         switch ($paymentStatus) {
             case 'completed':
                 return $isPublished
-                    ? 'Paiement réussi ! Votre annonce a été publiée automatiquement.'
-                    : 'Paiement réussi mais problème de publication. Contactez le support.';
+                    ? 'Payment successful! Your listing has been published automatically.'
+                    : 'Payment successful but publication issue. Contact support.';
             case 'failed':
-                return 'Paiement échoué. Votre annonce reste en brouillon.';
+                return 'Payment failed. Your listing remains in draft.';
             case 'pending':
-                return 'Paiement en cours de traitement. Veuillez patienter.';
+                return 'Payment is being processed. Please wait.';
             case 'initiated':
-                return 'Paiement initié mais pas encore finalisé.';
+                return 'Payment initiated but not yet finalized.';
             default:
-                return 'Statut de paiement inconnu. Veuillez contacter le support.';
+                return 'Unknown payment status. Please contact support.';
         }
     }
 
@@ -838,7 +838,7 @@ class PayTabsController extends Controller
         if (!$tranRef && !$paymentId) {
             return response()->json([
                 'success' => false,
-                'error' => 'payment_id ou tran_ref requis'
+                'error' => 'payment_id or tran_ref required'
             ], 400);
         }
 
@@ -856,13 +856,13 @@ class PayTabsController extends Controller
         if (!$payment) {
             return response()->json([
                 'success' => false,
-                'error' => 'Paiement non trouvé'
+                'error' => 'Payment not found'
             ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Paiement réussi ! Votre annonce a été publiée.',
+            'message' => 'Payment successful! Your listing has been published.',
             'payment_id' => $payment->id,
             'status' => $payment->payment_status,
             'amount' => $payment->amount,
@@ -892,7 +892,7 @@ class PayTabsController extends Controller
         if (!$tranRef && !$paymentId) {
             return response()->json([
                 'success' => false,
-                'error' => 'payment_id ou tran_ref requis',
+                'error' => 'payment_id or tran_ref required',
                 'reason' => $reason
             ], 400);
         }
@@ -908,8 +908,8 @@ class PayTabsController extends Controller
         if (!$payment) {
             return response()->json([
                 'success' => false,
-                'message' => 'Le paiement a échoué. Veuillez réessayer.',
-                'error' => 'Paiement non trouvé',
+                'message' => 'Payment failed. Please try again.',
+                'error' => 'Payment not found',
                 'reason' => $reason,
                 'tran_ref' => $tranRef,
                 'payment_id' => $paymentId
@@ -918,7 +918,7 @@ class PayTabsController extends Controller
 
         return response()->json([
             'success' => false,
-            'message' => 'Le paiement a échoué. Veuillez réessayer.',
+            'message' => 'Payment failed. Please try again.',
             'payment_id' => $payment->id,
             'status' => $payment->payment_status,
             'amount' => $payment->amount,
@@ -942,7 +942,7 @@ class PayTabsController extends Controller
         if (!$tranRef && !$paymentId) {
             return response()->json([
                 'success' => false,
-                'error' => 'payment_id ou tran_ref requis'
+                'error' => 'payment_id or tran_ref required'
             ], 400);
         }
 
@@ -960,13 +960,13 @@ class PayTabsController extends Controller
         if (!$payment) {
             return response()->json([
                 'success' => false,
-                'error' => 'Paiement non trouvé'
+                'error' => 'Payment not found'
             ], 404);
         }
 
         return response()->json([
             'success' => null,
-            'message' => 'Votre paiement est en cours de traitement...',
+            'message' => 'Your payment is being processed...',
             'payment_id' => $payment->id,
             'status' => $payment->payment_status,
             'amount' => $payment->amount,
@@ -983,7 +983,7 @@ class PayTabsController extends Controller
     {
         return response()->json([
             'success' => false,
-            'message' => 'Paiement annulé par l\'utilisateur',
+            'message' => 'Payment canceled by user',
             'data' => $request->all()
         ]);
     }
@@ -1160,7 +1160,7 @@ class PayTabsController extends Controller
         if (!$payment) {
             return response()->json([
                 'success' => false,
-                'error' => 'Paiement non trouvé'
+                'error' => 'Payment not found'
             ], 404);
         }
 
@@ -1200,14 +1200,14 @@ class PayTabsController extends Controller
         if (!$payment) {
             return response()->json([
                 'success' => false,
-                'error' => 'Paiement non trouvé'
+                'error' => 'Payment not found'
             ], 404);
         }
 
         if (auth()->id() && $payment->user_id !== auth()->id()) {
             return response()->json([
                 'success' => false,
-                'error' => 'Accès non autorisé'
+                'error' => 'Unauthorized access'
             ], 403);
         }
 
@@ -1521,7 +1521,7 @@ class PayTabsController extends Controller
         if (!$this->baseUrl || !$this->profileId || !$this->serverKey) {
             return response()->json([
                 'success' => false,
-                'error' => 'Configuration PayTabs manquante'
+                'error' => 'PayTabs configuration missing'
             ], 500);
         }
 
@@ -1537,7 +1537,7 @@ class PayTabsController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Connexion PayTabs réussie',
+                'message' => 'PayTabs connection successful',
                 'config' => [
                     'base_url' => $this->baseUrl,
                     'profile_id' => $this->profileId,
@@ -1548,7 +1548,7 @@ class PayTabsController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => 'Erreur de connexion PayTabs: ' . $e->getMessage()
+                'error' => 'PayTabs connection error: ' . $e->getMessage()
             ], 500);
         }
     }

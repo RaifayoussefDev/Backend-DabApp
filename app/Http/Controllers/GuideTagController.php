@@ -127,7 +127,7 @@ class GuideTagController extends Controller
         $tag = GuideTag::create($request->all());
 
         return response()->json([
-            'message' => 'Tag créé avec succès',
+            'message' => 'Tag created successfully',
             'data' => [
                 'id' => $tag->id,
                 'name' => $tag->name,
@@ -176,7 +176,7 @@ class GuideTagController extends Controller
 
         if (!$tag) {
             return response()->json([
-                'message' => 'Tag non trouvé'
+                'message' => 'Tag not found'
             ], 404);
         }
 
@@ -267,7 +267,7 @@ class GuideTagController extends Controller
 
         if (!$tag) {
             return response()->json([
-                'message' => 'Tag non trouvé'
+                'message' => 'Tag not found'
             ], 404);
         }
 
@@ -284,7 +284,7 @@ class GuideTagController extends Controller
         $tag->update($request->all());
 
         return response()->json([
-            'message' => 'Tag mis à jour avec succès',
+            'message' => 'Tag updated successfully',
             'data' => [
                 'id' => $tag->id,
                 'name' => $tag->name,
@@ -337,14 +337,14 @@ class GuideTagController extends Controller
 
         if (!$tag) {
             return response()->json([
-                'message' => 'Tag non trouvé'
+                'message' => 'Tag not found'
             ], 404);
         }
 
         $tag->delete();
 
         return response()->json([
-            'message' => 'Tag supprimé avec succès'
+            'message' => 'Tag deleted successfully'
         ]);
     }
 
@@ -408,7 +408,7 @@ class GuideTagController extends Controller
 
         if (!$tag) {
             return response()->json([
-                'message' => 'Tag non trouvé'
+                'message' => 'Tag not found'
             ], 404);
         }
 

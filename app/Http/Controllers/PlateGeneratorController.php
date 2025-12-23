@@ -31,14 +31,14 @@ class PlateGeneratorController extends Controller
         if ($result) {
             return response()->json([
                 'success' => true,
-                'message' => 'Plaque générée avec succès',
+                'message' => 'Plate generated successfully',
                 'data' => $result
             ]);
         }
 
         return response()->json([
             'success' => false,
-            'message' => 'Erreur lors de la génération'
+            'message' => 'Error during generation'
         ], 500);
     }
 
@@ -363,7 +363,7 @@ class PlateGeneratorController extends Controller
         $filePath = storage_path('app/public/plates/' . $filename);
 
         if (!file_exists($filePath)) {
-            return response()->json(['error' => 'Fichier non trouvé'], 404);
+            return response()->json(['error' => 'File not found'], 404);
         }
 
         return response()->download($filePath);
