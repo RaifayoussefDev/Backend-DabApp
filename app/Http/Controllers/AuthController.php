@@ -2123,13 +2123,7 @@ class AuthController extends Controller
      *             @OA\Property(property="password", type="string", format="password", example="secret123")
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="OTP sent successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="OTP has been sent")
-     *         )
-     *     ),
+     *     @OA\Response(response=200, description="OTP has been sent", @OA\JsonContent(@OA\Property(property="message", type="string", example="OTP has been sent to your email and WhatsApp / تم إرسال رمز التحقق إلى بريدك الإلكتروني و واتساب"))),
      *     @OA\Response(response=401, description="Unauthorized or invalid password", @OA\JsonContent(@OA\Property(property="error", type="string", example="Invalid password")))
      * )
      */
@@ -2161,7 +2155,7 @@ class AuthController extends Controller
 
         $this->sendDeletionOtp($user, $otp);
 
-        return response()->json(['message' => 'OTP has been sent to your email and WhatsApp']);
+        return response()->json(['message' => 'OTP has been sent to your email and WhatsApp / تم إرسال رمز التحقق إلى بريدك الإلكتروني و واتساب']);
     }
 
     /**
@@ -2243,7 +2237,7 @@ class AuthController extends Controller
      *         response=200,
      *         description="OTP resent successfully",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="OTP has been resent")
+     *             @OA\Property(property="message", type="string", example="OTP has been resent / تم إعادة إرسال رمز التحقق")
      *         )
      *     )
      * )
@@ -2268,7 +2262,7 @@ class AuthController extends Controller
 
         $this->sendDeletionOtp($user, $otp);
 
-        return response()->json(['message' => 'OTP has been resent']);
+        return response()->json(['message' => 'OTP has been resent / تم إعادة إرسال رمز التحقق']);
     }
 
     private function sendDeletionOtp($user, $otp)
@@ -2291,7 +2285,8 @@ class AuthController extends Controller
         try {
             $phoneNumber = $this->formatPhoneNumber($phone);
             
-            $text = "⚠️ Your OTP for account deletion from dabapp.co is: {$otp}\n\n⏳ Valid for 5 minutes.\n❌ If you didn't request this, ignore this message.";
+            $text = "⚠️ Your OTP for account deletion from dabapp.co is: {$otp}\n\n⏳ Valid for 5 minutes.\n❌ If you didn't request this, ignore this message.\n\n" .
+                    "⚠️ رمز التحقق الخاص بك لحذف الحساب من dabapp.co هو: {$otp}\n\n⏳ صالح لمدة 5 دقائق.\n❌ إذا لم تطلب هذا، فتجاهل هذه الرسالة.";
 
             $payload = [
                 'phonenumber' => '+' . $phoneNumber,
