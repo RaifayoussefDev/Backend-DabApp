@@ -1,7 +1,7 @@
 <?php
 // app/Http/Controllers/Api/NotificationPreferenceController.php
 
-namespace App\Http\Controllerss;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\NotificationPreference;
