@@ -2210,15 +2210,16 @@ class AuthController extends Controller
 
         DB::table('otps')->where('id', $otpRecord->id)->delete();
 
-        // Perform Soft Delete
-        $user->delete();
-
         // Send confirmation email about 30-day reactivation
+        // Sent before deletion to ensure delivery if notifications are queued
         try {
             $user->notify(new AccountDeletionStatusNotification());
         } catch (\Exception $e) {
             Log::error('Failed to send deletion confirmation email', ['error' => $e->getMessage()]);
         }
+
+        // Perform Soft Delete
+        $user->delete();
 
         return response()->json(['message' => 'Account deleted successfully. You have 30 days to reactivate your account by logging in. / تم حذف الحساب بنجاح. لديك 30 يوماً لإعادة تفعيل حسابك عن طريق تسجيل الدخول.']);
     }
