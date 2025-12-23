@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * @OA\Schema(
@@ -182,7 +183,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class User extends Authenticatable implements JWTSubject
 {
-    use HasFactory, SoftDeletes, Notifiable;
+    use HasFactory, SoftDeletes, Notifiable , HasApiTokens;
 
     /**
      * The attributes that are mass assignable.

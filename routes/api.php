@@ -82,6 +82,7 @@ use App\Http\Controllers\{
     EmailNotificationController,
     NotificationController,
     NotificationPreferenceController,
+    NotificationTokenController,
 };
 use PhpOffice\PhpSpreadsheet\Reader\Xls\RC4;
 
@@ -402,7 +403,7 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/user/update', [AuthController::class, 'updateProfile']);
     Route::put('/user/two-factor-toggle', [AuthController::class, 'toggleTwoFactor']);
     Route::put('/change-password', [AuthController::class, 'changePassword']);
-    
+
     // Account Deletion
     Route::prefix('user')->group(function () {
         Route::post('/delete-request', [AuthController::class, 'deleteAccountRequest']);
@@ -954,7 +955,13 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
 });
 
 Route::middleware('auth:api')->group(function () {
-
+   // Notification Tokens (FCM)
+    Route::prefix('notification-tokens')->group(function () {
+        Route::get('/', [NotificationTokenController::class, 'index']);
+        Route::post('/', [NotificationTokenController::class, 'store']);
+        Route::delete('/{id}', [NotificationTokenController::class, 'destroy']);
+        Route::post('/test', [NotificationTokenController::class, 'testPush']);
+    });
     // ========================================
     // ENVOI DE NOTIFICATIONS EMAIL
     // ========================================
@@ -980,9 +987,9 @@ Route::middleware('auth:api')->group(function () {
     // PRÉFÉRENCES DE NOTIFICATIONS
     // ========================================
     Route::prefix('notification-preferences')->group(function () {
-        Route::get('/', [ControllerssNotificationPreferenceController::class, 'show']);
-        Route::put('/', [ControllerssNotificationPreferenceController::class, 'update']);
-        Route::post('/enable-all', [ControllerssNotificationPreferenceController::class, 'enableAll']);
-        Route::post('/disable-all', [ControllerssNotificationPreferenceController::class, 'disableAll']);
+        Route::get('/', [NotificationPreferenceController::class, 'show']);
+        Route::put('/', [NotificationPreferenceController::class, 'update']);
+        Route::post('/enable-all', [NotificationPreferenceController::class, 'enableAll']);
+        Route::post('/disable-all', [NotificationPreferenceController::class, 'disableAll']);
     });
 });

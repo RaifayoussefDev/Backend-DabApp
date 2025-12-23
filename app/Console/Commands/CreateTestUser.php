@@ -5,11 +5,12 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\User;
 use App\Models\Role;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class CreateTestUser extends Command
 {
     protected $signature = 'test:create-user';
-    protected $description = 'Create a test user with API token';
+    protected $description = 'Create a test user with JWT token';
 
     public function handle()
     {
@@ -20,21 +21,22 @@ class CreateTestUser extends Command
             $this->info('Email: test@dabapp.com');
             $this->info('Password: password123');
 
-            // Générer un nouveau token
-            $token = $existingUser->createToken('test-token-' . time())->plainTextToken;
+            // Générer un token JWT
+            $token = JWTAuth::fromUser($existingUser);
             $this->newLine();
-            $this->warn('🔑 New Token:');
+            $this->warn('🔑 JWT Token:');
             $this->line($token);
             $this->newLine();
+            $this->info('💡 Copy for Postman Authorization:');
+            $this->line('Bearer ' . $token);
 
             return 0;
         }
 
-        // Récupérer le role_id (user normal, pas admin)
+        // Récupérer le role_id
         $role = Role::where('name', 'user')->first();
 
         if (!$role) {
-            // Si pas de role 'user', prendre le premier role non-admin
             $role = Role::where('id', '!=', 1)->first();
         }
 
@@ -56,22 +58,23 @@ class CreateTestUser extends Command
             'language' => 'en',
         ]);
 
-        // Créer les préférences de notification par défaut
+        // Créer les préférences de notification
         \App\Models\NotificationPreference::create([
             'user_id' => $user->id,
         ]);
 
-        $token = $user->createToken('test-token')->plainTextToken;
+        // Générer un token JWT
+        $token = JWTAuth::fromUser($user);
 
         $this->info('✅ User created successfully!');
         $this->info('Email: test@dabapp.com');
         $this->info('Password: password123');
         $this->info('Role: ' . $role->name);
         $this->newLine();
-        $this->warn('🔑 Token:');
+        $this->warn('🔑 JWT Token:');
         $this->line($token);
         $this->newLine();
-        $this->info('💡 Copy this token for Postman Authorization header:');
+        $this->info('💡 Copy for Postman Authorization:');
         $this->line('Bearer ' . $token);
 
         return 0;
