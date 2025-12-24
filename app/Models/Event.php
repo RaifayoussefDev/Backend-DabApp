@@ -173,4 +173,16 @@ class Event extends Model
    {
        return $this->interests()->where('user_id', $user->id)->exists();
    }
+
+   public function eventSponsors()
+    {
+        return $this->belongsToMany(
+            EventSponsor::class,
+            'event_sponsor_relations',
+            'event_id',
+            'sponsor_id'
+        )
+        ->withPivot('sponsorship_level')
+        ->withTimestamps();
+    }
 }

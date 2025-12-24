@@ -570,7 +570,7 @@ class EventController extends Controller
             'images.*.image_url' => 'required|url',
             'images.*.is_primary' => 'boolean',
             'sponsors' => 'nullable|array',
-            'sponsors.*.sponsor_id' => 'required|exists:sponsors,id',
+            'sponsors.*.sponsor_id' => 'required|exists:event_sponsors,id', // CHANGÉ ICI
             'sponsors.*.sponsorship_level' => 'nullable|in:platinum,gold,silver,bronze',
             'activities' => 'nullable|array',
             'activities.*.title' => 'required|string|max:255',
@@ -630,7 +630,7 @@ class EventController extends Controller
                         'sponsorship_level' => $sponsor['sponsorship_level'] ?? null
                     ];
                 }
-                $event->sponsors()->attach($sponsorData);
+                $event->eventSponsors()->attach($sponsorData); // CHANGÉ ICI
             }
 
             // Create activities
@@ -639,10 +639,13 @@ class EventController extends Controller
                     EventActivity::create([
                         'event_id' => $event->id,
                         'title' => $activityData['title'],
+                        'title_ar' => $activityData['title_ar'] ?? null,
                         'description' => $activityData['description'] ?? null,
+                        'description_ar' => $activityData['description_ar'] ?? null,
                         'start_time' => $activityData['start_time'] ?? null,
                         'end_time' => $activityData['end_time'] ?? null,
                         'location' => $activityData['location'] ?? null,
+                        'location_ar' => $activityData['location_ar'] ?? null,
                         'order_position' => $index + 1,
                     ]);
                 }
@@ -655,6 +658,7 @@ class EventController extends Controller
                         'event_id' => $event->id,
                         'contact_type' => $contactData['contact_type'],
                         'name' => $contactData['name'] ?? null,
+                        'name_ar' => $contactData['name_ar'] ?? null,
                         'phone' => $contactData['phone'] ?? null,
                         'email' => $contactData['email'] ?? null,
                     ]);
@@ -667,7 +671,9 @@ class EventController extends Controller
                     EventFaq::create([
                         'event_id' => $event->id,
                         'question' => $faqData['question'],
+                        'question_ar' => $faqData['question_ar'] ?? null,
                         'answer' => $faqData['answer'],
+                        'answer_ar' => $faqData['answer_ar'] ?? null,
                         'order_position' => $index + 1,
                     ]);
                 }
@@ -682,7 +688,7 @@ class EventController extends Controller
                 'city',
                 'country',
                 'images',
-                'sponsors',
+                'eventSponsors', // CHANGÉ ICI
                 'activities',
                 'contacts',
                 'faqs'
