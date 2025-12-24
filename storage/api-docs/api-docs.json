@@ -4150,7 +4150,7 @@
                                     },
                                     "action_url": {
                                         "type": "string",
-                                        "example": "https://dabapp.ma/listings/123"
+                                        "example": "https://dabapp.co/listings/123"
                                     }
                                 },
                                 "type": "object"
@@ -4222,7 +4222,7 @@
                                     },
                                     "action_url": {
                                         "type": "string",
-                                        "example": "https://dabapp.ma"
+                                        "example": "https://dabapp.co"
                                     },
                                     "icon": {
                                         "type": "string",

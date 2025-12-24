@@ -41,7 +41,7 @@ class EmailNotificationController extends Controller
      *                 type="object",
      *                 example={"listing_title": "Yamaha R1", "listing_id": 123}
      *             ),
-     *             @OA\Property(property="action_url", type="string", example="https://dabapp.ma/listings/123")
+     *             @OA\Property(property="action_url", type="string", example="https://dabapp.co/listings/123")
      *         )
      *     ),
      *     @OA\Response(
@@ -114,7 +114,7 @@ class EmailNotificationController extends Controller
      *             @OA\Property(property="user_id", type="integer", example=1),
      *             @OA\Property(property="title", type="string", example="مرحبا بك!"),
      *             @OA\Property(property="message", type="string", example="نحن سعداء بانضمامك"),
-     *             @OA\Property(property="action_url", type="string", example="https://dabapp.ma"),
+     *             @OA\Property(property="action_url", type="string", example="https://dabapp.co"),
      *             @OA\Property(property="icon", type="string", example="celebration"),
      *             @OA\Property(property="color", type="string", example="#4CAF50"),
      *             @OA\Property(property="priority", type="string", enum={"low", "normal", "high", "urgent"})
