@@ -5704,9 +5704,11 @@
                 "tags": [
                     "Events"
                 ],
-                "summary": "Create event with all relations (images, sponsors, activities, contacts, faqs)",
+                "summary": "Create a new event with all relations",
+                "description": "Create a comprehensive event including images, sponsors, activities, contacts, and FAQs. Supports both English and Arabic content.",
                 "operationId": "508895e03d7f10edac84357084c87b20",
                 "requestBody": {
+                    "description": "Event details with optional relations",
                     "required": true,
                     "content": {
                         "application/json": {
@@ -5721,17 +5723,34 @@
                                 "properties": {
                                     "title": {
                                         "type": "string",
+                                        "maxLength": 255,
                                         "example": "Tech Conference 2024"
+                                    },
+                                    "title_ar": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "مؤتمر التكنولوجيا 2024"
                                     },
                                     "description": {
                                         "type": "string",
-                                        "example": "Annual technology conference"
+                                        "example": "Annual technology conference featuring industry leaders and innovative solutions"
+                                    },
+                                    "description_ar": {
+                                        "type": "string",
+                                        "example": "مؤتمر تكنولوجي سنوي يضم قادة الصناعة والحلول المبتكرة"
                                     },
                                     "short_description": {
                                         "type": "string",
-                                        "example": "Join us for the biggest tech event"
+                                        "maxLength": 500,
+                                        "example": "Join us for the biggest tech event of the year"
+                                    },
+                                    "short_description_ar": {
+                                        "type": "string",
+                                        "maxLength": 500,
+                                        "example": "انضم إلينا في أكبر حدث تقني للعام"
                                     },
                                     "category_id": {
+                                        "description": "Event category ID",
                                         "type": "integer",
                                         "example": 1
                                     },
@@ -5752,72 +5771,119 @@
                                     },
                                     "venue_name": {
                                         "type": "string",
-                                        "example": "Convention Center"
+                                        "maxLength": 255,
+                                        "example": "Grand Convention Center"
+                                    },
+                                    "venue_name_ar": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "مركز المؤتمرات الكبير"
                                     },
                                     "address": {
                                         "type": "string",
-                                        "example": "123 Main Street"
+                                        "example": "123 Main Street, Downtown"
+                                    },
+                                    "address_ar": {
+                                        "type": "string",
+                                        "example": "123 الشارع الرئيسي، وسط المدينة"
                                     },
                                     "city_id": {
+                                        "description": "City ID from cities table",
                                         "type": "integer",
                                         "example": 1
                                     },
                                     "country_id": {
+                                        "description": "Country ID from countries table",
                                         "type": "integer",
                                         "example": 1
                                     },
                                     "latitude": {
+                                        "description": "Location latitude",
                                         "type": "number",
-                                        "format": "float",
+                                        "format": "double",
                                         "example": 40.7128
                                     },
                                     "longitude": {
+                                        "description": "Location longitude",
                                         "type": "number",
-                                        "format": "float",
+                                        "format": "double",
                                         "example": -74.006
                                     },
                                     "max_participants": {
+                                        "description": "Maximum number of participants",
                                         "type": "integer",
+                                        "minimum": 1,
                                         "example": 500
                                     },
                                     "price": {
+                                        "description": "Event price (0 if free)",
                                         "type": "number",
-                                        "format": "float",
+                                        "format": "double",
+                                        "minimum": 0,
                                         "example": 99.99
                                     },
                                     "is_free": {
+                                        "description": "Whether the event is free",
                                         "type": "boolean",
                                         "example": false
                                     },
                                     "featured_image": {
+                                        "description": "Main event image URL",
                                         "type": "string",
-                                        "example": "https://example.com/image.jpg"
+                                        "format": "url",
+                                        "example": "https://example.com/events/tech-conf-2024.jpg"
                                     },
                                     "images": {
+                                        "description": "Event gallery images",
                                         "type": "array",
                                         "items": {
+                                            "required": [
+                                                "image_url"
+                                            ],
                                             "properties": {
                                                 "image_url": {
                                                     "type": "string",
-                                                    "example": "https://example.com/gallery1.jpg"
+                                                    "format": "url",
+                                                    "example": "https://example.com/gallery/image1.jpg"
                                                 },
                                                 "is_primary": {
+                                                    "description": "Set as primary gallery image",
                                                     "type": "boolean",
-                                                    "example": true
+                                                    "example": false
                                                 }
                                             },
                                             "type": "object"
-                                        }
+                                        },
+                                        "example": [
+                                            {
+                                                "image_url": "https://example.com/gallery/stage.jpg",
+                                                "is_primary": true
+                                            },
+                                            {
+                                                "image_url": "https://example.com/gallery/audience.jpg",
+                                                "is_primary": false
+                                            },
+                                            {
+                                                "image_url": "https://example.com/gallery/networking.jpg",
+                                                "is_primary": false
+                                            }
+                                        ]
                                     },
                                     "sponsors": {
+                                        "description": "Event sponsors with their sponsorship levels",
                                         "type": "array",
                                         "items": {
+                                            "required": [
+                                                "sponsor_id"
+                                            ],
                                             "properties": {
                                                 "sponsor_id": {
+                                                    "description": "Sponsor ID from sponsors table",
                                                     "type": "integer",
                                                     "example": 1
                                                 },
                                                 "sponsorship_level": {
+                                                    "description": "Sponsorship tier",
                                                     "type": "string",
                                                     "enum": [
                                                         "platinum",
@@ -5829,19 +5895,47 @@
                                                 }
                                             },
                                             "type": "object"
-                                        }
+                                        },
+                                        "example": [
+                                            {
+                                                "sponsor_id": 1,
+                                                "sponsorship_level": "platinum"
+                                            },
+                                            {
+                                                "sponsor_id": 2,
+                                                "sponsorship_level": "gold"
+                                            },
+                                            {
+                                                "sponsor_id": 3,
+                                                "sponsorship_level": "silver"
+                                            }
+                                        ]
                                     },
                                     "activities": {
+                                        "description": "Event schedule and activities",
                                         "type": "array",
                                         "items": {
+                                            "required": [
+                                                "title"
+                                            ],
                                             "properties": {
                                                 "title": {
                                                     "type": "string",
+                                                    "maxLength": 255,
                                                     "example": "Opening Keynote"
+                                                },
+                                                "title_ar": {
+                                                    "type": "string",
+                                                    "maxLength": 255,
+                                                    "example": "الكلمة الافتتاحية"
                                                 },
                                                 "description": {
                                                     "type": "string",
-                                                    "example": "Welcome speech and introduction"
+                                                    "example": "Welcome speech and conference introduction by CEO"
+                                                },
+                                                "description_ar": {
+                                                    "type": "string",
+                                                    "example": "كلمة ترحيبية ومقدمة المؤتمر من قبل الرئيس التنفيذي"
                                                 },
                                                 "start_time": {
                                                     "type": "string",
@@ -5855,17 +5949,52 @@
                                                 },
                                                 "location": {
                                                     "type": "string",
-                                                    "example": "Main Hall"
+                                                    "maxLength": 255,
+                                                    "example": "Main Hall A"
+                                                },
+                                                "location_ar": {
+                                                    "type": "string",
+                                                    "maxLength": 255,
+                                                    "example": "القاعة الرئيسية أ"
                                                 }
                                             },
                                             "type": "object"
-                                        }
+                                        },
+                                        "example": [
+                                            {
+                                                "title": "Opening Keynote",
+                                                "title_ar": "الكلمة الافتتاحية",
+                                                "description": "Welcome speech by CEO",
+                                                "start_time": "09:00:00",
+                                                "end_time": "10:00:00",
+                                                "location": "Main Hall A"
+                                            },
+                                            {
+                                                "title": "AI Workshop",
+                                                "title_ar": "ورشة الذكاء الاصطناعي",
+                                                "description": "Hands-on AI development workshop",
+                                                "start_time": "10:30:00",
+                                                "end_time": "12:00:00",
+                                                "location": "Room B2"
+                                            },
+                                            {
+                                                "title": "Networking Lunch",
+                                                "start_time": "12:00:00",
+                                                "end_time": "13:30:00",
+                                                "location": "Cafeteria"
+                                            }
+                                        ]
                                     },
                                     "contacts": {
+                                        "description": "Event contact information",
                                         "type": "array",
                                         "items": {
+                                            "required": [
+                                                "contact_type"
+                                            ],
                                             "properties": {
                                                 "contact_type": {
+                                                    "description": "Type of contact",
                                                     "type": "string",
                                                     "enum": [
                                                         "organizer",
@@ -5876,39 +6005,159 @@
                                                 },
                                                 "name": {
                                                     "type": "string",
+                                                    "maxLength": 255,
                                                     "example": "John Doe"
+                                                },
+                                                "name_ar": {
+                                                    "type": "string",
+                                                    "maxLength": 255,
+                                                    "example": "جون دو"
                                                 },
                                                 "phone": {
                                                     "type": "string",
+                                                    "maxLength": 50,
                                                     "example": "+1234567890"
                                                 },
                                                 "email": {
                                                     "type": "string",
                                                     "format": "email",
-                                                    "example": "john@example.com"
+                                                    "maxLength": 255,
+                                                    "example": "john.doe@example.com"
                                                 }
                                             },
                                             "type": "object"
-                                        }
+                                        },
+                                        "example": [
+                                            {
+                                                "contact_type": "organizer",
+                                                "name": "John Doe",
+                                                "phone": "+1234567890",
+                                                "email": "john.doe@example.com"
+                                            },
+                                            {
+                                                "contact_type": "support",
+                                                "name": "Support Team",
+                                                "phone": "+1234567891",
+                                                "email": "support@example.com"
+                                            },
+                                            {
+                                                "contact_type": "emergency",
+                                                "name": "Emergency Services",
+                                                "phone": "+1234567892"
+                                            }
+                                        ]
                                     },
                                     "faqs": {
+                                        "description": "Frequently asked questions",
                                         "type": "array",
                                         "items": {
+                                            "required": [
+                                                "question",
+                                                "answer"
+                                            ],
                                             "properties": {
                                                 "question": {
                                                     "type": "string",
-                                                    "example": "What should I bring?"
+                                                    "example": "What should I bring to the event?"
+                                                },
+                                                "question_ar": {
+                                                    "type": "string",
+                                                    "example": "ماذا يجب أن أحضر للحدث؟"
                                                 },
                                                 "answer": {
                                                     "type": "string",
-                                                    "example": "Bring your ID and confirmation email"
+                                                    "example": "Bring your ID, confirmation email, and laptop for workshops"
+                                                },
+                                                "answer_ar": {
+                                                    "type": "string",
+                                                    "example": "أحضر هويتك وبريد التأكيد والكمبيوتر المحمول للورش"
                                                 }
                                             },
                                             "type": "object"
-                                        }
+                                        },
+                                        "example": [
+                                            {
+                                                "question": "What should I bring?",
+                                                "question_ar": "ماذا يجب أن أحضر؟",
+                                                "answer": "Bring your ID, confirmation email, and laptop",
+                                                "answer_ar": "أحضر هويتك وبريد التأكيد والكمبيوتر المحمول"
+                                            },
+                                            {
+                                                "question": "Is parking available?",
+                                                "answer": "Yes, free parking is available for all attendees"
+                                            },
+                                            {
+                                                "question": "Can I get a refund?",
+                                                "answer": "Refunds are available up to 7 days before the event"
+                                            }
+                                        ]
                                     }
                                 },
                                 "type": "object"
+                            },
+                            "example": {
+                                "title": "Tech Conference 2024",
+                                "title_ar": "مؤتمر التكنولوجيا 2024",
+                                "description": "Annual technology conference featuring industry leaders",
+                                "description_ar": "مؤتمر تكنولوجي سنوي يضم قادة الصناعة",
+                                "short_description": "Join us for the biggest tech event",
+                                "category_id": 1,
+                                "event_date": "2024-12-25",
+                                "start_time": "09:00:00",
+                                "end_time": "17:00:00",
+                                "venue_name": "Grand Convention Center",
+                                "address": "123 Main Street, Downtown",
+                                "city_id": 1,
+                                "country_id": 1,
+                                "latitude": 40.7128,
+                                "longitude": -74.006,
+                                "max_participants": 500,
+                                "price": 99.99,
+                                "is_free": false,
+                                "featured_image": "https://example.com/events/tech-conf-2024.jpg",
+                                "images": [
+                                    {
+                                        "image_url": "https://example.com/gallery/stage.jpg",
+                                        "is_primary": true
+                                    },
+                                    {
+                                        "image_url": "https://example.com/gallery/audience.jpg",
+                                        "is_primary": false
+                                    }
+                                ],
+                                "sponsors": [
+                                    {
+                                        "sponsor_id": 1,
+                                        "sponsorship_level": "platinum"
+                                    },
+                                    {
+                                        "sponsor_id": 2,
+                                        "sponsorship_level": "gold"
+                                    }
+                                ],
+                                "activities": [
+                                    {
+                                        "title": "Opening Keynote",
+                                        "description": "Welcome speech by CEO",
+                                        "start_time": "09:00:00",
+                                        "end_time": "10:00:00",
+                                        "location": "Main Hall A"
+                                    }
+                                ],
+                                "contacts": [
+                                    {
+                                        "contact_type": "organizer",
+                                        "name": "John Doe",
+                                        "phone": "+1234567890",
+                                        "email": "john.doe@example.com"
+                                    }
+                                ],
+                                "faqs": [
+                                    {
+                                        "question": "What should I bring?",
+                                        "answer": "Bring your ID and confirmation email"
+                                    }
+                                ]
                             }
                         }
                     }
@@ -5925,6 +6174,40 @@
                                             "example": "Event created successfully with all relations"
                                         },
                                         "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Tech Conference 2024"
+                                                },
+                                                "slug": {
+                                                    "type": "string",
+                                                    "example": "tech-conference-2024-abc123"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "draft"
+                                                },
+                                                "is_published": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "organizer_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
@@ -5934,10 +6217,68 @@
                         }
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "title": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The title field is required."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "500": {
-                        "description": "Failed to create event"
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to create event"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Database connection failed"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
