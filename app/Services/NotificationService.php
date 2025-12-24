@@ -128,8 +128,12 @@ class NotificationService
                 'device_type' => $token->device_type,
                 'device_id' => $token->device_id,
                 'status' => $result['success'] ? 'sent' : 'failed',
-                'fcm_message_id' => $result['message_id'] ?? null,
-                'error_message' => $result['error'] ?? null,
+                'fcm_message_id' => isset($result['message_id']) && is_array($result['message_id'])
+                    ? json_encode($result['message_id'])
+                    : ($result['message_id'] ?? null),
+                'error_message' => isset($result['error']) && is_array($result['error'])
+                    ? json_encode($result['error'])
+                    : ($result['error'] ?? null),
                 'queued_at' => now(),
             ]);
 
