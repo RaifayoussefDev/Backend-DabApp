@@ -8900,8 +8900,25 @@
                     {
                         "name": "page",
                         "in": "query",
+                        "description": "Page number",
                         "schema": {
                             "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (default: 20)",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "paginate",
+                        "in": "query",
+                        "description": "Enable pagination (true/false, default: false)",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
