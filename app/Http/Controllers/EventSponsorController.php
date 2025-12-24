@@ -19,8 +19,7 @@ class EventSponsorController extends Controller
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="search", in="query", description="Search by name", @OA\Schema(type="string")),
      *     @OA\Parameter(name="page", in="query", description="Page number", @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="per_page", in="query", description="Items per page (default: 20)", @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="paginate", in="query", description="Enable pagination (true/false, default: false)", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="per_page", in="query", description="Items per page (if not provided, returns all)", @OA\Schema(type="integer")),
      *     @OA\Response(
      *         response=200,
      *         description="List of sponsors",
@@ -41,18 +40,11 @@ class EventSponsorController extends Controller
             $query->where('name', 'like', "%{$search}%");
         }
 
-        // Check if pagination is explicitly requested
-        if ($request->has('paginate') && $request->paginate === 'true') {
-            $perPage = $request->input('per_page', 20); // Default 20 items per page
+        // If per_page is provided, paginate. Otherwise return all
+        if ($request->has('per_page')) {
+            $perPage = $request->input('per_page');
             $sponsors = $query->orderBy('name')->paginate($perPage);
-        }
-        // Or if page or per_page is provided
-        elseif ($request->has('page') || $request->has('per_page')) {
-            $perPage = $request->input('per_page', 20);
-            $sponsors = $query->orderBy('name')->paginate($perPage);
-        }
-        // Otherwise return all records
-        else {
+        } else {
             $sponsors = $query->orderBy('name')->get();
         }
 
@@ -83,7 +75,7 @@ class EventSponsorController extends Controller
      */
     public function show($id)
     {
-        $sponsor = EventSponsor::with(['events' => function ($query) {
+        $sponsor = EventSponsor::with(['events' => function($query) {
             $query->published()->orderBy('event_date', 'desc');
         }])->findOrFail($id);
 

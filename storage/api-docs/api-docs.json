@@ -8908,17 +8908,9 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Items per page (default: 20)",
+                        "description": "Items per page (if not provided, returns all)",
                         "schema": {
                             "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "paginate",
-                        "in": "query",
-                        "description": "Enable pagination (true/false, default: false)",
-                        "schema": {
-                            "type": "string"
                         }
                     }
                 ],
