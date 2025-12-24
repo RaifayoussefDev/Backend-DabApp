@@ -269,80 +269,224 @@ class EventController extends Controller
     /**
      * @OA\Post(
      *     path="/api/events",
-     *     summary="Create event with all relations (images, sponsors, activities, contacts, faqs)",
+     *     summary="Create a new event with all relations",
+     *     description="Create a comprehensive event including images, sponsors, activities, contacts, and FAQs. Supports both English and Arabic content.",
      *     tags={"Events"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
+     *         description="Event details with optional relations",
      *         @OA\JsonContent(
      *             required={"title","description","category_id","event_date","start_time"},
-     *             @OA\Property(property="title", type="string", example="Tech Conference 2024"),
-     *             @OA\Property(property="description", type="string", example="Annual technology conference"),
-     *             @OA\Property(property="short_description", type="string", example="Join us for the biggest tech event"),
-     *             @OA\Property(property="category_id", type="integer", example=1),
+     *             @OA\Property(property="title", type="string", maxLength=255, example="Tech Conference 2024"),
+     *             @OA\Property(property="title_ar", type="string", maxLength=255, example="مؤتمر التكنولوجيا 2024"),
+     *             @OA\Property(property="description", type="string", example="Annual technology conference featuring industry leaders and innovative solutions"),
+     *             @OA\Property(property="description_ar", type="string", example="مؤتمر تكنولوجي سنوي يضم قادة الصناعة والحلول المبتكرة"),
+     *             @OA\Property(property="short_description", type="string", maxLength=500, example="Join us for the biggest tech event of the year"),
+     *             @OA\Property(property="short_description_ar", type="string", maxLength=500, example="انضم إلينا في أكبر حدث تقني للعام"),
+     *             @OA\Property(property="category_id", type="integer", example=1, description="Event category ID"),
      *             @OA\Property(property="event_date", type="string", format="date", example="2024-12-25"),
      *             @OA\Property(property="start_time", type="string", format="time", example="09:00:00"),
      *             @OA\Property(property="end_time", type="string", format="time", example="17:00:00"),
-     *             @OA\Property(property="venue_name", type="string", example="Convention Center"),
-     *             @OA\Property(property="address", type="string", example="123 Main Street"),
-     *             @OA\Property(property="city_id", type="integer", example=1),
-     *             @OA\Property(property="country_id", type="integer", example=1),
-     *             @OA\Property(property="latitude", type="number", format="float", example=40.7128),
-     *             @OA\Property(property="longitude", type="number", format="float", example=-74.0060),
-     *             @OA\Property(property="max_participants", type="integer", example=500),
-     *             @OA\Property(property="price", type="number", format="float", example=99.99),
-     *             @OA\Property(property="is_free", type="boolean", example=false),
-     *             @OA\Property(property="featured_image", type="string", example="https://example.com/image.jpg"),
+     *             @OA\Property(property="venue_name", type="string", maxLength=255, example="Grand Convention Center"),
+     *             @OA\Property(property="venue_name_ar", type="string", maxLength=255, example="مركز المؤتمرات الكبير"),
+     *             @OA\Property(property="address", type="string", example="123 Main Street, Downtown"),
+     *             @OA\Property(property="address_ar", type="string", example="123 الشارع الرئيسي، وسط المدينة"),
+     *             @OA\Property(property="city_id", type="integer", example=1, description="City ID from cities table"),
+     *             @OA\Property(property="country_id", type="integer", example=1, description="Country ID from countries table"),
+     *             @OA\Property(property="latitude", type="number", format="double", example=40.7128, description="Location latitude"),
+     *             @OA\Property(property="longitude", type="number", format="double", example=-74.0060, description="Location longitude"),
+     *             @OA\Property(property="max_participants", type="integer", minimum=1, example=500, description="Maximum number of participants"),
+     *             @OA\Property(property="price", type="number", format="double", minimum=0, example=99.99, description="Event price (0 if free)"),
+     *             @OA\Property(property="is_free", type="boolean", example=false, description="Whether the event is free"),
+     *             @OA\Property(property="featured_image", type="string", format="url", example="https://example.com/events/tech-conf-2024.jpg", description="Main event image URL"),
      *             @OA\Property(
      *                 property="images",
      *                 type="array",
+     *                 description="Event gallery images",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="image_url", type="string", example="https://example.com/gallery1.jpg"),
-     *                     @OA\Property(property="is_primary", type="boolean", example=true)
-     *                 )
+     *                     required={"image_url"},
+     *                     @OA\Property(property="image_url", type="string", format="url", example="https://example.com/gallery/image1.jpg"),
+     *                     @OA\Property(property="is_primary", type="boolean", example=false, description="Set as primary gallery image")
+     *                 ),
+     *                 example={
+     *                     {"image_url": "https://example.com/gallery/stage.jpg", "is_primary": true},
+     *                     {"image_url": "https://example.com/gallery/audience.jpg", "is_primary": false},
+     *                     {"image_url": "https://example.com/gallery/networking.jpg", "is_primary": false}
+     *                 }
      *             ),
      *             @OA\Property(
      *                 property="sponsors",
      *                 type="array",
+     *                 description="Event sponsors with their sponsorship levels",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="sponsor_id", type="integer", example=1),
-     *                     @OA\Property(property="sponsorship_level", type="string", enum={"platinum","gold","silver","bronze"}, example="gold")
-     *                 )
+     *                     required={"sponsor_id"},
+     *                     @OA\Property(property="sponsor_id", type="integer", example=1, description="Sponsor ID from sponsors table"),
+     *                     @OA\Property(property="sponsorship_level", type="string", enum={"platinum","gold","silver","bronze"}, example="gold", description="Sponsorship tier")
+     *                 ),
+     *                 example={
+     *                     {"sponsor_id": 1, "sponsorship_level": "platinum"},
+     *                     {"sponsor_id": 2, "sponsorship_level": "gold"},
+     *                     {"sponsor_id": 3, "sponsorship_level": "silver"}
+     *                 }
      *             ),
      *             @OA\Property(
      *                 property="activities",
      *                 type="array",
+     *                 description="Event schedule and activities",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="title", type="string", example="Opening Keynote"),
-     *                     @OA\Property(property="description", type="string", example="Welcome speech and introduction"),
+     *                     required={"title"},
+     *                     @OA\Property(property="title", type="string", maxLength=255, example="Opening Keynote"),
+     *                     @OA\Property(property="title_ar", type="string", maxLength=255, example="الكلمة الافتتاحية"),
+     *                     @OA\Property(property="description", type="string", example="Welcome speech and conference introduction by CEO"),
+     *                     @OA\Property(property="description_ar", type="string", example="كلمة ترحيبية ومقدمة المؤتمر من قبل الرئيس التنفيذي"),
      *                     @OA\Property(property="start_time", type="string", format="time", example="09:00:00"),
      *                     @OA\Property(property="end_time", type="string", format="time", example="10:00:00"),
-     *                     @OA\Property(property="location", type="string", example="Main Hall")
-     *                 )
+     *                     @OA\Property(property="location", type="string", maxLength=255, example="Main Hall A"),
+     *                     @OA\Property(property="location_ar", type="string", maxLength=255, example="القاعة الرئيسية أ")
+     *                 ),
+     *                 example={
+     *                     {
+     *                         "title": "Opening Keynote",
+     *                         "title_ar": "الكلمة الافتتاحية",
+     *                         "description": "Welcome speech by CEO",
+     *                         "start_time": "09:00:00",
+     *                         "end_time": "10:00:00",
+     *                         "location": "Main Hall A"
+     *                     },
+     *                     {
+     *                         "title": "AI Workshop",
+     *                         "title_ar": "ورشة الذكاء الاصطناعي",
+     *                         "description": "Hands-on AI development workshop",
+     *                         "start_time": "10:30:00",
+     *                         "end_time": "12:00:00",
+     *                         "location": "Room B2"
+     *                     },
+     *                     {
+     *                         "title": "Networking Lunch",
+     *                         "start_time": "12:00:00",
+     *                         "end_time": "13:30:00",
+     *                         "location": "Cafeteria"
+     *                     }
+     *                 }
      *             ),
      *             @OA\Property(
      *                 property="contacts",
      *                 type="array",
+     *                 description="Event contact information",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="contact_type", type="string", enum={"organizer","support","emergency"}, example="organizer"),
-     *                     @OA\Property(property="name", type="string", example="John Doe"),
-     *                     @OA\Property(property="phone", type="string", example="+1234567890"),
-     *                     @OA\Property(property="email", type="string", format="email", example="john@example.com")
-     *                 )
+     *                     required={"contact_type"},
+     *                     @OA\Property(property="contact_type", type="string", enum={"organizer","support","emergency"}, example="organizer", description="Type of contact"),
+     *                     @OA\Property(property="name", type="string", maxLength=255, example="John Doe"),
+     *                     @OA\Property(property="name_ar", type="string", maxLength=255, example="جون دو"),
+     *                     @OA\Property(property="phone", type="string", maxLength=50, example="+1234567890"),
+     *                     @OA\Property(property="email", type="string", format="email", maxLength=255, example="john.doe@example.com")
+     *                 ),
+     *                 example={
+     *                     {
+     *                         "contact_type": "organizer",
+     *                         "name": "John Doe",
+     *                         "phone": "+1234567890",
+     *                         "email": "john.doe@example.com"
+     *                     },
+     *                     {
+     *                         "contact_type": "support",
+     *                         "name": "Support Team",
+     *                         "phone": "+1234567891",
+     *                         "email": "support@example.com"
+     *                     },
+     *                     {
+     *                         "contact_type": "emergency",
+     *                         "name": "Emergency Services",
+     *                         "phone": "+1234567892"
+     *                     }
+     *                 }
      *             ),
      *             @OA\Property(
      *                 property="faqs",
      *                 type="array",
+     *                 description="Frequently asked questions",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="question", type="string", example="What should I bring?"),
-     *                     @OA\Property(property="answer", type="string", example="Bring your ID and confirmation email")
-     *                 )
-     *             )
+     *                     required={"question","answer"},
+     *                     @OA\Property(property="question", type="string", example="What should I bring to the event?"),
+     *                     @OA\Property(property="question_ar", type="string", example="ماذا يجب أن أحضر للحدث؟"),
+     *                     @OA\Property(property="answer", type="string", example="Bring your ID, confirmation email, and laptop for workshops"),
+     *                     @OA\Property(property="answer_ar", type="string", example="أحضر هويتك وبريد التأكيد والكمبيوتر المحمول للورش")
+     *                 ),
+     *                 example={
+     *                     {
+     *                         "question": "What should I bring?",
+     *                         "question_ar": "ماذا يجب أن أحضر؟",
+     *                         "answer": "Bring your ID, confirmation email, and laptop",
+     *                         "answer_ar": "أحضر هويتك وبريد التأكيد والكمبيوتر المحمول"
+     *                     },
+     *                     {
+     *                         "question": "Is parking available?",
+     *                         "answer": "Yes, free parking is available for all attendees"
+     *                     },
+     *                     {
+     *                         "question": "Can I get a refund?",
+     *                         "answer": "Refunds are available up to 7 days before the event"
+     *                     }
+     *                 }
+     *             ),
+     *             example={
+     *                 "title": "Tech Conference 2024",
+     *                 "title_ar": "مؤتمر التكنولوجيا 2024",
+     *                 "description": "Annual technology conference featuring industry leaders",
+     *                 "description_ar": "مؤتمر تكنولوجي سنوي يضم قادة الصناعة",
+     *                 "short_description": "Join us for the biggest tech event",
+     *                 "category_id": 1,
+     *                 "event_date": "2024-12-25",
+     *                 "start_time": "09:00:00",
+     *                 "end_time": "17:00:00",
+     *                 "venue_name": "Grand Convention Center",
+     *                 "address": "123 Main Street, Downtown",
+     *                 "city_id": 1,
+     *                 "country_id": 1,
+     *                 "latitude": 40.7128,
+     *                 "longitude": -74.0060,
+     *                 "max_participants": 500,
+     *                 "price": 99.99,
+     *                 "is_free": false,
+     *                 "featured_image": "https://example.com/events/tech-conf-2024.jpg",
+     *                 "images": {
+     *                     {"image_url": "https://example.com/gallery/stage.jpg", "is_primary": true},
+     *                     {"image_url": "https://example.com/gallery/audience.jpg", "is_primary": false}
+     *                 },
+     *                 "sponsors": {
+     *                     {"sponsor_id": 1, "sponsorship_level": "platinum"},
+     *                     {"sponsor_id": 2, "sponsorship_level": "gold"}
+     *                 },
+     *                 "activities": {
+     *                     {
+     *                         "title": "Opening Keynote",
+     *                         "description": "Welcome speech by CEO",
+     *                         "start_time": "09:00:00",
+     *                         "end_time": "10:00:00",
+     *                         "location": "Main Hall A"
+     *                     }
+     *                 },
+     *                 "contacts": {
+     *                     {
+     *                         "contact_type": "organizer",
+     *                         "name": "John Doe",
+     *                         "phone": "+1234567890",
+     *                         "email": "john.doe@example.com"
+     *                     }
+     *                 },
+     *                 "faqs": {
+     *                     {
+     *                         "question": "What should I bring?",
+     *                         "answer": "Bring your ID and confirmation email"
+     *                     }
+     *                 }
+     *             }
      *         )
      *     ),
      *     @OA\Response(
@@ -350,11 +494,51 @@ class EventController extends Controller
      *         description="Event created successfully",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Event created successfully with all relations"),
-     *             @OA\Property(property="data", type="object")
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="title", type="string", example="Tech Conference 2024"),
+     *                 @OA\Property(property="slug", type="string", example="tech-conference-2024-abc123"),
+     *                 @OA\Property(property="status", type="string", example="draft"),
+     *                 @OA\Property(property="is_published", type="boolean", example=false),
+     *                 @OA\Property(property="organizer_id", type="integer", example=1),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
      *         )
      *     ),
-     *     @OA\Response(response=422, description="Validation error"),
-     *     @OA\Response(response=500, description="Failed to create event")
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="title",
+     *                     type="array",
+     *                     @OA\Items(type="string", example="The title field is required.")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Failed to create event"),
+     *             @OA\Property(property="error", type="string", example="Database connection failed")
+     *         )
+     *     )
      * )
      */
     public function store(Request $request)
