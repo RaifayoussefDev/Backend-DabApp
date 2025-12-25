@@ -324,6 +324,9 @@ Route::middleware('auth:api')->prefix('events')->group(function () {
     Route::get('/{id}/interested-users', [EventController::class, 'getInterestedUsers']);
     Route::post('/{id}/toggle-interest', [EventController::class, 'toggleInterest']);
 
+    Route::patch('/{eventId}/toggle-publish', [EventController::class, 'togglePublish']);
+    Route::patch('/{eventId}/toggle-featured', [EventController::class, 'toggleFeatured']);
+
     // Participants
     Route::get('/{eventId}/participants', [EventParticipantController::class, 'index']);
 
