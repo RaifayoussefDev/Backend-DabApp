@@ -141,7 +141,10 @@ class NotificationService
                 $results['sent']++;
                 $token->updateLastUsed();
                 $token->resetFailedAttempts();
-                $log->markAsSent($result['message_id']);
+                $messageId = isset($result['message_id']) && is_array($result['message_id']) 
+                    ? json_encode($result['message_id']) 
+                    : ($result['message_id'] ?? null);
+                $log->markAsSent($messageId);
             } else {
                 $results['failed']++;
                 $token->incrementFailedAttempts();
