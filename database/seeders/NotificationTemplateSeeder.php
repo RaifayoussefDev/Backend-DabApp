@@ -196,6 +196,7 @@ class NotificationTemplateSeeder extends Seeder
             DB::table('notification_templates')->updateOrInsert(
                 ['type' => $template['type']],
                 array_merge($template, [
+                    'name' => $template['type'], // Populate required 'name' column with type
                     'created_at' => now(),
                     'updated_at' => now(),
                 ])
