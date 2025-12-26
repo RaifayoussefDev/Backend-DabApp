@@ -277,8 +277,14 @@ class SoomController extends Controller
             $buyer = Auth::user();
             try {
                 Mail::to($listing->seller->email)->send(new SoomCreatedMail($submission, $listing, $buyer));
+                
+                // Send Notification to Seller
+                $this->notificationService->sendToUser($listing->seller, 'soom_new_negotiation', [
+                    'buyer_name' => $buyer->first_name . ' ' . $buyer->last_name,
+                    'listing_title' => $listing->title
+                ]);
             } catch (\Exception $e) {
-                \Log::error('Failed to send SOOM created email: ' . $e->getMessage());
+                \Log::error('Failed to send SOOM created email/notification: ' . $e->getMessage());
             }
 
             DB::commit();
@@ -585,6 +591,13 @@ class SoomController extends Controller
                 $emails = [$submission->user->email, $seller->email];
                 Mail::to($emails)->send(new SoomAcceptedMail($submission, $submission->listing, $seller));
                 \Log::info('SOOM accepted email sent successfully to both parties: ' . implode(', ', $emails));
+
+                // Send Notification to Buyer
+                $this->notificationService->sendToUser($submission->user, 'soom_accepted', [
+                    'listing_title' => $submission->listing->title,
+                    'amount' => $submission->amount,
+                    'currency' => 'AED' // Should be dynamic
+                ]);
             } catch (\Exception $e) {
                 \Log::error('Failed to send SOOM accepted email: ' . $e->getMessage());
             }
@@ -765,8 +778,14 @@ class SoomController extends Controller
             $seller = Auth::user();
             try {
                 Mail::to($submission->user->email)->send(new SoomRejectedMail($submission, $submission->listing, $seller, $request->reason));
+                
+                // Send Notification to Buyer
+                $this->notificationService->sendToUser($submission->user, 'soom_rejected', [
+                    'listing_title' => $submission->listing->title,
+                    'reason' => $request->reason ?? 'No reason provided'
+                ]);
             } catch (\Exception $e) {
-                \Log::error('Failed to send SOOM rejected email: ' . $e->getMessage());
+                \Log::error('Failed to send SOOM rejected email/notification: ' . $e->getMessage());
             }
 
             DB::commit();
