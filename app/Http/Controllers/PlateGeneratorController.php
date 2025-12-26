@@ -121,6 +121,12 @@ class PlateGeneratorController extends Controller
                 $html = view('templates.plate', $viewData)->render();
                 $windowSize = [700, 500];
             } elseif ($country === 'uae') {
+                \Log::info("🔍 DEBUG PlateGenerator: UAE Request Input", [
+                    'category_number_from_request' => $request->input('category_number'),
+                    'plate_number_from_request' => $request->input('plate_number'),
+                    'all_request_data' => $request->all()
+                ]);
+
                 $viewData = [
                     'categoryNumber' => $request->input('category_number'),
                     'plateNumber' => $request->input('plate_number'),

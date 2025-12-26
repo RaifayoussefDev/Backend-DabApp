@@ -145,19 +145,27 @@ class LicensePlate extends Model
                     'all_field_values' => $fieldValues
                 ]);
 
+                // Map category_number (can be from different field names)
                 $requestData['category_number'] = $fieldValues['category_number']
                     ?? $fieldValues['top_center_digits']
                     ?? $fieldValues['top_center']
+                    ?? $fieldValues['top_left']  // ← AJOUTÉ: fallback pour les anciennes données
                     ?? '';
 
+                // Map plate_number (can be from different field names)
                 $requestData['plate_number'] = $fieldValues['plate_number']
                     ?? $fieldValues['bottom_center_letter']
                     ?? $fieldValues['bottom_center']
+                    ?? $fieldValues['top_right']  // ← AJOUTÉ: fallback pour les anciennes données
                     ?? '';
 
                 \Log::info("🔍 DEBUG: Mapped values for UAE/Dubai", [
                     'category_number' => $requestData['category_number'],
-                    'plate_number' => $requestData['plate_number']
+                    'plate_number' => $requestData['plate_number'],
+                    'source_fields_used' => [
+                        'category_number_from' => $fieldValues['category_number'] ?? ($fieldValues['top_left'] ?? 'none'),
+                        'plate_number_from' => $fieldValues['plate_number'] ?? ($fieldValues['top_right'] ?? 'none')
+                    ]
                 ]);
             }
 

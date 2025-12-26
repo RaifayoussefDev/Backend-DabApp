@@ -18,7 +18,7 @@ class ImageUploadController extends Controller
     private const THUMBNAIL_SIZE = 300;
 
     // Configuration du watermark
-    private const WATERMARK_PATH = 'watermark/logo.png'; // Chemin relatif dans storage/app/public
+    private const WATERMARK_PATH = 'watermark/LogoDabApp.png'; // Chemin relatif dans storage/app/public
     private const WATERMARK_OPACITY = 100; // Opacité du watermark (0-100)
     private const WATERMARK_POSITION = 'bottom-right'; // Position: bottom-right, bottom-left, top-right, top-left, center
     private const WATERMARK_PADDING = 20; // Padding depuis les bords en pixels
