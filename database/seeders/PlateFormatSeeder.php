@@ -18,8 +18,8 @@ class PlateFormatSeeder extends Seeder
     public function run(): void
     {
         // Get country IDs
-        $ksaCountryId = DB::table('countries')->where('name', 'SAUDI')->value('id');
-        $uaeCountryId = DB::table('countries')->where('name', 'EMARAT')->value('id');
+        $ksaCountryId = DB::table('countries')->where('name', 'Saudi Arabia')->value('id');
+        $uaeCountryId = DB::table('countries')->where('name', 'United Arab Emirates')->value('id');
 
         // Get Abu Dhabi city ID
         $abuDhabiCityId = DB::table('cities')
