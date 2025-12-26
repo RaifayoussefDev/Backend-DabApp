@@ -29,6 +29,12 @@ class NotificationPreferenceSeeder extends Seeder
                     'bid_rejected' => true,
                     'bid_outbid' => true,
                     'auction_ending_soon' => true,
+
+                    // Soom
+                    'soom_new_negotiation' => true,
+                    'soom_counter_offer' => true,
+                    'soom_accepted' => true,
+                    'soom_rejected' => true,
                     
                     // Payments
                     'payment_success' => true,
