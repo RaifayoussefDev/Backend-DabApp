@@ -195,11 +195,19 @@ class NotificationTemplateSeeder extends Seeder
         foreach ($templates as $template) {
             DB::table('notification_templates')->updateOrInsert(
                 ['type' => $template['type']],
-                array_merge($template, [
-                    'name' => $template['type'], // Populate required 'name' column with type
+                [
+                    'name' => $template['type'],
+                    'title_template' => $template['title'],
+                    'message_template' => $template['message'],
+                    'title' => $template['title'],
+                    'message' => $template['message'],
+                    'icon' => $template['icon'],
+                    'color' => $template['color'],
+                    'sound' => $template['sound'],
+                    'is_active' => $template['is_active'],
                     'created_at' => now(),
                     'updated_at' => now(),
-                ])
+                ]
             );
         }
     }
