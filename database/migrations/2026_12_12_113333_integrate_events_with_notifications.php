@@ -1,259 +1,213 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
-/**
- * Migration pour intégrer le système d'événements avec le système de notifications existant
- * 
- * Cette migration ajoute:
- * 1. Support multilingue (arabe/anglais) pour les événements
- * 2. Système d'intérêts (interested users)
- * 3. Types de notifications pour événements dans les templates existants
- */
 return new class extends Migration
 {
     public function up()
     {
-        // ========================================
-        // ÉTAPE 1: Ajouter les champs arabes aux events
-        // ========================================
-        Schema::table('events', function (Blueprint $table) {
-            $table->string('title_ar')->nullable()->after('title');
-            $table->text('description_ar')->nullable()->after('description');
-            $table->text('short_description_ar')->nullable()->after('short_description');
-            $table->string('venue_name_ar')->nullable()->after('venue_name');
-            $table->text('address_ar')->nullable()->after('address');
-            $table->integer('interests_count')->default(0)->after('participants_count');
-        });
-
-        // ========================================
-        // ÉTAPE 2: Ajouter les champs arabes aux event_activities
-        // ========================================
-        Schema::table('event_activities', function (Blueprint $table) {
-            $table->string('title_ar')->nullable()->after('title');
-            $table->text('description_ar')->nullable()->after('description');
-            $table->string('location_ar')->nullable()->after('location');
-        });
-
-        // ========================================
-        // ÉTAPE 3: Ajouter les champs arabes aux event_faqs
-        // ========================================
-        Schema::table('event_faqs', function (Blueprint $table) {
-            $table->text('question_ar')->nullable()->after('question');
-            $table->text('answer_ar')->nullable()->after('answer');
-        });
-
-        // ========================================
-        // ÉTAPE 4: Ajouter les champs arabes aux event_categories
-        // ========================================
-        Schema::table('event_categories', function (Blueprint $table) {
-            $table->string('name_ar')->nullable()->after('name');
-            $table->text('description_ar')->nullable()->after('description');
-        });
-
-        // ========================================
-        // ÉTAPE 5: Ajouter les champs arabes aux event_contacts
-        // ========================================
-        Schema::table('event_contacts', function (Blueprint $table) {
-            $table->string('name_ar')->nullable()->after('name');
-        });
-
-        // ========================================
-        // ÉTAPE 6: Ajouter les champs arabes aux event_tickets
-        // ========================================
-        Schema::table('event_tickets', function (Blueprint $table) {
-            $table->string('ticket_type_ar')->nullable()->after('ticket_type');
-            $table->text('description_ar')->nullable()->after('description');
-        });
-
-        // ========================================
-        // ÉTAPE 7: Ajouter les champs arabes aux event_updates
-        // ========================================
-        Schema::table('event_updates', function (Blueprint $table) {
-            $table->string('title_ar')->nullable()->after('title');
-            $table->text('content_ar')->nullable()->after('content');
-        });
-
-        // ========================================
-        // ÉTAPE 8: Créer la table event_interests (utilisateurs intéressés)
-        // ========================================
-        Schema::create('event_interests', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('event_id')->constrained('events')->onDelete('cascade');
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->timestamp('created_at')->useCurrent();
-            
-            $table->unique(['event_id', 'user_id']);
-            $table->index(['event_id', 'user_id']);
-        });
-
-        // ========================================
-        // ÉTAPE 9: Insérer les templates de notifications pour événements
-        // dans la table notification_templates EXISTANTE
-        // ========================================
-        DB::table('notification_templates')->insert([
+        $templates = [
+            // Events
             [
-                'type' => 'event_new',
-                'name' => 'New Event Published',
-                'description' => 'Sent when a new event is published',
-                'title_template' => 'New Event: {{event_title}}',
-                'message_template' => 'Check out the new event: {{event_title}} on {{event_date}}',
+                'type' => 'event_new_participant',
+                'title' => 'New Event Participant / مشارك جديد في الحدث',
+                'message' => '{{participant_name}} has joined your event "{{event_name}}" / {{participant_name}} انضم إلى حدثك "{{event_name}}"',
                 'icon' => 'event',
                 'color' => '#4CAF50',
                 'sound' => 'default',
                 'is_active' => true,
-                'variables' => json_encode(['event_title', 'event_date', 'event_location']),
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
-                'type' => 'event_update',
-                'name' => 'Event Updated',
-                'description' => 'Sent when event details are updated',
-                'title_template' => 'Event Update: {{event_title}}',
-                'message_template' => 'The event {{event_title}} has been updated. Please check the new details.',
-                'icon' => 'update',
-                'color' => '#2196F3',
+                'type' => 'event_new_review',
+                'title' => 'New Event Review / تقييم جديد للحدث',
+                'message' => '{{reviewer_name}} rated your event "{{event_name}}" ({{rating}}⭐) / {{reviewer_name}} قيم حدثك "{{event_name}}" بـ ({{rating}}⭐)',
+                'icon' => 'star',
+                'color' => '#FFC107',
                 'sound' => 'default',
                 'is_active' => true,
-                'variables' => json_encode(['event_title', 'update_details']),
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
-                'type' => 'event_reminder',
-                'name' => 'Event Reminder',
-                'description' => 'Reminder before event starts',
-                'title_template' => 'Reminder: {{event_title}} starts in {{hours}} hours',
-                'message_template' => 'Don\'t forget! {{event_title}} starts in {{hours}} hours at {{event_location}}',
+                'type' => 'event_starting_soon',
+                'title' => 'Event Starting Soon / الحدث يبدأ قريباً',
+                'message' => 'Your event "{{event_name}}" starts in {{hours}} hours / حدثك "{{event_name}}" يبدأ خلال {{hours}} ساعات',
                 'icon' => 'alarm',
                 'color' => '#FF9800',
                 'sound' => 'default',
                 'is_active' => true,
-                'variables' => json_encode(['event_title', 'hours', 'event_location']),
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
-                'type' => 'event_cancelled',
-                'name' => 'Event Cancelled',
-                'description' => 'Sent when event is cancelled',
-                'title_template' => 'Event Cancelled: {{event_title}}',
-                'message_template' => 'Unfortunately, {{event_title}} has been cancelled. {{reason}}',
+                'type' => 'event_created',
+                'title' => 'Event Created / تم إنشاء الحدث',
+                'message' => 'Your event "{{event_name}}" has been successfully created / تم إنشاء حدثك "{{event_name}}" بنجاح',
+                'icon' => 'add_circle',
+                'color' => '#4CAF50',
+                'sound' => 'success',
+                'is_active' => true,
+            ],
+            
+            // Guides
+            [
+                'type' => 'guide_new_like',
+                'title' => 'New Guide Like / إعجاب جديد بالدليل',
+                'message' => '{{liker_name}} liked your guide "{{guide_title}}" / {{liker_name}} أعجب بدليلك "{{guide_title}}"',
+                'icon' => 'favorite',
+                'color' => '#E91E63',
+                'sound' => 'default',
+                'is_active' => true,
+            ],
+            [
+                'type' => 'guide_new_comment',
+                'title' => 'New Guide Comment / تعليق جديد على الدليل',
+                'message' => '{{commenter_name}} commented on "{{guide_title}}" / {{commenter_name}} علق على "{{guide_title}}"',
+                'icon' => 'comment',
+                'color' => '#2196F3',
+                'sound' => 'default',
+                'is_active' => true,
+            ],
+            [
+                'type' => 'guide_new_bookmark',
+                'title' => 'Guide Bookmarked / تم حفظ الدليل',
+                'message' => '{{user_name}} saved your guide "{{guide_title}}" / {{user_name}} حفظ دليلك "{{guide_title}}"',
+                'icon' => 'bookmark',
+                'color' => '#9C27B0',
+                'sound' => 'default',
+                'is_active' => true,
+            ],
+            [
+                'type' => 'guide_created',
+                'title' => 'Guide Created / تم إنشاء الدليل',
+                'message' => 'Your guide "{{guide_title}}" has been successfully created / تم إنشاء دليلك "{{guide_title}}" بنجاح',
+                'icon' => 'library_books',
+                'color' => '#4CAF50',
+                'sound' => 'success',
+                'is_active' => true,
+            ],
+            
+            // Listings
+            [
+                'type' => 'listing_created',
+                'title' => 'Listing Created / تم إنشاء الإعلان',
+                'message' => 'Your listing "{{listing_title}}" has been created and is under review / تم إنشاء إعلانك "{{listing_title}}" وهو قيد المراجعة',
+                'icon' => 'add_business',
+                'color' => '#2196F3',
+                'sound' => 'default',
+                'is_active' => true,
+            ],
+            [
+                'type' => 'listing_new_submission',
+                'title' => 'New Offer / عرض جديد',
+                'message' => '{{buyer_name}} made an offer for "{{listing_title}}" / {{buyer_name}} قدم عرضاً لـ "{{listing_title}}"',
+                'icon' => 'local_offer',
+                'color' => '#4CAF50',
+                'sound' => 'default',
+                'is_active' => true,
+            ],
+            [
+                'type' => 'listing_approved',
+                'title' => 'Listing Approved / تم قبول الإعلان',
+                'message' => 'Your listing "{{listing_title}}" is now live / إعلانك "{{listing_title}}" أصبح نشطاً الآن',
+                'icon' => 'check_circle',
+                'color' => '#4CAF50',
+                'sound' => 'success',
+                'is_active' => true,
+            ],
+            [
+                'type' => 'listing_rejected',
+                'title' => 'Listing Rejected / تم رفض الإعلان',
+                'message' => 'Your listing "{{listing_title}}" was rejected. Reason: {{reason}} / تم رفض إعلانك "{{listing_title}}". السبب: {{reason}}',
                 'icon' => 'cancel',
                 'color' => '#F44336',
                 'sound' => 'default',
                 'is_active' => true,
-                'variables' => json_encode(['event_title', 'reason']),
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
-                'type' => 'event_registration_confirmed',
-                'name' => 'Registration Confirmed',
-                'description' => 'Sent when user registers for event',
-                'title_template' => 'Registration Confirmed: {{event_title}}',
-                'message_template' => 'Your registration for {{event_title}} has been confirmed!',
+                'type' => 'auction_won',
+                'title' => 'Auction Won! / مبروك! فزت بالمزاد',
+                'message' => 'You won the auction for "{{listing_title}}" / لقد فزت بالمزاد لـ "{{listing_title}}"',
+                'icon' => 'emoji_events',
+                'color' => '#FFD700',
+                'sound' => 'success',
+                'is_active' => true,
+            ],
+            
+            // Soom (Negotiations)
+            [
+                'type' => 'soom_new_negotiation',
+                'title' => 'New Negotiation / مفاوضة جديدة',
+                'message' => '{{buyer_name}} wants to negotiate for "{{listing_title}}" / {{buyer_name}} يريد التفاوض على "{{listing_title}}"',
+                'icon' => 'handshake',
+                'color' => '#3F51B5',
+                'sound' => 'default',
+                'is_active' => true,
+            ],
+            [
+                'type' => 'soom_counter_offer',
+                'title' => 'Counter Offer / عرض مقابل',
+                'message' => 'New counter offer for "{{listing_title}}" / عرض مقابل جديد لـ "{{listing_title}}"',
+                'icon' => 'swap_horiz',
+                'color' => '#FF9800',
+                'sound' => 'default',
+                'is_active' => true,
+            ],
+            [
+                'type' => 'soom_accepted',
+                'title' => 'Offer Accepted! / تم قبول العرض',
+                'message' => 'Your offer for "{{listing_title}}" was accepted! / تم قبول عرضك لـ "{{listing_title}}"! 🎉',
                 'icon' => 'check_circle',
                 'color' => '#4CAF50',
-                'sound' => 'default',
+                'sound' => 'success',
                 'is_active' => true,
-                'variables' => json_encode(['event_title', 'event_date']),
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
-                'type' => 'event_new_participant',
-                'name' => 'New Participant (Organizer)',
-                'description' => 'Sent to organizer about new participant',
-                'title_template' => 'New Registration: {{event_title}}',
-                'message_template' => '{{participant_name}} has registered for your event {{event_title}}',
-                'icon' => 'person_add',
-                'color' => '#2196F3',
+                'type' => 'soom_rejected',
+                'title' => 'Offer Rejected / تم رفض العرض',
+                'message' => 'Your offer for "{{listing_title}}" was rejected / تم رفض عرضك لـ "{{listing_title}}"',
+                'icon' => 'cancel',
+                'color' => '#F44336',
                 'sound' => 'default',
                 'is_active' => true,
-                'variables' => json_encode(['event_title', 'participant_name']),
+            ],
+
+            // Payments
+            [
+                'type' => 'payment_success',
+                'title' => 'Payment Successful / تم الدفع بنجاح',
+                'message' => 'Payment of {{amount}} {{currency}} for "{{item_title}}" was successful / تم دفع {{amount}} {{currency}} لـ "{{item_title}}" بنجاح',
+                'icon' => 'verified',
+                'color' => '#4CAF50',
+                'sound' => 'success',
+                'is_active' => true,
+            ],
+            [
+                'type' => 'payment_failed',
+                'title' => 'Payment Failed / فشل الدفع',
+                'message' => 'Payment for "{{item_title}}" failed. Please try again. / فشل الدفع لـ "{{item_title}}". يرجى المحاولة مرة أخرى.',
+                'icon' => 'error',
+                'color' => '#F44336',
+                'sound' => 'default',
+                'is_active' => true,
+            ],
+        ];
+
+        foreach ($templates as $template) {
+            DB::table('notification_templates')->insert(array_merge($template, [
                 'created_at' => now(),
                 'updated_at' => now(),
-            ],
-        ]);
-
-        // ========================================
-        // ÉTAPE 10: Ajouter les préférences d'événements dans notification_preferences
-        // (Ajouter les colonnes pour les notifications d'événements)
-        // ========================================
-        Schema::table('notification_preferences', function (Blueprint $table) {
-            // Vérifier si les colonnes n'existent pas déjà
-            if (!Schema::hasColumn('notification_preferences', 'event_new')) {
-                $table->boolean('event_new')->default(true)->after('newsletter');
-            }
-            if (!Schema::hasColumn('notification_preferences', 'event_reminder')) {
-                $table->boolean('event_reminder')->default(true)->after('event_new');
-            }
-            if (!Schema::hasColumn('notification_preferences', 'event_updated')) {
-                $table->boolean('event_updated')->default(true)->after('event_reminder');
-            }
-            if (!Schema::hasColumn('notification_preferences', 'event_cancelled')) {
-                $table->boolean('event_cancelled')->default(true)->after('event_updated');
-            }
-            if (!Schema::hasColumn('notification_preferences', 'event_registration')) {
-                $table->boolean('event_registration')->default(true)->after('event_cancelled');
-            }
-        });
+            ]));
+        }
     }
 
     public function down()
     {
-        // Supprimer dans l'ordre inverse
-        Schema::dropIfExists('event_interests');
+        $types = [
+            'event_new_participant', 'event_new_review', 'event_starting_soon', 'event_created',
+            'guide_new_like', 'guide_new_comment', 'guide_new_bookmark', 'guide_created',
+            'listing_created', 'listing_new_submission', 'listing_approved', 'listing_rejected', 'auction_won',
+            'soom_new_negotiation', 'soom_counter_offer', 'soom_accepted', 'soom_rejected',
+            'payment_success', 'payment_failed'
+        ];
 
-        // Supprimer les colonnes arabes
-        Schema::table('events', function (Blueprint $table) {
-            $table->dropColumn([
-                'title_ar', 'description_ar', 'short_description_ar', 
-                'venue_name_ar', 'address_ar', 'interests_count'
-            ]);
-        });
-
-        Schema::table('event_activities', function (Blueprint $table) {
-            $table->dropColumn(['title_ar', 'description_ar', 'location_ar']);
-        });
-
-        Schema::table('event_faqs', function (Blueprint $table) {
-            $table->dropColumn(['question_ar', 'answer_ar']);
-        });
-
-        Schema::table('event_categories', function (Blueprint $table) {
-            $table->dropColumn(['name_ar', 'description_ar']);
-        });
-
-        Schema::table('event_contacts', function (Blueprint $table) {
-            $table->dropColumn('name_ar');
-        });
-
-        Schema::table('event_tickets', function (Blueprint $table) {
-            $table->dropColumn(['ticket_type_ar', 'description_ar']);
-        });
-
-        Schema::table('event_updates', function (Blueprint $table) {
-            $table->dropColumn(['title_ar', 'content_ar']);
-        });
-
-        Schema::table('notification_preferences', function (Blueprint $table) {
-            $table->dropColumn([
-                'event_new', 'event_reminder', 'event_updated', 
-                'event_cancelled', 'event_registration'
-            ]);
-        });
-
-        // Supprimer les templates d'événements
-        DB::table('notification_templates')
-            ->whereIn('type', [
-                'event_new', 'event_update', 'event_reminder', 
-                'event_cancelled', 'event_registration_confirmed', 'event_new_participant'
-            ])
-            ->delete();
+        DB::table('notification_templates')->whereIn('type', $types)->delete();
     }
 };

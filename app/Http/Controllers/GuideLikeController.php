@@ -6,6 +6,7 @@ use App\Models\Guide;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\NotificationService;
 
 /**
  * @OA\Tag(
@@ -15,6 +16,12 @@ use Illuminate\Support\Facades\DB;
  */
 class GuideLikeController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     /**
      * @OA\Post(
      *     path="/api/guides/{id}/like",
@@ -87,6 +94,18 @@ class GuideLikeController extends Controller
             'user_id' => $user->id,
             'created_at' => now()
         ]);
+
+        // Notify Author
+        try {
+            if ($guide->author_id !== $user->id) {
+                $this->notificationService->sendToUser($guide->author, 'guide_new_like', [
+                    'user_name' => $user->first_name . ' ' . $user->last_name,
+                    'guide_title' => $guide->title
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send guide like notification: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message' => 'Guide liked successfully',

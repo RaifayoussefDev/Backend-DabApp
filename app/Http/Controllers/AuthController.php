@@ -419,6 +419,19 @@ class AuthController extends Controller
             $user->restore();
             Log::info('Account reactivated on login', ['user_id' => $user->id]);
 
+            // ✅ SEND REACTIVATION NOTIFICATIONS
+            try {
+                // Email
+                $user->notify(new \App\Notifications\AccountReactivationNotification());
+                
+                // WhatsApp
+                if (!empty($user->phone)) {
+                    $this->sendReactivationWhatsApp($user->phone, $user->first_name);
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send reactivation notifications', ['error' => $e->getMessage()]);
+            }
+
             // Note: We continue the login flow after restoration
             $reactivationMessage = "Your account has been reactivated / تم إعادة تفعيل حسابك";
         }
@@ -1196,6 +1209,19 @@ class AuthController extends Controller
                 'was_verified' => $user->wasChanged('verified'),
                 'was_activated' => $user->wasChanged('is_active')
             ]);
+
+            // ✅ SEND ACTIVATION NOTIFICATIONS
+            try {
+                // Email
+                $user->notify(new \App\Notifications\AccountReactivationNotification()); // Or create AccountActivatedNotification if different text needed, reusing Reactivation for now as user said "compte et activer"
+
+                // WhatsApp
+                if (!empty($user->phone)) {
+                    $this->sendActivationWhatsApp($user->phone, $user->first_name);
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send activation notifications', ['error' => $e->getMessage()]);
+            }
         }
 
         // Extract country & continent
@@ -2289,6 +2315,18 @@ class AuthController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send deletion confirmation email', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+
+        // Send WhatsApp confirmation
+        if (!empty($user->phone)) {
+            $this->sendDeletionConfirmedWhatsApp($user->phone, $user->first_name);
         }
 
         // Perform Soft Delete
@@ -2341,16 +2379,27 @@ class AuthController extends Controller
 
     private function sendDeletionOtp($user, $otp)
     {
-        // 1. Send via Email
-        try {
-            $user->notify(new DeletionOtpNotification($otp));
-        } catch (\Exception $e) {
-            Log::error('Failed to send deletion email', ['error' => $e->getMessage()]);
-        }
+        // User request: "pour delete account ne envoi pas a les deux whatsapp et mail"
+        // Interpretation: Send via WhatsApp if available. If not, fallback to Email. Match "first whatsapp" preference.
 
-        // 2. Send via WhatsApp if phone exists
         if (!empty($user->phone)) {
-            $this->sendDeletionWhatsApp($user->phone, $otp);
+            // 1. Send via WhatsApp ONLY (if phone exists)
+            $sent = $this->sendDeletionWhatsApp($user->phone, $otp);
+            if (!$sent) {
+                // Fallback to email if WhatsApp failed
+                try {
+                    $user->notify(new DeletionOtpNotification($otp));
+                } catch (\Exception $e) {
+                    Log::error('Failed to send deletion email fallback', ['error' => $e->getMessage()]);
+                }
+            }
+        } else {
+            // 2. Send via Email (if no phone)
+            try {
+                $user->notify(new DeletionOtpNotification($otp));
+            } catch (\Exception $e) {
+                Log::error('Failed to send deletion email', ['error' => $e->getMessage()]);
+            }
         }
     }
 
@@ -2375,6 +2424,90 @@ class AuthController extends Controller
             return $response->successful();
         } catch (\Exception $e) {
             Log::error('WhatsApp deletion OTP send failed', ['error' => $e->getMessage()]);
+            return false;
+        }
+    }
+
+    private function sendDeletionConfirmedWhatsApp($phone, $name)
+    {
+        try {
+            $phoneNumber = $this->formatPhoneNumber($phone);
+            
+            $text = "🗑️ Account Deleted / تم حذف الحساب\n\n" .
+                   "Hello {$name},\n" .
+                   "Your account has been deleted successfully. You have 30 days to reactivate your account by logging in.\n\n" .
+                   "مرحباً {$name}،\n" .
+                   "تم حذف حسابك بنجاح. لديك 30 يوماً لإعادة تفعيل حسابك عن طريق تسجيل الدخول.";
+
+            $payload = [
+                'phonenumber' => '+' . $phoneNumber,
+                'text' => $text
+            ];
+
+            Http::timeout(10)->withHeaders([
+                'Authorization' => "Bearer {$this->whatsappApiToken}",
+                'Content-Type' => 'application/json',
+            ])->post($this->whatsappApiUrl, $payload);
+            
+            return true;
+        } catch (\Exception $e) {
+            Log::error('WhatsApp deletion confirmation send failed', ['error' => $e->getMessage()]);
+            return false;
+        }
+    }
+
+    private function sendReactivationWhatsApp($phone, $name)
+    {
+        try {
+            $phoneNumber = $this->formatPhoneNumber($phone);
+            
+            $text = "🎉 Account Reactivated / تم تفعيل الحساب\n\n" .
+                   "Hello {$name},\n" .
+                   "Your account has been successfully reactivated. Welcome back!\n\n" .
+                   "مرحباً {$name}،\n" .
+                   "تم إعادة تفعيل حسابك بنجاح. أهلاً بعودتك!";
+
+            $payload = [
+                'phonenumber' => '+' . $phoneNumber,
+                'text' => $text
+            ];
+
+            Http::timeout(10)->withHeaders([
+                'Authorization' => "Bearer {$this->whatsappApiToken}",
+                'Content-Type' => 'application/json',
+            ])->post($this->whatsappApiUrl, $payload);
+            
+            return true;
+        } catch (\Exception $e) {
+            Log::error('WhatsApp reactivation send failed', ['error' => $e->getMessage()]);
+            return false;
+        }
+    }
+
+    private function sendActivationWhatsApp($phone, $name)
+    {
+        try {
+            $phoneNumber = $this->formatPhoneNumber($phone);
+            
+            $text = "✅ Account Verified / تم تفعيل الحساب\n\n" .
+                   "Hello {$name},\n" .
+                   "Your account has been successfully verified and activated.\n\n" .
+                   "مرحباً {$name}،\n" .
+                   "تم التحقق من حسابك وتفعيله بنجاح.";
+
+            $payload = [
+                'phonenumber' => '+' . $phoneNumber,
+                'text' => $text
+            ];
+
+            Http::timeout(10)->withHeaders([
+                'Authorization' => "Bearer {$this->whatsappApiToken}",
+                'Content-Type' => 'application/json',
+            ])->post($this->whatsappApiUrl, $payload);
+            
+            return true;
+        } catch (\Exception $e) {
+            Log::error('WhatsApp activation send failed', ['error' => $e->getMessage()]);
             return false;
         }
     }

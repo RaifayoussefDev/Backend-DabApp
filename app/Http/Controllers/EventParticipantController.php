@@ -8,9 +8,16 @@ use App\Models\EventParticipant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\NotificationService;
 
 class EventParticipantController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     /**
      * @OA\Post(
      *     path="/api/events/{eventId}/register",
@@ -87,6 +94,16 @@ class EventParticipantController extends Controller
             $event->increment('participants_count');
 
             DB::commit();
+
+            // Notify Organizer
+            try {
+                $this->notificationService->sendToUser($event->organizer, 'event_new_participant', [
+                    'participant_name' => $user->first_name . ' ' . $user->last_name,
+                    'event_name' => $event->title
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send new participant notification: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'message' => 'Registration successful',

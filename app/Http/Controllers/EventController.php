@@ -14,9 +14,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\NotificationService;
 
 class EventController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     /**
      * @OA\Get(
      *     path="/api/events",
@@ -680,6 +687,15 @@ class EventController extends Controller
             }
 
             DB::commit();
+
+            // Send Notification
+            try {
+                $this->notificationService->sendToUser(Auth::user(), 'event_created', [
+                    'event_name' => $event->title
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send event created notification: ' . $e->getMessage());
+            }
 
             // Load all relations
             $event->load([

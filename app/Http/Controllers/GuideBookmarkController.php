@@ -6,6 +6,7 @@ use App\Models\Guide;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\NotificationService;
 
 /**
  * @OA\Tag(
@@ -15,6 +16,12 @@ use Illuminate\Support\Facades\DB;
  */
 class GuideBookmarkController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     /**
      * @OA\Post(
      *     path="/api/guides/{id}/bookmark",
@@ -88,6 +95,19 @@ class GuideBookmarkController extends Controller
             'user_id' => $user->id,
             'created_at' => $createdAt
         ]);
+
+        // Notify Author (Optional for bookmark, but requested in plan)
+        try {
+            if ($guide->author_id !== $user->id) {
+                // Assuming we want a notification for bookmarks too based on previous context
+                $this->notificationService->sendToUser($guide->author, 'guide_new_bookmark', [
+                    'user_name' => $user->first_name . ' ' . $user->last_name,
+                    'guide_title' => $guide->title
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send guide bookmark notification: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message' => 'Guide added to bookmarks successfully',

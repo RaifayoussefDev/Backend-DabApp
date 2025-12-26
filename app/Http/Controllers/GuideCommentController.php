@@ -7,6 +7,7 @@ use App\Models\GuideComment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\Services\NotificationService;
 
 /**
  * @OA\Tag(
@@ -16,6 +17,12 @@ use Illuminate\Support\Facades\Validator;
  */
 class GuideCommentController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     /**
      * @OA\Get(
      *     path="/api/guides/{id}/comments",
@@ -189,6 +196,18 @@ class GuideCommentController extends Controller
             'content' => $request->content,
             'is_approved' => true, // Auto-approuvé par défaut, peut être modifié selon besoins
         ]);
+
+        // Notify Author
+        try {
+            if ($guide->author_id !== Auth::id()) {
+                $this->notificationService->sendToUser($guide->author, 'guide_new_comment', [
+                    'user_name' => Auth::user()->first_name . ' ' . Auth::user()->last_name,
+                    'guide_title' => $guide->title
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send guide comment notification: ' . $e->getMessage());
+        }
 
         $comment->load('user');
 

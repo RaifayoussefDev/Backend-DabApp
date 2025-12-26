@@ -15,10 +15,17 @@ use App\Mail\SoomAcceptedMail;
 use App\Mail\SoomRejectedMail;
 use App\Mail\SaleValidatedMail;
 use Carbon\Carbon;
+use App\Services\NotificationService;
 
 
 class SoomController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     /**
      * Calculate minimum increment based on amount
      */

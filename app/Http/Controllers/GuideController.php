@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Services\NotificationService;
 
 /**
  * @OA\Tag(
@@ -19,6 +20,12 @@ use Tymon\JWTAuth\Facades\JWTAuth;
  */
 class GuideController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     /**
      * @OA\Get(
      *     path="/api/guides",
@@ -175,6 +182,16 @@ class GuideController extends Controller
             }
 
             DB::commit();
+
+            // Send Notification
+            try {
+                $this->notificationService->sendToUser(Auth::user(), 'guide_created', [
+                    'guide_title' => $guide->title
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send guide created notification: ' . $e->getMessage());
+            }
+
             $guide->load(['author', 'category', 'tags', 'sections']);
 
             return response()->json([

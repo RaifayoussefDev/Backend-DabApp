@@ -35,10 +35,19 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use App\Services\PayTabsConfigService;
+use App\Services\NotificationService;
 
 
 class ListingController extends Controller
 {
+    protected $payTabsConfigService;
+    protected $notificationService;
+
+    public function __construct(PayTabsConfigService $payTabsConfigService, NotificationService $notificationService)
+    {
+        $this->payTabsConfigService = $payTabsConfigService;
+        $this->notificationService = $notificationService;
+    }
     /**
      * ===========================================================================================
      * MULTI-STEP LISTING CREATION - FLEXIBLE WORKFLOW
@@ -631,7 +640,17 @@ class ListingController extends Controller
             }
 
             // ✅ Step 1 & 2 : pas de paiement
+            // ✅ Step 1 & 2 : pas de paiement
             DB::commit();
+
+            // Notify User
+            try {
+                $this->notificationService->sendToUser(Auth::user(), 'listing_created', [
+                    'listing_title' => $listing->title ?? 'New Listing / إعلان جديد',
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send listing_created notification: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'message' => 'Listing saved (no payment yet)',
