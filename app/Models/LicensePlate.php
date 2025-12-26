@@ -141,6 +141,10 @@ class LicensePlate extends Model
                 $requestData['bottom_right'] = $fieldValues['bottom_right'] ?? '';
             } else {
                 // UAE and Dubai
+                \Log::info("🔍 DEBUG: All available field values for UAE/Dubai", [
+                    'all_field_values' => $fieldValues
+                ]);
+
                 $requestData['category_number'] = $fieldValues['category_number']
                     ?? $fieldValues['top_center_digits']
                     ?? $fieldValues['top_center']
@@ -150,6 +154,11 @@ class LicensePlate extends Model
                     ?? $fieldValues['bottom_center_letter']
                     ?? $fieldValues['bottom_center']
                     ?? '';
+
+                \Log::info("🔍 DEBUG: Mapped values for UAE/Dubai", [
+                    'category_number' => $requestData['category_number'],
+                    'plate_number' => $requestData['plate_number']
+                ]);
             }
 
             // Add city names
