@@ -15211,6 +15211,60 @@
                 }
             }
         },
+        "/api/cities/{cityId}/plate-formats": {
+            "get": {
+                "tags": [
+                    "License Plates"
+                ],
+                "summary": "Get plate formats by city",
+                "description": "Retrieve plate formats for a specific city",
+                "operationId": "961bf9f606c6b938805e7b3183042e07",
+                "parameters": [
+                    {
+                        "name": "cityId",
+                        "in": "path",
+                        "description": "City ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Plate formats retrieved successfully"
+                    }
+                }
+            }
+        },
+        "/api/countries/{countryId}/plate-formats": {
+            "get": {
+                "tags": [
+                    "License Plates"
+                ],
+                "summary": "Get plate formats by country",
+                "description": "Retrieve plate formats for a specific country",
+                "operationId": "533174d1c4ef27232a0a093de69d9e34",
+                "parameters": [
+                    {
+                        "name": "countryId",
+                        "in": "path",
+                        "description": "Country ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Plate formats retrieved successfully"
+                    }
+                }
+            }
+        },
         "/api/cities/{cityId}/plate-formats/details": {
             "get": {
                 "tags": [

@@ -251,6 +251,92 @@ class LicensePlateController extends Controller
 
     /**
      * @OA\Get(
+     *     path="/api/cities/{cityId}/plate-formats",
+     *     tags={"License Plates"},
+     *     summary="Get plate formats by city",
+     *     description="Retrieve plate formats for a specific city",
+     *     @OA\Parameter(
+     *         name="cityId",
+     *         in="path",
+     *         required=true,
+     *         description="City ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Plate formats retrieved successfully"
+     *     )
+     * )
+     */
+    public function getFormatsByCity($cityId)
+    {
+        $city = City::findOrFail($cityId);
+        $countryId = $city->country_id;
+
+        $formats = PlateFormat::with(['country'])
+            ->where('is_active', true)
+            ->where(function ($query) use ($cityId, $countryId, $city) {
+                if ($countryId == 1) {
+                    $query->where('country_id', 1)->whereNull('city_id');
+                } elseif ($countryId == 2) {
+                    $isAbuDhabi = stripos($city->name, 'Abu Dhabi') !== false
+                                  || stripos($city->name_ar ?? '', 'أبو ظبي') !== false;
+                    if ($isAbuDhabi) {
+                        $query->where('country_id', 2)->where('city_id', $cityId);
+                    } else {
+                        $query->where('country_id', 2)->whereNull('city_id');
+                    }
+                } else {
+                    $query->where(function ($q) use ($cityId, $countryId) {
+                        $q->where('city_id', $cityId)
+                          ->orWhere(function ($subQ) use ($countryId) {
+                              $subQ->where('country_id', $countryId)->whereNull('city_id');
+                          });
+                    });
+                }
+            })
+            ->get();
+
+        return response()->json([
+            'city' => ['id' => $city->id, 'name' => $city->name],
+            'formats' => $formats
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/countries/{countryId}/plate-formats",
+     *     tags={"License Plates"},
+     *     summary="Get plate formats by country",
+     *     description="Retrieve plate formats for a specific country",
+     *     @OA\Parameter(
+     *         name="countryId",
+     *         in="path",
+     *         required=true,
+     *         description="Country ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Plate formats retrieved successfully"
+     *     )
+     * )
+     */
+    public function getFormatsByCountry($countryId)
+    {
+        $formats = PlateFormat::with(['country'])
+            ->where('country_id', $countryId)
+            ->where('is_active', true)
+            ->get();
+
+        return response()->json([
+            'country_id' => $countryId,
+            'formats' => $formats
+        ]);
+    }
+
+    /**
+     * @OA\Get(
      *     path="/api/cities/{cityId}/plate-formats/details",
      *     tags={"License Plates"},
      *     summary="Get plate formats by city with details",
@@ -320,12 +406,54 @@ class LicensePlateController extends Controller
     {
         // Récupérer la ville
         $city = City::findOrFail($cityId);
+        $countryId = $city->country_id;
 
-        // Récupérer les formats de cette ville
+        // ✅ LOGIQUE DE FALLBACK SELON LE PAYS ET LA VILLE
         $formats = PlateFormat::with(['country', 'fields'])
-            ->where('city_id', $cityId)
             ->where('is_active', true)
+            ->where(function ($query) use ($cityId, $countryId, $city) {
+                // KSA (country_id = 1): Toujours retourner le format KSA (city_id = null)
+                if ($countryId == 1) {
+                    $query->where('country_id', 1)
+                          ->whereNull('city_id');
+                }
+                // UAE (country_id = 2)
+                elseif ($countryId == 2) {
+                    // Vérifier si c'est Abu Dhabi
+                    $isAbuDhabi = stripos($city->name, 'Abu Dhabi') !== false
+                                  || stripos($city->name_ar ?? '', 'أبو ظبي') !== false;
+
+                    if ($isAbuDhabi) {
+                        // Abu Dhabi: retourner le format spécifique à Abu Dhabi
+                        $query->where('country_id', 2)
+                              ->where('city_id', $cityId);
+                    } else {
+                        // Autres Emirates: retourner le format générique (city_id = null)
+                        $query->where('country_id', 2)
+                              ->whereNull('city_id');
+                    }
+                }
+                // Autres pays: format spécifique à la ville ou fallback
+                else {
+                    $query->where(function ($q) use ($cityId, $countryId) {
+                        $q->where('city_id', $cityId)
+                          ->orWhere(function ($subQ) use ($countryId) {
+                              $subQ->where('country_id', $countryId)
+                                    ->whereNull('city_id');
+                          });
+                    });
+                }
+            })
             ->get();
+
+        // Si aucun format trouvé, essayer de trouver un format générique pour le pays
+        if ($formats->isEmpty()) {
+            $formats = PlateFormat::with(['country', 'fields'])
+                ->where('country_id', $countryId)
+                ->whereNull('city_id')
+                ->where('is_active', true)
+                ->get();
+        }
 
         $result = $formats->map(function ($format) {
             return [

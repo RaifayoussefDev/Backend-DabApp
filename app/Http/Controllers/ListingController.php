@@ -633,21 +633,6 @@ class ListingController extends Controller
             // ✅ Step 1 & 2 : pas de paiement
             DB::commit();
 
-            // 🔥 DÉPLACER L'APPEL ICI (APRÈS LE COMMIT)
-            if ($listing->category_id == 3 && $listing->licensePlate) {
-                try {
-                    $listing->licensePlate->generatePlateImage();
-                } catch (\Exception $e) {
-                    \Log::error("Async generation failed: " . $e->getMessage());
-                }
-            }
-
-            return response()->json([
-                'message' => 'Listing saved (no payment yet)',
-                'listing_id' => $listing->id,
-                'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate']),
-            ], 201);
-
             return response()->json([
                 'message' => 'Listing saved (no payment yet)',
                 'listing_id' => $listing->id,
