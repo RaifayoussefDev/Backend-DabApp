@@ -1066,6 +1066,675 @@ class ListingController extends Controller
             ], 500);
         }
     }
+
+
+    /**
+     * ===========================================================================================
+     * EDIT LISTING - UPDATE WITHOUT PAYMENT
+     * ===========================================================================================
+     *
+     * PURPOSE: Edit an existing listing's basic information and category-specific details
+     * 
+     * BUSINESS RULES:
+     * - Only PUBLISHED listings can be edited (status = 'published')
+     * - Draft and pending listings should use the complete endpoint
+     * - No payment is required for editing
+     * - Seller can only edit their own listings
+     * - All changes are saved immediately
+     * 
+     * WHAT CAN BE EDITED:
+     * ✅ Basic info: title, description, price, location, seller info
+     * ✅ Category-specific data: motorcycle/spare part/license plate details
+     * ✅ Images: add new images or replace existing ones
+     * ✅ Auction settings: enable/disable auction, change minimum bid
+     * ✅ Contact preferences: allow_submission, contacting_channel
+     * 
+     * WHAT CANNOT BE CHANGED:
+     * ❌ Listing category (motorcycle → spare part)
+     * ❌ Payment/billing information
+     * ❌ Listing ownership (seller_id)
+     * ❌ Publication status (use separate publish/unpublish endpoints)
+     * 
+     * ===========================================================================================
+     *
+     * @OA\Put(
+     *     path="/api/listings/edit/{id}",
+     *     summary="Edit a published listing (no payment required)",
+     *     description="Update listing details for published listings only. Draft/pending listings should use complete endpoint.",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Listing ID to edit",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=520)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Fields to update (all fields are optional, send only what you want to change)",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="basic_info",
+     *                 type="object",
+     *                 description="Basic listing information",
+     *                 @OA\Property(property="title", type="string", example="Updated Motorcycle Title"),
+     *                 @OA\Property(property="description", type="string", example="Updated description with more details"),
+     *                 @OA\Property(property="price", type="number", example=12000, description="Set to null for auction-only listings"),
+     *                 @OA\Property(property="country_id", type="integer", example=1),
+     *                 @OA\Property(property="city_id", type="integer", example=2),
+     *                 @OA\Property(property="seller_type", type="string", example="owner", enum={"owner", "dealer", "middleman"}),
+     *                 @OA\Property(property="contacting_channel", type="string", example="phone", enum={"phone", "email", "whatsapp"}),
+     *                 @OA\Property(property="allow_submission", type="boolean", example=true, description="Allow price negotiation offers")
+     *             ),
+     *             @OA\Property(
+     *                 property="auction_settings",
+     *                 type="object",
+     *                 description="Auction configuration (optional)",
+     *                 @OA\Property(property="auction_enabled", type="boolean", example=true),
+     *                 @OA\Property(property="minimum_bid", type="number", example=10000, description="Required if auction_enabled=true")
+     *             ),
+     *             @OA\Property(
+     *                 property="images",
+     *                 type="array",
+     *                 description="Complete list of image URLs (replaces existing images)",
+     *                 @OA\Items(type="string", example="https://be.dabapp.co/storage/listings/image1.jpg")
+     *             ),
+     *             @OA\Property(
+     *                 property="motorcycle",
+     *                 type="object",
+     *                 description="Motorcycle-specific fields (category_id=1 only)",
+     *                 @OA\Property(property="brand_id", type="integer", example=7),
+     *                 @OA\Property(property="model_id", type="integer", example=5712),
+     *                 @OA\Property(property="year_id", type="integer", example=10671),
+     *                 @OA\Property(property="engine", type="string", example="1000cc"),
+     *                 @OA\Property(property="mileage", type="integer", example=15000),
+     *                 @OA\Property(property="body_condition", type="string", example="As New", enum={"As New", "Used", "Needs some fixes"}),
+     *                 @OA\Property(property="modified", type="boolean", example=false),
+     *                 @OA\Property(property="insurance", type="boolean", example=true),
+     *                 @OA\Property(property="general_condition", type="string", example="Used", enum={"New", "Used"}),
+     *                 @OA\Property(property="vehicle_care", type="string", example="Wakeel", enum={"Wakeel", "USA", "Europe", "GCC", "Customs License", "Other"}),
+     *                 @OA\Property(property="transmission", type="string", example="Manual", enum={"Automatic", "Manual", "Semi-Automatic"})
+     *             ),
+     *             @OA\Property(
+     *                 property="spare_part",
+     *                 type="object",
+     *                 description="Spare part-specific fields (category_id=2 only)",
+     *                 @OA\Property(property="condition", type="string", example="new", enum={"new", "used"}),
+     *                 @OA\Property(property="bike_part_brand_id", type="integer", example=3),
+     *                 @OA\Property(property="bike_part_category_id", type="integer", example=5),
+     *                 @OA\Property(
+     *                     property="compatible_motorcycles",
+     *                     type="array",
+     *                     description="List of compatible motorcycles (replaces existing)",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="brand_id", type="integer", example=7),
+     *                         @OA\Property(property="model_id", type="integer", example=5713),
+     *                         @OA\Property(property="year_id", type="integer", example=10672)
+     *                     )
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="license_plate",
+     *                 type="object",
+     *                 description="License plate-specific fields (category_id=3 only)",
+     *                 @OA\Property(property="plate_format_id", type="integer", example=17),
+     *                 @OA\Property(property="country_id_lp", type="integer", example=1, description="Plate country"),
+     *                 @OA\Property(property="city_id_lp", type="integer", example=1, description="Plate emirate/city"),
+     *                 @OA\Property(
+     *                     property="fields",
+     *                     type="array",
+     *                     description="Plate field values (replaces existing)",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="field_id", type="integer", example=40),
+     *                         @OA\Property(property="value", type="string", example="٢٢٢")
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Listing updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Listing updated successfully"),
+     *             @OA\Property(property="listing_id", type="integer", example=520),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 description="Updated listing data with relationships"
+     *             ),
+     *             @OA\Property(
+     *                 property="updated_fields",
+     *                 type="array",
+     *                 description="List of fields that were updated",
+     *                 @OA\Items(type="string", example="title")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Listing cannot be edited",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Only published listings can be edited"),
+     *             @OA\Property(property="current_status", type="string", example="draft"),
+     *             @OA\Property(property="suggestion", type="string", example="Use the complete endpoint to finish draft listings")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=404, description="Listing not found or access denied"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
+     *
+     * ═══════════════════════════════════════════════════════════════════════════════════════
+     * REAL POSTMAN EXAMPLES - EDIT LISTING
+     * ═══════════════════════════════════════════════════════════════════════════════════════
+     *
+     * EXAMPLE 1 - Edit Motorcycle Listing (Basic Info Only):
+     * PUT /api/listings/edit/520
+     * {
+     *   "basic_info": {
+     *     "title": "Honda CBR 1000RR - Limited Edition",
+     *     "description": "Excellent condition, full service history, never crashed",
+     *     "price": 45000,
+     *     "city_id": 3,
+     *     "allow_submission": true,
+     *     "contacting_channel": "whatsapp"
+     *   }
+     * }
+     *
+     * Response:
+     * {
+     *   "success": true,
+     *   "message": "Listing updated successfully",
+     *   "listing_id": 520,
+     *   "updated_fields": ["title", "description", "price", "city_id", "allow_submission", "contacting_channel"],
+     *   "data": { ... }
+     * }
+     *
+     * ───────────────────────────────────────────────────────────────────────────────────────
+     *
+     * EXAMPLE 2 - Edit Motorcycle with Category-Specific Details:
+     * PUT /api/listings/edit/520
+     * {
+     *   "basic_info": {
+     *     "price": 42000
+     *   },
+     *   "motorcycle": {
+     *     "mileage": 18000,
+     *     "body_condition": "Used",
+     *     "insurance": false
+     *   }
+     * }
+     *
+     * Response: (success with updated motorcycle fields)
+     *
+     * ───────────────────────────────────────────────────────────────────────────────────────
+     *
+     * EXAMPLE 3 - Enable Auction on Existing Listing:
+     * PUT /api/listings/edit/520
+     * {
+     *   "basic_info": {
+     *     "price": null
+     *   },
+     *   "auction_settings": {
+     *     "auction_enabled": true,
+     *     "minimum_bid": 35000
+     *   }
+     * }
+     *
+     * Response: (auction now enabled)
+     *
+     * ───────────────────────────────────────────────────────────────────────────────────────
+     *
+     * EXAMPLE 4 - Update Images:
+     * PUT /api/listings/edit/520
+     * {
+     *   "images": [
+     *     "https://be.dabapp.co/storage/listings/new-image1.jpg",
+     *     "https://be.dabapp.co/storage/listings/new-image2.jpg",
+     *     "https://be.dabapp.co/storage/listings/new-image3.jpg"
+     *   ]
+     * }
+     *
+     * Response: (images replaced with new URLs)
+     *
+     * ───────────────────────────────────────────────────────────────────────────────────────
+     *
+     * EXAMPLE 5 - Edit Spare Part Compatible Motorcycles:
+     * PUT /api/listings/edit/522
+     * {
+     *   "spare_part": {
+     *     "condition": "used",
+     *     "compatible_motorcycles": [
+     *       {
+     *         "brand_id": 7,
+     *         "model_id": 5713,
+     *         "year_id": 10672
+     *       },
+     *       {
+     *         "brand_id": 8,
+     *         "model_id": 7815,
+     *         "year_id": 18675
+     *       },
+     *       {
+     *         "brand_id": 9,
+     *         "model_id": 8920,
+     *         "year_id": 19680
+     *       }
+     *     ]
+     *   }
+     * }
+     *
+     * Response: (spare part details and compatible motorcycles updated)
+     *
+     * ───────────────────────────────────────────────────────────────────────────────────────
+     *
+     * EXAMPLE 6 - Edit License Plate Fields:
+     * PUT /api/listings/edit/524
+     * {
+     *   "basic_info": {
+     *     "price": 75000,
+     *     "description": "Premium triple number plate - rare find!"
+     *   },
+     *   "license_plate": {
+     *     "fields": [
+     *       {
+     *         "field_id": 40,
+     *         "value": "٣٣٣"
+     *       },
+     *       {
+     *         "field_id": 43,
+     *         "value": "AAA"
+     *       },
+     *       {
+     *         "field_id": 41,
+     *         "value": "ججج"
+     *       },
+     *       {
+     *         "field_id": 42,
+     *         "value": "333"
+     *       }
+     *     ]
+     *   }
+     * }
+     *
+     * Response: (plate fields updated and new plate image generated)
+     *
+     * ───────────────────────────────────────────────────────────────────────────────────────
+     *
+     * EXAMPLE 7 - Error: Trying to Edit Draft Listing:
+     * PUT /api/listings/edit/530
+     * {
+     *   "basic_info": {
+     *     "title": "New title"
+     *   }
+     * }
+     *
+     * Response (403 Error):
+     * {
+     *   "error": "Only published listings can be edited",
+     *   "current_status": "draft",
+     *   "listing_id": 530,
+     *   "suggestion": "Use PUT /api/listings/complete/530 to finish draft listings"
+     * }
+     *
+     * ───────────────────────────────────────────────────────────────────────────────────────
+     *
+     * EXAMPLE 8 - Comprehensive Update (All Sections):
+     * PUT /api/listings/edit/520
+     * {
+     *   "basic_info": {
+     *     "title": "Yamaha R1 2020 - Full Carbon Edition",
+     *     "description": "Track-ready superbike with carbon fiber bodywork, Akrapovic exhaust, and racing suspension. Meticulously maintained with full service records.",
+     *     "price": 65000,
+     *     "city_id": 1,
+     *     "seller_type": "owner",
+     *     "contacting_channel": "phone",
+     *     "allow_submission": false
+     *   },
+     *   "auction_settings": {
+     *     "auction_enabled": true,
+     *     "minimum_bid": 60000
+     *   },
+     *   "motorcycle": {
+     *     "mileage": 8500,
+     *     "body_condition": "As New",
+     *     "modified": true,
+     *     "insurance": true,
+     *     "general_condition": "Used",
+     *     "transmission": "Manual"
+     *   },
+     *   "images": [
+     *     "https://be.dabapp.co/storage/listings/carbon-front.jpg",
+     *     "https://be.dabapp.co/storage/listings/carbon-side.jpg",
+     *     "https://be.dabapp.co/storage/listings/exhaust.jpg",
+     *     "https://be.dabapp.co/storage/listings/dashboard.jpg",
+     *     "https://be.dabapp.co/storage/listings/engine.jpg"
+     *   ]
+     * }
+     *
+     * Response:
+     * {
+     *   "success": true,
+     *   "message": "Listing updated successfully",
+     *   "listing_id": 520,
+     *   "updated_fields": [
+     *     "title", "description", "price", "city_id", "seller_type",
+     *     "contacting_channel", "allow_submission", "auction_enabled",
+     *     "minimum_bid", "mileage", "body_condition", "modified",
+     *     "insurance", "general_condition", "transmission", "images"
+     *   ],
+     *   "data": {
+     *     "id": 520,
+     *     "title": "Yamaha R1 2020 - Full Carbon Edition",
+     *     "status": "published",
+     *     "images": [...],
+     *     "motorcycle": {...}
+     *   }
+     * }
+     */
+    public function editListing(Request $request, $id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $sellerId = Auth::id();
+            if (!$sellerId) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            // ✅ Récupérer le listing
+            $listing = Listing::where('id', $id)
+                ->where('seller_id', $sellerId)
+                ->with(['images', 'motorcycle', 'sparePart', 'licensePlate'])
+                ->first();
+
+            if (!$listing) {
+                return response()->json([
+                    'error' => 'Listing not found or access denied'
+                ], 404);
+            }
+
+            // ✅ VÉRIFICATION CRITIQUE: Seuls les listings PUBLISHED peuvent être édités
+            if ($listing->status !== 'published') {
+                return response()->json([
+                    'error' => 'Only published listings can be edited',
+                    'current_status' => $listing->status,
+                    'listing_id' => $listing->id,
+                    'suggestion' => $listing->status === 'draft' 
+                        ? "Use PUT /api/listings/complete/{$listing->id} to finish draft listings"
+                        : "Contact support if you need to edit a {$listing->status} listing"
+                ], 403);
+            }
+
+            // ✅ Track updated fields for response
+            $updatedFields = [];
+
+            // ✅ VALIDATION - Flexible selon les champs envoyés
+            $validationRules = [];
+
+            if ($request->has('basic_info')) {
+                $validationRules = array_merge($validationRules, [
+                    'basic_info.title' => 'sometimes|string|max:255',
+                    'basic_info.description' => 'sometimes|string',
+                    'basic_info.price' => 'sometimes|nullable|numeric|min:0',
+                    'basic_info.country_id' => 'sometimes|exists:countries,id',
+                    'basic_info.city_id' => 'sometimes|exists:cities,id',
+                    'basic_info.seller_type' => 'sometimes|in:owner,dealer,middleman',
+                    'basic_info.contacting_channel' => 'sometimes|in:phone,email,whatsapp',
+                    'basic_info.allow_submission' => 'sometimes|boolean',
+                ]);
+            }
+
+            if ($request->has('auction_settings')) {
+                $validationRules = array_merge($validationRules, [
+                    'auction_settings.auction_enabled' => 'sometimes|boolean',
+                    'auction_settings.minimum_bid' => 'required_if:auction_settings.auction_enabled,true|nullable|numeric|min:0',
+                ]);
+            }
+
+            if ($request->has('images')) {
+                $validationRules['images'] = 'sometimes|array';
+                $validationRules['images.*'] = 'url';
+            }
+
+            // Validation selon la catégorie
+            if ($request->has('motorcycle') && $listing->category_id == 1) {
+                $validationRules = array_merge($validationRules, [
+                    'motorcycle.brand_id' => 'sometimes|exists:motorcycle_brands,id',
+                    'motorcycle.model_id' => 'sometimes|exists:motorcycle_models,id',
+                    'motorcycle.year_id' => 'sometimes|exists:motorcycle_years,id',
+                    'motorcycle.engine' => 'sometimes|string',
+                    'motorcycle.mileage' => 'sometimes|integer|min:0',
+                    'motorcycle.body_condition' => 'sometimes|in:As New,Used,Needs some fixes',
+                    'motorcycle.modified' => 'sometimes|boolean',
+                    'motorcycle.insurance' => 'sometimes|boolean',
+                    'motorcycle.general_condition' => 'sometimes|in:New,Used',
+                    'motorcycle.vehicle_care' => 'sometimes|in:Wakeel,USA,Europe,GCC,Customs License,Other',
+                    'motorcycle.transmission' => 'sometimes|in:Automatic,Manual,Semi-Automatic',
+                ]);
+            }
+
+            if ($request->has('spare_part') && $listing->category_id == 2) {
+                $validationRules = array_merge($validationRules, [
+                    'spare_part.condition' => 'sometimes|in:new,used',
+                    'spare_part.bike_part_brand_id' => 'sometimes|exists:bike_part_brands,id',
+                    'spare_part.bike_part_category_id' => 'sometimes|exists:bike_part_categories,id',
+                    'spare_part.compatible_motorcycles' => 'sometimes|array',
+                    'spare_part.compatible_motorcycles.*.brand_id' => 'required|exists:motorcycle_brands,id',
+                    'spare_part.compatible_motorcycles.*.model_id' => 'required|exists:motorcycle_models,id',
+                    'spare_part.compatible_motorcycles.*.year_id' => 'required|exists:motorcycle_years,id',
+                ]);
+            }
+
+            if ($request->has('license_plate') && $listing->category_id == 3) {
+                $validationRules = array_merge($validationRules, [
+                    'license_plate.plate_format_id' => 'sometimes|exists:plate_formats,id',
+                    'license_plate.country_id_lp' => 'sometimes|exists:countries,id',
+                    'license_plate.city_id_lp' => 'sometimes|exists:cities,id',
+                    'license_plate.fields' => 'sometimes|array',
+                    'license_plate.fields.*.field_id' => 'required|exists:plate_format_fields,id',
+                    'license_plate.fields.*.value' => 'required|string',
+                ]);
+            }
+
+            $request->validate($validationRules);
+
+            // ✅ UPDATE BASIC INFO
+            if ($request->has('basic_info')) {
+                $basicInfo = $request->basic_info;
+                
+                // Nettoyage du prix
+                if (isset($basicInfo['price']) && $basicInfo['price'] !== null && $basicInfo['price'] !== '') {
+                    $cleanPrice = str_replace([' ', ','], '', $basicInfo['price']);
+                    $basicInfo['price'] = is_numeric($cleanPrice) ? (float)$cleanPrice : null;
+                }
+
+                $allowedBasicFields = [
+                    'title', 'description', 'price', 'country_id', 'city_id',
+                    'seller_type', 'contacting_channel', 'allow_submission'
+                ];
+
+                foreach ($allowedBasicFields as $field) {
+                    if (array_key_exists($field, $basicInfo)) {
+                        $listing->$field = $basicInfo[$field];
+                        $updatedFields[] = $field;
+                    }
+                }
+            }
+
+            // ✅ UPDATE AUCTION SETTINGS
+            if ($request->has('auction_settings')) {
+                $auctionSettings = $request->auction_settings;
+                
+                if (isset($auctionSettings['auction_enabled'])) {
+                    $listing->auction_enabled = $auctionSettings['auction_enabled'];
+                    $updatedFields[] = 'auction_enabled';
+                }
+
+                if (isset($auctionSettings['minimum_bid'])) {
+                    $listing->minimum_bid = $auctionSettings['minimum_bid'];
+                    $updatedFields[] = 'minimum_bid';
+                }
+            }
+
+            $listing->save();
+
+            // ✅ UPDATE IMAGES
+            if ($request->has('images')) {
+                $listing->images()->delete();
+                foreach ($request->images as $imageUrl) {
+                    $listing->images()->create(['image_url' => $imageUrl]);
+                }
+                $updatedFields[] = 'images';
+            }
+
+            // ✅ UPDATE CATEGORY-SPECIFIC DATA
+            if ($request->has('motorcycle') && $listing->category_id == 1) {
+                $motorcycleData = $request->motorcycle;
+
+                // ✅ Récupérer le type_id depuis la table motorcycle_models si model_id change
+                if (isset($motorcycleData['model_id'])) {
+                    $model = \App\Models\MotorcycleModel::find($motorcycleData['model_id']);
+                    if ($model && $model->type_id) {
+                        $motorcycleData['type_id'] = $model->type_id;
+                    }
+                }
+
+                $listing->motorcycle()->updateOrCreate(
+                    ['listing_id' => $listing->id],
+                    array_filter($motorcycleData, function($value) {
+                        return $value !== null;
+                    })
+                );
+
+                $updatedFields = array_merge($updatedFields, array_keys($motorcycleData));
+            }
+
+            if ($request->has('spare_part') && $listing->category_id == 2) {
+                $sparePartData = array_filter($request->spare_part, function($value, $key) {
+                    return $key !== 'compatible_motorcycles' && $value !== null;
+                }, ARRAY_FILTER_USE_BOTH);
+
+                if (!empty($sparePartData)) {
+                    $sparePart = $listing->sparePart()->updateOrCreate(
+                        ['listing_id' => $listing->id],
+                        $sparePartData
+                    );
+                    $updatedFields = array_merge($updatedFields, array_keys($sparePartData));
+                }
+
+                // Update compatible motorcycles
+                if (isset($request->spare_part['compatible_motorcycles'])) {
+                    $sparePart = $listing->sparePart;
+                    if ($sparePart) {
+                        $sparePart->motorcycles()->delete();
+                        
+                        foreach ($request->spare_part['compatible_motorcycles'] as $moto) {
+                            $sparePart->motorcycles()->create([
+                                'brand_id' => $moto['brand_id'],
+                                'model_id' => $moto['model_id'],
+                                'year_id' => $moto['year_id'],
+                            ]);
+                        }
+                        $updatedFields[] = 'compatible_motorcycles';
+                    }
+                }
+            }
+
+            if ($request->has('license_plate') && $listing->category_id == 3) {
+                $licensePlateData = [];
+
+                if (isset($request->license_plate['plate_format_id'])) {
+                    $licensePlateData['plate_format_id'] = $request->license_plate['plate_format_id'];
+                }
+
+                if (isset($request->license_plate['country_id_lp'])) {
+                    $licensePlateData['country_id'] = $request->license_plate['country_id_lp'];
+                }
+
+                if (isset($request->license_plate['city_id_lp'])) {
+                    $licensePlateData['city_id'] = $request->license_plate['city_id_lp'];
+                }
+
+                if (!empty($licensePlateData)) {
+                    $licensePlate = $listing->licensePlate()->updateOrCreate(
+                        ['listing_id' => $listing->id],
+                        $licensePlateData
+                    );
+                    $updatedFields = array_merge($updatedFields, array_keys($licensePlateData));
+                } else {
+                    $licensePlate = $listing->licensePlate;
+                }
+
+                // Update plate fields
+                if (isset($request->license_plate['fields']) && $licensePlate) {
+                    $licensePlate->fieldValues()->delete();
+
+                    foreach ($request->license_plate['fields'] as $field) {
+                        $licensePlate->fieldValues()->create([
+                            'plate_format_field_id' => $field['field_id'],
+                            'field_value' => $field['value'],
+                        ]);
+                    }
+
+                    // ✅ Régénérer l'image de la plaque
+                    try {
+                        \Log::info("Regenerating plate image for license_plate_id: " . $licensePlate->id);
+                        $licensePlate->generatePlateImage();
+                        $updatedFields[] = 'license_plate_fields';
+                    } catch (\Exception $e) {
+                        \Log::error("Failed to regenerate plate image", [
+                            'license_plate_id' => $licensePlate->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
+
+            // ✅ Send notification
+            try {
+                $this->notificationService->sendToUser(Auth::user(), 'listing_updated', [
+                    'listing_title' => $listing->title,
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send listing_updated notification: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Listing updated successfully',
+                'listing_id' => $listing->id,
+                'updated_fields' => array_unique($updatedFields),
+                'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart.motorcycles', 'licensePlate.fieldValues'])
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Failed to edit listing', [
+                'listing_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'error' => 'Failed to update listing',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
     /**
      * @OA\Get(
      *     path="/api/listings/country/{country_id}",
