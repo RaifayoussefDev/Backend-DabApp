@@ -690,7 +690,7 @@ class EventController extends Controller
 
             // Send Notification
             try {
-                $this->notificationService->sendToUser(Auth::user(), 'event_created', [
+                $this->notificationService->sendToUser(Auth::user(), 'event_updated', [
                     'event_name' => $event->title
                 ]);
             } catch (\Exception $e) {

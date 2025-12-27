@@ -224,7 +224,7 @@ class GuideController extends Controller
 
             // Send Notification
             try {
-                $this->notificationService->sendToUser(Auth::user(), 'guide_created', [
+                $this->notificationService->sendToUser(Auth::user(), 'new_guide_published', [
                     'guide_title' => $guide->title
                 ]);
             } catch (\Exception $e) {

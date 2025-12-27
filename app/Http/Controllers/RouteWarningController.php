@@ -151,7 +151,7 @@ class RouteWarningController extends Controller
 
         // Send Notification
         try {
-            $this->notificationService->sendToUser(Auth::user(), 'warning_reported', [
+            $this->notificationService->sendToUser(Auth::user(), 'route_warning', [
                 'warning_type' => $warning->warning_type,
                 'route_name' => $route->name ?? 'Route'
             ]);

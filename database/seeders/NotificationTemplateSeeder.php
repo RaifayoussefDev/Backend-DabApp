@@ -47,6 +47,15 @@ class NotificationTemplateSeeder extends Seeder
                 'sound' => 'success',
                 'is_active' => true,
             ],
+             [
+                'type' => 'event_updated',
+                'title' => 'Event Created / تم إنشاء الحدث',
+                'message' => 'Your event "{{event_name}}" has been successfully created / تم إنشاء حدثك "{{event_name}}" بنجاح',
+                'icon' => 'add_circle',
+                'color' => '#4CAF50',
+                'sound' => 'success',
+                'is_active' => true,
+            ],
             
             // Guides
             [
@@ -77,7 +86,7 @@ class NotificationTemplateSeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'type' => 'guide_created',
+                'type' => 'new_guide_published',
                 'title' => 'Guide Created / تم إنشاء الدليل',
                 'message' => 'Your guide "{{guide_title}}" has been successfully created / تم إنشاء دليلك "{{guide_title}}" بنجاح',
                 'icon' => 'library_books',
@@ -86,6 +95,17 @@ class NotificationTemplateSeeder extends Seeder
                 'is_active' => true,
             ],
             
+            // Routes
+            [
+                 'type' => 'route_warning',
+                 'title' => 'Warning Reported / تم الإبلاغ عن تنبيه',
+                 'message' => 'Your warning for "{{route_name}}" has been reported / تم الإبلاغ عن تنبيهك لـ "{{route_name}}"',
+                 'icon' => 'warning',
+                 'color' => '#FF9800',
+                 'sound' => 'default',
+                 'is_active' => true,
+            ],
+
             // Listings
             [
                 'type' => 'listing_created',
