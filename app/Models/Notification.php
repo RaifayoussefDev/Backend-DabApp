@@ -52,6 +52,14 @@ class Notification extends Model
         'created_at' => 'datetime',
     ];
 
+    protected $appends = [
+        'time_ago',
+        'is_high_priority',
+        'entity_type',
+        'entity_id',
+        'action_route',
+    ];
+
     // Relations
     public function user(): BelongsTo
     {
@@ -151,5 +159,47 @@ class Notification extends Model
     public function getIsHighPriorityAttribute(): bool
     {
         return in_array($this->priority, ['high', 'urgent']);
+    }
+
+    public function getEntityTypeAttribute()
+    {
+        return $this->related_entity_type;
+    }
+
+    public function getEntityIdAttribute()
+    {
+        return $this->related_entity_id;
+    }
+
+    // Relation polymorphique pour accéder directement à l'entité liée
+    public function relatedEntity()
+    {
+        return $this->morphTo('related_entity');
+    }
+
+    // Helper pour construire l'URL d'action automatiquement
+    public function getActionRouteAttribute(): ?string
+    {
+        if ($this->action_url) {
+            return $this->action_url;
+        }
+
+        // Auto-génération de l'URL selon le type d'entité
+        if ($this->related_entity_type && $this->related_entity_id) {
+            $routes = [
+                'App\Models\Listing' => '/listings/',
+                'App\Models\Soom' => '/soom/',
+                'App\Models\Order' => '/orders/',
+                'App\Models\User' => '/profile/',
+                'App\Models\Event' => '/events/',
+                'App\Models\Poi' => '/pois/',
+            ];
+
+            if (isset($routes[$this->related_entity_type])) {
+                return $routes[$this->related_entity_type] . $this->related_entity_id;
+            }
+        }
+
+        return null;
     }
 }
