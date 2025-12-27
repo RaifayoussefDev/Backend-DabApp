@@ -804,6 +804,7 @@ class ListingController extends Controller
      *             @OA\Property(property="step", type="integer", example=3, description="Étape à compléter"),
      *             @OA\Property(property="action", type="string", example="complete", description="Action: 'update' ou 'complete'"),
      *             @OA\Property(property="amount", type="number", example=50.00, description="Montant pour step 3"),
+     *             @OA\Property(property="promo_code", type="string", example="WELCOME10", description="Code promo optionnel"),
      *             @OA\Property(property="title", type="string", example="Titre mis à jour"),
      *             @OA\Property(property="description", type="string"),
      *             @OA\Property(property="price", type="number"),
@@ -816,7 +817,7 @@ class ListingController extends Controller
      *     )
      * )
      */
-    public function completeListing(Request $request, $id)
+    public function completeListing(Request $request, $id, \App\Services\PromoCodeService $promoService)
     {
         DB::beginTransaction();
 
@@ -848,6 +849,7 @@ class ListingController extends Controller
             if ($step >= 3 && $action === 'complete') {
                 $request->validate([
                     'amount' => 'required|numeric|min:1',
+                    'promo_code' => 'sometimes|nullable|string'
                 ]);
             } else {
                 $request->validate([
@@ -860,7 +862,7 @@ class ListingController extends Controller
                 ]);
             }
 
-            // ✅ Remplissage du listing
+            // ✅ Remplissage du listing (SANS listing_type_id)
             $listing->fill(array_filter($request->only([
                 'title',
                 'description',
@@ -871,7 +873,6 @@ class ListingController extends Controller
                 'auction_enabled',
                 'minimum_bid',
                 'allow_submission',
-                'listing_type_id',
                 'contacting_channel',
                 'seller_type'
             ])));
@@ -907,14 +908,40 @@ class ListingController extends Controller
                         $originalCurrency = $currency->currency_code;
                         $exchangeRate = $currency->exchange_rate;
 
-                        // 🔥 LOGIQUE CORRECTE : TOUJOURS diviser par exchange_rate
-                        // Si exchange_rate = 0.98, cela signifie : 1 AED = 0.98 SAR
-                        // Donc pour convertir SAR → AED : montant_sar / 0.98
-
+                        // Conversion: diviser par exchange_rate
                         $aedAmount = round($originalAmount / $exchangeRate, 2);
 
                         \Log::info("Complete Listing - Conversion: {$originalAmount} {$originalCurrency} → {$aedAmount} AED (rate: 1 AED = {$exchangeRate} {$originalCurrency})");
                     }
+                }
+
+                // ✅ Handle Promo Code
+                $appliedPromoId = null;
+                if ($request->filled('promo_code')) {
+                    $promoResult = $promoService->validatePromoCode(
+                        $request->promo_code,
+                        Auth::user(),
+                        (float)$originalAmount
+                    );
+
+                    if (!$promoResult['valid']) {
+                        DB::rollBack();
+                        return response()->json(['error' => $promoResult['message']], $promoResult['status']);
+                    }
+
+                    // Apply discount to both original and AED amounts
+                    $discount = $promoResult['discount'];
+                    $originalAmount = max($originalAmount - $discount, 0);
+                    
+                    // Recalculate aedAmount based on the new originalAmount
+                    if ($countryId && $countryId != 2 && $exchangeRate > 0) {
+                        $aedAmount = round($originalAmount / $exchangeRate, 2);
+                    } else {
+                        $aedAmount = $originalAmount;
+                    }
+
+                    $appliedPromoId = $promoResult['promo']->id;
+                    \Log::info("Complete Listing - Promo Code Applied: {$request->promo_code}. Discount: {$discount}. New Amounts: {$originalAmount} / {$aedAmount}");
                 }
 
                 $payment = Payment::create([
@@ -926,16 +953,29 @@ class ListingController extends Controller
                     'currency'          => 'AED',
                     'payment_status'    => 'pending',
                     'cart_id'           => 'cart_' . time(),
+                    'promo_code_id'     => $appliedPromoId,
+                ]);
+
+                // 🔥 GET DYNAMIC PAYTABS CONFIG
+                $config = PayTabsConfigService::getConfig();
+                $baseUrl = PayTabsConfigService::getBaseUrl();
+                $environment = PayTabsConfigService::isTestMode() ? 'TEST' : 'LIVE';
+
+                \Log::info("Complete Listing - Creating payment in {$environment} mode", [
+                    'profile_id' => $config['profile_id'],
+                    'amount' => $aedAmount,
+                    'listing_id' => $listing->id,
+                    'base_url' => $baseUrl
                 ]);
 
                 // Payload PayTabs
                 $payload = [
-                    'profile_id' => (int) config('paytabs.profile_id'),
+                    'profile_id' => (int) $config['profile_id'],
                     'tran_type' => 'sale',
                     'tran_class' => 'ecom',
                     'cart_id' => $payment->cart_id,
                     'cart_description' => 'Completion Payment for Listing #' . $listing->id,
-                    'cart_currency' => 'AED',
+                    'cart_currency' => $config['currency'],
                     'cart_amount' => $aedAmount,
                     'customer_details' => [
                         'name' => Auth::user()->name,
@@ -944,7 +984,7 @@ class ListingController extends Controller
                         'street1' => 'N/A',
                         'city' => 'N/A',
                         'state' => 'N/A',
-                        'country' => 'ARE',
+                        'country' => $config['region'],
                         'zip' => '00000',
                         'ip' => $request->ip()
                     ],
@@ -952,18 +992,24 @@ class ListingController extends Controller
                     'return' => route('paytabs.return'),
                 ];
 
-                $baseUrl = 'https://secure.paytabs.com/';
-
                 $response = Http::withHeaders([
-                    'Authorization' => config('paytabs.server_key'),
+                    'Authorization' => $config['server_key'],
                     'Content-Type'  => 'application/json',
                     'Accept'        => 'application/json'
                 ])->post($baseUrl . 'payment/request', $payload);
 
                 if (!$response->successful()) {
                     DB::rollBack();
+
+                    \Log::error("Complete Listing - PayTabs payment request failed ({$environment})", [
+                        'response' => $response->json(),
+                        'status' => $response->status(),
+                        'payload' => $payload
+                    ]);
+
                     return response()->json([
                         'error' => 'Payment request failed',
+                        'environment' => strtolower($environment),
                         'details' => $response->json()
                     ], 400);
                 }
@@ -978,14 +1024,15 @@ class ListingController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Listing completed, payment initiated',
+                    'message' => "Listing completed, payment initiated ({$environment} mode)",
+                    'environment' => strtolower($environment),
                     'listing_id' => $listing->id,
                     'payment_id' => $payment->id,
                     'amount_aed' => $aedAmount,
                     'original_amount' => $originalAmount,
                     'original_currency' => $originalCurrency,
                     'exchange_rate' => "1 AED = {$exchangeRate} {$originalCurrency}",
-                    'currency' => 'AED',
+                    'currency' => $config['currency'],
                     'redirect_url' => $data['redirect_url'] ?? null,
                     'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart', 'licensePlate'])
                 ], 201);
@@ -993,6 +1040,15 @@ class ListingController extends Controller
 
             // ✅ Simple mise à jour sans paiement (step 1 & 2)
             DB::commit();
+
+            // Notify User
+            try {
+                $this->notificationService->sendToUser(Auth::user(), 'listing_updated', [
+                    'listing_title' => $listing->title ?? 'Updated Listing / إعلان محدث',
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send listing_updated notification: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'success' => true,

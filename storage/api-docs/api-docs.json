@@ -16092,6 +16092,11 @@
                                         "type": "number",
                                         "example": 50
                                     },
+                                    "promo_code": {
+                                        "description": "Code promo optionnel",
+                                        "type": "string",
+                                        "example": "WELCOME10"
+                                    },
                                     "title": {
                                         "type": "string",
                                         "example": "Titre mis à jour"
