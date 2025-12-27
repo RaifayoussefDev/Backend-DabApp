@@ -876,29 +876,35 @@ class GuideController extends Controller
 
     private function recordView($viewable, $user)
     {
-        if (!$user) {
-            $viewable->increment('views_count');
+        $ip = request()->ip();
+        $userAgent = request()->userAgent();
+
+        $query = View::where('viewable_id', $viewable->id)
+            ->where('viewable_type', get_class($viewable));
+
+        if ($user) {
+            $query->where('user_id', $user->id);
+        } else {
+            // For guests, check IP address to prevent multi-views
+            $query->where('ip_address', $ip)->whereNull('user_id');
+        }
+
+        if ($query->exists()) {
             return;
         }
 
-        $exists = View::where('user_id', $user->id)
-            ->where('viewable_id', $viewable->id)
-            ->where('viewable_type', get_class($viewable))
-            ->exists();
+        try {
+            View::create([
+                'user_id' => $user ? $user->id : null,
+                'viewable_id' => $viewable->id,
+                'viewable_type' => get_class($viewable),
+                'ip_address' => $ip,
+                'user_agent' => $userAgent,
+            ]);
 
-        if (!$exists) {
-            try {
-                View::create([
-                    'user_id' => $user->id,
-                    'viewable_id' => $viewable->id,
-                    'viewable_type' => get_class($viewable),
-                    'ip_address' => request()->ip(),
-                    'user_agent' => request()->userAgent(),
-                ]);
-                $viewable->increment('views_count');
-            } catch (\Exception $e) {
-                // Ignore unique constraint violation
-            }
+            $viewable->increment('views_count');
+        } catch (\Exception $e) {
+            // Ignore unique constraint violation or multiple clicks race condition
         }
     }
 

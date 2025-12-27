@@ -1459,15 +1459,31 @@ class AuthController extends Controller
     }
 
     /**
-     * @OA\Put(
+     * @OA\Post(
      *     path="/api/user/update",
      *     summary="Update user profile",
      *     tags={"Authentification"},
      *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="first_name", type="string"),
+     *             @OA\Property(property="last_name", type="string"),
+     *             @OA\Property(property="email", type="string", format="email"),
+     *             @OA\Property(property="phone", type="string"),
+     *             @OA\Property(property="birthday", type="string", format="date"),
+     *             @OA\Property(property="profile_picture", type="string", description="Path or URL of the profile picture")
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Profile updated successfully"
-     *     )
+     *         description="Profile updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Profile updated successfully"),
+     *             @OA\Property(property="user", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=422, description="Validation error")
      * )
      */
     public function updateProfile(Request $request)
@@ -1480,13 +1496,19 @@ class AuthController extends Controller
             'email'      => 'nullable|email|unique:users,email,' . $user->id,
             'phone'      => 'nullable|string|unique:users,phone,' . $user->id,
             'birthday'   => 'nullable|date',
+            'profile_picture' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        $user->update($request->only('first_name', 'last_name', 'email', 'phone', 'birthday'));
+        $data = $request->only('first_name', 'last_name', 'email', 'phone', 'birthday', 'profile_picture');
+
+        $user->update($data);
+
+        // Refresh user to get updated fields
+        $user->refresh();
 
         return response()->json([
             'message' => 'Profile updated successfully',

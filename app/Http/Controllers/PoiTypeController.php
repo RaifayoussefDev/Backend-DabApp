@@ -35,15 +35,28 @@ class PoiTypeController extends Controller
      *         required=false,
      *         @OA\Schema(type="boolean", default=false)
      *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=20)
+     *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=1)
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Success",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="array",
-     *                 @OA\Items(
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="current_page", type="integer"),
+     *                 @OA\Property(property="data", type="array", @OA\Items(
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="name", type="string", example="Gas Station"),
      *                     @OA\Property(property="icon", type="string", example="fas fa-gas-pump"),
@@ -51,7 +64,17 @@ class PoiTypeController extends Controller
      *                     @OA\Property(property="pois_count", type="integer", example=15),
      *                     @OA\Property(property="created_at", type="string", format="date-time"),
      *                     @OA\Property(property="updated_at", type="string", format="date-time")
-     *                 )
+     *                 )),
+     *                 @OA\Property(property="first_page_url", type="string"),
+     *                 @OA\Property(property="from", type="integer"),
+     *                 @OA\Property(property="last_page", type="integer"),
+     *                 @OA\Property(property="last_page_url", type="string"),
+     *                 @OA\Property(property="next_page_url", type="string", nullable=true),
+     *                 @OA\Property(property="path", type="string"),
+     *                 @OA\Property(property="per_page", type="integer"),
+     *                 @OA\Property(property="prev_page_url", type="string", nullable=true),
+     *                 @OA\Property(property="to", type="integer"),
+     *                 @OA\Property(property="total", type="integer")
      *             )
      *         )
      *     ),
@@ -72,7 +95,8 @@ class PoiTypeController extends Controller
             $query->with('services');
         }
 
-        $poiTypes = $query->orderBy('name')->get();
+        $perPage = $request->input('per_page', 20);
+        $poiTypes = $query->orderBy('name')->paginate($perPage);
 
         return response()->json([
             'success' => true,
