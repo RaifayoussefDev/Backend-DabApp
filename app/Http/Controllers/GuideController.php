@@ -550,6 +550,23 @@ class GuideController extends Controller
 
         $guide->update(['status' => 'published', 'published_at' => now()]);
 
+        // Envoyer notification aux followers de l'auteur
+        try {
+            $followers = $guide->author->followers; // Si tu as cette relation
+            foreach ($followers as $follower) {
+                $this->notificationService->sendToUser($follower, 'guide_published', [
+                    'guide_id' => $guide->id,
+                    'guide_title' => $guide->title,
+                    'author_name' => $guide->author->full_name,
+                ], [
+                    'entity' => $guide,
+                    'priority' => 'normal',
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send guide published notification: ' . $e->getMessage());
+        }
+
         return response()->json([
             'message' => 'Guide published successfully',
             'data' => [
