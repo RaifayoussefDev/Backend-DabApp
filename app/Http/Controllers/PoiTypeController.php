@@ -95,8 +95,14 @@ class PoiTypeController extends Controller
             $query->with('services');
         }
 
-        $perPage = $request->input('per_page', 20);
-        $poiTypes = $query->orderBy('name')->paginate($perPage);
+        // Check if pagination is requested
+        if ($request->has('per_page') || $request->has('page')) {
+            $perPage = $request->input('per_page', 20);
+            $poiTypes = $query->orderBy('name')->paginate($perPage);
+        } else {
+            // "if per_page and page vide return all"
+            $poiTypes = $query->orderBy('name')->get();
+        }
 
         return response()->json([
             'success' => true,
