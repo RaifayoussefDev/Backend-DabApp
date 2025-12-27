@@ -96,6 +96,33 @@ class PlateGeneratorController extends Controller
                 }
             }
 
+            // [INTEGRATION START] Fetch Plate Format Fields using variable_name
+            // We verify if we can find a format corresponding to country and map inputs via variable_name
+            $mappedData = [];
+            try {
+                // Find country ID by code
+                $countryModel = \App\Models\Country::where('code', $country)->first();
+                if ($countryModel) {
+                   $format = \App\Models\PlateFormat::where('country_id', $countryModel->id)->first();
+                   if ($format) {
+                       foreach ($format->fields as $field) {
+                           if (!empty($field->variable_name)) {
+                               // This allows the DB to define which request key maps to this field
+                               // We store it for logging or dynamic usage.
+                               // Note: The views are currently hardcoded to expect specific keys,
+                               // so we mainly log this "communication" for now or use it to override if keys match.
+                               $requestValue = $request->input($field->variable_name);
+                               $mappedData[$field->variable_name] = $requestValue;
+                           }
+                       }
+                       \Log::info("🔗 PlateGenerator mapped fields via DB:", $mappedData);
+                   }
+                }
+            } catch (\Exception $e) {
+                \Log::warning("Could not map fields from DB: " . $e->getMessage());
+            }
+            // [INTEGRATION END]
+
             // Générer le HTML selon le pays
             if ($country === 'ksa') {
                 $viewData = [
