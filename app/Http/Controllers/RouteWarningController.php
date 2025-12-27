@@ -18,6 +18,13 @@ use Illuminate\Support\Facades\Auth;
  */
 class RouteWarningController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(\App\Services\NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     /**
      * @OA\Get(
      *     path="/api/routes/{route_id}/warnings",
@@ -141,6 +148,16 @@ class RouteWarningController extends Controller
 
         $warning = RouteWarning::create($data);
         $warning->load(['waypoint', 'reporter']);
+
+        // Send Notification
+        try {
+            $this->notificationService->sendToUser(Auth::user(), 'warning_reported', [
+                'warning_type' => $warning->warning_type,
+                'route_name' => $route->name ?? 'Route'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send warning reported notification: ' . $e->getMessage());
+        }
 
         return response()->json([
             'success' => true,
