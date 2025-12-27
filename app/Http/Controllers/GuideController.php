@@ -96,27 +96,66 @@ class GuideController extends Controller
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
+     *         description="Comprehensive guide data including sections and media",
      *         @OA\JsonContent(
      *             required={"title"},
-     *             @OA\Property(property="title", type="string", example="Complete Motorcycle Maintenance Guide"),
-     *             @OA\Property(property="excerpt", type="string", example="Learn how to maintain your motorcycle properly"),
-     *             @OA\Property(property="featured_image", type="string", example="https://example.com/maintenance-cover.jpg"),
-     *             @OA\Property(property="category_id", type="integer", example=1),
-     *             @OA\Property(property="tags", type="array", @OA\Items(type="integer"), example={1, 2, 3}),
-     *             @OA\Property(property="is_featured", type="boolean", example=false),
+     *             @OA\Property(property="title", type="string", example="Ultimate Guide to Motorcycle Maintenance 2024"),
+     *             @OA\Property(property="excerpt", type="string", example="A complete walkthrough for maintaining your bike's engine, tires, and chains."),
+     *             @OA\Property(property="featured_image", type="string", format="url", example="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80"),
+     *             @OA\Property(property="category_id", type="integer", example=1, description="ID of the guide category"),
+     *             @OA\Property(property="tags", type="array", @OA\Items(type="integer"), example={1, 3, 5}, description="Array of tag IDs"),
+     *             @OA\Property(property="is_featured", type="boolean", example=true),
      *             @OA\Property(
      *                 property="sections",
      *                 type="array",
+     *                 description="List of content sections for the guide",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="type", type="string", enum={"text", "image", "text_image", "gallery", "video"}),
-     *                     @OA\Property(property="title", type="string"),
-     *                     @OA\Property(property="description", type="string"),
-     *                     @OA\Property(property="image_url", type="string"),
-     *                     @OA\Property(property="image_position", type="string", enum={"top", "right", "left", "bottom"}),
-     *                     @OA\Property(property="media", type="array", @OA\Items(type="object")),
-     *                     @OA\Property(property="order_position", type="integer")
-     *                 )
+     *                     required={"type"},
+     *                     @OA\Property(property="type", type="string", enum={"text", "image", "text_image", "gallery", "video"}, example="text_image"),
+     *                     @OA\Property(property="title", type="string", example="Checking Tire Pressure"),
+     *                     @OA\Property(property="description", type="string", example="Always check your tire pressure when the tires are cold for accurate readings."),
+     *                     @OA\Property(property="image_url", type="string", format="url", example="https://example.com/tire-pressure.jpg"),
+     *                     @OA\Property(property="image_position", type="string", enum={"top", "right", "left", "bottom"}, example="right"),
+     *                     @OA\Property(property="order_position", type="integer", example=1),
+     *                     @OA\Property(
+     *                         property="media",
+     *                         type="array",
+     *                         description="Gallery images if type is gallery",
+     *                         @OA\Items(
+     *                             type="object",
+     *                             @OA\Property(property="url", type="string", format="url"),
+     *                             @OA\Property(property="caption", type="string")
+     *                         ),
+     *                         example={
+     *                             {"url": "https://example.com/gallery1.jpg", "caption": "Front Tire"},
+     *                             {"url": "https://example.com/gallery2.jpg", "caption": "Rear Tire"}
+     *                         }
+     *                     )
+     *                 ),
+     *                 example={
+     *                     {
+     *                         "type": "text",
+     *                         "title": "Introduction",
+     *                         "description": "Welcome to the maintenance guide. Here is what you need to know...",
+     *                         "order_position": 0
+     *                     },
+     *                     {
+     *                         "type": "text_image",
+     *                         "title": "Checking Oil Level",
+     *                         "description": "Ensure the bike is upright and check the sight glass.",
+     *                         "image_url": "https://example.com/oil-check.jpg",
+     *                         "image_position": "left",
+     *                         "order_position": 1
+     *                     },
+     *                     {
+     *                         "type": "video",
+     *                         "title": "Chain Cleaning Tutorial",
+     *                         "description": "Watch this video to see proper chain cleaning technique.",
+     *                         "image_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+     *                         "order_position": 2
+     *                     }
+     *                 }
      *             )
      *         )
      *     ),
