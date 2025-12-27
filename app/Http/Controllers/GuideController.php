@@ -225,7 +225,11 @@ class GuideController extends Controller
             // Send Notification
             try {
                 $this->notificationService->sendToUser(Auth::user(), 'new_guide_published', [
+                    'guide_id' => $guide->id,  // ✅ AJOUTER guide_id
                     'guide_title' => $guide->title
+                ], [
+                    'entity' => $guide,  // ✅ AJOUTER entity pour action_url
+                    'priority' => 'normal',
                 ]);
             } catch (\Exception $e) {
                 \Log::error('Failed to send guide created notification: ' . $e->getMessage());
