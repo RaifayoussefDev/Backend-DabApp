@@ -2502,6 +2502,76 @@
                 ]
             }
         },
+        "/api/user/language": {
+            "put": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Change user language",
+                "operationId": "71c700e62f5d9ed7e1e6da69b8668766",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "language"
+                                ],
+                                "properties": {
+                                    "language": {
+                                        "description": "Language code (en=English, ar=Arabic)",
+                                        "type": "string",
+                                        "enum": [
+                                            "en",
+                                            "ar"
+                                        ],
+                                        "example": "ar"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Language updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Language updated successfully"
+                                        },
+                                        "language": {
+                                            "type": "string",
+                                            "example": "ar"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/banners": {
             "get": {
                 "tags": [
@@ -18444,76 +18514,6 @@
                         }
                     }
                 }
-            }
-        },
-        "/api/user/language": {
-            "put": {
-                "tags": [
-                    "User"
-                ],
-                "summary": "Change user language",
-                "operationId": "63343217f84ed6b8167351fd9cc3e25f",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "language"
-                                ],
-                                "properties": {
-                                    "language": {
-                                        "description": "Language code (en=English, ar=Arabic)",
-                                        "type": "string",
-                                        "enum": [
-                                            "en",
-                                            "ar"
-                                        ],
-                                        "example": "ar"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Language updated successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Language updated successfully"
-                                        },
-                                        "language": {
-                                            "type": "string",
-                                            "example": "ar"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized"
-                    },
-                    "422": {
-                        "description": "Validation error"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
             }
         },
         "/api/locations": {
@@ -34943,10 +34943,6 @@
         {
             "name": "Listings",
             "description": "Listings"
-        },
-        {
-            "name": "User",
-            "description": "User"
         },
         {
             "name": "locations",

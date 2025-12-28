@@ -2533,4 +2533,54 @@ class AuthController extends Controller
             return false;
         }
     }
+
+    
+    /**
+     * @OA\Put(
+     *     path="/api/user/language",
+     *     summary="Change user language",
+     *     tags={"Authentification"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"language"},
+     *             @OA\Property(
+     *                 property="language",
+     *                 type="string",
+     *                 enum={"en", "ar"},
+     *                 example="ar",
+     *                 description="Language code (en=English, ar=Arabic)"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Language updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Language updated successfully"),
+     *             @OA\Property(property="language", type="string", example="ar")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
+     */
+    public function changeLanguage(Request $request)
+    {
+        $request->validate([
+            'language' => 'required|in:en,ar'
+        ]);
+
+        $user = Auth::user();
+        $user->language = $request->language;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Language updated successfully',
+            'language' => $user->language
+        ]);
+    }
 }
