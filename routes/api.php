@@ -412,6 +412,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/delete-request', [AuthController::class, 'deleteAccountRequest']);
         Route::post('/delete-confirm', [AuthController::class, 'confirmDeleteAccount']);
         Route::post('/delete-resend-otp', [AuthController::class, 'resendDeletionOtp']);
+        Route::put('/language', [AuthController::class, 'changeLanguage']);
     });
 
 
