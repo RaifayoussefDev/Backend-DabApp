@@ -230,7 +230,7 @@ class AuthController extends Controller
                 'verified'   => false,
                 'is_active'  => false,
                 'is_online'  => false,
-                'language'   => 'fr',
+                'language'   => 'en',
                 'timezone'   => 'Africa/Casablanca',
                 'two_factor_enabled' => true,
                 'country_id' => $countryData['country_id'],
