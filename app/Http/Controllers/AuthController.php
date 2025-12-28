@@ -2573,7 +2573,7 @@ class AuthController extends Controller
             'language' => 'required|in:en,ar'
         ]);
 
-        $user = Auth::user();
+        $user = $request->user();  // ← Utilise $request->user()
         $user->language = $request->language;
         $user->save();
 
