@@ -43,6 +43,7 @@ class NotificationPreference extends Model
         'new_guide_published',
         'guide_comment',
         'guide_like',
+        'guide_published',
         // Events
         'event_reminder',
         'event_updated',
@@ -95,6 +96,7 @@ class NotificationPreference extends Model
         'wishlist_item_sold' => 'boolean',
         'new_message' => 'boolean',
         'new_guide_published' => 'boolean',
+        'guide_published' => 'boolean',
         'guide_comment' => 'boolean',
         'guide_like' => 'boolean',
         'event_reminder' => 'boolean',
