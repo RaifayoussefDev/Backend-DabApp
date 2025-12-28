@@ -554,19 +554,27 @@ class GuideController extends Controller
 
         $guide->update(['status' => 'published', 'published_at' => now()]);
 
-        // Envoyer notification aux followers de l'auteur
+        // ✅ Envoyer notification à TOUS les utilisateurs
         try {
-            $followers = $guide->author->followers; // Si tu as cette relation
-            foreach ($followers as $follower) {
-                $this->notificationService->sendToUser($follower, 'guide_published', [
+            $allUsers = \App\Models\User::where('is_active', true)
+                ->where('id', '!=', $guide->author_id)
+                ->get();
+
+            foreach ($allUsers as $recipient) {
+                $this->notificationService->sendToUser($recipient, 'guide_published', [
                     'guide_id' => $guide->id,
                     'guide_title' => $guide->title,
-                    'author_name' => $guide->author->full_name,
+                    'author_name' => $guide->author->first_name . ' ' . $guide->author->last_name,
                 ], [
                     'entity' => $guide,
                     'priority' => 'normal',
                 ]);
             }
+
+            \Log::info('Guide published notifications sent', [
+                'guide_id' => $guide->id,
+                'recipients_count' => $allUsers->count()
+            ]);
         } catch (\Exception $e) {
             \Log::error('Failed to send guide published notification: ' . $e->getMessage());
         }

@@ -44,8 +44,11 @@ class NotificationService
             ];
         }
 
-        // Rendre le template
-        $rendered = $template->render($data);
+        // ✅ Déterminer la langue de l'utilisateur (défaut: 'en')
+        $language = $user->language ?? 'en';
+
+        // ✅ Rendre le template dans la langue de l'utilisateur
+        $rendered = $template->render($data, $language);
 
         // Extraire les informations d'entité depuis les options ou data
         $entityInfo = $this->extractEntityInfo($data, $options);
@@ -118,6 +121,9 @@ class NotificationService
             } elseif (isset($data['poi_id'])) {
                 $entityInfo['entity_type'] = 'App\Models\Poi';
                 $entityInfo['entity_id'] = $data['poi_id'];
+            } elseif (isset($data['guide_id'])) {
+                $entityInfo['entity_type'] = 'App\Models\Guide';
+                $entityInfo['entity_id'] = $data['guide_id'];
             }
         }
 

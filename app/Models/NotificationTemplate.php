@@ -15,9 +15,13 @@ class NotificationTemplate extends Model
         'name',
         'description',
         'title_template',
+        'title_template_ar',
         'message_template',
+        'message_template_ar',
         'email_template',
+        'email_template_ar',
         'sms_template',
+        'sms_template_ar',
         'variables',
         'icon',
         'color',
@@ -42,11 +46,16 @@ class NotificationTemplate extends Model
     }
 
     // Methods
-    public function render(array $data): array
+    public function render(array $data, string $language = 'en'): array
     {
-        $title = $this->title_template;
-        $message = $this->message_template;
+        // Choisir le bon template selon la langue
+        $titleField = $language === 'ar' ? 'title_template_ar' : 'title_template';
+        $messageField = $language === 'ar' ? 'message_template_ar' : 'message_template';
 
+        $title = $this->{$titleField} ?? $this->title_template;
+        $message = $this->{$messageField} ?? $this->message_template;
+
+        // Remplacer les placeholders
         foreach ($data as $key => $value) {
             $placeholder = "{{{$key}}}";
             $title = str_replace($placeholder, $value, $title);
@@ -62,13 +71,14 @@ class NotificationTemplate extends Model
         ];
     }
 
-    public function renderEmail(array $data): string
+    public function renderEmail(array $data, string $language = 'en'): string
     {
-        if (!$this->email_template) {
+        $templateField = $language === 'ar' ? 'email_template_ar' : 'email_template';
+        $html = $this->{$templateField} ?? $this->email_template;
+
+        if (!$html) {
             return '';
         }
-
-        $html = $this->email_template;
 
         foreach ($data as $key => $value) {
             $placeholder = "{{{$key}}}";
@@ -78,13 +88,14 @@ class NotificationTemplate extends Model
         return $html;
     }
 
-    public function renderSms(array $data): string
+    public function renderSms(array $data, string $language = 'en'): string
     {
-        if (!$this->sms_template) {
+        $templateField = $language === 'ar' ? 'sms_template_ar' : 'sms_template';
+        $sms = $this->{$templateField} ?? $this->sms_template;
+
+        if (!$sms) {
             return '';
         }
-
-        $sms = $this->sms_template;
 
         foreach ($data as $key => $value) {
             $placeholder = "{{{$key}}}";
