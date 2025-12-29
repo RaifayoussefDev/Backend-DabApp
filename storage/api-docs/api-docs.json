@@ -961,6 +961,114 @@
                 ]
             }
         },
+        "/api/admin/notifications/mass-send": {
+            "post": {
+                "tags": [
+                    "Admin Notifications"
+                ],
+                "summary": "Send mass notifications to filtered users",
+                "operationId": "5b3be653f565cbdda97bacfcb2584c61",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "content"
+                                ],
+                                "properties": {
+                                    "filters": {
+                                        "properties": {
+                                            "city_id": {
+                                                "type": "integer"
+                                            },
+                                            "category_id": {
+                                                "type": "integer"
+                                            },
+                                            "date_from": {
+                                                "type": "string",
+                                                "format": "date"
+                                            },
+                                            "date_to": {
+                                                "type": "string",
+                                                "format": "date"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "content": {
+                                        "required": [
+                                            "title_en",
+                                            "body_en"
+                                        ],
+                                        "properties": {
+                                            "title_en": {
+                                                "type": "string"
+                                            },
+                                            "title_ar": {
+                                                "type": "string"
+                                            },
+                                            "body_en": {
+                                                "type": "string"
+                                            },
+                                            "body_ar": {
+                                                "type": "string"
+                                            },
+                                            "type": {
+                                                "type": "string",
+                                                "default": "info",
+                                                "enum": [
+                                                    "promo",
+                                                    "news",
+                                                    "info"
+                                                ]
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "channels": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "enum": [
+                                                "push",
+                                                "email"
+                                            ]
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Notification job dispatched",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "filters": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/login": {
             "post": {
                 "tags": [
@@ -34827,6 +34935,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Admin Notifications",
+            "description": "API Endpoints for Admin Mass Notifications"
+        },
         {
             "name": "Bike Part Brands",
             "description": "API Endpoints for managing bike part brands"
