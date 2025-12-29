@@ -19,6 +19,8 @@ class NotificationPreference extends Model
         'listing_rejected',
         'listing_expired',
         'listing_sold',
+        'listing_updated',
+        
         // Auctions
         'bid_placed',
         'bid_accepted',
@@ -80,6 +82,8 @@ class NotificationPreference extends Model
         'listing_rejected' => 'boolean',
         'listing_expired' => 'boolean',
         'listing_sold' => 'boolean',
+        'listing_updated' => 'boolean',
+
         'bid_placed' => 'boolean',
         'bid_accepted' => 'boolean',
         'bid_rejected' => 'boolean',
