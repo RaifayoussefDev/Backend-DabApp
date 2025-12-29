@@ -533,6 +533,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/debug-wishlist/{id}', [ListingController::class, 'getDebugInfo']);
     Route::get('/listings/{id}', [ListingController::class, 'getById']);
     Route::get('pricing', [ListingController::class, 'getPriceByModelId']);
+    Route::put('/listings/edit/{id}', [ListingController::class, 'editListing']);
+    Route::get('/listings/{id}/edit-status', [ListingController::class, 'checkEditStatus']);
 
     // ============================================
     // LISTING WITH AUCTION
@@ -959,7 +961,7 @@ Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
 });
 
 Route::middleware('auth:api')->group(function () {
-   // Notification Tokens (FCM)
+    // Notification Tokens (FCM)
     Route::prefix('notification-tokens')->group(function () {
         Route::get('/', [NotificationTokenController::class, 'index']);
         Route::post('/', [NotificationTokenController::class, 'store']);

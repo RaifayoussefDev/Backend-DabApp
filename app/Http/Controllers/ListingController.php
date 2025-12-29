@@ -532,7 +532,7 @@ class ListingController extends Controller
                     // Apply discount to both original and AED amounts
                     $discount = $promoResult['discount'];
                     $originalAmount = max($originalAmount - $discount, 0);
-                    
+
                     // Recalculate aedAmount based on the new originalAmount
                     if ($countryId && $countryId != 2 && $exchangeRate > 0) {
                         $aedAmount = round($originalAmount / $exchangeRate, 2);
@@ -932,7 +932,7 @@ class ListingController extends Controller
                     // Apply discount to both original and AED amounts
                     $discount = $promoResult['discount'];
                     $originalAmount = max($originalAmount - $discount, 0);
-                    
+
                     // Recalculate aedAmount based on the new originalAmount
                     if ($countryId && $countryId != 2 && $exchangeRate > 0) {
                         $aedAmount = round($originalAmount / $exchangeRate, 2);
@@ -1070,37 +1070,44 @@ class ListingController extends Controller
 
     /**
      * ===========================================================================================
-     * EDIT LISTING - UPDATE WITHOUT PAYMENT
+     * EDIT LISTING - UPDATE WITHOUT PAYMENT (ONE TIME ONLY)
      * ===========================================================================================
      *
      * PURPOSE: Edit an existing listing's basic information and category-specific details
-     * 
+     *
      * BUSINESS RULES:
      * - Only PUBLISHED listings can be edited (status = 'published')
-     * - Draft and pending listings should use the complete endpoint
+     * - Each listing can be edited ONLY ONCE after publication
      * - No payment is required for editing
      * - Seller can only edit their own listings
      * - All changes are saved immediately
-     * 
+     * - Edit counter is incremented after successful update
+     *
+     * EDIT LIMIT SYSTEM:
+     * - edit_count = 0 → Can edit (first time)
+     * - edit_count = 1 → Cannot edit anymore (limit reached)
+     * - last_edited_at → Timestamp of last edit
+     *
      * WHAT CAN BE EDITED:
      * ✅ Basic info: title, description, price, location, seller info
      * ✅ Category-specific data: motorcycle/spare part/license plate details
      * ✅ Images: add new images or replace existing ones
      * ✅ Auction settings: enable/disable auction, change minimum bid
      * ✅ Contact preferences: allow_submission, contacting_channel
-     * 
+     *
      * WHAT CANNOT BE CHANGED:
      * ❌ Listing category (motorcycle → spare part)
      * ❌ Payment/billing information
      * ❌ Listing ownership (seller_id)
      * ❌ Publication status (use separate publish/unpublish endpoints)
-     * 
+     * ❌ Edit count cannot be reset (business rule)
+     *
      * ===========================================================================================
      *
      * @OA\Put(
      *     path="/api/listings/edit/{id}",
-     *     summary="Edit a published listing (no payment required)",
-     *     description="Update listing details for published listings only. Draft/pending listings should use complete endpoint.",
+     *     summary="Edit a published listing once (no payment required)",
+     *     description="Update listing details for published listings. Each listing can only be edited ONCE after publication.",
      *     tags={"Listings"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
@@ -1200,8 +1207,10 @@ class ListingController extends Controller
      *         description="Listing updated successfully",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Listing updated successfully"),
+     *             @OA\Property(property="message", type="string", example="Listing updated successfully. You have used your one-time edit."),
      *             @OA\Property(property="listing_id", type="integer", example=520),
+     *             @OA\Property(property="edit_count", type="integer", example=1, description="Number of edits made (max 1)"),
+     *             @OA\Property(property="can_edit_again", type="boolean", example=false),
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
@@ -1219,9 +1228,19 @@ class ListingController extends Controller
      *         response=403,
      *         description="Listing cannot be edited",
      *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="Only published listings can be edited"),
-     *             @OA\Property(property="current_status", type="string", example="draft"),
-     *             @OA\Property(property="suggestion", type="string", example="Use the complete endpoint to finish draft listings")
+     *             oneOf={
+     *                 @OA\Schema(
+     *                     description="Not published",
+     *                     @OA\Property(property="error", type="string", example="Only published listings can be edited"),
+     *                     @OA\Property(property="current_status", type="string", example="draft")
+     *                 ),
+     *                 @OA\Schema(
+     *                     description="Edit limit reached",
+     *                     @OA\Property(property="error", type="string", example="Edit limit reached. This listing has already been edited once."),
+     *                     @OA\Property(property="edit_count", type="integer", example=1),
+     *                     @OA\Property(property="last_edited_at", type="string", example="2024-01-15 10:30:00")
+     *                 )
+     *             }
      *         )
      *     ),
      *     @OA\Response(response=401, description="Unauthorized"),
@@ -1230,143 +1249,75 @@ class ListingController extends Controller
      * )
      *
      * ═══════════════════════════════════════════════════════════════════════════════════════
-     * REAL POSTMAN EXAMPLES - EDIT LISTING
+     * REAL POSTMAN EXAMPLES - EDIT LISTING (ONE TIME ONLY)
      * ═══════════════════════════════════════════════════════════════════════════════════════
      *
-     * EXAMPLE 1 - Edit Motorcycle Listing (Basic Info Only):
+     * EXAMPLE 1 - First Edit (SUCCESS - edit_count = 0):
      * PUT /api/listings/edit/520
      * {
      *   "basic_info": {
      *     "title": "Honda CBR 1000RR - Limited Edition",
-     *     "description": "Excellent condition, full service history, never crashed",
-     *     "price": 45000,
-     *     "city_id": 3,
-     *     "allow_submission": true,
-     *     "contacting_channel": "whatsapp"
+     *     "price": 45000
      *   }
      * }
      *
-     * Response:
+     * Response (200 OK):
      * {
      *   "success": true,
-     *   "message": "Listing updated successfully",
+     *   "message": "Listing updated successfully. You have used your one-time edit.",
      *   "listing_id": 520,
-     *   "updated_fields": ["title", "description", "price", "city_id", "allow_submission", "contacting_channel"],
-     *   "data": { ... }
+     *   "edit_count": 1,
+     *   "can_edit_again": false,
+     *   "last_edited_at": "2024-12-29 14:30:00",
+     *   "updated_fields": ["title", "price"],
+     *   "data": {
+     *     "id": 520,
+     *     "title": "Honda CBR 1000RR - Limited Edition",
+     *     "status": "published",
+     *     "edit_count": 1,
+     *     ...
+     *   }
      * }
      *
      * ───────────────────────────────────────────────────────────────────────────────────────
      *
-     * EXAMPLE 2 - Edit Motorcycle with Category-Specific Details:
+     * EXAMPLE 2 - Second Edit Attempt (ERROR - edit_count = 1):
      * PUT /api/listings/edit/520
      * {
      *   "basic_info": {
      *     "price": 42000
-     *   },
-     *   "motorcycle": {
-     *     "mileage": 18000,
-     *     "body_condition": "Used",
-     *     "insurance": false
      *   }
      * }
      *
-     * Response: (success with updated motorcycle fields)
-     *
-     * ───────────────────────────────────────────────────────────────────────────────────────
-     *
-     * EXAMPLE 3 - Enable Auction on Existing Listing:
-     * PUT /api/listings/edit/520
+     * Response (403 Forbidden):
      * {
-     *   "basic_info": {
-     *     "price": null
-     *   },
-     *   "auction_settings": {
-     *     "auction_enabled": true,
-     *     "minimum_bid": 35000
-     *   }
+     *   "error": "Edit limit reached. This listing has already been edited once.",
+     *   "edit_count": 1,
+     *   "max_edits_allowed": 1,
+     *   "last_edited_at": "2024-12-29 14:30:00",
+     *   "listing_id": 520,
+     *   "suggestion": "Contact support if you need to make additional changes to your listing."
      * }
      *
-     * Response: (auction now enabled)
-     *
      * ───────────────────────────────────────────────────────────────────────────────────────
      *
-     * EXAMPLE 4 - Update Images:
-     * PUT /api/listings/edit/520
+     * EXAMPLE 3 - Check Edit Status Before Editing:
+     * GET /api/listings/520
+     *
+     * Response:
      * {
-     *   "images": [
-     *     "https://be.dabapp.co/storage/listings/new-image1.jpg",
-     *     "https://be.dabapp.co/storage/listings/new-image2.jpg",
-     *     "https://be.dabapp.co/storage/listings/new-image3.jpg"
-     *   ]
+     *   "id": 520,
+     *   "title": "Honda CBR 1000RR",
+     *   "status": "published",
+     *   "edit_count": 0,
+     *   "can_edit": true,
+     *   "last_edited_at": null,
+     *   ...
      * }
      *
-     * Response: (images replaced with new URLs)
-     *
      * ───────────────────────────────────────────────────────────────────────────────────────
      *
-     * EXAMPLE 5 - Edit Spare Part Compatible Motorcycles:
-     * PUT /api/listings/edit/522
-     * {
-     *   "spare_part": {
-     *     "condition": "used",
-     *     "compatible_motorcycles": [
-     *       {
-     *         "brand_id": 7,
-     *         "model_id": 5713,
-     *         "year_id": 10672
-     *       },
-     *       {
-     *         "brand_id": 8,
-     *         "model_id": 7815,
-     *         "year_id": 18675
-     *       },
-     *       {
-     *         "brand_id": 9,
-     *         "model_id": 8920,
-     *         "year_id": 19680
-     *       }
-     *     ]
-     *   }
-     * }
-     *
-     * Response: (spare part details and compatible motorcycles updated)
-     *
-     * ───────────────────────────────────────────────────────────────────────────────────────
-     *
-     * EXAMPLE 6 - Edit License Plate Fields:
-     * PUT /api/listings/edit/524
-     * {
-     *   "basic_info": {
-     *     "price": 75000,
-     *     "description": "Premium triple number plate - rare find!"
-     *   },
-     *   "license_plate": {
-     *     "fields": [
-     *       {
-     *         "field_id": 40,
-     *         "value": "٣٣٣"
-     *       },
-     *       {
-     *         "field_id": 43,
-     *         "value": "AAA"
-     *       },
-     *       {
-     *         "field_id": 41,
-     *         "value": "ججج"
-     *       },
-     *       {
-     *         "field_id": 42,
-     *         "value": "333"
-     *       }
-     *     ]
-     *   }
-     * }
-     *
-     * Response: (plate fields updated and new plate image generated)
-     *
-     * ───────────────────────────────────────────────────────────────────────────────────────
-     *
-     * EXAMPLE 7 - Error: Trying to Edit Draft Listing:
+     * EXAMPLE 4 - Edit Draft Listing (ERROR - not published):
      * PUT /api/listings/edit/530
      * {
      *   "basic_info": {
@@ -1374,7 +1325,7 @@ class ListingController extends Controller
      *   }
      * }
      *
-     * Response (403 Error):
+     * Response (403 Forbidden):
      * {
      *   "error": "Only published listings can be edited",
      *   "current_status": "draft",
@@ -1384,57 +1335,36 @@ class ListingController extends Controller
      *
      * ───────────────────────────────────────────────────────────────────────────────────────
      *
-     * EXAMPLE 8 - Comprehensive Update (All Sections):
-     * PUT /api/listings/edit/520
+     * EXAMPLE 5 - Comprehensive First Edit:
+     * PUT /api/listings/edit/521
      * {
      *   "basic_info": {
-     *     "title": "Yamaha R1 2020 - Full Carbon Edition",
-     *     "description": "Track-ready superbike with carbon fiber bodywork, Akrapovic exhaust, and racing suspension. Meticulously maintained with full service records.",
-     *     "price": 65000,
-     *     "city_id": 1,
-     *     "seller_type": "owner",
-     *     "contacting_channel": "phone",
-     *     "allow_submission": false
-     *   },
-     *   "auction_settings": {
-     *     "auction_enabled": true,
-     *     "minimum_bid": 60000
+     *     "title": "Yamaha R1 2020 - Track Ready",
+     *     "description": "Fully modified for track days. New tires, racing suspension.",
+     *     "price": 58000,
+     *     "city_id": 2
      *   },
      *   "motorcycle": {
-     *     "mileage": 8500,
-     *     "body_condition": "As New",
+     *     "mileage": 12000,
      *     "modified": true,
-     *     "insurance": true,
-     *     "general_condition": "Used",
-     *     "transmission": "Manual"
+     *     "body_condition": "Used"
      *   },
      *   "images": [
-     *     "https://be.dabapp.co/storage/listings/carbon-front.jpg",
-     *     "https://be.dabapp.co/storage/listings/carbon-side.jpg",
-     *     "https://be.dabapp.co/storage/listings/exhaust.jpg",
-     *     "https://be.dabapp.co/storage/listings/dashboard.jpg",
-     *     "https://be.dabapp.co/storage/listings/engine.jpg"
+     *     "https://be.dabapp.co/storage/listings/track1.jpg",
+     *     "https://be.dabapp.co/storage/listings/track2.jpg"
      *   ]
      * }
      *
-     * Response:
+     * Response (200 OK):
      * {
      *   "success": true,
-     *   "message": "Listing updated successfully",
-     *   "listing_id": 520,
-     *   "updated_fields": [
-     *     "title", "description", "price", "city_id", "seller_type",
-     *     "contacting_channel", "allow_submission", "auction_enabled",
-     *     "minimum_bid", "mileage", "body_condition", "modified",
-     *     "insurance", "general_condition", "transmission", "images"
-     *   ],
-     *   "data": {
-     *     "id": 520,
-     *     "title": "Yamaha R1 2020 - Full Carbon Edition",
-     *     "status": "published",
-     *     "images": [...],
-     *     "motorcycle": {...}
-     *   }
+     *   "message": "Listing updated successfully. You have used your one-time edit.",
+     *   "listing_id": 521,
+     *   "edit_count": 1,
+     *   "can_edit_again": false,
+     *   "last_edited_at": "2024-12-29 15:45:00",
+     *   "updated_fields": ["title", "description", "price", "city_id", "mileage", "modified", "body_condition", "images"],
+     *   "data": { ... }
      * }
      */
     public function editListing(Request $request, $id)
@@ -1459,15 +1389,34 @@ class ListingController extends Controller
                 ], 404);
             }
 
-            // ✅ VÉRIFICATION CRITIQUE: Seuls les listings PUBLISHED peuvent être édités
+            // ✅ VÉRIFICATION 1: Seuls les listings PUBLISHED peuvent être édités
             if ($listing->status !== 'published') {
                 return response()->json([
                     'error' => 'Only published listings can be edited',
                     'current_status' => $listing->status,
                     'listing_id' => $listing->id,
-                    'suggestion' => $listing->status === 'draft' 
+                    'suggestion' => $listing->status === 'draft'
                         ? "Use PUT /api/listings/complete/{$listing->id} to finish draft listings"
                         : "Contact support if you need to edit a {$listing->status} listing"
+                ], 403);
+            }
+
+            // 🔥 VÉRIFICATION 2: Limite d'édition - UNE SEULE FOIS
+            if ($listing->edit_count >= 1) {
+                \Log::warning("Edit limit reached for listing", [
+                    'listing_id' => $listing->id,
+                    'seller_id' => $sellerId,
+                    'edit_count' => $listing->edit_count,
+                    'last_edited_at' => $listing->last_edited_at
+                ]);
+
+                return response()->json([
+                    'error' => 'Edit limit reached. This listing has already been edited once.',
+                    'edit_count' => $listing->edit_count,
+                    'max_edits_allowed' => 1,
+                    'last_edited_at' => $listing->last_edited_at ? $listing->last_edited_at->format('Y-m-d H:i:s') : null,
+                    'listing_id' => $listing->id,
+                    'suggestion' => 'Contact support if you need to make additional changes to your listing.'
                 ], 403);
             }
 
@@ -1547,7 +1496,7 @@ class ListingController extends Controller
             // ✅ UPDATE BASIC INFO
             if ($request->has('basic_info')) {
                 $basicInfo = $request->basic_info;
-                
+
                 // Nettoyage du prix
                 if (isset($basicInfo['price']) && $basicInfo['price'] !== null && $basicInfo['price'] !== '') {
                     $cleanPrice = str_replace([' ', ','], '', $basicInfo['price']);
@@ -1555,8 +1504,14 @@ class ListingController extends Controller
                 }
 
                 $allowedBasicFields = [
-                    'title', 'description', 'price', 'country_id', 'city_id',
-                    'seller_type', 'contacting_channel', 'allow_submission'
+                    'title',
+                    'description',
+                    'price',
+                    'country_id',
+                    'city_id',
+                    'seller_type',
+                    'contacting_channel',
+                    'allow_submission'
                 ];
 
                 foreach ($allowedBasicFields as $field) {
@@ -1570,7 +1525,7 @@ class ListingController extends Controller
             // ✅ UPDATE AUCTION SETTINGS
             if ($request->has('auction_settings')) {
                 $auctionSettings = $request->auction_settings;
-                
+
                 if (isset($auctionSettings['auction_enabled'])) {
                     $listing->auction_enabled = $auctionSettings['auction_enabled'];
                     $updatedFields[] = 'auction_enabled';
@@ -1582,7 +1537,17 @@ class ListingController extends Controller
                 }
             }
 
+            // 🔥 INCRÉMENTER LE COMPTEUR D'ÉDITION
+            $listing->edit_count = $listing->edit_count + 1;
+            $listing->last_edited_at = now();
             $listing->save();
+
+            \Log::info("Listing edited successfully", [
+                'listing_id' => $listing->id,
+                'seller_id' => $sellerId,
+                'edit_count' => $listing->edit_count,
+                'updated_fields' => $updatedFields
+            ]);
 
             // ✅ UPDATE IMAGES
             if ($request->has('images')) {
@@ -1607,7 +1572,7 @@ class ListingController extends Controller
 
                 $listing->motorcycle()->updateOrCreate(
                     ['listing_id' => $listing->id],
-                    array_filter($motorcycleData, function($value) {
+                    array_filter($motorcycleData, function ($value) {
                         return $value !== null;
                     })
                 );
@@ -1616,7 +1581,7 @@ class ListingController extends Controller
             }
 
             if ($request->has('spare_part') && $listing->category_id == 2) {
-                $sparePartData = array_filter($request->spare_part, function($value, $key) {
+                $sparePartData = array_filter($request->spare_part, function ($value, $key) {
                     return $key !== 'compatible_motorcycles' && $value !== null;
                 }, ARRAY_FILTER_USE_BOTH);
 
@@ -1633,7 +1598,7 @@ class ListingController extends Controller
                     $sparePart = $listing->sparePart;
                     if ($sparePart) {
                         $sparePart->motorcycles()->delete();
-                        
+
                         foreach ($request->spare_part['compatible_motorcycles'] as $moto) {
                             $sparePart->motorcycles()->create([
                                 'brand_id' => $moto['brand_id'],
@@ -1709,12 +1674,14 @@ class ListingController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Listing updated successfully',
+                'message' => 'Listing updated successfully. You have used your one-time edit.',
                 'listing_id' => $listing->id,
+                'edit_count' => $listing->edit_count,
+                'can_edit_again' => false,
+                'last_edited_at' => $listing->last_edited_at->format('Y-m-d H:i:s'),
                 'updated_fields' => array_unique($updatedFields),
                 'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart.motorcycles', 'licensePlate.fieldValues'])
             ], 200);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             return response()->json([
@@ -1728,13 +1695,73 @@ class ListingController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'error' => 'Failed to update listing',
                 'details' => $e->getMessage()
             ], 500);
         }
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/listings/{id}/edit-status",
+     *     summary="Check if a listing can be edited",
+     *     description="Returns edit status and remaining edit count for a listing",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=520)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Edit status retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="listing_id", type="integer", example=520),
+     *             @OA\Property(property="status", type="string", example="published"),
+     *             @OA\Property(property="can_edit", type="boolean", example=true),
+     *             @OA\Property(property="edit_count", type="integer", example=0),
+     *             @OA\Property(property="max_edits_allowed", type="integer", example=1),
+     *             @OA\Property(property="edits_remaining", type="integer", example=1),
+     *             @OA\Property(property="last_edited_at", type="string", example=null)
+     *         )
+     *     )
+     * )
+     */
+    public function checkEditStatus($id)
+    {
+        $sellerId = Auth::id();
+        if (!$sellerId) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $listing = Listing::where('id', $id)
+            ->where('seller_id', $sellerId)
+            ->first(['id', 'status', 'edit_count', 'last_edited_at']);
+
+        if (!$listing) {
+            return response()->json(['error' => 'Listing not found or access denied'], 404);
+        }
+
+        $maxEdits = 1;
+        $canEdit = $listing->status === 'published' && $listing->edit_count < $maxEdits;
+
+        return response()->json([
+            'listing_id' => $listing->id,
+            'status' => $listing->status,
+            'can_edit' => $canEdit,
+            'edit_count' => $listing->edit_count,
+            'max_edits_allowed' => $maxEdits,
+            'edits_remaining' => max(0, $maxEdits - $listing->edit_count),
+            'last_edited_at' => $listing->last_edited_at ? $listing->last_edited_at->format('Y-m-d H:i:s') : null,
+            'reason' => !$canEdit ? ($listing->status !== 'published' ? 'Listing is not published' : 'Edit limit reached') : null
+        ], 200);
+    }
+
+
     /**
      * @OA\Get(
      *     path="/api/listings/country/{country_id}",
@@ -2415,7 +2442,6 @@ class ListingController extends Controller
         return response()->json($response);
     }
 
-
     /**
      * @OA\Get(
      *     path="/api/my-ads",
@@ -2477,6 +2503,10 @@ class ListingController extends Controller
      *                     @OA\Property(property="status", type="string", example="published"),
      *                     @OA\Property(property="auction_enabled", type="boolean", example=false),
      *                     @OA\Property(property="views_count", type="integer", example=150),
+     *                     @OA\Property(property="edit_count", type="integer", example=0, description="Number of times listing has been edited (0 or 1)"),
+     *                     @OA\Property(property="can_edit", type="boolean", example=true, description="Whether listing can be edited (true if edit_count=0 and status=published)"),
+     *                     @OA\Property(property="has_been_edited", type="boolean", example=false, description="Whether listing has been edited at least once"),
+     *                     @OA\Property(property="last_edited_at", type="string", format="date-time", nullable=true, example=null, description="Timestamp of last edit"),
      *                     @OA\Property(property="created_at", type="string", format="date-time"),
      *                     @OA\Property(property="city", type="string", example="Casablanca"),
      *                     @OA\Property(property="country", type="string", example="Morocco"),
@@ -2516,7 +2546,7 @@ class ListingController extends Controller
         $perPage = min($perPage, 100);
         $usePagination = !is_null($page);
 
-        // ✅ CORRECTION : Build the base query - ONLY user's listings with seller_id
+        // ✅ Build the base query - ONLY user's listings with seller_id
         $query = Listing::where('seller_id', $user->id)
             ->orderBy('created_at', 'desc');
 
@@ -2629,6 +2659,14 @@ class ListingController extends Controller
                 'seller_type' => $listing->seller_type,
                 'status' => $listing->status,
                 'views_count' => $listing->views_count ?? 0,
+
+                // ✅ NOUVEAUX CHAMPS D'ÉDITION (AJOUTÉS SANS CASSER LA STRUCTURE)
+                'edit_count' => $listing->edit_count ?? 0,
+                'can_edit' => $listing->canBeEdited(),
+                'has_been_edited' => $listing->edit_count > 0,
+                'last_edited_at' => $listing->last_edited_at ? $listing->last_edited_at->format('Y-m-d H:i:s') : null,
+                // ✅ FIN DES NOUVEAUX CHAMPS
+
                 'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
                 'updated_at' => $listing->updated_at->format('Y-m-d H:i:s'),
                 'city' => $listing->city?->name,
@@ -4480,5 +4518,4 @@ class ListingController extends Controller
             'listings' => $formattedListings
         ]);
     }
-
 }

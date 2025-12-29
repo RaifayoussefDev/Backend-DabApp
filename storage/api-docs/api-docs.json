@@ -16206,8 +16206,8 @@
                 "tags": [
                     "Listings"
                 ],
-                "summary": "Edit a published listing (no payment required)",
-                "description": "Update listing details for published listings only. Draft/pending listings should use complete endpoint.",
+                "summary": "Edit a published listing once (no payment required)",
+                "description": "Update listing details for published listings. Each listing can only be edited ONCE after publication.",
                 "operationId": "2365045b7684d3678ec0556377f3a389",
                 "parameters": [
                     {
@@ -16472,11 +16472,20 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Listing updated successfully"
+                                            "example": "Listing updated successfully. You have used your one-time edit."
                                         },
                                         "listing_id": {
                                             "type": "integer",
                                             "example": 520
+                                        },
+                                        "edit_count": {
+                                            "description": "Number of edits made (max 1)",
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "can_edit_again": {
+                                            "type": "boolean",
+                                            "example": false
                                         },
                                         "data": {
                                             "description": "Updated listing data with relationships",
@@ -16501,21 +16510,40 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Only published listings can be edited"
+                                    "oneOf": [
+                                        {
+                                            "description": "Not published",
+                                            "properties": {
+                                                "error": {
+                                                    "type": "string",
+                                                    "example": "Only published listings can be edited"
+                                                },
+                                                "current_status": {
+                                                    "type": "string",
+                                                    "example": "draft"
+                                                }
+                                            },
+                                            "type": "object"
                                         },
-                                        "current_status": {
-                                            "type": "string",
-                                            "example": "draft"
-                                        },
-                                        "suggestion": {
-                                            "type": "string",
-                                            "example": "Use the complete endpoint to finish draft listings"
+                                        {
+                                            "description": "Edit limit reached",
+                                            "properties": {
+                                                "error": {
+                                                    "type": "string",
+                                                    "example": "Edit limit reached. This listing has already been edited once."
+                                                },
+                                                "edit_count": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_edited_at": {
+                                                    "type": "string",
+                                                    "example": "2024-01-15 10:30:00"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
-                                    },
-                                    "type": "object"
+                                    ]
                                 }
                             }
                         }
@@ -16528,6 +16556,74 @@
                     },
                     "422": {
                         "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/listings/{id}/edit-status": {
+            "get": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Check if a listing can be edited",
+                "description": "Returns edit status and remaining edit count for a listing",
+                "operationId": "baf6e5b31316a3aa04073b702ac92844",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 520
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Edit status retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "listing_id": {
+                                            "type": "integer",
+                                            "example": 520
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "published"
+                                        },
+                                        "can_edit": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "edit_count": {
+                                            "type": "integer",
+                                            "example": 0
+                                        },
+                                        "max_edits_allowed": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "edits_remaining": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "last_edited_at": {
+                                            "type": "string",
+                                            "example": null
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -17160,6 +17256,28 @@
                                                     "views_count": {
                                                         "type": "integer",
                                                         "example": 150
+                                                    },
+                                                    "edit_count": {
+                                                        "description": "Number of times listing has been edited (0 or 1)",
+                                                        "type": "integer",
+                                                        "example": 0
+                                                    },
+                                                    "can_edit": {
+                                                        "description": "Whether listing can be edited (true if edit_count=0 and status=published)",
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "has_been_edited": {
+                                                        "description": "Whether listing has been edited at least once",
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "last_edited_at": {
+                                                        "description": "Timestamp of last edit",
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": null,
+                                                        "nullable": true
                                                     },
                                                     "created_at": {
                                                         "type": "string",
