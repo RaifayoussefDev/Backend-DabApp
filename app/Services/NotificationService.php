@@ -764,6 +764,9 @@ class NotificationService
         return $labels[$status] ?? $status;
     }
 
+    /**
+     * Notification: Listing updated
+     */
     public function notifyListingUpdated(User $user, $listing): array
     {
         return $this->sendToUser($user, 'listing_updated', [
@@ -773,6 +776,56 @@ class NotificationService
             'updated_at' => $listing->updated_at->toIso8601String(),
         ], [
             'entity' => $listing,
+            'priority' => 'normal',
+        ]);
+    }
+
+    /**
+     * Notification: New Listing in City (Mass Notification)
+     */
+    public function notifyUsersInCityNewListing($listing): void
+    {
+        if (!$listing->city_id) {
+            return;
+        }
+
+        // Find users active in the same city (via their listings), excluding the seller
+        User::whereHas('listings', function($q) use ($listing) {
+                $q->where('city_id', $listing->city_id);
+            })
+            ->where('id', '!=', $listing->seller_id)
+            ->where('is_active', true)
+            ->chunk(100, function ($users) use ($listing) {
+                foreach ($users as $user) {
+                    try {
+                        $this->sendToUser($user, 'new_listing_in_city', [
+                            'listing_id' => $listing->id,
+                            'listing_title' => $listing->title,
+                            'city_name' => $listing->city->name ?? 'Your City',
+                            'city_name_ar' => $listing->city->name_ar ?? $listing->city->name ?? 'Your City',
+                            'price' => $listing->price,
+                        ], [
+                            'entity' => $listing,
+                            'priority' => 'normal',
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error("Failed to notify user {$user->id} for listing {$listing->id}: " . $e->getMessage());
+                    }
+                }
+            });
+    }
+
+    /**
+     * Notification: Guide Updated
+     */
+    public function notifyGuideUpdated(User $user, $guide): array
+    {
+        return $this->sendToUser($user, 'guide_updated', [
+            'guide_id' => $guide->id,
+            'guide_title' => $guide->title,
+            'updated_at' => now()->toIso8601String(),
+        ], [
+            'entity' => $guide,
             'priority' => 'normal',
         ]);
     }

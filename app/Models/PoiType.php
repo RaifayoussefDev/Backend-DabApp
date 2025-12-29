@@ -14,6 +14,7 @@ class PoiType extends Model
         'name',
         'icon',
         'color',
+        'type',
     ];
 
     /**

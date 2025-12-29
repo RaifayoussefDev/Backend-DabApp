@@ -25,6 +25,8 @@ class Event extends Model
         'category_id',
         'organizer_id',
         'event_date',
+        'start_date',
+        'end_date',
         'start_time',
         'end_time',
         'latitude',
@@ -46,6 +48,8 @@ class Event extends Model
 
     protected $casts = [
         'event_date' => 'date',
+        'start_date' => 'date',
+        'end_date' => 'date',
         'registration_deadline' => 'datetime',
         'price' => 'decimal:2',
         'is_free' => 'boolean',

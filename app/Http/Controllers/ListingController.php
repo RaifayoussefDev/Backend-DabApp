@@ -640,7 +640,15 @@ class ListingController extends Controller
             }
 
             // ✅ Step 1 & 2 : pas de paiement
-            // ✅ Step 1 & 2 : pas de paiement
+            if ($listing->status != 'draft') {
+                try {
+                    // Send notification to users in the same city
+                    $this->notificationService->notifyUsersInCityNewListing($listing);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send city-wide listing notification: ' . $e->getMessage());
+                }
+            }
+
             DB::commit();
 
             // Notify User

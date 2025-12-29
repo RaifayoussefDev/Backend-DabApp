@@ -33,6 +33,11 @@ class Kernel extends ConsoleKernel
             ->dailyAt('09:00')
             ->description('Check for expired sale validations and update status')
             ->emailOutputOnFailure('yucefr@gmail.com'); // Optionnel: email en cas d'erreur
+
+        // Send event reminders
+        $schedule->command('events:send-reminders')
+            ->hourly()
+            ->withoutOverlapping();
     }
 
     /**

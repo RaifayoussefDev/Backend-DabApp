@@ -390,6 +390,13 @@ class GuideController extends Controller
             DB::commit();
             $guide->load(['sections', 'tags', 'category']);
 
+            // Notify followers/users about update
+            try {
+               $this->notificationService->notifyGuideUpdated(Auth::user(), $guide);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send guide updated notification: ' . $e->getMessage());
+            }
+
             return response()->json([
                 'message' => 'Guide updated successfully',
                 'data' => $this->formatGuideResponse($guide)

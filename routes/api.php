@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 // ============================================
 use App\Http\Controllers\{
     AdminMenuController,
+    AdminNotificationController,
     AuthController,
     BannerController,
     BikePartBrandController,
@@ -135,8 +136,9 @@ Route::prefix('admin')->group(function () {
         Route::put('/user/update', [AuthAdminController::class, 'updateProfile']);
         Route::put('/user/two-factor-toggle', [AuthAdminController::class, 'toggleTwoFactor']);
         Route::put('/change-password', [AuthAdminController::class, 'changePassword']); // ✅ Changé de AuthController à AuthAdminController
-
-
+        
+        // Notifications
+        Route::post('/notifications/mass-send', [AdminNotificationController::class, 'sendMassNotification']);
     });
 });
 

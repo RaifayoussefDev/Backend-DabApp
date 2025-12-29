@@ -12,10 +12,13 @@ class EventActivity extends Model
     protected $fillable = [
         'event_id',
         'title',
+        'title_ar',
         'description',
+        'description_ar',
         'start_time',
         'end_time',
         'location',
+        'day_in_event',
         'order_position',
     ];
 
