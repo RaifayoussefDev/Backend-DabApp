@@ -202,8 +202,8 @@ class NotificationService
                 $results['sent']++;
                 $token->updateLastUsed();
                 $token->resetFailedAttempts();
-                $messageId = isset($result['message_id']) && is_array($result['message_id']) 
-                    ? json_encode($result['message_id']) 
+                $messageId = isset($result['message_id']) && is_array($result['message_id'])
+                    ? json_encode($result['message_id'])
                     : ($result['message_id'] ?? null);
                 $log->markAsSent($messageId);
             } else {
@@ -762,5 +762,18 @@ class NotificationService
         ];
 
         return $labels[$status] ?? $status;
+    }
+
+    public function notifyListingUpdated(User $user, $listing): array
+    {
+        return $this->sendToUser($user, 'listing_updated', [
+            'listing_id' => $listing->id,
+            'listing_title' => $listing->title,
+            'listing_price' => $listing->price,
+            'updated_at' => $listing->updated_at->toIso8601String(),
+        ], [
+            'entity' => $listing,
+            'priority' => 'normal',
+        ]);
     }
 }
