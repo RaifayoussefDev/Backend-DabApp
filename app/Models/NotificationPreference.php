@@ -133,7 +133,15 @@ class NotificationPreference extends Model
     // Methods
     public function isNotificationEnabled(string $type): bool
     {
-        return $this->{$type} ?? false;
+        // Map specific types to preference columns
+        $map = [
+            'admin_broadcast' => 'admin_custom',
+            // Add other mappings if needed
+        ];
+
+        $column = $map[$type] ?? $type;
+
+        return $this->{$column} ?? false;
     }
 
     public function isQuietHours(): bool
