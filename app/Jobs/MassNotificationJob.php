@@ -38,7 +38,7 @@ class MassNotificationJob implements ShouldQueue
      */
     public function handle(NotificationService $notificationService)
     {
-        Log::info("Starting Mass Notification Job", ['filters' => $this->filters]);
+        Log::info("MassNotificationJob: STARTED", ['filters' => $this->filters, 'content' => $this->content]);
 
         $query = User::query()->where('is_active', true);
 
@@ -47,6 +47,7 @@ class MassNotificationJob implements ShouldQueue
             $query->whereHas('listings', function($q) {
                 $q->where('city_id', $this->filters['city_id']);
             });
+            Log::info("MassNotificationJob: Filtered by city_id: " . $this->filters['city_id']);
         }
 
         // 2. Filter by Listing Category or Date
@@ -62,42 +63,43 @@ class MassNotificationJob implements ShouldQueue
                     $q->where('created_at', '<=', $this->filters['date_to']);
                 }
             });
+            Log::info("MassNotificationJob: Applied extra filters");
         }
 
         $totalUsers = $query->count();
-        Log::info("Found {$totalUsers} users for mass notification.");
+        Log::info("MassNotificationJob: Found {$totalUsers} users matching criteria.");
+
+        if ($totalUsers === 0) {
+            Log::warning("MassNotificationJob: No users found. Job ending.");
+            return;
+        }
 
         $query->chunk(100, function ($users) use ($notificationService) {
+            Log::info("MassNotificationJob: Processing chunk of " . $users->count() . " users.");
             foreach ($users as $user) {
                 try {
-                    // Prepare data for template
-                    // We assume 'admin_broadcast' template uses variables matching our content keys or specific standard keys
-                    // Our seeder used: title, title_ar, body, body_ar.
-                    
-                    // Fallback for AR if not provided
                     $data = [
                         'title' => $this->content['title_en'] ?? 'Notification',
                         'title_ar' => $this->content['title_ar'] ?? ($this->content['title_en'] ?? 'Notification'),
                         'body' => $this->content['body_en'] ?? '',
                         'body_ar' => $this->content['body_ar'] ?? ($this->content['body_en'] ?? ''),
-                        // Add other data if needed
                     ];
 
-                    // Use NotificationService to send
-                    // We add a 'channels' option to hint which channels to use (though NotificationService mostly decides based on prefs)
-                    // But we can implement a specific method in NotificationService or just rely on 'admin_broadcast' logic.
+                    Log::info("MassNotificationJob: Sending to User ID {$user->id}");
                     
-                    $notificationService->sendToUser($user, 'admin_broadcast', $data, [
+                    $result = $notificationService->sendToUser($user, 'admin_broadcast', $data, [
                         'channels' => $this->channels, 
                         'priority' => 'high'
                     ]);
 
+                    Log::info("MassNotificationJob: Result for User {$user->id}: " . json_encode($result));
+
                 } catch (\Exception $e) {
-                    Log::error("Failed to send mass notification to user {$user->id}: " . $e->getMessage());
+                    Log::error("MassNotificationJob: Failed for user {$user->id}: " . $e->getMessage());
                 }
             }
         });
 
-        Log::info("Mass Notification Job Completed.");
+        Log::info("MassNotificationJob: COMPLETED.");
     }
 }
