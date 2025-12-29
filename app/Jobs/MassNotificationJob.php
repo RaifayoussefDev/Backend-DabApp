@@ -42,11 +42,9 @@ class MassNotificationJob implements ShouldQueue
 
         $query = User::query()->where('is_active', true);
 
-        // 1. Filter by City (Users who have listings in this city)
-        if (!empty($this->filters['city_id'])) {
-            $query->whereHas('listings', function($q) {
-                $q->where('city_id', $this->filters['city_id']);
-            });
+        // 1. Filter by Country (Users who belong to this country)
+        if (!empty($this->filters['country_id'])) {
+            $query->where('country_id', $this->filters['country_id']);
         }
 
         // 2. Filter by Listing Category or Date

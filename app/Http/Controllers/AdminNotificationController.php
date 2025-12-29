@@ -27,7 +27,7 @@ class AdminNotificationController extends Controller
      *             @OA\Property(
      *                 property="filters",
      *                 type="object",
-     *                 @OA\Property(property="city_id", type="integer"),
+     *                 @OA\Property(property="country_id", type="integer"),
      *                 @OA\Property(property="category_id", type="integer"),
      *                 @OA\Property(property="date_from", type="string", format="date"),
      *                 @OA\Property(property="date_to", type="string", format="date")
@@ -68,7 +68,7 @@ class AdminNotificationController extends Controller
             'content.title_ar' => 'nullable|string|max:255',
             'content.body_ar' => 'nullable|string',
             'content.type' => 'nullable|string|in:promo,news,info',
-            'filters.city_id' => 'nullable|exists:cities,id',
+            'filters.country_id' => 'nullable|exists:countries,id',
             'filters.category_id' => 'nullable|exists:categories,id',
             'filters.date_from' => 'nullable|date',
             'filters.date_to' => 'nullable|date',
