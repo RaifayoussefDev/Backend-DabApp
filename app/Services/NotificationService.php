@@ -24,19 +24,10 @@ class NotificationService
      */
     public function sendToUser(User $user, string $type, array $data = [], array $options = []): array
     {
-        // Debug Log
-        Log::info("NotificationService: sendToUser called for User {$user->id}, Type: {$type}");
-
         // Vérifier les préférences
         $preferences = $user->notificationPreference;
 
-        if (!$preferences) {
-            Log::warning("NotificationService: No preferences found for User {$user->id}");
-            return ['success' => false, 'message' => 'No preferences found'];
-        }
-
-        if (!$preferences->isNotificationEnabled($type)) {
-            Log::info("NotificationService: Notification DISABLED for User {$user->id}, Type: {$type} (Check admin_custom map)");
+        if (!$preferences || !$preferences->isNotificationEnabled($type)) {
             return [
                 'success' => false,
                 'message' => 'Notification disabled for this type',
@@ -47,7 +38,6 @@ class NotificationService
         $template = NotificationTemplate::where('type', $type)->where('is_active', true)->first();
 
         if (!$template) {
-            Log::error("NotificationService: Template '{$type}' NOT FOUND or inactive.");
             return [
                 'success' => false,
                 'message' => 'Template not found',

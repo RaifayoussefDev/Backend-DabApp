@@ -38,7 +38,7 @@ class MassNotificationJob implements ShouldQueue
      */
     public function handle(NotificationService $notificationService)
     {
-        Log::info("MassNotificationJob: STARTED", ['filters' => $this->filters, 'content' => $this->content]);
+        Log::info("Starting Mass Notification Job", ['filters' => $this->filters]);
 
         $query = User::query()->where('is_active', true);
 
@@ -47,7 +47,6 @@ class MassNotificationJob implements ShouldQueue
             $query->whereHas('listings', function($q) {
                 $q->where('city_id', $this->filters['city_id']);
             });
-            Log::info("MassNotificationJob: Filtered by city_id: " . $this->filters['city_id']);
         }
 
         // 2. Filter by Listing Category or Date
@@ -63,19 +62,12 @@ class MassNotificationJob implements ShouldQueue
                     $q->where('created_at', '<=', $this->filters['date_to']);
                 }
             });
-            Log::info("MassNotificationJob: Applied extra filters");
         }
 
         $totalUsers = $query->count();
-        Log::info("MassNotificationJob: Found {$totalUsers} users matching criteria.");
-
-        if ($totalUsers === 0) {
-            Log::warning("MassNotificationJob: No users found. Job ending.");
-            return;
-        }
+        Log::info("Found {$totalUsers} users for mass notification.");
 
         $query->chunk(100, function ($users) use ($notificationService) {
-            Log::info("MassNotificationJob: Processing chunk of " . $users->count() . " users.");
             foreach ($users as $user) {
                 try {
                     $data = [
@@ -85,21 +77,17 @@ class MassNotificationJob implements ShouldQueue
                         'body_ar' => $this->content['body_ar'] ?? ($this->content['body_en'] ?? ''),
                     ];
 
-                    Log::info("MassNotificationJob: Sending to User ID {$user->id}");
-                    
-                    $result = $notificationService->sendToUser($user, 'admin_broadcast', $data, [
+                    $notificationService->sendToUser($user, 'admin_broadcast', $data, [
                         'channels' => $this->channels, 
                         'priority' => 'high'
                     ]);
 
-                    Log::info("MassNotificationJob: Result for User {$user->id}: " . json_encode($result));
-
                 } catch (\Exception $e) {
-                    Log::error("MassNotificationJob: Failed for user {$user->id}: " . $e->getMessage());
+                    Log::error("Failed to send mass notification to user {$user->id}: " . $e->getMessage());
                 }
             }
         });
 
-        Log::info("MassNotificationJob: COMPLETED.");
+        Log::info("Mass Notification Job Completed.");
     }
 }
