@@ -270,14 +270,17 @@ class LicensePlate extends Model
             $field = $fieldValue->formatField ?? $fieldValue->field ?? $fieldValue->plateFormatField;
 
             if ($field) {
-                $fieldName = $field->field_name;
+                // Use variable_name as key, fallback to field_name
+                $key = !empty($field->variable_name) ? $field->variable_name : $field->field_name;
                 $fieldValueData = $fieldValue->field_value;
 
-                $values[$fieldName] = $fieldValueData;
+                $values[$key] = $fieldValueData;
 
                 \Log::info("✅ Mapped field successfully", [
                     'field_id' => $field->id,
-                    'field_name' => $fieldName,
+                    'key' => $key,
+                    'field_name' => $field->field_name,
+                    'variable_name' => $field->variable_name,
                     'position' => $field->position ?? 'N/A',
                     'value' => $fieldValueData,
                     'current_values_array' => $values

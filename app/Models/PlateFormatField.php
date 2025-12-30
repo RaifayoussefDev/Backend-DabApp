@@ -12,6 +12,7 @@ class PlateFormatField extends Model
     protected $fillable = [
         'plate_format_id',
         'field_name',
+        'field_name_ar',
         'variable_name',
         'position',
         'character_type',
