@@ -73,7 +73,7 @@
 
         /* Textes - ✅ POLICES BOLD GARANTIES */
         .arabic-number {
-            font-size: 70px;
+            font-size: 55px;
             font-weight: 900;
             color: #000;
             direction: rtl;
@@ -84,7 +84,7 @@
         }
 
         .latin-number {
-            font-size: 80px;
+            font-size: 55px;
             font-weight: 900;
             color: #000;
             line-height: 1;
@@ -93,7 +93,7 @@
         }
 
         .latin-letters {
-            font-size: 70px;
+            font-size: 55px;
             font-weight: 900;
             color: #000;
             line-height: 1;
