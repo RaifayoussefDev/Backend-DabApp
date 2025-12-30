@@ -32,8 +32,6 @@ class ImportMotorcycleController extends Controller
         ]);
 
         try {
-            DB::beginTransaction();
-
             $file = $request->file('excel_file');
             $spreadsheet = IOFactory::load($file->getPathname());
             $worksheet = $spreadsheet->getActiveSheet();
@@ -44,7 +42,10 @@ class ImportMotorcycleController extends Controller
 
             $imported = 0;
             $errors = [];
+            $batchSize = 50; // Commit toutes les 50 lignes pour éviter le timeout DB
 
+            DB::beginTransaction();
+            
             foreach ($data as $index => $row) {
                 try {
                     // Vérifier si la ligne n'est pas vide (au moins Make et Model requis)
@@ -54,24 +55,34 @@ class ImportMotorcycleController extends Controller
 
                     $this->importMotorcycleRow($row);
                     $imported++;
+
+                    // Commit par lots pour libérer la DB
+                    if (($imported % $batchSize) === 0) {
+                        DB::commit();
+                        DB::beginTransaction();
+                    }
+
                 } catch (\Exception $e) {
                     $errors[] = "Ligne " . ($index + 2) . ": " . $e->getMessage();
                 }
             }
 
-            DB::commit();
+            DB::commit(); // Commit final
 
             // Utiliser la session pour passer les erreurs d'import
             if (count($errors) > 0) {
                 return redirect()->back()->with([
                     'success' => "Import terminé ! {$imported} motos importées.",
-                    'importErrors' => $errors // Changé de 'errors' à 'importErrors'
+                    'importErrors' => $errors
                 ]);
             }
 
             return redirect()->back()->with('success', "Import réussi ! {$imported} motos importées.");
         } catch (\Exception $e) {
-            DB::rollback();
+            // En cas de crash majeur hors de la boucle
+            if (DB::transactionLevel() > 0) {
+                DB::rollback();
+            }
             return redirect()->back()->with('error', 'Erreur lors de l\'import: ' . $e->getMessage());
         }
     }
