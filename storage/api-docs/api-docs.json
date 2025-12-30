@@ -979,7 +979,7 @@
                                 "properties": {
                                     "filters": {
                                         "properties": {
-                                            "city_id": {
+                                            "country_id": {
                                                 "type": "integer"
                                             },
                                             "category_id": {
@@ -24532,6 +24532,10 @@
                                     "color": {
                                         "type": "string",
                                         "example": "#FF5733"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "example": "fontawesome"
                                     }
                                 },
                                 "type": "object"
@@ -24571,6 +24575,10 @@
                                                 "color": {
                                                     "type": "string",
                                                     "example": "#FF5733"
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "fontawesome"
                                                 }
                                             },
                                             "type": "object"
@@ -24672,6 +24680,10 @@
                                     "color": {
                                         "type": "string",
                                         "example": "#FF5733"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "example": "fontawesome"
                                     }
                                 },
                                 "type": "object"

@@ -122,7 +122,8 @@ class PoiTypeController extends Controller
      *             required={"name"},
      *             @OA\Property(property="name", type="string", example="Gas Station"),
      *             @OA\Property(property="icon", type="string", example="fas fa-gas-pump"),
-     *             @OA\Property(property="color", type="string", example="#FF5733")
+     *             @OA\Property(property="color", type="string", example="#FF5733"),
+     *             @OA\Property(property="type", type="string", example="fontawesome")
      *         )
      *     ),
      *     @OA\Response(
@@ -136,7 +137,8 @@ class PoiTypeController extends Controller
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="name", type="string", example="Gas Station"),
      *                 @OA\Property(property="icon", type="string", example="fas fa-gas-pump"),
-     *                 @OA\Property(property="color", type="string", example="#FF5733")
+     *                 @OA\Property(property="color", type="string", example="#FF5733"),
+     *                 @OA\Property(property="type", type="string", example="fontawesome")
      *             )
      *         )
      *     ),
@@ -150,6 +152,7 @@ class PoiTypeController extends Controller
             'name' => 'required|string|max:255|unique:poi_types,name',
             'icon' => 'nullable|string|max:255',
             'color' => 'nullable|string|max:50',
+            'type' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -240,7 +243,8 @@ class PoiTypeController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="name", type="string", example="Gas Station"),
      *             @OA\Property(property="icon", type="string", example="fas fa-gas-pump"),
-     *             @OA\Property(property="color", type="string", example="#FF5733")
+     *             @OA\Property(property="color", type="string", example="#FF5733"),
+     *             @OA\Property(property="type", type="string", example="fontawesome")
      *         )
      *     ),
      *     @OA\Response(response=200, description="POI type updated successfully"),
@@ -264,6 +268,7 @@ class PoiTypeController extends Controller
             'name' => 'sometimes|required|string|max:255|unique:poi_types,name,' . $id,
             'icon' => 'nullable|string|max:255',
             'color' => 'nullable|string|max:50',
+            'type' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
