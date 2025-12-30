@@ -170,13 +170,14 @@
             align-items: center;
             width: 100%;
             height: 100%;
-            gap: 2px; /* Espacement minime comme demandé "pas espace" mais détaché */
+            gap: 5px; /* Espacement fixe comme demandé "ajouter un peut d'espace" */
         }
         
         .arabic-char {
-            display: inline-block;
+            display: inline-block !important; /* Force isolation */
             width: 45px; /* Largeur fixe pour alignement "toujour fix" */
             text-align: center;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -194,11 +195,8 @@
                     <div class="arabic-number">
                         @php
                             $text = $topRight ?? $top_right ?? '';
-                            $chars = mb_str_split($text);
-                            // Reverse for RTL display if needed, but flex-direction: row-reverse or just ensure logical order.
-                            // Arabic is naturally RTL. If we use a flex container, we can control exact order.
-                            // KSA plates usually read right-to-left. 
-                            // If I output: char1 char2 char3. Browser renders: char3 char2 char1 (RTL).
+                            // Use preg_split for unicode safety, ensuring we get individual characters
+                            $chars = preg_split('//u', $text, -1, PREG_SPLIT_NO_EMPTY);
                         @endphp
                         <div class="arabic-char-container">
                              @foreach($chars as $char)

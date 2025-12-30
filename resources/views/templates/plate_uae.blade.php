@@ -110,21 +110,6 @@
 
         }
         
-        /* Conteneur pour les lettres arabes détachées */
-        .arabic-char-container {
-            display: flex;
-            flex-direction: row-reverse; /* RTL for Arabic */
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            height: 100%;
-            gap: 5px;
-        }
-        
-        .arabic-char {
-            display: inline-block;
-            width: 70px; /* Wider for UAE big font */
-            text-align: center;
         }
     </style>
 </head>
@@ -149,23 +134,7 @@
             <div class="plate-numbers">
             <!-- Numéros de plaque -->
             <div class="plate-numbers">
-                <div class="plate-number">
-                    @php
-                       $pNum = $plateNumber ?? '';
-                       // Check if string contains Arabic characters
-                       $isArabic = preg_match('/\p{Arabic}/u', $pNum);
-                    @endphp
-                    
-                    @if($isArabic)
-                         <div class="arabic-char-container">
-                            @foreach(mb_str_split($pNum) as $char)
-                                <span class="arabic-char">{{ $char }}</span>
-                            @endforeach
-                        </div>
-                    @else
-                        {{ $pNum }}
-                    @endif
-                </div>
+                <div class="plate-number">{{ $plateNumber }}</div>
             </div>
             </div>
         </div>
