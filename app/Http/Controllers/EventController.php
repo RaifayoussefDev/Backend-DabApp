@@ -353,8 +353,9 @@ class EventController extends Controller
      *                     @OA\Property(property="start_time", type="string", format="time", example="09:00:00"),
      *                     @OA\Property(property="end_time", type="string", format="time", example="10:00:00"),
      *                     @OA\Property(property="location", type="string", maxLength=255, example="Main Hall A"),
-     *                     @OA\Property(property="location_ar", type="string", maxLength=255, example="القاعة الرئيسية أ")
-     *                 ),
+                    @OA\Property(property="location_ar", type="string", maxLength=255, example="القاعة الرئيسية أ"),
+                    @OA\Property(property="day_in_event", type="integer", example=1, description="Day number of the activity")
+                ),
      *                 example={
      *                     {
      *                         "title": "Opening Keynote",
@@ -362,7 +363,8 @@ class EventController extends Controller
      *                         "description": "Welcome speech by CEO",
      *                         "start_time": "09:00:00",
      *                         "end_time": "10:00:00",
-     *                         "location": "Main Hall A"
+     *                         "location": "Main Hall A",
+                               "day_in_event": 1
      *                     },
      *                     {
      *                         "title": "AI Workshop",
@@ -370,14 +372,16 @@ class EventController extends Controller
      *                         "description": "Hands-on AI development workshop",
      *                         "start_time": "10:30:00",
      *                         "end_time": "12:00:00",
-     *                         "location": "Room B2"
-     *                     },
+                        "location": "Room B2",
+                        "day_in_event": 1
+                    },
      *                     {
      *                         "title": "Networking Lunch",
      *                         "start_time": "12:00:00",
      *                         "end_time": "13:30:00",
-     *                         "location": "Cafeteria"
-     *                     }
+                        "location": "Cafeteria",
+                        "day_in_event": 1
+                    }
      *                 }
      *             ),
      *             @OA\Property(
@@ -588,6 +592,7 @@ class EventController extends Controller
             'activities.*.end_time' => 'nullable',
             'activities.*.location' => 'nullable|string|max:255',
             'activities.*.location_ar' => 'nullable|string|max:255',
+            'activities.*.day_in_event' => 'nullable|integer|min:1',
             'contacts' => 'nullable|array',
             'contacts.*.contact_type' => 'required|in:organizer,support,emergency',
             'contacts.*.name' => 'nullable|string|max:255',
@@ -653,6 +658,7 @@ class EventController extends Controller
                         'end_time' => $activityData['end_time'] ?? null,
                         'location' => $activityData['location'] ?? null,
                         'location_ar' => $activityData['location_ar'] ?? null,
+                        'day_in_event' => $activityData['day_in_event'] ?? null,
                         'order_position' => $index + 1,
                     ]);
                 }
@@ -825,6 +831,7 @@ class EventController extends Controller
             'activities.*.end_time' => 'nullable',
             'activities.*.location' => 'nullable|string|max:255',
             'activities.*.location_ar' => 'nullable|string|max:255',
+            'activities.*.day_in_event' => 'nullable|integer|min:1',
             'contacts' => 'nullable|array',
             'contacts.*.contact_type' => 'required|in:organizer,support,emergency',
             'contacts.*.name' => 'nullable|string|max:255',
@@ -886,6 +893,7 @@ class EventController extends Controller
                         'start_time' => $activityData['start_time'] ?? null,
                         'end_time' => $activityData['end_time'] ?? null,
                         'location' => $activityData['location'] ?? null,
+                        'day_in_event' => $activityData['day_in_event'] ?? null,
                         'order_position' => $index + 1,
                     ]);
                 }
