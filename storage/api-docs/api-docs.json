@@ -6057,6 +6057,11 @@
                                         "type": "boolean",
                                         "example": false
                                     },
+                                    "number_of_days": {
+                                        "description": "Total duration of the event in days",
+                                        "type": "integer",
+                                        "example": 3
+                                    },
                                     "featured_image": {
                                         "description": "Main event image URL",
                                         "type": "string",
@@ -6215,11 +6220,12 @@
                                                 "day_in_event": 1
                                             },
                                             {
-                                                "title": "Networking Lunch",
-                                                "start_time": "12:00:00",
-                                                "end_time": "13:30:00",
-                                                "location": "Cafeteria",
-                                                "day_in_event": 1
+                                                "title": "Closing Ceremony",
+                                                "title_ar": "الحفل الختامي",
+                                                "start_time": "16:00:00",
+                                                "end_time": "18:00:00",
+                                                "location": "Main Hall",
+                                                "day_in_event": 3
                                             }
                                         ]
                                     },
@@ -6352,6 +6358,7 @@
                                 "max_participants": 500,
                                 "price": 99.99,
                                 "is_free": false,
+                                "number_of_days": 3,
                                 "featured_image": "https://example.com/events/tech-conf-2024.jpg",
                                 "images": [
                                     {

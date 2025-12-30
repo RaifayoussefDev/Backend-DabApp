@@ -306,6 +306,7 @@ class EventController extends Controller
      *             @OA\Property(property="max_participants", type="integer", minimum=1, example=500, description="Maximum number of participants"),
      *             @OA\Property(property="price", type="number", format="double", minimum=0, example=99.99, description="Event price (0 if free)"),
      *             @OA\Property(property="is_free", type="boolean", example=false, description="Whether the event is free"),
+     *             @OA\Property(property="number_of_days", type="integer", example=3, description="Total duration of the event in days"),
      *             @OA\Property(property="featured_image", type="string", format="url", example="https://example.com/events/tech-conf-2024.jpg", description="Main event image URL"),
      *             @OA\Property(
      *                 property="images",
@@ -364,7 +365,7 @@ class EventController extends Controller
      *                         "start_time": "09:00:00",
      *                         "end_time": "10:00:00",
      *                         "location": "Main Hall A",
-                               "day_in_event": 1
+     *                         "day_in_event": 1
      *                     },
      *                     {
      *                         "title": "AI Workshop",
@@ -372,16 +373,17 @@ class EventController extends Controller
      *                         "description": "Hands-on AI development workshop",
      *                         "start_time": "10:30:00",
      *                         "end_time": "12:00:00",
-                        "location": "Room B2",
-                        "day_in_event": 1
-                    },
+     *                         "location": "Room B2",
+     *                         "day_in_event": 1
+     *                     },
      *                     {
-     *                         "title": "Networking Lunch",
-     *                         "start_time": "12:00:00",
-     *                         "end_time": "13:30:00",
-                        "location": "Cafeteria",
-                        "day_in_event": 1
-                    }
+     *                         "title": "Closing Ceremony",
+     *                         "title_ar": "الحفل الختامي",
+     *                         "start_time": "16:00:00",
+     *                         "end_time": "18:00:00",
+     *                         "location": "Main Hall",
+     *                         "day_in_event": 3
+     *                     }
      *                 }
      *             ),
      *             @OA\Property(
@@ -465,6 +467,7 @@ class EventController extends Controller
      *                 "max_participants": 500,
      *                 "price": 99.99,
      *                 "is_free": false,
+     *                 "number_of_days": 3,
      *                 "featured_image": "https://example.com/events/tech-conf-2024.jpg",
      *                 "images": {
      *                     {"image_url": "https://example.com/gallery/stage.jpg", "is_primary": true},
