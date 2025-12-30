@@ -161,6 +161,23 @@
             text-align: center;
             font-family: 'Helvetica Neue', 'Arial', sans-serif;
         }
+        
+        /* Conteneur pour les lettres arabes détachées */
+        .arabic-char-container {
+            display: flex;
+            flex-direction: row-reverse; /* RTL natural flow */
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            gap: 2px; /* Espacement minime comme demandé "pas espace" mais détaché */
+        }
+        
+        .arabic-char {
+            display: inline-block;
+            width: 45px; /* Largeur fixe pour alignement "toujour fix" */
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -174,7 +191,21 @@
                     <div class="arabic-number">{{ $topLeft ?? $top_left ?? '' }}</div>
                 </div>
                 <div class="cell">
-                    <div class="arabic-number">{{ $topRight ?? $top_right ?? '' }}</div>
+                    <div class="arabic-number">
+                        @php
+                            $text = $topRight ?? $top_right ?? '';
+                            $chars = mb_str_split($text);
+                            // Reverse for RTL display if needed, but flex-direction: row-reverse or just ensure logical order.
+                            // Arabic is naturally RTL. If we use a flex container, we can control exact order.
+                            // KSA plates usually read right-to-left. 
+                            // If I output: char1 char2 char3. Browser renders: char3 char2 char1 (RTL).
+                        @endphp
+                        <div class="arabic-char-container">
+                             @foreach($chars as $char)
+                                <span class="arabic-char">{{ $char }}</span>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
             </div>
 
