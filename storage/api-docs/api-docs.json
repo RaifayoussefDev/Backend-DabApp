@@ -13373,6 +13373,41 @@
                 ]
             }
         },
+        "/api/guides/{id}/unpublish": {
+            "post": {
+                "tags": [
+                    "Guides"
+                ],
+                "summary": "Unpublish a guide",
+                "operationId": "85cec2f7ff12106e1acd747be1a2c5a1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Guide unpublished successfully"
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Guide not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/guides/{id}/archive": {
             "post": {
                 "tags": [

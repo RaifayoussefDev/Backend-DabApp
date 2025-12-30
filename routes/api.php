@@ -679,6 +679,7 @@ Route::middleware('auth:api')->group(function () {
         Route::put('/{id}', [GuideController::class, 'update']);
         Route::delete('/{id}', [GuideController::class, 'destroy']);
         Route::post('/{id}/publish', [GuideController::class, 'publish']);
+        Route::post('/{id}/unpublish', [GuideController::class, 'unpublish']);
         Route::post('/{id}/archive', [GuideController::class, 'archive']);
 
         // Images

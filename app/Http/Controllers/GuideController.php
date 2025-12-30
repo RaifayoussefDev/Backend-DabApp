@@ -598,6 +598,42 @@ class GuideController extends Controller
 
     /**
      * @OA\Post(
+     *     path="/api/guides/{id}/unpublish",
+     *     summary="Unpublish a guide",
+     *     tags={"Guides"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Guide unpublished successfully"),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=404, description="Guide not found")
+     * )
+     */
+    public function unpublish($id)
+    {
+        $guide = Guide::find($id);
+        if (!$guide) {
+            return response()->json(['message' => 'Guide not found'], 404);
+        }
+
+        $user = Auth::user();
+        if ($guide->author_id !== $user->id && $user->role_id != 1) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $guide->update(['status' => 'draft', 'published_at' => null]);
+
+        return response()->json([
+            'message' => 'Guide unpublished successfully',
+            'data' => [
+                'id' => $guide->id,
+                'status' => $guide->status,
+                'published_at' => null,
+            ]
+        ]);
+    }
+
+    /**
+     * @OA\Post(
      *     path="/api/guides/{id}/archive",
      *     summary="Archive a guide",
      *     tags={"Guides"},
