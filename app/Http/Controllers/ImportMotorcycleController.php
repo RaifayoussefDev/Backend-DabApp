@@ -21,8 +21,8 @@ class ImportMotorcycleController extends Controller
     public function import(Request $request)
     {
         // ✅ Augmenter limites avant de commencer
-        ini_set('max_execution_time', 300); // 5 minutes
-        ini_set('memory_limit', '512M');    // augmente mémoire si fichier lourd
+        ini_set('max_execution_time', 1800); // 30 minutes
+        ini_set('memory_limit', '1024M');    // augmente mémoire si fichier lourd
 
         $request->validate([
             'excel_file' => 'required|mimes:xlsx,xls,csv'
@@ -143,6 +143,14 @@ class ImportMotorcycleController extends Controller
             'ground_clearance' => trim($row[60] ?? ''),
             'wheelbase' => trim($row[61] ?? ''),
             'fuel_capacity' => trim($row[62] ?? ''),
+            'color_options' => trim($row[63] ?? ''),
+            'starter' => trim($row[64] ?? ''),
+            'instruments' => trim($row[65] ?? ''),
+            'electrical' => trim($row[66] ?? ''),
+            'light' => trim($row[67] ?? ''),
+            'carrying_capacity' => trim($row[68] ?? ''),
+            'factory_warranty' => trim($row[69] ?? ''),
+            'comments' => trim($row[70] ?? ''),
         ];
 
         // Validation des données obligatoires
@@ -216,7 +224,41 @@ class ImportMotorcycleController extends Controller
                 'wheelbase' => $this->cleanNumericValue($data['wheelbase']),
                 'fuel_capacity' => $this->cleanNumericValue($data['fuel_capacity']),
                 'rating' => $this->cleanNumericValue($data['rating']),
-                'price' => $this->cleanNumericValue($data['price'])
+                'price' => $this->cleanNumericValue($data['price']),
+                
+                // New Fields Mapping
+                'fuel_control' => $data['fuel_control'] ?: null,
+                'ignition' => $data['ignition'] ?: null,
+                'lubrication_system' => $data['lubrication_system'] ?: null,
+                'cooling_system' => $data['cooling_system'] ?: null,
+                'clutch' => $data['clutch'] ?: null,
+                'driveline' => $data['driveline'] ?: null,
+                'fuel_consumption' => $data['fuel_consumption'] ?: null, // Keeping as string to preserve units if needed
+                'greenhouse_gases' => $data['greenhouse_gases'] ?: null,
+                'emission_details' => $data['emission_details'] ?: null,
+                'exhaust_system' => $data['exhaust_system'] ?: null,
+                'frame_type' => $data['frame_type'] ?: null,
+                'rake' => $data['rake'] ?: null,
+                'trail' => $data['trail'] ?: null,
+                'front_wheel_travel' => $data['front_wheel_travel'] ?: null,
+                'rear_wheel_travel' => $data['rear_wheel_travel'] ?: null,
+                'front_brakes_diameter' => $data['front_brakes_diameter'] ?: null,
+                'rear_brakes_diameter' => $data['rear_brakes_diameter'] ?: null,
+                'wheels' => $data['wheels'] ?: null,
+                'seat' => $data['seat'] ?: null,
+                'power_weight_ratio' => $data['power_weight_ratio'] ?: null,
+                'front_weight_percentage' => $data['front_weight_percentage'] ?: null,
+                'rear_weight_percentage' => $data['rear_weight_percentage'] ?: null,
+                'alternate_seat_height' => $data['alternate_seat_height'] ?: null,
+                'carrying_capacity' => $data['carrying_capacity'] ?: null,
+                'color_options' => $data['color_options'] ?: null,
+                'starter' => $data['starter'] ?: null,
+                'instruments' => $data['instruments'] ?: null,
+                'electrical' => $data['electrical'] ?: null,
+                'light' => $data['light'] ?: null,
+                'factory_warranty' => $data['factory_warranty'] ?: null,
+                'comments' => $data['comments'] ?: null,
+                'acceleration_60_140' => $data['acceleration_60_140'] ?: null,
             ]);
         }
     }
@@ -302,7 +344,15 @@ class ImportMotorcycleController extends Controller
             'Overall width',
             'Ground clearance',
             'Wheelbase',
-            'Fuel capacity'
+            'Fuel capacity',
+            'Color options',
+            'Starter',
+            'Instruments',
+            'Electrical',
+            'Light',
+            'Carrying capacity',
+            'Factory warranty',
+            'Comments'
         ];
 
         $filename = 'motorcycle_import_template.csv';
