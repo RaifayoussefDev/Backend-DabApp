@@ -12,14 +12,24 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('events', function (Blueprint $table) {
-            $table->date('start_date')->nullable()->after('event_date');
-            $table->date('end_date')->nullable()->after('start_date');
+            if (!Schema::hasColumn('events', 'start_date')) {
+                $table->date('start_date')->nullable()->after('event_date');
+            }
+            if (!Schema::hasColumn('events', 'end_date')) {
+                $table->date('end_date')->nullable()->after('start_date');
+            }
         });
 
         Schema::table('event_activities', function (Blueprint $table) {
-            $table->integer('day_in_event')->nullable()->after('location');
-            $table->string('title_ar')->nullable()->after('title');
-            $table->text('description_ar')->nullable()->after('description');
+            if (!Schema::hasColumn('event_activities', 'day_in_event')) {
+                $table->integer('day_in_event')->nullable()->after('location');
+            }
+            if (!Schema::hasColumn('event_activities', 'title_ar')) {
+                $table->string('title_ar')->nullable()->after('title');
+            }
+            if (!Schema::hasColumn('event_activities', 'description_ar')) {
+                $table->text('description_ar')->nullable()->after('description');
+            }
         });
     }
 
