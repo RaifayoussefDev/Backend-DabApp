@@ -7,6 +7,7 @@ use App\Models\NotificationToken;
 use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @OA\Tag(
@@ -249,6 +250,17 @@ class NotificationTokenController extends Controller
         $failedCount = 0;
 
         foreach ($tokens as $token) {
+            // Log Payload just before sending (User request)
+            Log::info("FCM TEST SENDING [{$token->device_type}]", [
+                'user_id' => $user->id,
+                'token' => substr($token->fcm_token, 0, 10) . '...',
+                'notification' => ['title' => '🔔 Test Notification', 'body' => 'This is a test push notification from DabApp!'],
+                'data' => [
+                    'type' => 'test',
+                    'timestamp' => now()->toIso8601String(),
+                ]
+            ]);
+
             $result = $this->firebase->sendToToken(
                 $token->fcm_token,
                 '🔔 Test Notification',
