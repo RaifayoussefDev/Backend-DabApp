@@ -247,7 +247,6 @@ class NotificationService
                     'sound' => $notification->sound ?? 'default',
                     'color' => $notification->color ?? '#FF6B6B',
                     'icon' => $notification->icon ?? 'ic_notification',
-                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
                 ],
             ];
 
