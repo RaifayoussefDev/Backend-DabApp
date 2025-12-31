@@ -162,6 +162,7 @@ class NotificationService
                 'entity_type' => $notification->related_entity_type,
                 'entity_id' => (string) $notification->related_entity_id,
                 'action_url' => $notification->action_url ?? $notification->action_route,
+                'timestamp' => now()->toIso8601String(),
             ];
 
             // Fusionner avec les data additionnelles (sans écraser les clés importantes)
