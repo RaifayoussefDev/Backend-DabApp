@@ -173,6 +173,14 @@ class NotificationService
             // Options spécifiques par plateforme
             $fcmOptions = $this->buildPlatformOptions($token->device_type, $notification, $options);
 
+            // Log Payload just before sending (User request)
+            Log::info("FCM SENDING [{$token->device_type}]", [
+                'user_id' => $user->id,
+                'token' => substr($token->fcm_token, 0, 10) . '...',
+                'notification' => ['title' => $notification->title, 'body' => $notification->message],
+                'data' => $pushData
+            ]);
+
             $result = $this->firebase->sendToToken(
                 $token->fcm_token,
                 $notification->title,
