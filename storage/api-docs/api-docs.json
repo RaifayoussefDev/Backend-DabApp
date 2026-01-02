@@ -6386,7 +6386,8 @@
                                         "description": "Welcome speech by CEO",
                                         "start_time": "09:00:00",
                                         "end_time": "10:00:00",
-                                        "location": "Main Hall A"
+                                        "location": "Main Hall A",
+                                        "day_in_event": 1
                                     }
                                 ],
                                 "contacts": [
