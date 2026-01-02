@@ -128,21 +128,22 @@
                         <div class="row">
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label for="excel_file" class="form-label">
-                                        Fichier Excel <span class="text-danger">*</span>
+                                    <label for="excel_files" class="form-label">
+                                        Fichiers Excel <span class="text-danger">*</span>
                                     </label>
                                     <input type="file"
-                                           class="form-control @error('excel_file') is-invalid @enderror"
-                                           id="excel_file"
-                                           name="excel_file"
+                                           class="form-control @error('excel_files') is-invalid @enderror"
+                                           id="excel_files"
+                                           name="excel_files[]"
                                            accept=".xlsx,.xls,.csv"
+                                           multiple
                                            required>
-                                    @error('excel_file')
+                                    @error('excel_files')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                     <div class="form-text">
                                         <i class="mdi mdi-information-outline"></i>
-                                        Taille maximum: 10MB. Formats acceptés: .xlsx, .xls, .csv
+                                        Sélectionnez un ou plusieurs fichiers. Taille max par fichier: 10MB.
                                     </div>
                                 </div>
                             </div>

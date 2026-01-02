@@ -21,70 +21,81 @@ class ImportMotorcycleController extends Controller
     public function import(Request $request)
     {
         // ✅ Augmenter limites avant de commencer
-        ini_set('max_execution_time', 1800); // 30 minutes
-        ini_set('memory_limit', '1024M');    // augmente mémoire si fichier lourd
+        ini_set('max_execution_time', 3600); // 1 heure
+        ini_set('memory_limit', '2048M');    // augmente mémoire
 
         $request->validate([
-            'excel_file' => 'required|mimes:xlsx,xls,csv'
-        ]);
-        $request->validate([
-            'excel_file' => 'required|mimes:xlsx,xls,csv'
+            'excel_files' => 'required',
+            'excel_files.*' => 'mimes:xlsx,xls,csv'
         ]);
 
-        try {
-            $file = $request->file('excel_file');
-            $spreadsheet = IOFactory::load($file->getPathname());
-            $worksheet = $spreadsheet->getActiveSheet();
-            $data = $worksheet->toArray();
+        $totalImported = 0;
+        $globalErrors = [];
 
-            // Supprimer la ligne d'en-tête
-            array_shift($data);
-
-            $imported = 0;
-            $errors = [];
-            $batchSize = 50; // Commit toutes les 50 lignes pour éviter le timeout DB
-
-            DB::beginTransaction();
-            
-            foreach ($data as $index => $row) {
-                try {
-                    // Vérifier si la ligne n'est pas vide (au moins Make et Model requis)
-                    if (empty(trim($row[3] ?? '')) || empty(trim($row[4] ?? ''))) {
-                        continue;
-                    }
-
-                    $this->importMotorcycleRow($row);
-                    $imported++;
-
-                    // Commit par lots pour libérer la DB
-                    if (($imported % $batchSize) === 0) {
-                        DB::commit();
-                        DB::beginTransaction();
-                    }
-
-                } catch (\Exception $e) {
-                    $errors[] = "Ligne " . ($index + 2) . ": " . $e->getMessage();
-                }
-            }
-
-            DB::commit(); // Commit final
-
-            // Utiliser la session pour passer les erreurs d'import
-            if (count($errors) > 0) {
-                return redirect()->back()->with([
-                    'success' => "Import terminé ! {$imported} motos importées.",
-                    'importErrors' => $errors
-                ]);
-            }
-
-            return redirect()->back()->with('success', "Import réussi ! {$imported} motos importées.");
-        } catch (\Exception $e) {
-            // En cas de crash majeur hors de la boucle
-            if (DB::transactionLevel() > 0) {
-                DB::rollback();
-            }
-            return redirect()->back()->with('error', 'Erreur lors de l\'import: ' . $e->getMessage());
+        $files = $request->file('excel_files');
+        
+        // Ensure array
+        if (!is_array($files)) {
+            $files = [$files];
         }
+
+        foreach ($files as $fileIndex => $file) {
+            try {
+                $fileName = $file->getClientOriginalName();
+                $spreadsheet = IOFactory::load($file->getPathname());
+                $worksheet = $spreadsheet->getActiveSheet();
+                $data = $worksheet->toArray();
+
+                // Supprimer la ligne d'en-tête
+                array_shift($data);
+
+                $fileImportedCount = 0;
+                $batchSize = 50; 
+
+                DB::beginTransaction();
+                
+                foreach ($data as $rowIndex => $row) {
+                    try {
+                        // Vérifier si la ligne n'est pas vide (au moins Make et Model requis)
+                        if (empty(trim($row[3] ?? '')) || empty(trim($row[4] ?? ''))) {
+                            continue;
+                        }
+
+                        $this->importMotorcycleRow($row);
+                        $fileImportedCount++;
+                        $totalImported++;
+
+                        // Commit par lots
+                        if (($fileImportedCount % $batchSize) === 0) {
+                            DB::commit();
+                            DB::beginTransaction();
+                        }
+
+                    } catch (\Exception $e) {
+                        $globalErrors[] = "Fichier '{$fileName}' - Ligne " . ($rowIndex + 2) . ": " . $e->getMessage();
+                    }
+                }
+
+                DB::commit(); // Commit final pour ce fichier
+
+            } catch (\Exception $e) {
+                // En cas de crash majeur sur un fichier
+                if (DB::transactionLevel() > 0) {
+                    DB::rollback();
+                }
+                $globalErrors[] = "Erreur critique sur le fichier '{$file->getClientOriginalName()}': " . $e->getMessage();
+            }
+        }
+
+        // Utiliser la session pour passer les erreurs d'import
+        if (count($globalErrors) > 0) {
+            return redirect()->back()->with([
+                'success' => "Import terminé ! {$totalImported} motos importées.",
+                'importErrors' => $globalErrors
+            ]);
+        }
+
+        return redirect()->back()->with('success', "Import réussi ! {$totalImported} motos importées depuis " . count($files) . " fichiers.");
     }
 
     private function importMotorcycleRow($row)
