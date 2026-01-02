@@ -132,18 +132,18 @@
 
                             <div class="row">
                                 <div class="col-12">
-                                    <div class="mb-3">
-                                        <label for="excel_file" class="form-label">
-                                            Excel File <span class="text-danger">*</span>
+                                        <label for="excel_files" class="form-label">
+                                            Excel Files <span class="text-danger">*</span>
                                         </label>
                                         <input type="file"
-                                            class="form-control @if(isset($errors) && is_object($errors) && $errors->has('excel_file')) is-invalid @endif"
-                                            id="excel_file"
-                                            name="excel_file"
+                                            class="form-control @if(isset($errors) && is_object($errors) && $errors->has('excel_files')) is-invalid @endif"
+                                            id="excel_files"
+                                            name="excel_files[]"
                                             accept=".xlsx,.xls,.csv"
+                                            multiple
                                             required>
-                                        @if(isset($errors) && is_object($errors) && $errors->has('excel_file'))
-                                        <div class="invalid-feedback">{{ $errors->first('excel_file') }}</div>
+                                        @if(isset($errors) && is_object($errors) && $errors->has('excel_files'))
+                                        <div class="invalid-feedback">{{ $errors->first('excel_files') }}</div>
                                         @endif
                                         <div class="form-text">
                                             <i class="mdi mdi-information-outline"></i>
