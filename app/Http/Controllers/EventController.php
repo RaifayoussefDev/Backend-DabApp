@@ -480,11 +480,14 @@ class EventController extends Controller
      *                 "activities": {
      *                     {
      *                         "title": "Opening Keynote",
-     *                         "description": "Welcome speech by CEO",
-     *                         "start_time": "09:00:00",
-     *                         "end_time": "10:00:00",
-     *                         "location": "Main Hall A",
-     *                         "day_in_event": 1
+     *                   "title_ar": "الكلمة الافتتاحية",
+     *                   "description": "Welcome speech by CEO",
+     *                   "description_ar": "كلمة ترحيبية من الرئيس التنفيذي",
+     *                   "start_time": "09:00:00",
+     *                  "end_time": "10:00:00",
+     *                 "location": "Main Hall A",
+     *                "location_ar": "القاعة الرئيسية أ",
+     *               "day_in_event": 1
      *                     }
      *                 },
      *                 "contacts": {
