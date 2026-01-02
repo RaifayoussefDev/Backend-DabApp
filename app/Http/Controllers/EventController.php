@@ -354,9 +354,9 @@ class EventController extends Controller
      *                     @OA\Property(property="start_time", type="string", format="time", example="09:00:00"),
      *                     @OA\Property(property="end_time", type="string", format="time", example="10:00:00"),
      *                     @OA\Property(property="location", type="string", maxLength=255, example="Main Hall A"),
-                    @OA\Property(property="location_ar", type="string", maxLength=255, example="القاعة الرئيسية أ"),
-                    @OA\Property(property="day_in_event", type="integer", example=1, description="Day number of the activity")
-                ),
+     *                     @OA\Property(property="location_ar", type="string", maxLength=255, example="القاعة الرئيسية أ"),
+     *                     @OA\Property(property="day_in_event", type="integer", example=1, description="Day number of the activity")
+     *                 ),
      *                 example={
      *                     {
      *                         "title": "Opening Keynote",
@@ -480,10 +480,14 @@ class EventController extends Controller
      *                 "activities": {
      *                     {
      *                         "title": "Opening Keynote",
-     *                         "description": "Welcome speech by CEO",
-     *                         "start_time": "09:00:00",
-     *                         "end_time": "10:00:00",
-     *                         "location": "Main Hall A"
+     *                   "title_ar": "الكلمة الافتتاحية",
+     *                   "description": "Welcome speech by CEO",
+     *                   "description_ar": "كلمة ترحيبية من الرئيس التنفيذي",
+     *                   "start_time": "09:00:00",
+     *                  "end_time": "10:00:00",
+     *                 "location": "Main Hall A",
+     *                "location_ar": "القاعة الرئيسية أ",
+     *               "day_in_event": 1
      *                     }
      *                 },
      *                 "contacts": {
