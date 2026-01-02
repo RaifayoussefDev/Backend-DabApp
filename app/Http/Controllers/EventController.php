@@ -155,11 +155,11 @@ class EventController extends Controller
         }
 
         if ($request->has('date_from')) {
-            $query->where('event_date', '>=', $request->date_from);
+            $query->whereDate('event_date', '>=', $request->date_from);
         }
 
         if ($request->has('date_to')) {
-            $query->where('event_date', '<=', $request->date_to);
+            $query->whereDate('event_date', '<=', $request->date_to);
         }
 
         if ($request->has('search')) {
