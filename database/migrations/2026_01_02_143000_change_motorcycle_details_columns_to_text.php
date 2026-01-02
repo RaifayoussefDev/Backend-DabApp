@@ -13,14 +13,39 @@ return new class extends Migration {
         Schema::table('motorcycle_details', function (Blueprint $table) {
             $table->text('engine_details')->nullable()->change();
             $table->text('fuel_system')->nullable()->change();
-            $table->text('gearbox')->nullable()->change();
-            $table->text('transmission_type')->nullable()->change();
-            $table->text('front_suspension')->nullable()->change();
-            $table->text('rear_suspension')->nullable()->change();
-            $table->text('front_tire')->nullable()->change();
-            $table->text('rear_tire')->nullable()->change();
-            $table->text('front_brakes')->nullable()->change();
-            $table->text('rear_brakes')->nullable()->change();
+            $columnsToChange = [
+                'ignition',
+                'lubrication_system',
+                'cooling_system',
+                'clutch',
+                'driveline',
+                'fuel_consumption',
+                'greenhouse_gases',
+                'emission_details',
+                'exhaust_system',
+                'frame_type',
+                'rake',
+                'trail',
+                'front_wheel_travel',
+                'rear_wheel_travel',
+                'front_brakes_diameter',
+                'rear_brakes_diameter',
+                'wheels',
+                'seat',
+                'light',
+                'comments',
+                'color_options',
+                'factory_warranty'
+            ];
+
+            foreach ($columnsToChange as $column) {
+                // Check if column exists before changing, or just change it.
+                // Using change() requires doctrine/dbal.
+                // Assuming it's installed or we are using newer Laravel/MariaDB.
+                if (Schema::hasColumn('motorcycle_details', $column)) {
+                    $table->text($column)->nullable()->change();
+                }
+            }
         });
     }
 
@@ -30,13 +55,6 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('motorcycle_details', function (Blueprint $table) {
-            $table->string('engine_details')->nullable()->change();
-            $table->string('fuel_system')->nullable()->change();
-            $table->string('gearbox')->nullable()->change();
-            $table->string('transmission_type')->nullable()->change();
-            $table->string('front_suspension')->nullable()->change();
-            $table->string('rear_suspension')->nullable()->change();
-            $table->string('front_tire')->nullable()->change();
             $table->string('rear_tire')->nullable()->change();
             $table->string('front_brakes')->nullable()->change();
             $table->string('rear_brakes')->nullable()->change();

@@ -201,9 +201,7 @@ class ImportMotorcycleController extends Controller
 
         // Créer les détails de la moto
         if ($year) {
-            MotorcycleDetail::updateOrCreate([
-                'year_id' => $year->id
-            ], [
+            $dataToUpdate = [
                 'displacement' => $this->cleanNumericValue($data['displacement']),
                 'engine_type' => $data['engine_type'] ?: null,
                 'engine_details' => $data['engine_details'] ?: null,
@@ -236,15 +234,13 @@ class ImportMotorcycleController extends Controller
                 'fuel_capacity' => $this->cleanNumericValue($data['fuel_capacity']),
                 'rating' => $this->cleanNumericValue($data['rating']),
                 'price' => $this->cleanNumericValue($data['price']),
-                
-                // New Fields Mapping
                 'fuel_control' => $data['fuel_control'] ?: null,
                 'ignition' => $data['ignition'] ?: null,
                 'lubrication_system' => $data['lubrication_system'] ?: null,
                 'cooling_system' => $data['cooling_system'] ?: null,
                 'clutch' => $data['clutch'] ?: null,
                 'driveline' => $data['driveline'] ?: null,
-                'fuel_consumption' => $data['fuel_consumption'] ?: null, // Keeping as string to preserve units if needed
+                'fuel_consumption' => $data['fuel_consumption'] ?: null,
                 'greenhouse_gases' => $data['greenhouse_gases'] ?: null,
                 'emission_details' => $data['emission_details'] ?: null,
                 'exhaust_system' => $data['exhaust_system'] ?: null,
@@ -270,7 +266,28 @@ class ImportMotorcycleController extends Controller
                 'factory_warranty' => $data['factory_warranty'] ?: null,
                 'comments' => $data['comments'] ?: null,
                 'acceleration_60_140' => $data['acceleration_60_140'] ?: null,
-            ]);
+            ];
+
+            // Filter out null values from update array
+            $dataToUpdate = array_filter($dataToUpdate, function ($value) {
+                return !is_null($value) && $value !== '';
+            });
+
+            $detail = MotorcycleDetail::firstOrNew(['year_id' => $year->id]);
+
+            if ($detail->exists) {
+                // If record exists, ONLY update columns that are currently empty/null in DB
+                foreach ($dataToUpdate as $key => $value) {
+                    if (empty($detail->$key)) {
+                        $detail->$key = $value;
+                    }
+                }
+            } else {
+                // New record: fill everything available
+                $detail->fill($dataToUpdate);
+            }
+
+            $detail->save();
         }
     }
 
