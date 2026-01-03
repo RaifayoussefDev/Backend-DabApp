@@ -81,6 +81,11 @@ class ListingController extends Controller
 
             // Limit to 4 images
             $images = $listing->images->take(4)->map(function ($img) {
+                // Skip conversion for HTML preview (Browsers block file://)
+                if (request()->has('html')) {
+                    return $img;
+                }
+
                 // Convert URL to absolute local path to avoid HTTP deadlock on single-threaded server
                 $relativePath = str_replace(url('/storage'), '', $img->image_url);
                 $localPath = public_path('storage' . $relativePath); 
