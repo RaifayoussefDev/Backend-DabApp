@@ -93,7 +93,6 @@
 
     <div class="header">
         <h1>DabApp</h1>
-        <p>Premium Marketplace for Motorcycles & Parts</p>
     </div>
 
     <div class="title-section">
@@ -188,8 +187,7 @@
     </div>
 
     <div class="footer">
-        <p>Scan for more details or visit <strong>dabapp.co</strong></p>
-        <p>Listing ID: #{{ $listing->id }}</p>
+        <p>Visit <strong>dabapp.co</strong></p>
     </div>
 
 </body>
