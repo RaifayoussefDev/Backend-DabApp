@@ -15774,6 +15774,43 @@
                 }
             }
         },
+        "/api/listings/{id}/pdf": {
+            "get": {
+                "tags": [
+                    "Listings"
+                ],
+                "summary": "Generate PDF Flyer for a Listing",
+                "description": "Downloads a PDF file containing the listing details and images.",
+                "operationId": "50ec1fa5b4c8c588f4daa54d64ef6d9e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Listing ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "PDF File Download",
+                        "content": {
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Listing not found"
+                    }
+                }
+            }
+        },
         "/api/listings/motorcycle": {
             "post": {
                 "tags": [

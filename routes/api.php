@@ -191,6 +191,7 @@ Route::prefix('comparison/motorcycles')->group(function () {
 // LISTINGS (PUBLIC)
 // ============================================
 Route::get('/listings/by-category/{category_id}', [ListingController::class, 'getByCategory']);
+Route::get('/listings/{id}/pdf', [ListingController::class, 'generatePdf']); // PDF Route
 Route::get('/listings/search-by-model', [ListingController::class, 'searchByCategoryAndModel']);
 Route::get('/recent', [ListingController::class, 'getRecentListings']);
 Route::get('/types', [ListingController::class, 'getAllTypes']);

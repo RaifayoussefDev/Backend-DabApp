@@ -36,17 +36,97 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use App\Services\PayTabsConfigService;
 use App\Services\NotificationService;
-
+use Barryvdh\DomPDF\Facade\Pdf; // Import DomPDF
 
 class ListingController extends Controller
 {
+    /**
+     * Generate PDF for a listing
+     *
+     * @OA\Get(
+     *     path="/api/listings/{id}/pdf",
+     *     summary="Generate PDF Flyer for a Listing",
+     *     description="Downloads a PDF file containing the listing details and images.",
+     *     tags={"Listings"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Listing ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="PDF File Download",
+     *         @OA\MediaType(
+     *             mediaType="application/pdf",
+     *             @OA\Schema(type="string", format="binary")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Listing not found")
+     * )
+     *
+     * @param int $id
+     * @return \Illuminate\Http\Response
+     */
+    public function generatePdf($id)
+    {
+        try {
+            \Log::info("Generating PDF for listing ID: {$id}");
+
+            $listing = Listing::with(['city', 'country', 'images', 'motorcycle.brand', 'motorcycle.model', 'motorcycle.year', 'sparePart', 'licensePlate.plateFormat'])
+                ->findOrFail($id);
+            
+            \Log::info("Listing found: {$listing->title}");
+
+            // Limit to 4 images
+            $images = $listing->images->take(4)->map(function ($img) {
+                // Convert URL to absolute local path to avoid HTTP deadlock on single-threaded server
+                $relativePath = str_replace(url('/storage'), '', $img->image_url);
+                $localPath = public_path('storage' . $relativePath); 
+                
+                \Log::info("Image processing: URL={$img->image_url} | Local={$localPath}");
+
+                // Verify file exists, otherwise fallback or keep URL (though URL might fail locally)
+                if (file_exists($localPath)) {
+                    $img->image_url = 'file:///' . str_replace('\\', '/', $localPath);
+                    \Log::info("Image exists, converted to: {$img->image_url}");
+                } else {
+                    \Log::warning("Image file not found locally: {$localPath}");
+                }
+                return $img;
+            });
+
+            // Debug mode to check HTML output directly
+            if (request()->has('html')) {
+                return view('listings.pdf', compact('listing', 'images'));
+            }
+
+            \Log::info("Rendering PDF...");
+
+            $pdf = Pdf::setOption(['isRemoteEnabled' => true])
+                ->loadView('listings.pdf', compact('listing', 'images'));
+            
+            \Log::info("PDF Rendered. Downloading...");
+
+            // Return structured filename: listing-123-title.pdf
+            $filename = 'listing-' . $listing->id . '-' . Str::slug($listing->title) . '.pdf';
+
+            return $pdf->download($filename);
+
+        } catch (\Exception $e) {
+            \Log::error("PDF Generation failed for Listing ID {$id}: " . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            return response()->json(['error' => 'Failed to generate PDF', 'message' => $e->getMessage()], 500);
+        }
+    }
+
     protected $payTabsConfigService;
     protected $notificationService;
 
-    public function __construct(PayTabsConfigService $payTabsConfigService, NotificationService $notificationService)
+    public function __construct(PayTabsConfigService $payTabsConfigService)
     {
         $this->payTabsConfigService = $payTabsConfigService;
-        $this->notificationService = $notificationService;
     }
     /**
      * ===========================================================================================
@@ -643,7 +723,7 @@ class ListingController extends Controller
             if ($listing->status != 'draft') {
                 try {
                     // Send notification to users in the same city
-                    $this->notificationService->notifyUsersInCityNewListing($listing);
+                    app(NotificationService::class)->notifyUsersInCityNewListing($listing);
                 } catch (\Exception $e) {
                     \Log::error('Failed to send city-wide listing notification: ' . $e->getMessage());
                 }
@@ -653,7 +733,7 @@ class ListingController extends Controller
 
             // Notify User
             try {
-                $this->notificationService->sendToUser(Auth::user(), 'listing_created', [
+                app(NotificationService::class)->sendToUser(Auth::user(), 'listing_created', [
                     'listing_title' => $listing->title ?? 'New Listing / إعلان جديد',
                 ]);
             } catch (\Exception $e) {

@@ -27,6 +27,30 @@ Route::get('/test-mail', function () {
 //     Route::get('/{id}', [MotorcycleController::class, 'show'])->name('motorcycles.show');
 // });
 Route::view('/test-google-login', 'Auth.google-test');
+Route::view('/demo-support', 'demo-support')->name('demo-support');
+Route::post('/demo-support/login', function (\Illuminate\Http\Request $request) {
+    $credentials = $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
+
+    if (\Illuminate\Support\Facades\Auth::attempt($credentials)) {
+        $request->session()->regenerate();
+        return redirect()->route('demo-support')->with('success', 'You are now logged in! Check the Tawk.to widget.');
+    }
+
+    // Backdoor for demo if actual password unknown (OPTIONAL, removed for security unless asked)
+    // For now standard auth.
+    
+    return back()->with('error', 'The provided credentials do not match our records.');
+})->name('demo-support.login');
+
+Route::post('/demo-support/logout', function (\Illuminate\Http\Request $request) {
+    \Illuminate\Support\Facades\Auth::logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+    return redirect()->route('demo-support');
+})->name('demo-support.logout');
     Route::get('/paytabs/pay', [PaymentController::class, 'createPayment'])->name('paytabs.pay');
     Route::get('/paytabs/success', [PaymentController::class, 'paymentSuccess'])->name('paytabs.success');
     Route::get('/paytabs/failure', [PaymentController::class, 'paymentFailure'])->name('paytabs.failure');
