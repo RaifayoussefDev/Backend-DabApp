@@ -27590,19 +27590,23 @@
                                 "properties": {
                                     "reportable_id": {
                                         "description": "ID of the item being reported",
-                                        "type": "integer"
+                                        "type": "integer",
+                                        "example": 15
                                     },
                                     "reportable_type": {
                                         "description": "Type of item (guide, listing, event, etc.)",
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "listing"
                                     },
                                     "report_reason_id": {
                                         "description": "ID of the selected reason",
-                                        "type": "integer"
+                                        "type": "integer",
+                                        "example": 1
                                     },
                                     "details": {
                                         "description": "Optional additional details",
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "This listing contains misleading price information."
                                     }
                                 },
                                 "type": "object"

@@ -92,10 +92,10 @@ class ReportController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"reportable_id", "reportable_type", "report_reason_id"},
-     *             @OA\Property(property="reportable_id", type="integer", description="ID of the item being reported"),
-     *             @OA\Property(property="reportable_type", type="string", description="Type of item (guide, listing, event, etc.)"),
-     *             @OA\Property(property="report_reason_id", type="integer", description="ID of the selected reason"),
-     *             @OA\Property(property="details", type="string", description="Optional additional details")
+     *             @OA\Property(property="reportable_id", type="integer", description="ID of the item being reported", example=15),
+     *             @OA\Property(property="reportable_type", type="string", description="Type of item (guide, listing, event, etc.)", example="listing"),
+     *             @OA\Property(property="report_reason_id", type="integer", description="ID of the selected reason", example=1),
+     *             @OA\Property(property="details", type="string", description="Optional additional details", example="This listing contains misleading price information.")
      *         )
      *     ),
      *     @OA\Response(
