@@ -24,7 +24,7 @@ class ReportController extends Controller
      *     @OA\Parameter(
      *         name="type",
      *         in="query",
-     *         description="Type of content to report (guide, listing, event, comment, etc.)",
+     *         description="Type code (guide, listing) OR Type ID (1, 2)",
      *         required=false,
      *         @OA\Schema(type="string", default="default")
      *     ),
@@ -54,7 +54,15 @@ class ReportController extends Controller
         }
 
         // Fetch Type ID first
-        $reportType = \App\Models\ReportType::where('code', $type)->active()->first();
+        $query = \App\Models\ReportType::query()->active();
+        
+        if (is_numeric($type)) {
+            $query->where('id', $type);
+        } else {
+            $query->where('code', $type);
+        }
+
+        $reportType = $query->first();
 
         // Fallback to default if not found
         if (!$reportType) {

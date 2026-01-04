@@ -66,6 +66,7 @@ use App\Http\Controllers\{
     PricingRulesMotorcycleController,
     PricingRulesSparepartController,
     PromoCodeController,
+    ReportController,
     RoleController,
     RolePermissionController,
     RouteCategoryController,

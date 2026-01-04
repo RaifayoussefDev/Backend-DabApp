@@ -27531,7 +27531,7 @@
                     {
                         "name": "type",
                         "in": "query",
-                        "description": "Type of content to report (guide, listing, event, comment, etc.)",
+                        "description": "Type code (guide, listing) OR Type ID (1, 2)",
                         "required": false,
                         "schema": {
                             "type": "string",
