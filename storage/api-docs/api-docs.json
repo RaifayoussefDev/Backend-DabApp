@@ -27767,7 +27767,7 @@
                             "schema": {
                                 "required": [
                                     "reportable_id",
-                                    "reportable_type",
+                                    "report_type_id",
                                     "report_reason_id"
                                 ],
                                 "properties": {
@@ -27777,14 +27777,9 @@
                                         "example": 15
                                     },
                                     "report_type_id": {
-                                        "description": "ID of the report type (e.g. 1 for Guide). Alternative to reportable_type.",
+                                        "description": "ID of the report type (e.g. 3 for Listing).",
                                         "type": "integer",
-                                        "example": 1
-                                    },
-                                    "reportable_type": {
-                                        "description": "Type string (guide, listing). Optional if report_type_id is provided.",
-                                        "type": "string",
-                                        "example": "listing"
+                                        "example": 3
                                     },
                                     "report_reason_id": {
                                         "description": "ID of the selected reason",

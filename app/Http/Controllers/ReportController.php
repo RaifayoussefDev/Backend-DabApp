@@ -98,10 +98,9 @@ class ReportController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"reportable_id", "reportable_type", "report_reason_id"},
+     *             required={"reportable_id", "report_type_id", "report_reason_id"},
      *             @OA\Property(property="reportable_id", type="integer", description="ID of the item being reported", example=15),
-     *             @OA\Property(property="report_type_id", type="integer", description="ID of the report type (e.g. 1 for Guide). Alternative to reportable_type.", example=1),
-     *             @OA\Property(property="reportable_type", type="string", description="Type string (guide, listing). Optional if report_type_id is provided.", example="listing"),
+     *             @OA\Property(property="report_type_id", type="integer", description="ID of the report type (e.g. 3 for Listing).", example=3),
      *             @OA\Property(property="report_reason_id", type="integer", description="ID of the selected reason", example=1),
      *             @OA\Property(property="details", type="string", description="Optional additional details", example="This listing contains misleading price information.")
      *         )
@@ -124,8 +123,7 @@ class ReportController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'reportable_id' => 'required|integer',
-            'reportable_type' => 'nullable|required_without:report_type_id|string',
-            'report_type_id' => 'nullable|required_without:reportable_type|exists:report_types,id',
+            'report_type_id' => 'required|exists:report_types,id',
             'report_reason_id' => 'required|exists:report_reasons,id',
             'details' => 'nullable|string',
         ]);
@@ -140,34 +138,34 @@ class ReportController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        $type = $request->input('reportable_type');
-        
-        // If report_type_id is provided, resolve type code from there
-        if ($request->filled('report_type_id')) {
-            $reportTypeModel = \App\Models\ReportType::find($request->input('report_type_id'));
-            if ($reportTypeModel && $reportTypeModel->code !== 'default') {
-                $type = $reportTypeModel->code;
-            }
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
         }
+
+        // Resolve type code from report_type_id
+        $reportTypeModel = \App\Models\ReportType::find($request->input('report_type_id'));
+        $type = $reportTypeModel->code;
         
         // Map short names to full Model classes
         // You can update this map as you add more reportable models
         $modelMap = [
             'guide' => 'App\Models\Guide',
             'listing' => 'App\Models\Listing',
-            'motorcycle' => 'App\Models\Motorcycle', // Assuming separate model or if listing uses type
+            'motorcycle' => 'App\Models\Listing', // Listing type alias
+            'sparepart' => 'App\Models\Listing', // Listing type alias
+            'plate' => 'App\Models\Listing', // Listing type alias
             'event' => 'App\Models\Event',
             'user' => 'App\Models\User',
-            'comment' => 'App\Models\GuideComment', // Example
-            'review' => 'App\Models\EventReview', // Example
+            'comment' => 'App\Models\GuideComment', 
+            'review' => 'App\Models\EventReview', 
+            'default' => null, // Default type has no model
         ];
 
         // If it's a known short name, use the map. Otherwise check if class exists.
         $className = $modelMap[$type] ?? $type;
-        
-        // Handle case where frontend defines specific listing types but backend uses Listing model
-        if (in_array($type, ['motorcycle', 'sparepart', 'plate']) && !isset($modelMap[$type])) {
-             $className = 'App\Models\Listing';
+
+        if (!$className && $type === 'default') {
+             return response()->json(['error' => 'Invalid report type selected (Default cannot be used for reports). Please select a specific type.'], 400); 
         }
 
         if (!class_exists($className)) {
