@@ -549,8 +549,8 @@ class ListingController extends Controller
                 ]);
             }
 
-            // ✅ Remplissage du listing (SANS listing_type_id)
-            $listing->fill(array_filter($request->only([
+            // ✅ Remplissage du listing
+            $dataToFill = $request->only([
                 'title',
                 'description',
                 'price',
@@ -561,8 +561,21 @@ class ListingController extends Controller
                 'minimum_bid',
                 'allow_submission',
                 'contacting_channel',
-                'seller_type'
-            ])));
+                'seller_type',
+                'listing_type_id'
+            ]);
+
+            // Utiliser un callback pour garder 0 et '0' mais supprimer null
+            $dataToFill = array_filter($dataToFill, function($value) {
+                return $value !== null && $value !== '';
+            });
+
+            // Si enchère activée, on force le price à null (si c'est la règle business)
+            if (!empty($dataToFill['auction_enabled'])) {
+                $dataToFill['price'] = null;
+            }
+
+            $listing->fill($dataToFill);
             $listing->step = max($listing->step, $step);
             $listing->save();
 
@@ -575,6 +588,22 @@ class ListingController extends Controller
 
             // ✅ Traitement des données spécifiques selon la catégorie
             $this->handleCategorySpecificData($listing, $request);
+
+            // ✅ Création automatique de l'AuctionHistory si enchère activée
+            if ($listing->auction_enabled) {
+                // Vérifier si un historique existe déjà pour éviter les doublons
+                $exists = \App\Models\AuctionHistory::where('listing_id', $listing->id)->exists();
+
+                if (!$exists) {
+                    \App\Models\AuctionHistory::create([
+                        'listing_id' => $listing->id,
+                        'seller_id'  => $listing->seller_id,
+                        'bid_amount' => 0,      // Valeur initiale
+                        'bid_date'   => now(),  // Valeur initiale
+                        'validated'  => false,
+                    ]);
+                }
+            }
 
             // ✅ Paiement uniquement au step 3 (avec conversion vers AED)
             if ($step >= 3) {
