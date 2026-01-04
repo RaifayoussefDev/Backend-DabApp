@@ -24,6 +24,16 @@ class NotificationTemplateSeeder extends Seeder
                 'variables' => ['reason', 'item', 'report_id'],
             ],
             [
+                'type' => 'report_received',
+                'name' => 'Report Received Confirmation',
+                'description' => 'Notification sent to user knowing their report is received',
+                'title_template' => 'Report Received',
+                'message_template' => 'We have received your report regarding {{item}}. We will review it shortly.',
+                'title_template_ar' => 'تم استلام بلاغك',
+                'message_template_ar' => 'لقد استلمنا بلاغك بخصوص {{item}}. سنقوم بمراجعته قريباً.',
+                'variables' => ['item', 'report_id'],
+            ],
+            [
                 'type' => 'report_status_updated',
                 'name' => 'Report Status Updated',
                 'description' => 'Notification sent to user when report status changes',

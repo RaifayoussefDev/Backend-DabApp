@@ -194,6 +194,15 @@ class ReportController extends Controller
                 ]);
             }
 
+            // Notify User (Confirmation)
+            $user = auth()->user();
+            if ($user) {
+                $this->notificationService->sendToUser($user, 'report_received', [
+                    'report_id' => $report->id,
+                    'item' => class_basename($className),
+                ]);
+            }
+
             return response()->json(['message' => 'Report submitted successfully', 'report' => $report], 201);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to submit report', 'message' => $e->getMessage()], 500);

@@ -38,9 +38,37 @@ class ReportController extends Controller
      *         @OA\Schema(type="string", enum={"pending", "resolved", "dismissed"})
      *     ),
      *     @OA\Parameter(
+     *         name="report_type_id",
+     *         in="query",
+     *         description="Filter by Report Type ID (e.g., 1 for Guide)",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="report_reason_id",
+     *         in="query",
+     *         description="Filter by Report Reason ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Items per page (default: 20)",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=20)
+     *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
      *         name="type",
      *         in="query",
-     *         description="Filter by reportable type (listing, guide, etc.)",
+     *         description="Filter by reportable type string (e.g. 'Listing')",
      *         required=false,
      *         @OA\Schema(type="string")
      *     ),
@@ -62,11 +90,30 @@ class ReportController extends Controller
             $query->where('status', $request->query('status'));
         }
 
-        if ($request->has('type')) {
-            $query->where('reportable_type', 'like', '%' . $request->query('type') . '%');
+        if ($request->has('report_type_id')) {
+            $query->whereHas('reason', function ($q) use ($request) {
+                $q->where('report_type_id', $request->query('report_type_id'));
+            });
         }
 
-        return response()->json($query->latest()->paginate(20));
+        if ($request->has('report_reason_id')) {
+            $query->where('report_reason_id', $request->query('report_reason_id'));
+        }
+
+        if ($request->has('type')) {
+            // Support searching by ID if numeric (though type should usually be report_type_id, keeping for backward compat)
+             if (is_numeric($request->query('type'))) {
+                 // Try to match reportable_id or report_type_id? No, user said "filter by id not libelle" for GET reports.
+                 // Assuming they mean filtering by Report Type ID using the 'type' param or dedicated param.
+                 // I added dedicated report_type_id above. Keeping 'type' for reportable_type string match.
+                 $query->where('reportable_type', 'like', '%' . $request->query('type') . '%');
+             } else {
+                 $query->where('reportable_type', 'like', '%' . $request->query('type') . '%');
+             }
+        }
+        
+        $perPage = $request->query('per_page', 20);
+        return response()->json($query->latest()->paginate($perPage));
     }
 
     /**
