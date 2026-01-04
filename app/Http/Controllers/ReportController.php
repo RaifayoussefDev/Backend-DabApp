@@ -145,7 +145,7 @@ class ReportController extends Controller
         // If report_type_id is provided, resolve type code from there
         if ($request->filled('report_type_id')) {
             $reportTypeModel = \App\Models\ReportType::find($request->input('report_type_id'));
-            if ($reportTypeModel) {
+            if ($reportTypeModel && $reportTypeModel->code !== 'default') {
                 $type = $reportTypeModel->code;
             }
         }
