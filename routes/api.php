@@ -145,6 +145,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/report-reasons/types', [\App\Http\Controllers\Admin\ReportReasonController::class, 'getTypes']);
         Route::apiResource('report-reasons', \App\Http\Controllers\Admin\ReportReasonController::class);
         Route::apiResource('report-types', \App\Http\Controllers\Admin\ReportTypeController::class);
+        Route::apiResource('reports', \App\Http\Controllers\Admin\ReportController::class)->only(['index', 'show', 'update']);
     });
 });
 

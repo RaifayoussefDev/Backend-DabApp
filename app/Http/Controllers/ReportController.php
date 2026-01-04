@@ -16,6 +16,13 @@ use Illuminate\Database\Eloquent\Relations\Relation;
  */
 class ReportController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(\App\Services\NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     /**
      * @OA\Get(
      *     path="/api/reports/reasons",
@@ -121,6 +128,12 @@ class ReportController extends Controller
             'details' => 'nullable|string',
         ]);
 
+        // Check if "Other" reason requires details
+        $reason = ReportReason::find($request->input('report_reason_id'));
+        if ($reason && strtolower($reason->label_en) === 'other' && empty($request->input('details'))) {
+             return response()->json(['error' => 'Validation Error', 'message' => 'The details field is required when choosing "Other" as a reason.'], 422);
+        }
+
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
@@ -170,6 +183,16 @@ class ReportController extends Controller
                 'details' => $request->input('details'),
                 'status' => 'pending'
             ]);
+
+            // Notify Admins
+            $admins = \App\Models\User::where('role_id', 1)->get();
+            foreach ($admins as $admin) {
+                $this->notificationService->sendToUser($admin, 'new_report', [
+                     'report_id' => $report->id,
+                     'reason' => $reason ? $reason->label_en : 'Unknown',
+                     'item' => class_basename($className),
+                ]);
+            }
 
             return response()->json(['message' => 'Report submitted successfully', 'report' => $report], 201);
         } catch (\Exception $e) {

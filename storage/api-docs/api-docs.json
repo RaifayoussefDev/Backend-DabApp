@@ -1069,6 +1069,152 @@
                 ]
             }
         },
+        "/api/admin/reports": {
+            "get": {
+                "tags": [
+                    "Admin Reports"
+                ],
+                "summary": "List all reports",
+                "operationId": "7dee502286cff5a944789392ec0eae03",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status (pending, resolved, dismissed)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "resolved",
+                                "dismissed"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filter by reportable type (listing, guide, etc.)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of reports",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/reports/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Reports"
+                ],
+                "summary": "Get specific report details",
+                "operationId": "13e42390de896862a158d0aba87742aa",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Report details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Reports"
+                ],
+                "summary": "Update report status",
+                "operationId": "3a0be59e5f079246773c5a10db079952",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "resolved",
+                                            "dismissed"
+                                        ],
+                                        "example": "resolved"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Report updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/report-reasons": {
             "get": {
                 "tags": [
@@ -35806,6 +35952,10 @@
         {
             "name": "Admin Notifications",
             "description": "API Endpoints for Admin Mass Notifications"
+        },
+        {
+            "name": "Admin Reports",
+            "description": "API Endpoints for Managing User Reports"
         },
         {
             "name": "Admin Report Reasons",
