@@ -1010,8 +1010,11 @@ class SoomController extends Controller
                 }
 
                 // Envoyer à chaque destinataire séparément
+                // Utiliser fresh() pour s'assurer que les dates (casts) sont bien des objets Carbon
+                $freshAuctionHistory = $auctionHistory->fresh();
+
                 Mail::to($seller->email)->send(new SaleValidatedMail(
-                    $auctionHistory,
+                    $freshAuctionHistory,
                     $submission,
                     $seller,
                     $buyer
@@ -1019,7 +1022,7 @@ class SoomController extends Controller
                 \Log::info('Email sent successfully to seller: ' . $seller->email);
 
                 Mail::to($buyer->email)->send(new SaleValidatedMail(
-                    $auctionHistory,
+                    $freshAuctionHistory,
                     $submission,
                     $seller,
                     $buyer
