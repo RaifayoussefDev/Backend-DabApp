@@ -112,8 +112,14 @@ class ReportController extends Controller
              }
         }
         
-        $perPage = $request->query('per_page', 20);
-        return response()->json($query->latest()->paginate($perPage));
+        $page = (int) $request->query('page', 1);
+        $perPage = (int) $request->query('per_page', 20);
+        
+        if ($perPage > 100) {
+            $perPage = 100;
+        }
+
+        return response()->json($query->latest()->paginate($perPage, ['*'], 'page', $page));
     }
 
     /**
