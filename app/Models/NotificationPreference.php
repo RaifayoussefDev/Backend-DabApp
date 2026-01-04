@@ -136,7 +136,9 @@ class NotificationPreference extends Model
         // Map specific types to preference columns
         $map = [
             'admin_broadcast' => 'admin_custom',
-            // Add other mappings if needed
+            'report_received' => 'system_updates',
+            'report_status_updated' => 'system_updates',
+            'new_report' => 'system_updates', // For admins
         ];
 
         $column = $map[$type] ?? $type;
