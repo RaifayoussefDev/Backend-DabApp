@@ -176,10 +176,14 @@ class ReportController extends Controller
         if ($oldStatus !== $newStatus && $report->user_id) {
              $user = User::find($report->user_id);
              if ($user) {
+                 $reason = $report->reason;
+                 $reasonLabel = ($reason && $user->language === 'ar') ? $reason->label_ar : ($reason ? $reason->label_en : 'N/A');
+
                  $this->notificationService->sendToUser($user, 'report_status_updated', [
                      'report_id' => $report->id,
                      'status' => $newStatus,
                      'item' => class_basename($report->reportable_type),
+                     'reason' => $reasonLabel,
                  ]);
              }
         }
