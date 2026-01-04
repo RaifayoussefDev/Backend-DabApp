@@ -1069,6 +1069,647 @@
                 ]
             }
         },
+        "/api/admin/report-reasons": {
+            "get": {
+                "tags": [
+                    "Admin Report Reasons"
+                ],
+                "summary": "List all report reasons",
+                "operationId": "e5c0693035f3ff58a73fbc2eabb2c330",
+                "parameters": [
+                    {
+                        "name": "type_id",
+                        "in": "query",
+                        "description": "Filter by type ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of report reasons",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "report_type_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "type": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "code": {
+                                                                "type": "string"
+                                                            },
+                                                            "name_en": {
+                                                                "type": "string"
+                                                            },
+                                                            "name_ar": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "label_en": {
+                                                        "type": "string"
+                                                    },
+                                                    "label_ar": {
+                                                        "type": "string"
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Report Reasons"
+                ],
+                "summary": "Create a new report reason",
+                "operationId": "3c9e4b7cae0f1f1db5a707a2a9b94bdf",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "report_type_id",
+                                    "label_en",
+                                    "label_ar"
+                                ],
+                                "properties": {
+                                    "report_type_id": {
+                                        "description": "ID of the report type",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "label_en": {
+                                        "type": "string",
+                                        "example": "Inappropriate content"
+                                    },
+                                    "label_ar": {
+                                        "type": "string",
+                                        "example": "محتوى غير لائق"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "default": true,
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "report_type_id": {
+                                            "type": "integer"
+                                        },
+                                        "label_en": {
+                                            "type": "string"
+                                        },
+                                        "label_ar": {
+                                            "type": "string"
+                                        },
+                                        "is_active": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/report-reasons/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Report Reasons"
+                ],
+                "summary": "Get specific report reason",
+                "operationId": "c5112e394b4e56f72f6785dff67f5219",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Report Reason details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "report_type_id": {
+                                            "type": "integer"
+                                        },
+                                        "label_en": {
+                                            "type": "string"
+                                        },
+                                        "label_ar": {
+                                            "type": "string"
+                                        },
+                                        "is_active": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Report Reasons"
+                ],
+                "summary": "Update a report reason",
+                "operationId": "46b3315a56d7cccfb6bf5a1a8d30dce0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "report_type_id": {
+                                        "type": "integer"
+                                    },
+                                    "label_en": {
+                                        "type": "string"
+                                    },
+                                    "label_ar": {
+                                        "type": "string"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "report_type_id": {
+                                            "type": "integer"
+                                        },
+                                        "label_en": {
+                                            "type": "string"
+                                        },
+                                        "label_ar": {
+                                            "type": "string"
+                                        },
+                                        "is_active": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Report Reasons"
+                ],
+                "summary": "Delete a report reason",
+                "operationId": "15738c168f4e6066f6defffd0aae270f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/report-reasons/types": {
+            "get": {
+                "tags": [
+                    "Admin Report Reasons"
+                ],
+                "summary": "Get all report reason types",
+                "operationId": "925f456c24726bd59274d1a1fbb4a967",
+                "responses": {
+                    "200": {
+                        "description": "List of types",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "code": {
+                                                "type": "string"
+                                            },
+                                            "name_en": {
+                                                "type": "string"
+                                            },
+                                            "name_ar": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/report-types": {
+            "get": {
+                "tags": [
+                    "Admin Report Types"
+                ],
+                "summary": "List all report types",
+                "operationId": "dab5513f41936dafd438f4725feac147",
+                "responses": {
+                    "200": {
+                        "description": "List of report types",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "code": {
+                                                        "type": "string"
+                                                    },
+                                                    "name_en": {
+                                                        "type": "string"
+                                                    },
+                                                    "name_ar": {
+                                                        "type": "string"
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Report Types"
+                ],
+                "summary": "Create a new report type",
+                "operationId": "68a4f95b5a03a572c6946d1f37c79f7a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "code",
+                                    "name_en",
+                                    "name_ar"
+                                ],
+                                "properties": {
+                                    "code": {
+                                        "description": "Unique code (e.g. guide, listing)",
+                                        "type": "string",
+                                        "example": "story"
+                                    },
+                                    "name_en": {
+                                        "type": "string",
+                                        "example": "Story"
+                                    },
+                                    "name_ar": {
+                                        "type": "string",
+                                        "example": "قصة"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "default": true,
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "code": {
+                                            "type": "string"
+                                        },
+                                        "name_en": {
+                                            "type": "string"
+                                        },
+                                        "name_ar": {
+                                            "type": "string"
+                                        },
+                                        "is_active": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/report-types/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Report Types"
+                ],
+                "summary": "Get specific report type",
+                "operationId": "35ec4826c37946cfc3a6fbf5bfa9c7c2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Report Type details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "code": {
+                                            "type": "string"
+                                        },
+                                        "name_en": {
+                                            "type": "string"
+                                        },
+                                        "name_ar": {
+                                            "type": "string"
+                                        },
+                                        "is_active": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Report Types"
+                ],
+                "summary": "Update a report type",
+                "operationId": "53b22b014aa0f722bd98d38c417c2ad3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "code": {
+                                        "type": "string"
+                                    },
+                                    "name_en": {
+                                        "type": "string"
+                                    },
+                                    "name_ar": {
+                                        "type": "string"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "code": {
+                                            "type": "string"
+                                        },
+                                        "name_en": {
+                                            "type": "string"
+                                        },
+                                        "name_ar": {
+                                            "type": "string"
+                                        },
+                                        "is_active": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Report Types"
+                ],
+                "summary": "Delete a report type",
+                "operationId": "0cacfccca2570eb21695e8d8603f55c8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/login": {
             "post": {
                 "tags": [
@@ -26879,6 +27520,126 @@
                 ]
             }
         },
+        "/api/reports/reasons": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Get list of report reasons",
+                "operationId": "343cfcce1cdd7f9e7ab06929cd6f3af9",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Type of content to report (guide, listing, event, comment, etc.)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "default"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of report reasons",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "label_en": {
+                                                "type": "string"
+                                            },
+                                            "label_ar": {
+                                                "type": "string"
+                                            },
+                                            "type": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/reports": {
+            "post": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Submit a report",
+                "operationId": "318de4ef8123b483320dc9dbb45b6a43",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reportable_id",
+                                    "reportable_type",
+                                    "report_reason_id"
+                                ],
+                                "properties": {
+                                    "reportable_id": {
+                                        "description": "ID of the item being reported",
+                                        "type": "integer"
+                                    },
+                                    "reportable_type": {
+                                        "description": "Type of item (guide, listing, event, etc.)",
+                                        "type": "string"
+                                    },
+                                    "report_reason_id": {
+                                        "description": "ID of the selected reason",
+                                        "type": "integer"
+                                    },
+                                    "details": {
+                                        "description": "Optional additional details",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Report submitted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "report": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/roles": {
             "get": {
                 "tags": [
@@ -35043,6 +35804,14 @@
             "description": "API Endpoints for Admin Mass Notifications"
         },
         {
+            "name": "Admin Report Reasons",
+            "description": "API Endpoints for Managing Report Reasons"
+        },
+        {
+            "name": "Admin Report Types",
+            "description": "API Endpoints for Managing Report Types"
+        },
+        {
             "name": "Bike Part Brands",
             "description": "API Endpoints for managing bike part brands"
         },
@@ -35156,6 +35925,10 @@
         {
             "name": "Promo Code - Management",
             "description": "API Endpoints for managing Promo Codes"
+        },
+        {
+            "name": "Reports",
+            "description": "API Endpoints for User Reporting"
         },
         {
             "name": "Route Completions",

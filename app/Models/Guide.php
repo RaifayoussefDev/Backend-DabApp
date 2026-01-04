@@ -16,9 +16,12 @@ class Guide extends Model
 
     protected $fillable = [
         'title',
+        'title_ar',
         'slug',
         'content',
+        'content_ar',
         'excerpt',
+        'excerpt_ar',
         'featured_image',
         'author_id',
         'category_id',

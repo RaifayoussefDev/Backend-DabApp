@@ -69,6 +69,7 @@ class AdminNotificationController extends Controller
             'content.body_ar' => 'nullable|string',
             'content.type' => 'nullable|string|in:promo,news,info',
             'filters.country_id' => 'nullable|exists:countries,id',
+            'filters.city_id' => 'nullable|exists:cities,id',
             'filters.category_id' => 'nullable|exists:categories,id',
             'filters.date_from' => 'nullable|date',
             'filters.date_to' => 'nullable|date',

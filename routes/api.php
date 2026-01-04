@@ -139,6 +139,11 @@ Route::prefix('admin')->group(function () {
         
         // Notifications
         Route::post('/notifications/mass-send', [AdminNotificationController::class, 'sendMassNotification']);
+        
+        // Report Reasons & Types
+        Route::get('/report-reasons/types', [\App\Http\Controllers\Admin\ReportReasonController::class, 'getTypes']);
+        Route::apiResource('report-reasons', \App\Http\Controllers\Admin\ReportReasonController::class);
+        Route::apiResource('report-types', \App\Http\Controllers\Admin\ReportTypeController::class);
     });
 });
 
@@ -385,6 +390,12 @@ Route::get('/route-tags', [RouteTagController::class, 'index']);
 Route::get('/route-tags/{id}', [RouteTagController::class, 'show']);
 Route::get('/route-tags/slug/{slug}', [RouteTagController::class, 'showBySlug']);
 Route::post('/route-tags/search', [RouteTagController::class, 'search']);
+
+// ============================================
+// REPORTS (PUBLIC)
+// ============================================
+Route::get('/reports/reasons', [ReportController::class, 'getReasons']);
+
 
 // ============================================
 // TEST ROUTES
@@ -862,6 +873,12 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/reports/pending', [PoiReportController::class, 'pending']);
     Route::get('/reports/stats', [PoiReportController::class, 'stats']);
     Route::get('/user/reports', [PoiReportController::class, 'userReports']);
+
+    // ============================================
+    // GENERIC REPORTS (AUTHENTICATED)
+    // ============================================
+    Route::post('/reports', [ReportController::class, 'store']);
+
 
     // ============================================
     // ROUTES (AUTHENTICATED)

@@ -47,11 +47,14 @@ class MassNotificationJob implements ShouldQueue
             $query->where('country_id', $this->filters['country_id']);
         }
 
-        // 2. Filter by Listing Category or Date
-        if (!empty($this->filters['category_id']) || !empty($this->filters['date_from']) || !empty($this->filters['date_to'])) {
+        // 2. Filter by Listing Category or Date or City
+        if (!empty($this->filters['category_id']) || !empty($this->filters['city_id']) || !empty($this->filters['date_from']) || !empty($this->filters['date_to'])) {
             $query->whereHas('listings', function($q) {
                 if (!empty($this->filters['category_id'])) {
                     $q->where('category_id', $this->filters['category_id']);
+                }
+                if (!empty($this->filters['city_id'])) {
+                    $q->where('city_id', $this->filters['city_id']);
                 }
                 if (!empty($this->filters['date_from'])) {
                     $q->where('created_at', '>=', $this->filters['date_from']);
