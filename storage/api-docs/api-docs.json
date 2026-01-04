@@ -27776,8 +27776,13 @@
                                         "type": "integer",
                                         "example": 15
                                     },
+                                    "report_type_id": {
+                                        "description": "ID of the report type (e.g. 1 for Guide). Alternative to reportable_type.",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
                                     "reportable_type": {
-                                        "description": "Type of item (guide, listing, event, etc.)",
+                                        "description": "Type string (guide, listing). Optional if report_type_id is provided.",
                                         "type": "string",
                                         "example": "listing"
                                     },

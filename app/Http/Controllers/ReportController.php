@@ -100,7 +100,8 @@ class ReportController extends Controller
      *         @OA\JsonContent(
      *             required={"reportable_id", "reportable_type", "report_reason_id"},
      *             @OA\Property(property="reportable_id", type="integer", description="ID of the item being reported", example=15),
-     *             @OA\Property(property="reportable_type", type="string", description="Type of item (guide, listing, event, etc.)", example="listing"),
+     *             @OA\Property(property="report_type_id", type="integer", description="ID of the report type (e.g. 1 for Guide). Alternative to reportable_type.", example=1),
+     *             @OA\Property(property="reportable_type", type="string", description="Type string (guide, listing). Optional if report_type_id is provided.", example="listing"),
      *             @OA\Property(property="report_reason_id", type="integer", description="ID of the selected reason", example=1),
      *             @OA\Property(property="details", type="string", description="Optional additional details", example="This listing contains misleading price information.")
      *         )
@@ -123,7 +124,8 @@ class ReportController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'reportable_id' => 'required|integer',
-            'reportable_type' => 'required|string', 
+            'reportable_type' => 'nullable|required_without:report_type_id|string',
+            'report_type_id' => 'nullable|required_without:reportable_type|exists:report_types,id',
             'report_reason_id' => 'required|exists:report_reasons,id',
             'details' => 'nullable|string',
         ]);
@@ -139,6 +141,14 @@ class ReportController extends Controller
         }
 
         $type = $request->input('reportable_type');
+        
+        // If report_type_id is provided, resolve type code from there
+        if ($request->filled('report_type_id')) {
+            $reportTypeModel = \App\Models\ReportType::find($request->input('report_type_id'));
+            if ($reportTypeModel) {
+                $type = $reportTypeModel->code;
+            }
+        }
         
         // Map short names to full Model classes
         // You can update this map as you add more reportable models
@@ -187,9 +197,13 @@ class ReportController extends Controller
             // Notify User (Confirmation)
             $user = auth()->user();
             if ($user) {
+                // Determine reason label based on user preference
+                $reasonLabel = ($user->language === 'ar') ? $reason->label_ar : $reason->label_en;
+                
                 $this->notificationService->sendToUser($user, 'report_received', [
                     'report_id' => $report->id,
                     'item' => class_basename($className),
+                    'reason' => $reasonLabel,
                 ]);
             }
 
