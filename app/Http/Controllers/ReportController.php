@@ -184,16 +184,6 @@ class ReportController extends Controller
                 'status' => 'pending'
             ]);
 
-            // Notify Admins
-            $admins = \App\Models\User::where('role_id', 1)->get();
-            foreach ($admins as $admin) {
-                $this->notificationService->sendToUser($admin, 'new_report', [
-                     'report_id' => $report->id,
-                     'reason' => $reason ? $reason->label_en : 'Unknown',
-                     'item' => class_basename($className),
-                ]);
-            }
-
             // Notify User (Confirmation)
             $user = auth()->user();
             if ($user) {
