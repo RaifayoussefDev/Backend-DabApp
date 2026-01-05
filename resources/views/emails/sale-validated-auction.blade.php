@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>البيع مؤكد / Sale Validated</title>
@@ -11,6 +12,7 @@
             background-color: #f4f4f4;
             color: #00263a;
         }
+
         .container {
             max-width: 700px;
             margin: 0 auto;
@@ -19,24 +21,29 @@
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         .header {
             background: linear-gradient(135deg, #00263a 0%, #f03d24 100%);
             color: white;
             padding: 25px;
             text-align: center;
         }
+
         .accent-bar {
             background-color: #f03d24;
             height: 4px;
         }
+
         .content {
             padding: 30px;
         }
+
         .amount {
             font-size: 36px;
             font-weight: bold;
             color: #f03d24;
         }
+
         .section {
             background-color: #f8f9fa;
             padding: 20px;
@@ -44,6 +51,7 @@
             margin: 20px 0;
             border-left: 4px solid #f03d24;
         }
+
         .contact-info {
             background: linear-gradient(45deg, #e7f3ff 0%, #f0f8ff 100%);
             border: 2px solid #f03d24;
@@ -51,6 +59,7 @@
             border-radius: 8px;
             margin: 25px 0;
         }
+
         .contact-card {
             background-color: white;
             padding: 20px;
@@ -59,6 +68,7 @@
             border: 1px solid #f03d24;
             box-shadow: 0 2px 4px rgba(240, 61, 36, 0.1);
         }
+
         .important {
             background-color: #fff3cd;
             border: 2px solid #f03d24;
@@ -66,6 +76,7 @@
             border-radius: 8px;
             margin: 20px 0;
         }
+
         .safety {
             background-color: #d1ecf1;
             border: 2px solid #00263a;
@@ -73,6 +84,7 @@
             border-radius: 8px;
             margin: 20px 0;
         }
+
         .arabic {
             direction: rtl;
             text-align: right;
@@ -80,10 +92,12 @@
             padding-top: 30px;
             border-top: 3px solid #f03d24;
         }
+
         .english {
             direction: ltr;
             text-align: left;
         }
+
         .footer {
             background-color: #00263a;
             color: white;
@@ -91,17 +105,20 @@
             text-align: center;
             font-size: 14px;
         }
+
         .contact-flex {
             display: flex;
             justify-content: space-between;
             flex-wrap: wrap;
         }
-        .contact-flex > div {
+
+        .contact-flex>div {
             width: 48%;
             min-width: 250px;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -114,9 +131,13 @@
 
             <div class="section">
                 <h3>{{ $submission->listing->title }}</h3>
-                <p><strong>Final Sale Amount:</strong> <span class="amount">{{ number_format($auctionHistory->bid_amount, 2) }} SAR</span></p>
-                <p><strong>Validation Date:</strong> {{ $auctionHistory->validated_at->format('M d, Y H:i') }}</p>
-                <p><strong>Original Bid Date:</strong> {{ $auctionHistory->bid_date->format('M d, Y H:i') }}</p>
+                <p><strong>Final Sale Amount:</strong> <span
+                        class="amount">{{ number_format($auctionHistory->bid_amount, 2) }} SAR</span></p>
+                <p><strong>Validation Date:</strong>
+                    {{ optional($auctionHistory->validated_at)->format('M d, Y H:i') ?? now()->format('M d, Y H:i') }}
+                </p>
+                <p><strong>Original Bid Date:</strong>
+                    {{ optional($auctionHistory->bid_date)->format('M d, Y H:i') ?? 'N/A' }}</p>
             </div>
 
             <div class="contact-info">
@@ -125,17 +146,21 @@
                     <div class="contact-card">
                         <h4>🛍️ Seller Details:</h4>
                         <p><strong>Name:</strong> {{ $seller->first_name }} {{ $seller->last_name }}</p>
-                        <p><strong>Email:</strong> <a href="mailto:{{ $seller->email }}" style="color: #f03d24;">{{ $seller->email }}</a></p>
+                        <p><strong>Email:</strong> <a href="mailto:{{ $seller->email }}"
+                                style="color: #f03d24;">{{ $seller->email }}</a></p>
                         @if($seller->phone)
-                        <p><strong>Phone:</strong> <a href="tel:{{ $seller->phone }}" style="color: #f03d24;">{{ $seller->phone }}</a></p>
+                            <p><strong>Phone:</strong> <a href="tel:{{ $seller->phone }}"
+                                    style="color: #f03d24;">{{ $seller->phone }}</a></p>
                         @endif
                     </div>
                     <div class="contact-card">
                         <h4>🛒 Buyer Details:</h4>
                         <p><strong>Name:</strong> {{ $buyer->first_name }} {{ $buyer->last_name }}</p>
-                        <p><strong>Email:</strong> <a href="mailto:{{ $buyer->email }}" style="color: #f03d24;">{{ $buyer->email }}</a></p>
+                        <p><strong>Email:</strong> <a href="mailto:{{ $buyer->email }}"
+                                style="color: #f03d24;">{{ $buyer->email }}</a></p>
                         @if($buyer->phone)
-                        <p><strong>Phone:</strong> <a href="tel:{{ $buyer->phone }}" style="color: #f03d24;">{{ $buyer->phone }}</a></p>
+                            <p><strong>Phone:</strong> <a href="tel:{{ $buyer->phone }}"
+                                    style="color: #f03d24;">{{ $buyer->phone }}</a></p>
                         @endif
                     </div>
                 </div>
@@ -167,9 +192,10 @@
 
             <div class="section">
                 <h3>{{ $submission->listing->title }}</h3>
-                <p><strong>مبلغ البيع النهائي:</strong> <span class="amount">{{ number_format($auctionHistory->bid_amount, 2) }} ريال</span></p>
-                <p><strong>تاريخ التأكيد:</strong> {{ $auctionHistory->validated_at->format('M d, Y H:i') }}</p>
-                <p><strong>تاريخ العرض الأصلي:</strong> {{ $auctionHistory->bid_date->format('M d, Y H:i') }}</p>
+                <p><strong>مبلغ البيع النهائي:</strong> <span
+                        class="amount">{{ number_format($auctionHistory->bid_amount, 2) }} ريال</span></p>
+                <p><strong>تاريخ التأكيد:</strong> {{ optional($auctionHistory->validated_at)->format('M d, Y H:i') ?? now()->format('M d, Y H:i') }}</p>
+                <p><strong>تاريخ العرض الأصلي:</strong> {{ optional($auctionHistory->bid_date)->format('M d, Y H:i') ?? 'N/A' }}</p>
             </div>
 
             <div class="contact-info">
@@ -178,17 +204,21 @@
                     <div class="contact-card">
                         <h4>🛍️ تفاصيل البائع:</h4>
                         <p><strong>الاسم:</strong> {{ $seller->first_name }} {{ $seller->last_name }}</p>
-                        <p><strong>البريد الإلكتروني:</strong> <a href="mailto:{{ $seller->email }}" style="color: #f03d24;">{{ $seller->email }}</a></p>
+                        <p><strong>البريد الإلكتروني:</strong> <a href="mailto:{{ $seller->email }}"
+                                style="color: #f03d24;">{{ $seller->email }}</a></p>
                         @if($seller->phone)
-                        <p><strong>الهاتف:</strong> <a href="tel:{{ $seller->phone }}" style="color: #f03d24;">{{ $seller->phone }}</a></p>
+                            <p><strong>الهاتف:</strong> <a href="tel:{{ $seller->phone }}"
+                                    style="color: #f03d24;">{{ $seller->phone }}</a></p>
                         @endif
                     </div>
                     <div class="contact-card">
                         <h4>🛒 تفاصيل المشتري:</h4>
                         <p><strong>الاسم:</strong> {{ $buyer->first_name }} {{ $buyer->last_name }}</p>
-                        <p><strong>البريد الإلكتروني:</strong> <a href="mailto:{{ $buyer->email }}" style="color: #f03d24;">{{ $buyer->email }}</a></p>
+                        <p><strong>البريد الإلكتروني:</strong> <a href="mailto:{{ $buyer->email }}"
+                                style="color: #f03d24;">{{ $buyer->email }}</a></p>
                         @if($buyer->phone)
-                        <p><strong>الهاتف:</strong> <a href="tel:{{ $buyer->phone }}" style="color: #f03d24;">{{ $buyer->phone }}</a></p>
+                            <p><strong>الهاتف:</strong> <a href="tel:{{ $buyer->phone }}"
+                                    style="color: #f03d24;">{{ $buyer->phone }}</a></p>
                         @endif
                     </div>
                 </div>
@@ -221,4 +251,5 @@
         </div>
     </div>
 </body>
+
 </html>

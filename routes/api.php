@@ -137,10 +137,10 @@ Route::prefix('admin')->group(function () {
         Route::put('/user/update', [AuthAdminController::class, 'updateProfile']);
         Route::put('/user/two-factor-toggle', [AuthAdminController::class, 'toggleTwoFactor']);
         Route::put('/change-password', [AuthAdminController::class, 'changePassword']); // ✅ Changé de AuthController à AuthAdminController
-        
+
         // Notifications
         Route::post('/notifications/mass-send', [AdminNotificationController::class, 'sendMassNotification']);
-        
+
         // Report Reasons & Types
         Route::get('/report-reasons/types', [\App\Http\Controllers\Admin\ReportReasonController::class, 'getTypes']);
         Route::apiResource('report-reasons', \App\Http\Controllers\Admin\ReportReasonController::class);
@@ -403,6 +403,7 @@ Route::get('/reports/reasons', [ReportController::class, 'getReasons']);
 // TEST ROUTES
 // ============================================
 Route::get('/test-email', [SoomController::class, 'testEmail']);
+Route::get('/test-sale-validated-email', [SoomController::class, 'testSaleValidatedEmail']);
 
 // ============================================
 // ============================================

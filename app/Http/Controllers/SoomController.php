@@ -277,7 +277,7 @@ class SoomController extends Controller
             $buyer = Auth::user();
             try {
                 Mail::to($listing->seller->email)->send(new SoomCreatedMail($submission, $listing, $buyer));
-                
+
                 // Send Notification to Seller
                 $this->notificationService->sendToUser($listing->seller, 'soom_new_negotiation', [
                     'buyer_name' => $buyer->first_name . ' ' . $buyer->last_name,
@@ -778,7 +778,7 @@ class SoomController extends Controller
             $seller = Auth::user();
             try {
                 Mail::to($submission->user->email)->send(new SoomRejectedMail($submission, $submission->listing, $seller, $request->reason));
-                
+
                 // Send Notification to Buyer
                 $this->notificationService->sendToUser($submission->user, 'soom_rejected', [
                     'listing_title' => $submission->listing->title,
@@ -1030,6 +1030,33 @@ class SoomController extends Controller
                 \Log::info('Email sent successfully to buyer: ' . $buyer->email);
 
                 \log::info('=== SALE VALIDATION EMAILS SENT SUCCESSFULLY ===');
+
+                // ==========================================
+                // SEND NOTIFICATIONS (PUSH + IN-APP)
+                // ==========================================
+
+                // 1. Notify Buyer (Soom Won)
+                try {
+                    $this->notificationService->notifySoomWon(
+                        $buyer,
+                        $submission,
+                        $submission->amount
+                    );
+                    \Log::info('Notification sent to buyer');
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send notification to buyer: ' . $e->getMessage());
+                }
+
+                // 2. Notify Seller (Listing Sold)
+                try {
+                    $this->notificationService->notifyListingSold(
+                        $seller,
+                        $submission->listing
+                    );
+                    \Log::info('Notification sent to seller');
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send notification to seller: ' . $e->getMessage());
+                }
             } catch (\Exception $e) {
                 \Log::error('=== SALE VALIDATION EMAIL ERROR ===');
                 \Log::error('Error message: ' . $e->getMessage());
@@ -2073,6 +2100,50 @@ class SoomController extends Controller
             return response()->json([
                 'error' => 'Test email failed',
                 'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function testSaleValidatedEmail()
+    {
+        try {
+            // Créer des faux objets pour le test
+            $seller = \App\Models\User::first(); // Assumant qu'il y a des utilisateurs
+            $buyer = \App\Models\User::where('id', '!=', $seller->id)->first() ?? $seller;
+
+            $listing = new \App\Models\Listing();
+            $listing->title = "Test Listing Motorcycle";
+            $listing->seller_id = $seller->id;
+
+            $submission = new \App\Models\Submission();
+            $submission->id = 99999;
+            $submission->listing_id = 99999;
+            $submission->user_id = $buyer->id;
+            $submission->amount = 5000;
+            $submission->setRelation('listing', $listing); // Manually set relation
+
+            $auctionHistory = new \App\Models\AuctionHistory();
+            $auctionHistory->bid_amount = 5000;
+            $auctionHistory->validated_at = now();
+            $auctionHistory->bid_date = now();
+            $auctionHistory->id = 88888;
+
+            // Envoyer l'email
+            Mail::to('yucefr@gmail.com')->send(new SaleValidatedMail(
+                $auctionHistory,
+                $submission,
+                $seller,
+                $buyer
+            ));
+
+            return response()->json(['message' => 'SaleValidatedMail sent successfully']);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to send SaleValidatedMail',
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ], 500);
         }
     }
