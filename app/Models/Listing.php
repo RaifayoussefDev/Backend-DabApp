@@ -136,6 +136,11 @@ class Listing extends Model
         return $this->hasMany(AuctionHistory::class);
     }
 
+    public function submissions()
+    {
+        return $this->hasMany(Submission::class);
+    }
+
     // ===========================
     // SCOPES EXISTANTS
     // ===========================
