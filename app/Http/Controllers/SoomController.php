@@ -2077,76 +2077,8 @@ class SoomController extends Controller
         ]);
     }
 
-    public function testEmail()
-    {
-        try {
-            \Log::info('Testing email functionality');
 
-            // Test avec un email simple
-            Mail::raw('Test email from SOOM system', function ($message) {
-                $message->to('yucefr@gmail.com')
-                    ->subject('SOOM Test Email');
-            });
-
-            \Log::info('Test email sent successfully');
-
-            return response()->json([
-                'message' => 'Test email sent successfully',
-                'check_logs' => 'Check storage/logs/laravel.log for email content'
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Test email failed: ' . $e->getMessage());
-
-            return response()->json([
-                'error' => 'Test email failed',
-                'details' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function testSaleValidatedEmail()
-    {
-        try {
-            // Créer des faux objets pour le test
-            $seller = \App\Models\User::first(); // Assumant qu'il y a des utilisateurs
-            $buyer = \App\Models\User::where('id', '!=', $seller->id)->first() ?? $seller;
-
-            $listing = new \App\Models\Listing();
-            $listing->title = "Test Listing Motorcycle";
-            $listing->seller_id = $seller->id;
-
-            $submission = new \App\Models\Submission();
-            $submission->id = 99999;
-            $submission->listing_id = 99999;
-            $submission->user_id = $buyer->id;
-            $submission->amount = 5000;
-            $submission->setRelation('listing', $listing); // Manually set relation
-
-            $auctionHistory = new \App\Models\AuctionHistory();
-            $auctionHistory->bid_amount = 5000;
-            $auctionHistory->validated_at = now();
-            $auctionHistory->bid_date = now();
-            $auctionHistory->id = 88888;
-
-            // Envoyer l'email
-            Mail::to('yucefr@gmail.com')->send(new SaleValidatedMail(
-                $auctionHistory,
-                $submission,
-                $seller,
-                $buyer
-            ));
-
-            return response()->json(['message' => 'SaleValidatedMail sent successfully']);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to send SaleValidatedMail',
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ], 500);
-        }
-    }
+    
     /**
      * @OA\Patch(
      *     path="/api/listings/{listingId}/mark-as-sold",
