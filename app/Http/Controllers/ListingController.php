@@ -74,8 +74,18 @@ class ListingController extends Controller
         try {
             \Log::info("Generating PDF for listing ID: {$id}");
 
-            $listing = Listing::with(['city', 'country', 'images', 'motorcycle.brand', 'motorcycle.model', 'motorcycle.year', 'sparePart', 'licensePlate.plateFormat'])
-                ->findOrFail($id);
+            $listing = Listing::with([
+                'city', 
+                'country', 
+                'images', 
+                'motorcycle.brand', 
+                'motorcycle.model', 
+                'motorcycle.year', 
+                'sparePart.bikePartBrand', // ✅ Added
+                'licensePlate.plateFormat', 
+                'submissions', 
+                'seller'
+            ])->findOrFail($id);
             
             \Log::info("Listing found: {$listing->title}");
 
@@ -102,15 +112,23 @@ class ListingController extends Controller
                 return $img;
             });
 
+            // Calculate extra fields
+            $currentBid = $listing->submissions()->max('amount');
+            $displayPrice = $listing->price;
+            
+            if (!$displayPrice && $listing->auction_enabled) {
+                $displayPrice = $currentBid ?: $listing->minimum_bid;
+            }
+
             // Debug mode to check HTML output directly
             if (request()->has('html')) {
-                return view('listings.pdf', compact('listing', 'images'));
+                return view('listings.pdf', compact('listing', 'images', 'currentBid', 'displayPrice'));
             }
 
             \Log::info("Rendering PDF...");
 
             $pdf = Pdf::setOption(['isRemoteEnabled' => true])
-                ->loadView('listings.pdf', compact('listing', 'images'));
+                ->loadView('listings.pdf', compact('listing', 'images', 'currentBid', 'displayPrice'));
             
             \Log::info("PDF Rendered. Downloading...");
 

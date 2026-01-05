@@ -161,6 +161,10 @@
                     <th>Condition</th>
                     <td>{{ ucfirst($listing->sparePart->condition) }}</td>
                 </tr>
+                <tr>
+                    <th>Brand</th>
+                    <td>{{ $listing->sparePart->bikePartBrand->name ?? '-' }}</td>
+                </tr>
             @endif
 
             @if($listing->licensePlate)
@@ -175,11 +179,60 @@
                 <td>{{ ucfirst($listing->seller_type) }}</td>
             </tr>
             <tr>
+                <th>Seller Verified</th>
+                <td>{{ $listing->seller && $listing->seller->is_verified ? 'Yes' : 'No' }}</td>
+            </tr>
+            <tr>
+                <th>Contact Method</th>
+                <td>{{ $listing->contacting_channel ? ucfirst($listing->contacting_channel) : '-' }}</td>
+            </tr>
+            <tr>
+                <th>Soom Enabled</th>
+                <td>{{ $listing->auction_enabled ? 'Yes' : 'No' }}</td>
+            </tr>
+
+            @if($listing->auction_enabled)
+                <tr>
+                    <th>Minimum Bid</th>
+                    <td>{{ number_format($listing->minimum_bid, 2) }} {{ $listing->currency ?? 'AED' }}</td>
+                </tr>
+                <tr>
+                    <th>Current Highest Bid</th>
+                    <td>{{ $currentBid ? number_format($currentBid, 2) : '-' }} {{ $listing->currency ?? 'AED' }}</td>
+                </tr>
+            @endif
+
+            <tr>
                 <th>Listed On</th>
                 <td>{{ $listing->created_at->format('d M Y') }}</td>
             </tr>
         </table>
     </div>
+
+    @if($listing->auction_enabled && $listing->submissions->count() > 0)
+    <div class="submissions-section">
+        <h3>Recent Submissions (SOOMs)</h3>
+        <table class="details-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($listing->submissions->take(5) as $submission)
+                <tr>
+                    <td>{{ $submission->submission_date ? \Carbon\Carbon::parse($submission->submission_date)->format('d M Y H:i') : '-' }}</td>
+                    <td style="font-weight: bold;">{{ number_format($submission->amount, 2) }} {{ $listing->currency ?? 'AED' }}</td>
+                    <td>{{ ucfirst($submission->status) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
+
 
     <div class="description">
         <h3>Description</h3>
