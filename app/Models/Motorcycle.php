@@ -22,6 +22,7 @@ class Motorcycle extends Model
         'insurance',
         'general_condition',
         'vehicle_care',
+        'vehicle_care_other',
         'transmission',
     ];
 

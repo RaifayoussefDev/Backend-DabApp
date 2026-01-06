@@ -2078,7 +2078,7 @@ class SoomController extends Controller
     }
 
 
-    
+
     /**
      * @OA\Patch(
      *     path="/api/listings/{listingId}/mark-as-sold",
@@ -2191,7 +2191,7 @@ class SoomController extends Controller
                     'rejection_reason' => 'Listing marked as sold by seller'
                 ]);
 
-            // Optionnel : Envoyer des notifications aux utilisateurs avec SOOMs pending
+            // Optionnel : Envoyer des notifications aux utilisateurs avec SOOMs pending (qui viennent d'être rejetés)
             $pendingSoomUsers = Submission::where('listing_id', $listingId)
                 ->where('status', 'rejected')
                 ->where('rejection_reason', 'Listing marked as sold by seller')
@@ -2200,8 +2200,12 @@ class SoomController extends Controller
 
             foreach ($pendingSoomUsers as $submission) {
                 try {
-                    // Ici vous pouvez ajouter l'envoi d'email de notification
-                    // Mail::to($submission->user->email)->send(new ListingSoldNotificationMail($listing, $submission));
+                    // Notifier que le listing a été vendu
+                    // On utilise notifyListingSold pour informer que l'article n'est plus disponible
+                    $this->notificationService->notifyListingSold($submission->user, $listing);
+
+                    // Optionnel : Envoi d'email explicite si besoin, mais notifyListingSold gère déjà la notif in-app
+                    \Log::info('Sent Listing Sold notification to user ' . $submission->user_id);
                 } catch (\Exception $e) {
                     \Log::error('Failed to send listing sold notification: ' . $e->getMessage());
                 }

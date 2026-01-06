@@ -38,6 +38,11 @@ class Kernel extends ConsoleKernel
         $schedule->command('events:send-reminders')
             ->hourly()
             ->withoutOverlapping();
+
+        // Auto-mark sold listings
+        $schedule->command('soom:auto-mark-sold')
+            ->daily()
+            ->withoutOverlapping();
     }
 
     /**

@@ -75,18 +75,18 @@ class ListingController extends Controller
             \Log::info("Generating PDF for listing ID: {$id}");
 
             $listing = Listing::with([
-                'city', 
-                'country', 
-                'images', 
-                'motorcycle.brand', 
-                'motorcycle.model', 
-                'motorcycle.year', 
+                'city',
+                'country',
+                'images',
+                'motorcycle.brand',
+                'motorcycle.model',
+                'motorcycle.year',
                 'sparePart.bikePartBrand', // ✅ Added
-                'licensePlate.plateFormat', 
-                'submissions', 
+                'licensePlate.plateFormat',
+                'submissions',
                 'seller'
             ])->findOrFail($id);
-            
+
             \Log::info("Listing found: {$listing->title}");
 
             // Limit to 4 images
@@ -98,8 +98,8 @@ class ListingController extends Controller
 
                 // Convert URL to absolute local path to avoid HTTP deadlock on single-threaded server
                 $relativePath = str_replace(url('/storage'), '', $img->image_url);
-                $localPath = public_path('storage' . $relativePath); 
-                
+                $localPath = public_path('storage' . $relativePath);
+
                 \Log::info("Image processing: URL={$img->image_url} | Local={$localPath}");
 
                 // Verify file exists, otherwise fallback or keep URL (though URL might fail locally)
@@ -115,7 +115,7 @@ class ListingController extends Controller
             // Calculate extra fields
             $currentBid = $listing->submissions()->max('amount');
             $displayPrice = $listing->price;
-            
+
             if (!$displayPrice && $listing->auction_enabled) {
                 $displayPrice = $currentBid ?: $listing->minimum_bid;
             }
@@ -129,7 +129,7 @@ class ListingController extends Controller
 
             $pdf = Pdf::setOption(['isRemoteEnabled' => true])
                 ->loadView('listings.pdf', compact('listing', 'images', 'currentBid', 'displayPrice'));
-            
+
             \Log::info("PDF Rendered. Downloading...");
 
             // Return structured filename: listing-123-title.pdf
@@ -188,7 +188,8 @@ class ListingController extends Controller
      *             @OA\Property(property="modified", type="boolean", example=false, description="Step 1: Has modifications"),
      *             @OA\Property(property="insurance", type="boolean", example=true, description="Step 1: Has insurance"),
      *             @OA\Property(property="general_condition", type="string", example="New / Used", description="Step 1: General condition"),
-     *             @OA\Property(property="vehicle_care", type="string", example="Wakeel / USA / Europe / GCC / Customs License / Other", description="Step 1: Vehicle care type"),
+     *             @OA\Property(property="vehicle_care", type="string", example="Wakeel / USA / Europe / GCC / Other", description="Step 1: Vehicle care type"),
+     *             @OA\Property(property="vehicle_care_other", type="string", example="Custom Details", description="Step 1: Custom vehicle care details if Other is selected"),
      *             @OA\Property(property="transmission", type="string", example="Automatic / Manual / Semi-Automatic", description="Step 1: Transmission type"),
      *             @OA\Property(
      *                 property="images",
@@ -558,12 +559,12 @@ class ListingController extends Controller
             } else {
                 // Step 1 & 2 : validation des données de base
                 $request->validate([
-                    'title'       => 'sometimes|string|max:255',
+                    'title' => 'sometimes|string|max:255',
                     'description' => 'sometimes|string',
-                    'price'       => 'sometimes|nullable|numeric|min:0',
+                    'price' => 'sometimes|nullable|numeric|min:0',
                     'category_id' => 'sometimes|exists:categories,id',
-                    'country_id'  => 'sometimes|exists:countries,id',
-                    'city_id'     => 'sometimes|exists:cities,id',
+                    'country_id' => 'sometimes|exists:countries,id',
+                    'city_id' => 'sometimes|exists:cities,id',
                 ]);
             }
 
@@ -584,7 +585,7 @@ class ListingController extends Controller
             ]);
 
             // Utiliser un callback pour garder 0 et '0' mais supprimer null
-            $dataToFill = array_filter($dataToFill, function($value) {
+            $dataToFill = array_filter($dataToFill, function ($value) {
                 return $value !== null && $value !== '';
             });
 
@@ -615,10 +616,10 @@ class ListingController extends Controller
                 if (!$exists) {
                     \App\Models\AuctionHistory::create([
                         'listing_id' => $listing->id,
-                        'seller_id'  => $listing->seller_id,
+                        'seller_id' => $listing->seller_id,
                         'bid_amount' => 0,      // Valeur initiale
-                        'bid_date'   => now(),  // Valeur initiale
-                        'validated'  => false,
+                        'bid_date' => now(),  // Valeur initiale
+                        'validated' => false,
                     ]);
                 }
             }
@@ -653,7 +654,7 @@ class ListingController extends Controller
                     $promoResult = $promoService->validatePromoCode(
                         $request->promo_code,
                         Auth::user(),
-                        (float)$originalAmount
+                        (float) $originalAmount
                     );
 
                     if (!$promoResult['valid']) {
@@ -677,15 +678,15 @@ class ListingController extends Controller
                 }
 
                 $payment = Payment::create([
-                    'user_id'         => $sellerId,
-                    'listing_id'      => $listing->id,
-                    'amount'          => $aedAmount,
+                    'user_id' => $sellerId,
+                    'listing_id' => $listing->id,
+                    'amount' => $aedAmount,
                     'original_amount' => $originalAmount,
                     'original_currency' => $originalCurrency,
-                    'currency'        => 'AED',
-                    'payment_status'  => 'pending',
-                    'cart_id'         => 'cart_' . time(),
-                    'promo_code_id'   => $appliedPromoId,
+                    'currency' => 'AED',
+                    'payment_status' => 'pending',
+                    'cart_id' => 'cart_' . time(),
+                    'promo_code_id' => $appliedPromoId,
                 ]);
                 // 🔥 GET DYNAMIC PAYTABS CONFIG
                 $config = PayTabsConfigService::getConfig();
@@ -728,8 +729,8 @@ class ListingController extends Controller
 
                 $response = Http::withHeaders([
                     'Authorization' => $config['server_key'],  // ← UTILISEZ $config['server_key']
-                    'Content-Type'  => 'application/json',
-                    'Accept'        => 'application/json'
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json'
                 ])->post($baseUrl . 'payment/request', $payload);
 
                 if (!$response->successful()) {
@@ -824,6 +825,7 @@ class ListingController extends Controller
                     'insurance',
                     'general_condition',
                     'vehicle_care',
+                    'vehicle_care_other',
                     'transmission'
                 ]));
 
@@ -981,7 +983,7 @@ class ListingController extends Controller
             // ✅ Nettoyage du prix AVANT validation
             if ($request->has('price') && $request->price !== null && $request->price !== '') {
                 $cleanPrice = str_replace([' ', ','], '', $request->price);
-                $cleanPrice = is_numeric($cleanPrice) ? (float)$cleanPrice : null;
+                $cleanPrice = is_numeric($cleanPrice) ? (float) $cleanPrice : null;
                 $request->merge(['price' => $cleanPrice]);
             }
 
@@ -993,12 +995,12 @@ class ListingController extends Controller
                 ]);
             } else {
                 $request->validate([
-                    'title'       => 'sometimes|string|max:255',
+                    'title' => 'sometimes|string|max:255',
                     'description' => 'sometimes|string',
-                    'price'       => 'sometimes|nullable|numeric|min:0',
+                    'price' => 'sometimes|nullable|numeric|min:0',
                     'category_id' => 'sometimes|exists:categories,id',
-                    'country_id'  => 'sometimes|exists:countries,id',
-                    'city_id'     => 'sometimes|exists:cities,id',
+                    'country_id' => 'sometimes|exists:countries,id',
+                    'city_id' => 'sometimes|exists:cities,id',
                 ]);
             }
 
@@ -1061,7 +1063,7 @@ class ListingController extends Controller
                     $promoResult = $promoService->validatePromoCode(
                         $request->promo_code,
                         Auth::user(),
-                        (float)$originalAmount
+                        (float) $originalAmount
                     );
 
                     if (!$promoResult['valid']) {
@@ -1085,15 +1087,15 @@ class ListingController extends Controller
                 }
 
                 $payment = Payment::create([
-                    'user_id'           => $sellerId,
-                    'listing_id'        => $listing->id,
-                    'amount'            => $aedAmount,
-                    'original_amount'   => $originalAmount,
+                    'user_id' => $sellerId,
+                    'listing_id' => $listing->id,
+                    'amount' => $aedAmount,
+                    'original_amount' => $originalAmount,
                     'original_currency' => $originalCurrency,
-                    'currency'          => 'AED',
-                    'payment_status'    => 'pending',
-                    'cart_id'           => 'cart_' . time(),
-                    'promo_code_id'     => $appliedPromoId,
+                    'currency' => 'AED',
+                    'payment_status' => 'pending',
+                    'cart_id' => 'cart_' . time(),
+                    'promo_code_id' => $appliedPromoId,
                 ]);
 
                 // 🔥 GET DYNAMIC PAYTABS CONFIG
@@ -1134,8 +1136,8 @@ class ListingController extends Controller
 
                 $response = Http::withHeaders([
                     'Authorization' => $config['server_key'],
-                    'Content-Type'  => 'application/json',
-                    'Accept'        => 'application/json'
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json'
                 ])->post($baseUrl . 'payment/request', $payload);
 
                 if (!$response->successful()) {
@@ -1300,7 +1302,8 @@ class ListingController extends Controller
      *                 @OA\Property(property="modified", type="boolean", example=false),
      *                 @OA\Property(property="insurance", type="boolean", example=true),
      *                 @OA\Property(property="general_condition", type="string", example="Used", enum={"New", "Used"}),
-     *                 @OA\Property(property="vehicle_care", type="string", example="Wakeel", enum={"Wakeel", "USA", "Europe", "GCC", "Customs License", "Other"}),
+     *                 @OA\Property(property="vehicle_care", type="string", example="Wakeel", enum={"Wakeel", "USA", "Europe", "GCC", "Other"}),
+     *                 @OA\Property(property="vehicle_care_other", type="string", example="Custom details"),
      *                 @OA\Property(property="transmission", type="string", example="Manual", enum={"Automatic", "Manual", "Semi-Automatic"})
      *             ),
      *             @OA\Property(
@@ -1603,7 +1606,8 @@ class ListingController extends Controller
                     'motorcycle.modified' => 'sometimes|boolean',
                     'motorcycle.insurance' => 'sometimes|boolean',
                     'motorcycle.general_condition' => 'sometimes|in:New,Used',
-                    'motorcycle.vehicle_care' => 'sometimes|in:Wakeel,USA,Europe,GCC,Customs License,Other',
+                    'motorcycle.vehicle_care' => 'sometimes|in:Wakeel,USA,Europe,GCC,Other',
+                    'motorcycle.vehicle_care_other' => 'sometimes|string',
                     'motorcycle.transmission' => 'sometimes|in:Automatic,Manual,Semi-Automatic',
                 ]);
             }
@@ -1640,7 +1644,7 @@ class ListingController extends Controller
                 // Nettoyage du prix
                 if (isset($basicInfo['price']) && $basicInfo['price'] !== null && $basicInfo['price'] !== '') {
                     $cleanPrice = str_replace([' ', ','], '', $basicInfo['price']);
-                    $basicInfo['price'] = is_numeric($cleanPrice) ? (float)$cleanPrice : null;
+                    $basicInfo['price'] = is_numeric($cleanPrice) ? (float) $cleanPrice : null;
                 }
 
                 $allowedBasicFields = [

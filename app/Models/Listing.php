@@ -26,10 +26,10 @@ class Listing extends Model
         'contacting_channel',
         'seller_type',
         'payment_pending',
-        'step',                    // ✅ Pour multi-step listing
-        'views_count',             // ✅ Pour tracking des vues
-        'edit_count',              // ✅ NOUVEAU: Compteur d'éditions
-        'last_edited_at',          // ✅ NOUVEAU: Date de dernière édition
+        'step',                   
+        'views_count',            
+        'edit_count',             
+        'last_edited_at',         
     ];
 
     // ✅ AJOUT DES CASTS
