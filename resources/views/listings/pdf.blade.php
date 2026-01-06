@@ -260,7 +260,8 @@
                             <td>{{ $submission->submission_date ? \Carbon\Carbon::parse($submission->submission_date)->format('d M Y H:i') : '-' }}
                             </td>
                             <td style="font-weight: bold;">{{ number_format($submission->amount, 2) }}
-                                {{ $listing->currency ?? 'AED' }}</td>
+                                {{ $listing->currency ?? 'AED' }}
+                            </td>
                             <td>{{ ucfirst($submission->status) }}</td>
                         </tr>
                     @endforeach
@@ -276,7 +277,8 @@
     </div>
 
     <div class="footer">
-        <p>Visit <strong><a href="https://dabapp.co">dabapp.co</a></strong></p>
+        <p>Visit <strong><a href="https://dabapp.co"
+                    style="color: #F03D24; text-decoration: none;">dabapp.co</a></strong></p>
     </div>
 
 </body>
