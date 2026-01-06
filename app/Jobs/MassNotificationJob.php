@@ -48,13 +48,10 @@ class MassNotificationJob implements ShouldQueue
         }
 
         // 2. Filter by Listing Criteria
-        if (!empty($this->filters['category_id']) || !empty($this->filters['city_id']) || !empty($this->filters['date_from']) || !empty($this->filters['date_to'])) {
+        if (!empty($this->filters['category_id']) || !empty($this->filters['date_from']) || !empty($this->filters['date_to'])) {
             $query->whereHas('listings', function($q) {
                 if (!empty($this->filters['category_id'])) {
                     $q->where('category_id', $this->filters['category_id']);
-                }
-                if (!empty($this->filters['city_id'])) {
-                    $q->where('city_id', $this->filters['city_id']);
                 }
                 if (!empty($this->filters['date_from'])) {
                     $q->where('created_at', '>=', $this->filters['date_from']);
