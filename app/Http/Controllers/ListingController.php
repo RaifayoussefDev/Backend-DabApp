@@ -1811,7 +1811,6 @@ class ListingController extends Controller
 
             DB::commit();
 
-
             try {
                 $this->notificationService->sendToUser(Auth::user(), 'listing_updated', [
                     'listing_title' => $listing->title,
@@ -1819,6 +1818,7 @@ class ListingController extends Controller
             } catch (\Exception $e) {
                 \Log::error('Failed to send listing_updated notification: ' . $e->getMessage());
             }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Listing updated successfully. You have used your one-time edit.',
@@ -1829,7 +1829,6 @@ class ListingController extends Controller
                 'updated_fields' => array_unique($updatedFields),
                 'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart.motorcycles', 'licensePlate.fieldValues'])
             ], 200);
-
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
