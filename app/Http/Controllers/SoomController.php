@@ -1283,6 +1283,7 @@ class SoomController extends Controller
         // Add first image to each submission
         $sooms->each(function ($soom) {
             $soom->first_image = $soom->listing->images->first()?->image_url;
+            $soom->listing_status = $soom->listing->status;
         });
 
         // Statistiques
