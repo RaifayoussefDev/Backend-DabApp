@@ -13812,9 +13812,17 @@
                                         "type": "string",
                                         "example": "Ultimate Guide to Motorcycle Maintenance 2024"
                                     },
+                                    "title_ar": {
+                                        "type": "string",
+                                        "example": "الدليل الشامل لصيانة الدراجات النارية 2024"
+                                    },
                                     "excerpt": {
                                         "type": "string",
                                         "example": "A complete walkthrough for maintaining your bike's engine, tires, and chains."
+                                    },
+                                    "excerpt_ar": {
+                                        "type": "string",
+                                        "example": "برنامج تعليمي كامل لصيانة محرك دراجتك وإطاراتها وسلاسلها."
                                     },
                                     "featured_image": {
                                         "type": "string",
@@ -13865,9 +13873,17 @@
                                                     "type": "string",
                                                     "example": "Checking Tire Pressure"
                                                 },
+                                                "title_ar": {
+                                                    "type": "string",
+                                                    "example": "فحص ضغط الإطارات"
+                                                },
                                                 "description": {
                                                     "type": "string",
                                                     "example": "Always check your tire pressure when the tires are cold for accurate readings."
+                                                },
+                                                "description_ar": {
+                                                    "type": "string",
+                                                    "example": "تحقق دائمًا من ضغط الإطارات عندما تكون الإطارات باردة للحصول على قراءات دقيقة."
                                                 },
                                                 "image_url": {
                                                     "type": "string",
@@ -14015,7 +14031,13 @@
                                     "title": {
                                         "type": "string"
                                     },
+                                    "title_ar": {
+                                        "type": "string"
+                                    },
                                     "excerpt": {
+                                        "type": "string"
+                                    },
+                                    "excerpt_ar": {
                                         "type": "string"
                                     },
                                     "featured_image": {
@@ -14054,7 +14076,13 @@
                                                 "title": {
                                                     "type": "string"
                                                 },
+                                                "title_ar": {
+                                                    "type": "string"
+                                                },
                                                 "description": {
+                                                    "type": "string"
+                                                },
+                                                "description_ar": {
                                                     "type": "string"
                                                 },
                                                 "image_url": {

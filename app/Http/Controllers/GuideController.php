@@ -100,7 +100,9 @@ class GuideController extends Controller
      *         @OA\JsonContent(
      *             required={"title"},
      *             @OA\Property(property="title", type="string", example="Ultimate Guide to Motorcycle Maintenance 2024"),
+     *             @OA\Property(property="title_ar", type="string", example="الدليل الشامل لصيانة الدراجات النارية 2024"),
      *             @OA\Property(property="excerpt", type="string", example="A complete walkthrough for maintaining your bike's engine, tires, and chains."),
+     *             @OA\Property(property="excerpt_ar", type="string", example="برنامج تعليمي كامل لصيانة محرك دراجتك وإطاراتها وسلاسلها."),
      *             @OA\Property(property="featured_image", type="string", format="url", example="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80"),
      *             @OA\Property(property="category_id", type="integer", example=1, description="ID of the guide category"),
      *             @OA\Property(property="tags", type="array", @OA\Items(type="integer"), example={1, 3, 5}, description="Array of tag IDs"),
@@ -114,7 +116,9 @@ class GuideController extends Controller
      *                     required={"type"},
      *                     @OA\Property(property="type", type="string", enum={"text", "image", "text_image", "gallery", "video"}, example="text_image"),
      *                     @OA\Property(property="title", type="string", example="Checking Tire Pressure"),
+     *                     @OA\Property(property="title_ar", type="string", example="فحص ضغط الإطارات"),
      *                     @OA\Property(property="description", type="string", example="Always check your tire pressure when the tires are cold for accurate readings."),
+     *                     @OA\Property(property="description_ar", type="string", example="تحقق دائمًا من ضغط الإطارات عندما تكون الإطارات باردة للحصول على قراءات دقيقة."),
      *                     @OA\Property(property="image_url", type="string", format="url", example="https://example.com/tire-pressure.jpg"),
      *                     @OA\Property(property="image_position", type="string", enum={"top", "right", "left", "bottom"}, example="right"),
      *                     @OA\Property(property="order_position", type="integer", example=1),
@@ -167,7 +171,9 @@ class GuideController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
+            'title_ar' => 'nullable|string|max:255',
             'excerpt' => 'nullable|string',
+            'excerpt_ar' => 'nullable|string',
             'featured_image' => 'nullable|string|max:255',
             'category_id' => 'nullable|exists:guide_categories,id',
             'tags' => 'nullable|array',
@@ -176,7 +182,9 @@ class GuideController extends Controller
             'sections' => 'nullable|array',
             'sections.*.type' => 'required|in:text,image,text_image,gallery,video',
             'sections.*.title' => 'nullable|string|max:255',
+            'sections.*.title_ar' => 'nullable|string|max:255',
             'sections.*.description' => 'nullable|string',
+            'sections.*.description_ar' => 'nullable|string',
             'sections.*.image_url' => 'nullable|string|max:255',
             'sections.*.image_position' => 'nullable|in:top,right,left,bottom',
             'sections.*.media' => 'nullable|array',
@@ -192,8 +200,11 @@ class GuideController extends Controller
         try {
             $guide = Guide::create([
                 'title' => $request->title,
+                'title_ar' => $request->title_ar,
                 'content' => '',
+                'content_ar' => '',
                 'excerpt' => $request->excerpt,
+                'excerpt_ar' => $request->excerpt_ar,
                 'featured_image' => $request->featured_image,
                 'category_id' => $request->category_id,
                 'author_id' => Auth::id(),
@@ -211,7 +222,9 @@ class GuideController extends Controller
                         'guide_id' => $guide->id,
                         'type' => $sectionData['type'],
                         'title' => $sectionData['title'] ?? null,
+                        'title_ar' => $sectionData['title_ar'] ?? null,
                         'description' => $sectionData['description'] ?? null,
+                        'description_ar' => $sectionData['description_ar'] ?? null,
                         'image_url' => $sectionData['image_url'] ?? null,
                         'image_position' => $sectionData['image_position'] ?? 'top',
                         'media' => $sectionData['media'] ?? null,
@@ -284,7 +297,9 @@ class GuideController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             @OA\Property(property="title", type="string"),
+     *             @OA\Property(property="title_ar", type="string"),
      *             @OA\Property(property="excerpt", type="string"),
+     *             @OA\Property(property="excerpt_ar", type="string"),
      *             @OA\Property(property="featured_image", type="string"),
      *             @OA\Property(property="category_id", type="integer"),
      *             @OA\Property(property="tags", type="array", @OA\Items(type="integer")),
@@ -297,7 +312,9 @@ class GuideController extends Controller
      *                     @OA\Property(property="id", type="integer", description="Section ID for update, omit for new section"),
      *                     @OA\Property(property="type", type="string", enum={"text", "image", "text_image", "gallery", "video"}),
      *                     @OA\Property(property="title", type="string"),
+     *                     @OA\Property(property="title_ar", type="string"),
      *                     @OA\Property(property="description", type="string"),
+     *                     @OA\Property(property="description_ar", type="string"),
      *                     @OA\Property(property="image_url", type="string"),
      *                     @OA\Property(property="image_position", type="string", enum={"top", "right", "left", "bottom"}),
      *                     @OA\Property(property="media", type="array", @OA\Items(type="object")),
@@ -325,7 +342,9 @@ class GuideController extends Controller
 
         $validator = Validator::make($request->all(), [
             'title' => 'sometimes|string|max:255',
+            'title_ar' => 'nullable|string|max:255',
             'excerpt' => 'nullable|string',
+            'excerpt_ar' => 'nullable|string',
             'featured_image' => 'nullable|string|max:255',
             'category_id' => 'nullable|exists:guide_categories,id',
             'tags' => 'nullable|array',
@@ -335,7 +354,9 @@ class GuideController extends Controller
             'sections.*.id' => 'nullable|exists:guide_sections,id',
             'sections.*.type' => 'required|in:text,image,text_image,gallery,video',
             'sections.*.title' => 'nullable|string|max:255',
+            'sections.*.title_ar' => 'nullable|string|max:255',
             'sections.*.description' => 'nullable|string',
+            'sections.*.description_ar' => 'nullable|string',
             'sections.*.image_url' => 'nullable|string|max:255',
             'sections.*.image_position' => 'nullable|in:top,right,left,bottom',
             'sections.*.media' => 'nullable|array',
@@ -349,7 +370,7 @@ class GuideController extends Controller
         DB::beginTransaction();
 
         try {
-            $guide->update($request->only(['title', 'excerpt', 'featured_image', 'category_id', 'is_featured']));
+            $guide->update($request->only(['title', 'title_ar', 'excerpt', 'excerpt_ar', 'featured_image', 'category_id', 'is_featured']));
 
             if ($request->has('tags')) {
                 $guide->tags()->sync($request->tags);
@@ -366,7 +387,9 @@ class GuideController extends Controller
                             ->update([
                                 'type' => $sectionData['type'],
                                 'title' => $sectionData['title'] ?? null,
+                                'title_ar' => $sectionData['title_ar'] ?? null,
                                 'description' => $sectionData['description'] ?? null,
+                                'description_ar' => $sectionData['description_ar'] ?? null,
                                 'image_url' => $sectionData['image_url'] ?? null,
                                 'image_position' => $sectionData['image_position'] ?? 'top',
                                 'media' => $sectionData['media'] ?? null,
@@ -377,7 +400,9 @@ class GuideController extends Controller
                             'guide_id' => $guide->id,
                             'type' => $sectionData['type'],
                             'title' => $sectionData['title'] ?? null,
+                            'title_ar' => $sectionData['title_ar'] ?? null,
                             'description' => $sectionData['description'] ?? null,
+                            'description_ar' => $sectionData['description_ar'] ?? null,
                             'image_url' => $sectionData['image_url'] ?? null,
                             'image_position' => $sectionData['image_position'] ?? 'top',
                             'media' => $sectionData['media'] ?? null,
@@ -392,7 +417,7 @@ class GuideController extends Controller
 
             // Notify followers/users about update
             try {
-               $this->notificationService->notifyGuideUpdated(Auth::user(), $guide);
+                $this->notificationService->notifyGuideUpdated(Auth::user(), $guide);
             } catch (\Exception $e) {
                 \Log::error('Failed to send guide updated notification: ' . $e->getMessage());
             }
@@ -907,8 +932,10 @@ class GuideController extends Controller
         return [
             'id' => $guide->id,
             'title' => $guide->title,
+            'title_ar' => $guide->title_ar,
             'slug' => $guide->slug,
             'excerpt' => $guide->excerpt,
+            'excerpt_ar' => $guide->excerpt_ar,
             'featured_image' => $guide->featured_image,
             'views_count' => $guide->views_count,
             'likes_count' => $guide->likes()->count(),
@@ -946,8 +973,10 @@ class GuideController extends Controller
         return [
             'id' => $guide->id,
             'title' => $guide->title,
+            'title_ar' => $guide->title_ar,
             'slug' => $guide->slug,
             'excerpt' => $guide->excerpt,
+            'excerpt_ar' => $guide->excerpt_ar,
             'featured_image' => $guide->featured_image,
             'views_count' => $guide->views_count,
             'likes_count' => $guide->likes()->count(),
@@ -973,7 +1002,9 @@ class GuideController extends Controller
                     'id' => $section->id,
                     'type' => $section->type,
                     'title' => $section->title,
+                    'title_ar' => $section->title_ar,
                     'description' => $section->description,
+                    'description_ar' => $section->description_ar,
                     'image_url' => $section->image_url,
                     'image_position' => $section->image_position,
                     'media' => $section->media,
@@ -1037,8 +1068,10 @@ class GuideController extends Controller
         return [
             'id' => $guide->id,
             'title' => $guide->title,
+            'title_ar' => $guide->title_ar,
             'slug' => $guide->slug,
             'excerpt' => $guide->excerpt,
+            'excerpt_ar' => $guide->excerpt_ar,
             'featured_image' => $guide->featured_image,
             'status' => $guide->status,
             'is_featured' => $guide->is_featured,
@@ -1055,7 +1088,9 @@ class GuideController extends Controller
                     'id' => $section->id,
                     'type' => $section->type,
                     'title' => $section->title,
+                    'title_ar' => $section->title_ar,
                     'description' => $section->description,
+                    'description_ar' => $section->description_ar,
                     'image_url' => $section->image_url,
                     'image_position' => $section->image_position,
                     'media' => $section->media,
