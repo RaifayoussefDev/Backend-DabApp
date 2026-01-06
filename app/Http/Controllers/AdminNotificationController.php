@@ -25,7 +25,6 @@ class AdminNotificationController extends Controller
      *         @OA\JsonContent(
      *             required={"content"},
      *             @OA\Property(
-     *             @OA\Property(
      *                 property="filters",
      *                 type="object",
      *                 @OA\Property(property="country_id", type="integer"),

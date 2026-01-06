@@ -982,7 +982,17 @@
                                             "country_id": {
                                                 "type": "integer"
                                             },
+                                            "city_id": {
+                                                "type": "integer"
+                                            },
                                             "category_id": {
+                                                "type": "integer"
+                                            },
+                                            "has_listing": {
+                                                "type": "boolean"
+                                            },
+                                            "brand_in_garage": {
+                                                "description": "Brand ID in garage",
                                                 "type": "integer"
                                             },
                                             "date_from": {
@@ -1003,16 +1013,20 @@
                                         ],
                                         "properties": {
                                             "title_en": {
-                                                "type": "string"
+                                                "type": "string",
+                                                "example": "New Promotion"
                                             },
                                             "title_ar": {
-                                                "type": "string"
+                                                "type": "string",
+                                                "example": "عروض جديدة"
                                             },
                                             "body_en": {
-                                                "type": "string"
+                                                "type": "string",
+                                                "example": "Check out our latest offers!"
                                             },
                                             "body_ar": {
-                                                "type": "string"
+                                                "type": "string",
+                                                "example": "تحقق من أحدث عروضنا!"
                                             },
                                             "type": {
                                                 "type": "string",
