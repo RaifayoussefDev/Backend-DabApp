@@ -46,8 +46,8 @@ class NotificationService
             ];
         }
 
-        // ✅ Déterminer la langue de l'utilisateur (défaut: 'en')
-        $language = $user->language ?? 'en';
+        // ✅ Déterminer la langue de l'utilisateur (défaut: 'ar')
+        $language = ($user->language === 'en') ? 'en' : 'ar';
 
         // ✅ Rendre le template dans la langue de l'utilisateur
         $rendered = $template->render($data, $language);
