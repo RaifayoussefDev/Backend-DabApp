@@ -276,7 +276,7 @@
     </div>
 
     <div class="footer">
-        <p>Visit <strong>dabapp.co</strong></p>
+        <p>Visit <strong><a href="https://dabapp.co">dabapp.co</a></strong></p>
     </div>
 
 </body>
