@@ -3315,6 +3315,7 @@ class ListingController extends Controller
                 'insurance' => $listing->motorcycle->insurance,
                 'general_condition' => $listing->motorcycle->general_condition,
                 'vehicle_care' => $listing->motorcycle->vehicle_care,
+                'vehicle_care_other' => $listing->motorcycle->vehicle_care_other,
                 'transmission' => $listing->motorcycle->transmission,
             ];
         }
@@ -3340,6 +3341,7 @@ class ListingController extends Controller
             $licensePlate = $listing->licensePlate;
 
             $data['license_plate'] = [
+                'image' => $listing->images->where('is_plate_image', true)->first()?->image_url ?? $listing->images->first()?->image_url,
                 'plate_format' => [
                     'id' => $licensePlate->format?->id,
                     'name' => $licensePlate->format?->name,

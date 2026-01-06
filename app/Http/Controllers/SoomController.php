@@ -449,7 +449,9 @@ class SoomController extends Controller
         $minAmount = $listing->minimum_bid ?? 0;
 
         if ($lastSubmission) {
-            $minAmount = $lastSubmission->amount + 1;
+            // Use the shared increment logic
+            $increment = $this->getMinimumIncrement($lastSubmission->amount);
+            $minAmount = $lastSubmission->amount + $increment;
         }
 
         return response()->json([
