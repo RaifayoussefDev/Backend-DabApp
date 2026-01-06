@@ -78,10 +78,14 @@ class MassNotificationJob implements ShouldQueue
                         'body_ar' => $this->content['body_ar'] ?? ($this->content['body_en'] ?? ''),
                     ];
 
-                    $notificationService->sendToUser($user, 'admin_broadcast', $data, [
+                    $result = $notificationService->sendToUser($user, 'admin_broadcast', $data, [
                         'channels' => $this->channels, 
                         'priority' => 'high'
                     ]);
+
+                    if (!$result['success']) {
+                        Log::warning("Mass notification failed for user {$user->id}: " . ($result['message'] ?? 'Unknown error'));
+                    }
 
                 } catch (\Exception $e) {
                     Log::error("Failed to send mass notification to user {$user->id}: " . $e->getMessage());
