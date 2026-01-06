@@ -1272,7 +1272,7 @@ class SoomController extends Controller
         })
             ->with([
                 'user:id,first_name,last_name,email',
-                'listing:id,title,description,seller_id,city_id,country_id',
+                'listing:id,title,description,seller_id,city_id,country_id,status',
                 'listing.images',
                 'listing.city:id,name,country_id',
                 'listing.country:id,name,code',
@@ -1384,7 +1384,7 @@ class SoomController extends Controller
         // Récupérer tous mes SOOMs envoyés
         $sooms = Submission::where('user_id', $userId)
             ->with([
-                'listing:id,title,description,seller_id,city_id,country_id',
+                'listing:id,title,description,seller_id,city_id,country_id,status',
                 'listing.seller:id,first_name,last_name,email,phone',
                 'listing.city:id,name,country_id',
                 'listing.country:id,code,name',
