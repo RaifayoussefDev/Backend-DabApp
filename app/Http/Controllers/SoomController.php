@@ -1402,6 +1402,11 @@ class SoomController extends Controller
             'rejected_sooms' => $sooms->where('status', 'rejected')->count(),
         ];
 
+        // Add listing status to each submission
+        $sooms->each(function ($soom) {
+            $soom->listing_status = $soom->listing->status;
+        });
+
         return response()->json([
             'message' => 'My SOOMs retrieved successfully',
             'data' => $sooms,
