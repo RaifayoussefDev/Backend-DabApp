@@ -27,7 +27,7 @@ class AdminNotificationController extends Controller
      *             @OA\Property(
      *                 property="filters",
      *                 type="object",
-     *             @OA\Property(property="filters", type="object",
+     * 
      *                 @OA\Property(property="country_id", type="integer"),
      *                 @OA\Property(property="category_id", type="integer"),
      *                 @OA\Property(property="has_listing", type="boolean"),
