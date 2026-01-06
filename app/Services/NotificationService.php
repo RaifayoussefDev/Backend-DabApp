@@ -9,6 +9,8 @@ use App\Models\NotificationTemplate;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\NotificationMail;
 
 class NotificationService
 {
@@ -76,10 +78,34 @@ class NotificationService
             $pushResults = $this->sendPushNotification($user, $notification, $options);
         }
 
+        // Envoyer l'email si activé (soit explicitement demandé, soit par défaut si activé dans les préférences)
+        $emailResult = null;
+        $shouldSendEmail = false;
+
+        // 1. Vérifier si 'email' est dans les channels demandés
+        if (isset($options['channels']) && in_array('email', $options['channels'])) {
+            $shouldSendEmail = true;
+        } 
+        // 2. Si aucun channel n'est spécifié, vérifier les préférences globales
+        elseif (!isset($options['channels']) && $preferences->canSendEmail()) {
+            $shouldSendEmail = true;
+        }
+
+        if ($shouldSendEmail && $user->email) {
+            try {
+                Mail::to($user->email)->send(new NotificationMail($notification, $rendered['message'], $data));
+                $emailResult = 'sent';
+            } catch (\Exception $e) {
+                Log::error("Failed to send notification email to {$user->email}: " . $e->getMessage());
+                $emailResult = 'failed: ' . $e->getMessage();
+            }
+        }
+
         return [
             'success' => true,
             'notification_id' => $notification->id,
             'push_results' => $pushResults,
+            'email_result' => $emailResult,
         ];
     }
 
