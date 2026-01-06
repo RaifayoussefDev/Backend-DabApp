@@ -16712,7 +16712,12 @@
                                     "vehicle_care": {
                                         "description": "Step 1: Vehicle care type",
                                         "type": "string",
-                                        "example": "Wakeel / USA / Europe / GCC / Customs License / Other"
+                                        "example": "Wakeel / USA / Europe / GCC / Other"
+                                    },
+                                    "vehicle_care_other": {
+                                        "description": "Step 1: Custom vehicle care details if Other is selected",
+                                        "type": "string",
+                                        "example": "Custom Details"
                                     },
                                     "transmission": {
                                         "description": "Step 1: Transmission type",
@@ -17379,10 +17384,13 @@
                                                     "USA",
                                                     "Europe",
                                                     "GCC",
-                                                    "Customs License",
                                                     "Other"
                                                 ],
                                                 "example": "Wakeel"
+                                            },
+                                            "vehicle_care_other": {
+                                                "type": "string",
+                                                "example": "Custom details"
                                             },
                                             "transmission": {
                                                 "type": "string",
