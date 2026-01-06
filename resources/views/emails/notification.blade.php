@@ -1,5 +1,25 @@
+@php
+    $lang = $notification->user->language ?? 'ar';
+    $dir = $lang === 'en' ? 'ltr' : 'rtl';
+    $align = $lang === 'en' ? 'left' : 'right';
+    
+    // Translations
+    $trans = [
+        'greeting' => $lang === 'en' ? 'Hello' : 'مرحبا',
+        'view_details' => $lang === 'en' ? 'View Details' : 'عرض التفاصيل',
+        'automated_message' => $lang === 'en' ? 
+            'This is an automated message from DabApp. If you have any questions, please feel free to contact us.' : 
+            'هذه رسالة آلية من DabApp. إذا كان لديك أي استفسار، لا تتردد في الاتصال بنا.',
+        'sent_at' => $lang === 'en' ? 'Sent at' : 'تم الإرسال في',
+        'platform_name' => $lang === 'en' ? 'DabApp Platform - Motorcycle Marketplace' : 'منصة DabApp - سوق الدراجات النارية',
+        'rights_reserved' => $lang === 'en' ? 'All rights reserved.' : 'جميع الحقوق محفوظة.',
+        'unsubscribe' => $lang === 'en' ? 'To unsubscribe from emails,' : 'لإلغاء الاشتراك في رسائل البريد الإلكتروني،',
+        'click_here' => $lang === 'en' ? 'click here' : 'انقر هنا',
+    ];
+@endphp
+
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="{{ $lang }}" dir="{{ $dir }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,6 +37,8 @@
             background-color: #f5f5f5;
             padding: 20px;
             line-height: 1.6;
+            direction: {{ $dir }};
+            text-align: {{ $align }};
         }
 
         .email-container {
@@ -40,15 +62,9 @@
             margin-bottom: 15px;
         }
 
-        .header-title {
-            color: #ffffff;
-            font-size: 24px;
-            font-weight: bold;
-            margin: 0;
-        }
-
         .email-body {
             padding: 40px 30px;
+            text-align: {{ $align }};
         }
 
         .greeting {
@@ -60,10 +76,11 @@
 
         .notification-card {
             background-color: #f9f9f9;
-            border-left: 4px solid {{ $primaryColor }};
+            border-{{ $align === 'left' ? 'left' : 'right' }}: 4px solid {{ $primaryColor }};
             padding: 20px;
             margin: 25px 0;
             border-radius: 8px;
+            text-align: {{ $align }};
         }
 
         .notification-title {
@@ -114,20 +131,11 @@
 
         .info-box {
             background-color: #e8f4f8;
-            border-left: 4px solid {{ $secondaryColor }};
+            border-{{ $align === 'left' ? 'left' : 'right' }}: 4px solid {{ $secondaryColor }};
             padding: 15px;
             margin: 20px 0;
             border-radius: 6px;
-        }
-
-        .info-box p {
-            margin: 5px 0;
-            color: #555;
-            font-size: 14px;
-        }
-
-        .info-box strong {
-            color: {{ $secondaryColor }};
+            text-align: {{ $align }};
         }
 
         .divider {
@@ -144,44 +152,6 @@
             font-size: 14px;
         }
 
-        .footer-links {
-            margin: 15px 0;
-        }
-
-        .footer-links a {
-            color: #ffffff;
-            text-decoration: none;
-            margin: 0 10px;
-            opacity: 0.9;
-        }
-
-        .footer-links a:hover {
-            opacity: 1;
-            text-decoration: underline;
-        }
-
-        .social-icons {
-            margin: 20px 0;
-        }
-
-        .social-icons a {
-            display: inline-block;
-            width: 35px;
-            height: 35px;
-            background-color: {{ $primaryColor }};
-            border-radius: 50%;
-            text-align: center;
-            line-height: 35px;
-            color: white;
-            margin: 0 5px;
-            text-decoration: none;
-            transition: background-color 0.3s;
-        }
-
-        .social-icons a:hover {
-            background-color: #d63519;
-        }
-
         .timestamp {
             color: #999999;
             font-size: 13px;
@@ -191,35 +161,12 @@
 
         .priority-high {
             background-color: #fff3cd;
-            border-left-color: #ffc107;
+            border-{{ $align === 'left' ? 'left' : 'right' }}-color: #ffc107;
         }
 
         .priority-urgent {
             background-color: #f8d7da;
-            border-left-color: #dc3545;
-        }
-
-        @media only screen and (max-width: 600px) {
-            body {
-                padding: 10px;
-            }
-
-            .email-body {
-                padding: 25px 20px;
-            }
-
-            .header-title {
-                font-size: 20px;
-            }
-
-            .notification-title {
-                font-size: 18px;
-            }
-
-            .action-button {
-                padding: 12px 25px;
-                font-size: 14px;
-            }
+            border-{{ $align === 'left' ? 'left' : 'right' }}-color: #dc3545;
         }
     </style>
 </head>
@@ -232,7 +179,7 @@
 
         <!-- Body -->
         <div class="email-body">
-            <p class="greeting">مرحبا {{ $userName }}! 👋</p>
+            <p class="greeting">{{ $trans['greeting'] }} {{ $userName }}! 👋</p>
 
             <div class="notification-card @if($notification->priority === 'high') priority-high @elseif($notification->priority === 'urgent') priority-urgent @endif">
                 @if($notification->icon)
@@ -267,7 +214,7 @@
                 @if($actionUrl)
                     <center>
                         <a href="{{ $actionUrl }}" class="action-button">
-                            عرض التفاصيل
+                            {{ $trans['view_details'] }}
                         </a>
                     </center>
                 @endif
@@ -276,33 +223,25 @@
             <div class="divider"></div>
 
             <p style="color: #666; font-size: 14px; text-align: center;">
-                هذه رسالة آلية من DabApp. إذا كان لديك أي استفسار، لا تتردد في الاتصال بنا.
+                {{ $trans['automated_message'] }}
             </p>
 
             <div class="timestamp">
-                تم الإرسال في {{ $notification->created_at->format('d/m/Y H:i') }}
+                {{ $trans['sent_at'] }} {{ $notification->created_at->format('d/m/Y H:i') }}
             </div>
         </div>
 
         <!-- Footer -->
         <div class="email-footer">
-            <p style="margin-bottom: 15px; font-weight: 600;">منصة DabApp - سوق الدراجات النارية</p>
-
-
-            <!-- <div class="footer-links">
-                <a href="{{ config('app.url') }}">الرئيسية</a>
-                <a href="{{ config('app.url') }}/contact">اتصل بنا</a>
-                <a href="{{ config('app.url') }}/privacy">سياسة الخصوصية</a>
-                <a href="{{ config('app.url') }}/settings/notifications">إدارة الإشعارات</a>
-            </div> -->
+            <p style="margin-bottom: 15px; font-weight: 600;">{{ $trans['platform_name'] }}</p>
 
             <p style="margin-top: 20px; font-size: 12px; opacity: 0.8;">
-                © {{ date('Y') }} DabApp. جميع الحقوق محفوظة.
+                © {{ date('Y') }} DabApp. {{ $trans['rights_reserved'] }}
             </p>
 
             <p style="margin-top: 10px; font-size: 11px; opacity: 0.7;">
-                لإلغاء الاشتراك في رسائل البريد الإلكتروني،
-                <a href="{{ config('app.url') }}/settings/notifications" style="color: #ffffff;">انقر هنا</a>
+                {{ $trans['unsubscribe'] }}
+                <a href="{{ config('app.url') }}/settings/notifications" style="color: #ffffff;">{{ $trans['click_here'] }}</a>
             </p>
         </div>
     </div>
