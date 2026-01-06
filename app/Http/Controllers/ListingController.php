@@ -1554,7 +1554,7 @@ class ListingController extends Controller
                 ]);
 
                 return response()->json([
-                    'error' => 'Edit limit reached. This listing has already been edited once.',
+                    'error' => 'You have already modified this listing and you have only one modification allowed.',
                     'edit_count' => $listing->edit_count,
                     'max_edits_allowed' => 1,
                     'last_edited_at' => $listing->last_edited_at ? $listing->last_edited_at->format('Y-m-d H:i:s') : null,
@@ -1803,7 +1803,10 @@ class ListingController extends Controller
                         ]);
                     }
                 }
-            }
+
+            // ✅ INCREMENT EDIT COUNT & TIMESTAMP
+            $listing->increment('edit_count');
+            $listing->update(['last_edited_at' => now()]);
 
             DB::commit();
 

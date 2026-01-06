@@ -122,6 +122,8 @@
         </div>
         <p style="color: #666;">
             📍 {{ $listing->city->name ?? 'Unknown City' }}, {{ $listing->country->name ?? 'Unknown Country' }}
+            <br>
+            PHONE : {{ $listing->seller->phone ?? 'Unavailable' }}
         </p>
     </div>
 

@@ -81,6 +81,14 @@ class MassNotificationJob implements ShouldQueue
         $totalUsers = $query->count();
         Log::info("Found {$totalUsers} users for mass notification.");
 
+        $count = $query->count();
+        Log::info("MassNotificationJob: Found {$count} users matching filters.", ['filters' => $this->filters]);
+
+        if ($count === 0) {
+           Log::warning("MassNotificationJob: No users found matching the criteria.");
+           return;
+        }
+
         $query->chunk(100, function ($users) use ($notificationService) {
             foreach ($users as $user) {
                 try {
