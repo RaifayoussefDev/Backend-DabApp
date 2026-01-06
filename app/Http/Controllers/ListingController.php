@@ -1803,6 +1803,7 @@ class ListingController extends Controller
                         ]);
                     }
                 }
+            }
 
             // ✅ INCREMENT EDIT COUNT & TIMESTAMP
             $listing->increment('edit_count');
@@ -1829,16 +1830,7 @@ class ListingController extends Controller
                 'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart.motorcycles', 'licensePlate.fieldValues'])
             ], 200);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Listing updated successfully. You have used your one-time edit.',
-                'listing_id' => $listing->id,
-                'edit_count' => $listing->edit_count,
-                'can_edit_again' => false,
-                'last_edited_at' => $listing->last_edited_at->format('Y-m-d H:i:s'),
-                'updated_fields' => array_unique($updatedFields),
-                'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart.motorcycles', 'licensePlate.fieldValues'])
-            ], 200);
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             return response()->json([
