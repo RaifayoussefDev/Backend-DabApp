@@ -383,7 +383,8 @@ class SoomController extends Controller
             'message' => 'Submissions retrieved successfully',
             'data' => $submissions,
             'total_submissions' => $submissions->count(),
-            'highest_amount' => $submissions->first()?->amount ?? 0
+            'highest_amount' => $submissions->first()?->amount ?? 0,
+            'listing_status' => $listing->status
         ]);
     }
 
