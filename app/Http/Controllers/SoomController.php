@@ -978,6 +978,13 @@ class SoomController extends Controller
                 'sale_validation_date' => now()
             ]);
 
+            // Mettre à jour le statut du listing à "sold"
+            $submission->listing->update([
+                'status' => 'sold',
+                'closed_at' => now(),
+                'closing_reason' => 'sold_via_soom'
+            ]);
+
             // MAINTENANT rejeter tous les autres SOOMs pending pour ce listing
             Submission::where('listing_id', $submission->listing_id)
                 ->where('id', '!=', $submissionId)
