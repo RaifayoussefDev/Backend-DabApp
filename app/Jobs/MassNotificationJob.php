@@ -47,7 +47,7 @@ class MassNotificationJob implements ShouldQueue
             $query->where('country_id', $this->filters['country_id']);
         }
 
-        // 2. Filter by Listing Category or Date or City
+        // 2. Filter by Listing Criteria
         if (!empty($this->filters['category_id']) || !empty($this->filters['city_id']) || !empty($this->filters['date_from']) || !empty($this->filters['date_to'])) {
             $query->whereHas('listings', function($q) {
                 if (!empty($this->filters['category_id'])) {
@@ -62,6 +62,22 @@ class MassNotificationJob implements ShouldQueue
                 if (!empty($this->filters['date_to'])) {
                     $q->where('created_at', '<=', $this->filters['date_to']);
                 }
+            });
+        }
+
+        // 3. Filter by "Has Listing" (Boolean)
+        if (isset($this->filters['has_listing'])) {
+            if ($this->filters['has_listing']) {
+                $query->has('listings');
+            } else {
+                $query->doesntHave('listings');
+            }
+        }
+
+        // 4. Filter by Brand in Garage
+        if (!empty($this->filters['brand_in_garage'])) {
+            $query->whereHas('myGarage', function($q) {
+                $q->where('brand_id', $this->filters['brand_in_garage']);
             });
         }
 

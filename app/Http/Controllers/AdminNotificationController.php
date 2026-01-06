@@ -25,10 +25,14 @@ class AdminNotificationController extends Controller
      *         @OA\JsonContent(
      *             required={"content"},
      *             @OA\Property(
+     *             @OA\Property(
      *                 property="filters",
      *                 type="object",
      *                 @OA\Property(property="country_id", type="integer"),
+     *                 @OA\Property(property="city_id", type="integer"),
      *                 @OA\Property(property="category_id", type="integer"),
+     *                 @OA\Property(property="has_listing", type="boolean"),
+     *                 @OA\Property(property="brand_in_garage", type="integer", description="Brand ID in garage"),
      *                 @OA\Property(property="date_from", type="string", format="date"),
      *                 @OA\Property(property="date_to", type="string", format="date")
      *             ),
@@ -36,10 +40,10 @@ class AdminNotificationController extends Controller
      *                 property="content",
      *                 type="object",
      *                 required={"title_en", "body_en"},
-     *                 @OA\Property(property="title_en", type="string"),
-     *                 @OA\Property(property="title_ar", type="string"),
-     *                 @OA\Property(property="body_en", type="string"),
-     *                 @OA\Property(property="body_ar", type="string"),
+     *                 @OA\Property(property="title_en", type="string", example="New Promotion"),
+     *                 @OA\Property(property="title_ar", type="string", example="عروض جديدة"),
+     *                 @OA\Property(property="body_en", type="string", example="Check out our latest offers!"),
+     *                 @OA\Property(property="body_ar", type="string", example="تحقق من أحدث عروضنا!"),
      *                 @OA\Property(property="type", type="string", enum={"promo", "news", "info"}, default="info")
      *             ),
      *             @OA\Property(
@@ -71,6 +75,8 @@ class AdminNotificationController extends Controller
             'filters.country_id' => 'nullable|exists:countries,id',
             'filters.city_id' => 'nullable|exists:cities,id',
             'filters.category_id' => 'nullable|exists:categories,id',
+            'filters.has_listing' => 'nullable|boolean',
+            'filters.brand_in_garage' => 'nullable|exists:motorcycle_brands,id',
             'filters.date_from' => 'nullable|date',
             'filters.date_to' => 'nullable|date',
             'channels' => 'nullable|array',

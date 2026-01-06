@@ -490,6 +490,14 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * Get the user's garage entries
+     */
+    public function myGarage(): HasMany
+    {
+        return $this->hasMany(MyGarage::class);
+    }
+
+    /**
      * Get the notification preference for the user
      */
     public function notificationPreference(): HasOne
