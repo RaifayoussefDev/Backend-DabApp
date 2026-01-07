@@ -11,6 +11,7 @@ class SparePart extends Model
         'listing_id',
         'bike_part_brand_id',
         'bike_part_category_id',
+        'brand_other',
         'condition'
     ];
 
@@ -70,7 +71,7 @@ class SparePart extends Model
         return $this->hasMany(SparePartMotorcycle::class);
     }
     public function motorcycles()
-{
-    return $this->hasMany(SparePartMotorcycle::class, 'spare_part_id');
-}
+    {
+        return $this->hasMany(SparePartMotorcycle::class, 'spare_part_id');
+    }
 }

@@ -333,6 +333,7 @@ class ListingController extends Controller
      *             @OA\Property(property="listing_id", type="integer", example=522),
      *             @OA\Property(property="category_id", type="integer", example=2, description="Step 1: Always 2 for spare parts"),
      *             @OA\Property(property="bike_part_brand_id", type="integer", example=2, description="Step 1: Part brand ID"),
+     *             @OA\Property(property="brand_other", type="string", example="Custom Brand", description="Step 1: Custom brand name (if brand_id is Other)"),
      *             @OA\Property(property="bike_part_category_id", type="integer", example=2, description="Step 1: Part category ID"),
      *             @OA\Property(
      *                 property="motorcycles",
@@ -850,7 +851,8 @@ class ListingController extends Controller
                 $sparePartData = array_filter($request->only([
                     'condition',
                     'bike_part_brand_id',
-                    'bike_part_category_id'
+                    'bike_part_category_id',
+                    'brand_other'
                 ]));
 
                 if (!empty($sparePartData)) {
@@ -1313,6 +1315,7 @@ class ListingController extends Controller
      *                 description="Spare part-specific fields (category_id=2 only)",
      *                 @OA\Property(property="condition", type="string", example="new", enum={"new", "used"}),
      *                 @OA\Property(property="bike_part_brand_id", type="integer", example=3),
+     *                 @OA\Property(property="brand_other", type="string", example="Custom Brand"),
      *                 @OA\Property(property="bike_part_category_id", type="integer", example=5),
      *                 @OA\Property(
      *                     property="compatible_motorcycles",
@@ -1618,6 +1621,7 @@ class ListingController extends Controller
                     'spare_part.condition' => 'sometimes|in:new,used',
                     'spare_part.bike_part_brand_id' => 'sometimes|exists:bike_part_brands,id',
                     'spare_part.bike_part_category_id' => 'sometimes|exists:bike_part_categories,id',
+                    'spare_part.brand_other' => 'nullable|string',
                     'spare_part.compatible_motorcycles' => 'sometimes|array',
                     'spare_part.compatible_motorcycles.*.brand_id' => 'required|exists:motorcycle_brands,id',
                     'spare_part.compatible_motorcycles.*.model_id' => 'required|exists:motorcycle_models,id',
@@ -2012,7 +2016,8 @@ class ListingController extends Controller
                 } elseif ($listing->category_id == 2 && $listing->sparePart) {
                     $listingData['spare_part'] = [
                         'condition' => $listing->sparePart->condition,
-                        'brand' => $listing->sparePart->brand->name ?? null,
+                        'brand' => $listing->sparePart->bikePartBrand->name ?? $listing->sparePart->brand->name ?? null,
+                        'brand_other' => $listing->sparePart->brand_other,
                         'category' => $listing->sparePart->bikePartCategory->name ?? null,
                         'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
                             return [
@@ -2846,7 +2851,8 @@ class ListingController extends Controller
             } elseif ($listing->category_id == 2 && $listing->sparePart) {
                 $baseData['spare_part'] = [
                     'condition' => $listing->sparePart->condition,
-                    'brand' => $listing->sparePart->bikePartBrand?->name ?? null,
+                    'brand' => $listing->sparePart->bikePartBrand?->name ?? $listing->sparePart->brand_other ?? null,
+                    'brand_other' => $listing->sparePart->brand_other,
                     'category' => $listing->sparePart->bikePartCategory?->name ?? null,
                     'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
                         return [
@@ -3320,6 +3326,7 @@ class ListingController extends Controller
             $data['spare_part'] = [
                 'condition' => $listing->sparePart->condition,
                 'brand' => $listing->sparePart->bikePartBrand?->name,
+                'brand_other' => $listing->sparePart->brand_other,
                 'category' => $listing->sparePart->bikePartCategory?->name,
                 'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
                     return [
@@ -4619,6 +4626,7 @@ class ListingController extends Controller
                 $listingData['spare_part'] = [
                     'condition' => $listing->sparePart->condition,
                     'brand' => $listing->sparePart->bikePartBrand?->name,
+                    'brand_other' => $listing->sparePart->brand_other,
                     'category' => $listing->sparePart->bikePartCategory?->name,
                     'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
                         return [

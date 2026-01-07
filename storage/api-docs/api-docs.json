@@ -16963,6 +16963,11 @@
                                         "type": "integer",
                                         "example": 2
                                     },
+                                    "brand_other": {
+                                        "description": "Step 1: Custom brand name (if brand_id is Other)",
+                                        "type": "string",
+                                        "example": "Custom Brand"
+                                    },
                                     "bike_part_category_id": {
                                         "description": "Step 1: Part category ID",
                                         "type": "integer",
@@ -17457,6 +17462,10 @@
                                             "bike_part_brand_id": {
                                                 "type": "integer",
                                                 "example": 3
+                                            },
+                                            "brand_other": {
+                                                "type": "string",
+                                                "example": "Custom Brand"
                                             },
                                             "bike_part_category_id": {
                                                 "type": "integer",
