@@ -1578,7 +1578,7 @@ class ListingController extends Controller
                     'basic_info.country_id' => 'sometimes|exists:countries,id',
                     'basic_info.city_id' => 'sometimes|exists:cities,id',
                     'basic_info.seller_type' => 'sometimes|in:owner,dealer,middleman',
-                    'basic_info.contacting_channel' => 'sometimes|in:phone,email,whatsapp',
+                    'basic_info.contacting_channel' => ['nullable', \Illuminate\Validation\Rule::in(['phone', 'whatsapp', 'phone,whatsapp'])],
                     'basic_info.allow_submission' => 'sometimes|boolean',
                 ]);
             }
