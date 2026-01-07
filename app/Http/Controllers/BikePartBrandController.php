@@ -24,8 +24,9 @@ class BikePartBrandController extends Controller
      */
     public function index()
     {
+        $brands = BikePartBrand::orderByRaw("CASE WHEN name = 'Other' THEN 1 ELSE 0 END, name ASC")->get();
         return response()->json([
-            'data' => BikePartBrand::all()
+            'data' => $brands
         ]);
     }
 
