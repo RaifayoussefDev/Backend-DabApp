@@ -9,7 +9,7 @@ class MotorcycleType extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'description'];
+    protected $fillable = ['name', 'name_ar', 'description'];
 
     public function models()
     {

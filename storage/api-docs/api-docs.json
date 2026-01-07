@@ -3988,6 +3988,10 @@
                                     "name": {
                                         "type": "string",
                                         "example": "Oil"
+                                    },
+                                    "name_ar": {
+                                        "type": "string",
+                                        "example": "زيت"
                                     }
                                 },
                                 "type": "object"
@@ -4061,6 +4065,10 @@
                                     "name": {
                                         "type": "string",
                                         "example": "Oil"
+                                    },
+                                    "name_ar": {
+                                        "type": "string",
+                                        "example": "زيت"
                                     }
                                 },
                                 "type": "object"
@@ -21351,6 +21359,10 @@
                                     "name": {
                                         "type": "string",
                                         "example": "Sport"
+                                    },
+                                    "name_ar": {
+                                        "type": "string",
+                                        "example": "رياضية"
                                     }
                                 },
                                 "type": "object"
@@ -21419,6 +21431,10 @@
                                     "name": {
                                         "type": "string",
                                         "example": "Cruiser"
+                                    },
+                                    "name_ar": {
+                                        "type": "string",
+                                        "example": "كروزر"
                                     }
                                 },
                                 "type": "object"

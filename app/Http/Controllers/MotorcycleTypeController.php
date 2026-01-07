@@ -44,7 +44,8 @@ class MotorcycleTypeController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"name"},
-     *             @OA\Property(property="name", type="string", example="Sport")
+     *             @OA\Property(property="name", type="string", example="Sport"),
+            @OA\Property(property="name_ar", type="string", example="رياضية")
      *         )
      *     ),
      *     @OA\Response(response=201, description="Motorcycle type created successfully")
@@ -54,9 +55,10 @@ class MotorcycleTypeController extends Controller
     {
         $request->validate([
             'name' => 'required|unique:motorcycle_types',
+            'name_ar' => 'nullable|string'
         ]);
 
-        $type = MotorcycleType::create($request->only('name'));
+        $type = MotorcycleType::create($request->only(['name', 'name_ar']));
 
         return response()->json([
             'message' => 'Motorcycle type created successfully.',
@@ -108,7 +110,8 @@ class MotorcycleTypeController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"name"},
-     *             @OA\Property(property="name", type="string", example="Cruiser")
+     *             @OA\Property(property="name", type="string", example="Cruiser"),
+            @OA\Property(property="name_ar", type="string", example="كروزر")
      *         )
      *     ),
      *     @OA\Response(response=200, description="Motorcycle type updated successfully"),
@@ -125,9 +128,10 @@ class MotorcycleTypeController extends Controller
 
         $request->validate([
             'name' => 'required|unique:motorcycle_types,name,' . $id,
+            'name_ar' => 'nullable|string'
         ]);
 
-        $type->update($request->only('name'));
+        $type->update($request->only(['name', 'name_ar']));
 
         return response()->json([
             'message' => 'Motorcycle type updated successfully.',

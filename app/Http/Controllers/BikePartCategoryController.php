@@ -36,7 +36,8 @@ class BikePartCategoryController extends Controller
      *        required=true,
      *       @OA\JsonContent(
      *           required={"name"},
-     *          @OA\Property(property="name", type="string", example="Oil")
+     *          @OA\Property(property="name", type="string", example="Oil"),
+     *          @OA\Property(property="name_ar", type="string", example="زيت")
      *       )
      *   ),
      *  @OA\Response(response=201, description="Category created successfully"),
@@ -48,6 +49,7 @@ class BikePartCategoryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:bike_part_categories',
+            'name_ar' => 'nullable|string|max:255',
         ]);
 
         $category = BikePartCategory::create($validated);
@@ -99,7 +101,8 @@ class BikePartCategoryController extends Controller
      *       required=true,
      *      @OA\JsonContent(
      *          required={"name"},
-     *         @OA\Property(property="name", type="string", example="Oil")
+     *         @OA\Property(property="name", type="string", example="Oil"),
+     *         @OA\Property(property="name_ar", type="string", example="زيت")
      *      )
      *  ),
      * @OA\Response(response=200, description="Category updated successfully"),
@@ -110,6 +113,7 @@ class BikePartCategoryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:bike_part_categories,name,' . $bikePartCategory->id,
+            'name_ar' => 'nullable|string|max:255',
         ]);
 
         $bikePartCategory->update($validated);
