@@ -1607,7 +1607,7 @@ class ListingController extends Controller
                     'motorcycle.insurance' => 'sometimes|boolean',
                     'motorcycle.general_condition' => 'sometimes|in:New,Used',
                     'motorcycle.vehicle_care' => 'sometimes|in:Wakeel,USA,Europe,GCC,Other',
-                    'motorcycle.vehicle_care_other' => 'sometimes|string',
+                    'motorcycle.vehicle_care_other' => 'nullable|string',
                     'motorcycle.transmission' => 'sometimes|in:Automatic,Manual,Semi-Automatic',
                 ]);
             }
