@@ -2478,9 +2478,9 @@ class SoomController extends Controller
                 ], 403);
             }
 
-            if ($listing->status !== 'closed') {
+            if ($listing->status !== 'inactive') {
                 return response()->json([
-                    'message' => 'Only closed listings can be reopened.',
+                    'message' => 'Only inactive listings can be reopened.',
                     'current_status' => $listing->status
                 ], 422);
             }
