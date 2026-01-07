@@ -147,9 +147,10 @@ class ListingController extends Controller
     protected $payTabsConfigService;
     protected $notificationService;
 
-    public function __construct(PayTabsConfigService $payTabsConfigService)
+    public function __construct(PayTabsConfigService $payTabsConfigService, NotificationService $notificationService)
     {
         $this->payTabsConfigService = $payTabsConfigService;
+        $this->notificationService = $notificationService;
     }
     /**
      * ===========================================================================================
