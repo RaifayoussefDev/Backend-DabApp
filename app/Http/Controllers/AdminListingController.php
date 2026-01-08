@@ -23,15 +23,39 @@ class AdminListingController extends Controller
      *     summary="Get all listings (Admin)",
      *     tags={"Admin Listings"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="page", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="page", in="query", description="Page number", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="per_page", in="query", description="Items per page (default 15)", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="status", in="query", description="Filter by status (published, draft, sold, etc)", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="category_id", in="query", description="Filter by category", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="search", in="query", description="Search by title or ID", @OA\Schema(type="string")),
      *     @OA\Response(response=200, description="Listings retrieved")
      * )
      */
     public function index(Request $request)
     {
-        $listings = Listing::with(['seller', 'images', 'category'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+        $perPage = $request->input('per_page', 15);
+        
+        $query = Listing::with(['seller', 'images', 'category'])
+            ->orderBy('created_at', 'desc');
+
+        // Filters
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('search')) {
+             $search = $request->search;
+             $query->where(function($q) use ($search) {
+                 $q->where('title', 'like', "%{$search}%")
+                   ->orWhere('id', 'like', "%{$search}%");
+             });
+        }
+
+        $listings = $query->paginate($perPage);
 
         return response()->json($listings);
     }
