@@ -36,10 +36,12 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use App\Services\PayTabsConfigService;
 use App\Services\NotificationService;
-use Barryvdh\DomPDF\Facade\Pdf; // Import DomPDF
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Traits\CategoryDataTrait; // ✅ Added Trait
 
 class ListingController extends Controller
 {
+    use CategoryDataTrait; // ✅ Use Trait
     /**
      * Generate PDF for a listing
      *
@@ -806,129 +808,7 @@ class ListingController extends Controller
         }
     }
 
-    /**
-     * ✅ Méthode pour traiter les données spécifiques à chaque catégorie
-     */
-    private function handleCategorySpecificData($listing, $request)
-    {
-        // Déterminer la catégorie (1=moto, 2=pièce détachée, 3=plaque)
-        $categoryId = $request->category_id ?? $listing->category_id;
-
-        switch ($categoryId) {
-            case 1: // Moto
-                $motorcycleData = array_filter($request->only([
-                    'brand_id',
-                    'model_id',
-                    'year_id',
-                    'engine',
-                    'mileage',
-                    'body_condition',
-                    'modified',
-                    'insurance',
-                    'general_condition',
-                    'vehicle_care',
-                    'vehicle_care_other',
-                    'transmission'
-                ]));
-
-                // ✅ Récupérer le type_id depuis la table motorcycle_models
-                if (!empty($motorcycleData['model_id'])) {
-                    $model = \App\Models\MotorcycleModel::find($motorcycleData['model_id']);
-                    if ($model && $model->type_id) {
-                        $motorcycleData['type_id'] = $model->type_id;
-                    }
-                }
-
-                if (!empty($motorcycleData)) {
-                    $listing->motorcycle()->updateOrCreate(
-                        ['listing_id' => $listing->id],
-                        $motorcycleData
-                    );
-                }
-                break;
-
-            case 2: // Pièce détachée
-                $sparePartData = array_filter($request->only([
-                    'condition',
-                    'bike_part_brand_id',
-                    'bike_part_category_id',
-                    'brand_other'
-                ]));
-
-                if (!empty($sparePartData)) {
-                    $sparePart = $listing->sparePart()->updateOrCreate(
-                        ['listing_id' => $listing->id],
-                        $sparePartData
-                    );
-
-                    // Traiter les motos compatibles
-                    if ($request->has('motorcycles') && is_array($request->motorcycles)) {
-                        $sparePart->motorcycles()->delete();
-
-                        foreach ($request->motorcycles as $moto) {
-                            $sparePart->motorcycles()->create([
-                                'brand_id' => $moto['brand_id'] ?? null,
-                                'model_id' => $moto['model_id'] ?? null,
-                                'year_id' => $moto['year_id'] ?? null,
-                            ]);
-                        }
-                    }
-                }
-                break;
-
-            case 3: // Plaque d'immatriculation
-                // Map request fields to database fields
-                $licensePlateData = [];
-
-                if ($request->has('plate_format_id')) {
-                    $licensePlateData['plate_format_id'] = $request->plate_format_id;
-                }
-
-                if ($request->has('country_id_lp')) {
-                    $licensePlateData['country_id'] = $request->country_id_lp;
-                }
-
-                if ($request->has('city_id_lp')) {
-                    $licensePlateData['city_id'] = $request->city_id_lp;
-                }
-
-                // Remove null/empty values
-                $licensePlateData = array_filter($licensePlateData);
-
-                if (!empty($licensePlateData)) {
-                    $licensePlate = $listing->licensePlate()->updateOrCreate(
-                        ['listing_id' => $listing->id],
-                        $licensePlateData
-                    );
-
-                    // Traiter les champs personnalisés
-                    if ($request->has('fields') && is_array($request->fields)) {
-                        $licensePlate->fieldValues()->delete();
-
-                        foreach ($request->fields as $field) {
-                            if (!empty($field['field_id'])) {
-                                $licensePlate->fieldValues()->create([
-                                    'plate_format_field_id' => $field['field_id'],
-                                    'field_value' => $field['value'] ?? '',
-                                ]);
-                            }
-                        }
-
-                        // ✅ GÉNÉRER L'IMAGE DE LA PLAQUE APRÈS AVOIR SAUVEGARDÉ TOUS LES FIELDS
-                        try {
-                            \Log::info("Generating plate image for license_plate_id: " . $licensePlate->id);
-                            $licensePlate->generatePlateImage();
-                        } catch (\Exception $e) {
-                            \Log::error("Failed to generate plate image in handleCategorySpecificData", [
-                                'license_plate_id' => $licensePlate->id,
-                                'error' => $e->getMessage()
-                            ]);
-                        }
-                    }
-                }
-                break;
-        }
-    }
+    // handleCategorySpecificData removed from here - now in CategoryDataTrait
 
     /**
      * @OA\Put(

@@ -9,6 +9,263 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/admin/listings": {
+            "get": {
+                "tags": [
+                    "Admin Listings"
+                ],
+                "summary": "Get all listings (Admin)",
+                "operationId": "46e0a03bec7bb212d324fd3aa03d7915",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Listings retrieved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Listings"
+                ],
+                "summary": "Create listing on behalf of a user",
+                "operationId": "3d954a64dd023329054d3307723e5a9c",
+                "requestBody": {
+                    "description": "Listing data with user assignment",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id",
+                                    "category_id"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "description": "User ID (e.g., Role ID 2) to assign the listing to",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "step": {
+                                        "description": "Step to complete listing directly",
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "category_id": {
+                                        "description": "1=Motorcycle, 2=Spare Part, 3=Plate",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Premium Motorcycle for Sale (Admin Created)"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "This is a high-value listing created by an admin for a VIP client."
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "example": 45000
+                                    },
+                                    "country_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "auction_enabled": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "minimum_bid": {
+                                        "type": "number",
+                                        "example": null
+                                    },
+                                    "allow_submission": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "contacting_channel": {
+                                        "type": "string",
+                                        "example": "phone"
+                                    },
+                                    "seller_type": {
+                                        "type": "string",
+                                        "example": "dealer"
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "example": "https://be.dabapp.co/storage/listings/example.jpg"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Listing created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/listings/{id}": {
+            "put": {
+                "tags": [
+                    "Admin Listings"
+                ],
+                "summary": "Update listing (Admin)",
+                "operationId": "3f74ae8134eef361b086f31947af153d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "price": {
+                                        "type": "number"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "example": "active"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Listing updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Listings"
+                ],
+                "summary": "Delete listing (Admin)",
+                "operationId": "60f8605d19e56fea5a687a5b997041e1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Listing deleted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/listings/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Admin Listings"
+                ],
+                "summary": "Change listing status (Admin)",
+                "operationId": "5ea01e33a9c1b5df0107d6cf10afcd3e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "draft",
+                                            "active",
+                                            "sold",
+                                            "expired",
+                                            "deleted"
+                                        ],
+                                        "example": "sold"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Status updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/menus": {
             "get": {
                 "tags": [
@@ -1071,6 +1328,193 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/sooms": {
+            "get": {
+                "tags": [
+                    "Admin Sooms"
+                ],
+                "summary": "Get sooms (Admin)",
+                "operationId": "b95c6fb4c3ae50c860f16d464b4acec4",
+                "parameters": [
+                    {
+                        "name": "listing_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sooms retrieved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Sooms"
+                ],
+                "summary": "Create SOOM on behalf of user",
+                "operationId": "6d810e31c006a4a07c7fc6df5c2ad520",
+                "requestBody": {
+                    "description": "SOOM data with user assignment",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id",
+                                    "listing_id",
+                                    "amount"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "description": "User ID (Buyer) to place the bid for",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "listing_id": {
+                                        "description": "Listing ID to bid on",
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "amount": {
+                                        "description": "Bid amount. Must be higher than current highest + increment.",
+                                        "type": "number",
+                                        "example": 1500
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "example": "Admin placed bid for VIP client via phone call"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Soom created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Soom created successfully by Admin"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 123
+                                                },
+                                                "amount": {
+                                                    "type": "number",
+                                                    "example": 1500
+                                                },
+                                                "isOverbidding": {
+                                                    "description": "True if this bid is >150% of the previous highest bid",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/sooms/{id}": {
+            "put": {
+                "tags": [
+                    "Admin Sooms"
+                ],
+                "summary": "Update SOOM (Admin)",
+                "operationId": "740afa55d03f6ab32816d24ef9de5072",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "amount": {
+                                        "type": "number"
+                                    },
+                                    "status": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Soom updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Sooms"
+                ],
+                "summary": "Delete SOOM (Admin)",
+                "operationId": "9bdf7610ddf13200383be2850362400a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Soom deleted"
                     }
                 },
                 "security": [
@@ -36214,8 +36658,16 @@
             "description": "Operations related to wishlists"
         },
         {
+            "name": "Admin Listings",
+            "description": "Admin Listings"
+        },
+        {
             "name": "Admin Menus Management",
             "description": "Admin Menus Management"
+        },
+        {
+            "name": "Admin Sooms",
+            "description": "Admin Sooms"
         },
         {
             "name": "Authentification - admin",

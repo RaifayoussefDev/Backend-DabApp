@@ -11,10 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('report_reasons', function (Blueprint $table) {
-            $table->dropColumn('type');
-            $table->foreignId('report_type_id')->after('id')->constrained('report_types')->cascadeOnDelete();
-        });
+        if (Schema::hasColumn('report_reasons', 'type')) {
+            Schema::table('report_reasons', function (Blueprint $table) {
+                $table->dropColumn('type');
+            });
+        }
+
+        if (!Schema::hasColumn('report_reasons', 'report_type_id')) {
+            Schema::table('report_reasons', function (Blueprint $table) {
+                $table->foreignId('report_type_id')->after('id')->constrained('report_types')->cascadeOnDelete();
+            });
+        }
     }
 
     /**

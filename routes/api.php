@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Route;
 // ============================================
 use App\Http\Controllers\{
     AdminMenuController,
+    AdminListingController,
+    AdminSoomController,
     AdminNotificationController,
     AuthController,
     BannerController,
@@ -146,6 +148,15 @@ Route::prefix('admin')->group(function () {
         Route::apiResource('report-reasons', \App\Http\Controllers\Admin\ReportReasonController::class);
         Route::apiResource('report-types', \App\Http\Controllers\Admin\ReportTypeController::class);
         Route::apiResource('reports', \App\Http\Controllers\Admin\ReportController::class)->only(['index', 'show', 'update']);
+
+        // Admin Listings
+        Route::apiResource('listings', AdminListingController::class);
+        Route::patch('/listings/{id}/status', [AdminListingController::class, 'changeStatus']);
+        Route::post('/listings/{id}/images/reorder', [AdminListingController::class, 'reorderImages']);
+        Route::delete('/listings/{id}/images/{image_id}', [AdminListingController::class, 'deleteImage']);
+
+        // Admin Sooms
+        Route::apiResource('sooms', AdminSoomController::class);
     });
 });
 
