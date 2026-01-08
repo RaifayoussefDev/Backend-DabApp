@@ -9,6 +9,52 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/admin/dashboard/stats": {
+            "get": {
+                "tags": [
+                    "Admin Statistics"
+                ],
+                "summary": "Get Admin Dashboard Statistics",
+                "operationId": "20268dc4e4dd8b86744b17be1242b0b2",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard statistics",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_users": {
+                                            "type": "integer"
+                                        },
+                                        "total_listings": {
+                                            "type": "integer"
+                                        },
+                                        "listings_by_status": {
+                                            "type": "object"
+                                        },
+                                        "listings_by_category": {
+                                            "type": "object"
+                                        },
+                                        "recent_listings": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/listings": {
             "get": {
                 "tags": [
@@ -257,6 +303,96 @@
                 "responses": {
                     "200": {
                         "description": "Status updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/listings/{id}/images/reorder": {
+            "post": {
+                "tags": [
+                    "Admin Listings"
+                ],
+                "summary": "Reorder listing images (Admin)",
+                "description": "Deletes existing images and recreates them in the provided order to reset IDs/sequence.",
+                "operationId": "e9082ad4bc3140233e3bf631b9b594f8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "image_ids"
+                                ],
+                                "properties": {
+                                    "image_ids": {
+                                        "description": "Array of image IDs in desired order",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer",
+                                            "example": 10
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Images reordered"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/listings/{id}/images/{image_id}": {
+            "delete": {
+                "tags": [
+                    "Admin Listings"
+                ],
+                "summary": "Delete specific image from listing (Admin)",
+                "operationId": "0c666f9e8d50e6bfc835d4ee8c8c035d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "image_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Image deleted"
                     }
                 },
                 "security": [
@@ -36656,6 +36792,10 @@
         {
             "name": "Wishlist",
             "description": "Operations related to wishlists"
+        },
+        {
+            "name": "Admin Statistics",
+            "description": "Admin Statistics"
         },
         {
             "name": "Admin Listings",
