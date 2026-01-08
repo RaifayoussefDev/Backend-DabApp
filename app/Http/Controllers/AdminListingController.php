@@ -93,6 +93,84 @@ class AdminListingController extends Controller
      * ),
      * @OA\Response(response=201, description="Listing created")
      * )
+     *
+     * ═══════════════════════════════════════════════════════════════════════════════════════
+     * REAL POSTMAN EXAMPLES - CREATE LISTING (ADMIN)
+     * ═══════════════════════════════════════════════════════════════════════════════════════
+     *
+     * EXAMPLE 1: MOTORCYCLE (Category ID = 1)
+     * POST /api/admin/listings
+     * {
+     *   "user_id": 2,
+     *   "category_id": 1,
+     *   "step": 3,
+     *   "title": "Ducati Panigale V4 S - Admin Listed",
+     *   "description": "Mint condition, verified by admin.",
+     *   "price": 85000,
+     *   "country_id": 1,
+     *   "city_id": 1,
+     *   "seller_type": "dealer",
+     *   "contacting_channel": "phone,whatsapp",
+     *   "images": [
+     *     "https://be.dabapp.co/storage/listings/moto1.jpg",
+     *     "https://be.dabapp.co/storage/listings/moto2.jpg"
+     *   ],
+     *   "brand_id": 5,
+     *   "model_id": 120,
+     *   "year_id": 2024,
+     *   "engine": "1103cc",
+     *   "mileage": 5000,
+     *   "body_condition": "As New",
+     *   "transmission": "Manual",
+     *   "vehicle_care": "Wakeel",
+     *   "general_condition": "New"
+     * }
+     *
+     * ───────────────────────────────────────────────────────────────────────────────────────
+     *
+     * EXAMPLE 2: SPARE PART (Category ID = 2)
+     * POST /api/admin/listings
+     * {
+     *   "user_id": 2,
+     *   "category_id": 2,
+     *   "step": 3,
+     *   "title": "Akrapovic Exhaust System",
+     *   "description": "Full titanium exhaust system.",
+     *   "price": 12000,
+     *   "country_id": 1,
+     *   "city_id": 1,
+     *   "bike_part_category_id": 3,
+     *   "bike_part_brand_id": 10,
+     *   "condition": "new",
+     *   "motorcycles": [
+     *     { "brand_id": 5, "model_id": 120, "year_id": 2023 },
+     *     { "brand_id": 5, "model_id": 120, "year_id": 2024 }
+     *   ],
+     *   "images": [
+     *     "https://be.dabapp.co/storage/listings/part1.jpg"
+     *   ]
+     * }
+     *
+     * ───────────────────────────────────────────────────────────────────────────────────────
+     *
+     * EXAMPLE 3: LICENSE PLATE (Category ID = 3)
+     * POST /api/admin/listings
+     * {
+     *   "user_id": 2,
+     *   "category_id": 3,
+     *   "step": 3,
+     *   "title": "Dubai A 123",
+     *   "price": 250000,
+     *   "country_id": 1,
+     *   "city_id": 1,
+     *   "plate_format_id": 5,
+     *   "country_id_lp": 1,
+     *   "city_id_lp": 1,
+     *   "fields": [
+     *     { "field_id": 10, "value": "A" },
+     *     { "field_id": 11, "value": "123" }
+     *   ]
+     * }
      */
     public function store(Request $request)
     {
