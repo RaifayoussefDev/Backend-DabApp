@@ -69,16 +69,7 @@ class AdminListingController extends Controller
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         description="
-     *             <strong>Listing Data & Examples</strong><br>
-     *             Create a listing in a single step. Select the correct payload for the category.<br><br>
-     *             <strong>🟢 EXAMPLE 1: MOTORCYCLE (Category 1)</strong><br>
-     *             <pre>{ 'user_id': 2, 'category_id': 1, 'title': 'Ducati Panigale V4', 'price': 85000, 'brand_id': 5, 'model_id': 120, 'year_id': 2024, 'engine': '1103cc', 'mileage': 5000, 'body_condition': 'As New', 'images': ['https://url.com/img1.jpg'] }</pre>
-     *             <strong>🟢 EXAMPLE 2: SPARE PART (Category 2)</strong><br>
-     *             <pre>{ 'user_id': 2, 'category_id': 2, 'title': 'Akrapovic Exhaust', 'price': 12000, 'bike_part_category_id': 3, 'condition': 'new', 'motorcycles': [{'brand_id': 5, 'model_id': 120, 'year_id': 2023}], 'images': ['https://url.com/part.jpg'] }</pre>
-     *             <strong>🟢 EXAMPLE 3: LICENSE PLATE (Category 3)</strong><br>
-     *             <pre>{ 'user_id': 2, 'category_id': 3, 'title': 'Dubai A 123', 'price': 250000, 'plate_format_id': 5, 'fields': [{'field_id': 10, 'value': 'A'}, {'field_id': 11, 'value': '123'}] }</pre>
-     *         ",
+     *         description="<strong>Listing Data & Examples</strong><br>Create a listing in a single step. Select the correct payload for the category.<br><br><strong>🟢 EXAMPLE 1: MOTORCYCLE (Category 1)</strong><br><pre>{ 'user_id': 2, 'category_id': 1, 'title': 'Ducati Panigale V4', 'price': 85000, 'brand_id': 5, 'model_id': 120, 'year_id': 2024, 'engine': '1103cc', 'mileage': 5000, 'body_condition': 'As New', 'images': ['https://url.com/img1.jpg'] }</pre><strong>🟢 EXAMPLE 2: SPARE PART (Category 2)</strong><br><pre>{ 'user_id': 2, 'category_id': 2, 'title': 'Akrapovic Exhaust', 'price': 12000, 'bike_part_category_id': 3, 'condition': 'new', 'motorcycles': [{'brand_id': 5, 'model_id': 120, 'year_id': 2023}], 'images': ['https://url.com/part.jpg'] }</pre><strong>🟢 EXAMPLE 3: LICENSE PLATE (Category 3)</strong><br><pre>{ 'user_id': 2, 'category_id': 3, 'title': 'Dubai A 123', 'price': 250000, 'plate_format_id': 5, 'fields': [{'field_id': 10, 'value': 'A'}, {'field_id': 11, 'value': '123'}] }</pre>",
      *         @OA\JsonContent(
      *             required={"user_id", "category_id"},
      *             @OA\Property(property="user_id", type="integer", example=2),
