@@ -17,6 +17,7 @@ use App\Models\ListingImage; // ✅ Added
 class AdminListingController extends Controller
 {
     use CategoryDataTrait; // ✅ Use Trait
+    
     /**
      * @OA\Get(
      *     path="/api/admin/listings",
@@ -66,103 +67,48 @@ class AdminListingController extends Controller
      *     summary="Create listing on behalf of a user",
      *     tags={"Admin Listings"},
      *     security={{"bearerAuth":{}}},
-     * @OA\RequestBody(
-     *     required=true,
-     *     description="Listing data with user assignment",
-     *     @OA\JsonContent(
-     *         required={"user_id", "category_id"},
-     *         @OA\Property(property="user_id", type="integer", example=2, description="User ID (e.g., Role ID 2) to assign the listing to"),
-     *         @OA\Property(property="step", type="integer", example=3, description="Step to complete listing directly"),
-     *         @OA\Property(property="category_id", type="integer", example=1, description="1=Motorcycle, 2=Spare Part, 3=Plate"),
-     *         @OA\Property(property="title", type="string", example="Premium Motorcycle for Sale (Admin Created)"),
-     *         @OA\Property(property="description", type="string", example="This is a high-value listing created by an admin for a VIP client."),
-     *         @OA\Property(property="price", type="number", example=45000),
-     *         @OA\Property(property="country_id", type="integer", example=1),
-     *         @OA\Property(property="city_id", type="integer", example=1),
-     *         @OA\Property(property="auction_enabled", type="boolean", example=false),
-     *         @OA\Property(property="minimum_bid", type="number", example=null),
-     *         @OA\Property(property="allow_submission", type="boolean", example=true),
-     *         @OA\Property(property="contacting_channel", type="string", example="phone"),
-     *         @OA\Property(property="seller_type", type="string", example="dealer"),
-     *         @OA\Property(
-     *             property="images",
-     *             type="array",
-     *             @OA\Items(type="string", example="https://be.dabapp.co/storage/listings/example.jpg")
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="
+     *             <strong>Listing Data & Examples</strong><br>
+     *             Create a listing in a single step. Select the correct payload for the category.<br><br>
+     *             
+     *             <strong>🟢 EXAMPLE 1: MOTORCYCLE (Category 1)</strong><br>
+     *             <pre>{
+     *   'user_id': 2, 'category_id': 1,
+     *   'title': 'Ducati Panigale V4', 'price': 85000,
+     *   'brand_id': 5, 'model_id': 120, 'year_id': 2024,
+     *   'engine': '1103cc', 'mileage': 5000, 'body_condition': 'As New',
+     *   'images': ['https://url.com/img1.jpg']
+     * }</pre>
+     *             
+     *             <strong>🟢 EXAMPLE 2: SPARE PART (Category 2)</strong><br>
+     *             <pre>{
+     *   'user_id': 2, 'category_id': 2,
+     *   'title': 'Akrapovic Exhaust', 'price': 12000,
+     *   'bike_part_category_id': 3, 'condition': 'new',
+     *   'motorcycles': [{'brand_id': 5, 'model_id': 120, 'year_id': 2023}],
+     *   'images': ['https://url.com/part.jpg']
+     * }</pre>
+     *             
+     *             <strong>🟢 EXAMPLE 3: LICENSE PLATE (Category 3)</strong><br>
+     *             <pre>{
+     *   'user_id': 2, 'category_id': 3,
+     *   'title': 'Dubai A 123', 'price': 250000,
+     *   'plate_format_id': 5, 'fields': [{'field_id': 10, 'value': 'A'}, {'field_id': 11, 'value': '123'}]
+     * }</pre>
+     *         ",
+     *         @OA\JsonContent(
+     *             required={"user_id", "category_id"},
+     *             @OA\Property(property="user_id", type="integer", example=2),
+     *             @OA\Property(property="category_id", type="integer", example=1),
+     *             @OA\Property(property="title", type="string", example="Generic Listing"),
+     *             @OA\Property(property="price", type="number", example=1000),
+     *             @OA\Property(property="images", type="array", @OA\Items(type="string"))
      *         )
-     *     )
-     * ),
-     * @OA\Response(response=201, description="Listing created")
+     *     ),
+     *     @OA\Response(response=201, description="Listing created")
      * )
-     *
-     * ═══════════════════════════════════════════════════════════════════════════════════════
-     * ═══════════════════════════════════════════════════════════════════════════════════════
-     * REAL POSTMAN EXAMPLES - LISTING CREATION (SINGLE STEP)
-     * ═══════════════════════════════════════════════════════════════════════════════════════
-     *
-     * 🟢 EXAMPLE 1: CREATE MOTORCYCLE (Full Payload)
-     * POST /api/admin/listings
-     * {
-     *   "user_id": 2,
-     *   "category_id": 1,
-     *   "title": "Ducati Panigale V4 S - Admin Listed",
-     *   "description": "Mint condition, verified by admin.",
-     *   "price": 85000,
-     *   "country_id": 1,
-     *   "city_id": 1,
-     *   "seller_type": "dealer",
-     *   "contacting_channel": "phone,whatsapp",
-     *   "brand_id": 5, "model_id": 120, "year_id": 2024,
-     *   "engine": "1103cc", "mileage": 5000,
-     *   "body_condition": "As New", "transmission": "Manual",
-     *   "vehicle_care": "Wakeel", "general_condition": "New",
-     *   "images": [
-     *     "https://be.dabapp.co/storage/listings/moto1.jpg",
-     *     "https://be.dabapp.co/storage/listings/moto2.jpg"
-     *   ]
-     * }
-     *
-     * ───────────────────────────────────────────────────────────────────────────────────────
-     *
-     * 🟢 EXAMPLE 2: CREATE SPARE PART (Full Payload)
-     * POST /api/admin/listings
-     * {
-     *   "user_id": 2,
-     *   "category_id": 2,
-     *   "title": "Akrapovic Exhaust System",
-     *   "description": "Full titanium exhaust system.",
-     *   "price": 12000,
-     *   "country_id": 1,
-     *   "city_id": 1,
-     *   "bike_part_category_id": 3,
-     *   "bike_part_brand_id": 10,
-     *   "condition": "new",
-     *   "motorcycles": [
-     *     { "brand_id": 5, "model_id": 120, "year_id": 2023 }
-     *   ],
-     *   "images": [
-     *     "https://be.dabapp.co/storage/listings/part1.jpg"
-     *   ]
-     * }
-     *
-     * ───────────────────────────────────────────────────────────────────────────────────────
-     *
-     * 🟢 EXAMPLE 3: CREATE LICENSE PLATE (Full Payload)
-     * POST /api/admin/listings
-     * {
-     *   "user_id": 2,
-     *   "category_id": 3,
-     *   "title": "Dubai A 123",
-     *   "price": 250000,
-     *   "country_id": 1,
-     *   "city_id": 1,
-     *   "plate_format_id": 5,
-     *   "country_id_lp": 1,
-     *   "city_id_lp": 1,
-     *   "fields": [
-     *     { "field_id": 10, "value": "A" },
-     *     { "field_id": 11, "value": "123" }
-     *   ]
-     * }
      */
     public function store(Request $request)
     {
@@ -408,5 +354,61 @@ class AdminListingController extends Controller
         $image->delete();
 
         return response()->json(['message' => 'Image deleted successfully']);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/admin/users/autocomplete",
+     *     summary="Search users by name or phone",
+     *     tags={"Admin Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="query",
+     *         in="query",
+     *         required=true,
+     *         description="Search string (Phone, First Name, or Last Name)",
+     *         @OA\Schema(type="string", example="John")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Users found",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="first_name", type="string"),
+     *                 @OA\Property(property="last_name", type="string"),
+     *                 @OA\Property(property="email", type="string"),
+     *                 @OA\Property(property="phone", type="string"),
+     *                 @OA\Property(property="full_name", type="string")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function autocomplete(Request $request)
+    {
+        $search = $request->input('query');
+
+        if (empty($search)) {
+            return response()->json([]);
+        }
+
+        $users = User::where(function($q) use ($search) {
+                $q->where('phone', 'like', "%{$search}%")
+                  ->orWhere('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%");
+            })
+            ->select('id', 'first_name', 'last_name', 'email', 'phone')
+            ->limit(10)
+            ->get();
+
+        // Append full_name attribute
+        $users->transform(function ($user) {
+            $user->full_name = $user->first_name . ' ' . $user->last_name;
+            return $user;
+        });
+
+        return response()->json($users);
     }
 }

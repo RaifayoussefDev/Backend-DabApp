@@ -122,7 +122,7 @@
                 "summary": "Create listing on behalf of a user",
                 "operationId": "3d954a64dd023329054d3307723e5a9c",
                 "requestBody": {
-                    "description": "Listing data with user assignment",
+                    "description": "\r\n     *             <strong>Listing Data & Examples</strong><br>\r\n     *             Create a listing in a single step. Select the correct payload for the category.<br><br>\r\n     *             \r\n     *             <strong>🟢 EXAMPLE 1: MOTORCYCLE (Category 1)</strong><br>\r\n     *             <pre>{\r\n     *   'user_id': 2, 'category_id': 1,\r\n     *   'title': 'Ducati Panigale V4', 'price': 85000,\r\n     *   'brand_id': 5, 'model_id': 120, 'year_id': 2024,\r\n     *   'engine': '1103cc', 'mileage': 5000, 'body_condition': 'As New',\r\n     *   'images': ['https://url.com/img1.jpg']\r\n     * }</pre>\r\n     *             \r\n     *             <strong>🟢 EXAMPLE 2: SPARE PART (Category 2)</strong><br>\r\n     *             <pre>{\r\n     *   'user_id': 2, 'category_id': 2,\r\n     *   'title': 'Akrapovic Exhaust', 'price': 12000,\r\n     *   'bike_part_category_id': 3, 'condition': 'new',\r\n     *   'motorcycles': [{'brand_id': 5, 'model_id': 120, 'year_id': 2023}],\r\n     *   'images': ['https://url.com/part.jpg']\r\n     * }</pre>\r\n     *             \r\n     *             <strong>🟢 EXAMPLE 3: LICENSE PLATE (Category 3)</strong><br>\r\n     *             <pre>{\r\n     *   'user_id': 2, 'category_id': 3,\r\n     *   'title': 'Dubai A 123', 'price': 250000,\r\n     *   'plate_format_id': 5, 'fields': [{'field_id': 10, 'value': 'A'}, {'field_id': 11, 'value': '123'}]\r\n     * }</pre>\r\n     *         ",
                     "required": true,
                     "content": {
                         "application/json": {
@@ -133,65 +133,25 @@
                                 ],
                                 "properties": {
                                     "user_id": {
-                                        "description": "User ID (e.g., Role ID 2) to assign the listing to",
                                         "type": "integer",
                                         "example": 2
                                     },
-                                    "step": {
-                                        "description": "Step to complete listing directly",
-                                        "type": "integer",
-                                        "example": 3
-                                    },
                                     "category_id": {
-                                        "description": "1=Motorcycle, 2=Spare Part, 3=Plate",
                                         "type": "integer",
                                         "example": 1
                                     },
                                     "title": {
                                         "type": "string",
-                                        "example": "Premium Motorcycle for Sale (Admin Created)"
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "example": "This is a high-value listing created by an admin for a VIP client."
+                                        "example": "Generic Listing"
                                     },
                                     "price": {
                                         "type": "number",
-                                        "example": 45000
-                                    },
-                                    "country_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "city_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "auction_enabled": {
-                                        "type": "boolean",
-                                        "example": false
-                                    },
-                                    "minimum_bid": {
-                                        "type": "number",
-                                        "example": null
-                                    },
-                                    "allow_submission": {
-                                        "type": "boolean",
-                                        "example": true
-                                    },
-                                    "contacting_channel": {
-                                        "type": "string",
-                                        "example": "phone"
-                                    },
-                                    "seller_type": {
-                                        "type": "string",
-                                        "example": "dealer"
+                                        "example": 1000
                                     },
                                     "images": {
                                         "type": "array",
                                         "items": {
-                                            "type": "string",
-                                            "example": "https://be.dabapp.co/storage/listings/example.jpg"
+                                            "type": "string"
                                         }
                                     }
                                 },
@@ -426,6 +386,67 @@
                 "responses": {
                     "200": {
                         "description": "Image deleted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/users/autocomplete": {
+            "get": {
+                "tags": [
+                    "Admin Listings"
+                ],
+                "summary": "Search users by name or phone",
+                "operationId": "6ede5c667f5cef2f43c18d73d11442c3",
+                "parameters": [
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "description": "Search string (Phone, First Name, or Last Name)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "John"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Users found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "first_name": {
+                                                "type": "string"
+                                            },
+                                            "last_name": {
+                                                "type": "string"
+                                            },
+                                            "email": {
+                                                "type": "string"
+                                            },
+                                            "phone": {
+                                                "type": "string"
+                                            },
+                                            "full_name": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1700,67 +1721,6 @@
                 "responses": {
                     "200": {
                         "description": "Soom deleted"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/admin/users/autocomplete": {
-            "get": {
-                "tags": [
-                    "Admin Users"
-                ],
-                "summary": "Search users by name or phone",
-                "operationId": "4d3cf0ceb4f41a950f2c35dd41d92e4a",
-                "parameters": [
-                    {
-                        "name": "query",
-                        "in": "query",
-                        "description": "Search string (Phone, First Name, or Last Name)",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "John"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Users found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "properties": {
-                                            "id": {
-                                                "type": "integer"
-                                            },
-                                            "first_name": {
-                                                "type": "string"
-                                            },
-                                            "last_name": {
-                                                "type": "string"
-                                            },
-                                            "email": {
-                                                "type": "string"
-                                            },
-                                            "phone": {
-                                                "type": "string"
-                                            },
-                                            "full_name": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "type": "object"
-                                    }
-                                }
-                            }
-                        }
                     }
                 },
                 "security": [
@@ -36918,10 +36878,6 @@
         {
             "name": "Admin Sooms",
             "description": "Admin Sooms"
-        },
-        {
-            "name": "Admin Users",
-            "description": "Admin Users"
         },
         {
             "name": "Authentification - admin",
