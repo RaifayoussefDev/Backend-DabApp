@@ -23,18 +23,22 @@ class AdminSoomController extends Controller
      *     tags={"Admin Sooms"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="listing_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="page", in="query", description="Page number", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="per_page", in="query", description="Items per page (default 20)", @OA\Schema(type="integer")),
      *     @OA\Response(response=200, description="Sooms retrieved")
      * )
      */
     public function index(Request $request)
     {
+        $perPage = $request->input('per_page', 20);
+        
         $query = Submission::with(['user', 'listing']);
         
         if ($request->has('listing_id')) {
             $query->where('listing_id', $request->listing_id);
         }
 
-        $sooms = $query->orderBy('amount', 'desc')->paginate(20);
+        $sooms = $query->orderBy('amount', 'desc')->paginate($perPage);
 
         // Enhance with overbidding info if needed
         $sooms->getCollection()->transform(function ($soom) use ($request) {

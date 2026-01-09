@@ -95,15 +95,15 @@ class AdminListingController extends Controller
      * )
      *
      * ═══════════════════════════════════════════════════════════════════════════════════════
-     * REAL POSTMAN EXAMPLES - CREATE LISTING (ADMIN)
+     * ═══════════════════════════════════════════════════════════════════════════════════════
+     * REAL POSTMAN EXAMPLES - LISTING CREATION (SINGLE STEP)
      * ═══════════════════════════════════════════════════════════════════════════════════════
      *
-     * EXAMPLE 1: MOTORCYCLE (Category ID = 1)
+     * 🟢 EXAMPLE 1: CREATE MOTORCYCLE (Full Payload)
      * POST /api/admin/listings
      * {
      *   "user_id": 2,
      *   "category_id": 1,
-     *   "step": 3,
      *   "title": "Ducati Panigale V4 S - Admin Listed",
      *   "description": "Mint condition, verified by admin.",
      *   "price": 85000,
@@ -111,29 +111,23 @@ class AdminListingController extends Controller
      *   "city_id": 1,
      *   "seller_type": "dealer",
      *   "contacting_channel": "phone,whatsapp",
+     *   "brand_id": 5, "model_id": 120, "year_id": 2024,
+     *   "engine": "1103cc", "mileage": 5000,
+     *   "body_condition": "As New", "transmission": "Manual",
+     *   "vehicle_care": "Wakeel", "general_condition": "New",
      *   "images": [
      *     "https://be.dabapp.co/storage/listings/moto1.jpg",
      *     "https://be.dabapp.co/storage/listings/moto2.jpg"
-     *   ],
-     *   "brand_id": 5,
-     *   "model_id": 120,
-     *   "year_id": 2024,
-     *   "engine": "1103cc",
-     *   "mileage": 5000,
-     *   "body_condition": "As New",
-     *   "transmission": "Manual",
-     *   "vehicle_care": "Wakeel",
-     *   "general_condition": "New"
+     *   ]
      * }
      *
      * ───────────────────────────────────────────────────────────────────────────────────────
      *
-     * EXAMPLE 2: SPARE PART (Category ID = 2)
+     * 🟢 EXAMPLE 2: CREATE SPARE PART (Full Payload)
      * POST /api/admin/listings
      * {
      *   "user_id": 2,
      *   "category_id": 2,
-     *   "step": 3,
      *   "title": "Akrapovic Exhaust System",
      *   "description": "Full titanium exhaust system.",
      *   "price": 12000,
@@ -143,8 +137,7 @@ class AdminListingController extends Controller
      *   "bike_part_brand_id": 10,
      *   "condition": "new",
      *   "motorcycles": [
-     *     { "brand_id": 5, "model_id": 120, "year_id": 2023 },
-     *     { "brand_id": 5, "model_id": 120, "year_id": 2024 }
+     *     { "brand_id": 5, "model_id": 120, "year_id": 2023 }
      *   ],
      *   "images": [
      *     "https://be.dabapp.co/storage/listings/part1.jpg"
@@ -153,12 +146,11 @@ class AdminListingController extends Controller
      *
      * ───────────────────────────────────────────────────────────────────────────────────────
      *
-     * EXAMPLE 3: LICENSE PLATE (Category ID = 3)
+     * 🟢 EXAMPLE 3: CREATE LICENSE PLATE (Full Payload)
      * POST /api/admin/listings
      * {
      *   "user_id": 2,
      *   "category_id": 3,
-     *   "step": 3,
      *   "title": "Dubai A 123",
      *   "price": 250000,
      *   "country_id": 1,

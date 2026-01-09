@@ -155,6 +155,9 @@ Route::prefix('admin')->group(function () {
         Route::post('/listings/{id}/images/reorder', [AdminListingController::class, 'reorderImages']);
         Route::delete('/listings/{id}/images/{image_id}', [AdminListingController::class, 'deleteImage']);
 
+        // Admin Users
+        Route::get('/users/autocomplete', [App\Http\Controllers\AdminUserController::class, 'autocomplete']);
+
         // Admin Stats
         Route::get('/dashboard/stats', [App\Http\Controllers\AdminDashboardController::class, 'stats']);
 
