@@ -91,14 +91,24 @@ class NotificationService
             $shouldSendEmail = true;
         }
 
+        // DEBUG EMAIL
+        Log::info("NotificationService: Checking email for user {$user->id}", [
+            'shouldSendEmail' => $shouldSendEmail,
+            'user_email' => $user->email,
+            'channels' => $options['channels'] ?? 'null'
+        ]);
+
         if ($shouldSendEmail && $user->email) {
             try {
                 Mail::to($user->email)->send(new NotificationMail($notification, $rendered['message'], $data));
                 $emailResult = 'sent';
+                Log::info("NotificationService: Email SENT to {$user->email}");
             } catch (\Exception $e) {
                 Log::error("Failed to send notification email to {$user->email}: " . $e->getMessage());
                 $emailResult = 'failed: ' . $e->getMessage();
             }
+        } else {
+            Log::info("NotificationService: Email SKIPPED. Reason: " . (!$shouldSendEmail ? "Not requested/enabled" : "No email address"));
         }
 
         return [
