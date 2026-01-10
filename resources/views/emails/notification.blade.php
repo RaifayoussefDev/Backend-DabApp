@@ -179,7 +179,9 @@
 
         <!-- Body -->
         <div class="email-body">
-            <p class="greeting">{{ $trans['greeting'] }} {{ $userName }}! 👋</p>
+            <p class="greeting">
+                {{ $trans['greeting'] }} <span dir="auto" style="unicode-bidi: isolate;">{{ $userName }}</span>@if($lang === 'ar')&rlm;@endif! 👋
+            </p>
 
             <div class="notification-card @if($notification->priority === 'high') priority-high @elseif($notification->priority === 'urgent') priority-urgent @endif">
                 @if($notification->icon)
@@ -201,15 +203,8 @@
                     {!! nl2br(e($emailContent)) !!}
                 </div>
 
-                @if(!empty($data))
-                    <div class="info-box">
-                        @foreach($data as $key => $value)
-                            @if(!in_array($key, ['listing_id', 'transaction_id', 'event_id', 'title', 'title_en', 'title_ar', 'body', 'body_en', 'body_ar', 'message', 'type']))
-                                <p><strong>{{ ucfirst(str_replace('_', ' ', $key)) }}:</strong> {{ $value }}</p>
-                            @endif
-                        @endforeach
-                    </div>
-                @endif
+                <!-- Info Box Removed as requested -->
+
 
                 @if($actionUrl)
                     <center>
