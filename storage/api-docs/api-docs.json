@@ -1434,6 +1434,13 @@
                                 "properties": {
                                     "filters": {
                                         "properties": {
+                                            "user_ids": {
+                                                "description": "List of User IDs for direct notification",
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "integer"
+                                                }
+                                            },
                                             "country_id": {
                                                 "type": "integer"
                                             },
