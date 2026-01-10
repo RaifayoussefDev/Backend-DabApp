@@ -42,6 +42,11 @@ class MassNotificationJob implements ShouldQueue
 
         $query = User::query()->where('is_active', true);
 
+        // 0. Filter by specific User IDs (Direct Notification)
+        if (!empty($this->filters['user_ids'])) {
+            $query->whereIn('id', $this->filters['user_ids']);
+        }
+
         // 1. Filter by Country (Users who belong to this country)
         if (!empty($this->filters['country_id'])) {
             $query->where('country_id', $this->filters['country_id']);

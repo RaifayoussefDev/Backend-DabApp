@@ -28,7 +28,8 @@ class AdminNotificationController extends Controller
      *                 property="filters",
      *                 type="object",
      * 
-     *                 @OA\Property(property="country_id", type="integer"),
+     *                 @OA\Property(property="user_ids", type="array", @OA\Items(type="integer"), description="List of User IDs for direct notification"),
+                @OA\Property(property="country_id", type="integer"),
      *                 @OA\Property(property="category_id", type="integer"),
      *                 @OA\Property(property="has_listing", type="boolean"),
      *                 @OA\Property(property="brand_in_garage", type="integer", description="Brand ID in garage"),
@@ -71,6 +72,8 @@ class AdminNotificationController extends Controller
             'content.title_ar' => 'nullable|string|max:255',
             'content.body_ar' => 'nullable|string',
             'content.type' => 'nullable|string|in:promo,news,info',
+            'filters.user_ids' => 'nullable|array',
+            'filters.user_ids.*' => 'exists:users,id',
             'filters.country_id' => 'nullable|exists:countries,id',
             'filters.category_id' => 'nullable|exists:categories,id',
             'filters.has_listing' => 'nullable|boolean',
