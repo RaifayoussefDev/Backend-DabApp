@@ -204,7 +204,7 @@
                 @if(!empty($data))
                     <div class="info-box">
                         @foreach($data as $key => $value)
-                            @if(!in_array($key, ['listing_id', 'transaction_id', 'event_id']))
+                            @if(!in_array($key, ['listing_id', 'transaction_id', 'event_id', 'title', 'title_en', 'title_ar', 'body', 'body_en', 'body_ar', 'message', 'type']))
                                 <p><strong>{{ ucfirst(str_replace('_', ' ', $key)) }}:</strong> {{ $value }}</p>
                             @endif
                         @endforeach

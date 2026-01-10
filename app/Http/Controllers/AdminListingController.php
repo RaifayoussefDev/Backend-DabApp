@@ -102,19 +102,17 @@ class AdminListingController extends Controller
 
             $step = $request->step ?? 1;
 
+            // ✅ Create Listing
             $listing = Listing::create([
-                'seller_id' => $user->id,
-                'status' => 'active', // Admin created listings might default to active
-                'step' => $step,
-                'created_at' => now(),
+                'user_id' => $request->user_id, // Owner of the listing
+                'seller_id' => $request->user_id,
                 'category_id' => $request->category_id,
                 'title' => $request->title,
-                'description' => $request->description,
-                'price' => $request->price,
-                'country_id' => $request->country_id,
-                'city_id' => $request->city_id,
-                'auction_enabled' => $request->auction_enabled ?? false,
-                'minimum_bid' => $request->minimum_bid,
+                'description' => $request->description ?? '',
+                'price' => $request->price ?? null,
+                'status' => 'published', // ✅ Changed from 'active' to 'published' as requested
+                'created_by' => $request->user()->id, // ✅ Track who created it (Admin)
+                'minimum_bid' => $request->minimum_bid ?? null,
                 'allow_submission' => $request->allow_submission ?? false,
                 'contacting_channel' => $request->contacting_channel ?? 'phone',
                 'seller_type' => $request->seller_type ?? 'owner',

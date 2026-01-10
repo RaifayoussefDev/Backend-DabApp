@@ -27,9 +27,9 @@ class Listing extends Model
         'seller_type',
         'payment_pending',
         'step',                   
-        'views_count',            
         'edit_count',             
         'last_edited_at',         
+        'created_by', // ✅ Added
     ];
 
     // ✅ AJOUT DES CASTS
