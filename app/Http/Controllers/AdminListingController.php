@@ -69,11 +69,13 @@ class AdminListingController extends Controller
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         description="<strong>Listing Data & Examples</strong><br>Create a listing in a single step. Select the correct payload for the category.<br><br><strong>🟢 EXAMPLE 1: MOTORCYCLE (With Submission Enabled)</strong><br><pre>{ 'user_id': 2, 'category_id': 1, 'title': 'Ducati Panigale V4', 'allow_submission': true, 'minimum_bid': 50000, 'contacting_channel': 'phone', 'brand_id': 5, 'model_id': 120, 'year_id': 2024, 'engine': '1103cc', 'mileage': 5000, 'body_condition': 'As New', 'images': ['https://url.com/img1.jpg'] }</pre><strong>🟢 EXAMPLE 2: SPARE PART (Category 2)</strong><br><pre>{ 'user_id': 2, 'category_id': 2, 'title': 'Akrapovic Exhaust', 'price': 12000, 'contacting_channel': 'chat', 'bike_part_category_id': 3, 'condition': 'new', 'motorcycles': [{'brand_id': 5, 'model_id': 120, 'year_id': 2023}], 'images': ['https://url.com/part.jpg'] }</pre><strong>🟢 EXAMPLE 3: LICENSE PLATE (Category 3)</strong><br><pre>{ 'user_id': 2, 'category_id': 3, 'title': 'Dubai A 123', 'price': 250000, 'contacting_channel': 'both', 'plate_format_id': 5, 'fields': [{'field_id': 10, 'value': 'A'}, {'field_id': 11, 'value': '123'}] }</pre>",
+     *         description="<strong>Listing Data & Examples</strong><br>Create a listing in a single step. Select the correct payload for the category.<br><br><strong>🟢 EXAMPLE 1: MOTORCYCLE (With Submission Enabled)</strong><br><pre>{ 'user_id': 2, 'category_id': 1, 'country_id': 1, 'city_id': 50, 'title': 'Ducati Panigale V4', 'allow_submission': true, 'minimum_bid': 50000, 'contacting_channel': 'phone', 'brand_id': 5, 'model_id': 120, 'year_id': 2024, 'engine': '1103cc', 'mileage': 5000, 'body_condition': 'As New', 'images': ['https://url.com/img1.jpg'] }</pre><strong>🟢 EXAMPLE 2: SPARE PART (Category 2)</strong><br><pre>{ 'user_id': 2, 'category_id': 2, 'country_id': 1, 'city_id': 50, 'title': 'Akrapovic Exhaust', 'price': 12000, 'contacting_channel': 'chat', 'bike_part_category_id': 3, 'condition': 'new', 'motorcycles': [{'brand_id': 5, 'model_id': 120, 'year_id': 2023}], 'images': ['https://url.com/part.jpg'] }</pre><strong>🟢 EXAMPLE 3: LICENSE PLATE (Category 3)</strong><br><pre>{ 'user_id': 2, 'category_id': 3, 'country_id': 1, 'city_id': 50, 'title': 'Dubai A 123', 'price': 250000, 'contacting_channel': 'both', 'plate_format_id': 5, 'fields': [{'field_id': 10, 'value': 'A'}, {'field_id': 11, 'value': '123'}] }</pre>",
      *         @OA\JsonContent(
      *             required={"user_id", "category_id"},
      *             @OA\Property(property="user_id", type="integer", example=2),
      *             @OA\Property(property="category_id", type="integer", example=1),
+            @OA\Property(property="country_id", type="integer", example=1),
+            @OA\Property(property="city_id", type="integer", example=50),
      *             @OA\Property(property="title", type="string", example="Generic Listing"),
      *             @OA\Property(property="price", type="number", example=1000),
      *             @OA\Property(property="images", type="array", @OA\Items(type="string"))
@@ -88,6 +90,8 @@ class AdminListingController extends Controller
             'user_id' => 'required|exists:users,id',
             'step' => 'integer|min:1',
             'category_id' => 'required|exists:categories,id',
+            'country_id' => 'nullable|exists:countries,id',
+            'city_id' => 'nullable|exists:cities,id',
         ]);
 
         if ($validator->fails()) {
@@ -110,6 +114,8 @@ class AdminListingController extends Controller
                 'title' => $request->title,
                 'description' => $request->description ?? '',
                 'price' => $request->price ?? null,
+                'country_id' => $request->country_id,
+                'city_id' => $request->city_id,
                 'status' => 'published', // ✅ Changed from 'active' to 'published' as requested
                 'created_by' => $request->user()->id, // ✅ Track who created it (Admin)
                 'minimum_bid' => $request->minimum_bid ?? null,
