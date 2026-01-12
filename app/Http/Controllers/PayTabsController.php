@@ -1363,31 +1363,85 @@ class PayTabsController extends Controller
                 ], 404);
             }
 
-            // 2️⃣ Récupérer le paiement associé au listing
+            // 2️⃣ Récupérer le paiement
+            // STRATEGIE: Chercher d'abord par tran_ref (cas où le callback est déjà passé)
             $payment = Payment::where('listing_id', $listing->id)
-                ->whereIn('payment_status', ['pending', 'initiated'])
-                ->orderBy('created_at', 'desc')
+                ->where('tran_ref', $request->tran_ref)
                 ->first();
+
+            // Si pas trouvé par tran_ref, chercher le dernier pending (cas standard où le callback n'est pas encore arrivé)
+            if (!$payment) {
+                $payment = Payment::where('listing_id', $listing->id)
+                    ->whereIn('payment_status', ['pending', 'initiated'])
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+            }
 
             if (!$payment) {
                 return response()->json([
                     'success' => false,
-                    'error' => 'No pending payment found for this listing'
+                    'error' => 'No payment found for this transaction'
                 ], 404);
             }
 
-            Log::info("📱 Mobile app verifying payment", [
+            Log::info("📱 Mobile verifyAndPublish processing", [
                 'listing_id' => $listing->id,
                 'payment_id' => $payment->id,
                 'tran_ref' => $request->tran_ref,
-                'current_status' => $payment->payment_status
+                'current_payment_status' => $payment->payment_status
             ]);
 
+            // 3️⃣ CAS: Paiement DÉJÀ complété (par callback ou autre)
+            if ($payment->payment_status === 'completed') {
+                Log::info("✅ Payment #{$payment->id} already completed. Ensuring listing is published.");
+                
+                // S'assurer que le listing est publié
+                if ($listing->status !== 'published') {
+                    $this->autoPublishListing($payment);
+                    $listing->refresh();
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Payment already verified and listing published',
+                    'payment' => [
+                        'id' => $payment->id,
+                        'status' => 'completed',
+                        'amount' => $payment->amount,
+                        'currency' => $payment->currency ?? 'AED',
+                        'tran_ref' => $payment->tran_ref,
+                        'completed_at' => $payment->completed_at,
+                        'verification_method' => 'database_check'
+                    ],
+                    'listing' => [
+                        'id' => $listing->id,
+                        'title' => $listing->title,
+                        'status' => 'published',
+                        'published_at' => $listing->published_at
+                    ]
+                ]);
+            }
+            
+            // 4️⃣ CAS: Paiement en échec
+            if ($payment->payment_status === 'failed') {
+                 return response()->json([
+                    'success' => false,
+                    'message' => 'Payment previously failed',
+                    'payment' => [
+                        'id' => $payment->id,
+                        'status' => 'failed',
+                        'error_code' => $payment->response_code,
+                        'error_message' => $payment->payment_result
+                    ]
+                ], 400);
+            }
+
+            // 5️⃣ CAS: Paiement en attente -> Vérification
             $skipVerification = $request->input('skip_verification', false);
             $paymentVerified = false;
             $verificationMethod = 'none';
 
-            // 3️⃣ Vérifier avec PayTabs API (essaie backend + mobile configs)
+            // Vérifier avec PayTabs API
             if (!$skipVerification) {
                 $verificationResult = $this->verifyPayment($request->tran_ref);
 
@@ -1397,11 +1451,9 @@ class PayTabsController extends Controller
                     $responseMessage = $paymentResult['response_message'] ?? '';
                     $responseCode = $paymentResult['response_code'] ?? '';
 
-                    Log::info("📊 PayTabs verification result", [
-                        'listing_id' => $listing->id,
+                    Log::info("📊 PayTabs verification result via Mobile API", [
                         'payment_id' => $payment->id,
-                        'response_status' => $responseStatus,
-                        'response_message' => $responseMessage
+                        'response_status' => $responseStatus
                     ]);
 
                     // Si approuvé
@@ -1434,29 +1486,15 @@ class PayTabsController extends Controller
                                 'status' => 'failed',
                                 'error_code' => $responseCode,
                                 'error_message' => $responseMessage
-                            ],
-                            'listing' => [
-                                'id' => $listing->id,
-                                'status' => $listing->status
                             ]
                         ], 400);
                     }
-                } else {
-                    Log::warning("⚠️ PayTabs verification failed, will trust SDK response", [
-                        'listing_id' => $listing->id,
-                        'payment_id' => $payment->id,
-                        'tran_ref' => $request->tran_ref
-                    ]);
                 }
             }
 
-            // 4️⃣ Fallback: Faire confiance au SDK mobile
-            if (!$paymentVerified) {
-                Log::info("✅ Trusting mobile SDK success response", [
-                    'listing_id' => $listing->id,
-                    'payment_id' => $payment->id,
-                    'tran_ref' => $request->tran_ref
-                ]);
+            // Fallback: Faire confiance au SDK mobile si API échoue ou skip
+            if (!$paymentVerified && ($skipVerification || !isset($verificationResult))) {
+                Log::info("✅ Trusting mobile SDK success response", ['payment_id' => $payment->id]);
 
                 $payment->update([
                     'payment_status' => 'completed',
@@ -1469,17 +1507,10 @@ class PayTabsController extends Controller
                 $verificationMethod = 'sdk_trust';
             }
 
-            // 5️⃣ PUBLIER LE LISTING
-            if ($paymentVerified && $listing->status !== 'published') {
-                $listing->update([
-                    'status' => 'published',
-                    'published_at' => now()
-                ]);
-
-                Log::info("🚀 Listing #{$listing->id} PUBLISHED by mobile app", [
-                    'payment_id' => $payment->id,
-                    'verification_method' => $verificationMethod
-                ]);
+            // PUBLIER LE LISTING
+            if ($paymentVerified) {
+                $this->autoPublishListing($payment);
+                $listing->refresh();
             }
 
             return response()->json([
@@ -1501,6 +1532,7 @@ class PayTabsController extends Controller
                     'published_at' => $listing->published_at
                 ]
             ]);
+
         } catch (\Exception $e) {
             Log::error('❌ Mobile verify and publish error', [
                 'listing_id' => $request->listing_id ?? null,
