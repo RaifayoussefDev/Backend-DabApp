@@ -141,6 +141,7 @@ Route::prefix('admin')->group(function () {
         Route::put('/change-password', [AuthAdminController::class, 'changePassword']); // ✅ Changé de AuthController à AuthAdminController
 
         // Notifications
+        Route::get('/notifications', [AdminNotificationController::class, 'index']);
         Route::post('/notifications/mass-send', [AdminNotificationController::class, 'sendMassNotification']);
 
         // Report Reasons & Types

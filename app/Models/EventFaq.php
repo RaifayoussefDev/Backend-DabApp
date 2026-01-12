@@ -12,7 +12,9 @@ class EventFaq extends Model
     protected $fillable = [
         'event_id',
         'question',
+        'question_ar',
         'answer',
+        'answer_ar',
         'order_position',
     ];
 

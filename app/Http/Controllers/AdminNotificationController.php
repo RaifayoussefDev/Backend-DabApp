@@ -15,6 +15,87 @@ use Illuminate\Support\Facades\Validator;
 class AdminNotificationController extends Controller
 {
     /**
+     * @OA\Get(
+     *     path="/api/admin/notifications",
+     *     summary="Get all notifications list",
+     *     description="Retrieve a paginated list of all notifications sent to users, including read status",
+     *     tags={"Admin Notifications"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=20)
+     *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="query",
+     *         description="Filter by notification type",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Notifications retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Notifications retrieved successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="current_page", type="integer"),
+     *                 @OA\Property(property="data", type="array", @OA\Items(
+     *                     @OA\Property(property="id", type="integer"),
+     *                     @OA\Property(property="title", type="string"),
+     *                     @OA\Property(property="message", type="string"),
+     *                     @OA\Property(property="type", type="string"),
+     *                     @OA\Property(property="is_read", type="boolean"),
+     *                     @OA\Property(property="read_at", type="string", format="date-time", nullable=true),
+     *                     @OA\Property(property="created_at", type="string", format="date-time"),
+     *                     @OA\Property(
+     *                         property="user",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer"),
+     *                         @OA\Property(property="first_name", type="string"),
+     *                         @OA\Property(property="last_name", type="string"),
+     *                         @OA\Property(property="email", type="string")
+     *                     )
+     *                 )),
+     *                 @OA\Property(property="total", type="integer")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $query = \App\Models\Notification::with('user');
+
+        if ($request->has('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->has('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        $notifications = $query->orderBy('created_at', 'desc')
+            ->paginate($request->get('per_page', 20));
+
+        return response()->json([
+            'message' => 'Notifications retrieved successfully',
+            'data' => $notifications
+        ]);
+    }
+
+    /**
      * @OA\Post(
      *     path="/api/admin/notifications/mass-send",
      *     summary="Send mass notifications to filtered users",
@@ -29,7 +110,7 @@ class AdminNotificationController extends Controller
      *                 type="object",
      * 
      *                 @OA\Property(property="user_ids", type="array", @OA\Items(type="integer"), description="List of User IDs for direct notification"),
-                @OA\Property(property="country_id", type="integer"),
+     *                 @OA\Property(property="country_id", type="integer"),
      *                 @OA\Property(property="category_id", type="integer"),
      *                 @OA\Property(property="has_listing", type="boolean"),
      *                 @OA\Property(property="brand_in_garage", type="integer", description="Brand ID in garage"),

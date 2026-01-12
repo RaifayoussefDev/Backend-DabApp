@@ -99,6 +99,13 @@ class EventController extends Controller
      *         required=false,
      *         @OA\Schema(type="integer", default=15)
      *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=1)
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="List of events retrieved successfully",
@@ -517,6 +524,9 @@ class EventController extends Controller
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="title", type="string", example="Tech Conference 2024"),
+     *                 @OA\Property(property="title_ar", type="string", example="مؤتمر التقنية 2024"),
+     *                 @OA\Property(property="short_description_ar", type="string", example="انضم إلينا في أكبر حدث تقني"),
+     *                 @OA\Property(property="venue_name_ar", type="string", example="مركز المؤتمرات"),
      *                 @OA\Property(property="slug", type="string", example="tech-conference-2024-abc123"),
      *                 @OA\Property(property="status", type="string", example="draft"),
      *                 @OA\Property(property="is_published", type="boolean", example=false),
@@ -753,14 +763,19 @@ class EventController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             @OA\Property(property="title", type="string"),
+     *             @OA\Property(property="title_ar", type="string"),
      *             @OA\Property(property="description", type="string"),
+     *             @OA\Property(property="description_ar", type="string"),
      *             @OA\Property(property="short_description", type="string"),
+     *             @OA\Property(property="short_description_ar", type="string"),
      *             @OA\Property(property="category_id", type="integer"),
      *             @OA\Property(property="event_date", type="string", format="date"),
      *             @OA\Property(property="start_time", type="string", format="time"),
      *             @OA\Property(property="end_time", type="string", format="time"),
      *             @OA\Property(property="venue_name", type="string"),
+     *             @OA\Property(property="venue_name_ar", type="string"),
      *             @OA\Property(property="address", type="string"),
+     *             @OA\Property(property="address_ar", type="string"),
      *             @OA\Property(property="city_id", type="integer"),
      *             @OA\Property(property="country_id", type="integer"),
      *             @OA\Property(property="latitude", type="number"),
@@ -771,9 +786,45 @@ class EventController extends Controller
      *             @OA\Property(property="featured_image", type="string"),
      *             @OA\Property(property="images", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="sponsors", type="array", @OA\Items(type="object")),
-     *             @OA\Property(property="activities", type="array", @OA\Items(type="object")),
-     *             @OA\Property(property="contacts", type="array", @OA\Items(type="object")),
-     *             @OA\Property(property="faqs", type="array", @OA\Items(type="object"))
+     *             @OA\Property(
+     *                 property="activities",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="title", type="string"),
+     *                     @OA\Property(property="title_ar", type="string"),
+     *                     @OA\Property(property="description", type="string"),
+     *                     @OA\Property(property="description_ar", type="string"),
+     *                     @OA\Property(property="start_time", type="string"),
+     *                     @OA\Property(property="end_time", type="string"),
+     *                     @OA\Property(property="location", type="string"),
+     *                     @OA\Property(property="location_ar", type="string"),
+     *                     @OA\Property(property="day_in_event", type="integer")
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="contacts",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="contact_type", type="string"),
+     *                     @OA\Property(property="name", type="string"),
+     *                     @OA\Property(property="name_ar", type="string"),
+     *                     @OA\Property(property="phone", type="string"),
+     *                     @OA\Property(property="email", type="string")
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="faqs",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="question", type="string"),
+     *                     @OA\Property(property="question_ar", type="string"),
+     *                     @OA\Property(property="answer", type="string"),
+     *                     @OA\Property(property="answer_ar", type="string")
+     *                 )
+     *             )
      *         )
      *     ),
      *     @OA\Response(
@@ -896,10 +947,13 @@ class EventController extends Controller
                     EventActivity::create([
                         'event_id' => $event->id,
                         'title' => $activityData['title'],
+                        'title_ar' => $activityData['title_ar'] ?? null,
                         'description' => $activityData['description'] ?? null,
+                        'description_ar' => $activityData['description_ar'] ?? null,
                         'start_time' => $activityData['start_time'] ?? null,
                         'end_time' => $activityData['end_time'] ?? null,
                         'location' => $activityData['location'] ?? null,
+                        'location_ar' => $activityData['location_ar'] ?? null,
                         'day_in_event' => $activityData['day_in_event'] ?? null,
                         'order_position' => $index + 1,
                     ]);
@@ -914,6 +968,7 @@ class EventController extends Controller
                         'event_id' => $event->id,
                         'contact_type' => $contactData['contact_type'],
                         'name' => $contactData['name'] ?? null,
+                        'name_ar' => $contactData['name_ar'] ?? null,
                         'phone' => $contactData['phone'] ?? null,
                         'email' => $contactData['email'] ?? null,
                     ]);
@@ -927,7 +982,9 @@ class EventController extends Controller
                     EventFaq::create([
                         'event_id' => $event->id,
                         'question' => $faqData['question'],
+                        'question_ar' => $faqData['question_ar'] ?? null,
                         'answer' => $faqData['answer'],
+                        'answer_ar' => $faqData['answer_ar'] ?? null,
                         'order_position' => $index + 1,
                     ]);
                 }

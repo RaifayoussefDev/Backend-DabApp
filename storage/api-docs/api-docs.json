@@ -1416,6 +1416,130 @@
                 ]
             }
         },
+        "/api/admin/notifications": {
+            "get": {
+                "tags": [
+                    "Admin Notifications"
+                ],
+                "summary": "Get all notifications list",
+                "description": "Retrieve a paginated list of all notifications sent to users, including read status",
+                "operationId": "a726b45ec1430ec580f8d2c7849403f0",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filter by notification type",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notifications retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notifications retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "title": {
+                                                                "type": "string"
+                                                            },
+                                                            "message": {
+                                                                "type": "string"
+                                                            },
+                                                            "type": {
+                                                                "type": "string"
+                                                            },
+                                                            "is_read": {
+                                                                "type": "boolean"
+                                                            },
+                                                            "read_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "user": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "first_name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "last_name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "email": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/notifications/mass-send": {
             "post": {
                 "tags": [
@@ -7414,6 +7538,16 @@
                             "type": "integer",
                             "default": 15
                         }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
                     }
                 ],
                 "responses": {
@@ -7940,6 +8074,18 @@
                                                     "type": "string",
                                                     "example": "Tech Conference 2024"
                                                 },
+                                                "title_ar": {
+                                                    "type": "string",
+                                                    "example": "مؤتمر التقنية 2024"
+                                                },
+                                                "short_description_ar": {
+                                                    "type": "string",
+                                                    "example": "انضم إلينا في أكبر حدث تقني"
+                                                },
+                                                "venue_name_ar": {
+                                                    "type": "string",
+                                                    "example": "مركز المؤتمرات"
+                                                },
                                                 "slug": {
                                                     "type": "string",
                                                     "example": "tech-conference-2024-abc123"
@@ -8124,10 +8270,19 @@
                                     "title": {
                                         "type": "string"
                                     },
+                                    "title_ar": {
+                                        "type": "string"
+                                    },
                                     "description": {
                                         "type": "string"
                                     },
+                                    "description_ar": {
+                                        "type": "string"
+                                    },
                                     "short_description": {
+                                        "type": "string"
+                                    },
+                                    "short_description_ar": {
                                         "type": "string"
                                     },
                                     "category_id": {
@@ -8148,7 +8303,13 @@
                                     "venue_name": {
                                         "type": "string"
                                     },
+                                    "venue_name_ar": {
+                                        "type": "string"
+                                    },
                                     "address": {
+                                        "type": "string"
+                                    },
+                                    "address_ar": {
                                         "type": "string"
                                     },
                                     "city_id": {
@@ -8190,18 +8351,78 @@
                                     "activities": {
                                         "type": "array",
                                         "items": {
+                                            "properties": {
+                                                "title": {
+                                                    "type": "string"
+                                                },
+                                                "title_ar": {
+                                                    "type": "string"
+                                                },
+                                                "description": {
+                                                    "type": "string"
+                                                },
+                                                "description_ar": {
+                                                    "type": "string"
+                                                },
+                                                "start_time": {
+                                                    "type": "string"
+                                                },
+                                                "end_time": {
+                                                    "type": "string"
+                                                },
+                                                "location": {
+                                                    "type": "string"
+                                                },
+                                                "location_ar": {
+                                                    "type": "string"
+                                                },
+                                                "day_in_event": {
+                                                    "type": "integer"
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
                                     "contacts": {
                                         "type": "array",
                                         "items": {
+                                            "properties": {
+                                                "contact_type": {
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "name_ar": {
+                                                    "type": "string"
+                                                },
+                                                "phone": {
+                                                    "type": "string"
+                                                },
+                                                "email": {
+                                                    "type": "string"
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
                                     "faqs": {
                                         "type": "array",
                                         "items": {
+                                            "properties": {
+                                                "question": {
+                                                    "type": "string"
+                                                },
+                                                "question_ar": {
+                                                    "type": "string"
+                                                },
+                                                "answer": {
+                                                    "type": "string"
+                                                },
+                                                "answer_ar": {
+                                                    "type": "string"
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     }
