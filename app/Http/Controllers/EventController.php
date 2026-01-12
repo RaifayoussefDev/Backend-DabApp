@@ -525,14 +525,59 @@ class EventController extends Controller
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="title", type="string", example="Tech Conference 2024"),
      *                 @OA\Property(property="title_ar", type="string", example="مؤتمر التقنية 2024"),
+     *                 @OA\Property(property="description", type="string"),
+     *                 @OA\Property(property="description_ar", type="string"),
+     *                 @OA\Property(property="short_description", type="string"),
      *                 @OA\Property(property="short_description_ar", type="string", example="انضم إلينا في أكبر حدث تقني"),
+     *                 @OA\Property(property="venue_name", type="string"),
      *                 @OA\Property(property="venue_name_ar", type="string", example="مركز المؤتمرات"),
+     *                 @OA\Property(property="address", type="string"),
+     *                 @OA\Property(property="address_ar", type="string"),
      *                 @OA\Property(property="slug", type="string", example="tech-conference-2024-abc123"),
      *                 @OA\Property(property="status", type="string", example="draft"),
      *                 @OA\Property(property="is_published", type="boolean", example=false),
      *                 @OA\Property(property="organizer_id", type="integer", example=1),
      *                 @OA\Property(property="created_at", type="string", format="date-time"),
-     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *                 @OA\Property(property="updated_at", type="string", format="date-time"),
+     *                 @OA\Property(
+     *                     property="activities",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="title", type="string"),
+     *                         @OA\Property(property="title_ar", type="string"),
+     *                         @OA\Property(property="description", type="string"),
+     *                         @OA\Property(property="description_ar", type="string"),
+     *                         @OA\Property(property="start_time", type="string"),
+     *                         @OA\Property(property="end_time", type="string"),
+     *                         @OA\Property(property="location", type="string"),
+     *                         @OA\Property(property="location_ar", type="string"),
+     *                         @OA\Property(property="day_in_event", type="integer")
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="contacts",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="contact_type", type="string"),
+     *                         @OA\Property(property="name", type="string"),
+     *                         @OA\Property(property="name_ar", type="string"),
+     *                         @OA\Property(property="phone", type="string"),
+     *                         @OA\Property(property="email", type="string")
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="faqs",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="question", type="string"),
+     *                         @OA\Property(property="question_ar", type="string"),
+     *                         @OA\Property(property="answer", type="string"),
+     *                         @OA\Property(property="answer_ar", type="string")
+     *                     )
+     *                 )
      *             )
      *         )
      *     ),

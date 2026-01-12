@@ -8078,13 +8078,31 @@
                                                     "type": "string",
                                                     "example": "مؤتمر التقنية 2024"
                                                 },
+                                                "description": {
+                                                    "type": "string"
+                                                },
+                                                "description_ar": {
+                                                    "type": "string"
+                                                },
+                                                "short_description": {
+                                                    "type": "string"
+                                                },
                                                 "short_description_ar": {
                                                     "type": "string",
                                                     "example": "انضم إلينا في أكبر حدث تقني"
                                                 },
+                                                "venue_name": {
+                                                    "type": "string"
+                                                },
                                                 "venue_name_ar": {
                                                     "type": "string",
                                                     "example": "مركز المؤتمرات"
+                                                },
+                                                "address": {
+                                                    "type": "string"
+                                                },
+                                                "address_ar": {
+                                                    "type": "string"
                                                 },
                                                 "slug": {
                                                     "type": "string",
@@ -8109,6 +8127,84 @@
                                                 "updated_at": {
                                                     "type": "string",
                                                     "format": "date-time"
+                                                },
+                                                "activities": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "title": {
+                                                                "type": "string"
+                                                            },
+                                                            "title_ar": {
+                                                                "type": "string"
+                                                            },
+                                                            "description": {
+                                                                "type": "string"
+                                                            },
+                                                            "description_ar": {
+                                                                "type": "string"
+                                                            },
+                                                            "start_time": {
+                                                                "type": "string"
+                                                            },
+                                                            "end_time": {
+                                                                "type": "string"
+                                                            },
+                                                            "location": {
+                                                                "type": "string"
+                                                            },
+                                                            "location_ar": {
+                                                                "type": "string"
+                                                            },
+                                                            "day_in_event": {
+                                                                "type": "integer"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "contacts": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "contact_type": {
+                                                                "type": "string"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "name_ar": {
+                                                                "type": "string"
+                                                            },
+                                                            "phone": {
+                                                                "type": "string"
+                                                            },
+                                                            "email": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "faqs": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "question": {
+                                                                "type": "string"
+                                                            },
+                                                            "question_ar": {
+                                                                "type": "string"
+                                                            },
+                                                            "answer": {
+                                                                "type": "string"
+                                                            },
+                                                            "answer_ar": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
                                                 }
                                             },
                                             "type": "object"
