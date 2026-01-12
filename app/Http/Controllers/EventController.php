@@ -501,6 +501,7 @@ class EventController extends Controller
      *                     {
      *                         "contact_type": "organizer",
      *                         "name": "John Doe",
+     *                         "name_ar": "جون دو",
      *                         "phone": "+1234567890",
      *                         "email": "john.doe@example.com"
      *                     }
@@ -508,7 +509,9 @@ class EventController extends Controller
      *                 "faqs": {
      *                     {
      *                         "question": "What should I bring?",
-     *                         "answer": "Bring your ID and confirmation email"
+     *                         "question_ar": "ماذا يجب أن أحضر؟",
+     *                         "answer": "Bring your ID and confirmation email",
+     *                         "answer_ar": "أحضر هويتك وبريد التأكيد"
      *                     }
      *                 }
      *             }
