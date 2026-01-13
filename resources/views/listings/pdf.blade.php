@@ -362,24 +362,10 @@
         @endif
 
         <tr>
-            <td class="label">Seller Verified</td>
-            <td class="value">{{ $listing->seller && $listing->seller->is_verified ? 'Yes' : 'No' }}</td>
             <td class="label">Contact Method</td>
             <td class="value">{{ $listing->contacting_channel ? ucfirst($listing->contacting_channel) : '-' }}</td>
-        </tr>
-        <tr>
-            <td class="label">Soom Enabled</td>
-            <td class="value">{{ $listing->auction_enabled ? 'Yes' : 'No' }}</td>
             <td class="label">Listed On</td>
             <td class="value">{{ $listing->created_at->format('d M Y') }}</td>
-        </tr>
-        <tr>
-            <td class="label">Minimum Bid</td>
-            <td class="value">{{ number_format($listing->minimum_bid ?? 0, 2) }} {{ $listing->currency ?? 'AED' }}</td>
-            <td class="label">Current Highest Bid</td>
-            <td class="value">{{ isset($currentBid) && $currentBid ? number_format($currentBid, 2) : '-' }}
-                {{ $listing->currency ?? 'AED' }}
-            </td>
         </tr>
     </table>
 
