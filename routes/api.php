@@ -421,6 +421,16 @@ Route::get('/reports/reasons', [ReportController::class, 'getReasons']);
 // TEST ROUTES
 // ============================================
 Route::get('/test-email', [SoomController::class, 'testEmail']);
+Route::get('/test-time', function () {
+    return response()->json([
+        'config_timezone' => config('app.timezone'),
+        'php_default_timezone' => date_default_timezone_get(),
+        'server_time_carbon' => \Carbon\Carbon::now()->toDateTimeString(),
+        'server_time_formatted' => \Carbon\Carbon::now()->format('Y-m-d H:i:s P'),
+        'utc_time' => \Carbon\Carbon::now()->setTimezone('UTC')->toDateTimeString(),
+        'timestamp' => now()->timestamp,
+    ]);
+});
 Route::get('/test-sale-validated-email', [SoomController::class, 'testSaleValidatedEmail']);
 
 // ============================================
