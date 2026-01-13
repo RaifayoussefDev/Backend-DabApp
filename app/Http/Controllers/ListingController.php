@@ -2383,7 +2383,7 @@ class ListingController extends Controller
             }
 
             $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
-            $priceToShow = $listing->price ?? $listing->minimum_bid;
+            $priceToShow = $listing->price ? $listing->price : ($listing->minimum_bid ? $listing->minimum_bid : 0);
 
             $baseData = [
                 'id' => $listing->id,
