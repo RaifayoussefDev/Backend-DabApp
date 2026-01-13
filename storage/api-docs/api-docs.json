@@ -28760,6 +28760,141 @@
                 ]
             }
         },
+        "/api/prospect-listings": {
+            "post": {
+                "tags": [
+                    "Prospects"
+                ],
+                "summary": "Create a listing for a prospect (unauthenticated)",
+                "description": "Creates a new user (if not exists) and a listing in one go.",
+                "operationId": "3b29816384822af4998281fc4074d7cd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "phone": {
+                                        "description": "Required. Used to identify or create user.",
+                                        "type": "string",
+                                        "example": "+212600000000"
+                                    },
+                                    "email": {
+                                        "description": "Optional.",
+                                        "type": "string",
+                                        "example": "prospect@example.com"
+                                    },
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "brand_id": {
+                                        "type": "integer",
+                                        "example": 7
+                                    },
+                                    "model_id": {
+                                        "type": "integer",
+                                        "example": 5712
+                                    },
+                                    "year_id": {
+                                        "type": "integer",
+                                        "example": 10671
+                                    },
+                                    "engine": {
+                                        "type": "string",
+                                        "example": "9500cc"
+                                    },
+                                    "mileage": {
+                                        "type": "integer",
+                                        "example": 9000
+                                    },
+                                    "body_condition": {
+                                        "type": "string",
+                                        "example": "As New"
+                                    },
+                                    "modified": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "insurance": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "general_condition": {
+                                        "type": "string",
+                                        "example": "New"
+                                    },
+                                    "vehicle_care": {
+                                        "type": "string",
+                                        "example": "Wakeel"
+                                    },
+                                    "transmission": {
+                                        "type": "string",
+                                        "example": "Automatic"
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "My Prospect Listing"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Description here"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "example": 9000
+                                    },
+                                    "country_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Listing created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Listing created successfully"
+                                        },
+                                        "listing_id": {
+                                            "type": "integer",
+                                            "example": 123
+                                        },
+                                        "pdf_url": {
+                                            "type": "string",
+                                            "example": "https://api.dabapp.co/api/listings/123/pdf"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error"
+                    }
+                }
+            }
+        },
         "/api/reports/reasons": {
             "get": {
                 "tags": [
@@ -37337,6 +37472,10 @@
         {
             "name": "Promo Codes",
             "description": "Promo Codes"
+        },
+        {
+            "name": "Prospects",
+            "description": "Prospects"
         },
         {
             "name": "Roles",
