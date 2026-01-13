@@ -230,7 +230,7 @@
     <table class="header-table">
         <tr>
             <td class="header-logo-cell">
-                <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('storage/PDF/DABAPP ICON.svg'))) }}" alt="DabApp Logo" style="height: 40px;">
+                <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/pdf_icons/DABAPP ICON.svg'))) }}" alt="DabApp Logo" style="height: 40px;">
             </td>
             <td class="header-line-cell">
                 <div class="header-line"></div>
@@ -293,10 +293,10 @@
     <table class="buttons-table">
         <tr>
             <td class="btn btn-whatsapp" width="48%">
-                <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('storage/PDF/WHATS APP.svg'))) }}" style="height: 16px; margin-right: 5px; vertical-align: middle;"> {{ $listing->seller->phone ?? 'Unavailable' }}
+                <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/pdf_icons/WHATS APP.svg'))) }}" style="height: 16px; margin-right: 5px; vertical-align: middle;"> {{ $listing->seller->phone ?? 'Unavailable' }}
             </td>
             <td class="btn btn-call" width="48%">
-                <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('storage/PDF/CALL.svg'))) }}" style="height: 16px; margin-right: 5px; vertical-align: middle;"> {{ $listing->seller->phone ?? 'Unavailable' }}
+                <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/pdf_icons/CALL.svg'))) }}" style="height: 16px; margin-right: 5px; vertical-align: middle;"> {{ $listing->seller->phone ?? 'Unavailable' }}
             </td>
         </tr>
     </table>
@@ -305,7 +305,7 @@
 
     <!-- Description -->
     <div class="section-title">
-        <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('storage/PDF/BIKE.svg'))) }}" style="height: 24px; margin-right: 10px; vertical-align: middle;"> Description
+        <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/pdf_icons/BIKE.svg'))) }}" style="height: 24px; margin-right: 10px; vertical-align: middle;"> Description
     </div>
     <div class="description-text">
         {!! nl2br(e($listing->description)) !!}
@@ -398,7 +398,7 @@
 
     <!-- Footer -->
     <div class="footer">
-    <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('storage/PDF/DABAPP ICON2.svg'))) }}" class="footer-logo">
+    <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/pdf_icons/DABAPP ICON2.svg'))) }}" class="footer-logo">
         <br>
         <span style="font-size: 10px; color: #aaa;">2026 DabApp Technologies - All rights reserved</span>
     </div>
