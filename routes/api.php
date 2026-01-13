@@ -111,6 +111,8 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/firebase-login', [FirebaseAuthController::class, 'loginWithFirebase']);
 Route::get('/get-country', [AuthController::class, 'getCountry'])->name('get.country');
 Route::get('/countries', [AuthController::class, 'getAllCountries']);
+Route::post('/prospect/listings', [App\Http\Controllers\ProspectController::class, 'store']);
+Route::post('/prospect/upload', [App\Http\Controllers\ImageUploadController::class, 'upload']);
 
 
 Route::prefix('admin')->group(function () {
