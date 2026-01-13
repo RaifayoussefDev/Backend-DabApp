@@ -3373,10 +3373,20 @@ class ListingController extends Controller
         $user = Auth::user();
         $perPage = 10;
 
-        $listings = Listing::with(['images', 'city', 'country'])->where('status', 'published')
+        $listings = Listing::with(['images', 'city', 'country', 'country.currencyExchangeRate']) // ✅ Added currency relation
+            ->where('status', 'published')
+            ->orderBy('created_at', 'desc') // Ensure it orders by recent
             ->paginate($perPage);
 
-        $data = $listings->map(function ($listing) use ($user) {
+        // ✅ Fetch current bids for auctions (similar to getByCategory)
+        $listingIds = $listings->pluck('id');
+        $currentBids = DB::table('auction_histories')
+            ->whereIn('listing_id', $listingIds)
+            ->select('listing_id', DB::raw('MAX(bid_amount) as current_bid'))
+            ->groupBy('listing_id')
+            ->pluck('current_bid', 'listing_id');
+
+        $data = $listings->map(function ($listing) use ($user, $currentBids) {
             $isInWishlist = false;
 
             if ($user) {
@@ -3386,11 +3396,24 @@ class ListingController extends Controller
                     ->exists();
             }
 
+            // ✅ Price Calculation Logic (Copied from getByCategory)
+            $displayPrice = $listing->price;
+            $currentBid = $currentBids[$listing->id] ?? null;
+
+            if (!$displayPrice && $listing->auction_enabled) {
+                $displayPrice = $currentBid ?: $listing->minimum_bid;
+            }
+
+            $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+            $priceToShow = $listing->price ?? $listing->minimum_bid;
+
             $item = [
                 'id' => $listing->id,
                 'title' => $listing->title,
                 'description' => $listing->description,
-                'price' => $listing->price,
+                'price' => $priceToShow, // ✅ Use calculated price
+                'display_price' => $displayPrice, // ✅ Added display_price
+                'currency' => $currencySymbol, // ✅ Added currency
                 'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
                 'city' => $listing->city?->name,
                 'country' => $listing->country?->name,

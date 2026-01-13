@@ -421,15 +421,26 @@ Route::get('/reports/reasons', [ReportController::class, 'getReasons']);
 // TEST ROUTES
 // ============================================
 Route::get('/test-email', [SoomController::class, 'testEmail']);
-Route::get('/test-time', function () {
-    return response()->json([
+Route::get('/test-time', function (\Illuminate\Http\Request $request) {
+    $requestedTimezone = $request->query('timezone');
+    $serverTime = \Carbon\Carbon::now();
+
+    $response = [
         'config_timezone' => config('app.timezone'),
-        'php_default_timezone' => date_default_timezone_get(),
-        'server_time_carbon' => \Carbon\Carbon::now()->toDateTimeString(),
-        'server_time_formatted' => \Carbon\Carbon::now()->format('Y-m-d H:i:s P'),
-        'utc_time' => \Carbon\Carbon::now()->setTimezone('UTC')->toDateTimeString(),
-        'timestamp' => now()->timestamp,
-    ]);
+        'server_time' => $serverTime->toDateTimeString(),
+        'utc_time' => $serverTime->copy()->setTimezone('UTC')->toDateTimeString(),
+    ];
+
+    if ($requestedTimezone) {
+        try {
+            $response['requested_timezone'] = $requestedTimezone;
+            $response['time_in_requested_zone'] = $serverTime->copy()->setTimezone($requestedTimezone)->toDateTimeString();
+        } catch (\Exception $e) {
+            $response['error'] = "Invalid timezone provided: $requestedTimezone";
+        }
+    }
+
+    return response()->json($response);
 });
 Route::get('/test-sale-validated-email', [SoomController::class, 'testSaleValidatedEmail']);
 
