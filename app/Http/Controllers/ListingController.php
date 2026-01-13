@@ -2375,15 +2375,19 @@ class ListingController extends Controller
                     ->exists();
             }
 
-            $displayPrice = $listing->price;
-            $currentBid = $currentBids[$listing->id] ?? null;
-
-            if (!$displayPrice && $listing->auction_enabled) {
-                $displayPrice = $currentBid ?: $listing->minimum_bid;
-            }
-
             $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
             $priceToShow = $listing->price ? $listing->price : ($listing->minimum_bid ? $listing->minimum_bid : 0);
+
+            // ✅ Retrieving current bid
+            $currentBid = $currentBids[$listing->id] ?? null;
+
+            // ✅ Fix: Initialize displayPrice with priceToShow to ensure it always has a value
+            $displayPrice = $priceToShow;
+
+            // ✅ If it's an auction and has no direct price (buy now), use current bid or min bid
+            if ($listing->auction_enabled && !$listing->price) {
+                $displayPrice = $currentBid ?: $listing->minimum_bid;
+            }
 
             $baseData = [
                 'id' => $listing->id,
@@ -2396,6 +2400,7 @@ class ListingController extends Controller
                 'images' => $listing->images->pluck('image_url'),
                 'wishlist' => $isInWishlist,
                 'display_price' => $displayPrice,
+                'current_bid' => $currentBid,
                 'currency' => $currencySymbol,
             ];
 
@@ -3405,7 +3410,15 @@ class ListingController extends Controller
             }
 
             $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
-            $priceToShow = $listing->price ?? $listing->minimum_bid;
+            $priceToShow = $listing->price ? $listing->price : ($listing->minimum_bid ? $listing->minimum_bid : 0);
+
+            // ✅ Fix: Initialize displayPrice with priceToShow to ensure it always has a value
+            $displayPrice = $priceToShow;
+
+            // ✅ If it's an auction and has no direct price (buy now), use current bid or min bid
+            if ($listing->auction_enabled && !$listing->price) {
+                $displayPrice = $currentBid ?: $listing->minimum_bid;
+            }
 
             $item = [
                 'id' => $listing->id,
