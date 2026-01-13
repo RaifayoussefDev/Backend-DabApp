@@ -87,7 +87,7 @@
         .sub-info {
             font-size: 14px;
             color: #555;
-            margin-bottom: 20px;
+            margin-bottom: 60px; /* Increased from 20px */
         }
 
         .sub-info span {
@@ -286,7 +286,7 @@
         </tr>
     </table>
 
-    <div class="header-line" style="margin: 30px 0;"></div>
+    <div class="header-line" style="margin-top: 100px; margin-bottom: 20px;"></div>
 
     <div class="page-break"></div>
 
