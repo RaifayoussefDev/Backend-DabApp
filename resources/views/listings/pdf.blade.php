@@ -14,7 +14,7 @@
             color: #1a2b4b;
             /* Dark Blue Text */
             margin: 0;
-            padding: 30px;
+            padding: 10px;
         }
 
         /* Header */
@@ -42,12 +42,12 @@
         /* Image Grid */
         .image-grid {
             width: 100%;
-            border-spacing: 15px;
+            border-spacing: 5px;
             margin-bottom: 20px;
         }
         .image-cell {
             width: 50%;
-            height: 150px;
+            height: 240px;
             vertical-align: middle;
             text-align: center;
             border: 2px solid #F03D24; /* Match DabApp Red */
@@ -59,7 +59,7 @@
 
         .image-cell img {
             width: 100%;
-            height: 150px; /* Reduced from 200px */
+            height: 240px;
             object-fit: cover;
             /* Border radius on img needs to match container or overflow hidden handles it */
         }
