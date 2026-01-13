@@ -14,7 +14,7 @@
             color: #1a2b4b;
             /* Dark Blue Text */
             margin: 0;
-            padding: 10px;
+            padding: 30px;
         }
 
         /* Header */
@@ -42,7 +42,7 @@
         /* Image Grid */
         .image-grid {
             width: 100%;
-            border-spacing: 5px;
+            border-spacing: 15px;
             margin-bottom: 20px;
         }
         .image-cell {
