@@ -18,17 +18,25 @@
         }
 
         /* Header */
-        .header-top {
-            display: table;
+        .header-table {
             width: 100%;
             margin-bottom: 20px;
-            border-bottom: 2px solid #1a2b4b;
-            padding-bottom: 15px;
+            border-collapse: collapse;
         }
-
-        .header-logo {
-            display: table-cell;
+        .header-logo-cell {
+            width: 1%;
+            white-space: nowrap;
+            padding-right: 20px;
             vertical-align: middle;
+        }
+        .header-line-cell {
+            vertical-align: middle;
+            width: 99%;
+        }
+        .header-line {
+            border-bottom: 2px solid #1a2b4b;
+            width: 100%;
+            height: 1px; /* visual fix */
         }
 
         /* Image Grid */
@@ -37,19 +45,17 @@
             border-spacing: 15px;
             margin-bottom: 20px;
         }
-
         .image-cell {
             width: 50%;
-            height: 200px;
+            height: 150px; /* Reduced from 200px */
             vertical-align: middle;
             text-align: center;
-            border: 2px solid #F03D24;
-            /* Match DabApp Red */
+            border: 2px solid #F03D24; /* Match DabApp Red */
             overflow: hidden;
             padding: 0;
             background-color: white;
         }
-
+        
         /* Shape A: TopLeft & BottomRight rounded */
         .img-shape-a {
             border-top-left-radius: 20px;
@@ -68,7 +74,7 @@
 
         .image-cell img {
             width: 100%;
-            height: 200px;
+            height: 150px; /* Reduced from 200px */
             object-fit: cover;
             /* Border radius on img needs to match container or overflow hidden handles it */
         }
@@ -221,12 +227,16 @@
 <body>
 
     <!-- Header -->
-    <div class="header-top">
-        <div class="header-logo">
-            <img src="{{ public_path('LogoDabApp.png') }}" alt="DabApp Logo" style="height: 40px;">
-        </div>
-        <!-- Right side empty line as per image -->
-    </div>
+    <table class="header-table">
+        <tr>
+            <td class="header-logo-cell">
+                <img src="{{ public_path('LogoDabApp.png') }}" alt="DabApp Logo" style="height: 40px;">
+            </td>
+            <td class="header-line-cell">
+                <div class="header-line"></div>
+            </td>
+        </tr>
+    </table>
 
     <!-- Images -->
     @if($images->count() > 0)
