@@ -288,6 +288,8 @@
 
     <div class="header-line" style="margin: 30px 0;"></div>
 
+    <div class="page-break"></div>
+
     <!-- Description -->
     <div class="section-title">
         <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/pdf_icons/BIKE.svg'))) }}" style="height: 24px; margin-right: 10px; vertical-align: middle;"> Description
