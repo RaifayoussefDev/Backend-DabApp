@@ -89,11 +89,14 @@ class ProspectController extends Controller
                 // Create new user
                 $password = Str::random(10);
                 $user = User::create([
-                    'name' => 'Prospect ' . substr($phone, -4),
-                    'phone' => $phone,
+                    'first_name' => 'Prospect',
+                    'last_name' => substr($phone, -4),
                     'email' => $request->input('email'),
+                    'phone' => $phone,
                     'password' => Hash::make($password),
                     'role_id' => 2, // Assuming 2 is 'User' role
+                    'verified' => true,
+                    'is_active' => true,
                     // Add other default fields if necessary
                 ]);
             }
