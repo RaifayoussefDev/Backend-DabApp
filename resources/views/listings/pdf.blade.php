@@ -43,8 +43,8 @@
             height: 200px;
             vertical-align: middle;
             text-align: center;
-            border: 1px solid #f07e7e;
-            /* Light red border as seen */
+            border: 2px solid #F03D24;
+            /* Match DabApp Red */
             overflow: hidden;
             padding: 0;
             background-color: white;
@@ -80,8 +80,9 @@
             color: white;
             font-size: 20px;
             font-weight: bold;
-            padding: 5px 20px;
-            border-radius: 5px;
+            padding: 8px 25px;
+            /* Top-Right heavy rounding to match Image 2 */
+            border-radius: 4px 25px 4px 4px;
             margin-bottom: 10px;
         }
 
@@ -389,9 +390,6 @@
     <!-- Footer -->
     <div class="footer">
         <img src="{{ public_path('LogoDabApp.png') }}" class="footer-logo">
-        <!-- You might need a white version of the logo -->
-        <br>
-        DabApp
         <br>
         <span style="font-size: 10px; color: #aaa;">2026 DabApp Technologies - All rights reserved</span>
     </div>
