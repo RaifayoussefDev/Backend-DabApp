@@ -45,18 +45,32 @@
             text-align: center;
             border: 1px solid #f07e7e;
             /* Light red border as seen */
-            border-radius: 15px;
-            /* Rounded corners */
             overflow: hidden;
             padding: 0;
             background-color: white;
+        }
+
+        /* Shape A: TopLeft & BottomRight rounded */
+        .img-shape-a {
+            border-top-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            border-top-right-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+
+        /* Shape B: TopRight & BottomLeft rounded */
+        .img-shape-b {
+            border-top-right-radius: 20px;
+            border-bottom-left-radius: 20px;
+            border-top-left-radius: 0;
+            border-bottom-right-radius: 0;
         }
 
         .image-cell img {
             width: 100%;
             height: 200px;
             object-fit: cover;
-            border-radius: 12px;
+            /* Border radius on img needs to match container or overflow hidden handles it */
         }
 
         /* Price Tag */
@@ -215,29 +229,40 @@
 
     <!-- Images -->
     @if($images->count() > 0)
-        <table class="image-grid">
-            <tr>
-                @foreach($images->take(2) as $img)
-                    <td class="image-cell">
-                        <img src="{{ $img->image_url }}">
-                    </td>
-                @endforeach
-                <!-- Fill empty cells if needed -->
-                @if($images->count() < 2)
-                <td></td> @endif
-            </tr>
-            @if($images->count() > 2)
-                <tr>
-                    @foreach($images->skip(2)->take(2) as $img)
-                        <td class="image-cell">
-                            <img src="{{ $img->image_url }}">
-                        </td>
-                    @endforeach
-                    @if($images->count() < 4)
-                    <td></td> @endif
-                </tr>
+    <table class="image-grid">
+        <tr>
+            <!-- Row 1 Left: Shape A -->
+            @if($images->count() >= 1)
+            <td class="image-cell img-shape-a">
+                <img src="{{ $images[0]->image_url }}">
+            </td>
             @endif
-        </table>
+            
+            <!-- Row 1 Right: Shape B -->
+            @if($images->count() >= 2)
+            <td class="image-cell img-shape-b">
+                <img src="{{ $images[1]->image_url }}">
+            </td>
+            @endif
+        </tr>
+        @if($images->count() > 2)
+        <tr>
+            <!-- Row 2 Left: Shape B (Alternating) -->
+            @if($images->count() >= 3)
+            <td class="image-cell img-shape-b">
+                <img src="{{ $images[2]->image_url }}">
+            </td>
+            @endif
+
+            <!-- Row 2 Right: Shape A (Alternating) -->
+            @if($images->count() >= 4)
+            <td class="image-cell img-shape-a">
+                <img src="{{ $images[3]->image_url }}">
+            </td>
+            @endif
+        </tr>
+        @endif
+    </table>
     @endif
 
     <!-- Price -->
@@ -356,7 +381,8 @@
             <td class="value">{{ number_format($listing->minimum_bid ?? 0, 2) }} {{ $listing->currency ?? 'AED' }}</td>
             <td class="label">Current Highest Bid</td>
             <td class="value">{{ isset($currentBid) && $currentBid ? number_format($currentBid, 2) : '-' }}
-                {{ $listing->currency ?? 'AED' }}</td>
+                {{ $listing->currency ?? 'AED' }}
+            </td>
         </tr>
     </table>
 
