@@ -2381,19 +2381,20 @@ class ListingController extends Controller
             // ✅ Retrieving current bid
             $currentBid = $currentBids[$listing->id] ?? null;
 
-            // ✅ Fix: Initialize displayPrice with priceToShow to ensure it always has a value
-            $displayPrice = $priceToShow;
-
-            // ✅ If it's an auction and has no direct price (buy now), use current bid or min bid
-            if ($listing->auction_enabled && !$listing->price) {
-                $displayPrice = $currentBid ?: $listing->minimum_bid;
+            // ✅ User logic: If price exists, display it. If not, verify minimum_bid and display it.
+            if ($listing->price) {
+                $displayPrice = $listing->price;
+            } elseif ($listing->minimum_bid) {
+                $displayPrice = $listing->minimum_bid;
+            } else {
+                $displayPrice = 0;
             }
 
             $baseData = [
                 'id' => $listing->id,
                 'title' => $listing->title,
                 'description' => $listing->description,
-                'price' => $priceToShow,
+                'price' => $listing->price, // Use raw price here as per original logic, or should it be $displayPrice? usually raw price.
                 'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
                 'city' => $listing->city?->name,
                 'country' => $listing->country?->name,
