@@ -4500,7 +4500,39 @@ class ListingController extends Controller
             $message = "Showing last 10 listings from all categories.";
         }
 
-        $formattedListings = $listings->map(function ($listing) {
+        // ✅ Pour les enchères, charger la dernière enchère
+        $listingIds = $listings->pluck('id');
+        $currentBids = DB::table('auction_histories')
+            ->whereIn('listing_id', $listingIds)
+            ->select('listing_id', DB::raw('MAX(bid_amount) as current_bid'))
+            ->groupBy('listing_id')
+            ->pluck('current_bid', 'listing_id');
+
+        $user = Auth::user();
+
+        $formattedListings = $listings->map(function ($listing) use ($currentBids, $user) {
+            $isInWishlist = false;
+
+            if ($user) {
+                $isInWishlist = DB::table('wishlists')
+                    ->where('user_id', $user->id)
+                    ->where('listing_id', $listing->id)
+                    ->exists();
+            }
+
+            // ✅ Retrieving current bid
+            $currentBid = $currentBids[$listing->id] ?? null;
+
+            // ✅ User logic: If price exists, display it. If not, verify minimum_bid and display it.
+            if ($listing->price) {
+                $displayPrice = $listing->price;
+            } elseif ($listing->minimum_bid) {
+                $displayPrice = $listing->minimum_bid;
+            } else {
+                $displayPrice = 0;
+            }
+
+            $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
 
             // Base listing data
             $listingData = [
@@ -4520,6 +4552,10 @@ class ListingController extends Controller
                 'city' => $listing->city?->name,
                 'country' => $listing->country?->name,
                 'images' => $listing->images->pluck('image_url'),
+                'wishlist' => $isInWishlist,
+                'display_price' => $displayPrice,
+                'current_bid' => $currentBid,
+                'currency' => $currencySymbol,
             ];
 
             // Category-specific data
