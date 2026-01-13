@@ -16773,6 +16773,73 @@
                 }
             }
         },
+        "/api/upload-image-public": {
+            "post": {
+                "tags": [
+                    "Image Upload"
+                ],
+                "summary": "Public Upload multiple images (Watermarked)",
+                "description": "Allows public users to upload multiple images to the server. Images will be automatically resized and WATERMARKED. No authentication required.",
+                "operationId": "uploadImagesPublic",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "images[]"
+                                ],
+                                "properties": {
+                                    "images[]": {
+                                        "description": "Multiple image files to upload",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Images uploaded successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Images uploaded successfully"
+                                        },
+                                        "paths": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string",
+                                                "example": "http://yourdomain.com/storage/listings/image1.jpg"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "422": {
+                        "description": "Validation Error"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/api/upload-image-no-watermark": {
             "post": {
                 "tags": [
