@@ -215,7 +215,7 @@
     <table class="header-table">
         <tr>
             <td class="header-logo-cell">
-                <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/pdf_icons/DABAPP ICON.svg'))) }}" alt="DabApp Logo" style="height: 40px;">
+                <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('LogoDabApp.png'))) }}" alt="DabApp Logo" style="height: 40px;">
             </td>
             <td class="header-line-cell">
                 <div class="header-line"></div>
@@ -385,7 +385,7 @@
 
     <!-- Footer -->
     <div class="footer">
-    <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/pdf_icons/DABAPP ICON2.svg'))) }}" class="footer-logo">
+    <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/pdf_icons/logo-footer.svg'))) }}" class="footer-logo">
         <br>
         <span style="font-size: 10px; color: #aaa;">2026 DabApp Technologies - All rights reserved</span>
     </div>
