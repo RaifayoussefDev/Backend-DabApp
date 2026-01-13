@@ -47,29 +47,14 @@
         }
         .image-cell {
             width: 50%;
-            height: 150px; /* Reduced from 200px */
+            height: 150px;
             vertical-align: middle;
             text-align: center;
             border: 2px solid #F03D24; /* Match DabApp Red */
             overflow: hidden;
             padding: 0;
             background-color: white;
-        }
-        
-        /* Shape A: TopLeft & BottomRight rounded */
-        .img-shape-a {
-            border-top-left-radius: 20px;
-            border-bottom-right-radius: 20px;
-            border-top-right-radius: 0;
-            border-bottom-left-radius: 0;
-        }
-
-        /* Shape B: TopRight & BottomLeft rounded */
-        .img-shape-b {
-            border-top-right-radius: 20px;
-            border-bottom-left-radius: 20px;
-            border-top-left-radius: 0;
-            border-bottom-right-radius: 0;
+            border-radius: 0 40px 0 0; /* Top-Right only */
         }
 
         .image-cell img {
@@ -242,32 +227,32 @@
     @if($images->count() > 0)
     <table class="image-grid">
         <tr>
-            <!-- Row 1 Left: Shape A -->
+            <!-- Row 1 Left -->
             @if($images->count() >= 1)
-            <td class="image-cell img-shape-a">
+            <td class="image-cell">
                 <img src="{{ $images[0]->image_url }}">
             </td>
             @endif
             
-            <!-- Row 1 Right: Shape B -->
+            <!-- Row 1 Right -->
             @if($images->count() >= 2)
-            <td class="image-cell img-shape-b">
+            <td class="image-cell">
                 <img src="{{ $images[1]->image_url }}">
             </td>
             @endif
         </tr>
         @if($images->count() > 2)
         <tr>
-            <!-- Row 2 Left: Shape B (Alternating) -->
+            <!-- Row 2 Left -->
             @if($images->count() >= 3)
-            <td class="image-cell img-shape-b">
+            <td class="image-cell">
                 <img src="{{ $images[2]->image_url }}">
             </td>
             @endif
 
-            <!-- Row 2 Right: Shape A (Alternating) -->
+            <!-- Row 2 Right -->
             @if($images->count() >= 4)
-            <td class="image-cell img-shape-a">
+            <td class="image-cell">
                 <img src="{{ $images[3]->image_url }}">
             </td>
             @endif
@@ -301,7 +286,7 @@
         </tr>
     </table>
 
-    <hr style="border: 0; border-top: 2px solid #1a2b4b; margin: 30px 0;">
+    <div class="header-line" style="margin: 30px 0;"></div>
 
     <!-- Description -->
     <div class="section-title">
