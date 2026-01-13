@@ -161,6 +161,53 @@ class ImageUploadController extends Controller
 
     /**
      * @OA\Post(
+     *     path="/api/upload-image-public",
+     *     summary="Public Upload multiple images (Watermarked)",
+     *     description="Allows public users to upload multiple images to the server. Images will be automatically resized and WATERMARKED. No authentication required.",
+     *     operationId="uploadImagesPublic",
+     *     tags={"Image Upload"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"images[]"},
+     *                 @OA\Property(
+     *                     property="images[]",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="string",
+     *                         format="binary"
+     *                     ),
+     *                     description="Multiple image files to upload"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Images uploaded successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Images uploaded successfully"),
+     *             @OA\Property(
+     *                 property="paths",
+     *                 type="array",
+     *                 @OA\Items(type="string", example="http://yourdomain.com/storage/listings/image1.jpg")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Bad Request"),
+     *     @OA\Response(response=422, description="Validation Error"),
+     *     @OA\Response(response=500, description="Internal Server Error")
+     * )
+     */
+    public function uploadPublic(Request $request)
+    {
+        return $this->upload($request);
+    }
+
+    /**
+     * @OA\Post(
      *     path="/api/upload-image-no-watermark",
      *     summary="Upload multiple images without watermark",
      *     description="Allows users to upload multiple images to the server with automatic resizing but WITHOUT watermark.",
