@@ -71,7 +71,7 @@ class ProspectController extends Controller
             'country_id' => 'required|integer',
             'city_id' => 'required|integer',
             'title' => 'required|string|max:255',
-            'images' => 'required|array|min:1',
+            'images' => $request->category_id == 3 ? 'nullable|array' : 'required|array|min:1',
             // Add other fields as loosely required depending on category logic, but for now we keep it flexible
         ]);
 
