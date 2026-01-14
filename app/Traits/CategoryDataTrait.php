@@ -119,17 +119,17 @@ trait CategoryDataTrait
                                 ]);
                             }
                         }
+                    }
 
-                        // Generate plate image after saving fields
-                        try {
-                            Log::info("Generating plate image for license_plate_id: " . $licensePlate->id);
-                            $licensePlate->generatePlateImage();
-                        } catch (\Exception $e) {
-                            Log::error("Failed to generate plate image in handleCategorySpecificData", [
-                                'license_plate_id' => $licensePlate->id,
-                                'error' => $e->getMessage()
-                            ]);
-                        }
+                    // Generate plate image (Always try, even if no fields are passed, e.g. purely background)
+                    try {
+                        Log::info("Generating plate image for license_plate_id: " . $licensePlate->id);
+                        $licensePlate->generatePlateImage();
+                    } catch (\Exception $e) {
+                        Log::error("Failed to generate plate image in handleCategorySpecificData", [
+                            'license_plate_id' => $licensePlate->id,
+                            'error' => $e->getMessage()
+                        ]);
                     }
                 }
                 break;
