@@ -120,11 +120,11 @@ class LicensePlate extends Model
 
             // Vérifier que les valeurs ne sont pas vides
             if (empty($fieldValues)) {
-                \Log::error("❌ Field values are empty after formatting", [
+                \Log::warning("⚠️ Field values are empty after formatting, proceeding with blank template", [
                     'license_plate_id' => $this->id,
                     'raw_fieldValues' => $this->fieldValues->toArray()
                 ]);
-                return false;
+                // return false; // REMOVED: Allow generation even if empty
             }
 
             // Prepare request data

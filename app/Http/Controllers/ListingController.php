@@ -2375,33 +2375,33 @@ class ListingController extends Controller
                     ->exists();
             }
 
-            $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
-            $priceToShow = $listing->price ? $listing->price : ($listing->minimum_bid ? $listing->minimum_bid : 0);
-
-            // ✅ Retrieving current bid
+            $displayPrice = $listing->price;
             $currentBid = $currentBids[$listing->id] ?? null;
 
-            // ✅ User logic: If price exists, display it. If not, verify minimum_bid and display it.
-            if ($listing->price) {
-                $displayPrice = $listing->price;
-            } elseif ($listing->minimum_bid) {
+            // ✅ Logic updated: If allow_submission (make an offer), display minimum_bid, otherwise price
+            if ($listing->allow_submission) {
                 $displayPrice = $listing->minimum_bid;
             } else {
-                $displayPrice = 0;
+                $displayPrice = $listing->price;
             }
+
+            // ✅ Force string casting as requested (default to 0 to avoid empty string)
+            $displayPrice = (string) ($displayPrice ?? 0);
+
+            $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+            $priceToShow = $listing->price ?? $listing->minimum_bid;
 
             $baseData = [
                 'id' => $listing->id,
                 'title' => $listing->title,
                 'description' => $listing->description,
-                'price' => $listing->price, // Use raw price here as per original logic, or should it be $displayPrice? usually raw price.
+                'price' => $priceToShow,
                 'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
                 'city' => $listing->city?->name,
                 'country' => $listing->country?->name,
                 'images' => $listing->images->pluck('image_url'),
                 'wishlist' => $isInWishlist,
                 'display_price' => $displayPrice,
-                'current_bid' => $currentBid,
                 'currency' => $currencySymbol,
             ];
 
@@ -3379,20 +3379,10 @@ class ListingController extends Controller
         $user = Auth::user();
         $perPage = 10;
 
-        $listings = Listing::with(['images', 'city', 'country', 'country.currencyExchangeRate']) // ✅ Added currency relation
-            ->where('status', 'published')
-            ->orderBy('created_at', 'desc') // Ensure it orders by recent
+        $listings = Listing::with(['images', 'city', 'country'])->where('status', 'published')
             ->paginate($perPage);
 
-        // ✅ Fetch current bids for auctions (similar to getByCategory)
-        $listingIds = $listings->pluck('id');
-        $currentBids = DB::table('auction_histories')
-            ->whereIn('listing_id', $listingIds)
-            ->select('listing_id', DB::raw('MAX(bid_amount) as current_bid'))
-            ->groupBy('listing_id')
-            ->pluck('current_bid', 'listing_id');
-
-        $data = $listings->map(function ($listing) use ($user, $currentBids) {
+        $data = $listings->map(function ($listing) use ($user) {
             $isInWishlist = false;
 
             if ($user) {
@@ -3402,32 +3392,11 @@ class ListingController extends Controller
                     ->exists();
             }
 
-            // ✅ Price Calculation Logic (Copied from getByCategory)
-            $displayPrice = $listing->price;
-            $currentBid = $currentBids[$listing->id] ?? null;
-
-            if (!$displayPrice && $listing->auction_enabled) {
-                $displayPrice = $currentBid ?: $listing->minimum_bid;
-            }
-
-            $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
-            $priceToShow = $listing->price ? $listing->price : ($listing->minimum_bid ? $listing->minimum_bid : 0);
-
-            // ✅ Fix: Initialize displayPrice with priceToShow to ensure it always has a value
-            $displayPrice = $priceToShow;
-
-            // ✅ If it's an auction and has no direct price (buy now), use current bid or min bid
-            if ($listing->auction_enabled && !$listing->price) {
-                $displayPrice = $currentBid ?: $listing->minimum_bid;
-            }
-
             $item = [
                 'id' => $listing->id,
                 'title' => $listing->title,
                 'description' => $listing->description,
-                'price' => $priceToShow, // ✅ Use calculated price
-                'display_price' => $displayPrice, // ✅ Added display_price
-                'currency' => $currencySymbol, // ✅ Added currency
+                'price' => $listing->price,
                 'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
                 'city' => $listing->city?->name,
                 'country' => $listing->country?->name,
@@ -4500,39 +4469,7 @@ class ListingController extends Controller
             $message = "Showing last 10 listings from all categories.";
         }
 
-        // ✅ Pour les enchères, charger la dernière enchère
-        $listingIds = $listings->pluck('id');
-        $currentBids = DB::table('auction_histories')
-            ->whereIn('listing_id', $listingIds)
-            ->select('listing_id', DB::raw('MAX(bid_amount) as current_bid'))
-            ->groupBy('listing_id')
-            ->pluck('current_bid', 'listing_id');
-
-        $user = Auth::user();
-
-        $formattedListings = $listings->map(function ($listing) use ($currentBids, $user) {
-            $isInWishlist = false;
-
-            if ($user) {
-                $isInWishlist = DB::table('wishlists')
-                    ->where('user_id', $user->id)
-                    ->where('listing_id', $listing->id)
-                    ->exists();
-            }
-
-            // ✅ Retrieving current bid
-            $currentBid = $currentBids[$listing->id] ?? null;
-
-            // ✅ User logic: If price exists, display it. If not, verify minimum_bid and display it.
-            if ($listing->price) {
-                $displayPrice = $listing->price;
-            } elseif ($listing->minimum_bid) {
-                $displayPrice = $listing->minimum_bid;
-            } else {
-                $displayPrice = 0;
-            }
-
-            $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+        $formattedListings = $listings->map(function ($listing) {
 
             // Base listing data
             $listingData = [
@@ -4552,10 +4489,6 @@ class ListingController extends Controller
                 'city' => $listing->city?->name,
                 'country' => $listing->country?->name,
                 'images' => $listing->images->pluck('image_url'),
-                'wishlist' => $isInWishlist,
-                'display_price' => $displayPrice,
-                'current_bid' => $currentBid,
-                'currency' => $currencySymbol,
             ];
 
             // Category-specific data
