@@ -263,7 +263,7 @@
 
     <!-- Price -->
     <div class="price-tag">
-        {{ $displayPrice ? number_format($displayPrice, 0) : '0' }} {{ $listing->currency ?? 'AED' }}
+        {{ $displayPrice ? number_format($displayPrice, 0) : '0' }} {{ $currency }}
     </div>
 
     <!-- Title -->
@@ -331,8 +331,9 @@
             <tr>
                 <td class="label">Vehicle Care</td>
                 <td class="value">
-                    {{ $listing->motorcycle->vehicle_care ?? '-' }}
-                    @if($listing->motorcycle->vehicle_care === 'Other' && !empty($listing->motorcycle->vehicle_care_other))
+                    <div class="subtitle">
+                        {{ number_format($listing->highest_bid, 0, ',', ' ') }} {{ $currency }} 
+                    </div>@if($listing->motorcycle->vehicle_care === 'Other' && !empty($listing->motorcycle->vehicle_care_other))
                         ({{ $listing->motorcycle->vehicle_care_other }})
                     @endif
                 </td>

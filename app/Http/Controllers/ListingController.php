@@ -78,12 +78,12 @@ class ListingController extends Controller
 
             $listing = Listing::with([
                 'city',
-                'country',
+                'country.currencyExchangeRate', // ✅ Load currency
                 'images',
                 'motorcycle.brand',
                 'motorcycle.model',
                 'motorcycle.year',
-                'sparePart.bikePartBrand', // ✅ Added
+                'sparePart.bikePartBrand',
                 'licensePlate.plateFormat',
                 'submissions',
                 'seller'
@@ -122,15 +122,18 @@ class ListingController extends Controller
                 $displayPrice = $currentBid ?: $listing->minimum_bid;
             }
 
+            // ✅ Get currency symbol
+            $currency = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+
             // Debug mode to check HTML output directly
             if (request()->has('html')) {
-                return view('listings.pdf', compact('listing', 'images', 'currentBid', 'displayPrice'));
+                return view('listings.pdf', compact('listing', 'images', 'currentBid', 'displayPrice', 'currency'));
             }
 
             \Log::info("Rendering PDF...");
 
             $pdf = Pdf::setOption(['isRemoteEnabled' => true])
-                ->loadView('listings.pdf', compact('listing', 'images', 'currentBid', 'displayPrice'));
+                ->loadView('listings.pdf', compact('listing', 'images', 'currentBid', 'displayPrice', 'currency'));
 
             \Log::info("PDF Rendered. Downloading...");
 
