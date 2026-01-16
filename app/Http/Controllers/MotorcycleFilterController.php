@@ -195,6 +195,59 @@ class MotorcycleFilterController extends Controller
         ]);
     }
 
+    public function getYearsByBrand($brandId)
+    {
+        // Validation rapide
+        if (!MotorcycleBrand::where('id', $brandId)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Brand not found'
+            ], 404);
+        }
+
+        // Cache pendant 15 minutes
+        $years = Cache::remember("motorcycle_years_brand_{$brandId}", 900, function () use ($brandId) {
+            return MotorcycleYear::join('motorcycle_models', 'motorcycle_years.model_id', '=', 'motorcycle_models.id')
+                ->where('motorcycle_models.brand_id', $brandId)
+                ->select('motorcycle_years.year')
+                ->distinct()
+                ->orderBy('motorcycle_years.year', 'desc')
+                ->pluck('motorcycle_years.year');
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $years
+        ]);
+    }
+
+    public function getModelsByBrandAndYear($brandId, $year)
+    {
+        // Validation rapide
+        if (!MotorcycleBrand::where('id', $brandId)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Brand not found'
+            ], 404);
+        }
+
+        // Cache pendant 15 minutes
+        $models = Cache::remember("motorcycle_models_brand_{$brandId}_year_{$year}", 900, function () use ($brandId, $year) {
+            return MotorcycleModel::where('brand_id', $brandId)
+                ->whereHas('years', function ($query) use ($year) {
+                    $query->where('year', $year);
+                })
+                ->select('id', 'name', 'brand_id')
+                ->orderBy('name')
+                ->get();
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $models
+        ]);
+    }
+
     /**
      * @OA\Get(
      *     path="/api/motorcycle/details/{yearId}",

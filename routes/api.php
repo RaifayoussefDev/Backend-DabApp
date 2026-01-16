@@ -201,6 +201,10 @@ Route::prefix('motorcycle')->group(function () {
     Route::get('/brand/{brandId}', [MotorcycleFilterController::class, 'getByBrand']);
     Route::get('/year/{yearId}', [MotorcycleFilterController::class, 'getByYear']);
     Route::post('/clear-cache', [MotorcycleFilterController::class, 'clearCache']);
+
+    // ✅ New Filters (Brand -> Year -> Model)
+    Route::get('/years-by-brand/{brandId}', [MotorcycleFilterController::class, 'getYearsByBrand']);
+    Route::get('/models-by-year/{brandId}/{year}', [MotorcycleFilterController::class, 'getModelsByBrandAndYear']);
 });
 
 // ============================================
