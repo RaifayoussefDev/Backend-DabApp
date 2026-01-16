@@ -97,7 +97,7 @@ class ImageUploadController extends Controller
             Log::info('Upload request received', ['files_count' => count($request->allFiles())]);
 
             $request->validate([
-                'images.*' => 'required|image|mimes:jpeg,jpg,png,webp|max:10240'
+                'images.*' => 'required|image|mimes:jpeg,jpg,png,webp|max:51200'
             ]);
 
             if (!$request->hasFile('images')) {
@@ -248,7 +248,7 @@ class ImageUploadController extends Controller
     {
         try {
             $request->validate([
-                'images.*' => 'required|image|mimes:jpeg,jpg,png,webp|max:10240'
+                'images.*' => 'required|image|mimes:jpeg,jpg,png,webp|max:51200'
             ]);
 
             if (!$request->hasFile('images')) {
