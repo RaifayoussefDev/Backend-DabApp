@@ -195,6 +195,32 @@ class MotorcycleFilterController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/motorcycle/years-by-brand/{brandId}",
+     *     summary="Get distinct years for a brand",
+     *     tags={"Motorcycle"},
+     *     @OA\Parameter(
+     *         name="brandId",
+     *         in="path",
+     *         required=true,
+     *         description="Brand ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of available years for the brand",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(type="integer", example=2024)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Brand not found")
+     * )
+     */
     public function getYearsByBrand($brandId)
     {
         // Validation rapide
@@ -221,6 +247,43 @@ class MotorcycleFilterController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/motorcycle/models-by-year/{brandId}/{year}",
+     *     summary="Get models by brand and year",
+     *     tags={"Motorcycle"},
+     *     @OA\Parameter(
+     *         name="brandId",
+     *         in="path",
+     *         required=true,
+     *         description="Brand ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="year",
+     *         in="path",
+     *         required=true,
+     *         description="Year (e.g. 2024)",
+     *         @OA\Schema(type="integer", example=2024)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of models for the brand and year",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=142),
+     *                     @OA\Property(property="name", type="string", example="CBR1000RR"),
+     *                     @OA\Property(property="brand_id", type="integer", example=1)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Brand not found")
+     * )
+     */
     public function getModelsByBrandAndYear($brandId, $year)
     {
         // Validation rapide

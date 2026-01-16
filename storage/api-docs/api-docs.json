@@ -22152,6 +22152,127 @@
                 }
             }
         },
+        "/api/motorcycle/years-by-brand/{brandId}": {
+            "get": {
+                "tags": [
+                    "Motorcycle"
+                ],
+                "summary": "Get distinct years for a brand",
+                "operationId": "b4538e3b717a38a87aa3b60696cc5c6a",
+                "parameters": [
+                    {
+                        "name": "brandId",
+                        "in": "path",
+                        "description": "Brand ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of available years for the brand",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "integer",
+                                                "example": 2024
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Brand not found"
+                    }
+                }
+            }
+        },
+        "/api/motorcycle/models-by-year/{brandId}/{year}": {
+            "get": {
+                "tags": [
+                    "Motorcycle"
+                ],
+                "summary": "Get models by brand and year",
+                "operationId": "600aa9593caa6b23d01991cfc89f20b3",
+                "parameters": [
+                    {
+                        "name": "brandId",
+                        "in": "path",
+                        "description": "Brand ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "year",
+                        "in": "path",
+                        "description": "Year (e.g. 2024)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2024
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of models for the brand and year",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 142
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "CBR1000RR"
+                                                    },
+                                                    "brand_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Brand not found"
+                    }
+                }
+            }
+        },
         "/api/motorcycle/details/{yearId}": {
             "get": {
                 "tags": [
