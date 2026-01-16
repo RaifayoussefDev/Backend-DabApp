@@ -96,12 +96,22 @@ class ImageUploadController extends Controller
         try {
             Log::info('Upload request received', ['files_count' => count($request->allFiles())]);
 
+            // ✅ Détecter si la limite post_max_size du serveur est dépassée
+            if (empty($request->all()) && empty($request->allFiles()) && count($request->all()) == 0 && request()->server('CONTENT_LENGTH') > 0) {
+                $maxSize = ini_get('post_max_size');
+                return response()->json([
+                    'error' => "Server limit exceeded. The uploaded files are too large for the server configuration.",
+                    'message' => "The total size of the request exceeds the 'post_max_size' limit of {$maxSize} on the server.",
+                    'hint' => "Please increase 'post_max_size' and 'upload_max_filesize' in your php.ini."
+                ], 413); // 413 Payload Too Large
+            }
+
             $request->validate([
                 'images.*' => 'required|image|mimes:jpeg,jpg,png,webp|max:51200'
             ]);
 
             if (!$request->hasFile('images')) {
-                return response()->json(['error' => 'No images found in request.'], 400);
+                return response()->json(['error' => 'No images found in request. Ensure the key is "images[]".'], 400);
             }
 
             $paths = [];
