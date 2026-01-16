@@ -20,4 +20,9 @@ class MotorcycleModel extends Model
     {
         return $this->belongsTo(MotorcycleType::class);
     }
+
+    public function years()
+    {
+        return $this->hasMany(MotorcycleYear::class, 'model_id');
+    }
 }
