@@ -143,12 +143,17 @@ class ListingController extends Controller
 
                 if ($arabic) {
                     $fixArabic = function($text) use ($arabic) {
+                        if (!$text) return $text;
+
+                        // ✅ Only apply if text contains Arabic characters
+                        if (!preg_match('/\p{Arabic}/u', $text)) {
+                            return $text;
+                        }
+
                         // Handle both API styles
                         if (method_exists($arabic, 'utf8Glyphs')) {
-                            return $text ? $arabic->utf8Glyphs($text) : $text;
+                            return $arabic->utf8Glyphs($text);
                         }
-                        // Legacy style usually has separate method or invoked differently, 
-                        // but I18N_Arabic('Glyphs') often exposes utf8Glyphs too.
                         return $text; 
                     };
 
