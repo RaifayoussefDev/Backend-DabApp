@@ -353,18 +353,21 @@
                 <td class="label">The Seller Is a</td>
                 <td class="value">{{ ucfirst($listing->seller_type) }}</td>
             </tr>
-            <tr>
-                <td class="label">Contact Method</td>
-                <td class="value">{{ $listing->contacting_channel ? ucfirst($listing->contacting_channel) : '-' }}</td>
-                <td class="label">Listed On</td>
-                <td class="value">{{ $listing->created_at->format('d M Y') }}</td>
-            </tr>
+
         @elseif($listing->sparePart)
             <tr>
                 <td class="label">Condition</td>
                 <td class="value">{{ ucfirst($listing->sparePart->condition) }}</td>
                 <td class="label">Category</td>
-                <td class="value">{{ $listing->sparePart->bikePartCategory->name ?? '-' }}</td>
+                <td class="value">{{ $listing->sparePart->bikePartCategory->name ?? ($listing->sparePart->category ?? '-') }}</td>
+            </tr>
+            <tr>
+                <td class="label">Brand</td>
+                <td class="value">
+                    {{ $listing->sparePart->bikePartBrand->name ?? ($listing->sparePart->brand_other ?? ($listing->sparePart->brand ?? '-')) }}
+                </td>
+                <td class="label"></td>
+                <td class="value"></td>
             </tr>
         @elseif($listing->licensePlate)
             <tr>
