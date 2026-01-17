@@ -9,8 +9,15 @@
             margin: 0px;
         }
 
+        @font-face {
+            font-family: 'Noto Sans Arabic';
+            src: url({{ public_path('fonts/NotoSansArabic.ttf') }}) format("truetype");
+            font-weight: normal; 
+            font-style: normal; 
+        }
+
         body {
-            font-family: 'DejaVu Sans', sans-serif;
+            font-family: 'Noto Sans Arabic', 'DejaVu Sans', sans-serif;
             color: #1a2b4b;
             /* Dark Blue Text */
             margin: 0;
@@ -346,6 +353,12 @@
                 <td class="label">The Seller Is a</td>
                 <td class="value">{{ ucfirst($listing->seller_type) }}</td>
             </tr>
+            <tr>
+                <td class="label">Contact Method</td>
+                <td class="value">{{ $listing->contacting_channel ? ucfirst($listing->contacting_channel) : '-' }}</td>
+                <td class="label">Listed On</td>
+                <td class="value">{{ $listing->created_at->format('d M Y') }}</td>
+            </tr>
         @elseif($listing->sparePart)
             <tr>
                 <td class="label">Condition</td>
@@ -368,6 +381,24 @@
             <td class="label">Listed On</td>
             <td class="value">{{ $listing->created_at->format('d M Y') }}</td>
         </tr>
+
+        {{-- ✅ Compatible Motorcycles (Category 2 - Spare Parts) --}}
+        @if($listing->category_id == 2 && $listing->sparePart && $listing->sparePart->motorcycles->count() > 0)
+        <tr>
+            <td class="label" colspan="4" style="text-align:center; background-color: #f0f0f0; color: #031b4e; font-weight:bold;">Compatible Motorcycles</td>
+        </tr>
+        @foreach($listing->sparePart->motorcycles as $moto)
+        <tr>
+            <td class="label">Brand</td>
+            <td class="value">{{ $moto->brand->name ?? 'N/A' }}</td>
+            <td class="label">Model / Year</td>
+            <td class="value">
+                {{ $moto->model->name ?? 'All' }} 
+                @if($moto->year) ({{ $moto->year->year }}) @endif
+            </td>
+        </tr>
+        @endforeach
+        @endif
     </table>
 
     <!-- Footer -->

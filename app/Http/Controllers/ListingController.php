@@ -84,6 +84,9 @@ class ListingController extends Controller
                 'motorcycle.model',
                 'motorcycle.year',
                 'sparePart.bikePartBrand',
+                'sparePart.motorcycles.brand', // ✅ Load compatible motos brand
+                'sparePart.motorcycles.model', // ✅ Load compatible motos model
+                'sparePart.motorcycles.year',  // ✅ Load compatible motos year
                 'licensePlate.plateFormat',
                 'submissions',
                 'seller'
@@ -155,6 +158,12 @@ class ListingController extends Controller
                     if ($listing->country) $listing->country->name = $fixArabic($listing->country->name);
                     if ($listing->seller) {
                          $listing->seller->name = $fixArabic($listing->seller->name);
+                    }
+                    if ($listing->category_id == 2 && $listing->sparePart && $listing->sparePart->motorcycles) {
+                        foreach ($listing->sparePart->motorcycles as $moto) {
+                            if ($moto->brand) $moto->brand->name = $fixArabic($moto->brand->name);
+                            if ($moto->model) $moto->model->name = $fixArabic($moto->model->name);
+                        }
                     }
                     $currency = $fixArabic($currency);
                 }
