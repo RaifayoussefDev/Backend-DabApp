@@ -270,7 +270,7 @@
     <h1>{{ $listing->title }}</h1>
 
     <div class="sub-info">
-        <span>Name:</span> {{ $listing->seller->phone ?? 'Unknown' }} <br>
+        <span>Phone:</span> {{ $listing->seller->phone ?? 'Unknown' }} <br>
         <span>Location:</span> {{ $listing->city->name ?? '' }}, {{ $listing->country->name ?? '' }}
     </div>
 
