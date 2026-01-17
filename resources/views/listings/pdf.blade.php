@@ -236,32 +236,32 @@
         <tr>
             <!-- Row 1 Left -->
             @if($images->count() >= 1)
-            <td class="image-cell">
-                <img src="{{ $images[0]->image_url }}">
+            <td class="image-cell" style="vertical-align: top;">
+                <div style="width: 100%; height: 240px; background-image: url('{{ $images[0]->image_url }}'); background-size: cover; background-position: center;"></div>
             </td>
             @endif
             
             <!-- Row 1 Right -->
             @if($images->count() >= 2)
-            <td class="image-cell">
-                <img src="{{ $images[1]->image_url }}">
+            <td class="image-cell" style="vertical-align: top;">
+                <div style="width: 100%; height: 240px; background-image: url('{{ $images[1]->image_url }}'); background-size: cover; background-position: center; border-radius: 0 40px 0 0;"></div>
             </td>
             @endif
         </tr>
-        @if($images->count() > 2)
+        @if($images->count() >= 3)
         <tr>
             <!-- Row 2 Left -->
-            @if($images->count() >= 3)
-            <td class="image-cell">
-                <img src="{{ $images[2]->image_url }}">
+            <td class="image-cell" style="vertical-align: top;">
+                 <div style="width: 100%; height: 240px; background-image: url('{{ $images[2]->image_url }}'); background-size: cover; background-position: center;"></div>
             </td>
-            @endif
-
+            
             <!-- Row 2 Right -->
             @if($images->count() >= 4)
-            <td class="image-cell">
-                <img src="{{ $images[3]->image_url }}">
+            <td class="image-cell" style="vertical-align: top;">
+                 <div style="width: 100%; height: 240px; background-image: url('{{ $images[3]->image_url }}'); background-size: cover; background-position: center; border-radius: 0 40px 0 0;"></div>
             </td>
+            @else
+            <td></td>
             @endif
         </tr>
         @endif
