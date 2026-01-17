@@ -125,6 +125,29 @@ class ListingController extends Controller
             // ✅ Get currency symbol
             $currency = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
 
+            // ✅ Fix Arabic Display (GD/DomPDF support)
+            try {
+                if (class_exists(\ArPHP\I18N\Arabic::class)) {
+                    $arabic = new \ArPHP\I18N\Arabic();
+                    
+                    $fixArabic = function($text) use ($arabic) {
+                        return $text ? $arabic->utf8Glyphs($text) : $text;
+                    };
+
+                    $listing->title = $fixArabic($listing->title);
+                    $listing->description = $fixArabic($listing->description);
+                    if ($listing->city) $listing->city->name = $fixArabic($listing->city->name);
+                    if ($listing->country) $listing->country->name = $fixArabic($listing->country->name);
+                    if ($listing->seller) {
+                         $listing->seller->name = $fixArabic($listing->seller->name);
+                         // Note: Phone is usually numbers, doesn't need reshaping, but safe to ignore
+                    }
+                    $currency = $fixArabic($currency);
+                }
+            } catch (\Exception $e) {
+                \Log::warning("Arabic reshaping failed: " . $e->getMessage());
+            }
+
             // Debug mode to check HTML output directly
             if (request()->has('html')) {
                 return view('listings.pdf', compact('listing', 'images', 'currentBid', 'displayPrice', 'currency'));
