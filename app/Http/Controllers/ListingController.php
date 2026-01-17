@@ -127,11 +127,26 @@ class ListingController extends Controller
 
             // ✅ Fix Arabic Display (GD/DomPDF support)
             try {
+                $arabic = null;
                 if (class_exists(\ArPHP\I18N\Arabic::class)) {
+                    \Log::info("Arabic Lib: matches ArPHP\I18N\Arabic");
                     $arabic = new \ArPHP\I18N\Arabic();
-                    
+                } elseif (class_exists('I18N_Arabic')) {
+                    \Log::info("Arabic Lib: matches I18N_Arabic (Legacy)");
+                    $arabic = new \I18N_Arabic('Glyphs'); 
+                } else {
+                    \Log::warning("Arabic Lib: Class NOT found.");
+                }
+
+                if ($arabic) {
                     $fixArabic = function($text) use ($arabic) {
-                        return $text ? $arabic->utf8Glyphs($text) : $text;
+                        // Handle both API styles
+                        if (method_exists($arabic, 'utf8Glyphs')) {
+                            return $text ? $arabic->utf8Glyphs($text) : $text;
+                        }
+                        // Legacy style usually has separate method or invoked differently, 
+                        // but I18N_Arabic('Glyphs') often exposes utf8Glyphs too.
+                        return $text; 
                     };
 
                     $listing->title = $fixArabic($listing->title);
@@ -140,7 +155,6 @@ class ListingController extends Controller
                     if ($listing->country) $listing->country->name = $fixArabic($listing->country->name);
                     if ($listing->seller) {
                          $listing->seller->name = $fixArabic($listing->seller->name);
-                         // Note: Phone is usually numbers, doesn't need reshaping, but safe to ignore
                     }
                     $currency = $fixArabic($currency);
                 }
