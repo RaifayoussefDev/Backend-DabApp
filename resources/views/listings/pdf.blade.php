@@ -387,7 +387,9 @@
 
         <tr>
             <td class="label">Contact Method</td>
-            <td class="value">{{ $listing->contacting_channel ? ucfirst($listing->contacting_channel) : '-' }}</td>
+            <td class="value">
+                {{ $listing->contacting_channel ? ucwords(str_replace(',', ', ', $listing->contacting_channel)) : '-' }}
+            </td>
             <td class="label">Listed On</td>
             <td class="value">{{ $listing->created_at->format('d M Y') }}</td>
         </tr>
