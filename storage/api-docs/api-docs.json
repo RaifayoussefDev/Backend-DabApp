@@ -1666,6 +1666,374 @@
                 ]
             }
         },
+        "/api/admin/prospects": {
+            "get": {
+                "tags": [
+                    "Admin - Prospects"
+                ],
+                "summary": "List all prospects",
+                "operationId": "0681680476e42a420d22a8c469768aa2",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of prospects",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "first_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "last_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "email": {
+                                                        "type": "string"
+                                                    },
+                                                    "phone": {
+                                                        "type": "string"
+                                                    },
+                                                    "listings_count": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Prospects"
+                ],
+                "summary": "Create a new prospect",
+                "description": "Creates a prospect user. Optionally creates a listing if listing details are provided.",
+                "operationId": "6189806f5053c877849266a897de459a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+212600000000"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "prospect@example.com"
+                                    },
+                                    "create_listing": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Prospect Bike"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "example": 10000
+                                    },
+                                    "country_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "brand_id": {
+                                        "type": "integer",
+                                        "example": 7
+                                    },
+                                    "model_id": {
+                                        "type": "integer",
+                                        "example": 5712
+                                    },
+                                    "year_id": {
+                                        "type": "integer",
+                                        "example": 10671
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Prospect created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Prospect created successfully"
+                                        },
+                                        "user": {
+                                            "type": "object"
+                                        },
+                                        "listing": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/prospects/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Prospects"
+                ],
+                "summary": "Get prospect details",
+                "operationId": "638514f89900a409a99113453e67e20e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Prospect details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Prospects"
+                ],
+                "summary": "Update prospect details",
+                "operationId": "4c206c2bfa2cbb1b592bcf9102fc33a3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "phone": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "first_name": {
+                                        "type": "string"
+                                    },
+                                    "last_name": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Prospect updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Prospects"
+                ],
+                "summary": "Delete prospect",
+                "description": "Deletes the prospect and their listings",
+                "operationId": "2c8f275b6933a53545db1cb0212f19ad",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Prospect deleted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/prospects/{id}/listings": {
+            "get": {
+                "tags": [
+                    "Admin - Prospects"
+                ],
+                "summary": "Get prospect listings",
+                "operationId": "edbc94f8f704b7f34f0a940a9bdea813",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of listings",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/prospects/stats": {
+            "get": {
+                "tags": [
+                    "Admin - Prospects"
+                ],
+                "summary": "Get prospect statistics",
+                "operationId": "91d544c901b4ba39c137e3f061a070e8",
+                "responses": {
+                    "200": {
+                        "description": "Prospect stats data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_prospects": {
+                                            "type": "integer"
+                                        },
+                                        "prospects": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/sooms": {
             "get": {
                 "tags": [
@@ -5951,6 +6319,41 @@
                 "responses": {
                     "200": {
                         "description": "Complete dashboard data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/dashboard/prospect-stats": {
+            "get": {
+                "tags": [
+                    "Admin - Dashboard"
+                ],
+                "summary": "Get prospect statistics",
+                "operationId": "249fa3bef509a37036a75d8afdaab021",
+                "responses": {
+                    "200": {
+                        "description": "Prospect stats data",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -37532,6 +37935,10 @@
         {
             "name": "Admin Menus Management",
             "description": "Admin Menus Management"
+        },
+        {
+            "name": "Admin - Prospects",
+            "description": "Admin - Prospects"
         },
         {
             "name": "Admin Sooms",

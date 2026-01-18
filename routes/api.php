@@ -165,6 +165,11 @@ Route::prefix('admin')->group(function () {
         // Admin Stats
         Route::get('/dashboard/stats', [App\Http\Controllers\AdminDashboardController::class, 'stats']);
 
+        // Admin Prospects
+        Route::get('prospects/stats', [\App\Http\Controllers\AdminProspectController::class, 'stats']);
+        Route::apiResource('prospects', \App\Http\Controllers\AdminProspectController::class);
+        Route::get('prospects/{id}/listings', [\App\Http\Controllers\AdminProspectController::class, 'listings']);
+
         // Admin Sooms
         Route::apiResource('sooms', AdminSoomController::class);
     });
@@ -460,6 +465,7 @@ Route::get('/banners', [BannerController::class, 'index']);
 
 Route::middleware('auth:api')->group(function () {
     Route::get('admin/dashboard', [DashboardController::class, 'index']);
+    Route::get('admin/dashboard/prospect-stats', [DashboardController::class, 'prospectStats']);
 
     // ============================================
     // AUTH MANAGEMENT

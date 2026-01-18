@@ -50,11 +50,44 @@ class DashboardController extends Controller
             'content' => $this->getContentStats(),
             'moderation' => $this->getModerationStats(),
             'charts' => $this->getChartsData(),
+            'prospects' => $this->getProspectsStats(),
         ];
 
         return response()->json([
             'success' => true,
             'data' => $data
+        ]);
+    }
+
+
+    /**
+     * @OA\Get(
+     *     path="/api/admin/dashboard/prospect-stats",
+     *     tags={"Admin - Dashboard"},
+     *     summary="Get prospect statistics",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Prospect stats data",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
+    public function prospectStats()
+    {
+        $prospects = User::where('first_name', 'Prospect')
+            ->withCount('listings')
+            ->get(['id', 'first_name', 'last_name', 'email', 'phone', 'created_at']);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total_prospects' => $prospects->count(),
+                'prospects' => $prospects
+            ]
         ]);
     }
 
@@ -806,5 +839,20 @@ class DashboardController extends Controller
 
         $completed = Payment::completed()->count();
         return round(($completed / $total) * 100, 2);
+    }
+
+    /**
+     * Statistiques des prospects
+     */
+    private function getProspectsStats()
+    {
+        $prospects = User::where('first_name', 'Prospect')
+            ->withCount('listings')
+            ->get(['id', 'first_name', 'last_name', 'email', 'phone', 'created_at']);
+
+        return [
+            'total_prospects' => $prospects->count(),
+            'prospects' => $prospects
+        ];
     }
 }

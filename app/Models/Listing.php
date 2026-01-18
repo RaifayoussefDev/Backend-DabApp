@@ -5,6 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @OA\Schema(
+ *     schema="Listing",
+ *     title="Listing",
+ *     description="Listing model",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="title", type="string", example="Motorcycle for sale"),
+ *     @OA\Property(property="description", type="string", example="Good condition"),
+ *     @OA\Property(property="price", type="number", example=10000),
+ *     @OA\Property(property="status", type="string", example="published"),
+ *     @OA\Property(property="category_id", type="integer", example=1),
+ *     @OA\Property(property="seller_id", type="integer", example=1),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ */
 class Listing extends Model
 {
     use HasFactory;
