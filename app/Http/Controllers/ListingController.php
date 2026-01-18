@@ -84,6 +84,7 @@ class ListingController extends Controller
                 'motorcycle.model',
                 'motorcycle.year',
                 'sparePart.bikePartBrand',
+                'sparePart.bikePartCategory', // ✅ Load category
                 'sparePart.motorcycles.brand', // ✅ Load compatible motos brand
                 'sparePart.motorcycles.model', // ✅ Load compatible motos model
                 'sparePart.motorcycles.year',  // ✅ Load compatible motos year

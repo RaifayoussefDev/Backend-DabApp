@@ -402,7 +402,7 @@
                     @endphp
                 </td>
                 <td class="label">Category</td>
-                <td class="value">{{ ucfirst($listing->sparePart->category) }}</td>
+                <td class="value">{{ $listing->sparePart->bikePartCategory->name ?? ($listing->sparePart->category ?? '-') }}</td>
             </tr>
         @elseif($listing->licensePlate)
             <tr>
