@@ -282,14 +282,42 @@
     </div>
 
     <!-- Buttons -->
+    <!-- Buttons -->
     <table class="buttons-table">
         <tr>
-            <td class="btn btn-whatsapp" width="48%">
-                <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/pdf_icons/WHATS APP.svg'))) }}" style="height: 16px; margin-right: 5px; vertical-align: middle;"> {{ $listing->seller->phone ?? 'Unavailable' }}
-            </td>
-            <td class="btn btn-call" width="48%">
-                <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/pdf_icons/CALL.svg'))) }}" style="height: 16px; margin-right: 5px; vertical-align: middle;"> {{ $listing->seller->phone ?? 'Unavailable' }}
-            </td>
+            @php
+                $channel = strtolower($listing->contacting_channel ?? '');
+                $showPhone = str_contains($channel, 'phone');
+                $showWhatsapp = str_contains($channel, 'whatsapp');
+                
+                // If neither is present (e.g. legacy data), default to both or handle gracefully.
+                // Assuming defaults to showing if null, but explicit check requested.
+                if (!$showPhone && !$showWhatsapp) {
+                     // Fallback if empty: show both or hide? User implies data exists.
+                     // Let's assume broad match or default to phone if channel is empty but phone exists?
+                     // Current code showed both. I will default to showing both if empty just in case.
+                     $showPhone = true; 
+                     $showWhatsapp = true;
+                }
+            @endphp
+
+            @if($showWhatsapp && $showPhone)
+                <td class="btn btn-whatsapp" width="48%">
+                    <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/pdf_icons/WHATS APP.svg'))) }}" style="height: 16px; margin-right: 5px; vertical-align: middle;"> {{ $listing->seller->phone ?? 'Unavailable' }}
+                </td>
+                <td width="4%"></td> <!-- Spacing center -->
+                <td class="btn btn-call" width="48%">
+                    <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/pdf_icons/CALL.svg'))) }}" style="height: 16px; margin-right: 5px; vertical-align: middle;"> {{ $listing->seller->phone ?? 'Unavailable' }}
+                </td>
+            @elseif($showWhatsapp)
+                <td class="btn btn-whatsapp" width="100%">
+                    <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/pdf_icons/WHATS APP.svg'))) }}" style="height: 16px; margin-right: 5px; vertical-align: middle;"> {{ $listing->seller->phone ?? 'Unavailable' }}
+                </td>
+            @elseif($showPhone)
+                <td class="btn btn-call" width="100%">
+                    <img src="data:image/svg+xml;base64,{{ base64_encode(file_get_contents(public_path('img/pdf_icons/CALL.svg'))) }}" style="height: 16px; margin-right: 5px; vertical-align: middle;"> {{ $listing->seller->phone ?? 'Unavailable' }}
+                </td>
+            @endif
         </tr>
     </table>
 
