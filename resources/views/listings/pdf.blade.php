@@ -364,10 +364,17 @@
             <tr>
                 <td class="label">Brand</td>
                 <td class="value">
-                    {{ $listing->sparePart->bikePartBrand->name ?? ($listing->sparePart->brand_other ?? ($listing->sparePart->brand ?? '-')) }}
+                    @php
+                        $brand = $listing->sparePart->bikePartBrand->name ?? ($listing->sparePart->brand ?? '-');
+                        if (strtolower($brand) === 'other' || strtolower($brand) === 'others') {
+                            echo $listing->sparePart->brand_other ?? $brand;
+                        } else {
+                            echo $brand;
+                        }
+                    @endphp
                 </td>
-                <td class="label"></td>
-                <td class="value"></td>
+                <td class="label">Category</td>
+                <td class="value">{{ ucfirst($listing->sparePart->category) }}</td>
             </tr>
         @elseif($listing->licensePlate)
             <tr>
