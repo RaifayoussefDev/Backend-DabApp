@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Listing;
+use App\Models\ListingImage; // ✅ Added
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
-use App\Traits\CategoryDataTrait;
+use App\Traits\CategoryDataTrait; // ✅ Added
 use Illuminate\Support\Facades\Validator;
 
 class AdminProspectController extends Controller
@@ -429,6 +430,75 @@ class AdminProspectController extends Controller
         }
 
         return $data;
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/admin/prospects/{id}/listings/{listing_id}",
+     *     summary="Update prospect listing",
+     *     tags={"Admin - Prospects"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="listing_id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="title", type="string"),
+     *             @OA\Property(property="description", type="string"),
+     *             @OA\Property(property="price", type="number")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Listing updated")
+     * )
+     */
+    public function updateListing(Request $request, $id, $listingId)
+    {
+        $user = User::findOrFail($id);
+        
+        // Ensure listing belongs to this prospect
+        $listing = Listing::where('id', $listingId)
+            ->where('seller_id', $user->id)
+            ->firstOrFail();
+
+        $listing->update($request->except(['id', 'seller_id', 'created_at', 'images']));
+
+        if ($request->has('images')) {
+            $listing->images()->delete();
+            foreach ($request->images as $imageUrl) {
+                $listing->images()->create(['image_url' => $imageUrl]);
+            }
+        }
+
+        // Handle Category Specific Data (using Trait)
+        if (method_exists($this, 'handleCategorySpecificData')) {
+            $this->handleCategorySpecificData($listing, $request);
+        }
+
+        return response()->json(['message' => 'Listing updated', 'listing' => $listing->fresh()]);
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/admin/prospects/{id}/listings/{listing_id}",
+     *     summary="Delete prospect listing",
+     *     tags={"Admin - Prospects"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="listing_id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Listing deleted")
+     * )
+     */
+    public function destroyListing($id, $listingId)
+    {
+        $user = User::findOrFail($id);
+        
+        $listing = Listing::where('id', $listingId)
+            ->where('seller_id', $user->id)
+            ->firstOrFail();
+
+        $listing->delete();
+
+        return response()->json(['message' => 'Listing deleted successfully']);
     }
 
     /**

@@ -846,13 +846,16 @@ class DashboardController extends Controller
      */
     private function getProspectsStats()
     {
-        $prospects = User::where('first_name', 'Prospect')
-            ->withCount('listings')
-            ->get(['id', 'first_name', 'last_name', 'email', 'phone', 'created_at']);
+        $prospectCount = User::where('first_name', 'Prospect')->count();
+        
+        // Calculate total listings for all prospects
+        $prospectListingsCount = Listing::whereHas('seller', function($query) {
+            $query->where('first_name', 'Prospect');
+        })->count();
 
         return [
-            'total_prospects' => $prospects->count(),
-            'prospects' => $prospects
+            'total_prospects' => $prospectCount,
+            'total_prospect_listings' => $prospectListingsCount
         ];
     }
 }

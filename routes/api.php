@@ -169,6 +169,8 @@ Route::prefix('admin')->group(function () {
         Route::get('prospects/stats', [\App\Http\Controllers\AdminProspectController::class, 'stats']);
         Route::apiResource('prospects', \App\Http\Controllers\AdminProspectController::class);
         Route::get('prospects/{id}/listings', [\App\Http\Controllers\AdminProspectController::class, 'listings']);
+        Route::put('prospects/{id}/listings/{listing_id}', [\App\Http\Controllers\AdminProspectController::class, 'updateListing']);
+        Route::delete('prospects/{id}/listings/{listing_id}', [\App\Http\Controllers\AdminProspectController::class, 'destroyListing']);
 
         // Admin Sooms
         Route::apiResource('sooms', AdminSoomController::class);
