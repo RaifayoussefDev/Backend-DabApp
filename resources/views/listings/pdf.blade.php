@@ -401,8 +401,8 @@
                         }
                     @endphp
                 </td>
-                <td class="label">Category</td>
-                <td class="value">{{ $listing->sparePart->bikePartCategory->name ?? ($listing->sparePart->category ?? '-') }}</td>
+                <td class="label"></td>
+                <td class="value"></td>
             </tr>
         @elseif($listing->licensePlate)
             <tr>
