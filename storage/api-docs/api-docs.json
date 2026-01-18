@@ -2117,11 +2117,8 @@
                                         "total_prospects": {
                                             "type": "integer"
                                         },
-                                        "prospects": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object"
-                                            }
+                                        "total_prospect_listings": {
+                                            "type": "integer"
                                         }
                                     },
                                     "type": "object"

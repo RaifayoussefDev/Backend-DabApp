@@ -512,21 +512,22 @@ class AdminProspectController extends Controller
      *         description="Prospect stats data",
      *         @OA\JsonContent(
      *             @OA\Property(property="total_prospects", type="integer"),
-     *             @OA\Property(property="prospects", type="array", @OA\Items(type="object"))
+     *             @OA\Property(property="total_prospect_listings", type="integer")
      *         )
      *     )
      * )
      */
     public function stats()
     {
-        $prospects = User::where('first_name', 'Prospect')
-            ->withCount('listings')
-            ->orderBy('created_at', 'desc')
-            ->get(['id', 'first_name', 'last_name', 'email', 'phone', 'created_at']);
+        $prospectCount = User::where('first_name', 'Prospect')->count();
+
+        $prospectListingsCount = Listing::whereHas('seller', function($query) {
+             $query->where('first_name', 'Prospect');
+        })->count();
 
         return response()->json([
-            'total_prospects' => $prospects->count(),
-            'prospects' => $prospects
+            'total_prospects' => $prospectCount,
+            'total_prospect_listings' => $prospectListingsCount
         ]);
     }
 }
