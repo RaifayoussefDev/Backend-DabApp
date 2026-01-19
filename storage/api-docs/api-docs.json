@@ -22716,6 +22716,64 @@
                 }
             }
         },
+        "/api/motorcycle/years-by-brand-mbl/{brandId}": {
+            "get": {
+                "tags": [
+                    "Motorcycle"
+                ],
+                "summary": "Get distinct years for a brand (formatted for Mobile)",
+                "operationId": "f0a004d0166edeb6d405838ad1f91092",
+                "parameters": [
+                    {
+                        "name": "brandId",
+                        "in": "path",
+                        "description": "Brand ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of available years for the brand with year_id",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "year": {
+                                                        "type": "integer",
+                                                        "example": 2024
+                                                    },
+                                                    "year_id": {
+                                                        "type": "integer",
+                                                        "example": 2024
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Brand not found"
+                    }
+                }
+            }
+        },
         "/api/motorcycle/models-by-year/{brandId}/{year}": {
             "get": {
                 "tags": [

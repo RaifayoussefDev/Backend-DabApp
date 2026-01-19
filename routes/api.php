@@ -211,6 +211,7 @@ Route::prefix('motorcycle')->group(function () {
 
     // ✅ New Filters (Brand -> Year -> Model)
     Route::get('/years-by-brand/{brandId}', [MotorcycleFilterController::class, 'getYearsByBrand']);
+    Route::get('/years-by-brand-mbl/{brandId}', [MotorcycleFilterController::class, 'getYearsByBrandMbl']); // ✅ New Mobile Route
     Route::get('/models-by-year/{brandId}/{year}', [MotorcycleFilterController::class, 'getModelsByBrandAndYear']);
 });
 

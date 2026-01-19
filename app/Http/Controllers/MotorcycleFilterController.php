@@ -249,6 +249,69 @@ class MotorcycleFilterController extends Controller
 
     /**
      * @OA\Get(
+     *     path="/api/motorcycle/years-by-brand-mbl/{brandId}",
+     *     summary="Get distinct years for a brand (formatted for Mobile)",
+     *     tags={"Motorcycle"},
+     *     @OA\Parameter(
+     *         name="brandId",
+     *         in="path",
+     *         required=true,
+     *         description="Brand ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of available years for the brand with year_id",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="year", type="integer", example=2024),
+     *                     @OA\Property(property="year_id", type="integer", example=2024)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Brand not found")
+     * )
+     */
+    public function getYearsByBrandMbl($brandId)
+    {
+        // Validation rapide
+        if (!MotorcycleBrand::where('id', $brandId)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Brand not found'
+            ], 404);
+        }
+
+        // Cache pendant 15 minutes
+        $years = Cache::remember("motorcycle_years_brand_{$brandId}_mbl", 900, function () use ($brandId) {
+            $yearsList = MotorcycleYear::join('motorcycle_models', 'motorcycle_years.model_id', '=', 'motorcycle_models.id')
+                ->where('motorcycle_models.brand_id', $brandId)
+                ->select('motorcycle_years.year')
+                ->distinct()
+                ->orderBy('motorcycle_years.year', 'desc')
+                ->pluck('motorcycle_years.year');
+
+            return $yearsList->map(function ($year) {
+                return [
+                    'year' => $year,
+                    'year_id' => $year
+                ];
+            });
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $years
+        ]);
+    }
+
+    /**
+     * @OA\Get(
      *     path="/api/motorcycle/models-by-year/{brandId}/{year}",
      *     summary="Get models by brand and year",
      *     tags={"Motorcycle"},
