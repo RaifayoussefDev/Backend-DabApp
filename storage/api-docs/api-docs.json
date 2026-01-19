@@ -13257,6 +13257,18 @@
                         }
                     },
                     {
+                        "name": "manufacturing_years[]",
+                        "in": "query",
+                        "description": "Array of actual manufacturing years (e.g. 2022, 2023) to filter",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
                         "name": "condition",
                         "in": "query",
                         "description": "Motorcycle condition",

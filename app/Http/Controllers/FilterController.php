@@ -57,6 +57,7 @@ class FilterController extends Controller
      *     @OA\Parameter(name="models[]", in="query", description="Array of model IDs to filter", required=false, @OA\Schema(type="array", @OA\Items(type="integer"))),
      *     @OA\Parameter(name="types[]", in="query", description="Array of motorcycle type IDs to filter", required=false, @OA\Schema(type="array", @OA\Items(type="integer"))),
      *     @OA\Parameter(name="years[]", in="query", description="Array of year IDs to filter", required=false, @OA\Schema(type="array", @OA\Items(type="integer"))),
+     *     @OA\Parameter(name="manufacturing_years[]", in="query", description="Array of actual manufacturing years (e.g. 2022, 2023) to filter", required=false, @OA\Schema(type="array", @OA\Items(type="integer"))),
      *     @OA\Parameter(name="condition", in="query", description="Motorcycle condition", required=false, @OA\Schema(type="string", enum={"new", "used", "excellent", "good", "fair", "poor"})),
      *     @OA\Parameter(name="min_mileage", in="query", description="Minimum mileage filter", required=false, @OA\Schema(type="integer", minimum=0)),
      *     @OA\Parameter(name="max_mileage", in="query", description="Maximum mileage filter", required=false, @OA\Schema(type="integer", minimum=0)),
@@ -116,15 +117,16 @@ class FilterController extends Controller
         $models = $request->input('models');
         $types = $request->input('types');
         $years = $request->input('years');
+        $manufacturingYears = $request->input('manufacturing_years');
         $condition = $request->input('condition');
         $minMileage = $request->input('min_mileage');
         $maxMileage = $request->input('max_mileage');
 
         if ($this->hasValue($brands) || $this->hasValue($models) || $this->hasValue($types) ||
-            $this->hasValue($years) || $this->hasValue($condition) ||
+            $this->hasValue($years) || $this->hasValue($manufacturingYears) || $this->hasValue($condition) ||
             $this->hasValue($minMileage) || $this->hasValue($maxMileage)) {
 
-            $query->whereHas('motorcycle', function ($q) use ($brands, $models, $types, $years, $condition, $minMileage, $maxMileage) {
+            $query->whereHas('motorcycle', function ($q) use ($brands, $models, $types, $years, $manufacturingYears, $condition, $minMileage, $maxMileage) {
                 if ($this->hasValue($brands)) {
                     $q->whereIn('brand_id', $brands);
                 }
@@ -136,6 +138,11 @@ class FilterController extends Controller
                 }
                 if ($this->hasValue($years)) {
                     $q->whereIn('year_id', $years);
+                }
+                if ($this->hasValue($manufacturingYears)) {
+                    $q->whereHas('year', function ($q2) use ($manufacturingYears) {
+                        $q2->whereIn('year', $manufacturingYears);
+                    });
                 }
                 if ($this->hasValue($condition)) {
                     $q->where('general_condition', $condition);
