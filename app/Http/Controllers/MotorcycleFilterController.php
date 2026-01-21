@@ -261,7 +261,7 @@ class MotorcycleFilterController extends Controller
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="List of available years for the brand with year_id",
+     *         description="List of available years for the brand with year_ids",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=true),
@@ -269,7 +269,8 @@ class MotorcycleFilterController extends Controller
      *                 @OA\Items(
      *                     type="object",
      *                     @OA\Property(property="year", type="integer", example=2024),
-     *                     @OA\Property(property="year_id", type="integer", example=2024)
+     *                     @OA\Property(property="year_id", type="integer", example=2024),
+     *                     @OA\Property(property="year_ids", type="array", @OA\Items(type="integer"))
      *                 )
      *             )
      *         )
@@ -289,19 +290,19 @@ class MotorcycleFilterController extends Controller
 
         // Cache pendant 15 minutes
         $years = Cache::remember("motorcycle_years_brand_{$brandId}_mbl", 900, function () use ($brandId) {
-            $yearsList = MotorcycleYear::join('motorcycle_models', 'motorcycle_years.model_id', '=', 'motorcycle_models.id')
+            $yearsData = MotorcycleYear::join('motorcycle_models', 'motorcycle_years.model_id', '=', 'motorcycle_models.id')
                 ->where('motorcycle_models.brand_id', $brandId)
-                ->select('motorcycle_years.year')
-                ->distinct()
+                ->select('motorcycle_years.id', 'motorcycle_years.year')
                 ->orderBy('motorcycle_years.year', 'desc')
-                ->pluck('motorcycle_years.year');
+                ->get();
 
-            return $yearsList->map(function ($year) {
+            return $yearsData->groupBy('year')->map(function ($items, $year) {
                 return [
-                    'year' => $year,
-                    'year_id' => $year
+                    'year' => (int) $year,
+                    'year_id' => (int) $year, // Keep for compatibility if needed, though mostly symbolic now
+                    'year_ids' => $items->pluck('id')->values()->all()
                 ];
-            });
+            })->values();
         });
 
         return response()->json([
@@ -331,7 +332,7 @@ class MotorcycleFilterController extends Controller
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="List of models for the brand and year",
+     *         description="List of models for the brand and year with specific year_id",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=true),
@@ -339,7 +340,8 @@ class MotorcycleFilterController extends Controller
      *                 @OA\Items(
      *                     @OA\Property(property="id", type="integer", example=142),
      *                     @OA\Property(property="name", type="string", example="CBR1000RR"),
-     *                     @OA\Property(property="brand_id", type="integer", example=1)
+     *                     @OA\Property(property="brand_id", type="integer", example=1),
+     *                     @OA\Property(property="year_id", type="integer", example=501)
      *                 )
      *             )
      *         )
@@ -359,12 +361,16 @@ class MotorcycleFilterController extends Controller
 
         // Cache pendant 15 minutes
         $models = Cache::remember("motorcycle_models_brand_{$brandId}_year_{$year}", 900, function () use ($brandId, $year) {
-            return MotorcycleModel::where('brand_id', $brandId)
-                ->whereHas('years', function ($query) use ($year) {
-                    $query->where('year', $year);
-                })
-                ->select('id', 'name', 'brand_id')
-                ->orderBy('name')
+            return MotorcycleModel::join('motorcycle_years', 'motorcycle_models.id', '=', 'motorcycle_years.model_id')
+                ->where('motorcycle_models.brand_id', $brandId)
+                ->where('motorcycle_years.year', $year)
+                ->select(
+                    'motorcycle_models.id',
+                    'motorcycle_models.name',
+                    'motorcycle_models.brand_id',
+                    'motorcycle_years.id as year_id'
+                )
+                ->orderBy('motorcycle_models.name')
                 ->get();
         });
 
