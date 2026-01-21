@@ -1577,29 +1577,25 @@ class ListingController extends Controller
 
             $request->validate($validationRules);
 
+            // ✅ DETERMINE FINAL AUCTION STATE
+            $newAuctionEnabled = $listing->auction_enabled;
+            if ($request->has('auction_settings') && isset($request->auction_settings['auction_enabled'])) {
+                $newAuctionEnabled = $request->auction_settings['auction_enabled'];
+            }
+
             // ✅ UPDATE BASIC INFO
             if ($request->has('basic_info')) {
                 $basicInfo = $request->basic_info;
 
-                // Nettoyage du prix
-                if (isset($basicInfo['price']) && $basicInfo['price'] !== null && $basicInfo['price'] !== '') {
-                    $cleanPrice = str_replace([' ', ','], '', $basicInfo['price']);
-                    $basicInfo['price'] = is_numeric($cleanPrice) ? (float) $cleanPrice : null;
+                 // Nettoyage du prix (si validation 'numeric' passe, format est déjà OK)
+                if (array_key_exists('price', $basicInfo)) {
+                     // Force cast to float if present
+                     $listing->price = $basicInfo['price'] !== null ? (float) $basicInfo['price'] : null;
+                     $updatedFields[] = 'price';
                 }
 
-                $allowedBasicFields = [
-                    'title',
-                    'description',
-                    'price',
-                    'country_id',
-                    'city_id',
-                    'seller_type',
-                    'contacting_channel',
-                    'allow_submission'
-                ];
-
                 foreach ($allowedBasicFields as $field) {
-                    if (array_key_exists($field, $basicInfo)) {
+                    if (array_key_exists($field, $basicInfo) && $field !== 'price') { // Skip price as handled above
                         $listing->$field = $basicInfo[$field];
                         $updatedFields[] = $field;
                     }
@@ -1618,6 +1614,26 @@ class ListingController extends Controller
                 if (isset($auctionSettings['minimum_bid'])) {
                     $listing->minimum_bid = $auctionSettings['minimum_bid'];
                     $updatedFields[] = 'minimum_bid';
+                }
+            }
+
+            // ✅ LOGIC CHECK: FIXED PRICE vs AUCTION
+            if ($listing->auction_enabled) {
+                // Is Auction: Minimum Bid is required
+                if (is_null($listing->minimum_bid) || $listing->minimum_bid <= 0) {
+                     return response()->json([
+                        'error' => 'Minimum bid is required and must be greater than 0 for auctions.',
+                        'field' => 'auction_settings.minimum_bid'
+                    ], 422);
+                }
+                // Price is optional for auction, can be null or Buy Now price
+            } else {
+                // Is Fixed Price: Price is required
+                 if (is_null($listing->price) || $listing->price <= 0) {
+                     return response()->json([
+                        'error' => 'Price is required and must be greater than 0 for fixed price listings.',
+                        'field' => 'basic_info.price'
+                    ], 422);
                 }
             }
 
