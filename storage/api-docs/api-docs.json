@@ -22737,7 +22737,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "List of available years for the brand with year_id",
+                        "description": "List of available years for the brand with year_ids",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -22757,6 +22757,12 @@
                                                     "year_id": {
                                                         "type": "integer",
                                                         "example": 2024
+                                                    },
+                                                    "year_ids": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "integer"
+                                                        }
                                                     }
                                                 },
                                                 "type": "object"
@@ -22805,7 +22811,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "List of models for the brand and year",
+                        "description": "List of models for the brand and year with specific year_id",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -22829,6 +22835,10 @@
                                                     "brand_id": {
                                                         "type": "integer",
                                                         "example": 1
+                                                    },
+                                                    "year_id": {
+                                                        "type": "integer",
+                                                        "example": 501
                                                     }
                                                 },
                                                 "type": "object"
