@@ -1594,6 +1594,16 @@ class ListingController extends Controller
                      $updatedFields[] = 'price';
                 }
 
+                $allowedBasicFields = [
+                    'title',
+                    'description',
+                    'country_id',
+                    'city_id',
+                    'seller_type',
+                    'contacting_channel',
+                    'allow_submission'
+                ];
+
                 foreach ($allowedBasicFields as $field) {
                     if (array_key_exists($field, $basicInfo) && $field !== 'price') { // Skip price as handled above
                         $listing->$field = $basicInfo[$field];
