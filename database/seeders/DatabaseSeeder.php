@@ -20,6 +20,10 @@ class DatabaseSeeder extends Seeder
 
             AdminMenuSeeder::class,
             NotificationTemplateSeeder::class,
+            ServiceCategorySeeder::class,
+            TowTypeSeeder::class,
+            ServiceProviderSeeder::class,
+            ServiceSeeder::class,
         ]);
     }
 }

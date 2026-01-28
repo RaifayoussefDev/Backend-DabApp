@@ -89,6 +89,16 @@ use App\Http\Controllers\{
     NotificationTokenController,
 };
 use PhpOffice\PhpSpreadsheet\Reader\Xls\RC4;
+use App\Http\Controllers\Services\ServiceCategoryController;
+use App\Http\Controllers\Services\ServiceProviderController;
+use App\Http\Controllers\Services\ServiceController;
+use App\Http\Controllers\Services\ServiceBookingController;
+use App\Http\Controllers\Services\ServiceReviewController;
+use App\Http\Controllers\Services\ServiceFavoriteController;
+use App\Http\Controllers\Services\TowServiceController;
+use App\Http\Controllers\Services\TransportRouteController;
+use App\Http\Controllers\Services\RidingInstructorController;
+use App\Http\Controllers\Services\ChatSessionController;
 
 // ============================================
 // ============================================
@@ -1077,4 +1087,281 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/enable-all', [NotificationPreferenceController::class, 'enableAll']);
         Route::post('/disable-all', [NotificationPreferenceController::class, 'disableAll']);
     });
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| 📂 Service Categories Routes
+|--------------------------------------------------------------------------
+| Public routes for browsing service categories
+*/
+Route::prefix('service-categories')->group(function () {
+    Route::get('/', [ServiceCategoryController::class, 'index']);
+    Route::get('/stats', [ServiceCategoryController::class, 'stats']);
+    Route::get('/slug/{slug}', [ServiceCategoryController::class, 'showBySlug']);
+    Route::get('/{id}', [ServiceCategoryController::class, 'show']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| 🏢 Service Providers Routes
+|--------------------------------------------------------------------------
+| Routes for service providers (workshops, transport companies, etc.)
+*/
+Route::prefix('service-providers')->group(function () {
+    Route::get('/', [ServiceProviderController::class, 'index']);
+    Route::get('/nearby', [ServiceProviderController::class, 'nearby']);
+    Route::get('/{id}', [ServiceProviderController::class, 'show']);
+});
+
+// Become a provider (Authenticated users only)
+Route::middleware('auth:api')->group(function () {
+    Route::post('/become-provider', [ServiceProviderController::class, 'becomeProvider']);
+});
+
+// Provider-only routes
+Route::middleware(['auth:api'])->prefix('provider')->group(function () {
+    Route::get('/my-profile', [ServiceProviderController::class, 'myProfile']);
+    Route::put('/profile', [ServiceProviderController::class, 'updateProfile']);
+    Route::post('/profile', [ServiceProviderController::class, 'updateProfile']); // For multipart/form-data
+});
+
+/*
+|--------------------------------------------------------------------------
+| 🛠️ Services Routes
+|--------------------------------------------------------------------------
+| Routes for individual services offered by providers
+*/
+Route::prefix('services')->group(function () {
+    Route::get('/', [ServiceController::class, 'index']);
+    Route::get('/{id}', [ServiceController::class, 'show']);
+    
+    // Service reviews (nested route)
+    Route::get('/{serviceId}/reviews', [ServiceReviewController::class, 'index']);
+});
+
+// Provider services management (Authenticated providers only)
+Route::middleware(['auth:api'])->prefix('provider')->group(function () {
+    Route::get('/my-services', [ServiceController::class, 'myServices']);
+    Route::post('/services', [ServiceController::class, 'store']);
+    Route::put('/services/{id}', [ServiceController::class, 'update']);
+    Route::post('/services/{id}', [ServiceController::class, 'update']); // For form-data
+    Route::delete('/services/{id}', [ServiceController::class, 'destroy']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| 📅 Service Bookings Routes
+|--------------------------------------------------------------------------
+| Routes for booking services
+*/
+Route::middleware('auth:api')->group(function () {
+    // User bookings
+    Route::prefix('bookings')->group(function () {
+        Route::get('/', [ServiceBookingController::class, 'index']);
+        Route::post('/', [ServiceBookingController::class, 'store']);
+        Route::get('/{id}', [ServiceBookingController::class, 'show']);
+        Route::post('/{id}/cancel', [ServiceBookingController::class, 'cancel']);
+        
+        // Create review for a booking
+        Route::post('/{bookingId}/review', [ServiceReviewController::class, 'store']);
+        
+        // Start chat session for a booking
+        Route::post('/{bookingId}/start-chat', [ChatSessionController::class, 'startSession']);
+    });
+});
+
+/*
+|--------------------------------------------------------------------------
+| ⭐ Service Reviews Routes
+|--------------------------------------------------------------------------
+| Routes for managing service reviews and ratings
+*/
+Route::middleware('auth:api')->group(function () {
+    // User reviews
+    Route::prefix('reviews')->group(function () {
+        Route::put('/{id}', [ServiceReviewController::class, 'update']);
+        Route::delete('/{id}', [ServiceReviewController::class, 'destroy']);
+    });
+    
+    Route::get('/my-reviews', [ServiceReviewController::class, 'myReviews']);
+    
+    // Provider reviews management
+    Route::prefix('provider')->group(function () {
+        Route::get('/reviews', [ServiceReviewController::class, 'providerReviews']);
+        Route::post('/reviews/{id}/respond', [ServiceReviewController::class, 'respondToReview']);
+    });
+});
+
+/*
+|--------------------------------------------------------------------------
+| ❤️ Service Favorites Routes
+|--------------------------------------------------------------------------
+| Routes for managing favorite services
+*/
+Route::middleware('auth:api')->group(function () {
+    Route::get('/my-favorite-services', [ServiceFavoriteController::class, 'index']);
+    Route::get('/my-favorite-services/stats', [ServiceFavoriteController::class, 'stats']);
+    Route::delete('/my-favorite-services/clear', [ServiceFavoriteController::class, 'clearAll']);
+    
+    Route::prefix('services/{id}')->group(function () {
+        Route::post('/favorite', [ServiceFavoriteController::class, 'toggle']);
+        Route::post('/favorite/add', [ServiceFavoriteController::class, 'add']);
+        Route::delete('/favorite/remove', [ServiceFavoriteController::class, 'remove']);
+        Route::get('/is-favorited', [ServiceFavoriteController::class, 'isFavorited']);
+    });
+});
+
+/*
+|--------------------------------------------------------------------------
+| 🚛 Tow Service Routes
+|--------------------------------------------------------------------------
+| Routes for tow service (emergency roadside assistance)
+*/
+Route::prefix('tow')->group(function () {
+    // Public routes
+    Route::get('/types', [TowServiceController::class, 'types']);
+    Route::get('/types/{id}', [TowServiceController::class, 'show']);
+    
+    // Authenticated routes
+    Route::middleware('auth:api')->group(function () {
+        Route::post('/calculate-price', [TowServiceController::class, 'calculatePrice']);
+        Route::post('/request', [TowServiceController::class, 'request']);
+        Route::get('/available-providers', [TowServiceController::class, 'availableProviders']);
+    });
+});
+
+// Alternative routes (shorter URLs)
+Route::prefix('tow-types')->group(function () {
+    Route::get('/', [TowServiceController::class, 'types']);
+    Route::get('/{id}', [TowServiceController::class, 'show']);
+});
+
+Route::middleware('auth:api')->prefix('tow-service')->group(function () {
+    Route::post('/calculate-price', [TowServiceController::class, 'calculatePrice']);
+    Route::post('/request', [TowServiceController::class, 'request']);
+    Route::get('/available-providers', [TowServiceController::class, 'availableProviders']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| 🚚 Transport Routes (Scheduled Routes)
+|--------------------------------------------------------------------------
+| Routes for scheduled bike transport services
+*/
+Route::prefix('transport-routes')->group(function () {
+    // Public routes
+    Route::get('/', [TransportRouteController::class, 'index']);
+    Route::get('/{id}', [TransportRouteController::class, 'show']);
+    
+    // Authenticated routes
+    Route::middleware('auth:api')->group(function () {
+        Route::post('/{id}/book', [TransportRouteController::class, 'book']);
+    });
+});
+
+// Provider transport routes management
+Route::middleware('auth:api')->prefix('provider')->group(function () {
+    Route::get('/transport-routes', [TransportRouteController::class, 'myRoutes']);
+    Route::post('/transport-routes', [TransportRouteController::class, 'store']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| 🏍️ Riding Instructors Routes
+|--------------------------------------------------------------------------
+| Routes for motorcycle riding instructors
+*/
+Route::prefix('riding-instructors')->group(function () {
+    // Public routes
+    Route::get('/', [RidingInstructorController::class, 'index']);
+    Route::get('/{id}', [RidingInstructorController::class, 'show']);
+    Route::get('/{id}/availability', [RidingInstructorController::class, 'availability']);
+    
+    // Authenticated routes
+    Route::middleware('auth:api')->group(function () {
+        Route::post('/{id}/book-session', [RidingInstructorController::class, 'bookSession']);
+    });
+});
+
+Route::prefix('instructor-locations')->group(function () {
+    Route::get('/', [RidingInstructorController::class, 'locations']);
+});
+
+// Provider instructor management
+Route::middleware('auth:api')->prefix('provider')->group(function () {
+    Route::post('/riding-instructors', [RidingInstructorController::class, 'store']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| 💬 Chat Sessions Routes
+|--------------------------------------------------------------------------
+| Routes for technical chat between users and providers
+*/
+Route::middleware('auth:api')->group(function () {
+    Route::get('/my-chat-sessions', [ChatSessionController::class, 'mySessions']);
+    
+    Route::prefix('chat-sessions/{sessionId}')->group(function () {
+        Route::post('/send-message', [ChatSessionController::class, 'sendMessage']);
+        Route::get('/messages', [ChatSessionController::class, 'messages']);
+        Route::post('/end', [ChatSessionController::class, 'endSession']);
+        Route::post('/mark-read', [ChatSessionController::class, 'markAsRead']);
+    });
+});
+
+/*
+|--------------------------------------------------------------------------
+| 🔍 Search & Filter Routes (Optional - for advanced search)
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth:api')->group(function () {
+    Route::post('/services/search', [ServiceController::class, 'search']);
+    Route::post('/providers/search', [ServiceProviderController::class, 'search']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| 📊 Statistics & Analytics Routes (Optional)
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth:api')->prefix('stats')->group(function () {
+    // User statistics
+    Route::get('/my-bookings', function() {
+        // Return user booking statistics
+    });
+    
+    // Provider statistics
+    Route::get('/provider/dashboard', function() {
+        // Return provider dashboard statistics
+    });
+});
+
+/*
+|--------------------------------------------------------------------------
+| 🧪 Test Route (Remove in production)
+|--------------------------------------------------------------------------
+*/
+Route::get('/test', function () {
+    return response()->json([
+        'success' => true,
+        'message' => 'DabApp Services API is working!',
+        'version' => '1.0.0',
+        'timestamp' => now()->toDateTimeString()
+    ]);
+});
+
+/*
+|--------------------------------------------------------------------------
+| 📱 Health Check Route
+|--------------------------------------------------------------------------
+*/
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'healthy',
+        'service' => 'DabApp Services API',
+        'timestamp' => now()->toIso8601String(),
+        'database' => DB::connection()->getDatabaseName()
+    ]);
 });
