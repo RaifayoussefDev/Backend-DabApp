@@ -28,7 +28,8 @@ use Illuminate\Support\Facades\Log;
 class AuthController extends Controller
 {
     private $whatsappApiUrl = 'https://api.360messenger.com/v2/sendMessage';
-    private $whatsappApiToken = 'fFUXfEtxJDqxX2lnteWxheeazIYyDriNBDn';
+    // private $whatsappApiToken = 'fFUXfEtxJDqxX2lnteWxheeazIYyDriNBDn';
+    private $whatsappApiToken = 'lEv2uJJUFIZl9houMUQtkCQzgyWepWEzywf';
 
     private const ACCESS_TOKEN_DURATION = 60;
     private const REFRESH_TOKEN_DURATION = 43200;
