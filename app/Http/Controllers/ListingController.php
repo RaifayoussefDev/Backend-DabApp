@@ -617,7 +617,7 @@ class ListingController extends Controller
             // ✅ Validation selon le step
             if ($step >= 3) {
                 $request->validate([
-                    'amount' => 'required|numeric|min:1',
+                    'amount' => 'required|numeric|min:0',
                     'promo_code' => 'sometimes|nullable|string'
                 ]);
             } else {
