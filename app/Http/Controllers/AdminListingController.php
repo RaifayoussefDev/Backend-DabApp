@@ -339,7 +339,28 @@ class AdminListingController extends Controller
      *     tags={"Admin Listings"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Listing details"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Listing details",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="integer"),
+     *             @OA\Property(property="title", type="string"),
+     *             @OA\Property(property="description", type="string"),
+     *             @OA\Property(property="price", type="number"),
+     *             @OA\Property(property="created_at", type="string", format="date-time"),
+     *             @OA\Property(property="city", type="string"),
+     *             @OA\Property(property="country", type="string"),
+     *             @OA\Property(property="images", type="array", @OA\Items(type="string")),
+     *             @OA\Property(property="wishlist", type="boolean"),
+     *             @OA\Property(property="is_seller", type="boolean", description="True if authenticated user is the seller"),
+     *             @OA\Property(property="category_id", type="integer"),
+     *             @OA\Property(property="submission", type="object", nullable=true),
+     *             @OA\Property(property="seller", type="object", nullable=true),
+     *             @OA\Property(property="motorcycle", type="object", nullable=true),
+     *             @OA\Property(property="spare_part", type="object", nullable=true),
+     *             @OA\Property(property="license_plate", type="object", nullable=true)
+     *         )
+     *     ),
      *     @OA\Response(response=404, description="Listing not found")
      * )
      */

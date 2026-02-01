@@ -199,7 +199,74 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Listing details"
+                        "description": "Listing details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "price": {
+                                            "type": "number"
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        },
+                                        "city": {
+                                            "type": "string"
+                                        },
+                                        "country": {
+                                            "type": "string"
+                                        },
+                                        "images": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "wishlist": {
+                                            "type": "boolean"
+                                        },
+                                        "is_seller": {
+                                            "description": "True if authenticated user is the seller",
+                                            "type": "boolean"
+                                        },
+                                        "category_id": {
+                                            "type": "integer"
+                                        },
+                                        "submission": {
+                                            "type": "object",
+                                            "nullable": true
+                                        },
+                                        "seller": {
+                                            "type": "object",
+                                            "nullable": true
+                                        },
+                                        "motorcycle": {
+                                            "type": "object",
+                                            "nullable": true
+                                        },
+                                        "spare_part": {
+                                            "type": "object",
+                                            "nullable": true
+                                        },
+                                        "license_plate": {
+                                            "type": "object",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "404": {
                         "description": "Listing not found"
