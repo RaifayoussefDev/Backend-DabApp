@@ -4933,11 +4933,37 @@
                 "tags": [
                     "Banners Management"
                 ],
-                "summary": "Get all banners (ADMIN - tous les banners)",
+                "summary": "Get all banners (ADMIN - sorted by order)",
                 "operationId": "bc3b8e74c9adf55f0d1f4780e3ee02c7",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (default 15)",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by title",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "List of all banners"
+                        "description": "List of all banners with pagination"
                     }
                 },
                 "security": [

@@ -37,17 +37,17 @@ class BannerController extends Controller
     {
         // Pour les USERS: Seulement les banners actifs avec dates valides
         $banners = Banner::where('is_active', true)
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->whereNull('start_date')
-                      ->orWhere('start_date', '<=', now());
+                    ->orWhere('start_date', '<=', now());
             })
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->whereNull('end_date')
-                      ->orWhere('end_date', '>=', now());
+                    ->orWhere('end_date', '>=', now());
             })
             ->orderBy('order')
             ->get()
-            ->map(function($banner) {
+            ->map(function ($banner) {
                 return [
                     'id' => $banner->id,
                     'title' => $banner->title,
@@ -68,18 +68,32 @@ class BannerController extends Controller
      * @OA\Get(
      *     path="/api/admin/banners",
      *     tags={"Banners Management"},
-     *     summary="Get all banners (ADMIN - tous les banners)",
+     *     summary="Get all banners (ADMIN - sorted by order)",
      *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="page", in="query", description="Page number", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="per_page", in="query", description="Items per page (default 15)", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="search", in="query", description="Search by title", @OA\Schema(type="string")),
      *     @OA\Response(
      *         response=200,
-     *         description="List of all banners"
+     *         description="List of all banners with pagination"
      *     )
      * )
      */
-    public function adminIndex()
+    public function adminIndex(Request $request)
     {
-        // Pour les ADMINS: TOUS les banners sans filtre
-        $banners = Banner::orderBy('order')->get()->map(function($banner) {
+        $perPage = $request->input('per_page', 15);
+        $search = $request->input('search');
+
+        $query = Banner::orderBy('order');
+
+        if ($search) {
+            $query->where('title', 'like', "%{$search}%");
+        }
+
+        $banners = $query->paginate($perPage);
+
+        // Transform collection but keep pagination structure
+        $banners->getCollection()->transform(function ($banner) {
             return [
                 'id' => $banner->id,
                 'title' => $banner->title,
@@ -87,7 +101,7 @@ class BannerController extends Controller
                 'image' => $banner->image,
                 'link' => $banner->link,
                 'order' => $banner->order,
-                'is_active' => $banner->is_active,
+                'is_active' => (bool) $banner->is_active,
                 'start_date' => $banner->start_date?->format('Y-m-d'),
                 'end_date' => $banner->end_date?->format('Y-m-d'),
                 'created_at' => $banner->created_at->format('Y-m-d H:i:s')
