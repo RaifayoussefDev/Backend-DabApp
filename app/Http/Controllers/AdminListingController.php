@@ -239,8 +239,35 @@ class AdminListingController extends Controller
     public function destroy($id)
     {
         $listing = Listing::findOrFail($id);
-        $listing->delete();
-        return response()->json(['message' => 'Listing deleted']);
+
+        DB::beginTransaction();
+        try {
+            // Delete related auction history
+            DB::table('auction_histories')->where('listing_id', $listing->id)->delete();
+
+            // Delete related submissions
+            DB::table('submissions')->where('listing_id', $listing->id)->delete();
+
+            // Delete related wishlists
+            DB::table('wishlists')->where('listing_id', $listing->id)->delete();
+
+            // Delete related images
+            $listing->images()->delete();
+
+            // Delete payments related to this listing (Optional: logic depends on business rule. Usually we keep payments but nullify relation or soft delete)
+            // For now, we assume we might want to keep payment history or if it blocks, we delete it. 
+            // Given the error was specifically about auction_histories, we start there.
+            // If checking specifically for foreign key 'auction_histories_listing_id_foreign'
+
+            $listing->delete();
+
+            DB::commit();
+            return response()->json(['message' => 'Listing deleted successfully']);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to delete listing: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
