@@ -976,7 +976,7 @@ class ListingController extends Controller
             // ✅ Validation selon le step
             if ($step >= 3 && $action === 'complete') {
                 $request->validate([
-                    'amount' => 'required|numeric|min:1',
+                    'amount' => 'required|numeric|min:0',
                     'promo_code' => 'sometimes|nullable|string'
                 ]);
             } else {
@@ -1069,7 +1069,50 @@ class ListingController extends Controller
                     }
 
                     $appliedPromoId = $promoResult['promo']->id;
-                    \Log::info("Complete Listing - Promo Code Applied: {$request->promo_code}. Discount: {$discount}. New Amounts: {$originalAmount} / {$aedAmount}");
+                    \Log::info("Promo Code Applied: {$request->promo_code}. Discount: {$discount}. New Amounts: {$originalAmount} / {$aedAmount}");
+                }
+
+                // ✅ FREE LISTING / 100% DISCOUNT LOGIC
+                if ($aedAmount <= 0) {
+                    $payment = Payment::create([
+                        'user_id' => $sellerId,
+                        'listing_id' => $listing->id,
+                        'amount' => 0,
+                        'original_amount' => 0,
+                        'original_currency' => $originalCurrency,
+                        'currency' => 'AED',
+                        'payment_status' => 'completed',
+                        'cart_id' => 'free_complete_' . time() . '_' . $listing->id,
+                        'promo_code_id' => $appliedPromoId,
+                        'payment_result' => 'Free Completion / 100% Discount',
+                        'completed_at' => now(),
+                    ]);
+
+                    // Publish Listing Immediately
+                    $listing->update([
+                        'status' => 'published',
+                        'published_at' => now(),
+                    ]);
+
+                    // Record Promo Usage if applicable
+                    if ($appliedPromoId) {
+                        $promoService->recordUsage(
+                            \App\Models\PromoCode::find($appliedPromoId),
+                            $sellerId,
+                            $listing->id
+                        );
+                    }
+
+                    DB::commit();
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Listing completed and published successfully (Free)',
+                        'listing_id' => $listing->id,
+                        'payment_id' => $payment->id,
+                        'status' => 'published',
+                        'published_at' => $listing->published_at,
+                    ]);
                 }
 
                 $payment = Payment::create([
