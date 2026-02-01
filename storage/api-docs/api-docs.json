@@ -181,6 +181,36 @@
             }
         },
         "/api/admin/listings/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Listings"
+                ],
+                "summary": "Get listing by ID (Admin)",
+                "operationId": "39920c732c735da36125e96f3dae0f80",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Listing details"
+                    },
+                    "404": {
+                        "description": "Listing not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
             "put": {
                 "tags": [
                     "Admin Listings"

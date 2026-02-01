@@ -17,7 +17,7 @@ use App\Models\ListingImage; // ✅ Added
 class AdminListingController extends Controller
 {
     use CategoryDataTrait; // ✅ Use Trait
-    
+
     /**
      * @OA\Get(
      *     path="/api/admin/listings",
@@ -35,8 +35,8 @@ class AdminListingController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 15);
-        
-        $query = Listing::with(['seller', 'images', 'category'])
+
+        $query = Listing::with(['seller', 'images', 'category', 'city', 'country'])
             ->orderBy('created_at', 'desc');
 
         // Filters
@@ -49,11 +49,11 @@ class AdminListingController extends Controller
         }
 
         if ($request->filled('search')) {
-             $search = $request->search;
-             $query->where(function($q) use ($search) {
-                 $q->where('title', 'like', "%{$search}%")
-                   ->orWhere('id', 'like', "%{$search}%");
-             });
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('id', 'like', "%{$search}%");
+            });
         }
 
         $listings = $query->paginate($perPage);
@@ -123,7 +123,7 @@ class AdminListingController extends Controller
                 'contacting_channel' => $request->contacting_channel ?? 'phone',
                 'seller_type' => $request->seller_type ?? 'owner',
             ]);
-            
+
             // Handle Images
             if ($request->has('images')) {
                 foreach ($request->images as $imageUrl) {
@@ -183,14 +183,14 @@ class AdminListingController extends Controller
     public function update(Request $request, $id)
     {
         $listing = Listing::findOrFail($id);
-        
+
         $listing->update($request->except(['id', 'seller_id', 'created_at', 'images']));
 
         if ($request->has('images')) {
-             $listing->images()->delete();
-             foreach ($request->images as $imageUrl) {
+            $listing->images()->delete();
+            foreach ($request->images as $imageUrl) {
                 $listing->images()->create(['image_url' => $imageUrl]);
-             }
+            }
         }
 
         // ✅ Handle Category Specific Data (using Trait)
@@ -218,7 +218,7 @@ class AdminListingController extends Controller
     public function changeStatus(Request $request, $id)
     {
         $request->validate(['status' => 'required|string']);
-        
+
         $listing = Listing::findOrFail($id);
         $listing->status = $request->status;
         $listing->save();
@@ -274,21 +274,21 @@ class AdminListingController extends Controller
         ]);
 
         $listing = Listing::findOrFail($id);
-        
+
         // Ensure all images belong to this listing
         $count = ListingImage::where('listing_id', $listing->id)
             ->whereIn('id', $request->image_ids)
             ->count();
-            
+
         if ($count != count($request->image_ids)) {
-             return response()->json(['error' => 'Some images do not belong to this listing or are duplicates'], 400);
+            return response()->json(['error' => 'Some images do not belong to this listing or are duplicates'], 400);
         }
 
         DB::beginTransaction();
         try {
             // Fetch current images data to preserve URLs
             $currentImages = ListingImage::whereIn('id', $request->image_ids)->get()->keyBy('id');
-            
+
             // Delete existing images
             ListingImage::whereIn('id', $request->image_ids)->delete();
 
@@ -303,7 +303,7 @@ class AdminListingController extends Controller
                     ]);
                 }
             }
-            
+
             DB::commit();
             return response()->json(['message' => 'Images reordered successfully', 'images' => $listing->images()->get()]);
 
@@ -330,6 +330,163 @@ class AdminListingController extends Controller
         $image->delete();
 
         return response()->json(['message' => 'Image deleted successfully']);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/admin/listings/{id}",
+     *     summary="Get listing by ID (Admin)",
+     *     tags={"Admin Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Listing details"),
+     *     @OA\Response(response=404, description="Listing not found")
+     * )
+     */
+    public function show($id)
+    {
+        $user = auth()->user();
+
+        $listing = Listing::with([
+            'images',
+            'city',
+            'country',
+            'country.currencyExchangeRate',
+            'seller',
+            'motorcycle.brand',
+            'motorcycle.model',
+            'motorcycle.year',
+            'sparePart.bikePartBrand',
+            'sparePart.bikePartCategory',
+            'sparePart.motorcycleAssociations.brand',
+            'sparePart.motorcycleAssociations.model',
+            'sparePart.motorcycleAssociations.year',
+            'licensePlate.format',
+            'licensePlate.city',
+            'licensePlate.fieldValues.formatField'
+        ])->where('id', $id)->first();
+
+        if (!$listing) {
+            return response()->json(['message' => 'Listing not found'], 404);
+        }
+
+        // Récupérer current_bid pour les enchères
+        $currentBid = null;
+        if ($listing->auction_enabled) {
+            $currentBid = DB::table('auction_histories')
+                ->where('listing_id', $listing->id)
+                ->max('bid_amount');
+        }
+
+        // Déterminer le prix à afficher
+        $displayPrice = $listing->price;
+        $isAuction = false;
+
+        if (!$displayPrice && $listing->auction_enabled) {
+            $displayPrice = $currentBid ?: $listing->minimum_bid;
+            $isAuction = true;
+        }
+
+        // Récupérer le symbole de devise
+        $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+
+        $data = [
+            'id' => $listing->id,
+            'title' => $listing->title,
+            'description' => $listing->description,
+            'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
+            'city' => $listing->city?->name,
+            'country' => $listing->country?->name,
+            'images' => $listing->images->pluck('image_url'),
+            'category_id' => $listing->category_id,
+            'allow_submission' => $listing->allow_submission,
+            'auction_enabled' => $listing->auction_enabled,
+            'minimum_bid' => $listing->minimum_bid,
+            'listing_type_id' => $listing->listing_type_id,
+            'contacting_channel' => $listing->contacting_channel,
+            'seller_type' => $listing->seller_type,
+            'status' => $listing->status,
+            'currency' => $currencySymbol,
+            'display_price' => $displayPrice,
+            'is_auction' => $isAuction,
+            'current_bid' => $currentBid,
+            'seller' => [
+                'id' => $listing->seller?->id,
+                'name' => $listing->seller?->first_name . ' ' . $listing->seller?->last_name,
+                'email' => $listing->seller?->email,
+                'phone' => $listing->seller?->phone,
+                'address' => $listing->seller?->address,
+                'profile_image' => $listing->seller?->profile_image,
+                'verified' => (bool) $listing->seller?->verified,
+                'member_since' => $listing->seller?->created_at ? $listing->seller->created_at->format('Y-m-d H:i:s') : null,
+            ]
+        ];
+
+        // Motorcycle category
+        if ($listing->category_id == 1 && $listing->motorcycle) {
+            $data['motorcycle'] = [
+                'brand' => $listing->motorcycle->brand?->name,
+                'model' => $listing->motorcycle->model?->name,
+                'year' => $listing->motorcycle->year?->year,
+                'engine' => $listing->motorcycle->engine,
+                'mileage' => $listing->motorcycle->mileage,
+                'body_condition' => $listing->motorcycle->body_condition,
+                'modified' => $listing->motorcycle->modified,
+                'insurance' => $listing->motorcycle->insurance,
+                'general_condition' => $listing->motorcycle->general_condition,
+                'vehicle_care' => $listing->motorcycle->vehicle_care,
+                'vehicle_care_other' => $listing->motorcycle->vehicle_care_other,
+                'transmission' => $listing->motorcycle->transmission,
+            ];
+        }
+
+        // Spare part category
+        if ($listing->category_id == 2 && $listing->sparePart) {
+            $data['spare_part'] = [
+                'condition' => $listing->sparePart->condition,
+                'brand' => $listing->sparePart->bikePartBrand?->name,
+                'brand_other' => $listing->sparePart->brand_other,
+                'category' => $listing->sparePart->bikePartCategory?->name,
+                'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
+                    return [
+                        'brand' => $association->brand?->name,
+                        'model' => $association->model?->name,
+                        'year' => $association->year?->year,
+                    ];
+                }),
+            ];
+        }
+
+        // License plate category
+        if ($listing->category_id == 3 && $listing->licensePlate) {
+            $licensePlate = $listing->licensePlate;
+
+            $data['license_plate'] = [
+                'image' => $listing->images->where('is_plate_image', true)->first()?->image_url ?? $listing->images->first()?->image_url,
+                'plate_format' => [
+                    'id' => $licensePlate->format?->id,
+                    'name' => $licensePlate->format?->name,
+                    'pattern' => $licensePlate->format?->pattern ?? null,
+                    'country' => $licensePlate->format?->country ?? null,
+                ],
+                'city' => $licensePlate->city?->name,
+                'country_id' => $licensePlate->country_id,
+                'fields' => $licensePlate->fieldValues->map(function ($fieldValue) {
+                    return [
+                        'field_id' => $fieldValue->formatField?->id,
+                        'field_name' => $fieldValue->formatField?->field_name,
+                        'position' => $fieldValue->formatField?->position,
+                        'character_type' => $fieldValue->formatField?->character_type,
+                        'is_required' => $fieldValue->formatField?->is_required,
+                        'min_length' => $fieldValue->formatField?->min_length,
+                        'max_length' => $fieldValue->formatField?->max_length,
+                        'value' => $fieldValue->field_value,
+                    ];
+                })->toArray(),
+            ];
+        }
+
+        return response()->json($data);
     }
 
     /**
@@ -370,11 +527,11 @@ class AdminListingController extends Controller
             return response()->json([]);
         }
 
-        $users = User::where(function($q) use ($search) {
-                $q->where('phone', 'like', "%{$search}%")
-                  ->orWhere('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%");
-            })
+        $users = User::where(function ($q) use ($search) {
+            $q->where('phone', 'like', "%{$search}%")
+                ->orWhere('first_name', 'like', "%{$search}%")
+                ->orWhere('last_name', 'like', "%{$search}%");
+        })
             ->select('id', 'first_name', 'last_name', 'email', 'phone')
             ->limit(10)
             ->get();
