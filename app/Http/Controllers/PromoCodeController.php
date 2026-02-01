@@ -288,14 +288,14 @@ class PromoCodeController extends Controller
         }
 
         return response()->json([
-            'old_price' => $result['old_price'],
-            'new_price' => $result['new_price'],
-            'discount' => $result['discount'],
+            'old_price' => (string) $result['old_price'],
+            'new_price' => (string) $result['new_price'],
+            'discount' => (string) $result['discount'],
             'discount_type' => $result['promo']->discount_type,
-            'discount_value' => $result['promo']->discount_value,
+            'discount_value' => (string) $result['promo']->discount_value,
             'description' => $result['promo']->description,
-            'usage_count' => $result['user_usages'],
-            'total_usage_count' => $result['total_usages'],
+            'usage_count' => (string) $result['user_usages'],
+            'total_usage_count' => (string) $result['total_usages'],
         ]);
     }
     /**
