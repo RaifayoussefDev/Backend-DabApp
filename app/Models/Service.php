@@ -23,15 +23,26 @@ class Service extends Model
         'is_available',
         'requires_booking',
         'max_capacity',
-        'image'
+        'image',
+        'base_price',                     // NOUVEAU: Prix de base
+        'origin_city_id',                 // NOUVEAU: Ville de départ
+        'destination_city_id',            // NOUVEAU: Ville d'arrivée
+        'has_online_consultation',        // NOUVEAU
+        'consultation_price_per_session', // NOUVEAU
+        'consultation_email',             // NOUVEAU
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
+        'base_price' => 'decimal:2',      // NOUVEAU
         'is_available' => 'boolean',
         'requires_booking' => 'boolean',
         'duration_minutes' => 'integer',
-        'max_capacity' => 'integer'
+        'max_capacity' => 'integer',
+        'has_online_consultation' => 'boolean',        // NOUVEAU
+        'consultation_price_per_session' => 'decimal:2', // NOUVEAU
+        'origin_city_id' => 'integer',    // NOUVEAU
+        'destination_city_id' => 'integer', // NOUVEAU
     ];
 
     // Relations
@@ -43,6 +54,16 @@ class Service extends Model
     public function category()
     {
         return $this->belongsTo(ServiceCategory::class, 'category_id');
+    }
+
+    public function originCity()
+    {
+        return $this->belongsTo(City::class, 'origin_city_id');
+    }
+
+    public function destinationCity()
+    {
+        return $this->belongsTo(City::class, 'destination_city_id');
     }
 
     public function schedules()
@@ -86,6 +107,22 @@ class Service extends Model
         return $this->reviews()->where('is_approved', true)->count();
     }
 
+    /**
+     * Check if service offers online consultation
+     */
+    public function hasOnlineConsultation()
+    {
+        return $this->has_online_consultation;
+    }
+
+    /**
+     * Get consultation price or return null
+     */
+    public function getConsultationPriceAttribute()
+    {
+        return $this->has_online_consultation ? $this->consultation_price_per_session : null;
+    }
+
     // Scopes
     public function scopeAvailable($query)
     {
@@ -104,9 +141,17 @@ class Service extends Model
 
     public function scopeWithActiveProvider($query)
     {
-        return $query->whereHas('provider', function($q) {
+        return $query->whereHas('provider', function ($q) {
             $q->where('is_active', true);
         });
+    }
+
+    /**
+     * Scope: Services with online consultation
+     */
+    public function scopeWithOnlineConsultation($query)
+    {
+        return $query->where('has_online_consultation', true);
     }
 
     // Accessors
@@ -128,7 +173,7 @@ class Service extends Model
     public function getFormattedPriceAttribute()
     {
         $priceText = number_format($this->price, 2) . ' ' . $this->currency;
-        
+
         switch ($this->price_type) {
             case 'per_hour':
                 return $priceText . ' / ' . __('hour');
@@ -139,5 +184,17 @@ class Service extends Model
             default:
                 return $priceText;
         }
+    }
+
+    /**
+     * Get formatted consultation price
+     */
+    public function getFormattedConsultationPriceAttribute()
+    {
+        if (!$this->has_online_consultation || !$this->consultation_price_per_session) {
+            return null;
+        }
+
+        return number_format($this->consultation_price_per_session, 2) . ' ' . $this->currency . ' / ' . __('session');
     }
 }

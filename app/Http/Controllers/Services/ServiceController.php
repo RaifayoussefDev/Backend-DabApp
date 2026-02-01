@@ -170,7 +170,7 @@ class ServiceController extends Controller
 
         // Filtre: Ville (via provider)
         if ($request->has('city_id')) {
-            $query->whereHas('provider', function($q) use ($request) {
+            $query->whereHas('provider', function ($q) use ($request) {
                 $q->where('city_id', $request->city_id);
             });
         }
@@ -193,10 +193,10 @@ class ServiceController extends Controller
         // Recherche
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('name_ar', 'LIKE', "%{$search}%")
-                  ->orWhere('description', 'LIKE', "%{$search}%");
+                    ->orWhere('name_ar', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%");
             });
         }
 
@@ -211,9 +211,9 @@ class ServiceController extends Controller
 
         if ($sortBy === 'rating') {
             $query->leftJoin('service_reviews', 'services.id', '=', 'service_reviews.service_id')
-                  ->select('services.*', DB::raw('AVG(service_reviews.rating) as avg_rating'))
-                  ->groupBy('services.id')
-                  ->orderBy('avg_rating', $sortOrder);
+                ->select('services.*', DB::raw('AVG(service_reviews.rating) as avg_rating'))
+                ->groupBy('services.id')
+                ->orderBy('avg_rating', $sortOrder);
         } else {
             $query->orderBy($sortBy, $sortOrder);
         }
@@ -271,16 +271,16 @@ class ServiceController extends Controller
             'category',
             'schedules',
             'requiredDocuments',
-            'reviews' => function($q) {
+            'reviews' => function ($q) {
                 $q->where('is_approved', true)
-                  ->latest()
-                  ->limit(10)
-                  ->with('user:id,full_name,avatar');
+                    ->latest()
+                    ->limit(10)
+                    ->with('user:id,full_name,avatar');
             }
         ])
-        ->withCount('reviews')
-        ->withAvg('reviews', 'rating')
-        ->find($id);
+            ->withCount('reviews')
+            ->withAvg('reviews', 'rating')
+            ->find($id);
 
         if (!$service) {
             return response()->json([
@@ -289,9 +289,18 @@ class ServiceController extends Controller
             ], 404);
         }
 
-        // Vérifier si l'utilisateur a ajouté aux favoris
-        $user = JWTAuth::parseToken()->authenticate();
-        $isFavorited = $service->isFavoritedBy($user);
+        // Vérifier si l'utilisateur a ajouté aux favoris (si authentifié)
+        $isFavorited = false;
+        try {
+            if ($token = JWTAuth::parseToken()) {
+                $user = $token->authenticate();
+                if ($user) {
+                    $isFavorited = $service->isFavoritedBy($user);
+                }
+            }
+        } catch (\Exception $e) {
+            // Utilisateur non connecté ou token invalide : on ignore
+        }
 
         $serviceData = $service->toArray();
         $serviceData['is_favorited'] = $isFavorited;

@@ -5,10 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @OA\Schema(
+ *     title="TowType",
+ *     description="Tow Service Type model",
+ *     @OA\Xml(name="TowType")
+ * )
+ */
 class TowType extends Model
 {
     use HasFactory;
 
+    /**
+     * @OA\Property(property="id", type="integer", example=1)
+     * @OA\Property(property="name", type="string", example="Flatbed Towing")
+     * @OA\Property(property="base_price", type="number", format="float", example=100.00)
+     * @OA\Property(property="price_per_km", type="number", format="float", example=5.00)
+     * @OA\Property(property="is_active", type="boolean", example=true)
+     */
     protected $fillable = [
         'name',
         'name_ar',
@@ -45,7 +59,7 @@ class TowType extends Model
     {
         $basePrice = $this->base_price ?? 0;
         $pricePerKm = $this->price_per_km ?? 0;
-        
+
         return $basePrice + ($distanceKm * $pricePerKm);
     }
 
@@ -69,7 +83,7 @@ class TowType extends Model
     {
         $base = number_format($this->base_price, 2) . ' SAR';
         $perKm = number_format($this->price_per_km, 2) . ' SAR/km';
-        
+
         return $base . ' + ' . $perKm;
     }
 }

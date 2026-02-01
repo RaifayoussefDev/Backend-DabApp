@@ -99,6 +99,17 @@ use App\Http\Controllers\Services\TowServiceController;
 use App\Http\Controllers\Services\TransportRouteController;
 use App\Http\Controllers\Services\RidingInstructorController;
 use App\Http\Controllers\Services\ChatSessionController;
+use App\Http\Controllers\Services\SubscriptionPlanController;
+use App\Http\Controllers\Services\ServiceSubscriptionController;
+use App\Http\Controllers\Services\AdminSubscriptionPlanController;
+use App\Http\Controllers\Services\AdminServiceController;
+use App\Http\Controllers\Services\AdminSubscriptionController;
+use App\Http\Controllers\Services\AdminServiceCategoryController;
+use App\Http\Controllers\Services\AdminServiceBookingController;
+use App\Http\Controllers\Services\AdminServiceReviewController;
+use App\Http\Controllers\Services\AdminTransportRouteController;
+use App\Http\Controllers\Services\AdminTowServiceController;
+use App\Http\Controllers\Services\AdminChatSessionController;
 
 // ============================================
 // ============================================
@@ -184,6 +195,47 @@ Route::prefix('admin')->group(function () {
 
         // Admin Sooms
         Route::apiResource('sooms', AdminSoomController::class);
+
+        // ============================================
+        // SERVICES & SUBSCRIPTIONS ADMIN
+        // ============================================
+
+        // Admin Subscription Plans
+        Route::apiResource('subscription-plans', AdminSubscriptionPlanController::class);
+
+        // Admin User Subscriptions
+        Route::get('subscriptions', [AdminSubscriptionController::class, 'index']);
+        Route::get('subscriptions/{id}', [AdminSubscriptionController::class, 'show']);
+        Route::post('subscriptions/{id}/cancel', [AdminSubscriptionController::class, 'cancel']);
+
+        // Admin Service Categories
+        Route::apiResource('service-categories', AdminServiceCategoryController::class);
+
+        // Admin Services
+        Route::get('services', [AdminServiceController::class, 'index']);
+        Route::get('services/{id}', [AdminServiceController::class, 'show']);
+        Route::post('services/{id}/approve', [AdminServiceController::class, 'approve']);
+        Route::post('services/{id}/reject', [AdminServiceController::class, 'reject']);
+        Route::delete('services/{id}', [AdminServiceController::class, 'destroy']);
+
+        // Admin Bookings
+        Route::get('bookings', [AdminServiceBookingController::class, 'index']);
+        Route::get('bookings/{id}', [AdminServiceBookingController::class, 'show']);
+
+        // Admin Service Reviews
+        Route::get('service-reviews', [AdminServiceReviewController::class, 'index']);
+        Route::post('service-reviews/{id}/approve', [AdminServiceReviewController::class, 'approve']);
+        Route::delete('service-reviews/{id}', [AdminServiceReviewController::class, 'destroy']);
+
+        // Admin Transport Routes
+        Route::apiResource('transport-routes', AdminTransportRouteController::class);
+
+        // Admin Tow Types
+        Route::apiResource('tow-types', AdminTowServiceController::class);
+
+        // Admin Chat Sessions
+        Route::get('chat-sessions', [AdminChatSessionController::class, 'index']);
+        Route::get('chat-sessions/{id}', [AdminChatSessionController::class, 'show']);
     });
 });
 
@@ -595,6 +647,13 @@ Route::middleware('auth:api')->group(function () {
     });
 
 
+
+    // ============================================
+    // SERVICE SUBSCRIPTIONS (PROVIDER)
+    // ============================================
+    Route::get('/my-subscription', [ServiceSubscriptionController::class, 'mySubscription']);
+    Route::post('/subscriptions/subscribe', [ServiceSubscriptionController::class, 'subscribe']);
+    Route::post('/subscriptions/cancel', [ServiceSubscriptionController::class, 'cancel']);
 
     // ============================================
     // LISTINGS MANAGEMENT
@@ -1092,6 +1151,19 @@ Route::middleware('auth:api')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| 📂 Subscription Plans Routes
+|--------------------------------------------------------------------------
+| Public routes for browsing subscription plans
+*/
+Route::prefix('subscription-plans')->group(function () {
+    Route::get('/', [SubscriptionPlanController::class, 'index']);
+    Route::get('/featured', [SubscriptionPlanController::class, 'featured']);
+    Route::get('/compare', [SubscriptionPlanController::class, 'compare']);
+    Route::get('/{id}', [SubscriptionPlanController::class, 'show']);
+});
+
+/*
+|--------------------------------------------------------------------------
 | 📂 Service Categories Routes
 |--------------------------------------------------------------------------
 | Public routes for browsing service categories
@@ -1136,7 +1208,7 @@ Route::middleware(['auth:api'])->prefix('provider')->group(function () {
 Route::prefix('services')->group(function () {
     Route::get('/', [ServiceController::class, 'index']);
     Route::get('/{id}', [ServiceController::class, 'show']);
-    
+
     // Service reviews (nested route)
     Route::get('/{serviceId}/reviews', [ServiceReviewController::class, 'index']);
 });
@@ -1163,10 +1235,10 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/', [ServiceBookingController::class, 'store']);
         Route::get('/{id}', [ServiceBookingController::class, 'show']);
         Route::post('/{id}/cancel', [ServiceBookingController::class, 'cancel']);
-        
+
         // Create review for a booking
         Route::post('/{bookingId}/review', [ServiceReviewController::class, 'store']);
-        
+
         // Start chat session for a booking
         Route::post('/{bookingId}/start-chat', [ChatSessionController::class, 'startSession']);
     });
@@ -1184,9 +1256,9 @@ Route::middleware('auth:api')->group(function () {
         Route::put('/{id}', [ServiceReviewController::class, 'update']);
         Route::delete('/{id}', [ServiceReviewController::class, 'destroy']);
     });
-    
-    Route::get('/my-reviews', [ServiceReviewController::class, 'myReviews']);
-    
+
+    Route::get('/services/my-reviews', [ServiceReviewController::class, 'myReviews']);
+
     // Provider reviews management
     Route::prefix('provider')->group(function () {
         Route::get('/reviews', [ServiceReviewController::class, 'providerReviews']);
@@ -1204,7 +1276,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/my-favorite-services', [ServiceFavoriteController::class, 'index']);
     Route::get('/my-favorite-services/stats', [ServiceFavoriteController::class, 'stats']);
     Route::delete('/my-favorite-services/clear', [ServiceFavoriteController::class, 'clearAll']);
-    
+
     Route::prefix('services/{id}')->group(function () {
         Route::post('/favorite', [ServiceFavoriteController::class, 'toggle']);
         Route::post('/favorite/add', [ServiceFavoriteController::class, 'add']);
@@ -1223,7 +1295,7 @@ Route::prefix('tow')->group(function () {
     // Public routes
     Route::get('/types', [TowServiceController::class, 'types']);
     Route::get('/types/{id}', [TowServiceController::class, 'show']);
-    
+
     // Authenticated routes
     Route::middleware('auth:api')->group(function () {
         Route::post('/calculate-price', [TowServiceController::class, 'calculatePrice']);
@@ -1254,7 +1326,7 @@ Route::prefix('transport-routes')->group(function () {
     // Public routes
     Route::get('/', [TransportRouteController::class, 'index']);
     Route::get('/{id}', [TransportRouteController::class, 'show']);
-    
+
     // Authenticated routes
     Route::middleware('auth:api')->group(function () {
         Route::post('/{id}/book', [TransportRouteController::class, 'book']);
@@ -1278,7 +1350,7 @@ Route::prefix('riding-instructors')->group(function () {
     Route::get('/', [RidingInstructorController::class, 'index']);
     Route::get('/{id}', [RidingInstructorController::class, 'show']);
     Route::get('/{id}/availability', [RidingInstructorController::class, 'availability']);
-    
+
     // Authenticated routes
     Route::middleware('auth:api')->group(function () {
         Route::post('/{id}/book-session', [RidingInstructorController::class, 'bookSession']);
@@ -1302,13 +1374,26 @@ Route::middleware('auth:api')->prefix('provider')->group(function () {
 */
 Route::middleware('auth:api')->group(function () {
     Route::get('/my-chat-sessions', [ChatSessionController::class, 'mySessions']);
-    
+
     Route::prefix('chat-sessions/{sessionId}')->group(function () {
         Route::post('/send-message', [ChatSessionController::class, 'sendMessage']);
         Route::get('/messages', [ChatSessionController::class, 'messages']);
         Route::post('/end', [ChatSessionController::class, 'endSession']);
         Route::post('/mark-read', [ChatSessionController::class, 'markAsRead']);
     });
+});
+
+/*
+|--------------------------------------------------------------------------
+| 💳 Subscription Plans Routes
+|--------------------------------------------------------------------------
+| Routes for viewing and comparing subscription plans
+*/
+Route::prefix('subscription-plans')->group(function () {
+    Route::get('/', [SubscriptionPlanController::class, 'index']);
+    Route::get('/featured', [SubscriptionPlanController::class, 'featured']);
+    Route::get('/compare', [SubscriptionPlanController::class, 'compare']);
+    Route::get('/{id}', [SubscriptionPlanController::class, 'show']);
 });
 
 /*
@@ -1328,12 +1413,12 @@ Route::middleware('auth:api')->group(function () {
 */
 Route::middleware('auth:api')->prefix('stats')->group(function () {
     // User statistics
-    Route::get('/my-bookings', function() {
+    Route::get('/my-bookings', function () {
         // Return user booking statistics
     });
-    
+
     // Provider statistics
-    Route::get('/provider/dashboard', function() {
+    Route::get('/provider/dashboard', function () {
         // Return provider dashboard statistics
     });
 });
