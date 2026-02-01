@@ -288,11 +288,11 @@ class PromoCodeController extends Controller
         }
 
         return response()->json([
-            'old_price' => (string) $result['old_price'],
-            'new_price' => (string) $result['new_price'],
-            'discount' => (string) $result['discount'],
+            'old_price' => number_format($result['old_price'], 2, '.', ''),
+            'new_price' => number_format($result['new_price'], 2, '.', ''),
+            'discount' => number_format($result['discount'], 2, '.', ''),
             'discount_type' => $result['promo']->discount_type,
-            'discount_value' => (string) $result['promo']->discount_value,
+            'discount_value' => number_format($result['promo']->discount_value, 2, '.', ''),
             'description' => $result['promo']->description,
             'usage_count' => (string) $result['user_usages'],
             'total_usage_count' => (string) $result['total_usages'],
