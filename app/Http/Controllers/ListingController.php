@@ -137,14 +137,15 @@ class ListingController extends Controller
                     $arabic = new \ArPHP\I18N\Arabic();
                 } elseif (class_exists('I18N_Arabic')) {
                     \Log::info("Arabic Lib: matches I18N_Arabic (Legacy)");
-                    $arabic = new \I18N_Arabic('Glyphs'); 
+                    $arabic = new \I18N_Arabic('Glyphs');
                 } else {
                     \Log::warning("Arabic Lib: Class NOT found.");
                 }
 
                 if ($arabic) {
-                    $fixArabic = function($text) use ($arabic) {
-                        if (!$text) return $text;
+                    $fixArabic = function ($text) use ($arabic) {
+                        if (!$text)
+                            return $text;
 
                         // ✅ Only apply if text contains Arabic characters
                         if (!preg_match('/\p{Arabic}/u', $text)) {
@@ -155,20 +156,24 @@ class ListingController extends Controller
                         if (method_exists($arabic, 'utf8Glyphs')) {
                             return $arabic->utf8Glyphs($text);
                         }
-                        return $text; 
+                        return $text;
                     };
 
                     $listing->title = $fixArabic($listing->title);
                     $listing->description = $fixArabic($listing->description);
-                    if ($listing->city) $listing->city->name = $fixArabic($listing->city->name);
-                    if ($listing->country) $listing->country->name = $fixArabic($listing->country->name);
+                    if ($listing->city)
+                        $listing->city->name = $fixArabic($listing->city->name);
+                    if ($listing->country)
+                        $listing->country->name = $fixArabic($listing->country->name);
                     if ($listing->seller) {
-                         $listing->seller->name = $fixArabic($listing->seller->name);
+                        $listing->seller->name = $fixArabic($listing->seller->name);
                     }
                     if ($listing->category_id == 2 && $listing->sparePart && $listing->sparePart->motorcycles) {
                         foreach ($listing->sparePart->motorcycles as $moto) {
-                            if ($moto->brand) $moto->brand->name = $fixArabic($moto->brand->name);
-                            if ($moto->model) $moto->model->name = $fixArabic($moto->model->name);
+                            if ($moto->brand)
+                                $moto->brand->name = $fixArabic($moto->brand->name);
+                            if ($moto->model)
+                                $moto->model->name = $fixArabic($moto->model->name);
                         }
                     }
                     $currency = $fixArabic($currency);
@@ -734,6 +739,49 @@ class ListingController extends Controller
 
                     $appliedPromoId = $promoResult['promo']->id;
                     \Log::info("Promo Code Applied: {$request->promo_code}. Discount: {$discount}. New Amounts: {$originalAmount} / {$aedAmount}");
+                }
+
+                // ✅ FREE LISTING / 100% DISCOUNT LOGIC
+                if ($aedAmount <= 0) {
+                    $payment = Payment::create([
+                        'user_id' => $sellerId,
+                        'listing_id' => $listing->id,
+                        'amount' => 0,
+                        'original_amount' => 0,
+                        'original_currency' => $originalCurrency,
+                        'currency' => 'AED',
+                        'payment_status' => 'completed',
+                        'cart_id' => 'free_' . time() . '_' . $listing->id,
+                        'promo_code_id' => $appliedPromoId,
+                        'payment_result' => 'Free Listing / 100% Discount',
+                        'completed_at' => now(),
+                    ]);
+
+                    // Publish Listing Immediately
+                    $listing->update([
+                        'status' => 'published',
+                        'published_at' => now(),
+                    ]);
+
+                    // Record Promo Usage if applicable
+                    if ($appliedPromoId) {
+                        $promoService->recordUsage(
+                            \App\Models\PromoCode::find($appliedPromoId),
+                            $sellerId,
+                            $listing->id
+                        );
+                    }
+
+                    DB::commit();
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Listing published successfully (Free)',
+                        'listing_id' => $listing->id,
+                        'payment_id' => $payment->id,
+                        'status' => 'published',
+                        'published_at' => $listing->published_at,
+                    ]);
                 }
 
                 $payment = Payment::create([
@@ -1587,11 +1635,11 @@ class ListingController extends Controller
             if ($request->has('basic_info')) {
                 $basicInfo = $request->basic_info;
 
-                 // Nettoyage du prix (si validation 'numeric' passe, format est déjà OK)
+                // Nettoyage du prix (si validation 'numeric' passe, format est déjà OK)
                 if (array_key_exists('price', $basicInfo)) {
-                     // Force cast to float if present
-                     $listing->price = $basicInfo['price'] !== null ? (float) $basicInfo['price'] : null;
-                     $updatedFields[] = 'price';
+                    // Force cast to float if present
+                    $listing->price = $basicInfo['price'] !== null ? (float) $basicInfo['price'] : null;
+                    $updatedFields[] = 'price';
                 }
 
                 $allowedBasicFields = [
@@ -1631,7 +1679,7 @@ class ListingController extends Controller
             if ($listing->auction_enabled) {
                 // Is Auction: Minimum Bid is required
                 if (is_null($listing->minimum_bid) || $listing->minimum_bid <= 0) {
-                     return response()->json([
+                    return response()->json([
                         'error' => 'Minimum bid is required and must be greater than 0 for auctions.',
                         'field' => 'auction_settings.minimum_bid'
                     ], 422);
@@ -1639,8 +1687,8 @@ class ListingController extends Controller
                 // Price is optional for auction, can be null or Buy Now price
             } else {
                 // Is Fixed Price: Price is required
-                 if (is_null($listing->price) || $listing->price <= 0) {
-                     return response()->json([
+                if (is_null($listing->price) || $listing->price <= 0) {
+                    return response()->json([
                         'error' => 'Price is required and must be greater than 0 for fixed price listings.',
                         'field' => 'basic_info.price'
                     ], 422);
