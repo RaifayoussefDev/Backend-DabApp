@@ -107,9 +107,9 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
-            'last_name'  => 'required|string|max:255',
-            'email'      => 'required|email',
-            'phone'      => [
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|email',
+            'phone' => [
                 'required',
                 'string',
                 function ($attribute, $value, $fail) {
@@ -124,7 +124,7 @@ class AuthController extends Controller
                     }
                 }
             ],
-            'password'   => 'required|string|min:6|confirmed',
+            'password' => 'required|string|min:6|confirmed',
         ]);
 
         if ($validator->fails()) {
@@ -150,18 +150,18 @@ class AuthController extends Controller
         $existingUserByEmail = User::where('email', $request->email)->first();
 
         if ($existingUserByEmail) {
-            // Si l'utilisateur existe MAIS n'est PAS vérifié
-            if (!$existingUserByEmail->verified) {
-                Log::info('Found unverified user, allowing update', [
+            // Si l'utilisateur existe MAIS n'a PAS terminé son inscription (OTP)
+            if (!$existingUserByEmail->is_registration_completed) {
+                Log::info('Found unverified user (registration not completed), allowing update', [
                     'user_id' => $existingUserByEmail->id,
                     'old_phone' => $existingUserByEmail->phone,
                     'new_phone' => $formattedPhone,
                 ]);
 
-                // Vérifier si le nouveau numéro n'est pas utilisé par un AUTRE utilisateur vérifié
+                // Vérifier si le nouveau numéro n'est pas utilisé par un AUTRE utilisateur dont l'inscription est terminée
                 $phoneUsedByOther = User::where('phone', $formattedPhone)
                     ->where('id', '!=', $existingUserByEmail->id)
-                    ->where('verified', true)
+                    ->where('is_registration_completed', true)
                     ->exists();
 
                 if ($phoneUsedByOther) {
@@ -174,9 +174,9 @@ class AuthController extends Controller
                 // Mettre à jour les informations de l'utilisateur non vérifié
                 $existingUserByEmail->update([
                     'first_name' => $request->first_name,
-                    'last_name'  => $request->last_name,
-                    'phone'      => $formattedPhone,
-                    'password'   => Hash::make($request->password),
+                    'last_name' => $request->last_name,
+                    'phone' => $formattedPhone,
+                    'password' => Hash::make($request->password),
                     'country_id' => $countryData['country_id'],
                     'updated_at' => now(),
                 ]);
@@ -222,16 +222,16 @@ class AuthController extends Controller
             // Créer un NOUVEAU utilisateur non vérifié
             $user = User::create([
                 'first_name' => $request->first_name,
-                'last_name'  => $request->last_name,
-                'email'      => $request->email,
-                'phone'      => $formattedPhone,
-                'password'   => Hash::make($request->password),
-                'role_id'    => $request->role_id ?? 1,
-                'verified'   => false,
-                'is_active'  => false,
-                'is_online'  => false,
-                'language'   => 'en',
-                'timezone'   => 'Africa/Casablanca',
+                'last_name' => $request->last_name,
+                'email' => $request->email,
+                'phone' => $formattedPhone,
+                'password' => Hash::make($request->password),
+                'role_id' => $request->role_id ?? 1,
+                'verified' => false,
+                'is_active' => false,
+                'is_online' => false,
+                'language' => 'en',
+                'timezone' => 'Africa/Casablanca',
                 'two_factor_enabled' => true,
                 'country_id' => $countryData['country_id'],
             ]);
@@ -423,7 +423,7 @@ class AuthController extends Controller
             try {
                 // Email
                 $user->notify(new \App\Notifications\AccountReactivationNotification());
-                
+
                 // WhatsApp
                 if (!empty($user->phone)) {
                     $this->sendReactivationWhatsApp($user->phone, $user->first_name);
@@ -436,9 +436,9 @@ class AuthController extends Controller
             $reactivationMessage = "Your account has been reactivated / تم إعادة تفعيل حسابك";
         }
 
-        // ✅ VÉRIFIER SI L'UTILISATEUR EST VÉRIFIÉ
-        if (!$user->verified) {
-            Log::warning('Login attempt by unverified user', [
+        // ✅ VÉRIFIER SI L'INSCRIPTION EST COMPLÈTE (OTP/EMAIL)
+        if (!$user->is_registration_completed) {
+            Log::warning('Login attempt by user with incomplete registration', [
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'login_type' => $isEmailLogin ? 'email' : 'phone'
@@ -459,14 +459,14 @@ class AuthController extends Controller
             // ⭐ ENVOYER OTP SELON LE TYPE DE LOGIN
             $otpSentVia = $this->sendOtpBasedOnLoginMethod($user, $otp, $isEmailLogin);
 
-            Log::info('OTP sent for unverified user', [
+            Log::info('OTP sent for incomplete registration user', [
                 'user_id' => $user->id,
                 'otp_sent_via' => $otpSentVia,
                 'login_type' => $isEmailLogin ? 'email' : 'phone'
             ]);
 
             return response()->json([
-                'error' => 'Account not verified',
+                'error' => 'Account not verified', // Keeping generic error for frontend
                 'message' => 'Please verify your account with the OTP code we just sent',
                 'requiresOTP' => true,
                 'user_id' => $user->id,
@@ -1198,15 +1198,16 @@ class AuthController extends Controller
             'email' => $user->email
         ]);
 
-        // ✅ ACTIVER ET VÉRIFIER L'UTILISATEUR
-        if (!$user->verified || !$user->is_active) {
-            $user->verified = true;
+        // ✅ ACTIVER ET FINALISER L'INSCRIPTION
+        if (!$user->is_registration_completed || !$user->is_active) {
+            $user->is_registration_completed = true; // OTP/Registration verified
             $user->is_active = true;
+            // NOTE: We do NOT touch 'verified' here anymore. 'verified' is only for Identity Verification (Blue Tick).
             $user->save();
 
-            Log::info('User verified and activated', [
+            Log::info('User registration completed and activated', [
                 'user_id' => $user->id,
-                'was_verified' => $user->wasChanged('verified'),
+                'was_registration_completed' => $user->wasChanged('is_registration_completed'),
                 'was_activated' => $user->wasChanged('is_active')
             ]);
 
@@ -1492,10 +1493,10 @@ class AuthController extends Controller
 
         $validator = Validator::make($request->all(), [
             'first_name' => 'nullable|string|max:255',
-            'last_name'  => 'nullable|string|max:255',
-            'email'      => 'nullable|email|unique:users,email,' . $user->id,
-            'phone'      => 'nullable|string|unique:users,phone,' . $user->id,
-            'birthday'   => 'nullable|date',
+            'last_name' => 'nullable|string|max:255',
+            'email' => 'nullable|email|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string|unique:users,phone,' . $user->id,
+            'birthday' => 'nullable|date',
             'profile_picture' => 'nullable|string|max:255',
         ]);
 
@@ -2454,12 +2455,12 @@ class AuthController extends Controller
     {
         try {
             $phoneNumber = $this->formatPhoneNumber($phone);
-            
+
             $text = "🗑️ Account Deleted / تم حذف الحساب\n\n" .
-                   "Hello {$name},\n" .
-                   "Your account has been deleted successfully. You have 30 days to reactivate your account by logging in.\n\n" .
-                   "مرحباً {$name}،\n" .
-                   "تم حذف حسابك بنجاح. لديك 30 يوماً لإعادة تفعيل حسابك عن طريق تسجيل الدخول.";
+                "Hello {$name},\n" .
+                "Your account has been deleted successfully. You have 30 days to reactivate your account by logging in.\n\n" .
+                "مرحباً {$name}،\n" .
+                "تم حذف حسابك بنجاح. لديك 30 يوماً لإعادة تفعيل حسابك عن طريق تسجيل الدخول.";
 
             $payload = [
                 'phonenumber' => '+' . $phoneNumber,
@@ -2470,7 +2471,7 @@ class AuthController extends Controller
                 'Authorization' => "Bearer {$this->whatsappApiToken}",
                 'Content-Type' => 'application/json',
             ])->post($this->whatsappApiUrl, $payload);
-            
+
             return true;
         } catch (\Exception $e) {
             Log::error('WhatsApp deletion confirmation send failed', ['error' => $e->getMessage()]);
@@ -2482,12 +2483,12 @@ class AuthController extends Controller
     {
         try {
             $phoneNumber = $this->formatPhoneNumber($phone);
-            
+
             $text = "🎉 Account Reactivated / تم تفعيل الحساب\n\n" .
-                   "Hello {$name},\n" .
-                   "Your account has been successfully reactivated. Welcome back!\n\n" .
-                   "مرحباً {$name}،\n" .
-                   "تم إعادة تفعيل حسابك بنجاح. أهلاً بعودتك!";
+                "Hello {$name},\n" .
+                "Your account has been successfully reactivated. Welcome back!\n\n" .
+                "مرحباً {$name}،\n" .
+                "تم إعادة تفعيل حسابك بنجاح. أهلاً بعودتك!";
 
             $payload = [
                 'phonenumber' => '+' . $phoneNumber,
@@ -2498,7 +2499,7 @@ class AuthController extends Controller
                 'Authorization' => "Bearer {$this->whatsappApiToken}",
                 'Content-Type' => 'application/json',
             ])->post($this->whatsappApiUrl, $payload);
-            
+
             return true;
         } catch (\Exception $e) {
             Log::error('WhatsApp reactivation send failed', ['error' => $e->getMessage()]);
@@ -2510,12 +2511,12 @@ class AuthController extends Controller
     {
         try {
             $phoneNumber = $this->formatPhoneNumber($phone);
-            
+
             $text = "✅ Account Verified / تم تفعيل الحساب\n\n" .
-                   "Hello {$name},\n" .
-                   "Your account has been successfully verified and activated.\n\n" .
-                   "مرحباً {$name}،\n" .
-                   "تم التحقق من حسابك وتفعيله بنجاح.";
+                "Hello {$name},\n" .
+                "Your account has been successfully verified and activated.\n\n" .
+                "مرحباً {$name}،\n" .
+                "تم التحقق من حسابك وتفعيله بنجاح.";
 
             $payload = [
                 'phonenumber' => '+' . $phoneNumber,
@@ -2526,7 +2527,7 @@ class AuthController extends Controller
                 'Authorization' => "Bearer {$this->whatsappApiToken}",
                 'Content-Type' => 'application/json',
             ])->post($this->whatsappApiUrl, $payload);
-            
+
             return true;
         } catch (\Exception $e) {
             Log::error('WhatsApp activation send failed', ['error' => $e->getMessage()]);
@@ -2534,7 +2535,7 @@ class AuthController extends Controller
         }
     }
 
-    
+
     /**
      * @OA\Put(
      *     path="/api/user/language",

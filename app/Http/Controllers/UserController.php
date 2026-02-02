@@ -312,24 +312,25 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
-            'last_name'  => 'required|string|max:255',
-            'email'      => 'required|email|unique:users,email',
-            'phone'      => 'nullable|string|unique:users,phone',
-            'birthday'   => 'nullable|date',
-            'gender'     => 'nullable|string|in:male,female,other',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'phone' => 'nullable|string|unique:users,phone',
+            'birthday' => 'nullable|date',
+            'gender' => 'nullable|string|in:male,female,other',
             'profile_picture' => 'nullable|string',
-            'address'    => 'nullable|string',
+            'address' => 'nullable|string',
             'postal_code' => 'nullable|string',
-            'role_id'    => 'required|exists:roles,id',
+            'role_id' => 'required|exists:roles,id',
             'country_id' => 'nullable|exists:countries,id',
-            'language'   => 'nullable|string|max:10',
-            'timezone'   => 'nullable|string|max:50',
+            'language' => 'nullable|string|max:10',
+            'timezone' => 'nullable|string|max:50',
         ]);
 
         $generatedPassword = Str::random(12);
         $validated['password'] = Hash::make($generatedPassword);
         $validated['is_active'] = true;
-        $validated['verified'] = false;
+        $validated['verified'] = false; // Blue Tick defaults to false
+        $validated['is_registration_completed'] = true; // Admin created users don't need OTP
 
         $user = User::create($validated);
 
@@ -470,10 +471,10 @@ class UserController extends Controller
                         'licensePlate',
                         'listingType'
                     ])->withCount([
-                        'images',
-                        'auctionHistories',
-                        'payments'
-                    ]);
+                                'images',
+                                'auctionHistories',
+                                'payments'
+                            ]);
                 }
             ])->findOrFail($id);
 
@@ -661,18 +662,18 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'first_name' => 'sometimes|required|string|max:255',
-            'last_name'  => 'sometimes|required|string|max:255',
-            'email'      => 'sometimes|required|email|unique:users,email,' . $id,
-            'phone'      => 'nullable|string|unique:users,phone,' . $id,
-            'birthday'   => 'nullable|date',
-            'gender'     => 'nullable|string|in:male,female,other',
+            'last_name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|email|unique:users,email,' . $id,
+            'phone' => 'nullable|string|unique:users,phone,' . $id,
+            'birthday' => 'nullable|date',
+            'gender' => 'nullable|string|in:male,female,other',
             'profile_picture' => 'nullable|string',
-            'address'    => 'nullable|string',
+            'address' => 'nullable|string',
             'postal_code' => 'nullable|string',
-            'role_id'    => 'sometimes|required|exists:roles,id',
+            'role_id' => 'sometimes|required|exists:roles,id',
             'country_id' => 'nullable|exists:countries,id',
-            'language'   => 'nullable|string|max:10',
-            'timezone'   => 'nullable|string|max:50',
+            'language' => 'nullable|string|max:10',
+            'timezone' => 'nullable|string|max:50',
         ]);
 
         $user->update($validated);

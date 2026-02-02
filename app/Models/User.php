@@ -183,7 +183,7 @@ use Laravel\Sanctum\HasApiTokens;
  */
 class User extends Authenticatable implements JWTSubject
 {
-    use HasFactory, SoftDeletes, Notifiable , HasApiTokens;
+    use HasFactory, SoftDeletes, Notifiable, HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
@@ -201,7 +201,8 @@ class User extends Authenticatable implements JWTSubject
         'profile_picture',
         'address',
         'postal_code',
-        'verified',
+        'verified', // Blue Tick
+        'is_registration_completed', // OTP Verified
         'is_active',
         'is_online',
         'last_login',
@@ -234,6 +235,7 @@ class User extends Authenticatable implements JWTSubject
     protected $casts = [
         'birthday' => 'date',
         'verified' => 'boolean',
+        'is_registration_completed' => 'boolean',
         'is_active' => 'boolean',
         'is_online' => 'boolean',
         'two_factor_enabled' => 'boolean',
