@@ -242,6 +242,8 @@ Route::prefix('admin')->group(function () {
 // ============================================
 // LOCATIONS (PUBLIC)
 // ============================================
+Route::get('/countries-list', [LocationController::class, 'listCountries']);
+Route::get('/cities-list', [LocationController::class, 'listCities']); // Using listCities to avoid conflict
 Route::get('/locations', [LocationController::class, 'index']);
 Route::post('/countries', [LocationController::class, 'storeCountry']);
 Route::put('/countries/{id}', [LocationController::class, 'updateCountry']);

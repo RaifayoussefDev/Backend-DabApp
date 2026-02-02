@@ -132,6 +132,82 @@ class LocationController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/countries-list",
+     *     summary="Get list of countries (Public)",
+     *     description="Get a list of countries with optional search",
+     *     operationId="listCountries",
+     *     tags={"locations"},
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search by name or code",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful response"
+     *     )
+     * )
+     */
+    public function listCountries(Request $request)
+    {
+        $query = Country::query();
+
+        if ($request->has('search')) {
+            $search = $request->input('search');
+            $query->where('name', 'like', "%{$search}%")
+                ->orWhere('code', 'like', "%{$search}%");
+        }
+
+        return response()->json($query->get());
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/cities",
+     *     summary="Get list of cities (Public)",
+     *     description="Get a list of cities with optional search and country filter",
+     *     operationId="listCities",
+     *     tags={"locations"},
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search by name",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="country_id",
+     *         in="query",
+     *         description="Filter by country ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful response"
+     *     )
+     * )
+     */
+    public function listCities(Request $request)
+    {
+        $query = City::with('country');
+
+        if ($request->has('search')) {
+            $search = $request->input('search');
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        if ($request->has('country_id')) {
+            $query->where('country_id', $request->input('country_id'));
+        }
+
+        return response()->json($query->get());
+    }
+
     // CRUD Countries
     /**
      * @OA\Post(

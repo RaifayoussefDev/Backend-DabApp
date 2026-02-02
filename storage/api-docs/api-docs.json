@@ -21571,6 +21571,104 @@
                 ]
             }
         },
+        "/api/countries-list": {
+            "get": {
+                "tags": [
+                    "locations"
+                ],
+                "summary": "Get list of countries (Public)",
+                "description": "Get a list of countries with optional search",
+                "operationId": "listCountries",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by name or code",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        },
+        "/api/cities": {
+            "get": {
+                "tags": [
+                    "locations"
+                ],
+                "summary": "Get list of cities (Public)",
+                "description": "Get a list of cities with optional search and country filter",
+                "operationId": "listCities",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "country_id",
+                        "in": "query",
+                        "description": "Filter by country ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "locations"
+                ],
+                "summary": "Create a new city",
+                "description": "Store a new city",
+                "operationId": "storeCity",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "country_id"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Paris"
+                                    },
+                                    "country_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "City created successfully"
+                    }
+                }
+            }
+        },
         "/api/countries/{id}": {
             "put": {
                 "tags": [
@@ -21640,45 +21738,6 @@
                 "responses": {
                     "204": {
                         "description": "Country deleted successfully"
-                    }
-                }
-            }
-        },
-        "/api/cities": {
-            "post": {
-                "tags": [
-                    "locations"
-                ],
-                "summary": "Create a new city",
-                "description": "Store a new city",
-                "operationId": "storeCity",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "name",
-                                    "country_id"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "Paris"
-                                    },
-                                    "country_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "City created successfully"
                     }
                 }
             }
