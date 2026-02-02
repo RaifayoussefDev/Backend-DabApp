@@ -646,6 +646,21 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/banners/{id}/toggle', [BannerController::class, 'toggleStatus']);
     });
 
+    // Admin Locations
+    Route::prefix('admin')->group(function () {
+        Route::get('/countries', [LocationController::class, 'adminCountries']);
+        Route::post('/countries', [LocationController::class, 'adminStoreCountry']);
+        Route::get('/countries/{id}', [LocationController::class, 'adminShowCountry']);
+        Route::put('/countries/{id}', [LocationController::class, 'adminUpdateCountry']);
+        Route::delete('/countries/{id}', [LocationController::class, 'adminDestroyCountry']);
+
+        Route::get('/cities', [LocationController::class, 'adminCities']);
+        Route::post('/cities', [LocationController::class, 'adminStoreCity']);
+        Route::get('/cities/{id}', [LocationController::class, 'adminShowCity']);
+        Route::put('/cities/{id}', [LocationController::class, 'adminUpdateCity']);
+        Route::delete('/cities/{id}', [LocationController::class, 'adminDestroyCity']);
+    });
+
 
 
     // ============================================
