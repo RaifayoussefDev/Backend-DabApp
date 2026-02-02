@@ -63,7 +63,8 @@ class PayTabsController extends Controller
             'amount' => 'required|numeric|min:0.1',
             'name' => 'required|string',
             'email' => 'required|email',
-            'phone' => 'required|string'
+            'phone' => 'required|string',
+            'promo_code_id' => 'nullable|exists:promo_codes,id'
         ]);
 
         return $this->processPayment($request);
@@ -80,7 +81,8 @@ class PayTabsController extends Controller
             'amount' => 'required|numeric|min:0.1',
             'name' => 'required|string',
             'email' => 'required|email',
-            'phone' => 'required|string'
+            'phone' => 'required|string',
+            'promo_code_id' => 'nullable|exists:promo_codes,id'
         ]);
 
         return $this->processPayment($request);
