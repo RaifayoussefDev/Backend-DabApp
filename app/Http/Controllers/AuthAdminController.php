@@ -183,8 +183,8 @@ class AuthAdminController extends Controller
             return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
-        // ✅ VÉRIFIER SI L'UTILISATEUR EST VÉRIFIÉ
-        if (!$user->verified) {
+        // ✅ VÉRIFIER SI L'UTILISATEUR A FINALISÉ SON INSCRIPTION
+        if (!$user->is_registration_completed) {
             Log::warning('Login attempt by unverified user', [
                 'user_id' => $user->id,
                 'email' => $user->email,
@@ -945,15 +945,15 @@ class AuthAdminController extends Controller
             'email' => $user->email
         ]);
 
-        // ✅ ACTIVER ET VÉRIFIER L'UTILISATEUR
-        if (!$user->verified || !$user->is_active) {
-            $user->verified = true;
+        // ✅ ACTIVER ET FINALISER L'INSCRIPTION
+        if (!$user->is_registration_completed || !$user->is_active) {
+            $user->is_registration_completed = true;
             $user->is_active = true;
             $user->save();
 
-            Log::info('User verified and activated', [
+            Log::info('User registration completed and activated', [
                 'user_id' => $user->id,
-                'was_verified' => $user->wasChanged('verified'),
+                'was_registration_completed' => $user->wasChanged('is_registration_completed'),
                 'was_activated' => $user->wasChanged('is_active')
             ]);
         }
@@ -1133,10 +1133,10 @@ class AuthAdminController extends Controller
 
         $validator = Validator::make($request->all(), [
             'first_name' => 'nullable|string|max:255',
-            'last_name'  => 'nullable|string|max:255',
-            'email'      => 'nullable|email|unique:users,email,' . $user->id,
-            'phone'      => 'nullable|string|unique:users,phone,' . $user->id,
-            'birthday'   => 'nullable|date',
+            'last_name' => 'nullable|string|max:255',
+            'email' => 'nullable|email|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string|unique:users,phone,' . $user->id,
+            'birthday' => 'nullable|date',
         ]);
 
         if ($validator->fails()) {

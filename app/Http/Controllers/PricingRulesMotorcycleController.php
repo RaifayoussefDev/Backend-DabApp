@@ -27,12 +27,12 @@ class PricingRulesMotorcycleController extends Controller
      *             @OA\Property(property="data", type="array",
      *                 @OA\Items(
      *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="motorcycle_type_id", type="integer", example=2),
+     *                     @OA\Property(property="motorcycle_type_id", type="integer", example=20),
      *                     @OA\Property(property="price", type="string", example="150.00"),
      *                     @OA\Property(property="created_at", type="string", example="2024-01-15T10:30:00.000000Z"),
      *                     @OA\Property(property="updated_at", type="string", example="2024-01-15T10:30:00.000000Z"),
      *                     @OA\Property(property="motorcycle_type", type="object",
-     *                         @OA\Property(property="id", type="integer", example=2),
+     *                         @OA\Property(property="id", type="integer", example=20),
      *                         @OA\Property(property="name_en", type="string", example="Sport"),
      *                         @OA\Property(property="name_ar", type="string", example="رياضية"),
      *                         @OA\Property(property="name_fr", type="string", example="Sport"),
@@ -64,7 +64,7 @@ class PricingRulesMotorcycleController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"motorcycle_type_id", "price"},
-     *             @OA\Property(property="motorcycle_type_id", type="integer", example=2, description="ID of motorcycle type"),
+     *             @OA\Property(property="motorcycle_type_id", type="integer", example=20, description="ID of motorcycle type"),
      *             @OA\Property(property="price", type="number", format="float", example=150.00, description="Price for this motorcycle type")
      *         )
      *     ),
@@ -74,7 +74,7 @@ class PricingRulesMotorcycleController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Pricing rule created successfully"),
      *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="motorcycle_type_id", type="integer", example=2),
+     *                 @OA\Property(property="motorcycle_type_id", type="integer", example=20),
      *                 @OA\Property(property="price", type="string", example="150.00"),
      *                 @OA\Property(property="updated_at", type="string", example="2024-01-15T10:30:00.000000Z"),
      *                 @OA\Property(property="created_at", type="string", example="2024-01-15T10:30:00.000000Z"),
@@ -122,12 +122,12 @@ class PricingRulesMotorcycleController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="motorcycle_type_id", type="integer", example=2),
+     *                 @OA\Property(property="motorcycle_type_id", type="integer", example=20),
      *                 @OA\Property(property="price", type="string", example="150.00"),
      *                 @OA\Property(property="created_at", type="string", example="2024-01-15T10:30:00.000000Z"),
      *                 @OA\Property(property="updated_at", type="string", example="2024-01-15T10:30:00.000000Z"),
      *                 @OA\Property(property="motorcycle_type", type="object",
-     *                     @OA\Property(property="id", type="integer", example=2),
+     *                     @OA\Property(property="id", type="integer", example=20),
      *                     @OA\Property(property="name_en", type="string", example="Sport"),
      *                     @OA\Property(property="name_ar", type="string", example="رياضية"),
      *                     @OA\Property(property="name_fr", type="string", example="Sport")
@@ -165,7 +165,7 @@ class PricingRulesMotorcycleController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"motorcycle_type_id", "price"},
-     *             @OA\Property(property="motorcycle_type_id", type="integer", example=2),
+     *             @OA\Property(property="motorcycle_type_id", type="integer", example=20),
      *             @OA\Property(property="price", type="number", format="float", example=200.00)
      *         )
      *     ),
@@ -176,7 +176,7 @@ class PricingRulesMotorcycleController extends Controller
      *             @OA\Property(property="message", type="string", example="Pricing rule updated successfully"),
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="motorcycle_type_id", type="integer", example=2),
+     *                 @OA\Property(property="motorcycle_type_id", type="integer", example=20),
      *                 @OA\Property(property="price", type="string", example="200.00"),
      *                 @OA\Property(property="created_at", type="string", example="2024-01-15T10:30:00.000000Z"),
      *                 @OA\Property(property="updated_at", type="string", example="2024-01-15T11:45:00.000000Z")
