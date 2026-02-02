@@ -28,9 +28,9 @@ class PayTabsController extends Controller
 
         $this->profileId = $config['profile_id'];
         $this->serverKey = $config['server_key'];
-        $this->currency  = $config['currency'];
-        $this->region    = $config['region'];
-        $this->baseUrl   = PayTabsConfigService::getBaseUrl();
+        $this->currency = $config['currency'];
+        $this->region = $config['region'];
+        $this->baseUrl = PayTabsConfigService::getBaseUrl();
 
         // Log which environment is active
         $environment = PayTabsConfigService::isTestMode() ? 'TEST' : 'LIVE';
@@ -101,23 +101,59 @@ class PayTabsController extends Controller
                 ], 404);
             }
 
-            // Générer un ID de commande unique
+            // 1. Empêcher le paiement si déjà payé (status completed)
+            $completedPayment = Payment::where('listing_id', $listing->id)
+                ->where('payment_status', 'completed')
+                ->first();
+
+            if ($completedPayment) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Cette annonce a déjà été payée.'
+                ], 400);
+            }
+
+            // Générer un ID de commande unique pour cette tentative
             $cartId = 'cart_' . time() . '_' . $listing->id;
             $cartDescription = "Paiement pour l'annonce: " . $listing->title;
 
-            // Créer l'enregistrement de paiement
-            $payment = Payment::create([
-                'listing_id' => $listing->id,
-                'user_id' => auth()->id() ?? null,
-                'amount' => $request->amount,
-                'currency' => $this->currency,
-                'cart_id' => $cartId,
-                'customer_name' => $request->name,
-                'customer_email' => $request->email,
-                'customer_phone' => $request->phone,
-                'payment_status' => 'pending',
-                'created_at' => now()
-            ]);
+            // 2. Vérifier s'il existe déjà un paiement en attente (pending)
+            $pendingPayment = Payment::where('listing_id', $listing->id)
+                ->where('payment_status', 'pending')
+                ->first();
+
+            if ($pendingPayment) {
+                // RÉUTILISER L'ENREGISTREMENT EXISTANT (Mise à jour)
+                // On met à jour le cart_id pour que PayTabs le considère comme une nouvelle transaction
+                $pendingPayment->update([
+                    'cart_id' => $cartId,
+                    'amount' => $request->amount,
+                    'currency' => $this->currency,
+                    'customer_name' => $request->name,
+                    'customer_email' => $request->email,
+                    'customer_phone' => $request->phone,
+                    'created_at' => now(), // On rafraîchit la date de création pour le tri
+                ]);
+                $payment = $pendingPayment;
+
+                Log::info("Existing pending payment #{$payment->id} reused for listing #{$listing->id} with new cart_id: {$cartId}");
+            } else {
+                // CRÉER UN NOUVEAU PAIEMENT
+                $payment = Payment::create([
+                    'listing_id' => $listing->id,
+                    'user_id' => auth()->id() ?? null,
+                    'amount' => $request->amount,
+                    'currency' => $this->currency,
+                    'cart_id' => $cartId,
+                    'customer_name' => $request->name,
+                    'customer_email' => $request->email,
+                    'customer_phone' => $request->phone,
+                    'payment_status' => 'pending',
+                    'created_at' => now()
+                ]);
+
+                Log::info("New payment #{$payment->id} created for listing #{$listing->id}");
+            }
 
             // URLs de callback
             $callbackUrl = config('app.url') . '/api/paytabs/callback';
@@ -225,8 +261,10 @@ class PayTabsController extends Controller
 
         // Trouver le paiement
         $payment = Payment::where(function ($query) use ($tranRef, $cartId) {
-            if ($tranRef) $query->where('tran_ref', $tranRef);
-            if ($cartId) $query->orWhere('cart_id', $cartId);
+            if ($tranRef)
+                $query->where('tran_ref', $tranRef);
+            if ($cartId)
+                $query->orWhere('cart_id', $cartId);
         })->with('listing')->first();
 
         if (!$payment) {
@@ -544,8 +582,10 @@ class PayTabsController extends Controller
         // 2. Chercher par tran_ref ou cart_id
         if (!$payment && ($tranRef || $cartId)) {
             $payment = Payment::where(function ($query) use ($tranRef, $cartId) {
-                if ($tranRef) $query->where('tran_ref', $tranRef);
-                if ($cartId) $query->orWhere('cart_id', $cartId);
+                if ($tranRef)
+                    $query->where('tran_ref', $tranRef);
+                if ($cartId)
+                    $query->orWhere('cart_id', $cartId);
             })->with('listing')->first();
 
             if ($payment) {
@@ -1075,12 +1115,12 @@ class PayTabsController extends Controller
                 $response = Http::timeout(15)
                     ->withHeaders([
                         "Authorization" => $serverKey,
-                        "Content-Type"  => "application/json",
-                        "Accept"        => "application/json"
+                        "Content-Type" => "application/json",
+                        "Accept" => "application/json"
                     ])->post($this->baseUrl . 'payment/query', [
-                        "profile_id" => (int) $profileId,
-                        "tran_ref" => $tranRef
-                    ]);
+                            "profile_id" => (int) $profileId,
+                            "tran_ref" => $tranRef
+                        ]);
 
                 if ($response->successful()) {
                     $data = $response->json();
@@ -1394,7 +1434,7 @@ class PayTabsController extends Controller
             // 3️⃣ CAS: Paiement DÉJÀ complété (par callback ou autre)
             if ($payment->payment_status === 'completed') {
                 Log::info("✅ Payment #{$payment->id} already completed. Ensuring listing is published.");
-                
+
                 // S'assurer que le listing est publié
                 if ($listing->status !== 'published') {
                     $this->autoPublishListing($payment);
@@ -1421,10 +1461,10 @@ class PayTabsController extends Controller
                     ]
                 ]);
             }
-            
+
             // 4️⃣ CAS: Paiement en échec
             if ($payment->payment_status === 'failed') {
-                 return response()->json([
+                return response()->json([
                     'success' => false,
                     'message' => 'Payment previously failed',
                     'payment' => [
@@ -1560,12 +1600,12 @@ class PayTabsController extends Controller
         try {
             $response = Http::withHeaders([
                 "Authorization" => $this->serverKey,
-                "Content-Type"  => "application/json",
-                "Accept"        => "application/json"
+                "Content-Type" => "application/json",
+                "Accept" => "application/json"
             ])->post($this->baseUrl . 'payment/query', [
-                "profile_id" => $this->profileId,
-                "tran_ref" => "test_connection"
-            ]);
+                        "profile_id" => $this->profileId,
+                        "tran_ref" => "test_connection"
+                    ]);
 
             return response()->json([
                 'success' => true,
