@@ -55,6 +55,373 @@
                 ]
             }
         },
+        "/api/admin/events": {
+            "get": {
+                "tags": [
+                    "Admin Events"
+                ],
+                "summary": "Admin: Get all events with filters",
+                "operationId": "052bd3596ea9414e611f76c74ed2497b",
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Filter by category ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "published",
+                                "cancelled"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "is_featured",
+                        "in": "query",
+                        "description": "Filter by featured status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "organizer_id",
+                        "in": "query",
+                        "description": "Filter by organizer ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search in title, description, venue",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of events retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Events retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Events"
+                ],
+                "summary": "Admin: Create a new event",
+                "operationId": "810e6676c9be89249ee1a8edd6578436",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Event created successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/events/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Events"
+                ],
+                "summary": "Admin: Get event details",
+                "operationId": "7b1836412dba1854f6c3430552a56a02",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Event ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Event details retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Event retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Event not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Events"
+                ],
+                "summary": "Admin: Update an event",
+                "operationId": "ce686f5a858d0c6151c5ac736a269af1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Event ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Event updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Events"
+                ],
+                "summary": "Admin: Delete an event",
+                "operationId": "2e1b929d7e6e13789097e089b189eedb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Event ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Event deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/events/{id}/toggle-publish": {
+            "patch": {
+                "tags": [
+                    "Admin Events"
+                ],
+                "summary": "Admin: Toggle event publish status",
+                "operationId": "2eef9814a55f5998e0b526ce9299e88f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Event ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "is_published": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Status updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/events/{id}/approve": {
+            "patch": {
+                "tags": [
+                    "Admin Events"
+                ],
+                "summary": "Admin: Approve an event",
+                "operationId": "cded94354c9d5bc0dcf8cfec9f431af5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Event ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Event approved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/events/{id}/reject": {
+            "patch": {
+                "tags": [
+                    "Admin Events"
+                ],
+                "summary": "Admin: Reject an event",
+                "operationId": "9bd8840693af6cd6de3c5803e454ba22",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Event ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "rejection_reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Event rejected"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/listings": {
             "get": {
                 "tags": [
@@ -1754,6 +2121,173 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/organizers": {
+            "get": {
+                "tags": [
+                    "Admin Organizers"
+                ],
+                "summary": "Admin: Get all organizers",
+                "operationId": "11747fbd4b9af1d8be2b61ab92624f47",
+                "responses": {
+                    "200": {
+                        "description": "List of organizers",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Organizer"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Admin Organizers"
+                ],
+                "summary": "Admin: Create a new organizer",
+                "operationId": "699dbab2730d903d929770f7411642a8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Super Event Organizers LLC"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Leading events company"
+                                    },
+                                    "logo": {
+                                        "description": "URL of the logo",
+                                        "type": "string",
+                                        "example": "https://example.com/logo.png"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Organizer created successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/organizers/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Organizers"
+                ],
+                "summary": "Admin: Get organizer details",
+                "operationId": "3281b70f6b84e6ca82e722263bc46f90",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Organizer details"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Admin Organizers"
+                ],
+                "summary": "Admin: Update an organizer",
+                "operationId": "620238e77aa34a83b9106fdcbde92a09",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Super Event Organizers LLC"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Leading events company"
+                                    },
+                                    "logo": {
+                                        "description": "URL of the logo",
+                                        "type": "string",
+                                        "example": "https://example.com/logo.png"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Organizer updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Organizers"
+                ],
+                "summary": "Admin: Delete an organizer",
+                "operationId": "e42ca45a3f5599dc1170b11fd4b17fea",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Organizer deleted successfully"
                     }
                 },
                 "security": [
@@ -46589,6 +47123,42 @@
                 },
                 "type": "object"
             },
+            "Organizer": {
+                "title": "Organizer",
+                "description": "Organizer model",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Super Event Organizers LLC"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "A leading event organization company."
+                    },
+                    "logo": {
+                        "description": "URL to the logo image",
+                        "type": "string",
+                        "format": "url",
+                        "example": "http://example.com/storage/organizers/logo.png"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "ServiceCategory": {
                 "title": "ServiceCategory",
                 "description": "Service Category model",
@@ -46988,12 +47558,20 @@
             "description": "Admin Statistics"
         },
         {
+            "name": "Admin Events",
+            "description": "Admin Events"
+        },
+        {
             "name": "Admin Listings",
             "description": "Admin Listings"
         },
         {
             "name": "Admin Menus Management",
             "description": "Admin Menus Management"
+        },
+        {
+            "name": "Admin Organizers",
+            "description": "Admin Organizers"
         },
         {
             "name": "Admin - Prospects",

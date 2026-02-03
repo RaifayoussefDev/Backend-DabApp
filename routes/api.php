@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Route;
 // ============================================
 use App\Http\Controllers\{
     AdminMenuController,
+    AdminEventController,
+    AdminOrganizerController,
     AdminListingController,
     AdminSoomController,
     AdminNotificationController,
@@ -179,6 +181,15 @@ Route::prefix('admin')->group(function () {
         Route::patch('/listings/{id}/status', [AdminListingController::class, 'changeStatus']);
         Route::post('/listings/{id}/images/reorder', [AdminListingController::class, 'reorderImages']);
         Route::delete('/listings/{id}/images/{image_id}', [AdminListingController::class, 'deleteImage']);
+
+        // Admin Events
+        Route::apiResource('events', AdminEventController::class);
+        Route::patch('/events/{id}/toggle-publish', [AdminEventController::class, 'togglePublish']);
+        Route::patch('/events/{id}/approve', [AdminEventController::class, 'approve']);
+        Route::patch('/events/{id}/reject', [AdminEventController::class, 'reject']);
+
+        // Organizers
+        Route::apiResource('organizers', AdminOrganizerController::class);
 
         // Admin Users
         Route::get('/users/autocomplete', [AdminListingController::class, 'autocomplete']);

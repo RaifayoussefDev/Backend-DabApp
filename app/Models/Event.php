@@ -42,8 +42,8 @@ class Event extends Model
         'status',
         'is_featured',
         'is_published',
-        'views_count',
         'participants_count',
+        'organizer_profile_id',
     ];
 
     protected $casts = [
@@ -67,6 +67,11 @@ class Event extends Model
     public function organizer()
     {
         return $this->belongsTo(User::class, 'organizer_id');
+    }
+
+    public function organizerProfile()
+    {
+        return $this->belongsTo(Organizer::class, 'organizer_profile_id');
     }
 
     public function city()
@@ -165,20 +170,20 @@ class Event extends Model
         return !$this->isFull();
     }
     public function interests()
-   {
-       return $this->hasMany(EventInterest::class);
-   }
+    {
+        return $this->hasMany(EventInterest::class);
+    }
 
-   public function interestedUsers()
-   {
-       return $this->belongsToMany(User::class, 'event_interests');
-   }
-   public function isInterestedBy(User $user): bool
-   {
-       return $this->interests()->where('user_id', $user->id)->exists();
-   }
+    public function interestedUsers()
+    {
+        return $this->belongsToMany(User::class, 'event_interests');
+    }
+    public function isInterestedBy(User $user): bool
+    {
+        return $this->interests()->where('user_id', $user->id)->exists();
+    }
 
-   public function eventSponsors()
+    public function eventSponsors()
     {
         return $this->belongsToMany(
             EventSponsor::class,
@@ -186,7 +191,7 @@ class Event extends Model
             'event_id',
             'sponsor_id'
         )
-        ->withPivot('sponsorship_level')
-        ->withTimestamps();
+            ->withPivot('sponsorship_level')
+            ->withTimestamps();
     }
 }
