@@ -196,12 +196,24 @@ class PricingRulesMotorcycleController extends Controller
      */
     public function update(Request $request, PricingRulesMotorcycle $pricingRulesMotorcycle)
     {
+        // Log the incoming request
+        \Illuminate\Support\Facades\Log::info("Attempting to update PricingRule ID: {$pricingRulesMotorcycle->id}", [
+            'request_data' => $request->all(),
+            'current_db_record' => $pricingRulesMotorcycle->toArray()
+        ]);
+
         // Manual validation for uniqueness to debug the issue
         $existing = PricingRulesMotorcycle::where('motorcycle_type_id', $request->motorcycle_type_id)
             ->where('id', '!=', $pricingRulesMotorcycle->id)
             ->first();
 
         if ($existing) {
+            \Illuminate\Support\Facades\Log::warning("Validation Conflict Detected", [
+                'attempted_type_id' => $request->motorcycle_type_id,
+                'conflicting_record_id' => $existing->id,
+                'conflicting_record_data' => $existing->toArray()
+            ]);
+
             return response()->json([
                 'message' => 'The given data was invalid.',
                 'errors' => [
