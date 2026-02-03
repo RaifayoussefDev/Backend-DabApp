@@ -196,12 +196,24 @@ class PricingRulesMotorcycleController extends Controller
      */
     public function update(Request $request, PricingRulesMotorcycle $pricingRulesMotorcycle)
     {
+        // Manual validation for uniqueness to debug the issue
+        $existing = PricingRulesMotorcycle::where('motorcycle_type_id', $request->motorcycle_type_id)
+            ->where('id', '!=', $pricingRulesMotorcycle->id)
+            ->first();
+
+        if ($existing) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => [
+                    'motorcycle_type_id' => [
+                        "The motorcycle type id has already been taken by ID {$existing->id}."
+                    ]
+                ]
+            ], 422);
+        }
+
         $validated = $request->validate([
-            'motorcycle_type_id' => [
-                'required',
-                'exists:motorcycle_types,id',
-                Rule::unique('pricing_rules_motorcycle', 'motorcycle_type_id')->ignore($pricingRulesMotorcycle->id),
-            ],
+            'motorcycle_type_id' => 'required|exists:motorcycle_types,id',
             'price' => 'required|numeric|min:0',
         ]);
 
