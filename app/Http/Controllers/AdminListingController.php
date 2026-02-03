@@ -411,14 +411,13 @@ class AdminListingController extends Controller
      */
     public function show($id)
     {
-        $user = auth()->user();
-
         $listing = Listing::with([
+            'seller',
             'images',
+            'category',
             'city',
             'country',
             'country.currencyExchangeRate',
-            'seller',
             'motorcycle.brand',
             'motorcycle.model',
             'motorcycle.year',
@@ -430,129 +429,9 @@ class AdminListingController extends Controller
             'licensePlate.format',
             'licensePlate.city',
             'licensePlate.fieldValues.formatField'
-        ])->where('id', $id)->first();
+        ])->findOrFail($id);
 
-        if (!$listing) {
-            return response()->json(['message' => 'Listing not found'], 404);
-        }
-
-        // Récupérer current_bid pour les enchères
-        $currentBid = null;
-        if ($listing->auction_enabled) {
-            $currentBid = DB::table('auction_histories')
-                ->where('listing_id', $listing->id)
-                ->max('bid_amount');
-        }
-
-        // Déterminer le prix à afficher
-        $displayPrice = $listing->price;
-        $isAuction = false;
-
-        if (!$displayPrice && $listing->auction_enabled) {
-            $displayPrice = $currentBid ?: $listing->minimum_bid;
-            $isAuction = true;
-        }
-
-        // Récupérer le symbole de devise
-        $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
-
-        $data = [
-            'id' => $listing->id,
-            'title' => $listing->title,
-            'description' => $listing->description,
-            'created_at' => $listing->created_at->format('Y-m-d H:i:s'),
-            'city' => $listing->city?->name,
-            'country' => $listing->country?->name,
-            'images' => $listing->images->pluck('image_url'),
-            'category_id' => $listing->category_id,
-            'allow_submission' => $listing->allow_submission,
-            'auction_enabled' => $listing->auction_enabled,
-            'minimum_bid' => $listing->minimum_bid,
-            'listing_type_id' => $listing->listing_type_id,
-            'contacting_channel' => $listing->contacting_channel,
-            'seller_type' => $listing->seller_type,
-            'status' => $listing->status,
-            'currency' => $currencySymbol,
-            'display_price' => $displayPrice,
-            'is_auction' => $isAuction,
-            'current_bid' => $currentBid,
-            'seller' => [
-                'id' => $listing->seller?->id,
-                'name' => $listing->seller?->first_name . ' ' . $listing->seller?->last_name,
-                'email' => $listing->seller?->email,
-                'phone' => $listing->seller?->phone,
-                'address' => $listing->seller?->address,
-                'profile_image' => $listing->seller?->profile_image,
-                'verified' => (bool) $listing->seller?->verified,
-                'member_since' => $listing->seller?->created_at ? $listing->seller->created_at->format('Y-m-d H:i:s') : null,
-            ]
-        ];
-
-        // Motorcycle category
-        if ($listing->category_id == 1 && $listing->motorcycle) {
-            $data['motorcycle'] = [
-                'brand' => $listing->motorcycle->brand?->name,
-                'model' => $listing->motorcycle->model?->name,
-                'year' => $listing->motorcycle->year?->year,
-                'engine' => $listing->motorcycle->engine,
-                'mileage' => $listing->motorcycle->mileage,
-                'body_condition' => $listing->motorcycle->body_condition,
-                'modified' => $listing->motorcycle->modified,
-                'insurance' => $listing->motorcycle->insurance,
-                'general_condition' => $listing->motorcycle->general_condition,
-                'vehicle_care' => $listing->motorcycle->vehicle_care,
-                'vehicle_care_other' => $listing->motorcycle->vehicle_care_other,
-                'transmission' => $listing->motorcycle->transmission,
-            ];
-        }
-
-        // Spare part category
-        if ($listing->category_id == 2 && $listing->sparePart) {
-            $data['spare_part'] = [
-                'condition' => $listing->sparePart->condition,
-                'brand' => $listing->sparePart->bikePartBrand?->name,
-                'brand_other' => $listing->sparePart->brand_other,
-                'category' => $listing->sparePart->bikePartCategory?->name,
-                'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
-                    return [
-                        'brand' => $association->brand?->name,
-                        'model' => $association->model?->name,
-                        'year' => $association->year?->year,
-                    ];
-                }),
-            ];
-        }
-
-        // License plate category
-        if ($listing->category_id == 3 && $listing->licensePlate) {
-            $licensePlate = $listing->licensePlate;
-
-            $data['license_plate'] = [
-                'image' => $listing->images->where('is_plate_image', true)->first()?->image_url ?? $listing->images->first()?->image_url,
-                'plate_format' => [
-                    'id' => $licensePlate->format?->id,
-                    'name' => $licensePlate->format?->name,
-                    'pattern' => $licensePlate->format?->pattern ?? null,
-                    'country' => $licensePlate->format?->country ?? null,
-                ],
-                'city' => $licensePlate->city?->name,
-                'country_id' => $licensePlate->country_id,
-                'fields' => $licensePlate->fieldValues->map(function ($fieldValue) {
-                    return [
-                        'field_id' => $fieldValue->formatField?->id,
-                        'field_name' => $fieldValue->formatField?->field_name,
-                        'position' => $fieldValue->formatField?->position,
-                        'character_type' => $fieldValue->formatField?->character_type,
-                        'is_required' => $fieldValue->formatField?->is_required,
-                        'min_length' => $fieldValue->formatField?->min_length,
-                        'max_length' => $fieldValue->formatField?->max_length,
-                        'value' => $fieldValue->field_value,
-                    ];
-                })->toArray(),
-            ];
-        }
-
-        return response()->json($data);
+        return response()->json($listing);
     }
 
     /**
