@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\PricingRulesMotorcycle;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Validation\Rule;
 
 /**
  * @OA\Tag(
@@ -196,7 +197,11 @@ class PricingRulesMotorcycleController extends Controller
     public function update(Request $request, PricingRulesMotorcycle $pricingRulesMotorcycle)
     {
         $validated = $request->validate([
-            'motorcycle_type_id' => 'required|exists:motorcycle_types,id|unique:pricing_rules_motorcycle,motorcycle_type_id,' . $pricingRulesMotorcycle->id,
+            'motorcycle_type_id' => [
+                'required',
+                'exists:motorcycle_types,id',
+                Rule::unique('pricing_rules_motorcycle', 'motorcycle_type_id')->ignore($pricingRulesMotorcycle->id),
+            ],
             'price' => 'required|numeric|min:0',
         ]);
 
