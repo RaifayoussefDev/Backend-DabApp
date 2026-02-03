@@ -702,8 +702,8 @@ class NotificationService
         return $this->sendToUser($user, 'event_created', [
             'event_id' => $event->id,
             'event_title' => $event->title,
-            'event_date' => $event->start_date->toIso8601String(),
-            'event_location' => $event->location,
+            'event_date' => $event->event_date->toIso8601String(),
+            'event_location' => $event->location ?? $event->venue_name,
         ], [
             'entity' => $event,
             'priority' => 'normal',
@@ -718,8 +718,8 @@ class NotificationService
         return $this->sendToUser($user, 'event_reminder', [
             'event_id' => $event->id,
             'event_title' => $event->title,
-            'event_date' => $event->start_date->toIso8601String(),
-            'event_location' => $event->location,
+            'event_date' => $event->event_date->toIso8601String(),
+            'event_location' => $event->location ?? $event->venue_name,
         ], [
             'entity' => $event,
             'priority' => 'high',
@@ -734,7 +734,7 @@ class NotificationService
         return $this->sendToUser($user, 'event_starting_soon', [
             'event_id' => $event->id,
             'event_title' => $event->title,
-            'starts_at' => $event->start_date->toIso8601String(),
+            'starts_at' => $event->event_date->toIso8601String(),
         ], [
             'entity' => $event,
             'priority' => 'high',
@@ -778,7 +778,7 @@ class NotificationService
         return $this->sendToUser($user, 'event_published', [
             'event_id' => $event->id,
             'event_title' => $event->title,
-            'event_date' => $event->start_date->toIso8601String(),
+            'event_date' => $event->event_date->toIso8601String(),
         ], [
             'entity' => $event,
             'priority' => 'high',
