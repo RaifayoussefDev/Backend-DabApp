@@ -120,7 +120,7 @@ class EventController extends Controller
     {
         $user = auth()->user(); // ou auth('sanctum')->user() selon ton auth
 
-        $query = Event::with(['category', 'city', 'country', 'organizer', 'images'])
+        $query = Event::with(['category', 'city', 'country', 'organizer', 'images', 'organizerProfile'])
             ->published();
 
         // Ajouter le compteur d'intéressés et vérifier si l'utilisateur est intéressé
@@ -226,6 +226,7 @@ class EventController extends Controller
         $query = Event::with([
             'category',
             'organizer',
+            'organizerProfile',
             'city',
             'country',
             'images',
