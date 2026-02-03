@@ -36,7 +36,25 @@ class AdminListingController extends Controller
     {
         $perPage = $request->input('per_page', 15);
 
-        $query = Listing::with(['seller', 'images', 'category', 'city', 'country'])
+        $query = Listing::with([
+            'seller',
+            'images',
+            'category',
+            'city',
+            'country',
+            'country.currencyExchangeRate',
+            'motorcycle.brand',
+            'motorcycle.model',
+            'motorcycle.year',
+            'sparePart.bikePartBrand',
+            'sparePart.bikePartCategory',
+            'sparePart.motorcycleAssociations.brand',
+            'sparePart.motorcycleAssociations.model',
+            'sparePart.motorcycleAssociations.year',
+            'licensePlate.format',
+            'licensePlate.city',
+            'licensePlate.fieldValues.formatField'
+        ])
             ->orderBy('created_at', 'desc');
 
         // Filters
