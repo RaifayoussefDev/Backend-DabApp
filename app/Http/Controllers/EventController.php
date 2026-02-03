@@ -761,6 +761,7 @@ class EventController extends Controller
 
             // Send Notification
             try {
+                $event->refresh();
                 $this->notificationService->notifyEventCreated(Auth::user(), $event);
             } catch (\Exception $e) {
                 \Log::error('Failed to send event created notification: ' . $e->getMessage());
