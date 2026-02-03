@@ -85,7 +85,7 @@ class NotificationService
         // 1. Vérifier si 'email' est dans les channels demandés
         if (isset($options['channels']) && in_array('email', $options['channels'])) {
             $shouldSendEmail = true;
-        } 
+        }
         // 2. Si aucun channel n'est spécifié, vérifier les préférences globales
         elseif (!isset($options['channels']) && $preferences->canSendEmail()) {
             $shouldSendEmail = true;
@@ -770,6 +770,21 @@ class NotificationService
         ]);
     }
 
+    /**
+     * Notification: Événement publié
+     */
+    public function notifyEventPublished(User $user, $event): array
+    {
+        return $this->sendToUser($user, 'event_published', [
+            'event_id' => $event->id,
+            'event_title' => $event->title,
+            'event_date' => $event->start_date->toIso8601String(),
+        ], [
+            'entity' => $event,
+            'priority' => 'high',
+        ]);
+    }
+
     // ==================== POI (POINTS D'INTÉRÊT) ====================
 
     /**
@@ -834,9 +849,9 @@ class NotificationService
         }
 
         // Find users active in the same city (via their listings), excluding the seller
-        User::whereHas('listings', function($q) use ($listing) {
-                $q->where('city_id', $listing->city_id);
-            })
+        User::whereHas('listings', function ($q) use ($listing) {
+            $q->where('city_id', $listing->city_id);
+        })
             ->where('id', '!=', $listing->seller_id)
             ->where('is_active', true)
             ->chunk(100, function ($users) use ($listing) {

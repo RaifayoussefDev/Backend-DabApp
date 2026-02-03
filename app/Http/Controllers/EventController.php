@@ -761,9 +761,7 @@ class EventController extends Controller
 
             // Send Notification
             try {
-                $this->notificationService->sendToUser(Auth::user(), 'event_updated', [
-                    'event_name' => $event->title
-                ]);
+                $this->notificationService->notifyEventCreated(Auth::user(), $event);
             } catch (\Exception $e) {
                 \Log::error('Failed to send event created notification: ' . $e->getMessage());
             }
@@ -1039,6 +1037,13 @@ class EventController extends Controller
             }
 
             DB::commit();
+
+            // Send Notification
+            try {
+                $this->notificationService->notifyEventUpdated(Auth::user(), $event);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send event updated notification: ' . $e->getMessage());
+            }
 
             // Load all relations
             $event->load([
@@ -1354,6 +1359,15 @@ class EventController extends Controller
         ]);
 
         $event->update(['is_published' => $validated['is_published']]);
+
+        // Send Notification if published
+        if ($validated['is_published']) {
+            try {
+                $this->notificationService->notifyEventPublished(Auth::user(), $event);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send event published notification: ' . $e->getMessage());
+            }
+        }
 
         $message = $validated['is_published'] ? 'Event published successfully' : 'Event unpublished successfully';
 
