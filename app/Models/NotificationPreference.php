@@ -20,7 +20,7 @@ class NotificationPreference extends Model
         'listing_expired',
         'listing_sold',
         'listing_updated',
-        
+
         // Auctions
         'bid_placed',
         'bid_accepted',
@@ -47,6 +47,8 @@ class NotificationPreference extends Model
         'guide_like',
         'guide_published',
         // Events
+        'event_created',
+        'event_published',
         'event_reminder',
         'event_updated',
         'event_cancelled',
@@ -103,6 +105,8 @@ class NotificationPreference extends Model
         'guide_published' => 'boolean',
         'guide_comment' => 'boolean',
         'guide_like' => 'boolean',
+        'event_created' => 'boolean',
+        'event_published' => 'boolean',
         'event_reminder' => 'boolean',
         'event_updated' => 'boolean',
         'event_cancelled' => 'boolean',
@@ -206,6 +210,8 @@ class NotificationPreference extends Model
             'wishlist_price_drop' => true,
             'wishlist_item_sold' => true,
             'new_message' => true,
+            'event_created' => true,
+            'event_published' => true,
             'push_enabled' => true,
             'in_app_enabled' => true,
         ]);
@@ -233,6 +239,8 @@ class NotificationPreference extends Model
             'wishlist_price_drop' => false,
             'wishlist_item_sold' => false,
             'new_message' => false,
+            'event_created' => false,
+            'event_published' => false,
             'push_enabled' => false,
             'in_app_enabled' => false,
         ]);
