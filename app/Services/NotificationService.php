@@ -30,6 +30,7 @@ class NotificationService
         $preferences = $user->notificationPreference;
 
         if (!$preferences || !$preferences->isNotificationEnabled($type)) {
+            Log::warning("NotificationService: Notification disabled or no preferences for user {$user->id}. Type: {$type}");
             return [
                 'success' => false,
                 'message' => 'Notification disabled for this type',
@@ -40,6 +41,7 @@ class NotificationService
         $template = NotificationTemplate::where('type', $type)->where('is_active', true)->first();
 
         if (!$template) {
+            Log::warning("NotificationService: Template not found for type: {$type}");
             return [
                 'success' => false,
                 'message' => 'Template not found',

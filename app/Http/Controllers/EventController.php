@@ -762,9 +762,12 @@ class EventController extends Controller
             // Send Notification
             try {
                 $event->refresh();
-                $this->notificationService->notifyEventCreated(Auth::user(), $event);
+                \Log::info("EventController: Attempting to send notification for event {$event->id}");
+                $result = $this->notificationService->notifyEventCreated(Auth::user(), $event);
+                \Log::info("EventController: Notification result: " . json_encode($result));
             } catch (\Exception $e) {
                 \Log::error('Failed to send event created notification: ' . $e->getMessage());
+                \Log::error($e->getTraceAsString());
             }
 
             // Load all relations
