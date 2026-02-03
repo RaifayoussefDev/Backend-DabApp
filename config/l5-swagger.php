@@ -49,6 +49,7 @@ return [
                     base_path('app/Models/SubscriptionPlan.php'),
                     base_path('app/Models/TowType.php'),
                     base_path('app/Models/Organizer.php'),
+                    base_path('app/Models/Event.php'),
                 ],
             ],
         ],

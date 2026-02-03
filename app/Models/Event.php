@@ -10,6 +10,26 @@ class Event extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /**
+     * @OA\Schema(
+     *     schema="Event",
+     *     type="object",
+     *     title="Event",
+     *     required={"title", "event_date", "start_time", "category_id"},
+     *     @OA\Property(property="id", type="integer", format="int64", example=1),
+     *     @OA\Property(property="title", type="string", example="Tech Conference 2024"),
+     *     @OA\Property(property="slug", type="string", example="tech-conference-2024"),
+     *     @OA\Property(property="description", type="string", example="Annual tech gathering..."),
+     *     @OA\Property(property="event_date", type="string", format="date", example="2024-12-25"),
+     *     @OA\Property(property="start_time", type="string", format="time", example="09:00:00"),
+     *     @OA\Property(property="category_id", type="integer", example=1),
+     *     @OA\Property(property="organizer_id", type="integer", example=1),
+     *     @OA\Property(property="organizer_profile_id", type="integer", example=1),
+     *     @OA\Property(property="created_at", type="string", format="date-time"),
+     *     @OA\Property(property="updated_at", type="string", format="date-time")
+     * )
+     */
+
     protected $fillable = [
         'title',
         'slug',

@@ -11,21 +11,38 @@ class AdminOrganizerController extends Controller
     /**
      * @OA\Get(
      *     path="/api/admin/organizers",
-     *     summary="Admin: Get all organizers",
+     *     summary="Admin: Get all organizers with pagination and search",
      *     tags={"Admin Organizers"},
+     *     @OA\Parameter(name="page", in="query", description="Page number", required=false, @OA\Schema(type="integer", default=1)),
+     *     @OA\Parameter(name="per_page", in="query", description="Items per page", required=false, @OA\Schema(type="integer", default=15)),
+     *     @OA\Parameter(name="search", in="query", description="Search by name or description", required=false, @OA\Schema(type="string")),
      *     @OA\Response(
      *         response=200,
      *         description="List of organizers",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Organizer"))
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Organizer")),
+     *             @OA\Property(property="links", type="object"),
+     *             @OA\Property(property="meta", type="object")
      *         )
      *     )
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
-        $organizers = Organizer::latest()->get();
-        return response()->json(['data' => $organizers]);
+        $query = Organizer::latest();
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        $perPage = $request->get('per_page', 15);
+        $organizers = $query->paginate($perPage);
+
+        return response()->json($organizers);
     }
 
     /**

@@ -60,14 +60,19 @@
                 "tags": [
                     "Admin Events"
                 ],
-                "summary": "Admin: Get all events with filters",
+                "summary": "Admin: Get all events",
                 "operationId": "052bd3596ea9414e611f76c74ed2497b",
                 "parameters": [
                     {
-                        "name": "category_id",
+                        "name": "page",
                         "in": "query",
-                        "description": "Filter by category ID",
-                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
                         "schema": {
                             "type": "integer"
                         }
@@ -75,8 +80,6 @@
                     {
                         "name": "status",
                         "in": "query",
-                        "description": "Filter by status",
-                        "required": false,
                         "schema": {
                             "type": "string",
                             "enum": [
@@ -87,65 +90,27 @@
                         }
                     },
                     {
-                        "name": "is_featured",
-                        "in": "query",
-                        "description": "Filter by featured status",
-                        "required": false,
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    {
-                        "name": "organizer_id",
-                        "in": "query",
-                        "description": "Filter by organizer ID",
-                        "required": false,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
                         "name": "search",
                         "in": "query",
-                        "description": "Search in title, description, venue",
-                        "required": false,
                         "schema": {
                             "type": "string"
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "description": "Items per page",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "default": 15
-                        }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "description": "Page number",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "default": 1
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "List of events retrieved successfully",
+                        "description": "List of events",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Events retrieved successfully"
-                                        },
                                         "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Event"
+                                            }
+                                        },
+                                        "meta": {
                                             "type": "object"
                                         }
                                     },
@@ -154,24 +119,216 @@
                             }
                         }
                     }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
+                }
             },
             "post": {
                 "tags": [
                     "Admin Events"
                 ],
-                "summary": "Admin: Create a new event",
+                "summary": "Admin: Create a new event with all relations",
                 "operationId": "810e6676c9be89249ee1a8edd6578436",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
+                                "required": [
+                                    "title",
+                                    "description",
+                                    "category_id",
+                                    "event_date",
+                                    "start_time"
+                                ],
+                                "properties": {
+                                    "organizer_profile_id": {
+                                        "description": "ID of the organizer profile (Admin only)",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Tech Conference 2024"
+                                    },
+                                    "title_ar": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "مؤتمر التقنية 2024"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Annual technology conference"
+                                    },
+                                    "description_ar": {
+                                        "type": "string",
+                                        "example": "مؤتمر تكنولوجي سنوي"
+                                    },
+                                    "short_description": {
+                                        "type": "string",
+                                        "maxLength": 500
+                                    },
+                                    "short_description_ar": {
+                                        "type": "string",
+                                        "maxLength": 500
+                                    },
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "event_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-12-25"
+                                    },
+                                    "start_time": {
+                                        "type": "string",
+                                        "format": "time",
+                                        "example": "09:00:00"
+                                    },
+                                    "end_time": {
+                                        "type": "string",
+                                        "format": "time",
+                                        "example": "17:00:00"
+                                    },
+                                    "venue_name": {
+                                        "type": "string",
+                                        "example": "Grand Convention Center"
+                                    },
+                                    "venue_name_ar": {
+                                        "type": "string",
+                                        "example": "مركز المؤتمرات الكبير"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "123 Main St"
+                                    },
+                                    "address_ar": {
+                                        "type": "string",
+                                        "example": "123 الشارع الرئيسي"
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "country_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "format": "double",
+                                        "example": 40.7128
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "format": "double",
+                                        "example": -74.006
+                                    },
+                                    "max_participants": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "example": 500
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "double",
+                                        "minimum": 0,
+                                        "example": 99.99
+                                    },
+                                    "is_free": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "featured_image": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "example": "https://example.com/image.jpg"
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "image_url": {
+                                                    "type": "string",
+                                                    "example": "https://example.com/1.jpg"
+                                                },
+                                                "is_primary": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "sponsors": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "sponsor_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "sponsorship_level": {
+                                                    "type": "string",
+                                                    "example": "gold"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "activities": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Opening Ceremony"
+                                                },
+                                                "start_time": {
+                                                    "type": "string",
+                                                    "example": "09:00:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "contacts": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "contact_type": {
+                                                    "type": "string",
+                                                    "example": "organizer"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "john@example.com"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "faqs": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "question": {
+                                                    "type": "string",
+                                                    "example": "Is parking free?"
+                                                },
+                                                "answer": {
+                                                    "type": "string",
+                                                    "example": "Yes."
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
                                 "type": "object"
                             }
                         }
@@ -200,7 +357,6 @@
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "Event ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -209,45 +365,20 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Event details retrieved successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Event retrieved successfully"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Event not found"
+                        "description": "Event details"
                     }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
+                }
             },
             "put": {
                 "tags": [
                     "Admin Events"
                 ],
-                "summary": "Admin: Update an event",
+                "summary": "Admin: Update an event with all relations",
                 "operationId": "ce686f5a858d0c6151c5ac736a269af1",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "Event ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -259,6 +390,59 @@
                     "content": {
                         "application/json": {
                             "schema": {
+                                "properties": {
+                                    "organizer_profile_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Updated Tech Conference"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Updated description"
+                                    },
+                                    "event_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-12-26"
+                                    },
+                                    "featured_image": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "example": "https://example.com/new-image.jpg"
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "image_url": {
+                                                    "type": "string",
+                                                    "example": "https://example.com/2.jpg"
+                                                },
+                                                "is_primary": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "draft",
+                                            "published",
+                                            "cancelled"
+                                        ],
+                                        "example": "published"
+                                    },
+                                    "is_published": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
                                 "type": "object"
                             }
                         }
@@ -322,23 +506,9 @@
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "is_published": {
-                                        "type": "boolean"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
-                        "description": "Status updated successfully"
+                        "description": "Status updated"
                     }
                 },
                 "security": [
@@ -359,7 +529,6 @@
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "Event ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -389,7 +558,6 @@
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "Event ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -2135,8 +2303,39 @@
                 "tags": [
                     "Admin Organizers"
                 ],
-                "summary": "Admin: Get all organizers",
+                "summary": "Admin: Get all organizers with pagination and search",
                 "operationId": "11747fbd4b9af1d8be2b61ab92624f47",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by name or description",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of organizers",
@@ -2149,6 +2348,12 @@
                                             "items": {
                                                 "$ref": "#/components/schemas/Organizer"
                                             }
+                                        },
+                                        "links": {
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -47119,6 +47324,65 @@
                             }
                         },
                         "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "Event": {
+                "title": "Event",
+                "required": [
+                    "title",
+                    "event_date",
+                    "start_time",
+                    "category_id"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Tech Conference 2024"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "tech-conference-2024"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Annual tech gathering..."
+                    },
+                    "event_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-12-25"
+                    },
+                    "start_time": {
+                        "type": "string",
+                        "format": "time",
+                        "example": "09:00:00"
+                    },
+                    "category_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "organizer_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "organizer_profile_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
                     }
                 },
                 "type": "object"
