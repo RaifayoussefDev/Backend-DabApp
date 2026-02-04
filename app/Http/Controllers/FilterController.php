@@ -33,7 +33,7 @@ class FilterController extends Controller
         // Check if empty array
         if (is_array($value)) {
             // Filter out empty strings and null values from array
-            $filtered = array_filter($value, function($item) {
+            $filtered = array_filter($value, function ($item) {
                 return !is_null($item) && (!is_string($item) || trim($item) !== '');
             });
             return !empty($filtered);
@@ -93,21 +93,21 @@ class FilterController extends Controller
                 $q->where(function ($subQ) use ($minPrice, $maxPrice) {
                     $subQ->whereNotNull('price');
                     if ($this->hasValue($minPrice) && $this->hasValue($maxPrice)) {
-                        $subQ->whereBetween('price', [(float)$minPrice, (float)$maxPrice]);
+                        $subQ->whereBetween('price', [(float) $minPrice, (float) $maxPrice]);
                     } elseif ($this->hasValue($minPrice)) {
-                        $subQ->where('price', '>=', (float)$minPrice);
+                        $subQ->where('price', '>=', (float) $minPrice);
                     } elseif ($this->hasValue($maxPrice)) {
-                        $subQ->where('price', '<=', (float)$maxPrice);
+                        $subQ->where('price', '<=', (float) $maxPrice);
                     }
                 });
                 $q->orWhere(function ($subQ) use ($minPrice, $maxPrice) {
                     $subQ->whereNull('price')->where('auction_enabled', true);
                     if ($this->hasValue($minPrice) && $this->hasValue($maxPrice)) {
-                        $subQ->whereBetween('minimum_bid', [(float)$minPrice, (float)$maxPrice]);
+                        $subQ->whereBetween('minimum_bid', [(float) $minPrice, (float) $maxPrice]);
                     } elseif ($this->hasValue($minPrice)) {
-                        $subQ->where('minimum_bid', '>=', (float)$minPrice);
+                        $subQ->where('minimum_bid', '>=', (float) $minPrice);
                     } elseif ($this->hasValue($maxPrice)) {
-                        $subQ->where('minimum_bid', '<=', (float)$maxPrice);
+                        $subQ->where('minimum_bid', '<=', (float) $maxPrice);
                     }
                 });
             });
@@ -122,9 +122,11 @@ class FilterController extends Controller
         $minMileage = $request->input('min_mileage');
         $maxMileage = $request->input('max_mileage');
 
-        if ($this->hasValue($brands) || $this->hasValue($models) || $this->hasValue($types) ||
+        if (
+            $this->hasValue($brands) || $this->hasValue($models) || $this->hasValue($types) ||
             $this->hasValue($years) || $this->hasValue($manufacturingYears) || $this->hasValue($condition) ||
-            $this->hasValue($minMileage) || $this->hasValue($maxMileage)) {
+            $this->hasValue($minMileage) || $this->hasValue($maxMileage)
+        ) {
 
             $query->whereHas('motorcycle', function ($q) use ($brands, $models, $types, $years, $manufacturingYears, $condition, $minMileage, $maxMileage) {
                 if ($this->hasValue($brands)) {
@@ -148,11 +150,11 @@ class FilterController extends Controller
                     $q->where('general_condition', $condition);
                 }
                 if ($this->hasValue($minMileage) && $this->hasValue($maxMileage)) {
-                    $q->whereBetween('mileage', [(int)$minMileage, (int)$maxMileage]);
+                    $q->whereBetween('mileage', [(int) $minMileage, (int) $maxMileage]);
                 } elseif ($this->hasValue($minMileage)) {
-                    $q->where('mileage', '>=', (int)$minMileage);
+                    $q->where('mileage', '>=', (int) $minMileage);
                 } elseif ($this->hasValue($maxMileage)) {
-                    $q->where('mileage', '<=', (int)$maxMileage);
+                    $q->where('mileage', '<=', (int) $maxMileage);
                 }
             });
         }
@@ -192,20 +194,32 @@ class FilterController extends Controller
 
         // ✅ Pagination
         $motorcycles = $query->select([
-            'id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid',
-            'created_at', 'seller_type', 'country_id', 'city_id', 'category_id',
+            'id',
+            'title',
+            'description',
+            'price',
+            'auction_enabled',
+            'minimum_bid',
+            'created_at',
+            'seller_type',
+            'country_id',
+            'city_id',
+            'category_id',
             DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
         ])->paginate($perPage, ['*'], 'page', $page);
 
         $motorcyclesCollection = $motorcycles->getCollection();
 
         $motorcyclesCollection->load([
-            'images' => function ($query) { $query->select('listing_id', 'image_url')->limit(1); },
+            'images' => function ($query) {
+                $query->select('listing_id', 'image_url')->orderBy('id', 'asc')->limit(1); },
             'motorcycle' => function ($query) {
                 $query->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id')
                     ->with(['brand:id,name', 'model:id,name', 'year:id,year', 'type:id,name']);
             },
-            'country:id,name', 'city:id,name', 'category:id,name',
+            'country:id,name',
+            'city:id,name',
+            'category:id,name',
             'country.currencyExchangeRate:id,country_id,currency_symbol'
         ]);
 
@@ -301,21 +315,21 @@ class FilterController extends Controller
                 $q->where(function ($subQ) use ($minPrice, $maxPrice) {
                     $subQ->whereNotNull('price');
                     if ($this->hasValue($minPrice) && $this->hasValue($maxPrice)) {
-                        $subQ->whereBetween('price', [(float)$minPrice, (float)$maxPrice]);
+                        $subQ->whereBetween('price', [(float) $minPrice, (float) $maxPrice]);
                     } elseif ($this->hasValue($minPrice)) {
-                        $subQ->where('price', '>=', (float)$minPrice);
+                        $subQ->where('price', '>=', (float) $minPrice);
                     } elseif ($this->hasValue($maxPrice)) {
-                        $subQ->where('price', '<=', (float)$maxPrice);
+                        $subQ->where('price', '<=', (float) $maxPrice);
                     }
                 });
                 $q->orWhere(function ($subQ) use ($minPrice, $maxPrice) {
                     $subQ->whereNull('price')->where('auction_enabled', true);
                     if ($this->hasValue($minPrice) && $this->hasValue($maxPrice)) {
-                        $subQ->whereBetween('minimum_bid', [(float)$minPrice, (float)$maxPrice]);
+                        $subQ->whereBetween('minimum_bid', [(float) $minPrice, (float) $maxPrice]);
                     } elseif ($this->hasValue($minPrice)) {
-                        $subQ->where('minimum_bid', '>=', (float)$minPrice);
+                        $subQ->where('minimum_bid', '>=', (float) $minPrice);
                     } elseif ($this->hasValue($maxPrice)) {
-                        $subQ->where('minimum_bid', '<=', (float)$maxPrice);
+                        $subQ->where('minimum_bid', '<=', (float) $maxPrice);
                     }
                 });
             });
@@ -374,20 +388,32 @@ class FilterController extends Controller
 
         // ✅ Pagination
         $spareParts = $query->select([
-            'id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid',
-            'created_at', 'seller_type', 'country_id', 'city_id', 'category_id',
+            'id',
+            'title',
+            'description',
+            'price',
+            'auction_enabled',
+            'minimum_bid',
+            'created_at',
+            'seller_type',
+            'country_id',
+            'city_id',
+            'category_id',
             DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
         ])->paginate($perPage, ['*'], 'page', $page);
 
         $sparePartsCollection = $spareParts->getCollection();
 
         $sparePartsCollection->load([
-            'images' => function ($query) { $query->select('listing_id', 'image_url')->limit(1); },
+            'images' => function ($query) {
+                $query->select('listing_id', 'image_url')->orderBy('id', 'asc')->limit(1); },
             'sparePart' => function ($query) {
                 $query->select('id', 'listing_id', 'bike_part_brand_id', 'bike_part_category_id', 'condition')
                     ->with(['bikePartBrand:id,name', 'bikePartCategory:id,name']);
             },
-            'country:id,name', 'city:id,name', 'category:id,name',
+            'country:id,name',
+            'city:id,name',
+            'category:id,name',
             'country.currencyExchangeRate:id,country_id,currency_symbol'
         ]);
 
@@ -483,21 +509,21 @@ class FilterController extends Controller
                 $q->where(function ($subQ) use ($minPrice, $maxPrice) {
                     $subQ->whereNotNull('price');
                     if ($this->hasValue($minPrice) && $this->hasValue($maxPrice)) {
-                        $subQ->whereBetween('price', [(float)$minPrice, (float)$maxPrice]);
+                        $subQ->whereBetween('price', [(float) $minPrice, (float) $maxPrice]);
                     } elseif ($this->hasValue($minPrice)) {
-                        $subQ->where('price', '>=', (float)$minPrice);
+                        $subQ->where('price', '>=', (float) $minPrice);
                     } elseif ($this->hasValue($maxPrice)) {
-                        $subQ->where('price', '<=', (float)$maxPrice);
+                        $subQ->where('price', '<=', (float) $maxPrice);
                     }
                 });
                 $q->orWhere(function ($subQ) use ($minPrice, $maxPrice) {
                     $subQ->whereNull('price')->where('auction_enabled', true);
                     if ($this->hasValue($minPrice) && $this->hasValue($maxPrice)) {
-                        $subQ->whereBetween('minimum_bid', [(float)$minPrice, (float)$maxPrice]);
+                        $subQ->whereBetween('minimum_bid', [(float) $minPrice, (float) $maxPrice]);
                     } elseif ($this->hasValue($minPrice)) {
-                        $subQ->where('minimum_bid', '>=', (float)$minPrice);
+                        $subQ->where('minimum_bid', '>=', (float) $minPrice);
                     } elseif ($this->hasValue($maxPrice)) {
-                        $subQ->where('minimum_bid', '<=', (float)$maxPrice);
+                        $subQ->where('minimum_bid', '<=', (float) $maxPrice);
                     }
                 });
             });
@@ -523,8 +549,10 @@ class FilterController extends Controller
         $plateFormatId = $request->input('plate_format_id');
         $plateSearch = $request->input('plate_search');
 
-        if ($this->hasValue($plateCountryId) || $this->hasValue($plateCityId) ||
-            $this->hasValue($plateFormatId) || $this->hasValue($plateSearch)) {
+        if (
+            $this->hasValue($plateCountryId) || $this->hasValue($plateCityId) ||
+            $this->hasValue($plateFormatId) || $this->hasValue($plateSearch)
+        ) {
 
             $query->whereHas('licensePlate', function ($q) use ($plateCountryId, $plateCityId, $plateFormatId, $plateSearch) {
                 if ($this->hasValue($plateCountryId)) {
@@ -564,15 +592,25 @@ class FilterController extends Controller
 
         // ✅ Pagination
         $results = $query->select([
-            'id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid',
-            'created_at', 'seller_type', 'country_id', 'city_id', 'category_id',
+            'id',
+            'title',
+            'description',
+            'price',
+            'auction_enabled',
+            'minimum_bid',
+            'created_at',
+            'seller_type',
+            'country_id',
+            'city_id',
+            'category_id',
             DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
         ])->paginate($perPage, ['*'], 'page', $page);
 
         $resultsCollection = $results->getCollection();
 
         $resultsCollection->load([
-            'images' => function ($q) { $q->select('listing_id', 'image_url')->limit(1); },
+            'images' => function ($q) {
+                $q->select('listing_id', 'image_url')->orderBy('id', 'asc')->limit(1); },
             'licensePlate.format',
             'licensePlate.city',
             'licensePlate.country',
