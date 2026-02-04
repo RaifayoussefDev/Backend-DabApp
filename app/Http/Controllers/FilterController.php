@@ -212,7 +212,8 @@ class FilterController extends Controller
 
         $motorcyclesCollection->load([
             'images' => function ($query) {
-                $query->select('listing_id', 'image_url')->orderBy('id', 'asc')->limit(1); },
+                $query->select('listing_id', 'image_url')->orderBy('id', 'asc');
+            },
             'motorcycle' => function ($query) {
                 $query->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id')
                     ->with(['brand:id,name', 'model:id,name', 'year:id,year', 'type:id,name']);
@@ -406,7 +407,8 @@ class FilterController extends Controller
 
         $sparePartsCollection->load([
             'images' => function ($query) {
-                $query->select('listing_id', 'image_url')->orderBy('id', 'asc')->limit(1); },
+                $query->select('listing_id', 'image_url')->orderBy('id', 'asc')->limit(1);
+            },
             'sparePart' => function ($query) {
                 $query->select('id', 'listing_id', 'bike_part_brand_id', 'bike_part_category_id', 'condition')
                     ->with(['bikePartBrand:id,name', 'bikePartCategory:id,name']);
@@ -610,7 +612,8 @@ class FilterController extends Controller
 
         $resultsCollection->load([
             'images' => function ($q) {
-                $q->select('listing_id', 'image_url')->orderBy('id', 'asc')->limit(1); },
+                $q->select('listing_id', 'image_url')->orderBy('id', 'asc')->limit(1);
+            },
             'licensePlate.format',
             'licensePlate.city',
             'licensePlate.country',

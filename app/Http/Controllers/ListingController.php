@@ -2483,7 +2483,7 @@ class ListingController extends Controller
         // ✅ Charger les relations nécessaires selon la catégorie
         $listingsCollection->load([
             'images' => function ($query) {
-                $query->select('listing_id', 'image_url')->limit(1);
+                $query->select('listing_id', 'image_url')->orderBy('id', 'asc');
             },
             'category:id,name',
             'country:id,name',
