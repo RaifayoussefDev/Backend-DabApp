@@ -280,7 +280,7 @@ class LicensePlateController extends Controller
                     $query->where('country_id', 1)->whereNull('city_id');
                 } elseif ($countryId == 2) {
                     $isAbuDhabi = stripos($city->name, 'Abu Dhabi') !== false
-                                  || stripos($city->name_ar ?? '', 'أبو ظبي') !== false;
+                        || stripos($city->name_ar ?? '', 'أبو ظبي') !== false;
                     if ($isAbuDhabi) {
                         $query->where('country_id', 2)->where('city_id', $cityId);
                     } else {
@@ -289,9 +289,9 @@ class LicensePlateController extends Controller
                 } else {
                     $query->where(function ($q) use ($cityId, $countryId) {
                         $q->where('city_id', $cityId)
-                          ->orWhere(function ($subQ) use ($countryId) {
-                              $subQ->where('country_id', $countryId)->whereNull('city_id');
-                          });
+                            ->orWhere(function ($subQ) use ($countryId) {
+                                $subQ->where('country_id', $countryId)->whereNull('city_id');
+                            });
                     });
                 }
             })
@@ -377,6 +377,7 @@ class LicensePlateController extends Controller
      *                         @OA\Items(
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="field_name", type="string", example="Letters"),
+     *                             @OA\Property(property="field_name_ar", type="string", example="أحرف"),
      *                             @OA\Property(property="position", type="string", example="left"),
      *                             @OA\Property(property="character_type", type="string", example="alphabetic"),
      *                             @OA\Property(property="writing_system", type="string", example="latin"),
@@ -415,32 +416,32 @@ class LicensePlateController extends Controller
                 // KSA (country_id = 1): Toujours retourner le format KSA (city_id = null)
                 if ($countryId == 1) {
                     $query->where('country_id', 1)
-                          ->whereNull('city_id');
+                        ->whereNull('city_id');
                 }
                 // UAE (country_id = 2)
                 elseif ($countryId == 2) {
                     // Vérifier si c'est Abu Dhabi
                     $isAbuDhabi = stripos($city->name, 'Abu Dhabi') !== false
-                                  || stripos($city->name_ar ?? '', 'أبو ظبي') !== false;
+                        || stripos($city->name_ar ?? '', 'أبو ظبي') !== false;
 
                     if ($isAbuDhabi) {
                         // Abu Dhabi: retourner le format spécifique à Abu Dhabi
                         $query->where('country_id', 2)
-                              ->where('city_id', $cityId);
+                            ->where('city_id', $cityId);
                     } else {
                         // Autres Emirates: retourner le format générique (city_id = null)
                         $query->where('country_id', 2)
-                              ->whereNull('city_id');
+                            ->whereNull('city_id');
                     }
                 }
                 // Autres pays: format spécifique à la ville ou fallback
                 else {
                     $query->where(function ($q) use ($cityId, $countryId) {
                         $q->where('city_id', $cityId)
-                          ->orWhere(function ($subQ) use ($countryId) {
-                              $subQ->where('country_id', $countryId)
+                            ->orWhere(function ($subQ) use ($countryId) {
+                                $subQ->where('country_id', $countryId)
                                     ->whereNull('city_id');
-                          });
+                            });
                     });
                 }
             })
@@ -470,6 +471,7 @@ class LicensePlateController extends Controller
                     return [
                         'id' => $field->id,
                         'field_name' => $field->field_name,
+                        'field_name_ar' => $field->field_name_ar,
                         'position' => $field->position, // Directement le champ string
                         'character_type' => $field->character_type,
                         'writing_system' => $field->writing_system,

@@ -191,13 +191,19 @@ class LicensePlate extends Model
                     'url' => $response['url']
                 ]);
 
+                // ✅ DELETE EXISTING OLD PLATE IMAGES
+                \Illuminate\Support\Facades\DB::table('listing_images')
+                    ->where('listing_id', $this->listing_id)
+                    ->where('is_plate_image', true)
+                    ->delete();
+
                 // Save to listing_images
                 $inserted = \Illuminate\Support\Facades\DB::table('listing_images')->insert([
-                    'listing_id'     => $this->listing_id,
-                    'image_url'      => $response['url'],
+                    'listing_id' => $this->listing_id,
+                    'image_url' => $response['url'],
                     'is_plate_image' => true,
-                    'created_at'     => now(),
-                    'updated_at'     => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]);
 
                 if ($inserted) {
