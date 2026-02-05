@@ -31,6 +31,12 @@ use App\Http\Controllers\{
     EventSponsorController,
     EventTicketController,
     EventUpdateController,
+    AdminEventCategoryController,
+    AdminEventParticipantController,
+    AdminEventReviewController,
+    AdminEventTicketController,
+    AdminEventSponsorController,
+    AdminEventUpdateController,
     FilterController,
     FirebaseAuthController,
     GuideBookmarkController,
@@ -187,6 +193,35 @@ Route::prefix('admin')->group(function () {
         Route::patch('/events/{id}/toggle-publish', [AdminEventController::class, 'togglePublish']);
         Route::patch('/events/{id}/approve', [AdminEventController::class, 'approve']);
         Route::patch('/events/{id}/reject', [AdminEventController::class, 'reject']);
+
+        // Admin Event Categories
+        Route::apiResource('event-categories', AdminEventCategoryController::class);
+
+        // Admin Event Participants
+        Route::get('/events/{eventId}/participants', [AdminEventParticipantController::class, 'index']);
+        Route::delete('/event-participants/{id}', [AdminEventParticipantController::class, 'destroy']);
+        Route::put('/event-participants/{id}', [AdminEventParticipantController::class, 'update']); // Add update route
+
+        // Admin Event Reviews
+        Route::get('/event-reviews', [AdminEventReviewController::class, 'index']);
+        Route::patch('/event-reviews/{id}/approve', [AdminEventReviewController::class, 'approve']);
+        Route::patch('/event-reviews/{id}/reject', [AdminEventReviewController::class, 'reject']);
+        Route::delete('/event-reviews/{id}', [AdminEventReviewController::class, 'destroy']);
+
+        // Admin Event Tickets
+        Route::get('/events/{eventId}/tickets', [AdminEventTicketController::class, 'index']);
+        Route::post('/events/{eventId}/tickets', [AdminEventTicketController::class, 'store']);
+        Route::put('/event-tickets/{id}', [AdminEventTicketController::class, 'update']);
+        Route::delete('/event-tickets/{id}', [AdminEventTicketController::class, 'destroy']);
+
+        // Admin Event Sponsors
+        Route::apiResource('event-sponsors', AdminEventSponsorController::class);
+
+        // Admin Event Updates
+        Route::get('/events/{eventId}/updates', [AdminEventUpdateController::class, 'index']);
+        Route::post('/events/{eventId}/updates', [AdminEventUpdateController::class, 'store']);
+        Route::put('/event-updates/{id}', [AdminEventUpdateController::class, 'update']);
+        Route::delete('/event-updates/{id}', [AdminEventUpdateController::class, 'destroy']);
 
         // Organizers
         Route::apiResource('organizers', AdminOrganizerController::class);

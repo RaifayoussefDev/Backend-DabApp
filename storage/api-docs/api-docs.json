@@ -55,26 +55,181 @@
                 ]
             }
         },
+        "/api/admin/event-categories": {
+            "get": {
+                "tags": [
+                    "Admin Event Categories"
+                ],
+                "summary": "Admin: Get all event categories",
+                "operationId": "8171a30a60635ee656c68771b65c1e4a",
+                "responses": {
+                    "200": {
+                        "description": "List of event categories",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/EventCategory"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Admin Event Categories"
+                ],
+                "summary": "Admin: Create event category",
+                "operationId": "88a90bd23e7594cbffd224e1f7e2727a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Music"
+                                    },
+                                    "name_ar": {
+                                        "type": "string",
+                                        "example": "موسيقى"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "music_note"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Category created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/event-categories/{id}": {
+            "put": {
+                "tags": [
+                    "Admin Event Categories"
+                ],
+                "summary": "Admin: Update event category",
+                "operationId": "64b6ff65b3369f75ec66e20b2ab3b475",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "name_ar": {
+                                        "type": "string"
+                                    },
+                                    "icon": {
+                                        "type": "string"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Category updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Event Categories"
+                ],
+                "summary": "Admin: Delete event category",
+                "operationId": "be04a0741d18dee69ceeb301bbb203b3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category deleted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/events": {
             "get": {
                 "tags": [
                     "Admin Events"
                 ],
-                "summary": "Admin: Get all events",
+                "summary": "Admin: Get all events with filters",
                 "operationId": "052bd3596ea9414e611f76c74ed2497b",
                 "parameters": [
                     {
                         "name": "page",
                         "in": "query",
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "default": 1
                         }
                     },
                     {
                         "name": "per_page",
                         "in": "query",
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "default": 15
                         }
                     },
                     {
@@ -92,8 +247,67 @@
                     {
                         "name": "search",
                         "in": "query",
+                        "description": "Search in title, description",
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Filter by category ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "country_id",
+                        "in": "query",
+                        "description": "Filter by country ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "city_id",
+                        "in": "query",
+                        "description": "Filter by city ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "is_featured",
+                        "in": "query",
+                        "description": "Filter by featured status",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "is_free",
+                        "in": "query",
+                        "description": "Filter by free events",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "description": "Filter events from this date",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "description": "Filter events until this date",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
                         }
                     }
                 ],
@@ -111,6 +325,9 @@
                                             }
                                         },
                                         "meta": {
+                                            "type": "object"
+                                        },
+                                        "links": {
                                             "type": "object"
                                         }
                                     },
@@ -581,6 +798,807 @@
                 "responses": {
                     "200": {
                         "description": "Event rejected"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/events/{eventId}/participants": {
+            "get": {
+                "tags": [
+                    "Admin Event Participants"
+                ],
+                "summary": "Admin: Get participants for an event",
+                "operationId": "a9640225ad37e7bad4e587e3b5424c78",
+                "parameters": [
+                    {
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of participants",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/EventParticipant"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/event-participants/{id}": {
+            "put": {
+                "tags": [
+                    "Admin Event Participants"
+                ],
+                "summary": "Admin: Update participant status",
+                "operationId": "13ce24b00fc893b4a8727625aaccb0f3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "confirmed",
+                                            "pending",
+                                            "cancelled",
+                                            "attended"
+                                        ]
+                                    },
+                                    "payment_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "paid",
+                                            "pending",
+                                            "failed",
+                                            "refunded"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Participant updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Event Participants"
+                ],
+                "summary": "Admin: Remove a participant",
+                "operationId": "c27f0e978f8913aeb2bbcdb1f2f5fe89",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Participant removed"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/event-reviews": {
+            "get": {
+                "tags": [
+                    "Admin Event Reviews"
+                ],
+                "summary": "Admin: Get all reviews",
+                "operationId": "b84a202c60d5f8b9ce65908966987db9",
+                "parameters": [
+                    {
+                        "name": "event_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "is_approved",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of reviews",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/EventReview"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/event-reviews/{id}/approve": {
+            "patch": {
+                "tags": [
+                    "Admin Event Reviews"
+                ],
+                "summary": "Admin: Approve a review",
+                "operationId": "493f0437706f81a1314f4bf3827d31b4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review approved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/event-reviews/{id}/reject": {
+            "patch": {
+                "tags": [
+                    "Admin Event Reviews"
+                ],
+                "summary": "Admin: Reject (unapprove) a review",
+                "operationId": "cdc7a65772a0b3626e71aa179f65802a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review rejected"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/event-reviews/{id}": {
+            "delete": {
+                "tags": [
+                    "Admin Event Reviews"
+                ],
+                "summary": "Admin: Delete a review",
+                "operationId": "90c8f12fca28b22043eedc19825cdc0b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review deleted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/event-sponsors": {
+            "get": {
+                "tags": [
+                    "Admin Event Sponsors"
+                ],
+                "summary": "Admin: Get all sponsors",
+                "operationId": "3ab965a53b43846fb15d0b27c9d36f04",
+                "responses": {
+                    "200": {
+                        "description": "List of sponsors",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/EventSponsor"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Event Sponsors"
+                ],
+                "summary": "Admin: Create a new sponsor",
+                "operationId": "61460854bcba89e6dbe8d61be9883ce6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Tech Corp"
+                                    },
+                                    "logo": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "example": "https://example.com/logo.png"
+                                    },
+                                    "website": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "example": "https://example.com"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Global Tech Leader"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Sponsor created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/event-sponsors/{id}": {
+            "put": {
+                "tags": [
+                    "Admin Event Sponsors"
+                ],
+                "summary": "Admin: Update a sponsor",
+                "operationId": "d5c66135897d3127008d7ac9bb8679ea",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "logo": {
+                                        "type": "string",
+                                        "format": "url"
+                                    },
+                                    "website": {
+                                        "type": "string",
+                                        "format": "url"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Sponsor updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Event Sponsors"
+                ],
+                "summary": "Admin: Delete a sponsor",
+                "operationId": "a8f04531ec9e205f34d0085f4998d10d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sponsor deleted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/events/{eventId}/tickets": {
+            "get": {
+                "tags": [
+                    "Admin Event Tickets"
+                ],
+                "summary": "Admin: Get tickets for an event",
+                "operationId": "1a5b77a13643feb725b4e37dc159fdb1",
+                "parameters": [
+                    {
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of tickets",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/EventTicket"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Event Tickets"
+                ],
+                "summary": "Admin: Create a ticket pool for an event",
+                "operationId": "3f13d8e16736b3af93bff8dc80d61e9b",
+                "parameters": [
+                    {
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ticket_type",
+                                    "price",
+                                    "quantity_available"
+                                ],
+                                "properties": {
+                                    "ticket_type": {
+                                        "type": "string",
+                                        "example": "VIP"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "double",
+                                        "example": 100
+                                    },
+                                    "quantity_available": {
+                                        "type": "integer",
+                                        "example": 500
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "VIP Access"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Ticket created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/event-tickets/{id}": {
+            "put": {
+                "tags": [
+                    "Admin Event Tickets"
+                ],
+                "summary": "Admin: Update a ticket",
+                "operationId": "7dac67e6d2c205bd99d6a2cc31a872bf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "ticket_type": {
+                                        "type": "string"
+                                    },
+                                    "price": {
+                                        "type": "number"
+                                    },
+                                    "quantity_available": {
+                                        "type": "integer"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ticket updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Event Tickets"
+                ],
+                "summary": "Admin: Delete a ticket",
+                "operationId": "8cf2624241c0646447f052464a986537",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ticket deleted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/events/{eventId}/updates": {
+            "get": {
+                "tags": [
+                    "Admin Event Updates"
+                ],
+                "summary": "Admin: Get updates for an event",
+                "operationId": "99af86a2ef965b17a81d26c9a3c96463",
+                "parameters": [
+                    {
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of updates",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/EventUpdate"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Event Updates"
+                ],
+                "summary": "Admin: Post a new update for an event",
+                "operationId": "aa64d2b0ce2be7821e058ac654982d0c",
+                "parameters": [
+                    {
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "content"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Important Announcement"
+                                    },
+                                    "content": {
+                                        "type": "string",
+                                        "example": "The event start time has changed."
+                                    },
+                                    "is_important": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Update created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/event-updates/{id}": {
+            "put": {
+                "tags": [
+                    "Admin Event Updates"
+                ],
+                "summary": "Admin: Edit an event update",
+                "operationId": "be1a842d41db4182986ed42c4f41801c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "content": {
+                                        "type": "string"
+                                    },
+                                    "is_important": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Update modified"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Event Updates"
+                ],
+                "summary": "Admin: Delete an event update",
+                "operationId": "805673da69c586fbd71d0133ecc87c2a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Update deleted"
                     }
                 },
                 "security": [
@@ -19000,6 +20018,10 @@
                                                                 "field_name": {
                                                                     "type": "string",
                                                                     "example": "Letters"
+                                                                },
+                                                                "field_name_ar": {
+                                                                    "type": "string",
+                                                                    "example": "أحرف"
                                                                 },
                                                                 "position": {
                                                                     "type": "string",
@@ -47328,6 +48350,73 @@
                 },
                 "type": "object"
             },
+            "City": {
+                "title": "City",
+                "required": [
+                    "name",
+                    "country_id"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Casablanca"
+                    },
+                    "name_ar": {
+                        "type": "string",
+                        "example": "الدار البيضاء"
+                    },
+                    "country_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "country": {
+                        "$ref": "#/components/schemas/Country"
+                    }
+                },
+                "type": "object"
+            },
+            "Country": {
+                "title": "Country",
+                "required": [
+                    "name",
+                    "code"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Morocco"
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "MA"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "Event": {
                 "title": "Event",
                 "required": [
@@ -47387,6 +48476,355 @@
                 },
                 "type": "object"
             },
+            "EventCategory": {
+                "title": "EventCategory",
+                "required": [
+                    "name",
+                    "slug"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Technology"
+                    },
+                    "name_ar": {
+                        "type": "string",
+                        "example": "تكنولوجيا"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "technology"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Tech events"
+                    },
+                    "icon": {
+                        "type": "string",
+                        "example": "fa-server"
+                    },
+                    "color": {
+                        "type": "string",
+                        "example": "#FFFFFF"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "EventParticipant": {
+                "title": "EventParticipant",
+                "required": [
+                    "event_id",
+                    "user_id",
+                    "status"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "event_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "registered",
+                            "confirmed",
+                            "attended",
+                            "cancelled"
+                        ],
+                        "example": "registered"
+                    },
+                    "registration_date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "confirmation_date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "payment_status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "paid",
+                            "refunded"
+                        ],
+                        "example": "paid"
+                    },
+                    "payment_amount": {
+                        "type": "number",
+                        "format": "double",
+                        "example": 99.99
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Vegan meal preference"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/User"
+                    }
+                },
+                "type": "object"
+            },
+            "EventReview": {
+                "title": "EventReview",
+                "required": [
+                    "event_id",
+                    "user_id",
+                    "rating",
+                    "comment"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "event_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "rating": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1,
+                        "example": 5
+                    },
+                    "comment": {
+                        "type": "string",
+                        "example": "Great event!"
+                    },
+                    "is_approved": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/User"
+                    }
+                },
+                "type": "object"
+            },
+            "EventSponsor": {
+                "title": "EventSponsor",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Tech Corp"
+                    },
+                    "logo": {
+                        "type": "string",
+                        "format": "url",
+                        "example": "https://example.com/logo.png"
+                    },
+                    "website": {
+                        "type": "string",
+                        "format": "url",
+                        "example": "https://example.com"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Technology provider"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "EventTicket": {
+                "title": "EventTicket",
+                "required": [
+                    "event_id",
+                    "ticket_type",
+                    "price"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "event_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "ticket_type": {
+                        "type": "string",
+                        "example": "General Admission"
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "double",
+                        "example": 50
+                    },
+                    "quantity_available": {
+                        "type": "integer",
+                        "example": 100
+                    },
+                    "quantity_sold": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Standard entry ticket"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "EventUpdate": {
+                "title": "EventUpdate",
+                "required": [
+                    "event_id",
+                    "title",
+                    "content"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "event_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Update Title"
+                    },
+                    "content": {
+                        "type": "string",
+                        "example": "Update content details"
+                    },
+                    "posted_by": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "is_important": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "posted_by_user": {
+                        "$ref": "#/components/schemas/User"
+                    }
+                },
+                "type": "object"
+            },
+            "Listing": {
+                "title": "Listing",
+                "description": "Listing model",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Motorcycle for sale"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Good condition"
+                    },
+                    "price": {
+                        "type": "number",
+                        "example": 10000
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "published"
+                    },
+                    "category_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "seller_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "Organizer": {
                 "title": "Organizer",
                 "description": "Organizer model",
@@ -47411,6 +48849,141 @@
                         "type": "string",
                         "format": "url",
                         "example": "http://example.com/storage/organizers/logo.png"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Permission": {
+                "title": "Permission",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "create_events"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Can create new events"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ReportReason": {
+                "title": "Report Reason",
+                "required": [
+                    "report_type_id",
+                    "label_en",
+                    "label_ar"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "report_type_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "label_en": {
+                        "type": "string",
+                        "example": "Spam"
+                    },
+                    "label_ar": {
+                        "type": "string",
+                        "example": "محتوى غير مرغوب فيه"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/ReportType"
+                    }
+                },
+                "type": "object"
+            },
+            "ReportType": {
+                "title": "Report Type",
+                "required": [
+                    "code",
+                    "name_en",
+                    "name_ar"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "guide"
+                    },
+                    "name_en": {
+                        "type": "string",
+                        "example": "Guide"
+                    },
+                    "name_ar": {
+                        "type": "string",
+                        "example": "دليل"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Role": {
+                "title": "Role",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Admin"
                     },
                     "created_at": {
                         "type": "string",
@@ -47566,6 +49139,158 @@
                 "xml": {
                     "name": "TowType"
                 }
+            },
+            "User": {
+                "title": "User",
+                "description": "User model representing a user in the system",
+                "required": [
+                    "first_name",
+                    "last_name",
+                    "email",
+                    "role_id"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "User ID",
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "first_name": {
+                        "description": "User's first name",
+                        "type": "string",
+                        "example": "John"
+                    },
+                    "last_name": {
+                        "description": "User's last name",
+                        "type": "string",
+                        "example": "Doe"
+                    },
+                    "email": {
+                        "description": "User's email address",
+                        "type": "string",
+                        "format": "email",
+                        "example": "john.doe@example.com"
+                    },
+                    "phone": {
+                        "description": "User's phone number",
+                        "type": "string",
+                        "example": "+212612345678",
+                        "nullable": true
+                    },
+                    "birthday": {
+                        "description": "User's date of birth",
+                        "type": "string",
+                        "format": "date",
+                        "example": "1990-01-15",
+                        "nullable": true
+                    },
+                    "gender": {
+                        "description": "User's gender",
+                        "type": "string",
+                        "enum": [
+                            "male",
+                            "female",
+                            "other"
+                        ],
+                        "example": "male",
+                        "nullable": true
+                    },
+                    "profile_picture": {
+                        "description": "URL or path to user's profile picture",
+                        "type": "string",
+                        "example": "profiles/user123.jpg",
+                        "nullable": true
+                    },
+                    "address": {
+                        "description": "User's address",
+                        "type": "string",
+                        "example": "123 Main Street, Casablanca",
+                        "nullable": true
+                    },
+                    "postal_code": {
+                        "description": "User's postal/ZIP code",
+                        "type": "string",
+                        "example": "20250",
+                        "nullable": true
+                    },
+                    "verified": {
+                        "description": "Whether the user's account is verified",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_active": {
+                        "description": "Whether the user's account is active",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_online": {
+                        "description": "Whether the user is currently online",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "last_login": {
+                        "description": "Timestamp of user's last login",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-15T10:30:00Z",
+                        "nullable": true
+                    },
+                    "role_id": {
+                        "description": "ID of the user's role",
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "country_id": {
+                        "description": "ID of the user's country",
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "language": {
+                        "description": "User's preferred language code",
+                        "type": "string",
+                        "example": "en",
+                        "nullable": true
+                    },
+                    "timezone": {
+                        "description": "User's timezone",
+                        "type": "string",
+                        "example": "Africa/Casablanca",
+                        "nullable": true
+                    },
+                    "two_factor_enabled": {
+                        "description": "Whether two-factor authentication is enabled",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "created_at": {
+                        "description": "Timestamp when the user was created",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-15T10:30:00Z"
+                    },
+                    "updated_at": {
+                        "description": "Timestamp when the user was last updated",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-15T10:30:00Z"
+                    },
+                    "deleted_at": {
+                        "description": "Timestamp when the user was soft deleted (null if not deleted)",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/Role"
+                    },
+                    "country": {
+                        "$ref": "#/components/schemas/Country"
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -47822,8 +49547,32 @@
             "description": "Admin Statistics"
         },
         {
+            "name": "Admin Event Categories",
+            "description": "Admin Event Categories"
+        },
+        {
             "name": "Admin Events",
             "description": "Admin Events"
+        },
+        {
+            "name": "Admin Event Participants",
+            "description": "Admin Event Participants"
+        },
+        {
+            "name": "Admin Event Reviews",
+            "description": "Admin Event Reviews"
+        },
+        {
+            "name": "Admin Event Sponsors",
+            "description": "Admin Event Sponsors"
+        },
+        {
+            "name": "Admin Event Tickets",
+            "description": "Admin Event Tickets"
+        },
+        {
+            "name": "Admin Event Updates",
+            "description": "Admin Event Updates"
         },
         {
             "name": "Admin Listings",

@@ -5,6 +5,21 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * @OA\Schema(
+ *     schema="City",
+ *     type="object",
+ *     title="City",
+ *     required={"name", "country_id"},
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="name", type="string", example="Casablanca"),
+ *     @OA\Property(property="name_ar", type="string", example="الدار البيضاء"),
+ *     @OA\Property(property="country_id", type="integer", example=1),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time"),
+ *     @OA\Property(property="country", ref="#/components/schemas/Country")
+ * )
+ */
 class City extends Model
 {
     use HasFactory;

@@ -45,11 +45,7 @@ return [
                  */
                 'annotations' => [
                     base_path('app/Http/Controllers'),
-                    base_path('app/Models/ServiceCategory.php'),
-                    base_path('app/Models/SubscriptionPlan.php'),
-                    base_path('app/Models/TowType.php'),
-                    base_path('app/Models/Organizer.php'),
-                    base_path('app/Models/Event.php'),
+                    base_path('app/Models'),
                 ],
             ],
         ],

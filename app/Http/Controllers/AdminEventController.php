@@ -26,29 +26,66 @@ class AdminEventController extends Controller
     /**
      * @OA\Get(
      *     path="/api/admin/events",
-     *     summary="Admin: Get all events",
+     *     summary="Admin: Get all events with filters",
      *     tags={"Admin Events"},
-     *     @OA\Parameter(name="page", in="query", @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="per_page", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="page", in="query", @OA\Schema(type="integer", default=1)),
+     *     @OA\Parameter(name="per_page", in="query", @OA\Schema(type="integer", default=15)),
      *     @OA\Parameter(name="status", in="query", @OA\Schema(type="string", enum={"draft", "published", "cancelled"})),
-     *     @OA\Parameter(name="search", in="query", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="search", in="query", description="Search in title, description", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="category_id", in="query", description="Filter by category ID", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="country_id", in="query", description="Filter by country ID", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="city_id", in="query", description="Filter by city ID", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="is_featured", in="query", description="Filter by featured status", @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="is_free", in="query", description="Filter by free events", @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="date_from", in="query", description="Filter events from this date", @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="date_to", in="query", description="Filter events until this date", @OA\Schema(type="string", format="date")),
      *     @OA\Response(
      *         response=200,
      *         description="List of events",
      *         @OA\JsonContent(
      *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Event")),
-     *             @OA\Property(property="meta", type="object")
+     *             @OA\Property(property="meta", type="object"),
+     *             @OA\Property(property="links", type="object")
      *         )
      *     )
      * )
      */
     public function index(Request $request)
     {
-        $query = Event::with(['organizer', 'category', 'city', 'country', 'images', 'organizerProfile']) // Added organizerProfile
+        $query = Event::with(['organizer', 'category', 'city', 'country', 'images', 'organizerProfile'])
             ->latest();
+
+        // Filters matching EventController
+        if ($request->has('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
 
         if ($request->has('status')) {
             $query->where('status', $request->status);
+        }
+
+        if ($request->has('is_featured')) {
+            $query->where('is_featured', $request->boolean('is_featured'));
+        }
+
+        if ($request->has('is_free')) {
+            $query->where('is_free', $request->boolean('is_free'));
+        }
+
+        if ($request->has('country_id')) {
+            $query->where('country_id', $request->country_id);
+        }
+
+        if ($request->has('city_id')) {
+            $query->where('city_id', $request->city_id);
+        }
+
+        if ($request->has('date_from')) {
+            $query->whereDate('event_date', '>=', $request->date_from);
+        }
+
+        if ($request->has('date_to')) {
+            $query->whereDate('event_date', '<=', $request->date_to);
         }
 
         if ($request->has('search')) {
@@ -61,7 +98,10 @@ class AdminEventController extends Controller
 
         $events = $query->paginate($request->get('per_page', 15));
 
-        return response()->json($events);
+        return response()->json([
+            'message' => 'Events retrieved successfully',
+            'data' => $events
+        ]);
     }
 
     /**
@@ -86,9 +126,21 @@ class AdminEventController extends Controller
             'contacts',
             'faqs',
             'organizerProfile' // Added organizerProfile
-        ])->findOrFail($id);
+        ])->withCount('interests')->findOrFail($id);
 
-        return response()->json(['data' => $event]);
+        $availableSpots = null;
+        if ($event->max_participants) {
+            $availableSpots = $event->max_participants - $event->participants_count;
+        }
+
+        return response()->json([
+            'message' => 'Event retrieved successfully',
+            'data' => $event,
+            'is_registration_open' => $event->isRegistrationOpen(), // Ensure these methods exist on Event model
+            'is_full' => $event->isFull(),
+            'available_spots' => $availableSpots,
+            'interests_count' => $event->interests_count
+        ]);
     }
 
     /**

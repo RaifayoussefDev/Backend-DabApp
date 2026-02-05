@@ -4,6 +4,26 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @OA\Schema(
+ *     schema="EventParticipant",
+ *     type="object",
+ *     title="EventParticipant",
+ *     required={"event_id", "user_id", "status"},
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="event_id", type="integer", example=1),
+ *     @OA\Property(property="user_id", type="integer", example=1),
+ *     @OA\Property(property="status", type="string", enum={"registered", "confirmed", "attended", "cancelled"}, example="registered"),
+ *     @OA\Property(property="registration_date", type="string", format="date-time"),
+ *     @OA\Property(property="confirmation_date", type="string", format="date-time"),
+ *     @OA\Property(property="payment_status", type="string", enum={"pending", "paid", "refunded"}, example="paid"),
+ *     @OA\Property(property="payment_amount", type="number", format="double", example=99.99),
+ *     @OA\Property(property="notes", type="string", example="Vegan meal preference"),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time"),
+ *     @OA\Property(property="user", ref="#/components/schemas/User")
+ * )
+ */
 class EventParticipant extends Model
 {
     use HasFactory;
