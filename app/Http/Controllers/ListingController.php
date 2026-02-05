@@ -714,6 +714,9 @@ class ListingController extends Controller
 
                 // ✅ Handle Promo Code
                 $appliedPromoId = null;
+                $totalAmount = $originalAmount; // Capture original amount before discount
+                $discountAmount = 0;
+
                 if ($request->filled('promo_code')) {
                     $promoResult = $promoService->validatePromoCode(
                         $request->promo_code,
@@ -728,6 +731,7 @@ class ListingController extends Controller
 
                     // Apply discount to both original and AED amounts
                     $discount = $promoResult['discount'];
+                    $discountAmount = $discount;
                     $originalAmount = max($originalAmount - $discount, 0);
 
                     // Recalculate aedAmount based on the new originalAmount
@@ -769,6 +773,8 @@ class ListingController extends Controller
                         'payment_status' => 'completed',
                         'cart_id' => 'free_' . time() . '_' . $listing->id,
                         'promo_code_id' => $appliedPromoId,
+                        'total_amount' => $totalAmount,
+                        'discounted_amount' => $discountAmount,
                         'payment_result' => 'Free Listing / 100% Discount',
                         'completed_at' => now(),
                     ]);
@@ -1068,6 +1074,9 @@ class ListingController extends Controller
 
                 // ✅ Handle Promo Code
                 $appliedPromoId = null;
+                $totalAmount = $originalAmount; // Capture original amount before discount
+                $discountAmount = 0;
+
                 if ($request->filled('promo_code')) {
                     $promoResult = $promoService->validatePromoCode(
                         $request->promo_code,
@@ -1082,6 +1091,7 @@ class ListingController extends Controller
 
                     // Apply discount to both original and AED amounts
                     $discount = $promoResult['discount'];
+                    $discountAmount = $discount;
                     $originalAmount = max($originalAmount - $discount, 0);
 
                     // Recalculate aedAmount based on the new originalAmount
@@ -1123,6 +1133,8 @@ class ListingController extends Controller
                         'payment_status' => 'completed',
                         'cart_id' => 'free_complete_' . time() . '_' . $listing->id,
                         'promo_code_id' => $appliedPromoId,
+                        'total_amount' => $totalAmount,
+                        'discounted_amount' => $discountAmount,
                         'payment_result' => 'Free Completion / 100% Discount',
                         'completed_at' => now(),
                     ]);
