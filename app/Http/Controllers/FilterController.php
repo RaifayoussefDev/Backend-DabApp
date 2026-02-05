@@ -407,7 +407,7 @@ class FilterController extends Controller
 
         $sparePartsCollection->load([
             'images' => function ($query) {
-                $query->select('listing_id', 'image_url')->orderBy('id', 'asc')->limit(1);
+                $query->select('listing_id', 'image_url')->orderBy('id', 'asc');
             },
             'sparePart' => function ($query) {
                 $query->select('id', 'listing_id', 'bike_part_brand_id', 'bike_part_category_id', 'condition')
@@ -612,7 +612,7 @@ class FilterController extends Controller
 
         $resultsCollection->load([
             'images' => function ($q) {
-                $q->select('listing_id', 'image_url')->orderBy('id', 'asc')->limit(1);
+                $q->select('listing_id', 'image_url')->orderBy('id', 'asc');
             },
             'licensePlate.format',
             'licensePlate.city',

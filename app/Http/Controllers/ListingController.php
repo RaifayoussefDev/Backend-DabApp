@@ -741,6 +741,22 @@ class ListingController extends Controller
                     \Log::info("Promo Code Applied: {$request->promo_code}. Discount: {$discount}. New Amounts: {$originalAmount} / {$aedAmount}");
                 }
 
+                // ✅ CHECK FOR EXISTING COMPLETED PAYMENT (Idempotency)
+                $existingPayment = Payment::where('listing_id', $listing->id)
+                    ->where('payment_status', 'completed')
+                    ->first();
+
+                if ($existingPayment) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Listing is already paid and published.',
+                        'listing_id' => $listing->id,
+                        'payment_id' => $existingPayment->id,
+                        'status' => 'published',
+                        'published_at' => $listing->published_at,
+                    ]);
+                }
+
                 // ✅ FREE LISTING / 100% DISCOUNT LOGIC
                 if ($aedAmount <= 0) {
                     $payment = Payment::create([
@@ -784,17 +800,24 @@ class ListingController extends Controller
                     ]);
                 }
 
-                $payment = Payment::create([
-                    'user_id' => $sellerId,
-                    'listing_id' => $listing->id,
-                    'amount' => $aedAmount,
-                    'original_amount' => $originalAmount,
-                    'original_currency' => $originalCurrency,
-                    'currency' => 'AED',
-                    'payment_status' => 'pending',
-                    'cart_id' => 'cart_' . time(),
-                    'promo_code_id' => $appliedPromoId,
-                ]);
+                $payment = Payment::where('listing_id', $listing->id)
+                    ->where('payment_status', 'pending')
+                    ->where('amount', $aedAmount) // Ensure amount matches
+                    ->first();
+
+                if (!$payment) {
+                    $payment = Payment::create([
+                        'user_id' => $sellerId,
+                        'listing_id' => $listing->id,
+                        'amount' => $aedAmount,
+                        'original_amount' => $originalAmount,
+                        'original_currency' => $originalCurrency,
+                        'currency' => 'AED',
+                        'payment_status' => 'pending',
+                        'cart_id' => 'cart_' . time(),
+                        'promo_code_id' => $appliedPromoId,
+                    ]);
+                }
                 // 🔥 GET DYNAMIC PAYTABS CONFIG
                 $config = PayTabsConfigService::getConfig();
                 $baseUrl = PayTabsConfigService::getBaseUrl();
@@ -1072,6 +1095,22 @@ class ListingController extends Controller
                     \Log::info("Promo Code Applied: {$request->promo_code}. Discount: {$discount}. New Amounts: {$originalAmount} / {$aedAmount}");
                 }
 
+                // ✅ CHECK FOR EXISTING COMPLETED PAYMENT (Idempotency)
+                $existingPayment = Payment::where('listing_id', $listing->id)
+                    ->where('payment_status', 'completed')
+                    ->first();
+
+                if ($existingPayment) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Listing is already paid and published.',
+                        'listing_id' => $listing->id,
+                        'payment_id' => $existingPayment->id,
+                        'status' => 'published',
+                        'published_at' => $listing->published_at,
+                    ]);
+                }
+
                 // ✅ FREE LISTING / 100% DISCOUNT LOGIC
                 if ($aedAmount <= 0) {
                     $payment = Payment::create([
@@ -1115,17 +1154,24 @@ class ListingController extends Controller
                     ]);
                 }
 
-                $payment = Payment::create([
-                    'user_id' => $sellerId,
-                    'listing_id' => $listing->id,
-                    'amount' => $aedAmount,
-                    'original_amount' => $originalAmount,
-                    'original_currency' => $originalCurrency,
-                    'currency' => 'AED',
-                    'payment_status' => 'pending',
-                    'cart_id' => 'cart_' . time(),
-                    'promo_code_id' => $appliedPromoId,
-                ]);
+                $payment = Payment::where('listing_id', $listing->id)
+                    ->where('payment_status', 'pending')
+                    ->where('amount', $aedAmount)
+                    ->first();
+
+                if (!$payment) {
+                    $payment = Payment::create([
+                        'user_id' => $sellerId,
+                        'listing_id' => $listing->id,
+                        'amount' => $aedAmount,
+                        'original_amount' => $originalAmount,
+                        'original_currency' => $originalCurrency,
+                        'currency' => 'AED',
+                        'payment_status' => 'pending',
+                        'cart_id' => 'cart_' . time(),
+                        'promo_code_id' => $appliedPromoId,
+                    ]);
+                }
 
                 // 🔥 GET DYNAMIC PAYTABS CONFIG
                 $config = PayTabsConfigService::getConfig();
