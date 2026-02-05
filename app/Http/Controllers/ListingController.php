@@ -599,6 +599,16 @@ class ListingController extends Controller
             }
 
             $step = $request->step ?? 1;
+
+            \Log::info("Listing Store Request", [
+                'user_id' => $sellerId,
+                'request_step' => $request->step,
+                'calculated_step' => $step,
+                'amount' => $request->amount,
+                'has_listing_id' => $request->listing_id,
+                'all_inputs' => $request->all()
+            ]);
+
             $listing = $request->listing_id ? Listing::find($request->listing_id) : null;
 
             if ($listing && $listing->seller_id !== $sellerId) {
@@ -994,6 +1004,18 @@ class ListingController extends Controller
 
             $step = $request->step ?? ($listing->step + 1);
             $action = $request->action ?? 'update'; // 'update' ou 'complete'
+
+            \Log::info("Listing Complete/Update Request", [
+                'user_id' => $sellerId,
+                'listing_id' => $id,
+                'current_listing_step' => $listing->step,
+                'request_step' => $request->step,
+                'calculated_step' => $step,
+                'request_action' => $request->action,
+                'calculated_action' => $action,
+                'amount' => $request->amount,
+                'all_inputs' => $request->all()
+            ]);
 
             // ✅ Nettoyage du prix AVANT validation
             if ($request->has('price') && $request->price !== null && $request->price !== '') {
