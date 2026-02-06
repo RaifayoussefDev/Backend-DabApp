@@ -57,9 +57,11 @@ class NotificationTemplate extends Model
 
         // Remplacer les placeholders
         foreach ($data as $key => $value) {
-            $placeholder = "{{{$key}}}";
-            $title = str_replace($placeholder, $value, $title);
-            $message = str_replace($placeholder, $value, $message);
+            $placeholderDouble = "{{{$key}}}";
+            $placeholderSingle = "{{$key}}";
+
+            $title = str_replace([$placeholderDouble, $placeholderSingle], $value, $title);
+            $message = str_replace([$placeholderDouble, $placeholderSingle], $value, $message);
         }
 
         return [
@@ -81,8 +83,9 @@ class NotificationTemplate extends Model
         }
 
         foreach ($data as $key => $value) {
-            $placeholder = "{{{$key}}}";
-            $html = str_replace($placeholder, $value, $html);
+            $placeholderDouble = "{{{$key}}}";
+            $placeholderSingle = "{{$key}}";
+            $html = str_replace([$placeholderDouble, $placeholderSingle], $value, $html);
         }
 
         return $html;
@@ -98,8 +101,9 @@ class NotificationTemplate extends Model
         }
 
         foreach ($data as $key => $value) {
-            $placeholder = "{{{$key}}}";
-            $sms = str_replace($placeholder, $value, $sms);
+            $placeholderDouble = "{{{$key}}}";
+            $placeholderSingle = "{{$key}}";
+            $sms = str_replace([$placeholderDouble, $placeholderSingle], $value, $sms);
         }
 
         return $sms;

@@ -281,7 +281,8 @@ class SoomController extends Controller
                 // Send Notification to Seller
                 $this->notificationService->sendToUser($listing->seller, 'soom_new_negotiation', [
                     'buyer_name' => $buyer->first_name . ' ' . $buyer->last_name,
-                    'listing_title' => $listing->title
+                    'listing_title' => $listing->title,
+                    'amount' => $request->amount, // ✅ Added amount
                 ]);
             } catch (\Exception $e) {
                 \Log::error('Failed to send SOOM created email/notification: ' . $e->getMessage());
