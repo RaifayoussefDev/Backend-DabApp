@@ -31,9 +31,9 @@ class AdminSoomController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 20);
-        
+
         $query = Submission::with(['user', 'listing']);
-        
+
         if ($request->has('listing_id')) {
             $query->where('listing_id', $request->listing_id);
         }
@@ -103,7 +103,7 @@ class AdminSoomController extends Controller
         try {
             $user = User::findOrFail($request->user_id);
             $listing = Listing::with('seller')->findOrFail($request->listing_id);
-            
+
             // Bypass regular checks? Maybe check if user is same as seller?
             if ($listing->seller_id == $user->id) {
                 // Admin might want to do this anyway? 
@@ -139,7 +139,8 @@ class AdminSoomController extends Controller
                 Mail::to($listing->seller->email)->send(new SoomCreatedMail($submission, $listing, $user));
                 app(NotificationService::class)->sendToUser($listing->seller, 'soom_new_negotiation', [
                     'buyer_name' => $user->first_name . ' ' . $user->last_name,
-                    'listing_title' => $listing->title
+                    'listing_title' => $listing->title,
+                    'amount' => $request->amount, // ✅ Added amount
                 ]);
             } catch (\Exception $e) {
                 \Log::error('AdminSoom: Failed to notify seller: ' . $e->getMessage());
@@ -153,25 +154,25 @@ class AdminSoomController extends Controller
                 // OR "user who DID the overbid"? 
                 // Context "display overbiding, send email to user overbidding" suggest identifying the act of overbidding.
                 // But usually you notify the LOSER.
-                
+
                 // Let's do both or clarifying logic.
                 // If isOverbidding (amount > 150%), maybe notify the NEW bidder "You overbid significantly"? Unlikely.
-                
+
                 // I will interpret "send email to user overbidding" as "notify the user that they have been overbidden (outbid)".
                 $previousUser = $highestSubmission->user;
                 if ($previousUser) {
                     // Send generic "Outbid" notification
-                     app(NotificationService::class)->sendToUser($previousUser, 'soom_outbid', [
+                    app(NotificationService::class)->sendToUser($previousUser, 'soom_outbid', [
                         'listing_title' => $listing->title,
                         'new_amount' => $request->amount
                     ]);
-                    
+
                     // Email?
                     // Mail::to($previousUser->email)->send(new SoomOutbidMail(...)); 
                     // Since I don't have SoomOutbidMail, I'll log or skip if not existing.
                 }
             }
-            
+
             // Also notify the USER (Buyer) that a SOOM was placed on their behalf?
             // app(NotificationService::class)->sendToUser($user, 'soom_created_by_admin', ...);
 
@@ -208,9 +209,9 @@ class AdminSoomController extends Controller
     public function update(Request $request, $id)
     {
         $submission = Submission::findOrFail($id);
-        
+
         $submission->update($request->only(['amount', 'status']));
-        
+
         return response()->json(['message' => 'Soom updated', 'data' => $submission]);
     }
 
