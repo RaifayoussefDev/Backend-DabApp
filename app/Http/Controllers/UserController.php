@@ -639,7 +639,13 @@ class UserController extends Controller
      *             @OA\Property(property="role_id", type="integer", example=3),
      *             @OA\Property(property="country_id", type="integer", example=2),
      *             @OA\Property(property="language", type="string", example="fr"),
-     *             @OA\Property(property="timezone", type="string", example="Europe/Paris")
+     *             @OA\Property(property="timezone", type="string", example="Europe/Paris"),
+     *             @OA\Property(property="is_dealer", type="boolean", example=true, description="Set to true to make user a Dealer, false to remove Dealer status"),
+     *             @OA\Property(property="dealer_title", type="string", example="Best Cars LLC", description="Required if is_dealer is true"),
+     *             @OA\Property(property="dealer_address", type="string", example="123 Sheikh Zayed Road", description="Required if is_dealer is true"),
+     *             @OA\Property(property="dealer_phone", type="string", example="+971500000000", description="Required if is_dealer is true"),
+     *             @OA\Property(property="latitude", type="number", example=25.1234, description="Required if is_dealer is true"),
+     *             @OA\Property(property="longitude", type="number", example=55.1234, description="Required if is_dealer is true")
      *         )
      *     ),
      *     @OA\Response(
@@ -674,9 +680,39 @@ class UserController extends Controller
             'country_id' => 'nullable|exists:countries,id',
             'language' => 'nullable|string|max:10',
             'timezone' => 'nullable|string|max:50',
+            'is_dealer' => 'nullable|boolean',
+            'dealer_title' => 'nullable|required_if:is_dealer,true|string|max:255',
+            'dealer_address' => 'nullable|required_if:is_dealer,true|string|max:255',
+            'dealer_phone' => 'nullable|required_if:is_dealer,true|string|max:20',
+            'latitude' => 'nullable|required_if:is_dealer,true|numeric|between:-90,90',
+            'longitude' => 'nullable|required_if:is_dealer,true|numeric|between:-180,180',
         ]);
 
+        $wasDealer = $user->is_dealer;
+        $becomingDealer = (isset($validated['is_dealer']) && $validated['is_dealer'] == true) && !$wasDealer;
+
         $user->update($validated);
+
+        // ✅ Notification: Admin has marked user as Dealer
+        if ($becomingDealer) {
+            try {
+                \App\Models\Notification::create([
+                    'type' => 'dealer_approved',
+                    'user_id' => $user->id, // ✅ Correct field
+                    'title' => 'Dealer Status Approved',
+                    'title_ar' => 'تمت الموافقة على حساب التاجر',
+                    'message' => "Congratulations! Your account has been upgraded to Dealer status.",
+                    'message_ar' => "تهانينا! تمت ترقية حسابك إلى حساب تاجر.",
+                    'data' => json_encode(['admin_id' => Auth::id()]),
+                    'read_at' => null,
+                ]);
+
+                // Optional: Send Email?
+                // Mail::to($user->email)->send(new DealerApprovedMail($user)); 
+            } catch (\Exception $e) {
+                \Log::error('Failed to create dealer approved notification', ['error' => $e->getMessage()]);
+            }
+        }
 
         return response()->json([
             'success' => true,

@@ -8359,6 +8359,56 @@
                 ]
             }
         },
+        "/api/dealers": {
+            "get": {
+                "tags": [
+                    "Dealers"
+                ],
+                "summary": "Get all dealers",
+                "operationId": "118e1b90d9666dd454f1e8e2d46cf5d3",
+                "responses": {
+                    "200": {
+                        "description": "List of dealers",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "dealer_title": {
+                                                "type": "string"
+                                            },
+                                            "dealer_address": {
+                                                "type": "string"
+                                            },
+                                            "dealer_phone": {
+                                                "type": "string"
+                                            },
+                                            "latitude": {
+                                                "type": "number"
+                                            },
+                                            "longitude": {
+                                                "type": "number"
+                                            },
+                                            "profile_picture": {
+                                                "type": "string"
+                                            },
+                                            "is_dealer": {
+                                                "type": "boolean"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/notifications/send": {
             "post": {
                 "tags": [
@@ -45981,6 +46031,36 @@
                                     "timezone": {
                                         "type": "string",
                                         "example": "Europe/Paris"
+                                    },
+                                    "is_dealer": {
+                                        "description": "Set to true to make user a Dealer, false to remove Dealer status",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "dealer_title": {
+                                        "description": "Required if is_dealer is true",
+                                        "type": "string",
+                                        "example": "Best Cars LLC"
+                                    },
+                                    "dealer_address": {
+                                        "description": "Required if is_dealer is true",
+                                        "type": "string",
+                                        "example": "123 Sheikh Zayed Road"
+                                    },
+                                    "dealer_phone": {
+                                        "description": "Required if is_dealer is true",
+                                        "type": "string",
+                                        "example": "+971500000000"
+                                    },
+                                    "latitude": {
+                                        "description": "Required if is_dealer is true",
+                                        "type": "number",
+                                        "example": 25.1234
+                                    },
+                                    "longitude": {
+                                        "description": "Required if is_dealer is true",
+                                        "type": "number",
+                                        "example": 55.1234
                                     }
                                 },
                                 "type": "object"
@@ -49633,6 +49713,10 @@
         {
             "name": "Admin - Dashboard",
             "description": "Admin - Dashboard"
+        },
+        {
+            "name": "Dealers",
+            "description": "Dealers"
         },
         {
             "name": "Event Activities",

@@ -213,7 +213,21 @@ class User extends Authenticatable implements JWTSubject
         'timezone',
         'two_factor_enabled',
         'country_id',
+        'is_dealer',
+        'dealer_title',
+        'dealer_address',
+        'dealer_phone',
+        'latitude',
+        'longitude',
     ];
+
+    /**
+     * Scope a query to only include dealers.
+     */
+    public function scopeDealers($query)
+    {
+        return $query->where('is_dealer', true);
+    }
 
     /**
      * The attributes that should be hidden for serialization.

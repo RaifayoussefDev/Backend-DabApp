@@ -143,6 +143,7 @@ Route::get('/countries', [AuthController::class, 'getAllCountries']);
 Route::post('/prospect-listings', [App\Http\Controllers\ProspectController::class, 'store']);
 Route::post('/prospect/upload', [App\Http\Controllers\ImageUploadController::class, 'upload']);
 Route::post('/upload-image-public', [App\Http\Controllers\ImageUploadController::class, 'uploadPublic']);
+Route::get('/dealers', [\App\Http\Controllers\DealerController::class, 'index']);
 
 
 Route::prefix('admin')->group(function () {

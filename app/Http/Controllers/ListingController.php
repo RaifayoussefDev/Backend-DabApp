@@ -90,7 +90,7 @@ class ListingController extends Controller
                 'sparePart.motorcycles.year',  // ✅ Load compatible motos year
                 'licensePlate.plateFormat',
                 'submissions',
-                'seller'
+                'seller:id,name,first_name,last_name,email,phone,profile_picture,created_at,is_dealer,dealer_title,dealer_address,dealer_phone'
             ])->findOrFail($id);
 
             \Log::info("Listing found: {$listing->title}");
@@ -3327,7 +3327,7 @@ class ListingController extends Controller
             'city',
             'country',
             'country.currencyExchangeRate',
-            'seller',
+            'seller:id,name,first_name,last_name,email,phone,profile_picture,created_at,is_dealer,dealer_title,dealer_address,dealer_phone',
             'motorcycle.brand',
             'motorcycle.model',
             'motorcycle.year',

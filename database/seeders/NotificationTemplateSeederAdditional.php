@@ -64,6 +64,36 @@ class NotificationTemplateSeederAdditional extends Seeder
                 'description' => 'Notification sent to author when a new comment is added',
                 'variables' => ['user_name', 'guide_title'],
                 'is_active' => true,
+            ],
+            [
+                'type' => 'soom_new_negotiation',
+                'name' => 'New Soom Negotiation',
+                'title_template' => 'New Offer Received',
+                'title_template_ar' => 'عرض جديد مستلم',
+                'message_template' => '{{buyer_name}} sent an offer for "{{listing_title}}".',
+                'message_template_ar' => 'أرسل {{buyer_name}} عرضًا بخصوص "{{listing_title}}".',
+                'variables' => ['buyer_name', 'listing_title'],
+                'is_active' => true,
+            ],
+            [
+                'type' => 'soom_accepted',
+                'name' => 'Soom Accepted',
+                'title_template' => 'Offer Accepted',
+                'title_template_ar' => 'تم قبول العرض',
+                'message_template' => 'Your offer of {{amount}} {{currency}} for "{{listing_title}}" has been accepted!',
+                'message_template_ar' => 'تم قبول عرضك بقيمة {{amount}} {{currency}} بخصوص "{{listing_title}}".',
+                'variables' => ['amount', 'currency', 'listing_title'],
+                'is_active' => true,
+            ],
+            [
+                'type' => 'soom_rejected',
+                'name' => 'Soom Rejected',
+                'title_template' => 'Offer Rejected',
+                'title_template_ar' => 'تم رفض العرض',
+                'message_template' => 'Your offer for "{{listing_title}}" was rejected. Reason: {{reason}}',
+                'message_template_ar' => 'تم رفض عرضك بخصوص "{{listing_title}}". السبب: {{reason}}',
+                'variables' => ['listing_title', 'reason'],
+                'is_active' => true,
             ]
         ];
 
