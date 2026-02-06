@@ -32,6 +32,8 @@ class NotificationPreference extends Model
         'soom_counter_offer',
         'soom_accepted',
         'soom_rejected',
+        // Dealer
+        'dealer_approved',
         // Payments
         'payment_success',
         'payment_failed',
@@ -95,6 +97,7 @@ class NotificationPreference extends Model
         'soom_counter_offer' => 'boolean',
         'soom_accepted' => 'boolean',
         'soom_rejected' => 'boolean',
+        'dealer_approved' => 'boolean',
         'payment_success' => 'boolean',
         'payment_failed' => 'boolean',
         'payment_pending' => 'boolean',
@@ -143,8 +146,7 @@ class NotificationPreference extends Model
             'report_received' => 'system_updates',
             'report_status_updated' => 'system_updates',
             'new_report' => 'system_updates', // For admins
-            'dealer_approved' => 'system_updates', // ✅ Map Dealer Approval to System Updates
-            'dealer_removed' => 'system_updates', // ✅ Map Dealer Removal to System Updates
+            'dealer_removed' => 'dealer_approved', // Map Removal to same pref
         ];
 
         $column = $map[$type] ?? $type;
@@ -206,6 +208,7 @@ class NotificationPreference extends Model
             'soom_counter_offer' => true,
             'soom_accepted' => true,
             'soom_rejected' => true,
+            'dealer_approved' => true,
             'payment_success' => true,
             'payment_failed' => true,
             'payment_pending' => true,
@@ -235,6 +238,7 @@ class NotificationPreference extends Model
             'soom_counter_offer' => false,
             'soom_accepted' => false,
             'soom_rejected' => false,
+            'dealer_approved' => false,
             'payment_success' => false,
             'payment_failed' => false,
             'payment_pending' => false,
