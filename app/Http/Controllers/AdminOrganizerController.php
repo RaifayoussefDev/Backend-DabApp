@@ -14,15 +14,20 @@ class AdminOrganizerController extends Controller
      *     summary="Admin: Get all organizers with pagination and search",
      *     tags={"Admin Organizers"},
      *     @OA\Parameter(name="page", in="query", description="Page number", required=false, @OA\Schema(type="integer", default=1)),
-     *     @OA\Parameter(name="per_page", in="query", description="Items per page", required=false, @OA\Schema(type="integer", default=15)),
+     *     @OA\Parameter(name="per_page", in="query", description="Items per page (leave empty for all)", required=false, @OA\Schema(type="integer")),
      *     @OA\Parameter(name="search", in="query", description="Search by name or description", required=false, @OA\Schema(type="string")),
      *     @OA\Response(
      *         response=200,
      *         description="List of organizers",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Organizer")),
-     *             @OA\Property(property="links", type="object"),
-     *             @OA\Property(property="meta", type="object")
+     *             oneOf={
+     *                 @OA\Schema(type="array", @OA\Items(ref="#/components/schemas/Organizer")),
+     *                 @OA\Schema(
+     *                     @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Organizer")),
+     *                     @OA\Property(property="links", type="object"),
+     *                     @OA\Property(property="meta", type="object")
+     *                 )
+     *             }
      *         )
      *     )
      * )
@@ -31,7 +36,7 @@ class AdminOrganizerController extends Controller
     {
         $query = Organizer::latest();
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -39,8 +44,11 @@ class AdminOrganizerController extends Controller
             });
         }
 
-        $perPage = $request->get('per_page', 15);
-        $organizers = $query->paginate($perPage);
+        if ($request->filled('per_page')) {
+            $organizers = $query->paginate((int) $request->per_page);
+        } else {
+            $organizers = $query->get();
+        }
 
         return response()->json($organizers);
     }
@@ -95,7 +103,7 @@ class AdminOrganizerController extends Controller
     }
 
     /**
-     * @OA\Post(
+     * @OA\Put(
      *     path="/api/admin/organizers/{id}",
      *     summary="Admin: Update an organizer",
      *     tags={"Admin Organizers"},
