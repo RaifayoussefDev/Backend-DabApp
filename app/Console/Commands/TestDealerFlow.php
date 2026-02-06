@@ -25,6 +25,16 @@ class TestDealerFlow extends Command
         ]);
         $this->info("Created Test User: {$user->id} ({$user->email})");
 
+        // Create Preferences for Test User
+        \App\Models\NotificationPreference::create([
+            'user_id' => $user->id,
+            'dealer_approved' => true,
+            'dealer_removed' => true,
+            'system_updates' => true,
+            'push_enabled' => true,
+            'email_enabled' => true,
+        ]);
+
         // 2. Simulate Admin Update (using Controller logic manually or calling method)
         // We act as Admin
         $controller = new UserController();
@@ -59,9 +69,35 @@ class TestDealerFlow extends Command
             ->first();
 
         if ($notification) {
-            $this->info('✅ Notification Success: Notification found.');
+            $this->info('✅ Notification Success: Dealer Approved notification found.');
         } else {
-            $this->error('❌ Notification Failed: No notification found for user.');
+            $this->error('❌ Notification Failed: No Dealer Approved notification found.');
+        }
+
+        // 4. Simulate REMOVE Dealer
+        $this->info('Testing Dealer Removal...');
+        $removeRequest = Request::create("/api/admin/users/{$user->id}", 'PUT', [
+            'is_dealer' => false,
+        ]);
+        $controller->update($removeRequest, $user->id);
+        $user->refresh();
+
+        if (!$user->is_dealer) {
+            $this->info('✅ Admin Remove Success: User is no longer a dealer.');
+        } else {
+            $this->error('❌ Admin Remove Failed: User is still a dealer.');
+        }
+
+        // 5. Verify Removal Notification
+        $removeNotification = Notification::where('user_id', $user->id)
+            ->where('type', 'dealer_removed')
+            ->latest()
+            ->first();
+
+        if ($removeNotification) {
+            $this->info('✅ Notification Success: Dealer Removed notification found.');
+        } else {
+            $this->error('❌ Notification Failed: No Dealer Removed notification found.');
         }
 
         // Cleanup

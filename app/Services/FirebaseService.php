@@ -17,10 +17,29 @@ class FirebaseService
 
     public function __construct()
     {
-        $credentialsPath = storage_path('app/' . config('firebase.credentials.file'));
+        // Lazy initialization
+    }
 
-        $this->factory = (new Factory)->withServiceAccount($credentialsPath);
-        $this->messaging = $this->factory->createMessaging();
+    protected function initialize()
+    {
+        if ($this->messaging) {
+            return;
+        }
+
+        try {
+            $credentialsPath = storage_path('app/' . config('firebase.credentials.file'));
+
+            // Check if file exists to avoid immediate crash
+            if (!file_exists($credentialsPath) && !file_exists($credentialsPath = base_path('firebase_credentials.json'))) {
+                throw new \Exception("Firebase credentials file not found at: $credentialsPath");
+            }
+
+            $this->factory = (new Factory)->withServiceAccount($credentialsPath);
+            $this->messaging = $this->factory->createMessaging();
+        } catch (\Exception $e) {
+            \Log::error("Firebase Initialization Failed: " . $e->getMessage());
+            throw $e;
+        }
     }
 
     /**
@@ -58,6 +77,12 @@ class FirebaseService
             ];
 
         } catch (MessagingException $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'token' => $token,
+            ];
+        } catch (\Exception $e) { // Catch general exceptions from initialize
             return [
                 'success' => false,
                 'error' => $e->getMessage(),
@@ -133,6 +158,7 @@ class FirebaseService
     public function subscribeToTopic(array $tokens, string $topic): array
     {
         try {
+            $this->initialize();
             $result = $this->messaging->subscribeToTopic($topic, $tokens);
 
             return [
@@ -156,6 +182,7 @@ class FirebaseService
     public function unsubscribeFromTopic(array $tokens, string $topic): array
     {
         try {
+            $this->initialize();
             $result = $this->messaging->unsubscribeFromTopic($topic, $tokens);
 
             return [
@@ -178,8 +205,11 @@ class FirebaseService
     public function validateToken(string $token): bool
     {
         try {
+            $this->initialize();
             $this->messaging->validate($token);
             return true;
+        } catch (\Exception $e) {
+            return false;
         } catch (MessagingException | FirebaseException $e) {
             return false;
         }

@@ -690,27 +690,31 @@ class UserController extends Controller
 
         $wasDealer = $user->is_dealer;
         $becomingDealer = (isset($validated['is_dealer']) && $validated['is_dealer'] == true) && !$wasDealer;
+        $removingDealer = (isset($validated['is_dealer']) && $validated['is_dealer'] == false) && $wasDealer; // ✅ Detect removal
 
         $user->update($validated);
 
         // ✅ Notification: Admin has marked user as Dealer
         if ($becomingDealer) {
             try {
-                \App\Models\Notification::create([
-                    'type' => 'dealer_approved',
-                    'user_id' => $user->id, // ✅ Correct field
-                    'title' => 'Dealer Status Approved',
-                    'title_ar' => 'تمت الموافقة على حساب التاجر',
-                    'message' => "Congratulations! Your account has been upgraded to Dealer status.",
-                    'message_ar' => "تهانينا! تمت ترقية حسابك إلى حساب تاجر.",
-                    'data' => json_encode(['admin_id' => Auth::id()]),
-                    'read_at' => null,
+                // Use NotificationService to handle database, push, and email based on preferences
+                // We use 'system_updates' preference via the mapping we added
+                app(\App\Services\NotificationService::class)->sendToUser($user, 'dealer_approved', [
+                    'admin_id' => Auth::id()
                 ]);
-
-                // Optional: Send Email?
-                // Mail::to($user->email)->send(new DealerApprovedMail($user)); 
             } catch (\Exception $e) {
-                \Log::error('Failed to create dealer approved notification', ['error' => $e->getMessage()]);
+                \Log::error('Failed to send dealer approved notification', ['error' => $e->getMessage()]);
+            }
+        }
+
+        // ✅ Notification: Admin has REMOVED Dealer status
+        if ($removingDealer) {
+            try {
+                app(\App\Services\NotificationService::class)->sendToUser($user, 'dealer_removed', [
+                    'admin_id' => Auth::id()
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send dealer removed notification', ['error' => $e->getMessage()]);
             }
         }
 
