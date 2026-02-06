@@ -143,6 +143,7 @@ class NotificationPreference extends Model
             'report_received' => 'system_updates',
             'report_status_updated' => 'system_updates',
             'new_report' => 'system_updates', // For admins
+            'dealer_approved' => 'system_updates', // ✅ Map Dealer Approval to System Updates
         ];
 
         $column = $map[$type] ?? $type;

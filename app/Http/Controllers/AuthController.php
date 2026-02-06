@@ -236,6 +236,26 @@ class AuthController extends Controller
                 'country_id' => $countryData['country_id'],
             ]);
 
+            // ✅ Create default Notification Preferences
+            \App\Models\NotificationPreference::create([
+                'user_id' => $user->id,
+                'listing_approved' => true,
+                'listing_rejected' => true,
+                'listing_sold' => true,
+                'bid_placed' => true,
+                'bid_accepted' => true,
+                'bid_rejected' => true,
+                'bid_outbid' => true,
+                'soom_new_negotiation' => true, // Important for Soom
+                'soom_accepted' => true,
+                'soom_rejected' => true,
+                'dealer_approved' => true, // Important for Dealer
+                'system_updates' => true,
+                'push_enabled' => true,
+                'email_enabled' => true,
+                // Add other Defaults as needed, mostly true is good for engagement
+            ]);
+
             Log::info('New user created (unverified)', [
                 'user_id' => $user->id,
                 'email' => $user->email,
