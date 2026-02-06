@@ -8,6 +8,62 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Carbon\Carbon;
 
+/**
+ * @OA\Schema(
+ *     schema="NotificationPreference",
+ *     title="Notification Preference",
+ *     description="User notification settings",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="user_id", type="integer", example=10),
+ *     @OA\Property(property="listing_approved", type="boolean", example=true),
+ *     @OA\Property(property="listing_rejected", type="boolean", example=true),
+ *     @OA\Property(property="listing_expired", type="boolean", example=true),
+ *     @OA\Property(property="listing_sold", type="boolean", example=true),
+ *     @OA\Property(property="bid_placed", type="boolean", example=true),
+ *     @OA\Property(property="bid_accepted", type="boolean", example=true),
+ *     @OA\Property(property="bid_rejected", type="boolean", example=true),
+ *     @OA\Property(property="bid_outbid", type="boolean", example=true),
+ *     @OA\Property(property="auction_ending_soon", type="boolean", example=true),
+ *     @OA\Property(property="soom_new_negotiation", type="boolean", example=true),
+ *     @OA\Property(property="soom_counter_offer", type="boolean", example=true),
+ *     @OA\Property(property="soom_accepted", type="boolean", example=true),
+ *     @OA\Property(property="soom_rejected", type="boolean", example=true),
+ *     @OA\Property(property="dealer_approved", type="boolean", example=true),
+ *     @OA\Property(property="payment_success", type="boolean", example=true),
+ *     @OA\Property(property="payment_failed", type="boolean", example=true),
+ *     @OA\Property(property="payment_pending", type="boolean", example=true),
+ *     @OA\Property(property="wishlist_price_drop", type="boolean", example=true),
+ *     @OA\Property(property="wishlist_item_sold", type="boolean", example=true),
+ *     @OA\Property(property="new_message", type="boolean", example=true),
+ *     @OA\Property(property="new_guide_published", type="boolean", example=true),
+ *     @OA\Property(property="guide_comment", type="boolean", example=true),
+ *     @OA\Property(property="guide_like", type="boolean", example=true),
+ *     @OA\Property(property="event_created", type="boolean", example=true),
+ *     @OA\Property(property="event_published", type="boolean", example=true),
+ *     @OA\Property(property="event_reminder", type="boolean", example=true),
+ *     @OA\Property(property="event_updated", type="boolean", example=true),
+ *     @OA\Property(property="event_cancelled", type="boolean", example=true),
+ *     @OA\Property(property="poi_review", type="boolean", example=true),
+ *     @OA\Property(property="new_poi_nearby", type="boolean", example=true),
+ *     @OA\Property(property="route_comment", type="boolean", example=true),
+ *     @OA\Property(property="route_warning", type="boolean", example=true),
+ *     @OA\Property(property="system_updates", type="boolean", example=true),
+ *     @OA\Property(property="promotional", type="boolean", example=true),
+ *     @OA\Property(property="newsletter", type="boolean", example=true),
+ *     @OA\Property(property="admin_custom", type="boolean", example=true),
+ *     @OA\Property(property="push_enabled", type="boolean", example=true),
+ *     @OA\Property(property="in_app_enabled", type="boolean", example=true),
+ *     @OA\Property(property="email_enabled", type="boolean", example=true),
+ *     @OA\Property(property="sms_enabled", type="boolean", example=true),
+ *     @OA\Property(property="quiet_hours_enabled", type="boolean", example=false),
+ *     @OA\Property(property="quiet_hours_start", type="string", format="time", example="22:00:00"),
+ *     @OA\Property(property="quiet_hours_end", type="string", format="time", example="08:00:00"),
+ *     @OA\Property(property="push_vibration", type="boolean", example=true),
+ *     @OA\Property(property="push_sound", type="boolean", example=true),
+ *     @OA\Property(property="push_badge", type="boolean", example=true),
+ *     @OA\Property(property="push_priority", type="string", example="high")
+ * )
+ */
 class NotificationPreference extends Model
 {
     use HasFactory;

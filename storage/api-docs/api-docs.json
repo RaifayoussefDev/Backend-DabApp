@@ -3316,6 +3316,213 @@
                 ]
             }
         },
+        "/api/admin/notification-preferences": {
+            "get": {
+                "tags": [
+                    "Admin Notification Preferences"
+                ],
+                "summary": "Get all notification preferences",
+                "description": "Retrieve list of notification preferences with pagination",
+                "operationId": "c3627f645b1278b37bd7e4737055ee4c",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (leave empty for all)",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Filter by User ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of preferences",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/NotificationPreference"
+                                            }
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/NotificationPreference"
+                                                    }
+                                                },
+                                                "meta": {
+                                                    "type": "object"
+                                                },
+                                                "links": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/notification-preferences/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Notification Preferences"
+                ],
+                "summary": "Get specific preference by ID",
+                "operationId": "792711e8dde560905233a35d6c8cb82a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Preference details"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Notification Preferences"
+                ],
+                "summary": "Update specific preference",
+                "operationId": "afed78853872828aa5836d5b11b04168",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "listing_approved": {
+                                        "type": "boolean"
+                                    },
+                                    "listing_rejected": {
+                                        "type": "boolean"
+                                    },
+                                    "soom_new_negotiation": {
+                                        "type": "boolean"
+                                    },
+                                    "bid_placed": {
+                                        "type": "boolean"
+                                    },
+                                    "push_enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "email_enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "quiet_hours_enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "quiet_hours_start": {
+                                        "type": "string",
+                                        "format": "time",
+                                        "example": "22:00:00"
+                                    },
+                                    "quiet_hours_end": {
+                                        "type": "string",
+                                        "format": "time",
+                                        "example": "08:00:00"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "listing_approved": true,
+                                "listing_rejected": true,
+                                "bid_placed": false,
+                                "soom_new_negotiation": true,
+                                "push_enabled": true,
+                                "email_enabled": false,
+                                "quiet_hours_enabled": true,
+                                "quiet_hours_start": "22:00:00",
+                                "quiet_hours_end": "08:00:00"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Preferences updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/NotificationPreference"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/organizers": {
             "get": {
                 "tags": [
@@ -3337,11 +3544,10 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Items per page",
+                        "description": "Items per page (leave empty for all)",
                         "required": false,
                         "schema": {
-                            "type": "integer",
-                            "default": 15
+                            "type": "integer"
                         }
                     },
                     {
@@ -3360,21 +3566,31 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "properties": {
-                                        "data": {
+                                    "oneOf": [
+                                        {
                                             "type": "array",
                                             "items": {
                                                 "$ref": "#/components/schemas/Organizer"
                                             }
                                         },
-                                        "links": {
-                                            "type": "object"
-                                        },
-                                        "meta": {
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Organizer"
+                                                    }
+                                                },
+                                                "links": {
+                                                    "type": "object"
+                                                },
+                                                "meta": {
+                                                    "type": "object"
+                                                }
+                                            },
                                             "type": "object"
                                         }
-                                    },
-                                    "type": "object"
+                                    ]
                                 }
                             }
                         }
@@ -3450,12 +3666,12 @@
                     }
                 }
             },
-            "post": {
+            "put": {
                 "tags": [
                     "Admin Organizers"
                 ],
                 "summary": "Admin: Update an organizer",
-                "operationId": "620238e77aa34a83b9106fdcbde92a09",
+                "operationId": "99aad7151f871ccf45f5008c26767a3c",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -48905,6 +49121,211 @@
                 },
                 "type": "object"
             },
+            "NotificationPreference": {
+                "title": "Notification Preference",
+                "description": "User notification settings",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "listing_approved": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "listing_rejected": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "listing_expired": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "listing_sold": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "bid_placed": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "bid_accepted": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "bid_rejected": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "bid_outbid": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "auction_ending_soon": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "soom_new_negotiation": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "soom_counter_offer": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "soom_accepted": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "soom_rejected": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "dealer_approved": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "payment_success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "payment_failed": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "payment_pending": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "wishlist_price_drop": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "wishlist_item_sold": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "new_message": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "new_guide_published": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "guide_comment": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "guide_like": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "event_created": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "event_published": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "event_reminder": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "event_updated": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "event_cancelled": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "poi_review": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "new_poi_nearby": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "route_comment": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "route_warning": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "system_updates": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "promotional": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "newsletter": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "admin_custom": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "push_enabled": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "in_app_enabled": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "email_enabled": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "sms_enabled": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "quiet_hours_enabled": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "quiet_hours_start": {
+                        "type": "string",
+                        "format": "time",
+                        "example": "22:00:00"
+                    },
+                    "quiet_hours_end": {
+                        "type": "string",
+                        "format": "time",
+                        "example": "08:00:00"
+                    },
+                    "push_vibration": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "push_sound": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "push_badge": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "push_priority": {
+                        "type": "string",
+                        "example": "high"
+                    }
+                },
+                "type": "object"
+            },
             "Organizer": {
                 "title": "Organizer",
                 "description": "Organizer model",
@@ -49386,6 +49807,10 @@
         {
             "name": "Admin Notifications",
             "description": "API Endpoints for Admin Mass Notifications"
+        },
+        {
+            "name": "Admin Notification Preferences",
+            "description": "Admin management of user notification preferences"
         },
         {
             "name": "Admin Reports",

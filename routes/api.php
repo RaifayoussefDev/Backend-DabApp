@@ -97,6 +97,7 @@ use App\Http\Controllers\{
     NotificationTokenController,
 };
 use PhpOffice\PhpSpreadsheet\Reader\Xls\RC4;
+use App\Http\Controllers\AdminNotificationPreferenceController;
 use App\Http\Controllers\Services\ServiceCategoryController;
 use App\Http\Controllers\Services\ServiceProviderController;
 use App\Http\Controllers\Services\ServiceController;
@@ -176,6 +177,7 @@ Route::prefix('admin')->group(function () {
         // Notifications
         Route::get('/notifications', [AdminNotificationController::class, 'index']);
         Route::post('/notifications/mass-send', [AdminNotificationController::class, 'sendMassNotification']);
+        Route::apiResource('notification-preferences', AdminNotificationPreferenceController::class);
 
         // Report Reasons & Types
         Route::get('/report-reasons/types', [\App\Http\Controllers\Admin\ReportReasonController::class, 'getTypes']);
