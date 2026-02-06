@@ -48,6 +48,7 @@ class FirebaseService
     public function sendToToken(string $token, string $title, string $body, array $data = [], array $options = []): array
     {
         try {
+            $this->initialize();
             $notification = Notification::create($title, $body);
 
             $message = CloudMessage::withTarget('token', $token)
@@ -129,6 +130,7 @@ class FirebaseService
     public function sendToTopic(string $topic, string $title, string $body, array $data = []): array
     {
         try {
+            $this->initialize();
             $notification = Notification::create($title, $body);
 
             $message = CloudMessage::withTarget('topic', $topic)
