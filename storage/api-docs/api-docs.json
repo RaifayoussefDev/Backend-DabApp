@@ -3391,6 +3391,59 @@
                         "bearerAuth": []
                     }
                 ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Notification Preferences"
+                ],
+                "summary": "Create default preferences for a user",
+                "description": "Useful if a user hasn't logged in yet and has no preferences record",
+                "operationId": "6ead68d2316b93f365f338ac3fc635e4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "type": "integer",
+                                        "example": 10
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Preferences created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/NotificationPreference"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/admin/notification-preferences/{id}": {
@@ -3505,6 +3558,104 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Preferences updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/NotificationPreference"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/notification-preferences/{id}/enable-all": {
+            "patch": {
+                "tags": [
+                    "Admin Notification Preferences"
+                ],
+                "summary": "Enable all notifications for a user",
+                "operationId": "e57fc9886c6c2382ef50c15516b6e52d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "All notifications enabled",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "All notifications enabled"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/NotificationPreference"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/notification-preferences/{id}/disable-all": {
+            "patch": {
+                "tags": [
+                    "Admin Notification Preferences"
+                ],
+                "summary": "Disable all notifications for a user",
+                "operationId": "de61ce12c16f52847c8fcaf947488752",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "All notifications disabled",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "All notifications disabled"
                                         },
                                         "data": {
                                             "$ref": "#/components/schemas/NotificationPreference"

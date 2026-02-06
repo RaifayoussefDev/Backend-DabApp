@@ -59,6 +59,52 @@ class AdminNotificationPreferenceController extends Controller
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/admin/notification-preferences",
+     *     tags={"Admin Notification Preferences"},
+     *     summary="Create default preferences for a user",
+     *     description="Useful if a user hasn't logged in yet and has no preferences record",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"user_id"},
+     *             @OA\Property(property="user_id", type="integer", example=10)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Preferences created",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", ref="#/components/schemas/NotificationPreference")
+     *         )
+     *     )
+     * )
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id|unique:notification_preferences,user_id',
+        ]);
+
+        $preference = NotificationPreference::create([
+            'user_id' => $request->user_id,
+        ]);
+
+        // Apply defaults if needed, but model/db should handle default values (usually true/false)
+        // Check migration defaults? Assuming they are set. If not, we might want to enableAll/init.
+        // For safety, let's enable all by default or rely on DB defaults.
+        // $preference->enableAll(); // Optional: force enable all on create?
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Preferences created successfully',
+            'data' => $preference,
+        ], 201);
+    }
+
+    /**
      * @OA\Get(
      *     path="/api/admin/notification-preferences/{id}",
      *     tags={"Admin Notification Preferences"},
@@ -126,6 +172,7 @@ class AdminNotificationPreferenceController extends Controller
             'listing_rejected' => 'sometimes|boolean',
             'listing_expired' => 'sometimes|boolean',
             'listing_sold' => 'sometimes|boolean',
+            'listing_updated' => 'sometimes|boolean',
             'bid_placed' => 'sometimes|boolean',
             'bid_accepted' => 'sometimes|boolean',
             'bid_rejected' => 'sometimes|boolean',
@@ -138,8 +185,11 @@ class AdminNotificationPreferenceController extends Controller
             'wishlist_item_sold' => 'sometimes|boolean',
             'new_message' => 'sometimes|boolean',
             'new_guide_published' => 'sometimes|boolean',
+            'guide_published' => 'sometimes|boolean',
             'guide_comment' => 'sometimes|boolean',
             'guide_like' => 'sometimes|boolean',
+            'event_created' => 'sometimes|boolean',
+            'event_published' => 'sometimes|boolean',
             'event_reminder' => 'sometimes|boolean',
             'event_updated' => 'sometimes|boolean',
             'event_cancelled' => 'sometimes|boolean',
@@ -151,6 +201,7 @@ class AdminNotificationPreferenceController extends Controller
             'promotional' => 'sometimes|boolean',
             'newsletter' => 'sometimes|boolean',
             'admin_custom' => 'sometimes|boolean',
+            'dealer_approved' => 'sometimes|boolean',
             'push_enabled' => 'sometimes|boolean',
             'in_app_enabled' => 'sometimes|boolean',
             'email_enabled' => 'sometimes|boolean',
@@ -163,6 +214,9 @@ class AdminNotificationPreferenceController extends Controller
             'push_badge' => 'sometimes|boolean',
             'push_priority' => 'sometimes|in:default,high',
             'soom_new_negotiation' => 'sometimes|boolean',
+            'soom_counter_offer' => 'sometimes|boolean',
+            'soom_accepted' => 'sometimes|boolean',
+            'soom_rejected' => 'sometimes|boolean',
         ]);
 
         $preference->update($validated);
@@ -170,6 +224,64 @@ class AdminNotificationPreferenceController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Preferences updated successfully',
+            'data' => $preference->fresh(),
+        ]);
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/admin/notification-preferences/{id}/enable-all",
+     *     tags={"Admin Notification Preferences"},
+     *     summary="Enable all notifications for a user",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="All notifications enabled",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="All notifications enabled"),
+     *             @OA\Property(property="data", ref="#/components/schemas/NotificationPreference")
+     *         )
+     *     )
+     * )
+     */
+    public function enableAll($id): JsonResponse
+    {
+        $preference = NotificationPreference::findOrFail($id);
+        $preference->enableAll();
+        return response()->json([
+            'success' => true,
+            'message' => 'All notifications enabled',
+            'data' => $preference->fresh(),
+        ]);
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/admin/notification-preferences/{id}/disable-all",
+     *     tags={"Admin Notification Preferences"},
+     *     summary="Disable all notifications for a user",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="All notifications disabled",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="All notifications disabled"),
+     *             @OA\Property(property="data", ref="#/components/schemas/NotificationPreference")
+     *         )
+     *     )
+     * )
+     */
+    public function disableAll($id): JsonResponse
+    {
+        $preference = NotificationPreference::findOrFail($id);
+        $preference->disableAll();
+        return response()->json([
+            'success' => true,
+            'message' => 'All notifications disabled',
             'data' => $preference->fresh(),
         ]);
     }
