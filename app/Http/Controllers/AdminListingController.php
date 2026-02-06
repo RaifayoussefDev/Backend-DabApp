@@ -29,12 +29,26 @@ class AdminListingController extends Controller
      *     @OA\Parameter(name="status", in="query", description="Filter by status (published, draft, sold, etc)", @OA\Schema(type="string")),
      *     @OA\Parameter(name="category_id", in="query", description="Filter by category", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="search", in="query", description="Search by title or ID", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="sort_by", in="query", description="Column to sort by", @OA\Schema(type="string", enum={"id", "title", "price", "status", "created_at", "views"})),
+     *     @OA\Parameter(name="sort_order", in="query", description="Sort order (asc/desc)", @OA\Schema(type="string", enum={"asc", "desc"})),
      *     @OA\Response(response=200, description="Listings retrieved")
      * )
      */
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 15);
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortOrder = $request->input('sort_order', 'desc');
+
+        $allowedSorts = ['id', 'title', 'price', 'status', 'created_at', 'views', 'updated_at'];
+
+        if (!in_array($sortBy, $allowedSorts)) {
+            $sortBy = 'created_at';
+        }
+
+        if (!in_array(strtolower($sortOrder), ['asc', 'desc'])) {
+            $sortOrder = 'desc';
+        }
 
         $query = Listing::with([
             'seller',
@@ -55,7 +69,7 @@ class AdminListingController extends Controller
             'licensePlate.city',
             'licensePlate.fieldValues.formatField'
         ])
-            ->orderBy('created_at', 'desc');
+            ->orderBy($sortBy, $sortOrder);
 
         // Filters
         if ($request->filled('status')) {
@@ -92,8 +106,8 @@ class AdminListingController extends Controller
      *             required={"user_id", "category_id"},
      *             @OA\Property(property="user_id", type="integer", example=2),
      *             @OA\Property(property="category_id", type="integer", example=1),
-            @OA\Property(property="country_id", type="integer", example=1),
-            @OA\Property(property="city_id", type="integer", example=50),
+     *      @OA\Property(property="country_id", type="integer", example=1),
+     *      @OA\Property(property="city_id", type="integer", example=50),
      *             @OA\Property(property="title", type="string", example="Generic Listing"),
      *             @OA\Property(property="price", type="number", example=1000),
      *             @OA\Property(property="images", type="array", @OA\Items(type="string"))
