@@ -177,6 +177,7 @@ Route::prefix('admin')->group(function () {
         // Notifications
         Route::get('/notifications', [AdminNotificationController::class, 'index']);
         Route::post('/notifications/mass-send', [AdminNotificationController::class, 'sendMassNotification']);
+        Route::post('notification-preferences/mass-update', [AdminNotificationPreferenceController::class, 'massUpdate']);
         Route::patch('notification-preferences/{id}/enable-all', [AdminNotificationPreferenceController::class, 'enableAll']);
         Route::patch('notification-preferences/{id}/disable-all', [AdminNotificationPreferenceController::class, 'disableAll']);
         Route::apiResource('notification-preferences', AdminNotificationPreferenceController::class);

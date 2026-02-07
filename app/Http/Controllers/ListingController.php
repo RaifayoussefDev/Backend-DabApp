@@ -3327,7 +3327,7 @@ class ListingController extends Controller
             'city',
             'country',
             'country.currencyExchangeRate',
-            'seller:id,name,first_name,last_name,email,phone,profile_picture,created_at,is_dealer,dealer_title,dealer_address,dealer_phone',
+            'seller:id,first_name,last_name,email,phone,profile_picture,created_at,is_dealer,dealer_title,dealer_address,dealer_phone',
             'motorcycle.brand',
             'motorcycle.model',
             'motorcycle.year',

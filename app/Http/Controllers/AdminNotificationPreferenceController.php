@@ -275,14 +275,122 @@ class AdminNotificationPreferenceController extends Controller
      *     )
      * )
      */
-    public function disableAll($id): JsonResponse
+    /**
+     * @OA\Post(
+     *     path="/api/admin/notification-preferences/mass-update",
+     *     tags={"Admin Notification Preferences"},
+     *     summary="Update preferences for ALL users",
+     *     description="Apply specific preference settings to ALL users in the system. Use with caution.",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             example={"soom_new_negotiation": true, "push_enabled": true},
+     *             @OA\Property(property="listing_approved", type="boolean"),
+     *             @OA\Property(property="soom_new_negotiation", type="boolean"),
+     *             @OA\Property(property="push_enabled", type="boolean"),
+     *             @OA\Property(property="enable_all", type="boolean", description="If true, enables ALL notifications for everyone")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Mass update successful",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Updated 1500 users choices")
+     *         )
+     *     )
+     * )
+     */
+    public function massUpdate(Request $request): JsonResponse
     {
-        $preference = NotificationPreference::findOrFail($id);
-        $preference->disableAll();
+        // If "enable_all" is present and true, we enable everything
+        if ($request->input('enable_all')) {
+            // This might be heavy, so we can use a direct DB update for speed
+            // or just iterate (but large userbase = slow).
+            // DB Update is safer for "Create Default" logic if we assume rows exist.
+            // If rows don't exist, we can't update them here easily without creating them first.
+            // Assuming most users have prefs or we update those who have.
+
+            // For now, let's update existing records.
+            NotificationPreference::query()->update([
+                'listing_approved' => true,
+                'listing_rejected' => true,
+                'listing_expired' => true,
+                'listing_sold' => true,
+                'listing_updated' => true,
+                'bid_placed' => true,
+                'bid_accepted' => true,
+                'bid_rejected' => true,
+                'bid_outbid' => true,
+                'auction_ending_soon' => true,
+                'soom_new_negotiation' => true,
+                'soom_counter_offer' => true,
+                'soom_accepted' => true,
+                'soom_rejected' => true,
+                'dealer_approved' => true,
+                'payment_success' => true,
+                'payment_failed' => true,
+                'payment_pending' => true,
+                'wishlist_price_drop' => true,
+                'wishlist_item_sold' => true,
+                'new_message' => true,
+                'new_guide_published' => true,
+                'guide_published' => true,
+                'guide_comment' => true,
+                'guide_like' => true,
+                'event_created' => true,
+                'event_published' => true,
+                'event_reminder' => true,
+                'event_updated' => true,
+                'event_cancelled' => true,
+                'poi_review' => true,
+                'new_poi_nearby' => true,
+                'route_comment' => true,
+                'route_warning' => true,
+                'system_updates' => true,
+                'promotional' => true,
+                'newsletter' => true,
+                'admin_custom' => true,
+                'push_enabled' => true,
+                'in_app_enabled' => true,
+                'email_enabled' => true,
+                'sms_enabled' => true,
+                'quiet_hours_enabled' => false, // Usually disable quiet hours if enabling all?
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'All notifications enabled for all users (who had preference records)']);
+        }
+
+        // Partial Update
+        $validated = $request->validate([
+            'listing_approved' => 'sometimes|boolean',
+            'push_enabled' => 'sometimes|boolean',
+            'soom_new_negotiation' => 'sometimes|boolean',
+            // Add other fields as needed, or allow all generic
+        ]);
+
+        // Filter out nulls/non-present keys
+        $dataToUpdate = $request->except(['enable_all']);
+
+        // Security: Ensure only valid columns are updated by checking against schema or model fillable?
+        // Using $fillable is safer, but $request->except might include garbage.
+        // Let's rely on strict validation or intersection with fillable.
+
+        $preferenceModel = new NotificationPreference();
+        $fillable = $preferenceModel->getFillable();
+        $validData = array_intersect_key($dataToUpdate, array_flip($fillable));
+
+        if (empty($validData)) {
+            return response()->json(['success' => false, 'message' => 'No valid fields provided'], 400);
+        }
+
+        NotificationPreference::query()->update($validData);
+
         return response()->json([
             'success' => true,
-            'message' => 'All notifications disabled',
-            'data' => $preference->fresh(),
+            'message' => 'Updated preferences for all users',
+            'fields_updated' => array_keys($validData)
         ]);
     }
 }

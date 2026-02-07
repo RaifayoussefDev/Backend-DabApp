@@ -1655,6 +1655,34 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Column to sort by",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "id",
+                                "title",
+                                "price",
+                                "status",
+                                "created_at",
+                                "views"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Sort order (asc/desc)",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
                     }
                 ],
                 "responses": {
@@ -3625,26 +3653,46 @@
                 ]
             }
         },
-        "/api/admin/notification-preferences/{id}/disable-all": {
-            "patch": {
+        "/api/admin/notification-preferences/mass-update": {
+            "post": {
                 "tags": [
                     "Admin Notification Preferences"
                 ],
-                "summary": "Disable all notifications for a user",
-                "operationId": "de61ce12c16f52847c8fcaf947488752",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
+                "summary": "Update preferences for ALL users",
+                "description": "Apply specific preference settings to ALL users in the system. Use with caution.",
+                "operationId": "4e814407e010113245c311fa4d77de9e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "listing_approved": {
+                                        "type": "boolean"
+                                    },
+                                    "soom_new_negotiation": {
+                                        "type": "boolean"
+                                    },
+                                    "push_enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "enable_all": {
+                                        "description": "If true, enables ALL notifications for everyone",
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "soom_new_negotiation": true,
+                                "push_enabled": true
+                            }
                         }
                     }
-                ],
+                },
                 "responses": {
                     "200": {
-                        "description": "All notifications disabled",
+                        "description": "Mass update successful",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3655,10 +3703,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "All notifications disabled"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/NotificationPreference"
+                                            "example": "Updated 1500 users choices"
                                         }
                                     },
                                     "type": "object"
