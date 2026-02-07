@@ -18588,6 +18588,42 @@
                         }
                     },
                     {
+                        "name": "motorcycle_brands[]",
+                        "in": "query",
+                        "description": "Array of compatible motorcycle brand IDs",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "motorcycle_models[]",
+                        "in": "query",
+                        "description": "Array of compatible motorcycle model IDs",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "motorcycle_years[]",
+                        "in": "query",
+                        "description": "Array of compatible motorcycle year IDs",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
                         "name": "condition",
                         "in": "query",
                         "description": "Spare part condition",
