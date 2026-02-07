@@ -120,6 +120,11 @@ use App\Http\Controllers\Services\AdminTransportRouteController;
 use App\Http\Controllers\Services\AdminTowServiceController;
 use App\Http\Controllers\Services\AdminChatSessionController;
 
+use App\Http\Controllers\Admin\GuideAdminController;
+use App\Http\Controllers\Admin\GuideCategoryAdminController;
+use App\Http\Controllers\Admin\GuideTagAdminController;
+use App\Http\Controllers\Admin\GuideCommentAdminController;
+
 // ============================================
 // ============================================
 // PUBLIC ROUTES (NO AUTHENTICATION)
@@ -193,6 +198,38 @@ Route::prefix('admin')->group(function () {
         Route::patch('/listings/{id}/status', [AdminListingController::class, 'changeStatus']);
         Route::post('/listings/{id}/images/reorder', [AdminListingController::class, 'reorderImages']);
         Route::delete('/listings/{id}/images/{image_id}', [AdminListingController::class, 'deleteImage']);
+
+        // Guides Management
+        Route::prefix('guides')->group(function () {
+            Route::get('/stats', [GuideAdminController::class, 'stats']);
+            Route::post('/bulk-delete', [GuideAdminController::class, 'bulkDelete']);
+            Route::post('/bulk-change-status', [GuideAdminController::class, 'bulkChangeStatus']);
+            Route::post('/{id}/change-status', [GuideAdminController::class, 'changeStatus']);
+            Route::get('/{id}/comments', [GuideAdminController::class, 'getComments']);
+        });
+        Route::apiResource('guides', GuideAdminController::class);
+
+        // Guide Categories Management
+        Route::prefix('guide-categories')->group(function () {
+            Route::get('/stats', [GuideCategoryAdminController::class, 'stats']);
+            Route::post('/reorder', [GuideCategoryAdminController::class, 'reorder']);
+        });
+        Route::apiResource('guide-categories', GuideCategoryAdminController::class);
+
+        // Guide Tags Management
+        Route::prefix('guide-tags')->group(function () {
+            Route::get('/stats', [GuideTagAdminController::class, 'stats']);
+            Route::post('/bulk-delete', [GuideTagAdminController::class, 'bulkDelete']);
+            Route::delete('/cleanup-unused', [GuideTagAdminController::class, 'cleanupUnused']);
+        });
+        Route::apiResource('guide-tags', GuideTagAdminController::class);
+
+        // Guide Comments Management
+        Route::prefix('guide-comments')->group(function () {
+            Route::get('/stats', [GuideCommentAdminController::class, 'stats']);
+            Route::post('/bulk-delete', [GuideCommentAdminController::class, 'bulkDelete']);
+        });
+        Route::apiResource('guide-comments', GuideCommentAdminController::class)->except(['store']);
 
         // Admin Events
         Route::apiResource('events', AdminEventController::class);
