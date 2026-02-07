@@ -4603,6 +4603,2812 @@
                 ]
             }
         },
+        "/api/admin/guides": {
+            "get": {
+                "tags": [
+                    "Admin - Guides"
+                ],
+                "summary": "Liste tous les guides avec filtres avancés (Admin)",
+                "description": "Récupère la liste de tous les guides avec possibilité de filtrer, trier et paginer. Si per_page est vide, retourne tous les résultats sans pagination.",
+                "operationId": "c6915dc5dc5c0f2d2b290ff4841ef909",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Numéro de page pour la pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1,
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page. Laisser vide pour retourner TOUS les résultats sans pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filtrer par statut du guide",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "published",
+                                "archived"
+                            ],
+                            "example": "published"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Filtrer par ID de catégorie",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 3
+                        }
+                    },
+                    {
+                        "name": "author_id",
+                        "in": "query",
+                        "description": "Filtrer par ID de l'auteur",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Recherche dans le titre, l'excerpt et le contenu des guides",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "maintenance"
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Champ de tri",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "created_at",
+                            "enum": [
+                                "created_at",
+                                "updated_at",
+                                "title",
+                                "views_count",
+                                "likes_count",
+                                "comments_count"
+                            ],
+                            "example": "views_count"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Ordre de tri",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "desc",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ],
+                            "example": "desc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des guides récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "Guide complet de maintenance moto"
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "example": "guide-complet-maintenance-moto"
+                                                    },
+                                                    "excerpt": {
+                                                        "type": "string",
+                                                        "example": "Apprenez à entretenir votre moto comme un pro"
+                                                    },
+                                                    "featured_image": {
+                                                        "type": "string",
+                                                        "example": "https://example.com/images/guide1.jpg"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "published"
+                                                    },
+                                                    "views_count": {
+                                                        "type": "integer",
+                                                        "example": 1234
+                                                    },
+                                                    "likes_count": {
+                                                        "type": "integer",
+                                                        "example": 45
+                                                    },
+                                                    "comments_count": {
+                                                        "type": "integer",
+                                                        "example": 12
+                                                    },
+                                                    "category": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Maintenance"
+                                                            },
+                                                            "slug": {
+                                                                "type": "string",
+                                                                "example": "maintenance"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "author": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 5
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "John Doe"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "john@example.com"
+                                                            },
+                                                            "profile_picture": {
+                                                                "type": "string",
+                                                                "example": "https://example.com/profiles/john.jpg"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "tags": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "Entretien"
+                                                                },
+                                                                "slug": {
+                                                                    "type": "string",
+                                                                    "example": "entretien"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "meta_title": {
+                                                        "type": "string",
+                                                        "example": "Guide Maintenance Moto - DabApp"
+                                                    },
+                                                    "meta_description": {
+                                                        "type": "string",
+                                                        "example": "Guide complet pour entretenir votre moto"
+                                                    },
+                                                    "meta_keywords": {
+                                                        "type": "string",
+                                                        "example": "maintenance, moto, entretien"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "example": "2025-01-15 10:30:00"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "example": "2025-02-01 14:20:00"
+                                                    },
+                                                    "published_at": {
+                                                        "type": "string",
+                                                        "example": "2025-01-16 09:00:00"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "current_page": {
+                                            "description": "Page actuelle (uniquement si paginé)",
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "last_page": {
+                                            "description": "Dernière page (uniquement si paginé)",
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "per_page": {
+                                            "description": "Éléments par page (uniquement si paginé)",
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "total": {
+                                            "description": "Nombre total d'éléments",
+                                            "type": "integer",
+                                            "example": 195
+                                        },
+                                        "from": {
+                                            "description": "Index du premier élément (uniquement si paginé)",
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "to": {
+                                            "description": "Index du dernier élément (uniquement si paginé)",
+                                            "type": "integer",
+                                            "example": 20
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorisé - Accès admin requis",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized - Admin access required"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Guides"
+                ],
+                "summary": "Créer un nouveau guide (Admin)",
+                "description": "Crée un nouveau guide avec toutes ses informations. Le slug est généré automatiquement depuis le titre.",
+                "operationId": "346408b8dd38ce766fafa4c73a965236",
+                "requestBody": {
+                    "description": "Données du guide à créer",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "category_id",
+                                    "author_id",
+                                    "status"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "description": "Titre du guide (max 255 caractères)",
+                                        "type": "string",
+                                        "example": "Guide de maintenance complète"
+                                    },
+                                    "excerpt": {
+                                        "description": "Résumé court du guide",
+                                        "type": "string",
+                                        "example": "Un guide détaillé pour entretenir votre moto"
+                                    },
+                                    "content": {
+                                        "description": "Contenu complet du guide en HTML",
+                                        "type": "string",
+                                        "example": "<p>Contenu HTML complet du guide...</p>"
+                                    },
+                                    "featured_image": {
+                                        "description": "URL de l'image principale",
+                                        "type": "string",
+                                        "example": "https://example.com/images/maintenance.jpg"
+                                    },
+                                    "category_id": {
+                                        "description": "ID de la catégorie (doit exister)",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "author_id": {
+                                        "description": "ID de l'auteur (doit exister)",
+                                        "type": "integer",
+                                        "example": 5
+                                    },
+                                    "status": {
+                                        "description": "Statut du guide",
+                                        "type": "string",
+                                        "enum": [
+                                            "draft",
+                                            "published",
+                                            "archived"
+                                        ],
+                                        "example": "draft"
+                                    },
+                                    "tags": {
+                                        "description": "IDs des tags à associer",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3
+                                        ]
+                                    },
+                                    "meta_title": {
+                                        "description": "Titre SEO (max 255)",
+                                        "type": "string",
+                                        "example": "Guide Maintenance Moto - DabApp"
+                                    },
+                                    "meta_description": {
+                                        "description": "Description SEO",
+                                        "type": "string",
+                                        "example": "Apprenez à entretenir votre moto avec notre guide complet"
+                                    },
+                                    "meta_keywords": {
+                                        "description": "Mots-clés SEO",
+                                        "type": "string",
+                                        "example": "maintenance, moto, entretien, guide"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Guide créé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Guide created successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 150
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Guide de maintenance complète"
+                                                },
+                                                "slug": {
+                                                    "type": "string",
+                                                    "example": "guide-de-maintenance-complete"
+                                                },
+                                                "excerpt": {
+                                                    "type": "string",
+                                                    "example": "Un guide détaillé pour entretenir votre moto"
+                                                },
+                                                "featured_image": {
+                                                    "type": "string",
+                                                    "example": "https://example.com/images/maintenance.jpg"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "draft"
+                                                },
+                                                "views_count": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "likes_count": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "comments_count": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "category": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Maintenance"
+                                                        },
+                                                        "slug": {
+                                                            "type": "string",
+                                                            "example": "maintenance"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "author": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "John Doe"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "john@example.com"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "tags": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Entretien"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "example": "2025-02-07 10:30:00"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "example": "2025-02-07 10:30:00"
+                                                },
+                                                "published_at": {
+                                                    "type": "string",
+                                                    "example": null
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "errors": {
+                                            "properties": {
+                                                "title": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The title field is required."
+                                                    }
+                                                },
+                                                "category_id": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The selected category id is invalid."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorisé - Accès admin requis",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized - Admin access required"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guides/stats": {
+            "get": {
+                "tags": [
+                    "Admin - Guides"
+                ],
+                "summary": "Statistiques globales des guides (Admin)",
+                "description": "Retourne des statistiques complètes sur tous les guides : compteurs, top auteurs, catégories populaires, guides les plus consultés, etc.",
+                "operationId": "36a13d31b635d845e4b790c0269f28fb",
+                "responses": {
+                    "200": {
+                        "description": "Statistiques récupérées avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_guides": {
+                                            "description": "Nombre total de guides",
+                                            "type": "integer",
+                                            "example": 150
+                                        },
+                                        "published_guides": {
+                                            "description": "Guides publiés",
+                                            "type": "integer",
+                                            "example": 120
+                                        },
+                                        "draft_guides": {
+                                            "description": "Guides en brouillon",
+                                            "type": "integer",
+                                            "example": 25
+                                        },
+                                        "archived_guides": {
+                                            "description": "Guides archivés",
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "total_views": {
+                                            "description": "Total de vues",
+                                            "type": "integer",
+                                            "example": 45678
+                                        },
+                                        "total_likes": {
+                                            "description": "Total de likes",
+                                            "type": "integer",
+                                            "example": 3456
+                                        },
+                                        "total_comments": {
+                                            "description": "Total de commentaires",
+                                            "type": "integer",
+                                            "example": 890
+                                        },
+                                        "total_categories": {
+                                            "description": "Nombre de catégories",
+                                            "type": "integer",
+                                            "example": 12
+                                        },
+                                        "total_tags": {
+                                            "description": "Nombre de tags",
+                                            "type": "integer",
+                                            "example": 45
+                                        },
+                                        "guides_this_month": {
+                                            "description": "Guides créés ce mois",
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "guides_today": {
+                                            "description": "Guides créés aujourd'hui",
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "avg_views_per_guide": {
+                                            "description": "Moyenne de vues par guide",
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 304.52
+                                        },
+                                        "top_authors": {
+                                            "description": "Top 5 des auteurs les plus productifs",
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "guides_count": {
+                                                        "type": "integer",
+                                                        "example": 25
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "top_categories": {
+                                            "description": "Top 5 des catégories les plus utilisées",
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Maintenance"
+                                                    },
+                                                    "guides_count": {
+                                                        "type": "integer",
+                                                        "example": 45
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "most_viewed_guides": {
+                                            "description": "Top 5 des guides les plus consultés",
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "Guide complet de maintenance"
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "example": "guide-complet-maintenance"
+                                                    },
+                                                    "views_count": {
+                                                        "type": "integer",
+                                                        "example": 2345
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "most_liked_guides": {
+                                            "description": "Top 5 des guides les plus likés",
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 3
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "Entretien moteur"
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "example": "entretien-moteur"
+                                                    },
+                                                    "likes_count": {
+                                                        "type": "integer",
+                                                        "example": 156
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "recent_guides": {
+                                            "description": "5 guides les plus récents",
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 150
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "Nouveau guide"
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "example": "nouveau-guide"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "draft"
+                                                    },
+                                                    "author_name": {
+                                                        "type": "string",
+                                                        "example": "Jane Smith"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "example": "2025-02-07 10:30:00"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "status_distribution": {
+                                            "description": "Distribution des guides par statut",
+                                            "properties": {
+                                                "draft": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "published": {
+                                                    "type": "integer",
+                                                    "example": 120
+                                                },
+                                                "archived": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "guides_by_month": {
+                                            "description": "Nombre de guides créés par mois (12 derniers mois)",
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "year": {
+                                                        "type": "integer",
+                                                        "example": 2025
+                                                    },
+                                                    "month": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "count": {
+                                                        "type": "integer",
+                                                        "example": 15
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorisé - Accès admin requis",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized - Admin access required"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guides/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Guides"
+                ],
+                "summary": "Détails complets d'un guide (Admin)",
+                "description": "Récupère tous les détails d'un guide incluant le contenu complet, les sections, images et commentaires récents",
+                "operationId": "a216778412110dde33c653679bd146cd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du guide",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du guide récupérés avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Guide complet de maintenance moto"
+                                                },
+                                                "slug": {
+                                                    "type": "string",
+                                                    "example": "guide-complet-maintenance-moto"
+                                                },
+                                                "excerpt": {
+                                                    "type": "string",
+                                                    "example": "Apprenez à entretenir votre moto comme un pro"
+                                                },
+                                                "content": {
+                                                    "type": "string",
+                                                    "example": "<p>Contenu HTML complet du guide...</p>"
+                                                },
+                                                "featured_image": {
+                                                    "type": "string",
+                                                    "example": "https://example.com/images/guide1.jpg"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "published"
+                                                },
+                                                "views_count": {
+                                                    "type": "integer",
+                                                    "example": 1234
+                                                },
+                                                "likes_count": {
+                                                    "type": "integer",
+                                                    "example": 45
+                                                },
+                                                "comments_count": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "category": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Maintenance"
+                                                        },
+                                                        "slug": {
+                                                            "type": "string",
+                                                            "example": "maintenance"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "author": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "John Doe"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "john@example.com"
+                                                        },
+                                                        "profile_picture": {
+                                                            "type": "string",
+                                                            "example": "https://example.com/profiles/john.jpg"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "tags": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Entretien"
+                                                            },
+                                                            "slug": {
+                                                                "type": "string",
+                                                                "example": "entretien"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "sections": {
+                                                    "description": "Sections du guide",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "title": {
+                                                                "type": "string",
+                                                                "example": "Introduction"
+                                                            },
+                                                            "content": {
+                                                                "type": "string",
+                                                                "example": "<p>Contenu de la section...</p>"
+                                                            },
+                                                            "order_position": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "images": {
+                                                    "description": "Images du guide",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "image_url": {
+                                                                "type": "string",
+                                                                "example": "https://example.com/images/step1.jpg"
+                                                            },
+                                                            "caption": {
+                                                                "type": "string",
+                                                                "example": "Première étape"
+                                                            },
+                                                            "order_position": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "recent_comments": {
+                                                    "description": "10 commentaires les plus récents",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "content": {
+                                                                "type": "string",
+                                                                "example": "Excellent guide, très utile!"
+                                                            },
+                                                            "user_name": {
+                                                                "type": "string",
+                                                                "example": "Jane Smith"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "example": "2025-02-05 11:30:00"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "meta_title": {
+                                                    "type": "string",
+                                                    "example": "Guide Maintenance Moto - DabApp"
+                                                },
+                                                "meta_description": {
+                                                    "type": "string",
+                                                    "example": "Guide complet pour entretenir votre moto"
+                                                },
+                                                "meta_keywords": {
+                                                    "type": "string",
+                                                    "example": "maintenance, moto, entretien"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "example": "2025-01-15 10:30:00"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "example": "2025-02-01 14:20:00"
+                                                },
+                                                "published_at": {
+                                                    "type": "string",
+                                                    "example": "2025-01-16 09:00:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Guide non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Guide not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorisé - Accès admin requis",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized - Admin access required"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Guides"
+                ],
+                "summary": "Mettre à jour un guide (Admin)",
+                "description": "Met à jour un guide existant. Tous les champs sont optionnels. Si le titre change, le slug est régénéré automatiquement.",
+                "operationId": "cf95b7c31191910a554db616a2a9c3a0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du guide à mettre à jour",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Données à mettre à jour (tous les champs sont optionnels)",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "description": "Nouveau titre (max 255)",
+                                        "type": "string",
+                                        "example": "Titre modifié"
+                                    },
+                                    "excerpt": {
+                                        "type": "string",
+                                        "example": "Résumé modifié"
+                                    },
+                                    "content": {
+                                        "type": "string",
+                                        "example": "<p>Nouveau contenu...</p>"
+                                    },
+                                    "featured_image": {
+                                        "type": "string",
+                                        "example": "https://example.com/new-image.jpg"
+                                    },
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "author_id": {
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "draft",
+                                            "published",
+                                            "archived"
+                                        ],
+                                        "example": "published"
+                                    },
+                                    "tags": {
+                                        "description": "Nouveaux tags (remplace les anciens)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            5
+                                        ]
+                                    },
+                                    "meta_title": {
+                                        "type": "string",
+                                        "example": "Nouveau titre SEO"
+                                    },
+                                    "meta_description": {
+                                        "type": "string",
+                                        "example": "Nouvelle description SEO"
+                                    },
+                                    "meta_keywords": {
+                                        "type": "string",
+                                        "example": "nouveaux, mots-clés"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Guide mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Guide updated successfully"
+                                        },
+                                        "data": {
+                                            "description": "Guide mis à jour avec toutes ses relations",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Guide non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Guide not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorisé - Accès admin requis",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized - Admin access required"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Guides"
+                ],
+                "summary": "Supprimer un guide (Admin)",
+                "description": "Supprime définitivement un guide et toutes ses relations (tags, sections, images, commentaires, likes). Cette action est irréversible.",
+                "operationId": "714dcf3e0b332150ff1e752d712725e7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du guide à supprimer",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Guide supprimé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Guide deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Guide non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Guide not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorisé - Accès admin requis",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized - Admin access required"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guides/{id}/change-status": {
+            "post": {
+                "tags": [
+                    "Admin - Guides"
+                ],
+                "summary": "Changer le statut d'un guide (Admin)",
+                "description": "Change le statut d'un guide. Si le statut passe à 'published' pour la première fois, la date de publication est définie automatiquement.",
+                "operationId": "c935caefc78b687391ff97d2fdf22b3f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du guide",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Nouveau statut du guide",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "description": "Nouveau statut à appliquer",
+                                        "type": "string",
+                                        "enum": [
+                                            "draft",
+                                            "published",
+                                            "archived"
+                                        ],
+                                        "example": "published"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Statut changé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Status changed successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "old_status": {
+                                                    "type": "string",
+                                                    "example": "draft"
+                                                },
+                                                "new_status": {
+                                                    "type": "string",
+                                                    "example": "published"
+                                                },
+                                                "published_at": {
+                                                    "description": "Date de publication (null si non publié)",
+                                                    "type": "string",
+                                                    "example": "2025-02-07 10:30:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Guide non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Guide not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "errors": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The selected status is invalid."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorisé - Accès admin requis",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized - Admin access required"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guides/bulk-delete": {
+            "post": {
+                "tags": [
+                    "Admin - Guides"
+                ],
+                "summary": "Suppression en masse de guides (Admin)",
+                "description": "Supprime plusieurs guides en une seule opération. Toutes les relations (tags, sections, images, commentaires, likes) sont également supprimées. Cette action est irréversible.",
+                "operationId": "7eb0bcae13c3f6e33bfcf01b68b6677d",
+                "requestBody": {
+                    "description": "Liste des IDs des guides à supprimer",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ids"
+                                ],
+                                "properties": {
+                                    "ids": {
+                                        "description": "Tableau des IDs de guides à supprimer (minimum 1, recommandé max 100)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3,
+                                            4,
+                                            5
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Guides supprimés avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Guides deleted successfully"
+                                        },
+                                        "deleted_count": {
+                                            "description": "Nombre de guides supprimés",
+                                            "type": "integer",
+                                            "example": 5
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "errors": {
+                                            "properties": {
+                                                "ids": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The ids field is required."
+                                                    }
+                                                },
+                                                "ids.0": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The selected ids.0 is invalid."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorisé - Accès admin requis",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized - Admin access required"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guides/bulk-change-status": {
+            "post": {
+                "tags": [
+                    "Admin - Guides"
+                ],
+                "summary": "Changement de statut en masse (Admin)",
+                "description": "Change le statut de plusieurs guides en une seule opération. Si le statut devient 'published', la date de publication est définie pour tous les guides concernés.",
+                "operationId": "8b969f0b101744ded3f2d1ef63784de4",
+                "requestBody": {
+                    "description": "Liste des IDs et nouveau statut",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ids",
+                                    "status"
+                                ],
+                                "properties": {
+                                    "ids": {
+                                        "description": "Tableau des IDs de guides à modifier",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            10,
+                                            11,
+                                            12,
+                                            13
+                                        ]
+                                    },
+                                    "status": {
+                                        "description": "Nouveau statut à appliquer à tous les guides",
+                                        "type": "string",
+                                        "enum": [
+                                            "draft",
+                                            "published",
+                                            "archived"
+                                        ],
+                                        "example": "published"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Statuts changés avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Status changed successfully"
+                                        },
+                                        "updated_count": {
+                                            "description": "Nombre de guides modifiés",
+                                            "type": "integer",
+                                            "example": 4
+                                        },
+                                        "new_status": {
+                                            "description": "Nouveau statut appliqué",
+                                            "type": "string",
+                                            "example": "published"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "errors": {
+                                            "properties": {
+                                                "ids": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The ids field is required."
+                                                    }
+                                                },
+                                                "status": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The selected status is invalid."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorisé - Accès admin requis",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized - Admin access required"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guides/{id}/comments": {
+            "get": {
+                "tags": [
+                    "Admin - Guides"
+                ],
+                "summary": "Liste des commentaires d'un guide (Admin)",
+                "description": "Récupère tous les commentaires d'un guide spécifique avec les informations des utilisateurs",
+                "operationId": "802a26b660bfec8784be03363d12251b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du guide",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des commentaires récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "guide_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "comments_count": {
+                                            "description": "Nombre total de commentaires",
+                                            "type": "integer",
+                                            "example": 25
+                                        },
+                                        "comments": {
+                                            "description": "Liste de tous les commentaires triés du plus récent au plus ancien",
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "guide_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 10
+                                                    },
+                                                    "content": {
+                                                        "type": "string",
+                                                        "example": "Excellent guide, très utile pour les débutants!"
+                                                    },
+                                                    "user_name": {
+                                                        "type": "string",
+                                                        "example": "Jane Smith"
+                                                    },
+                                                    "profile_picture": {
+                                                        "type": "string",
+                                                        "example": "https://example.com/profiles/jane.jpg"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "example": "2025-02-05 14:30:00"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "example": "2025-02-05 14:30:00"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Guide non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Guide not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorisé - Accès admin requis",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized - Admin access required"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guide-categories": {
+            "get": {
+                "tags": [
+                    "Admin - Guide Categories"
+                ],
+                "summary": "Liste toutes les catégories (Admin)",
+                "description": "Récupère toutes les catégories avec le nombre de guides. Si per_page est vide, retourne tout sans pagination.",
+                "operationId": "43e38192c80060280260aa56812bf222",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Numéro de page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1,
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Éléments par page (vide = tous)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Recherche dans nom et description",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "maintenance"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des catégories",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Maintenance"
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "example": "maintenance"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Guides de maintenance"
+                                                    },
+                                                    "icon": {
+                                                        "type": "string",
+                                                        "example": "wrench"
+                                                    },
+                                                    "color": {
+                                                        "type": "string",
+                                                        "example": "#FF5722"
+                                                    },
+                                                    "order_position": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "guides_count": {
+                                                        "type": "integer",
+                                                        "example": 45
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "example": "2025-01-15 10:30:00"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 12
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorisé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Guide Categories"
+                ],
+                "summary": "Créer une catégorie (Admin)",
+                "operationId": "1fdc56b84934a6d15dc280ca2cf8d751",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Sécurité"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Guides de sécurité routière"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "shield"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "example": "#4CAF50"
+                                    },
+                                    "order_position": {
+                                        "type": "integer",
+                                        "example": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Catégorie créée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category created successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guide-categories/stats": {
+            "get": {
+                "tags": [
+                    "Admin - Guide Categories"
+                ],
+                "summary": "Statistiques des catégories (Admin)",
+                "operationId": "86a37c56461596c2590e779677adaae8",
+                "responses": {
+                    "200": {
+                        "description": "Statistiques",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_categories": {
+                                            "type": "integer",
+                                            "example": 12
+                                        },
+                                        "categories_with_guides": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "empty_categories": {
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "top_categories": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "guides_count": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guide-categories/{id}": {
+            "put": {
+                "tags": [
+                    "Admin - Guide Categories"
+                ],
+                "summary": "Mettre à jour une catégorie (Admin)",
+                "operationId": "c439f35dd38e23cea834468713c7a83b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Sécurité Routière"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "icon": {
+                                        "type": "string"
+                                    },
+                                    "color": {
+                                        "type": "string"
+                                    },
+                                    "order_position": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Catégorie mise à jour"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Guide Categories"
+                ],
+                "summary": "Supprimer une catégorie (Admin)",
+                "description": "Supprime une catégorie. Les guides associés auront category_id = NULL",
+                "operationId": "bc7301c3e5ec2fde3a68174b1d73d3cc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Catégorie supprimée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guide-categories/reorder": {
+            "post": {
+                "tags": [
+                    "Admin - Guide Categories"
+                ],
+                "summary": "Réorganiser l'ordre des catégories (Admin)",
+                "operationId": "545ab83dda6278c7d4950f360fd1332b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "categories"
+                                ],
+                                "properties": {
+                                    "categories": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "order_position": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ordre mis à jour"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guide-comments": {
+            "get": {
+                "tags": [
+                    "Admin - Guide Comments"
+                ],
+                "summary": "Liste tous les commentaires (Admin)",
+                "description": "Récupère la liste de tous les commentaires avec filtres. Si per_page est vide, retourne tous les résultats.",
+                "operationId": "c3bdb7b2fe76fba8fa6332dc0ebd7236",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre par page (vide = tous)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    },
+                    {
+                        "name": "guide_id",
+                        "in": "query",
+                        "description": "Filtrer par guide",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Filtrer par utilisateur",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Recherche dans le contenu",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "desc",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des commentaires",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "content": {
+                                                        "type": "string",
+                                                        "example": "Excellent guide!"
+                                                    },
+                                                    "guide_id": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "guide_title": {
+                                                        "type": "string",
+                                                        "example": "Guide maintenance"
+                                                    },
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 10
+                                                    },
+                                                    "user_name": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "user_email": {
+                                                        "type": "string",
+                                                        "example": "john@example.com"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "example": "2025-02-05 14:30:00"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guide-comments/stats": {
+            "get": {
+                "tags": [
+                    "Admin - Guide Comments"
+                ],
+                "summary": "Statistiques des commentaires (Admin)",
+                "operationId": "e0ade2088961df829ab5a6cbfffbec17",
+                "responses": {
+                    "200": {
+                        "description": "Statistiques",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_comments": {
+                                            "type": "integer",
+                                            "example": 890
+                                        },
+                                        "comments_today": {
+                                            "type": "integer",
+                                            "example": 12
+                                        },
+                                        "comments_this_week": {
+                                            "type": "integer",
+                                            "example": 78
+                                        },
+                                        "comments_this_month": {
+                                            "type": "integer",
+                                            "example": 234
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guide-comments/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Guide Comments"
+                ],
+                "summary": "Détails d'un commentaire (Admin)",
+                "operationId": "5df276d00a009ddcde73c934ae4baddf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du commentaire"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Guide Comments"
+                ],
+                "summary": "Mettre à jour un commentaire (Admin)",
+                "operationId": "c80910390eacd884a98a7e854aa128b7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Contenu modifié"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Commentaire mis à jour"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Guide Comments"
+                ],
+                "summary": "Supprimer un commentaire (Admin)",
+                "operationId": "46b5b32f5b5cd5511a30203d96a0915a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Commentaire supprimé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guide-comments/bulk-delete": {
+            "post": {
+                "tags": [
+                    "Admin - Guide Comments"
+                ],
+                "summary": "Suppression en masse de commentaires (Admin)",
+                "operationId": "bdda7abd62e95ba2b2ce3fa868430ebb",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ids"
+                                ],
+                                "properties": {
+                                    "ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Commentaires supprimés"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guide-tags": {
+            "get": {
+                "tags": [
+                    "Admin - Guide Tags"
+                ],
+                "summary": "Liste tous les tags (Admin)",
+                "description": "Récupère tous les tags avec le nombre de guides associés",
+                "operationId": "6253ce448da3759be1900ef0b993d54e",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Vide = tous",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "entretien"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des tags"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Guide Tags"
+                ],
+                "summary": "Créer un tag (Admin)",
+                "operationId": "4b8192af13a5096325f6068e05e67956",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Réparation"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tag créé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guide-tags/stats": {
+            "get": {
+                "tags": [
+                    "Admin - Guide Tags"
+                ],
+                "summary": "Statistiques des tags (Admin)",
+                "operationId": "068675f7120a4440ff04d03d2da4e627",
+                "responses": {
+                    "200": {
+                        "description": "Statistiques"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guide-tags/{id}": {
+            "put": {
+                "tags": [
+                    "Admin - Guide Tags"
+                ],
+                "summary": "Mettre à jour un tag (Admin)",
+                "operationId": "63fde7f40d3ced05519227864652444f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag mis à jour"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Guide Tags"
+                ],
+                "summary": "Supprimer un tag (Admin)",
+                "operationId": "628753bb91e371c1ad7a03d406d902f8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag supprimé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guide-tags/bulk-delete": {
+            "post": {
+                "tags": [
+                    "Admin - Guide Tags"
+                ],
+                "summary": "Suppression en masse de tags (Admin)",
+                "operationId": "9f554a9244c8f7c458a01a0c1dc5b2d4",
+                "responses": {
+                    "200": {
+                        "description": "Tags supprimés"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guide-tags/cleanup-unused": {
+            "delete": {
+                "tags": [
+                    "Admin - Guide Tags"
+                ],
+                "summary": "Supprimer tous les tags non utilisés (Admin)",
+                "operationId": "2b2c03e0c678afbd312720d8d40430fc",
+                "responses": {
+                    "200": {
+                        "description": "Tags non utilisés supprimés"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/reports": {
             "get": {
                 "tags": [
@@ -50007,6 +52813,22 @@
         {
             "name": "Admin Notification Preferences",
             "description": "Admin management of user notification preferences"
+        },
+        {
+            "name": "Admin - Guides",
+            "description": "API Endpoints pour l'administration des guides"
+        },
+        {
+            "name": "Admin - Guide Categories",
+            "description": "API Endpoints pour l'administration des catégories de guides"
+        },
+        {
+            "name": "Admin - Guide Comments",
+            "description": "API Endpoints pour l'administration des commentaires de guides"
+        },
+        {
+            "name": "Admin - Guide Tags",
+            "description": "API Endpoints pour l'administration des tags de guides"
         },
         {
             "name": "Admin Reports",

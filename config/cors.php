@@ -25,7 +25,6 @@ return [
         'http://localhost:8000',
         'https://dabapp-adminboard.vercel.app',
         'adminboard.dabapp.co',
-
     ],
 
     'allowed_origins_patterns' => [
