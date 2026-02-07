@@ -3438,6 +3438,10 @@ class ListingController extends Controller
                 'profile_image' => $listing->seller?->profile_image,
                 'verified' => (bool) $listing->seller?->verified,
                 'member_since' => $listing->seller?->created_at->format('Y-m-d H:i:s'),
+                'is_dealer' => (bool) $listing->seller?->is_dealer,
+                'dealer_title' => $listing->seller?->dealer_title,
+                'dealer_address' => $listing->seller?->dealer_address,
+                'dealer_phone' => $listing->seller?->dealer_phone,
             ];
         }
 
