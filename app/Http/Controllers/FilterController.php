@@ -284,6 +284,9 @@ class FilterController extends Controller
      *     @OA\Parameter(name="max_price", in="query", description="Maximum price filter", required=false, @OA\Schema(type="number", format="float", minimum=0)),
      *     @OA\Parameter(name="bike_part_brands[]", in="query", description="Array of bike part brand IDs", required=false, @OA\Schema(type="array", @OA\Items(type="integer"))),
      *     @OA\Parameter(name="bike_part_categories[]", in="query", description="Array of bike part category IDs", required=false, @OA\Schema(type="array", @OA\Items(type="integer"))),
+     *     @OA\Parameter(name="motorcycle_brands[]", in="query", description="Array of compatible motorcycle brand IDs", required=false, @OA\Schema(type="array", @OA\Items(type="integer"))),
+     *     @OA\Parameter(name="motorcycle_models[]", in="query", description="Array of compatible motorcycle model IDs", required=false, @OA\Schema(type="array", @OA\Items(type="integer"))),
+     *     @OA\Parameter(name="motorcycle_years[]", in="query", description="Array of compatible motorcycle year IDs", required=false, @OA\Schema(type="array", @OA\Items(type="integer"))),
      *     @OA\Parameter(name="condition", in="query", description="Spare part condition", required=false, @OA\Schema(type="string", enum={"new", "used", "excellent", "good", "fair", "poor"})),
      *     @OA\Parameter(name="seller_type", in="query", description="Type of seller", required=false, @OA\Schema(type="string", enum={"individual", "professional", "dealer"})),
      *     @OA\Parameter(name="country_id", in="query", description="Country ID filter", required=false, @OA\Schema(type="integer")),
@@ -350,6 +353,25 @@ class FilterController extends Controller
                 }
                 if ($this->hasValue($condition)) {
                     $q->where('condition', $condition);
+                }
+            });
+        }
+
+        // ✅ NEW: Filter by Compatible Motorcycles (Spare Parts)
+        $motoBrands = $request->input('motorcycle_brands');
+        $motoModels = $request->input('motorcycle_models');
+        $motoYears = $request->input('motorcycle_years');
+
+        if ($this->hasValue($motoBrands) || $this->hasValue($motoModels) || $this->hasValue($motoYears)) {
+            $query->whereHas('sparePart.motorcycles', function ($q) use ($motoBrands, $motoModels, $motoYears) {
+                if ($this->hasValue($motoBrands)) {
+                    $q->whereIn('brand_id', $motoBrands);
+                }
+                if ($this->hasValue($motoModels)) {
+                    $q->whereIn('model_id', $motoModels);
+                }
+                if ($this->hasValue($motoYears)) {
+                    $q->whereIn('year_id', $motoYears);
                 }
             });
         }
