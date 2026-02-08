@@ -109,21 +109,41 @@ class PointOfInterestController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"name","type_id","latitude","longitude"},
-     *             @OA\Property(property="name", type="string"),
-     *             @OA\Property(property="description", type="string"),
-     *             @OA\Property(property="type_id", type="integer"),
-     *             @OA\Property(property="latitude", type="number", format="float"),
-     *             @OA\Property(property="longitude", type="number", format="float"),
-     *             @OA\Property(property="address", type="string"),
-     *             @OA\Property(property="city_id", type="integer"),
-     *             @OA\Property(property="country_id", type="integer"),
-     *             @OA\Property(property="phone", type="string"),
-     *             @OA\Property(property="email", type="string"),
-     *             @OA\Property(property="website", type="string"),
-     *             @OA\Property(property="opening_hours", type="object")
+     *             @OA\Property(property="name", type="string", example="Eiffel Tower"),
+     *             @OA\Property(property="description", type="string", example="A wrought-iron lattice tower on the Champ de Mars."),
+     *             @OA\Property(property="type_id", type="integer", example=1),
+     *             @OA\Property(property="latitude", type="number", format="float", example=48.8584),
+     *             @OA\Property(property="longitude", type="number", format="float", example=2.2945),
+     *             @OA\Property(property="address", type="string", example="Champ de Mars, 5 Av. Anatole France, 75007 Paris"),
+     *             @OA\Property(property="city_id", type="integer", example=1),
+     *             @OA\Property(property="country_id", type="integer", example=1),
+     *             @OA\Property(property="phone", type="string", example="+33 892 70 12 39"),
+     *             @OA\Property(property="email", type="string", example="info@toureiffel.paris"),
+     *             @OA\Property(property="website", type="string", example="https://www.toureiffel.paris"),
+     *             @OA\Property(
+     *                 property="opening_hours", 
+     *                 type="object",
+     *                 example={
+     *                     "monday": "09:00-23:45",
+     *                     "tuesday": "09:00-23:45",
+     *                     "wednesday": "09:00-23:45",
+     *                     "thursday": "09:00-23:45",
+     *                     "friday": "09:00-23:45",
+     *                     "saturday": "09:00-23:45",
+     *                     "sunday": "09:00-23:45"
+     *                 }
+     *             )
      *         )
      *     ),
-     *     @OA\Response(response=201, description="POI created successfully"),
+     *     @OA\Response(
+     *         response=201, 
+     *         description="POI created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Point of interest created successfully"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
      *     @OA\Response(response=422, description="Validation error"),
      *     @OA\Response(response=401, description="Unauthenticated")
      * )
@@ -241,13 +261,35 @@ class PointOfInterestController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string"),
-     *             @OA\Property(property="description", type="string"),
-     *             @OA\Property(property="latitude", type="number", format="float"),
-     *             @OA\Property(property="longitude", type="number", format="float")
+     *             @OA\Property(property="name", type="string", example="Eiffel Tower (Updated)"),
+     *             @OA\Property(property="description", type="string", example="Updated description for the tower."),
+     *             @OA\Property(property="latitude", type="number", format="float", example=48.8584),
+     *             @OA\Property(property="longitude", type="number", format="float", example=2.2945),
+     *             @OA\Property(property="address", type="string", example="Updated Address, Paris"),
+     *             @OA\Property(property="city_id", type="integer", example=1),
+     *             @OA\Property(property="country_id", type="integer", example=1),
+     *             @OA\Property(property="phone", type="string", example="+33 1 23 45 67 89"),
+     *             @OA\Property(property="email", type="string", example="updated@toureiffel.paris"),
+     *             @OA\Property(property="website", type="string", example="https://www.toureiffel.paris"),
+     *             @OA\Property(
+     *                 property="opening_hours", 
+     *                 type="object",
+     *                 example={
+     *                     "monday": "closed",
+     *                     "tuesday": "10:00-18:00"
+     *                 }
+     *             )
      *         )
      *     ),
-     *     @OA\Response(response=200, description="POI updated successfully"),
+     *     @OA\Response(
+     *         response=200, 
+     *         description="POI updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Point of interest updated successfully"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
      *     @OA\Response(response=403, description="Forbidden"),
      *     @OA\Response(response=404, description="POI not found"),
      *     @OA\Response(response=401, description="Unauthenticated")

@@ -33508,42 +33508,62 @@
                                 ],
                                 "properties": {
                                     "name": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "Eiffel Tower"
                                     },
                                     "description": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "A wrought-iron lattice tower on the Champ de Mars."
                                     },
                                     "type_id": {
-                                        "type": "integer"
+                                        "type": "integer",
+                                        "example": 1
                                     },
                                     "latitude": {
                                         "type": "number",
-                                        "format": "float"
+                                        "format": "float",
+                                        "example": 48.8584
                                     },
                                     "longitude": {
                                         "type": "number",
-                                        "format": "float"
+                                        "format": "float",
+                                        "example": 2.2945
                                     },
                                     "address": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "Champ de Mars, 5 Av. Anatole France, 75007 Paris"
                                     },
                                     "city_id": {
-                                        "type": "integer"
+                                        "type": "integer",
+                                        "example": 1
                                     },
                                     "country_id": {
-                                        "type": "integer"
+                                        "type": "integer",
+                                        "example": 1
                                     },
                                     "phone": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "+33 892 70 12 39"
                                     },
                                     "email": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "info@toureiffel.paris"
                                     },
                                     "website": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "https://www.toureiffel.paris"
                                     },
                                     "opening_hours": {
-                                        "type": "object"
+                                        "type": "object",
+                                        "example": {
+                                            "monday": "09:00-23:45",
+                                            "tuesday": "09:00-23:45",
+                                            "wednesday": "09:00-23:45",
+                                            "thursday": "09:00-23:45",
+                                            "friday": "09:00-23:45",
+                                            "saturday": "09:00-23:45",
+                                            "sunday": "09:00-23:45"
+                                        }
                                     }
                                 },
                                 "type": "object"
@@ -33553,7 +33573,27 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "POI created successfully"
+                        "description": "POI created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Point of interest created successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "422": {
                         "description": "Validation error"
@@ -33626,18 +33666,53 @@
                             "schema": {
                                 "properties": {
                                     "name": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "Eiffel Tower (Updated)"
                                     },
                                     "description": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "Updated description for the tower."
                                     },
                                     "latitude": {
                                         "type": "number",
-                                        "format": "float"
+                                        "format": "float",
+                                        "example": 48.8584
                                     },
                                     "longitude": {
                                         "type": "number",
-                                        "format": "float"
+                                        "format": "float",
+                                        "example": 2.2945
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "Updated Address, Paris"
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "country_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+33 1 23 45 67 89"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "updated@toureiffel.paris"
+                                    },
+                                    "website": {
+                                        "type": "string",
+                                        "example": "https://www.toureiffel.paris"
+                                    },
+                                    "opening_hours": {
+                                        "type": "object",
+                                        "example": {
+                                            "monday": "closed",
+                                            "tuesday": "10:00-18:00"
+                                        }
                                     }
                                 },
                                 "type": "object"
@@ -33647,7 +33722,27 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "POI updated successfully"
+                        "description": "POI updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Point of interest updated successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "403": {
                         "description": "Forbidden"
