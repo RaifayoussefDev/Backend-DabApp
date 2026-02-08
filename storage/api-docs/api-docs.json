@@ -25864,6 +25864,12 @@
                                                     "name": {
                                                         "type": "string"
                                                     },
+                                                    "name_ar": {
+                                                        "type": "string"
+                                                    },
+                                                    "icon": {
+                                                        "type": "string"
+                                                    },
                                                     "listings_count": {
                                                         "type": "integer"
                                                     }
