@@ -16,7 +16,26 @@ class MotorcycleTypeController extends Controller
      *     path="/api/motorcycle-types",
      *     tags={"Motorcycle Types"},
      *     summary="Get all motorcycle types",
-     *     @OA\Response(response=200, description="List of motorcycle types or no data")
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of motorcycle types or no data",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Motorcycle types retrieved successfully."),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Sport"),
+     *                     @OA\Property(property="name_ar", type="string", example="رياضية"),
+     *                     @OA\Property(property="icon", type="string", example="https://api.dabapp.co/storage/motorcycle_types/icon.png"),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T12:00:00Z"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T12:00:00Z")
+     *                 )
+     *             )
+     *         )
+     *     )
      * )
      */
     public function index()
@@ -53,7 +72,23 @@ class MotorcycleTypeController extends Controller
      *             )
      *         )
      *     ),
-     *     @OA\Response(response=201, description="Motorcycle type created successfully")
+     *     @OA\Response(
+     *         response=201,
+     *         description="Motorcycle type created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Motorcycle type created successfully."),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="Sport"),
+     *                 @OA\Property(property="name_ar", type="string", example="رياضية"),
+     *                 @OA\Property(property="icon", type="string", example="https://api.dabapp.co/storage/motorcycle_types/icon.png"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T12:00:00Z"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T12:00:00Z")
+     *             )
+     *         )
+     *     )
      * )
      */
     public function store(Request $request)
@@ -90,7 +125,23 @@ class MotorcycleTypeController extends Controller
      *         required=true,
      *         @OA\Schema(type="integer")
      *     ),
-     *     @OA\Response(response=200, description="Motorcycle type data"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Motorcycle type data",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Motorcycle type retrieved successfully."),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="Sport"),
+     *                 @OA\Property(property="name_ar", type="string", example="رياضية"),
+     *                 @OA\Property(property="icon", type="string", example="https://api.dabapp.co/storage/motorcycle_types/icon.png"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T12:00:00Z"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T12:00:00Z")
+     *             )
+     *         )
+     *     ),
      *     @OA\Response(response=404, description="Not Found")
      * )
      */
@@ -131,7 +182,23 @@ class MotorcycleTypeController extends Controller
      *             )
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Motorcycle type updated successfully"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Motorcycle type updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Motorcycle type updated successfully."),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="Cruiser"),
+     *                 @OA\Property(property="name_ar", type="string", example="كروزر"),
+     *                 @OA\Property(property="icon", type="string", example="https://api.dabapp.co/storage/motorcycle_types/icon.png"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T12:00:00Z"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T12:00:00Z")
+     *             )
+     *         )
+     *     ),
      *     @OA\Response(response=404, description="Not Found")
      * )
      */

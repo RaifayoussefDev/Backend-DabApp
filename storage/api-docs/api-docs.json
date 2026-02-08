@@ -28705,7 +28705,54 @@
                 "operationId": "297a51041d61f5f3f541a47f0193a7cc",
                 "responses": {
                     "200": {
-                        "description": "List of motorcycle types or no data"
+                        "description": "List of motorcycle types or no data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Motorcycle types retrieved successfully."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Sport"
+                                                    },
+                                                    "name_ar": {
+                                                        "type": "string",
+                                                        "example": "رياضية"
+                                                    },
+                                                    "icon": {
+                                                        "type": "string",
+                                                        "example": "https://api.dabapp.co/storage/motorcycle_types/icon.png"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-01-01T12:00:00Z"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-01-01T12:00:00Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -28745,7 +28792,51 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Motorcycle type created successfully"
+                        "description": "Motorcycle type created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Motorcycle type created successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Sport"
+                                                },
+                                                "name_ar": {
+                                                    "type": "string",
+                                                    "example": "رياضية"
+                                                },
+                                                "icon": {
+                                                    "type": "string",
+                                                    "example": "https://api.dabapp.co/storage/motorcycle_types/icon.png"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2024-01-01T12:00:00Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2024-01-01T12:00:00Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -28769,7 +28860,51 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Motorcycle type data"
+                        "description": "Motorcycle type data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Motorcycle type retrieved successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Sport"
+                                                },
+                                                "name_ar": {
+                                                    "type": "string",
+                                                    "example": "رياضية"
+                                                },
+                                                "icon": {
+                                                    "type": "string",
+                                                    "example": "https://api.dabapp.co/storage/motorcycle_types/icon.png"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2024-01-01T12:00:00Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2024-01-01T12:00:00Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "404": {
                         "description": "Not Found"
@@ -28824,7 +28959,51 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Motorcycle type updated successfully"
+                        "description": "Motorcycle type updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Motorcycle type updated successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Cruiser"
+                                                },
+                                                "name_ar": {
+                                                    "type": "string",
+                                                    "example": "كروزر"
+                                                },
+                                                "icon": {
+                                                    "type": "string",
+                                                    "example": "https://api.dabapp.co/storage/motorcycle_types/icon.png"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2024-01-01T12:00:00Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2024-01-01T12:00:00Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "404": {
                         "description": "Not Found"
