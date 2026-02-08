@@ -33673,6 +33673,10 @@
                                         "type": "string",
                                         "example": "Updated description for the tower."
                                     },
+                                    "type_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
                                     "latitude": {
                                         "type": "number",
                                         "format": "float",

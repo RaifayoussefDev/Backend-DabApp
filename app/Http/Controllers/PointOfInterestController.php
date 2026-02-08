@@ -263,6 +263,7 @@ class PointOfInterestController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="name", type="string", example="Eiffel Tower (Updated)"),
      *             @OA\Property(property="description", type="string", example="Updated description for the tower."),
+     *             @OA\Property(property="type_id", type="integer", example=1),
      *             @OA\Property(property="latitude", type="number", format="float", example=48.8584),
      *             @OA\Property(property="longitude", type="number", format="float", example=2.2945),
      *             @OA\Property(property="address", type="string", example="Updated Address, Paris"),
