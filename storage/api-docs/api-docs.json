@@ -28765,7 +28765,7 @@
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "multipart/form-data": {
+                        "application/json": {
                             "schema": {
                                 "required": [
                                     "name"
@@ -28780,9 +28780,9 @@
                                         "example": "رياضية"
                                     },
                                     "icon": {
-                                        "description": "Motorcycle type icon image",
+                                        "description": "URL of the uploaded icon",
                                         "type": "string",
-                                        "format": "binary"
+                                        "example": "https://api.dabapp.co/storage/icons/icon.png"
                                     }
                                 },
                                 "type": "object"
@@ -28817,7 +28817,7 @@
                                                 },
                                                 "icon": {
                                                     "type": "string",
-                                                    "example": "https://api.dabapp.co/storage/motorcycle_types/icon.png"
+                                                    "example": "https://api.dabapp.co/storage/icons/icon.png"
                                                 },
                                                 "created_at": {
                                                     "type": "string",
@@ -28911,12 +28911,12 @@
                     }
                 }
             },
-            "post": {
+            "put": {
                 "tags": [
                     "Motorcycle Types"
                 ],
-                "summary": "Update a motorcycle type (Use POST with _method=PUT for file upload)",
-                "operationId": "793ab025e2c6a322ff48d6545d842628",
+                "summary": "Update a motorcycle type",
+                "operationId": "5271c1e7521208c1d4922ca3050335d5",
                 "parameters": [
                     {
                         "name": "id",
@@ -28930,14 +28930,12 @@
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "multipart/form-data": {
+                        "application/json": {
                             "schema": {
+                                "required": [
+                                    "name"
+                                ],
                                 "properties": {
-                                    "_method": {
-                                        "description": "Required for updating with files",
-                                        "type": "string",
-                                        "example": "PUT"
-                                    },
                                     "name": {
                                         "type": "string",
                                         "example": "Cruiser"
@@ -28947,9 +28945,9 @@
                                         "example": "كروزر"
                                     },
                                     "icon": {
-                                        "description": "Motorcycle type icon image",
+                                        "description": "URL of the uploaded icon",
                                         "type": "string",
-                                        "format": "binary"
+                                        "example": "https://api.dabapp.co/storage/icons/icon.png"
                                     }
                                 },
                                 "type": "object"
@@ -28984,7 +28982,7 @@
                                                 },
                                                 "icon": {
                                                     "type": "string",
-                                                    "example": "https://api.dabapp.co/storage/motorcycle_types/icon.png"
+                                                    "example": "https://api.dabapp.co/storage/icons/icon.png"
                                                 },
                                                 "created_at": {
                                                     "type": "string",

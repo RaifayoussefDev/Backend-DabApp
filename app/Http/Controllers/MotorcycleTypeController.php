@@ -62,14 +62,11 @@ class MotorcycleTypeController extends Controller
      *     summary="Create a new motorcycle type",
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\MediaType(
-     *             mediaType="multipart/form-data",
-     *             @OA\Schema(
-     *                 required={"name"},
-     *                 @OA\Property(property="name", type="string", example="Sport"),
-     *                 @OA\Property(property="name_ar", type="string", example="رياضية"),
-     *                 @OA\Property(property="icon", type="string", format="binary", description="Motorcycle type icon image")
-     *             )
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="Sport"),
+     *             @OA\Property(property="name_ar", type="string", example="رياضية"),
+     *             @OA\Property(property="icon", type="string", example="https://api.dabapp.co/storage/icons/icon.png", description="URL of the uploaded icon")
      *         )
      *     ),
      *     @OA\Response(
@@ -83,7 +80,7 @@ class MotorcycleTypeController extends Controller
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="name", type="string", example="Sport"),
      *                 @OA\Property(property="name_ar", type="string", example="رياضية"),
-     *                 @OA\Property(property="icon", type="string", example="https://api.dabapp.co/storage/motorcycle_types/icon.png"),
+     *                 @OA\Property(property="icon", type="string", example="https://api.dabapp.co/storage/icons/icon.png"),
      *                 @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T12:00:00Z"),
      *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T12:00:00Z")
      *             )
@@ -96,15 +93,10 @@ class MotorcycleTypeController extends Controller
         $request->validate([
             'name' => 'required|unique:motorcycle_types',
             'name_ar' => 'nullable|string',
-            'icon' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+            'icon' => 'nullable|string'
         ]);
 
-        $data = $request->only(['name', 'name_ar']);
-
-        if ($request->hasFile('icon')) {
-            $path = $request->file('icon')->store('motorcycle_types', 'public');
-            $data['icon'] = config('app.url') . '/storage/' . $path;
-        }
+        $data = $request->only(['name', 'name_ar', 'icon']);
 
         $type = MotorcycleType::create($data);
 
@@ -160,10 +152,10 @@ class MotorcycleTypeController extends Controller
     }
 
     /**
-     * @OA\Post(
+     * @OA\Put(
      *     path="/api/motorcycle-types/{id}",
      *     tags={"Motorcycle Types"},
-     *     summary="Update a motorcycle type (Use POST with _method=PUT for file upload)",
+     *     summary="Update a motorcycle type",
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -172,14 +164,11 @@ class MotorcycleTypeController extends Controller
      *     ),
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\MediaType(
-     *             mediaType="multipart/form-data",
-     *             @OA\Schema(
-     *                 @OA\Property(property="_method", type="string", example="PUT", description="Required for updating with files"),
-     *                 @OA\Property(property="name", type="string", example="Cruiser"),
-     *                 @OA\Property(property="name_ar", type="string", example="كروزر"),
-     *                 @OA\Property(property="icon", type="string", format="binary", description="Motorcycle type icon image")
-     *             )
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="Cruiser"),
+     *             @OA\Property(property="name_ar", type="string", example="كروزر"),
+     *             @OA\Property(property="icon", type="string", example="https://api.dabapp.co/storage/icons/icon.png", description="URL of the uploaded icon")
      *         )
      *     ),
      *     @OA\Response(
@@ -193,7 +182,7 @@ class MotorcycleTypeController extends Controller
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="name", type="string", example="Cruiser"),
      *                 @OA\Property(property="name_ar", type="string", example="كروزر"),
-     *                 @OA\Property(property="icon", type="string", example="https://api.dabapp.co/storage/motorcycle_types/icon.png"),
+     *                 @OA\Property(property="icon", type="string", example="https://api.dabapp.co/storage/icons/icon.png"),
      *                 @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T12:00:00Z"),
      *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T12:00:00Z")
      *             )
@@ -213,23 +202,15 @@ class MotorcycleTypeController extends Controller
         $request->validate([
             'name' => 'required|unique:motorcycle_types,name,' . $id,
             'name_ar' => 'nullable|string',
-            'icon' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+            'icon' => 'nullable|string'
         ]);
 
-        $data = $request->only(['name', 'name_ar']);
+        $data = $request->only(['name', 'name_ar', 'icon']);
 
-        if ($request->hasFile('icon')) {
-            // Delete old icon if exists
-            if ($type->icon) {
-                $oldPath = str_replace(config('app.url') . '/storage/', '', $type->icon);
-                if (\Storage::disk('public')->exists($oldPath)) {
-                    \Storage::disk('public')->delete($oldPath);
-                }
-            }
-
-            $path = $request->file('icon')->store('motorcycle_types', 'public');
-            $data['icon'] = config('app.url') . '/storage/' . $path;
-        }
+        // Handle icon deletion if new icon is provided or explicitly set to null (if business logic allows, but here we just update if present)
+        // With URL based approach, typically we just overwrite the URL.
+        // If we want to delete the OLD file from storage when updating the URL, we would need to parse the old URL.
+        // For simplicity and safety against deleting used files, we might skip auto-deletion for now or handle it if specific requirement exists.
 
         $type->update($data);
 
