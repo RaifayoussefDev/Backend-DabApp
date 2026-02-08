@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MotorcycleType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @OA\Tag(name="Motorcycle Types")
@@ -42,10 +43,14 @@ class MotorcycleTypeController extends Controller
      *     summary="Create a new motorcycle type",
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             required={"name"},
-     *             @OA\Property(property="name", type="string", example="Sport"),
-            @OA\Property(property="name_ar", type="string", example="رياضية")
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"name"},
+     *                 @OA\Property(property="name", type="string", example="Sport"),
+     *                 @OA\Property(property="name_ar", type="string", example="رياضية"),
+     *                 @OA\Property(property="icon", type="string", format="binary", description="Motorcycle type icon image")
+     *             )
      *         )
      *     ),
      *     @OA\Response(response=201, description="Motorcycle type created successfully")
@@ -55,10 +60,18 @@ class MotorcycleTypeController extends Controller
     {
         $request->validate([
             'name' => 'required|unique:motorcycle_types',
-            'name_ar' => 'nullable|string'
+            'name_ar' => 'nullable|string',
+            'icon' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
         ]);
 
-        $type = MotorcycleType::create($request->only(['name', 'name_ar']));
+        $data = $request->only(['name', 'name_ar']);
+
+        if ($request->hasFile('icon')) {
+            $path = $request->file('icon')->store('motorcycle_types', 'public');
+            $data['icon'] = config('app.url') . '/storage/' . $path;
+        }
+
+        $type = MotorcycleType::create($data);
 
         return response()->json([
             'message' => 'Motorcycle type created successfully.',
@@ -96,10 +109,10 @@ class MotorcycleTypeController extends Controller
     }
 
     /**
-     * @OA\Put(
+     * @OA\Post(
      *     path="/api/motorcycle-types/{id}",
      *     tags={"Motorcycle Types"},
-     *     summary="Update a motorcycle type",
+     *     summary="Update a motorcycle type (Use POST with _method=PUT for file upload)",
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -108,10 +121,14 @@ class MotorcycleTypeController extends Controller
      *     ),
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             required={"name"},
-     *             @OA\Property(property="name", type="string", example="Cruiser"),
-            @OA\Property(property="name_ar", type="string", example="كروزر")
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="_method", type="string", example="PUT", description="Required for updating with files"),
+     *                 @OA\Property(property="name", type="string", example="Cruiser"),
+     *                 @OA\Property(property="name_ar", type="string", example="كروزر"),
+     *                 @OA\Property(property="icon", type="string", format="binary", description="Motorcycle type icon image")
+     *             )
      *         )
      *     ),
      *     @OA\Response(response=200, description="Motorcycle type updated successfully"),
@@ -128,10 +145,26 @@ class MotorcycleTypeController extends Controller
 
         $request->validate([
             'name' => 'required|unique:motorcycle_types,name,' . $id,
-            'name_ar' => 'nullable|string'
+            'name_ar' => 'nullable|string',
+            'icon' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
         ]);
 
-        $type->update($request->only(['name', 'name_ar']));
+        $data = $request->only(['name', 'name_ar']);
+
+        if ($request->hasFile('icon')) {
+            // Delete old icon if exists
+            if ($type->icon) {
+                $oldPath = str_replace(config('app.url') . '/storage/', '', $type->icon);
+                if (\Storage::disk('public')->exists($oldPath)) {
+                    \Storage::disk('public')->delete($oldPath);
+                }
+            }
+
+            $path = $request->file('icon')->store('motorcycle_types', 'public');
+            $data['icon'] = config('app.url') . '/storage/' . $path;
+        }
+
+        $type->update($data);
 
         return response()->json([
             'message' => 'Motorcycle type updated successfully.',
