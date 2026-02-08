@@ -4101,6 +4101,8 @@ class ListingController extends Controller
      *                 @OA\Items(
      *                     @OA\Property(property="id", type="integer"),
      *                     @OA\Property(property="name", type="string"),
+     *                     @OA\Property(property="name_ar", type="string"),
+     *                     @OA\Property(property="icon", type="string"),
      *                     @OA\Property(property="listings_count", type="integer")
      *                 )
      *             )
@@ -4110,13 +4112,13 @@ class ListingController extends Controller
      */
     public function getTypesWithListingCount()
     {
-        $motorcycle_types = MotorcycleType::select('motorcycle_types.id', 'motorcycle_types.name')
+        $motorcycle_types = MotorcycleType::select('motorcycle_types.id', 'motorcycle_types.name', 'motorcycle_types.name_ar', 'motorcycle_types.icon')
             ->join('motorcycles', 'motorcycle_types.id', '=', 'motorcycles.type_id')
             ->join('listings', 'motorcycles.listing_id', '=', 'listings.id')
             ->where('listings.status', 'published')
-            ->groupBy('motorcycle_types.id', 'motorcycle_types.name')
+            ->groupBy('motorcycle_types.id', 'motorcycle_types.name', 'motorcycle_types.name_ar', 'motorcycle_types.icon')
             ->selectRaw('COUNT(listings.id) as listings_count')
-            ->orderBy('motorcycle_types.name')
+            ->orderBy('listings_count', 'desc')
             ->get();
 
         return response()->json([
