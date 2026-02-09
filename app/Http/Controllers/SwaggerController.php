@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 /**
  * @OA\Info(
- *     title="Mon API",
+ *     title="DabApp API",
  *     version="1.0.0",
- *     description="Documentation de l'API avec Swagger",
+ *     description="Documentation de l'API Application avec Swagger",
  *     @OA\Contact(
- *         email="contact@exemple.com"
+ *         email="contact@dabapp.com"
  *     )
  * )
  */

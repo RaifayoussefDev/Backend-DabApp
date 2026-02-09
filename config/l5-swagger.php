@@ -1,11 +1,102 @@
 <?php
 
+$adminControllers = [];
+$appControllers = [];
+
+// Helper function removed in favor of inline logic to optimize file reading
+
+// Scanning directories to categorize files
+$controllersPath = base_path('app/Http/Controllers');
+$allFiles = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($controllersPath));
+
+foreach ($allFiles as $file) {
+    if ($file->isFile() && $file->getExtension() === 'php') {
+        $path = $file->getPathname();
+        $fileName = basename($path);
+
+        // Explicitly handle Swagger controllers
+        if (str_contains($path, 'SwaggerController.php')) {
+            $appControllers[] = $path;
+            continue;
+        }
+        if (str_contains($path, 'SwaggerAdminController.php')) {
+            $adminControllers[] = $path;
+            continue;
+        }
+
+        // Read content once
+        $content = file_get_contents($path);
+        if ($content === false)
+            continue;
+
+        // Check for "Management" tag (indicates Admin relevance)
+        $hasManagementTag = str_contains($content, 'Management"');
+
+        // Check if there are any tags that are NOT Management (indicates App relevance)
+        $hasNonManagementTag = false;
+
+        // 1. Check explicit @OA\Tag(name="...")
+        if (preg_match_all('/@OA\\\\Tag\s*\(\s*name\s*=\s*"([^"]+)"/', $content, $matches)) {
+            foreach ($matches[1] as $tag) {
+                if (!str_contains($tag, 'Management')) {
+                    $hasNonManagementTag = true;
+                    break;
+                }
+            }
+        }
+
+        // 2. Check tags={"..."} assignments in annotations
+        if (!$hasNonManagementTag && preg_match_all('/tags\s*=\s*\{([^}]+)\}/', $content, $matches)) {
+            foreach ($matches[1] as $tagList) {
+                // $tagList could be '"Tag1", "Tag2"'
+                // Extract individual tags
+                if (preg_match_all('/"([^"]+)"/', $tagList, $tags)) {
+                    foreach ($tags[1] as $tag) {
+                        if (!str_contains($tag, 'Management')) {
+                            $hasNonManagementTag = true;
+                            break 2; // Break both loops
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fallback: If NO tags are found at all, and it's NOT an Admin path, assume it belongs to App.
+        // But if it has Management tags (and no others), hasNonManagementTag remains false.
+        if (!$hasManagementTag && !$hasNonManagementTag) {
+            $hasNonManagementTag = true;
+        }
+
+        // Check for Admin path/name (Strict Admin)
+        $normalized = str_replace(['\\', '/'], '/', $path);
+        $isAdminPath = stripos($normalized, '/Http/Controllers/Admin/') !== false || str_contains($fileName, 'Admin');
+
+        // Logic:
+        // Admin Docs = AdminPath OR HasManagementTag
+        if ($isAdminPath || $hasManagementTag) {
+            $adminControllers[] = $path;
+        }
+
+        // App Docs = NOT AdminPath AND HasNonManagementTag
+        // This ensures User Management (Pure Admin) is excluded from App.
+        // But Banner (Mixed) is included in App.
+        if (!$isAdminPath && $hasNonManagementTag) {
+            $appControllers[] = $path;
+        }
+    }
+}
+
+// Add Models to both
+$modelsPath = base_path('app/Models');
+$appControllers[] = $modelsPath;
+$adminControllers[] = $modelsPath;
+
 return [
     'default' => 'default',
     'documentations' => [
         'default' => [
             'api' => [
-                'title' => 'DabApp API Documentation', // 👈 Changé
+                'title' => 'DabApp API Documentation',
             ],
 
             'routes' => [
@@ -13,6 +104,8 @@ return [
                  * Route for accessing api documentation interface
                  */
                 'api' => 'api/documentation',
+                'docs' => 'api/docs',
+                'oauth2_callback' => 'api/oauth2-callback',
             ],
             'paths' => [
                 /*
@@ -43,10 +136,53 @@ return [
                 /*
                  * Absolute paths to directory containing the swagger annotations are stored.
                  */
-                'annotations' => [
-                    base_path('app/Http/Controllers'),
-                    base_path('app/Models'),
-                ],
+                'annotations' => $appControllers,
+            ],
+        ],
+
+        'admin' => [
+            'api' => [
+                'title' => 'DabApp Admin API Documentation',
+            ],
+
+            'routes' => [
+                /*
+                 * Route for accessing api documentation interface
+                 */
+                'api' => 'admin/documentation',
+                'docs' => 'admin/docs',
+                'oauth2_callback' => 'admin/oauth2-callback',
+            ],
+            'paths' => [
+                /*
+                 * Edit to include full URL in ui for assets
+                 */
+                'use_absolute_path' => env('L5_SWAGGER_USE_ABSOLUTE_PATH', true),
+
+                /*
+                 * Edit to set path where swagger ui assets should be stored
+                 */
+                'swagger_ui_assets_path' => env('L5_SWAGGER_UI_ASSETS_PATH', 'vendor/swagger-api/swagger-ui/dist/'),
+
+                /*
+                 * File name of the generated json documentation file
+                 */
+                'docs_json' => 'admin-docs.json',
+
+                /*
+                 * File name of the generated YAML documentation file
+                 */
+                'docs_yaml' => 'admin-docs.yaml',
+
+                /*
+                 * Set this to `json` or `yaml` to determine which documentation file to use in UI
+                 */
+                'format_to_use_for_docs' => env('L5_FORMAT_TO_USE_FOR_DOCS', 'json'),
+
+                /*
+                 * Absolute paths to directory containing the swagger annotations are stored.
+                 */
+                'annotations' => $adminControllers,
             ],
         ],
     ],
@@ -158,10 +294,10 @@ return [
              * @see \OpenApi\scan
              */
             'exclude' => [
-                base_path('app/Console'),           // 👈 Ajouté pour éviter les warnings
-                base_path('app/Exceptions'),        // 👈 Ajouté
-                base_path('app/Providers'),         // 👈 Ajouté
-                base_path('app/Http/Middleware'),   // 👈 Ajouté
+                base_path('app/Console'),
+                base_path('app/Exceptions'),
+                base_path('app/Providers'),
+                base_path('app/Http/Middleware'),
             ],
 
             /*
@@ -176,74 +312,19 @@ return [
          */
         'securityDefinitions' => [
             'securitySchemes' => [
-                // 👈 Ajouté la configuration Bearer Auth
                 'bearerAuth' => [
                     'type' => 'http',
                     'scheme' => 'bearer',
                     'bearerFormat' => 'JWT',
                     'description' => 'Enter token in format: Bearer <your-token>'
                 ],
-
-                /*
-                 * Examples of Security schemes
-                 */
-                /*
-                'api_key_security_example' => [ // Unique name of security
-                    'type' => 'apiKey', // The type of the security scheme. Valid values are "basic", "apiKey" or "oauth2".
-                    'description' => 'A short description for security scheme',
-                    'name' => 'api_key', // The name of the header or query parameter to be used.
-                    'in' => 'header', // The location of the API key. Valid values are "query" or "header".
-                ],
-                'oauth2_security_example' => [ // Unique name of security
-                    'type' => 'oauth2', // The type of the security scheme. Valid values are "basic", "apiKey" or "oauth2".
-                    'description' => 'A short description for oauth2 security scheme.',
-                    'flow' => 'implicit', // The flow used by the OAuth2 security scheme. Valid values are "implicit", "password", "application" or "accessCode".
-                    'authorizationUrl' => 'http://example.com/auth', // The authorization URL to be used for (implicit/accessCode)
-                    //'tokenUrl' => 'http://example.com/auth' // The authorization URL to be used for (password/application/accessCode)
-                    'scopes' => [
-                        'read:projects' => 'read your projects',
-                        'write:projects' => 'modify projects in your account',
-                    ]
-                ],
-                */
-
-                /* Open API 3.0 support
-                'passport' => [ // Unique name of security
-                    'type' => 'oauth2', // The type of the security scheme. Valid values are "basic", "apiKey" or "oauth2".
-                    'description' => 'Laravel passport oauth2 security.',
-                    'in' => 'header',
-                    'scheme' => 'https',
-                    'flows' => [
-                        "password" => [
-                            "authorizationUrl" => config('app.url') . '/oauth/authorize',
-                            "tokenUrl" => config('app.url') . '/oauth/token',
-                            "refreshUrl" => config('app.url') . '/token/refresh',
-                            "scopes" => []
-                        ],
-                    ],
-                ],
-                'sanctum' => [ // Unique name of security
-                    'type' => 'apiKey', // Valid values are "basic", "apiKey" or "oauth2".
-                    'description' => 'Enter token in format (Bearer <token>)',
-                    'name' => 'Authorization', // The name of the header or query parameter to be used.
-                    'in' => 'header', // The location of the API key. Valid values are "query" or "header".
-                ],
-                */
             ],
             'security' => [
                 /*
                  * Examples of Securities
                  */
                 [
-                    'bearerAuth' => [] // 👈 Ajouté
-                    /*
-                    'oauth2_security_example' => [
-                        'read',
-                        'write'
-                    ],
-
-                    'passport' => []
-                    */
+                    'bearerAuth' => []
                 ],
             ],
         ],
@@ -327,7 +408,7 @@ return [
          * Constants which can be used in annotations
          */
         'constants' => [
-            'L5_SWAGGER_CONST_HOST' => env('L5_SWAGGER_CONST_HOST', 'http://localhost:8000'), // 👈 Changé
+            'L5_SWAGGER_CONST_HOST' => env('L5_SWAGGER_CONST_HOST', 'http://localhost:8000'),
         ],
     ],
 ];

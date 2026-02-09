@@ -286,8 +286,8 @@ class ImageUploadController extends Controller
     /**
      * @OA\Post(
      *     path="/api/upload-icon",
-     *     summary="Upload an icon (16x16)",
-     *     description="Allows users to upload an icon that will be automatically resized to 16x16 pixels",
+     *     summary="Upload an icon",
+     *     description="Allows users to upload an icon (original size kept)",
      *     operationId="uploadIcon",
      *     tags={"Image Upload"},
      *     @OA\RequestBody(
@@ -300,7 +300,7 @@ class ImageUploadController extends Controller
      *                     property="icon",
      *                     type="string",
      *                     format="binary",
-     *                     description="Icon file to upload (will be resized to 16x16)"
+     *                     description="Icon file to upload"
      *                 )
      *             )
      *         )
@@ -423,8 +423,8 @@ class ImageUploadController extends Controller
 
             // Redimensionner le watermark pour qu'il soit toujours à la bonne taille
             $ratio = min($maxWatermarkWidth / $watermark->width(), $maxWatermarkHeight / $watermark->height());
-            $newWidth = (int)($watermark->width() * $ratio);
-            $newHeight = (int)($watermark->height() * $ratio);
+            $newWidth = (int) ($watermark->width() * $ratio);
+            $newHeight = (int) ($watermark->height() * $ratio);
             $watermark->resize($newWidth, $newHeight);
 
             Log::info('Watermark resized', [
@@ -540,8 +540,8 @@ class ImageUploadController extends Controller
         if ($originalWidth > self::MAX_WIDTH || $originalHeight > self::MAX_HEIGHT) {
             // Calculer les nouvelles dimensions en gardant le ratio
             $ratio = min(self::MAX_WIDTH / $originalWidth, self::MAX_HEIGHT / $originalHeight);
-            $newWidth = (int)($originalWidth * $ratio);
-            $newHeight = (int)($originalHeight * $ratio);
+            $newWidth = (int) ($originalWidth * $ratio);
+            $newHeight = (int) ($originalHeight * $ratio);
 
             $image = $image->resize($newWidth, $newHeight);
 
@@ -555,7 +555,7 @@ class ImageUploadController extends Controller
     }
 
     /**
-     * Traite et redimensionne l'icône à 16x16
+     * Traite l'icône sans redimensionnement
      */
     private function processIcon($uploadedFile)
     {
@@ -567,17 +567,9 @@ class ImageUploadController extends Controller
         $originalWidth = $icon->width();
         $originalHeight = $icon->height();
 
-        Log::info('Original icon dimensions', [
+        Log::info('Original icon dimensions (keeping original size)', [
             'width' => $originalWidth,
             'height' => $originalHeight
-        ]);
-
-        // Redimensionner à 16x16 en gardant le ratio et en ajoutant un crop si nécessaire
-        $icon = $icon->cover(self::ICON_SIZE, self::ICON_SIZE);
-
-        Log::info('Icon resized', [
-            'new_width' => $icon->width(),
-            'new_height' => $icon->height()
         ]);
 
         return $icon;
