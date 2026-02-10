@@ -3373,8 +3373,9 @@ class ListingController extends Controller
         $displayPrice = $listing->price;
         $isAuction = false;
 
-        if (!$displayPrice && $listing->auction_enabled) {
-            $displayPrice = $currentBid ?: $listing->minimum_bid;
+        if ($listing->auction_enabled) {
+            $currentBidFloat = (float) $currentBid;
+            $displayPrice = ($currentBidFloat > 0) ? $currentBid : $listing->minimum_bid;
             $isAuction = true;
         }
 
