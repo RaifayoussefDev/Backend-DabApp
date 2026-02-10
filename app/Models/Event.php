@@ -179,7 +179,7 @@ class Event extends Model
 
     public function isRegistrationOpen()
     {
-        if ($this->status !== 'upcoming') {
+        if ($this->status !== 'upcoming' && !$this->is_published) {
             return false;
         }
 
