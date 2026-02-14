@@ -17,6 +17,7 @@ class GuideCategory extends Model
         'description',
         'icon',
         'color',
+        'order_position',
     ];
 
     // Relations
