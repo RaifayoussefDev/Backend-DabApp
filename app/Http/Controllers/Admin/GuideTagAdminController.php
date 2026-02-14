@@ -199,7 +199,7 @@ class GuideTagAdminController extends Controller
             return response()->json(['message' => 'Tag not found'], 404);
         }
 
-        DB::table('guide_tag')->where('guide_tag_id', $id)->delete();
+        DB::table('guide_tag_relations')->where('tag_id', $id)->delete();
         $tag->delete();
 
         return response()->json(['message' => 'Tag deleted successfully']);
@@ -229,7 +229,7 @@ class GuideTagAdminController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        DB::table('guide_tag')->whereIn('guide_tag_id', $request->ids)->delete();
+        DB::table('guide_tag_relations')->whereIn('tag_id', $request->ids)->delete();
         GuideTag::whereIn('id', $request->ids)->delete();
 
         return response()->json(['message' => 'Tags deleted successfully', 'deleted_count' => count($request->ids)]);
