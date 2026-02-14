@@ -106,10 +106,11 @@ use App\Http\Controllers\Services\ServiceReviewController;
 use App\Http\Controllers\Services\ServiceFavoriteController;
 use App\Http\Controllers\Services\TowServiceController;
 use App\Http\Controllers\Services\TransportRouteController;
+use App\Http\Controllers\Services\ServiceSubscriptionController;
+use App\Http\Controllers\Services\SubscriptionTransactionController;
 use App\Http\Controllers\Services\RidingInstructorController;
 use App\Http\Controllers\Services\ChatSessionController;
 use App\Http\Controllers\Services\SubscriptionPlanController;
-use App\Http\Controllers\Services\ServiceSubscriptionController;
 use App\Http\Controllers\Services\AdminSubscriptionPlanController;
 use App\Http\Controllers\Services\AdminServiceController;
 use App\Http\Controllers\Services\AdminSubscriptionController;
@@ -198,6 +199,17 @@ Route::prefix('admin')->group(function () {
         Route::apiResource('listings', AdminListingController::class);
         Route::patch('/listings/{id}/status', [AdminListingController::class, 'changeStatus']);
         Route::post('/listings/{id}/images/reorder', [AdminListingController::class, 'reorderImages']);
+
+        // Subscriptions Management
+        Route::get('/subscriptions/stats', [AdminSubscriptionController::class, 'statistics']); // Must be before {id}
+        Route::get('/subscriptions', [AdminSubscriptionController::class, 'index']);
+        Route::post('/subscriptions', [AdminSubscriptionController::class, 'store']);
+        Route::get('/subscriptions/{id}', [AdminSubscriptionController::class, 'show']);
+        Route::put('/subscriptions/{id}', [AdminSubscriptionController::class, 'update']);
+        Route::post('/subscriptions/{id}/cancel', [AdminSubscriptionController::class, 'cancel']);
+
+        // Subscription Plans Management
+        Route::apiResource('subscription-plans', AdminSubscriptionPlanController::class);
         Route::delete('/listings/{id}/images/{image_id}', [AdminListingController::class, 'deleteImage']);
 
         // Guides Management
@@ -291,6 +303,7 @@ Route::prefix('admin')->group(function () {
         // ============================================
 
         // Admin Subscription Plans
+        Route::patch('subscription-plans/{id}/toggle-status', [AdminSubscriptionPlanController::class, 'toggleStatus']);
         Route::apiResource('subscription-plans', AdminSubscriptionPlanController::class);
 
         // Admin User Subscriptions
@@ -756,11 +769,34 @@ Route::middleware('auth:api')->group(function () {
 
 
     // ============================================
+    // PROVIDER WORKING HOURS
+    // ============================================
+    Route::get('/my-working-hours', [App\Http\Controllers\Services\ProviderWorkingHoursController::class, 'index']);
+    Route::put('/my-working-hours', [App\Http\Controllers\Services\ProviderWorkingHoursController::class, 'update']);
+
+    // ============================================
     // SERVICE SUBSCRIPTIONS (PROVIDER)
     // ============================================
     Route::get('/my-subscription', [ServiceSubscriptionController::class, 'mySubscription']);
     Route::post('/subscriptions/subscribe', [ServiceSubscriptionController::class, 'subscribe']);
     Route::post('/subscriptions/cancel', [ServiceSubscriptionController::class, 'cancel']);
+
+    // PayTabs Subs Callbacks
+    Route::any('/subscriptions/callback', [ServiceSubscriptionController::class, 'handleCallback'])->name('api.subscriptions.callback');
+    Route::any('/subscriptions/return', [ServiceSubscriptionController::class, 'handleReturn'])->name('api.subscriptions.return');
+
+    // Transaction History
+    Route::get('/subscription/transactions', [App\Http\Controllers\Services\SubscriptionTransactionController::class, 'index']);
+
+    // ============================================
+    // SUBSCRIPTION PLANS (PROVIDER)
+    // ============================================
+    Route::prefix('service-provider')->group(function () {
+        Route::get('subscription-plans', [SubscriptionPlanController::class, 'index']);
+        Route::get('subscription-plans/featured', [SubscriptionPlanController::class, 'featured']);
+        Route::get('subscription-plans/compare', [SubscriptionPlanController::class, 'compare']);
+        Route::get('subscription-plans/{id}', [SubscriptionPlanController::class, 'show']);
+    });
 
     // ============================================
     // LISTINGS MANAGEMENT
@@ -1323,10 +1359,29 @@ Route::prefix('services')->group(function () {
 // Provider services management (Authenticated providers only)
 Route::middleware(['auth:api'])->prefix('provider')->group(function () {
     Route::get('/my-services', [ServiceController::class, 'myServices']);
-    Route::post('/services', [ServiceController::class, 'store']);
-    Route::put('/services/{id}', [ServiceController::class, 'update']);
-    Route::post('/services/{id}', [ServiceController::class, 'update']); // For form-data
-    Route::delete('/services/{id}', [ServiceController::class, 'destroy']);
+
+    // Routes requiring active subscription
+    Route::middleware(['provider.subscription'])->group(function () {
+        Route::post('/services', [ServiceController::class, 'store']);
+        Route::put('/services/{id}', [ServiceController::class, 'update']);
+        Route::post('/services/{id}', [ServiceController::class, 'update']); // For form-data
+        Route::delete('/services/{id}', [ServiceController::class, 'destroy']);
+    });
+});
+
+// ============================================
+// MY SERVICES (Consistent public endpoint)
+// ============================================
+Route::middleware(['auth:api'])->prefix('my-services')->group(function () {
+    // View services - Only Auth needed
+    Route::get('/', [ServiceController::class, 'myServices']);
+
+    // Modify services - Requires Active Subscription
+    Route::middleware(['provider.subscription'])->group(function () {
+        Route::post('/', [ServiceController::class, 'store']);
+        Route::put('/{id}', [ServiceController::class, 'update']);
+        Route::delete('/{id}', [ServiceController::class, 'destroy']);
+    });
 });
 
 /*
@@ -1556,4 +1611,21 @@ Route::get('/health', function () {
         'timestamp' => now()->toIso8601String(),
         'database' => DB::connection()->getDatabaseName()
     ]);
+});
+
+/*
+|--------------------------------------------------------------------------
+| 💳 Service Subscriptions Routes (Provider)
+|--------------------------------------------------------------------------
+*/
+// Public Routes (Callbacks from PayTabs)
+Route::post('/subscriptions/callback', [ServiceSubscriptionController::class, 'handleCallback'])->name('api.subscriptions.callback');
+Route::any('/subscriptions/return', [ServiceSubscriptionController::class, 'handleReturn'])->name('api.subscriptions.return'); // Handle GET/POST returns
+
+// Protected Routes
+Route::middleware('auth:api')->group(function () {
+    Route::get('/my-subscription', [ServiceSubscriptionController::class, 'mySubscription']);
+    Route::post('/subscriptions/subscribe', [ServiceSubscriptionController::class, 'subscribe']);
+    Route::post('/subscriptions/cancel', [ServiceSubscriptionController::class, 'cancel']);
+    Route::get('/subscription/transactions', [SubscriptionTransactionController::class, 'index']);
 });

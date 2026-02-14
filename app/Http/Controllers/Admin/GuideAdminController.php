@@ -197,7 +197,7 @@ class GuideAdminController extends Controller
         // Tri
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
-        
+
         if (in_array($sortBy, ['likes_count', 'comments_count'])) {
             $query->orderBy($sortBy, $sortOrder);
         } else {
@@ -370,22 +370,22 @@ class GuideAdminController extends Controller
             'published_guides' => Guide::where('status', 'published')->count(),
             'draft_guides' => Guide::where('status', 'draft')->count(),
             'archived_guides' => Guide::where('status', 'archived')->count(),
-            
+
             'total_views' => Guide::sum('views_count'),
             'total_likes' => DB::table('guide_likes')->count(),
             'total_comments' => DB::table('guide_comments')->count(),
-            
+
             'total_categories' => GuideCategory::count(),
             'total_tags' => GuideTag::count(),
-            
+
             'guides_this_month' => Guide::whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year)
                 ->count(),
-            
+
             'guides_today' => Guide::whereDate('created_at', today())->count(),
-            
+
             'avg_views_per_guide' => round(Guide::avg('views_count'), 2),
-            
+
             'top_authors' => User::select('users.id', DB::raw('CONCAT(users.first_name, " ", users.last_name) as name'))
                 ->join('guides', 'users.id', '=', 'guides.author_id')
                 ->groupBy('users.id', 'users.first_name', 'users.last_name')
@@ -396,7 +396,7 @@ class GuideAdminController extends Controller
                     $author->guides_count = Guide::where('author_id', $author->id)->count();
                     return $author;
                 }),
-            
+
             'top_categories' => GuideCategory::withCount('guides')
                 ->orderBy('guides_count', 'desc')
                 ->limit(5)
@@ -408,12 +408,12 @@ class GuideAdminController extends Controller
                         'guides_count' => $category->guides_count
                     ];
                 }),
-            
+
             'most_viewed_guides' => Guide::select('id', 'title', 'slug', 'views_count')
                 ->orderBy('views_count', 'desc')
                 ->limit(5)
                 ->get(),
-            
+
             'most_liked_guides' => Guide::withCount('likes')
                 ->orderBy('likes_count', 'desc')
                 ->limit(5)
@@ -426,7 +426,7 @@ class GuideAdminController extends Controller
                         'likes_count' => $guide->likes_count
                     ];
                 }),
-            
+
             'recent_guides' => Guide::with('author')
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
@@ -441,13 +441,13 @@ class GuideAdminController extends Controller
                         'created_at' => $guide->created_at->format('Y-m-d H:i:s')
                     ];
                 }),
-            
+
             'status_distribution' => [
                 'draft' => Guide::where('status', 'draft')->count(),
                 'published' => Guide::where('status', 'published')->count(),
                 'archived' => Guide::where('status', 'archived')->count(),
             ],
-            
+
             'guides_by_month' => DB::table('guides')
                 ->select(
                     DB::raw('YEAR(created_at) as year'),

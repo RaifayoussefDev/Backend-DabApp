@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\ServicePricingRule;
 
 class Service extends Model
 {
@@ -24,12 +25,12 @@ class Service extends Model
         'requires_booking',
         'max_capacity',
         'image',
-        'base_price',                     // NOUVEAU: Prix de base
-        'origin_city_id',                 // NOUVEAU: Ville de départ
-        'destination_city_id',            // NOUVEAU: Ville d'arrivée
-        'has_online_consultation',        // NOUVEAU
-        'consultation_price_per_session', // NOUVEAU
-        'consultation_email',             // NOUVEAU
+        'base_price',
+        'origin_city_id',
+        'destination_city_id',
+        'has_online_consultation',
+        'consultation_price_per_session',
+        'consultation_email',
     ];
 
     protected $casts = [
@@ -172,7 +173,7 @@ class Service extends Model
 
     public function getFormattedPriceAttribute()
     {
-        $priceText = number_format($this->price, 2) . ' ' . $this->currency;
+        $priceText = number_format((float) $this->price, 2) . ' ' . $this->currency;
 
         switch ($this->price_type) {
             case 'per_hour':
@@ -195,6 +196,13 @@ class Service extends Model
             return null;
         }
 
-        return number_format($this->consultation_price_per_session, 2) . ' ' . $this->currency . ' / ' . __('session');
+        return number_format((float) $this->consultation_price_per_session, 2) . ' ' . $this->currency . ' / ' . __('session');
+    }
+    /**
+     * Get the pricing rules for the service.
+     */
+    public function pricingRules()
+    {
+        return $this->hasMany(ServicePricingRule::class, 'service_id');
     }
 }

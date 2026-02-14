@@ -223,7 +223,7 @@ class EventController extends Controller
     {
         $user = auth()->user();
 
-        $query = Event::with([
+        $query = Event::withTrashed()->with([
             'category',
             'organizer',
             'organizerProfile',

@@ -12,6 +12,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
+        // Check for expired subscriptions daily
+        $schedule->job(new \App\Jobs\SubscriptionExpirationJob)->dailyAt('00:00');
+
         // Vérifier les paiements en attente toutes les 10 minutes
         $schedule->command('payments:check-pending')
             ->everyTenMinutes()

@@ -156,7 +156,7 @@ class ServiceController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Service::with(['provider.city', 'category']);
+        $query = Service::with(['provider.city', 'category', 'pricingRules.originCity', 'pricingRules.destinationCity', 'schedules']);
 
         // Filtre: Catégorie
         if ($request->has('category_id')) {
@@ -271,6 +271,8 @@ class ServiceController extends Controller
             'category',
             'schedules',
             'requiredDocuments',
+            'pricingRules.originCity', // Load city details for rules
+            'pricingRules.destinationCity',
             'reviews' => function ($q) {
                 $q->where('is_approved', true)
                     ->latest()
@@ -370,7 +372,22 @@ class ServiceController extends Controller
             'is_available' => 'nullable|boolean',
             'requires_booking' => 'nullable|boolean',
             'max_capacity' => 'nullable|integer|min:1',
-            'image' => 'nullable|image|max:2048'
+            'image' => 'nullable|image|max:2048',
+            'has_online_consultation' => 'nullable|boolean',
+            'consultation_price_per_session' => 'nullable|required_if:has_online_consultation,true|numeric|min:0',
+            'consultation_email' => 'nullable|required_if:has_online_consultation,true|email|max:255',
+            // Pricing Rules
+            'pricing_rules' => 'nullable|array',
+            'pricing_rules.*.type' => 'required|in:per_km,fixed_route',
+            'pricing_rules.*.price' => 'required|numeric|min:0',
+            'pricing_rules.*.origin_city_id' => 'required_if:pricing_rules.*.type,fixed_route|nullable|exists:cities,id',
+            'pricing_rules.*.destination_city_id' => 'required_if:pricing_rules.*.type,fixed_route|nullable|exists:cities,id',
+            // Schedules (Service-Specific Opening Hours)
+            'schedules' => 'nullable|array',
+            'schedules.*.day_of_week' => 'required|integer|min:0|max:6',
+            'schedules.*.start_time' => 'nullable|date_format:H:i',
+            'schedules.*.end_time' => 'nullable|date_format:H:i|after:schedules.*.start_time',
+            'schedules.*.is_available' => 'nullable|boolean',
         ]);
 
         DB::beginTransaction();
@@ -385,8 +402,38 @@ class ServiceController extends Controller
                 'provider_id' => $user->serviceProvider->id,
                 'currency' => $validated['currency'] ?? 'SAR',
                 'is_available' => $validated['is_available'] ?? true,
-                'requires_booking' => $validated['requires_booking'] ?? true
+                'requires_booking' => $validated['requires_booking'] ?? true,
+                'has_online_consultation' => $validated['has_online_consultation'] ?? false,
+                'consultation_price_per_session' => $validated['consultation_price_per_session'] ?? null,
+                'consultation_email' => $validated['consultation_email'] ?? null
             ]);
+
+            // Save Pricing Rules
+            if ($request->has('pricing_rules') && is_array($request->pricing_rules)) {
+                foreach ($request->pricing_rules as $rule) {
+                    \App\Models\ServicePricingRule::create([
+                        'service_id' => $service->id,
+                        'type' => $rule['type'],
+                        'price' => $rule['price'],
+                        'origin_city_id' => $rule['origin_city_id'] ?? null,
+                        'destination_city_id' => $rule['destination_city_id'] ?? null,
+                        'is_active' => true
+                    ]);
+                }
+            }
+
+            // Save Schedules
+            if ($request->has('schedules') && is_array($request->schedules)) {
+                foreach ($request->schedules as $schedule) {
+                    \App\Models\ServiceSchedule::create([
+                        'service_id' => $service->id,
+                        'day_of_week' => $schedule['day_of_week'],
+                        'start_time' => $schedule['start_time'] ?? null,
+                        'end_time' => $schedule['end_time'] ?? null,
+                        'is_available' => $schedule['is_available'] ?? true
+                    ]);
+                }
+            }
 
             // Incrémenter le compteur de services du provider
             $user->serviceProvider->increment('services_count');
@@ -477,7 +524,23 @@ class ServiceController extends Controller
             'is_available' => 'nullable|boolean',
             'requires_booking' => 'nullable|boolean',
             'max_capacity' => 'nullable|integer|min:1',
-            'image' => 'nullable|image|max:2048'
+            'image' => 'nullable|image|max:2048',
+            'has_online_consultation' => 'nullable|boolean',
+            'consultation_price_per_session' => 'nullable|required_if:has_online_consultation,true|numeric|min:0',
+            'consultation_email' => 'nullable|required_if:has_online_consultation,true|email|max:255',
+            // Pricing Rules
+            'pricing_rules' => 'nullable|array',
+            'pricing_rules.*.id' => 'nullable|exists:service_pricing_rules,id',
+            'pricing_rules.*.type' => 'required|in:per_km,fixed_route',
+            'pricing_rules.*.price' => 'required|numeric|min:0',
+            'pricing_rules.*.origin_city_id' => 'required_if:pricing_rules.*.type,fixed_route|nullable|exists:cities,id',
+            'pricing_rules.*.destination_city_id' => 'required_if:pricing_rules.*.type,fixed_route|nullable|exists:cities,id',
+            // Schedules
+            'schedules' => 'nullable|array',
+            'schedules.*.day_of_week' => 'required|integer|min:0|max:6',
+            'schedules.*.start_time' => 'nullable|date_format:H:i',
+            'schedules.*.end_time' => 'nullable|date_format:H:i|after:schedules.*.start_time',
+            'schedules.*.is_available' => 'nullable|boolean',
         ]);
 
         try {
@@ -492,9 +555,65 @@ class ServiceController extends Controller
 
             $service->update($validated);
 
+            // Sync Pricing Rules
+            if ($request->has('pricing_rules')) {
+                // Delete existing (simplest way for now, or use upsert if IDs proveded)
+                // Better approach: Keep existing IDs if provided, create new ones, delete missing ones
+                $currentRuleIds = $service->pricingRules()->pluck('id')->toArray();
+                $newRules = $request->pricing_rules ?? [];
+                $processedIds = [];
+
+                foreach ($newRules as $rule) {
+                    if (isset($rule['id']) && in_array($rule['id'], $currentRuleIds)) {
+                        // Update
+                        \App\Models\ServicePricingRule::where('id', $rule['id'])->update([
+                            'type' => $rule['type'],
+                            'price' => $rule['price'],
+                            'origin_city_id' => $rule['origin_city_id'] ?? null,
+                            'destination_city_id' => $rule['destination_city_id'] ?? null,
+                            'is_active' => true
+                        ]);
+                        $processedIds[] = $rule['id'];
+                    } else {
+                        // Create
+                        $newRule = \App\Models\ServicePricingRule::create([
+                            'service_id' => $service->id,
+                            'type' => $rule['type'],
+                            'price' => $rule['price'],
+                            'origin_city_id' => $rule['origin_city_id'] ?? null,
+                            'destination_city_id' => $rule['destination_city_id'] ?? null,
+                            'is_active' => true
+                        ]);
+                        $processedIds[] = $newRule->id;
+                    }
+                }
+
+                // Delete removed rules
+                $service->pricingRules()->whereNotIn('id', $processedIds)->delete();
+            }
+
+            // Sync Schedules (Delete All & Insert New)
+            if ($request->has('schedules')) {
+                // Delete existing
+                $service->schedules()->delete();
+
+                // Insert new
+                if (is_array($request->schedules)) {
+                    foreach ($request->schedules as $schedule) {
+                        \App\Models\ServiceSchedule::create([
+                            'service_id' => $service->id,
+                            'day_of_week' => $schedule['day_of_week'],
+                            'start_time' => $schedule['start_time'] ?? null,
+                            'end_time' => $schedule['end_time'] ?? null,
+                            'is_available' => $schedule['is_available'] ?? true
+                        ]);
+                    }
+                }
+            }
+
             return response()->json([
                 'success' => true,
-                'data' => $service->fresh(['category', 'provider']),
+                'data' => $service->fresh(['category', 'provider', 'pricingRules']),
                 'message' => 'Service updated successfully'
             ], 200);
 
@@ -615,7 +734,7 @@ class ServiceController extends Controller
         }
 
         $services = Service::where('provider_id', $user->serviceProvider->id)
-            ->with(['category'])
+            ->with(['category', 'pricingRules.originCity', 'pricingRules.destinationCity', 'schedules'])
             ->withCount(['bookings', 'reviews'])
             ->withAvg('reviews', 'rating')
             ->get();

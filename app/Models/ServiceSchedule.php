@@ -22,6 +22,11 @@ class ServiceSchedule extends Model
         'is_available' => 'boolean'
     ];
 
+    protected $appends = [
+        'day_name',
+        'day_name_ar'
+    ];
+
     // Relations
     public function service()
     {

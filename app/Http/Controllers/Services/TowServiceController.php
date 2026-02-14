@@ -186,29 +186,42 @@ class TowServiceController extends Controller
             'pickup_longitude' => 'required|numeric|between:-180,180',
             'dropoff_latitude' => 'required|numeric|between:-90,90',
             'dropoff_longitude' => 'required|numeric|between:-180,180',
+            'pickup_city_id' => 'nullable|exists:cities,id',
+            'dropoff_city_id' => 'nullable|exists:cities,id',
             'promo_code' => 'nullable|string|exists:service_promo_codes,code'
         ]);
 
         try {
             $basePrice = 0;
             $pricePerKm = 0;
+            $fixedPrice = null; // New logic for fixed pricing
             $towTypeData = null;
             $serviceData = null;
 
             // Logique de tarification
             if ($request->has('service_id')) {
-                $service = Service::with('category')->findOrFail($request->service_id);
+                $service = Service::with(['category', 'pricingRules'])->findOrFail($request->service_id);
 
-                // Si le service a un prix de base défini, on l'utilise, sinon 0
-                $basePrice = $service->base_price ?? 0;
+                // Priority 1: Check for Fixed Route Rule
+                if ($request->pickup_city_id && $request->dropoff_city_id) {
+                    $rule = $service->pricingRules->where('type', 'fixed_route')
+                        ->where('origin_city_id', $request->pickup_city_id)
+                        ->where('destination_city_id', $request->dropoff_city_id)
+                        ->first();
 
-                // Le prix par km est stocké dans le champ 'price' standard si le type est 'per_km'
-                if ($service->price_type === 'per_km') {
-                    $pricePerKm = $service->price;
-                } else {
-                    // Si c'est un prix fixe, on ignore le calcul par km ici, ou on considère 0
-                    // Mais pour ce endpoint 'calculate-price', on assume une logique distance
-                    $pricePerKm = 0;
+                    if ($rule) {
+                        $fixedPrice = $rule->price;
+                        $basePrice = 0; // Flat fee implies included base
+                        $pricePerKm = 0;
+                    }
+                }
+
+                if ($fixedPrice === null) {
+                    // Fallback to standard service pricing
+                    $basePrice = $service->base_price ?? 0;
+                    if ($service->price_type === 'per_km') {
+                        $pricePerKm = $service->price;
+                    }
                 }
 
                 $serviceData = [
@@ -246,10 +259,19 @@ class TowServiceController extends Controller
                 $validated['dropoff_longitude']
             );
 
-            // Calculer le prix
-            // Formule: Base + (Km * Prix/Km)
-            $distancePrice = $distance * $pricePerKm;
-            $subtotal = $basePrice + $distancePrice;
+            // Prix final
+            $subtotal = 0;
+            $distancePrice = 0;
+
+            if ($fixedPrice !== null) {
+                // Fixed Price override
+                $subtotal = $fixedPrice;
+                $distancePrice = 0; // Included
+            } else {
+                // Standard Formula: Base + (Km * Prix/Km)
+                $distancePrice = $distance * $pricePerKm;
+                $subtotal = $basePrice + $distancePrice;
+            }
 
             // Appliquer code promo si fourni
             $discountAmount = 0;
@@ -268,7 +290,7 @@ class TowServiceController extends Controller
                 'data' => [
                     'tow_type' => $towTypeData, // Peut être null si service_id utilisé
                     'service' => $serviceData,  // Nouveau champ
-                    'pricing_model' => $request->has('service_id') ? 'provider_specific' : 'standard',
+                    'pricing_model' => $fixedPrice !== null ? 'fixed_route' : ($request->has('service_id') ? 'provider_specific' : 'standard'),
                     'distance_km' => round($distance, 2),
                     'base_price' => round($basePrice, 2),
                     'price_per_km' => round($pricePerKm, 2),
@@ -332,13 +354,16 @@ class TowServiceController extends Controller
         $user = JWTAuth::parseToken()->authenticate();
 
         $validated = $request->validate([
-            'tow_type_id' => 'required|exists:tow_types,id',
+            'tow_type_id' => 'required_without:service_id|exists:tow_types,id',
+            'service_id' => 'nullable|exists:services,id',
             'pickup_location' => 'required|string|max:500',
             'pickup_latitude' => 'required|numeric|between:-90,90',
             'pickup_longitude' => 'required|numeric|between:-180,180',
             'dropoff_location' => 'required|string|max:500',
             'dropoff_latitude' => 'required|numeric|between:-90,90',
             'dropoff_longitude' => 'required|numeric|between:-180,180',
+            'pickup_city_id' => 'nullable|exists:cities,id',
+            'dropoff_city_id' => 'nullable|exists:cities,id',
             'notes' => 'nullable|string|max:1000',
             'phone' => 'nullable|string|max:20',
             'promo_code' => 'nullable|string|exists:service_promo_codes,code'
@@ -346,9 +371,7 @@ class TowServiceController extends Controller
 
         DB::beginTransaction();
         try {
-            $towType = TowType::findOrFail($validated['tow_type_id']);
-
-            // Calculer distance et prix
+            // Calculer distance
             $distance = $this->calculateDistance(
                 $validated['pickup_latitude'],
                 $validated['pickup_longitude'],
@@ -356,22 +379,55 @@ class TowServiceController extends Controller
                 $validated['dropoff_longitude']
             );
 
-            $basePrice = $towType->base_price;
-            $distancePrice = $distance * $towType->price_per_km;
-            $totalPrice = $basePrice + $distancePrice;
+            $towService = null;
+            $totalPrice = 0;
+            $towType = null; // Can be null if using provider service directly
 
-            // Appliquer promo code
+            if ($request->has('service_id')) {
+                // Use specific provider service
+                $towService = Service::with(['category', 'pricingRules'])->findOrFail($request->service_id);
+
+                // Calculate Price based on Service Rules
+                $basePrice = $towService->base_price ?? 0;
+                $pricePerKm = ($towService->price_type === 'per_km') ? $towService->price : 0;
+                $fixedPrice = null;
+
+                if ($request->pickup_city_id && $request->dropoff_city_id) {
+                    $rule = $towService->pricingRules->where('type', 'fixed_route')
+                        ->where('origin_city_id', $request->pickup_city_id)
+                        ->where('destination_city_id', $request->dropoff_city_id)
+                        ->first();
+                    if ($rule) {
+                        $fixedPrice = $rule->price;
+                    }
+                }
+
+                if ($fixedPrice !== null) {
+                    $totalPrice = $fixedPrice;
+                } else {
+                    $totalPrice = $basePrice + ($distance * $pricePerKm);
+                }
+
+            } else {
+                // Fallback to Tow Type logic and find random provider
+                $towType = TowType::findOrFail($validated['tow_type_id']);
+                $basePrice = $towType->base_price;
+                $distancePrice = $distance * $towType->price_per_km;
+                $totalPrice = $basePrice + $distancePrice;
+
+                // Trouver un service de remorquage disponible (catégorie "tow-service")
+                $towService = Service::whereHas('category', function ($q) {
+                    $q->where('slug', 'tow-service');
+                })
+                    ->where('is_available', true)
+                    ->first();
+            }
+
+            // Appliquer promo code (moved down)
             if ($request->promo_code) {
                 $promoResult = $this->applyPromoCode($totalPrice, $request->promo_code);
                 $totalPrice = $promoResult['final_price'];
             }
-
-            // Trouver un service de remorquage disponible (catégorie "tow-service")
-            $towService = Service::whereHas('category', function ($q) {
-                $q->where('slug', 'tow-service');
-            })
-                ->where('is_available', true)
-                ->first();
 
             if (!$towService) {
                 return response()->json([
@@ -489,11 +545,20 @@ class TowServiceController extends Controller
         }
 
         // Trouver les providers à proximité qui offrent du remorquage
-        $providers = \App\Models\ServiceProvider::nearby(
-            $validated['latitude'],
-            $validated['longitude'],
-            $radius
-        )
+        // Utilisation de raw SQL pour la distance au lieu du scope nearby() pour contrôler le tri
+        $providers = \App\Models\ServiceProvider::select('service_providers.*')
+            ->selectRaw(
+                "(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance",
+                [$validated['latitude'], $validated['longitude'], $validated['latitude']]
+            )
+            ->leftJoin('service_subscriptions', function ($join) {
+                $join->on('service_providers.id', '=', 'service_subscriptions.provider_id')
+                    ->where('service_subscriptions.status', 'active')
+                    ->whereDate('service_subscriptions.current_period_end', '>=', now());
+            })
+            ->leftJoin('subscription_plans', 'service_subscriptions.plan_id', '=', 'subscription_plans.id')
+            ->addSelect(DB::raw('COALESCE(subscription_plans.priority, 0) as plan_priority'))
+            ->having('distance', '<', $radius)
             ->active()
             ->verified()
             ->whereHas('services', function ($q) use ($towCategory) {
@@ -504,8 +569,11 @@ class TowServiceController extends Controller
                 'services' => function ($q) use ($towCategory) {
                     $q->where('category_id', $towCategory->id);
                 },
-                'city'
+                'city',
+                'activeSubscription.plan' // Eager load plan for UI display
             ])
+            ->orderByDesc('plan_priority') // Priorité plan
+            ->orderBy('distance')      // Puis distance
             ->get();
 
         return response()->json([

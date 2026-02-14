@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SubscriptionPlan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 /**
  * @OA\Tag(
@@ -117,7 +118,14 @@ class AdminSubscriptionPlanController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $data = $request->all();
+
+        // Generate slug if not provided or empty
+        if (empty($data['slug']) && !empty($data['name'])) {
+            $data['slug'] = Str::slug($data['name']);
+        }
+
+        $validator = Validator::make($data, [
             'name' => 'required|string|max:255',
             'name_ar' => 'required|string|max:255',
             'slug' => 'required|string|unique:subscription_plans,slug|max:255',
@@ -139,7 +147,7 @@ class AdminSubscriptionPlanController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
-        $plan = SubscriptionPlan::create($request->all());
+        $plan = SubscriptionPlan::create($data);
 
         return response()->json([
             'success' => true,
@@ -188,8 +196,18 @@ class AdminSubscriptionPlanController extends Controller
     public function update(Request $request, $id)
     {
         $plan = SubscriptionPlan::findOrFail($id);
+        $data = $request->all();
 
-        $validator = Validator::make($request->all(), [
+        // Generate slug if explicitly provided as null/empty, or if not provided but name changed (optional, but requested behavior implies automation)
+        // For safety, only if empty/null and name is present.
+        if (array_key_exists('slug', $data) && empty($data['slug']) && !empty($data['name'])) {
+            $data['slug'] = Str::slug($data['name']);
+        } elseif (!array_key_exists('slug', $data) && !empty($data['name']) && empty($plan->slug)) {
+            // Edge case: if plan has no slug (unlikely) and we update name.
+            $data['slug'] = Str::slug($data['name']);
+        }
+
+        $validator = Validator::make($data, [
             'name' => 'string|max:255',
             'name_ar' => 'string|max:255',
             'slug' => 'string|max:255|unique:subscription_plans,slug,' . $id,
@@ -209,7 +227,7 @@ class AdminSubscriptionPlanController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
-        $plan->update($request->all());
+        $plan->update($data);
 
         return response()->json([
             'success' => true,
@@ -246,6 +264,44 @@ class AdminSubscriptionPlanController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Subscription plan deleted successfully'
+        ]);
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/admin/subscription-plans/{id}/toggle-status",
+     *     summary="Toggle subscription plan active status (Admin)",
+     *     operationId="adminToggleSubscriptionPlanStatus",
+     *     tags={"Admin Subscription Plans"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Plan status updated successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="is_active", type="boolean", example=false)
+     *             ),
+     *             @OA\Property(property="message", type="string", example="Subscription plan deactivated successfully")
+     *         )
+     *     )
+     * )
+     */
+    public function toggleStatus($id)
+    {
+        $plan = SubscriptionPlan::findOrFail($id);
+        $plan->is_active = !$plan->is_active;
+        $plan->save();
+
+        return response()->json([
+            'success' => true,
+            'data' => $plan,
+            'message' => 'Subscription plan ' . ($plan->is_active ? 'activated' : 'deactivated') . ' successfully'
         ]);
     }
 }

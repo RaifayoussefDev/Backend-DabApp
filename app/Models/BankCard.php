@@ -10,10 +10,12 @@ class BankCard extends Model
 {
     protected $fillable = [
         'user_id',
-        'card_number',
+        'payment_token',
+        'last_four',
+        'brand',
+        'expiry_month',
+        'expiry_year',
         'card_holder_name',
-        'expiration_date',
-        'cvv',
         'card_type_id',
         'is_default'
     ];

@@ -539,4 +539,12 @@ class User extends Authenticatable implements JWTSubject
         }
         return $this->attributes['name'];
     }
+
+    /**
+     * Get the service provider profile associated with the user.
+     */
+    public function serviceProvider()
+    {
+        return $this->hasOne(ServiceProvider::class);
+    }
 }

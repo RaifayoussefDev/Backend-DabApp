@@ -1756,235 +1756,43 @@
                 "operationId": "e68c29d4d26f557a17b9e095146a4f0d",
                 "responses": {
                     "200": {
-                        "description": "List of BankCards"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/api/my-cards": {
-            "get": {
-                "tags": [
-                    "BankCards"
-                ],
-                "summary": "Get authenticated user's cards",
-                "operationId": "af74c31afb9229905aa329697bf611f3",
-                "responses": {
-                    "200": {
-                        "description": "List of user's bank cards",
+                        "description": "List of BankCards with User details",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "type": "array",
                                     "items": {
-                                        "$ref": "#/components/schemas/BankCard"
+                                        "allOf": [
+                                            {
+                                                "$ref": "#/components/schemas/BankCard"
+                                            },
+                                            {
+                                                "properties": {
+                                                    "user": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "User Name"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "user@example.com"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        ]
                                     }
                                 }
                             }
                         }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            },
-            "post": {
-                "tags": [
-                    "BankCards"
-                ],
-                "summary": "Add a new card for the authenticated user",
-                "operationId": "fec5900e84eda158df67dad987d7fe10",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "card_type_id"
-                                ],
-                                "properties": {
-                                    "card_type_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "card_number": {
-                                        "type": "string",
-                                        "example": "1234 5678 9012 3456"
-                                    },
-                                    "card_holder_name": {
-                                        "type": "string",
-                                        "example": "John Doe"
-                                    },
-                                    "expiration_date": {
-                                        "description": "Format: MM/YY",
-                                        "type": "string",
-                                        "example": "12/25"
-                                    },
-                                    "cvv": {
-                                        "type": "string",
-                                        "example": "123"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Card added successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Bank card successfully added."
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/BankCard"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "Card already exists"
-                    },
-                    "422": {
-                        "description": "Validation error"
-                    },
-                    "500": {
-                        "description": "Internal server error"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/api/my-cards/{id}": {
-            "put": {
-                "tags": [
-                    "BankCards"
-                ],
-                "summary": "Update user's card",
-                "operationId": "b08e8c3ae4447a9673d44c8b293d7434",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "Card ID",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "card_holder_name": {
-                                        "type": "string",
-                                        "example": "John Doe Updated"
-                                    },
-                                    "expiration_date": {
-                                        "type": "string",
-                                        "example": "12/25"
-                                    },
-                                    "cvv": {
-                                        "type": "string",
-                                        "example": "456"
-                                    },
-                                    "is_default": {
-                                        "type": "boolean",
-                                        "example": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Card updated successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/BankCard"
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Not authorized to update this card"
-                    },
-                    "404": {
-                        "description": "Card not found"
-                    },
-                    "422": {
-                        "description": "Validation error"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            },
-            "delete": {
-                "tags": [
-                    "BankCards"
-                ],
-                "summary": "Delete user's card",
-                "operationId": "5f1c13a1fb9c7989240d1b0ab2460f9b",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "Card ID",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Card deleted successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Card deleted successfully"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Not authorized to delete this card"
-                    },
-                    "404": {
-                        "description": "Card not found"
                     }
                 },
                 "security": [
@@ -1995,36 +1803,6 @@
             }
         },
         "/api/BankCards/{id}": {
-            "get": {
-                "tags": [
-                    "BankCards"
-                ],
-                "summary": "Get BankCard by ID",
-                "operationId": "a619b9cda83c954a3be2507121b083af",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "BankCard details"
-                    },
-                    "404": {
-                        "description": "BankCard not found"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            },
             "put": {
                 "tags": [
                     "BankCards"
@@ -2046,13 +1824,17 @@
                         "application/json": {
                             "schema": {
                                 "properties": {
-                                    "name": {
+                                    "card_holder_name": {
                                         "type": "string",
-                                        "example": "New VIP BankCard"
+                                        "example": "John Doe"
                                     },
-                                    "BankCard_type_id": {
+                                    "card_type_id": {
                                         "type": "integer",
                                         "example": 1
+                                    },
+                                    "is_default": {
+                                        "type": "boolean",
+                                        "example": true
                                     }
                                 },
                                 "type": "object"
@@ -28475,6 +28257,133 @@
                 ]
             }
         },
+        "/api/my-working-hours": {
+            "get": {
+                "tags": [
+                    "Provider Working Hours"
+                ],
+                "summary": "Get my working hours",
+                "description": "Retrieve the working hours for the authenticated service provider",
+                "operationId": "getMyWorkingHours",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "day_of_week": {
+                                                        "description": "0=Sunday, 1=Monday...",
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "is_open": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "open_time": {
+                                                        "type": "string",
+                                                        "format": "time",
+                                                        "example": "09:00:00"
+                                                    },
+                                                    "close_time": {
+                                                        "type": "string",
+                                                        "format": "time",
+                                                        "example": "17:00:00"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Provider Working Hours"
+                ],
+                "summary": "Update working hours",
+                "description": "Update the working hours for the authenticated service provider",
+                "operationId": "updateWorkingHours",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "schedule_type",
+                                    "hours_type"
+                                ],
+                                "properties": {
+                                    "schedule_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "all_week",
+                                            "specific_days"
+                                        ],
+                                        "example": "specific_days"
+                                    },
+                                    "specific_days": {
+                                        "description": "Required if schedule_type is specific_days. 0=Sunday, 6=Saturday",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "hours_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "24_hours",
+                                            "specific_time"
+                                        ],
+                                        "example": "specific_time"
+                                    },
+                                    "open_time": {
+                                        "type": "string",
+                                        "format": "time",
+                                        "example": "09:00"
+                                    },
+                                    "close_time": {
+                                        "type": "string",
+                                        "format": "time",
+                                        "example": "17:00"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Working hours updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
         "/api/riding-instructors": {
             "get": {
                 "tags": [
@@ -33109,6 +33018,116 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/subscription/transactions": {
+            "get": {
+                "tags": [
+                    "Subscription Transactions"
+                ],
+                "summary": "Get subscription transaction history",
+                "description": "Retrieve a list of subscription transactions (invoices) for the authenticated service provider",
+                "operationId": "getSubscriptionTransactions",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "invoice_number": {
+                                                        "type": "string",
+                                                        "example": "INV-20260211-XYZ"
+                                                    },
+                                                    "amount": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 29
+                                                    },
+                                                    "currency": {
+                                                        "type": "string",
+                                                        "example": "SAR"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "completed"
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "example": "subscription"
+                                                    },
+                                                    "date": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2026-02-11T12:00:00Z"
+                                                    },
+                                                    "billing_start": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": "2026-02-11"
+                                                    },
+                                                    "billing_end": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": "2026-03-11"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/tow-types": {
@@ -38749,6 +38768,10 @@
             "description": "API endpoints pour le chat technique entre utilisateurs et providers"
         },
         {
+            "name": "Provider Working Hours",
+            "description": "API endpoints for managing service provider working hours"
+        },
+        {
             "name": "Riding Instructors",
             "description": "API endpoints pour les instructeurs de conduite moto"
         },
@@ -38783,6 +38806,10 @@
         {
             "name": "Subscription Plans",
             "description": "API endpoints for viewing and comparing subscription plans (Basic, Business, Enterprise)"
+        },
+        {
+            "name": "Subscription Transactions",
+            "description": "API endpoints for viewing subscription invoices and transaction history"
         },
         {
             "name": "Tow Service",
