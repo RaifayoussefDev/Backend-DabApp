@@ -96,8 +96,10 @@ class GuideAdminController extends Controller
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="title", type="string", example="Guide complet de maintenance moto"),
+     *                     @OA\Property(property="title_ar", type="string", example="دليل صيانة الدراجات النارية الكامل"),
      *                     @OA\Property(property="slug", type="string", example="guide-complet-maintenance-moto"),
      *                     @OA\Property(property="excerpt", type="string", example="Apprenez à entretenir votre moto comme un pro"),
+     *                     @OA\Property(property="excerpt_ar", type="string", example="تعلم كيفية صيانة دراجتك النارية كالمحترفين"),
      *                     @OA\Property(property="featured_image", type="string", example="https://example.com/images/guide1.jpg"),
      *                     @OA\Property(property="status", type="string", example="published"),
      *                     @OA\Property(property="views_count", type="integer", example=1234),
@@ -189,8 +191,11 @@ class GuideAdminController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('title_ar', 'like', "%{$search}%")
                     ->orWhere('excerpt', 'like', "%{$search}%")
-                    ->orWhere('content', 'like', "%{$search}%");
+                    ->orWhere('excerpt_ar', 'like', "%{$search}%")
+                    ->orWhere('content', 'like', "%{$search}%")
+                    ->orWhere('content_ar', 'like', "%{$search}%");
             });
         }
 
@@ -488,9 +493,12 @@ class GuideAdminController extends Controller
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="title", type="string", example="Guide complet de maintenance moto"),
+     *                 @OA\Property(property="title_ar", type="string", example="دليل صيانة الدراجات النارية الكامل"),
      *                 @OA\Property(property="slug", type="string", example="guide-complet-maintenance-moto"),
      *                 @OA\Property(property="excerpt", type="string", example="Apprenez à entretenir votre moto comme un pro"),
+     *                 @OA\Property(property="excerpt_ar", type="string", example="تعلم كيفية صيانة دراجتك النارية كالمحترفين"),
      *                 @OA\Property(property="content", type="string", example="<p>Contenu HTML complet du guide...</p>"),
+     *                 @OA\Property(property="content_ar", type="string", example="<p>المحتوى الكامل للدليل باللغة العربية...</p>"),
      *                 @OA\Property(property="featured_image", type="string", example="https://example.com/images/guide1.jpg"),
      *                 @OA\Property(property="status", type="string", example="published"),
      *                 @OA\Property(property="views_count", type="integer", example=1234),
@@ -629,8 +637,11 @@ class GuideAdminController extends Controller
      *         @OA\JsonContent(
      *             required={"title", "category_id", "author_id", "status"},
      *             @OA\Property(property="title", type="string", example="Guide de maintenance complète", description="Titre du guide (max 255 caractères)"),
+     *             @OA\Property(property="title_ar", type="string", example="دليل الصيانة الكاملة", description="Titre en arabe"),
      *             @OA\Property(property="excerpt", type="string", example="Un guide détaillé pour entretenir votre moto", description="Résumé court du guide"),
+     *             @OA\Property(property="excerpt_ar", type="string", example="دليل مفصل لصيانة دراجتك النارية", description="Résumé en arabe"),
      *             @OA\Property(property="content", type="string", example="<p>Contenu HTML complet du guide...</p>", description="Contenu complet du guide en HTML"),
+     *             @OA\Property(property="content_ar", type="string", example="<p>المحتوى الكامل للدليل...</p>", description="Contenu en arabe"),
      *             @OA\Property(property="featured_image", type="string", example="https://example.com/images/maintenance.jpg", description="URL de l'image principale"),
      *             @OA\Property(property="category_id", type="integer", example=1, description="ID de la catégorie (doit exister)"),
      *             @OA\Property(property="author_id", type="integer", example=5, description="ID de l'auteur (doit exister)"),
@@ -658,8 +669,10 @@ class GuideAdminController extends Controller
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=150),
      *                 @OA\Property(property="title", type="string", example="Guide de maintenance complète"),
+     *                 @OA\Property(property="title_ar", type="string", example="دليل الصيانة الكاملة"),
      *                 @OA\Property(property="slug", type="string", example="guide-de-maintenance-complete"),
      *                 @OA\Property(property="excerpt", type="string", example="Un guide détaillé pour entretenir votre moto"),
+     *                 @OA\Property(property="excerpt_ar", type="string", example="دليل مفصل لصيانة دراجتك النارية"),
      *                 @OA\Property(property="featured_image", type="string", example="https://example.com/images/maintenance.jpg"),
      *                 @OA\Property(property="status", type="string", example="draft"),
      *                 @OA\Property(property="views_count", type="integer", example=0),
@@ -734,8 +747,11 @@ class GuideAdminController extends Controller
 
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
+            'title_ar' => 'nullable|string|max:255',
             'excerpt' => 'nullable|string',
+            'excerpt_ar' => 'nullable|string',
             'content' => 'nullable|string',
+            'content_ar' => 'nullable|string',
             'featured_image' => 'nullable|string|max:255',
             'category_id' => 'required|exists:guide_categories,id',
             'author_id' => 'required|exists:users,id',
@@ -765,9 +781,12 @@ class GuideAdminController extends Controller
 
         $guide = Guide::create([
             'title' => $request->title,
+            'title_ar' => $request->title_ar,
             'slug' => $slug,
             'excerpt' => $request->excerpt,
+            'excerpt_ar' => $request->excerpt_ar,
             'content' => $request->content,
+            'content_ar' => $request->content_ar,
             'featured_image' => $request->featured_image,
             'category_id' => $request->category_id,
             'author_id' => $request->author_id,
@@ -809,8 +828,11 @@ class GuideAdminController extends Controller
      *         description="Données à mettre à jour (tous les champs sont optionnels)",
      *         @OA\JsonContent(
      *             @OA\Property(property="title", type="string", example="Titre modifié", description="Nouveau titre (max 255)"),
+     *             @OA\Property(property="title_ar", type="string", example="العنوان المعدل"),
      *             @OA\Property(property="excerpt", type="string", example="Résumé modifié"),
+     *             @OA\Property(property="excerpt_ar", type="string", example="الملخص المعدل"),
      *             @OA\Property(property="content", type="string", example="<p>Nouveau contenu...</p>"),
+     *             @OA\Property(property="content_ar", type="string", example="<p>محتوى جديد...</p>"),
      *             @OA\Property(property="featured_image", type="string", example="https://example.com/new-image.jpg"),
      *             @OA\Property(property="category_id", type="integer", example=2),
      *             @OA\Property(property="author_id", type="integer", example=3),
@@ -884,8 +906,11 @@ class GuideAdminController extends Controller
 
         $validator = Validator::make($request->all(), [
             'title' => 'sometimes|string|max:255',
+            'title_ar' => 'nullable|string|max:255',
             'excerpt' => 'nullable|string',
+            'excerpt_ar' => 'nullable|string',
             'content' => 'nullable|string',
+            'content_ar' => 'nullable|string',
             'featured_image' => 'nullable|string|max:255',
             'category_id' => 'sometimes|exists:guide_categories,id',
             'author_id' => 'sometimes|exists:users,id',
@@ -1420,8 +1445,10 @@ class GuideAdminController extends Controller
         return [
             'id' => $guide->id,
             'title' => $guide->title,
+            'title_ar' => $guide->title_ar,
             'slug' => $guide->slug,
             'excerpt' => $guide->excerpt,
+            'excerpt_ar' => $guide->excerpt_ar,
             'featured_image' => $guide->featured_image,
             'status' => $guide->status,
             'views_count' => $guide->views_count,
@@ -1462,6 +1489,7 @@ class GuideAdminController extends Controller
         $data = $this->formatGuideForAdmin($guide);
 
         $data['content'] = $guide->content;
+        $data['content_ar'] = $guide->content_ar;
         $data['sections'] = $guide->sections->map(function ($section) {
             return [
                 'id' => $section->id,

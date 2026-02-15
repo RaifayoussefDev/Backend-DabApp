@@ -11589,6 +11589,14 @@
                                         "type": "string",
                                         "example": "برنامج تعليمي كامل لصيانة محرك دراجتك وإطاراتها وسلاسلها."
                                     },
+                                    "content": {
+                                        "type": "string",
+                                        "example": "<p>Full guide content...</p>"
+                                    },
+                                    "content_ar": {
+                                        "type": "string",
+                                        "example": "<p>محتوى الدليل الكامل...</p>"
+                                    },
                                     "featured_image": {
                                         "type": "string",
                                         "format": "url",
@@ -11803,6 +11811,12 @@
                                         "type": "string"
                                     },
                                     "excerpt_ar": {
+                                        "type": "string"
+                                    },
+                                    "content": {
+                                        "type": "string"
+                                    },
+                                    "content_ar": {
                                         "type": "string"
                                     },
                                     "featured_image": {
@@ -32019,10 +32033,10 @@
                     "Service Subscriptions"
                 ],
                 "summary": "Subscribe to a plan",
-                "description": "Create a new subscription for the authenticated service provider. Provider must not have an active subscription.",
+                "description": "Create a new subscription. If the user is not yet a service provider, a provider profile will be automatically created.",
                 "operationId": "subscribeToAPlan",
                 "requestBody": {
-                    "description": "Subscription details",
+                    "description": "Subscription details with optional provider profile and images",
                     "required": true,
                     "content": {
                         "application/json": {
@@ -32033,12 +32047,11 @@
                                 ],
                                 "properties": {
                                     "plan_id": {
-                                        "description": "ID of the subscription plan (1=Basic, 2=Business, 3=Enterprise)",
+                                        "description": "ID of the subscription plan",
                                         "type": "integer",
                                         "example": 2
                                     },
                                     "billing_cycle": {
-                                        "description": "Billing frequency",
                                         "type": "string",
                                         "enum": [
                                             "monthly",
@@ -32047,25 +32060,86 @@
                                         "example": "monthly"
                                     },
                                     "payment_method_id": {
-                                        "description": "Card type ID (optional)",
                                         "type": "integer",
                                         "example": 1,
                                         "nullable": true
                                     },
                                     "bank_card_id": {
-                                        "description": "Saved bank card ID (optional)",
                                         "type": "integer",
                                         "example": 5,
                                         "nullable": true
+                                    },
+                                    "business_name": {
+                                        "type": "string",
+                                        "example": "My Car Service"
+                                    },
+                                    "business_name_ar": {
+                                        "type": "string",
+                                        "example": "خدمة سيارتي"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Best car service"
+                                    },
+                                    "description_ar": {
+                                        "type": "string",
+                                        "example": "أفضل خدمة سيارات"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+966500000000"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "contact@carservice.com"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "123 Main St"
+                                    },
+                                    "address_ar": {
+                                        "type": "string",
+                                        "example": "123 شارع الرئيسي"
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "country_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 24.7136
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 46.6753
+                                    },
+                                    "logo": {
+                                        "description": "Provider Logo URL",
+                                        "type": "string",
+                                        "example": "https://example.com/logo.png"
+                                    },
+                                    "cover_image": {
+                                        "description": "Cover Image URL",
+                                        "type": "string",
+                                        "example": "https://example.com/cover.png"
+                                    },
+                                    "images": {
+                                        "description": "Gallery Image URLs",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "example": "https://example.com/image1.png"
+                                        }
                                     }
                                 },
                                 "type": "object"
-                            },
-                            "example": {
-                                "plan_id": 2,
-                                "billing_cycle": "monthly",
-                                "payment_method_id": 1,
-                                "bank_card_id": 5
                             }
                         }
                     }

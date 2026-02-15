@@ -103,6 +103,8 @@ class GuideController extends Controller
      *             @OA\Property(property="title_ar", type="string", example="الدليل الشامل لصيانة الدراجات النارية 2024"),
      *             @OA\Property(property="excerpt", type="string", example="A complete walkthrough for maintaining your bike's engine, tires, and chains."),
      *             @OA\Property(property="excerpt_ar", type="string", example="برنامج تعليمي كامل لصيانة محرك دراجتك وإطاراتها وسلاسلها."),
+     *             @OA\Property(property="content", type="string", example="<p>Full guide content...</p>"),
+     *             @OA\Property(property="content_ar", type="string", example="<p>محتوى الدليل الكامل...</p>"),
      *             @OA\Property(property="featured_image", type="string", format="url", example="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80"),
      *             @OA\Property(property="category_id", type="integer", example=1, description="ID of the guide category"),
      *             @OA\Property(property="tags", type="array", @OA\Items(type="integer"), example={1, 3, 5}, description="Array of tag IDs"),
@@ -174,6 +176,8 @@ class GuideController extends Controller
             'title_ar' => 'nullable|string|max:255',
             'excerpt' => 'nullable|string',
             'excerpt_ar' => 'nullable|string',
+            'content' => 'nullable|string',
+            'content_ar' => 'nullable|string',
             'featured_image' => 'nullable|string|max:255',
             'category_id' => 'nullable|exists:guide_categories,id',
             'tags' => 'nullable|array',
@@ -201,8 +205,8 @@ class GuideController extends Controller
             $guide = Guide::create([
                 'title' => $request->title,
                 'title_ar' => $request->title_ar,
-                'content' => '',
-                'content_ar' => '',
+                'content' => $request->content,
+                'content_ar' => $request->content_ar,
                 'excerpt' => $request->excerpt,
                 'excerpt_ar' => $request->excerpt_ar,
                 'featured_image' => $request->featured_image,
@@ -300,6 +304,8 @@ class GuideController extends Controller
      *             @OA\Property(property="title_ar", type="string"),
      *             @OA\Property(property="excerpt", type="string"),
      *             @OA\Property(property="excerpt_ar", type="string"),
+     *             @OA\Property(property="content", type="string"),
+     *             @OA\Property(property="content_ar", type="string"),
      *             @OA\Property(property="featured_image", type="string"),
      *             @OA\Property(property="category_id", type="integer"),
      *             @OA\Property(property="tags", type="array", @OA\Items(type="integer")),
@@ -370,7 +376,7 @@ class GuideController extends Controller
         DB::beginTransaction();
 
         try {
-            $guide->update($request->only(['title', 'title_ar', 'excerpt', 'excerpt_ar', 'featured_image', 'category_id', 'is_featured']));
+            $guide->update($request->only(['title', 'title_ar', 'excerpt', 'excerpt_ar', 'content', 'content_ar', 'featured_image', 'category_id', 'is_featured']));
 
             if ($request->has('tags')) {
                 $guide->tags()->sync($request->tags);
@@ -977,6 +983,8 @@ class GuideController extends Controller
             'slug' => $guide->slug,
             'excerpt' => $guide->excerpt,
             'excerpt_ar' => $guide->excerpt_ar,
+            'content' => $guide->content,
+            'content_ar' => $guide->content_ar,
             'featured_image' => $guide->featured_image,
             'views_count' => $guide->views_count,
             'likes_count' => $guide->likes()->count(),
@@ -1072,6 +1080,8 @@ class GuideController extends Controller
             'slug' => $guide->slug,
             'excerpt' => $guide->excerpt,
             'excerpt_ar' => $guide->excerpt_ar,
+            'content' => $guide->content,
+            'content_ar' => $guide->content_ar,
             'featured_image' => $guide->featured_image,
             'status' => $guide->status,
             'is_featured' => $guide->is_featured,
