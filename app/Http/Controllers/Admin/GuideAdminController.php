@@ -95,12 +95,12 @@ class GuideAdminController extends Controller
      *                 @OA\Items(
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="title", type="string", example="Guide complet de maintenance moto"),
-     *                     @OA\Property(property="title_ar", type="string", example="دليل صيانة الدراجات النارية الكامل"),
-     *                     @OA\Property(property="slug", type="string", example="guide-complet-maintenance-moto"),
-     *                     @OA\Property(property="excerpt", type="string", example="Apprenez à entretenir votre moto comme un pro"),
-     *                     @OA\Property(property="excerpt_ar", type="string", example="تعلم كيفية صيانة دراجتك النارية كالمحترفين"),
-     *                     @OA\Property(property="featured_image", type="string", example="https://example.com/images/guide1.jpg"),
+     *                     @OA\Property(property="title", type="string", example="Ultimate Guide to Motorcycle Maintenance"),
+     *                     @OA\Property(property="title_ar", type="string", example="الدليل الشامل لصيانة الدراجات النارية"),
+     *                     @OA\Property(property="slug", type="string", example="ultimate-guide-motorcycle-maintenance"),
+     *                     @OA\Property(property="excerpt", type="string", example="Everything you need to know about keeping your bike in top condition."),
+     *                     @OA\Property(property="excerpt_ar", type="string", example="كل ما تحتاج معرفته للحفاظ على دراجتك في أفضل حالة."),
+     *                     @OA\Property(property="featured_image", type="string", example="https://example.com/images/guide-maintenance.jpg"),
      *                     @OA\Property(property="status", type="string", example="published"),
      *                     @OA\Property(property="views_count", type="integer", example=1234),
      *                     @OA\Property(property="likes_count", type="integer", example=45),
@@ -116,9 +116,9 @@ class GuideAdminController extends Controller
      *                         property="author",
      *                         type="object",
      *                         @OA\Property(property="id", type="integer", example=5),
-     *                         @OA\Property(property="name", type="string", example="John Doe"),
-     *                         @OA\Property(property="email", type="string", example="john@example.com"),
-     *                         @OA\Property(property="profile_picture", type="string", example="https://example.com/profiles/john.jpg")
+     *                         @OA\Property(property="name", type="string", example="Ahmed Hassan"),
+     *                         @OA\Property(property="email", type="string", example="ahmed@example.com"),
+     *                         @OA\Property(property="profile_picture", type="string", example="https://example.com/profiles/ahmed.jpg")
      *                     ),
      *                     @OA\Property(
      *                         property="tags",
@@ -126,24 +126,24 @@ class GuideAdminController extends Controller
      *                         @OA\Items(
      *                             type="object",
      *                             @OA\Property(property="id", type="integer", example=1),
-     *                             @OA\Property(property="name", type="string", example="Entretien"),
-     *                             @OA\Property(property="slug", type="string", example="entretien")
+     *                             @OA\Property(property="name", type="string", example="DIY"),
+     *                             @OA\Property(property="slug", type="string", example="diy")
      *                         )
      *                     ),
-     *                     @OA\Property(property="meta_title", type="string", example="Guide Maintenance Moto - DabApp"),
-     *                     @OA\Property(property="meta_description", type="string", example="Guide complet pour entretenir votre moto"),
-     *                     @OA\Property(property="meta_keywords", type="string", example="maintenance, moto, entretien"),
+     *                     @OA\Property(property="meta_title", type="string", example="Motorcycle Maintenance Guide - DabApp"),
+     *                     @OA\Property(property="meta_description", type="string", example="Learn how to maintain your motorcycle like a pro."),
+     *                     @OA\Property(property="meta_keywords", type="string", example="maintenance, motorcycle, tips, guide"),
      *                     @OA\Property(property="created_at", type="string", example="2025-01-15 10:30:00"),
      *                     @OA\Property(property="updated_at", type="string", example="2025-02-01 14:20:00"),
      *                     @OA\Property(property="published_at", type="string", example="2025-01-16 09:00:00")
      *                 )
      *             ),
-     *             @OA\Property(property="current_page", type="integer", example=1, description="Page actuelle (uniquement si paginé)"),
-     *             @OA\Property(property="last_page", type="integer", example=10, description="Dernière page (uniquement si paginé)"),
-     *             @OA\Property(property="per_page", type="integer", example=20, description="Éléments par page (uniquement si paginé)"),
-     *             @OA\Property(property="total", type="integer", example=195, description="Nombre total d'éléments"),
-     *             @OA\Property(property="from", type="integer", example=1, description="Index du premier élément (uniquement si paginé)"),
-     *             @OA\Property(property="to", type="integer", example=20, description="Index du dernier élément (uniquement si paginé)")
+     *             @OA\Property(property="current_page", type="integer", example=1, description="Current page number"),
+     *             @OA\Property(property="last_page", type="integer", example=10, description="Last page number"),
+     *             @OA\Property(property="per_page", type="integer", example=20, description="Items per page"),
+     *             @OA\Property(property="total", type="integer", example=195, description="Total items count"),
+     *             @OA\Property(property="from", type="integer", example=1, description="First item index"),
+     *             @OA\Property(property="to", type="integer", example=20, description="Last item index")
      *         )
      *     ),
      *     @OA\Response(
@@ -489,17 +489,18 @@ class GuideAdminController extends Controller
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(
+     *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="title", type="string", example="Guide complet de maintenance moto"),
-     *                 @OA\Property(property="title_ar", type="string", example="دليل صيانة الدراجات النارية الكامل"),
-     *                 @OA\Property(property="slug", type="string", example="guide-complet-maintenance-moto"),
-     *                 @OA\Property(property="excerpt", type="string", example="Apprenez à entretenir votre moto comme un pro"),
-     *                 @OA\Property(property="excerpt_ar", type="string", example="تعلم كيفية صيانة دراجتك النارية كالمحترفين"),
-     *                 @OA\Property(property="content", type="string", example="<p>Contenu HTML complet du guide...</p>"),
-     *                 @OA\Property(property="content_ar", type="string", example="<p>المحتوى الكامل للدليل باللغة العربية...</p>"),
-     *                 @OA\Property(property="featured_image", type="string", example="https://example.com/images/guide1.jpg"),
+     *                 @OA\Property(property="title", type="string", example="Ultimate Guide to Motorcycle Maintenance"),
+     *                 @OA\Property(property="title_ar", type="string", example="الدليل الشامل لصيانة الدراجات النارية"),
+     *                 @OA\Property(property="slug", type="string", example="ultimate-guide-motorcycle-maintenance"),
+     *                 @OA\Property(property="excerpt", type="string", example="Everything you need to know about keeping your bike in top condition."),
+     *                 @OA\Property(property="excerpt_ar", type="string", example="كل ما تحتاج معرفته للحفاظ على دراجتك في أفضل حالة."),
+     *                 @OA\Property(property="content", type="string", example="<p>Regular oil changes are crucial for engine longevity...</p>"),
+     *                 @OA\Property(property="content_ar", type="string", example="<p>تغيير الزيت بانتظام أمر بالغ الأهمية لطول عمر المحرك...</p>"),
+     *                 @OA\Property(property="featured_image", type="string", example="https://example.com/images/guide-maintenance.jpg"),
      *                 @OA\Property(property="status", type="string", example="published"),
      *                 @OA\Property(property="views_count", type="integer", example=1234),
      *                 @OA\Property(property="likes_count", type="integer", example=45),
@@ -515,9 +516,9 @@ class GuideAdminController extends Controller
      *                     property="author",
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=5),
-     *                     @OA\Property(property="name", type="string", example="John Doe"),
-     *                     @OA\Property(property="email", type="string", example="john@example.com"),
-     *                     @OA\Property(property="profile_picture", type="string", example="https://example.com/profiles/john.jpg")
+     *                     @OA\Property(property="name", type="string", example="Ahmed Hassan"),
+     *                     @OA\Property(property="email", type="string", example="ahmed@example.com"),
+     *                     @OA\Property(property="profile_picture", type="string", example="https://example.com/profiles/ahmed.jpg")
      *                 ),
      *                 @OA\Property(
      *                     property="tags",
@@ -525,49 +526,51 @@ class GuideAdminController extends Controller
      *                     @OA\Items(
      *                         type="object",
      *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="name", type="string", example="Entretien"),
-     *                         @OA\Property(property="slug", type="string", example="entretien")
+     *                         @OA\Property(property="name", type="string", example="DIY"),
+     *                         @OA\Property(property="slug", type="string", example="diy")
      *                     )
      *                 ),
      *                 @OA\Property(
      *                     property="sections",
      *                     type="array",
-     *                     description="Sections du guide",
+     *                     description="Guide sections",
      *                     @OA\Items(
      *                         type="object",
      *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="title", type="string", example="Introduction"),
-     *                         @OA\Property(property="content", type="string", example="<p>Contenu de la section...</p>"),
+     *                         @OA\Property(property="title", type="string", example="Oil Change"),
+     *                         @OA\Property(property="title_ar", type="string", example="تغيير الزيت"),
+     *                         @OA\Property(property="content", type="string", example="<p>Step 1: Warm up the engine...</p>"),
+     *                         @OA\Property(property="content_ar", type="string", example="<p>الخطوة 1: قم بتسخين المحرك...</p>"),
      *                         @OA\Property(property="order_position", type="integer", example=1)
      *                     )
      *                 ),
      *                 @OA\Property(
      *                     property="images",
      *                     type="array",
-     *                     description="Images du guide",
+     *                     description="Guide images",
      *                     @OA\Items(
      *                         type="object",
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="image_url", type="string", example="https://example.com/images/step1.jpg"),
-     *                         @OA\Property(property="caption", type="string", example="Première étape"),
+     *                         @OA\Property(property="caption", type="string", example="Drain bolt location"),
      *                         @OA\Property(property="order_position", type="integer", example=1)
      *                     )
      *                 ),
      *                 @OA\Property(
      *                     property="recent_comments",
      *                     type="array",
-     *                     description="10 commentaires les plus récents",
+     *                     description="10 most recent comments",
      *                     @OA\Items(
      *                         type="object",
      *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="content", type="string", example="Excellent guide, très utile!"),
-     *                         @OA\Property(property="user_name", type="string", example="Jane Smith"),
+     *                         @OA\Property(property="content", type="string", example="Great guide, thanks!"),
+     *                         @OA\Property(property="user_name", type="string", example="Sarah Jones"),
      *                         @OA\Property(property="created_at", type="string", example="2025-02-05 11:30:00")
      *                     )
      *                 ),
-     *                 @OA\Property(property="meta_title", type="string", example="Guide Maintenance Moto - DabApp"),
-     *                 @OA\Property(property="meta_description", type="string", example="Guide complet pour entretenir votre moto"),
-     *                 @OA\Property(property="meta_keywords", type="string", example="maintenance, moto, entretien"),
+     *                 @OA\Property(property="meta_title", type="string", example="Motorcycle Maintenance Guide - DabApp"),
+     *                 @OA\Property(property="meta_description", type="string", example="Learn how to maintain your motorcycle like a pro."),
+     *                 @OA\Property(property="meta_keywords", type="string", example="maintenance, motorcycle, tips, guide"),
      *                 @OA\Property(property="created_at", type="string", example="2025-01-15 10:30:00"),
      *                 @OA\Property(property="updated_at", type="string", example="2025-02-01 14:20:00"),
      *                 @OA\Property(property="published_at", type="string", example="2025-01-16 09:00:00")
@@ -636,26 +639,26 @@ class GuideAdminController extends Controller
      *         description="Données du guide à créer",
      *         @OA\JsonContent(
      *             required={"title", "category_id", "author_id", "status"},
-     *             @OA\Property(property="title", type="string", example="Guide de maintenance complète", description="Titre du guide (max 255 caractères)"),
-     *             @OA\Property(property="title_ar", type="string", example="دليل الصيانة الكاملة", description="Titre en arabe"),
-     *             @OA\Property(property="excerpt", type="string", example="Un guide détaillé pour entretenir votre moto", description="Résumé court du guide"),
-     *             @OA\Property(property="excerpt_ar", type="string", example="دليل مفصل لصيانة دراجتك النارية", description="Résumé en arabe"),
-     *             @OA\Property(property="content", type="string", example="<p>Contenu HTML complet du guide...</p>", description="Contenu complet du guide en HTML"),
-     *             @OA\Property(property="content_ar", type="string", example="<p>المحتوى الكامل للدليل...</p>", description="Contenu en arabe"),
-     *             @OA\Property(property="featured_image", type="string", example="https://example.com/images/maintenance.jpg", description="URL de l'image principale"),
-     *             @OA\Property(property="category_id", type="integer", example=1, description="ID de la catégorie (doit exister)"),
-     *             @OA\Property(property="author_id", type="integer", example=5, description="ID de l'auteur (doit exister)"),
-     *             @OA\Property(property="status", type="string", enum={"draft", "published", "archived"}, example="draft", description="Statut du guide"),
+     *             @OA\Property(property="title", type="string", example="Ultimate Guide to Motorcycle Maintenance", description="Guide title (max 255 chars)"),
+     *             @OA\Property(property="title_ar", type="string", example="الدليل الشامل لصيانة الدراجات النارية", description="Arabic title"),
+     *             @OA\Property(property="excerpt", type="string", example="Everything you need to know about keeping your bike in top condition.", description="Short summary"),
+     *             @OA\Property(property="excerpt_ar", type="string", example="كل ما تحتاج معرفته للحفاظ على دراجتك في أفضل حالة.", description="Arabic summary"),
+     *             @OA\Property(property="content", type="string", example="<p>Regular oil changes are crucial...</p>", description="Full HTML content"),
+     *             @OA\Property(property="content_ar", type="string", example="<p>تغيير الزيت بانتظام ضروري...</p>", description="Arabic HTML content"),
+     *             @OA\Property(property="featured_image", type="string", example="https://example.com/images/maintenance.jpg", description="Main image URL"),
+     *             @OA\Property(property="category_id", type="integer", example=1, description="Category ID"),
+     *             @OA\Property(property="author_id", type="integer", example=5, description="Author ID"),
+     *             @OA\Property(property="status", type="string", enum={"draft", "published", "archived"}, example="draft", description="Guide status"),
      *             @OA\Property(
      *                 property="tags",
      *                 type="array",
-     *                 description="IDs des tags à associer",
+     *                 description="Tag IDs",
      *                 @OA\Items(type="integer"),
      *                 example={1, 2, 3}
      *             ),
-     *             @OA\Property(property="meta_title", type="string", example="Guide Maintenance Moto - DabApp", description="Titre SEO (max 255)"),
-     *             @OA\Property(property="meta_description", type="string", example="Apprenez à entretenir votre moto avec notre guide complet", description="Description SEO"),
-     *             @OA\Property(property="meta_keywords", type="string", example="maintenance, moto, entretien, guide", description="Mots-clés SEO")
+     *             @OA\Property(property="meta_title", type="string", example="Motorcycle Maintenance Guide - DabApp", description="SEO Title"),
+     *             @OA\Property(property="meta_description", type="string", example="Learn how to maintain your motorcycle like a pro.", description="SEO Description"),
+     *             @OA\Property(property="meta_keywords", type="string", example="maintenance, motorcycle, tips, guide", description="SEO Keywords")
      *         )
      *     ),
      *     @OA\Response(
@@ -668,11 +671,11 @@ class GuideAdminController extends Controller
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=150),
-     *                 @OA\Property(property="title", type="string", example="Guide de maintenance complète"),
-     *                 @OA\Property(property="title_ar", type="string", example="دليل الصيانة الكاملة"),
-     *                 @OA\Property(property="slug", type="string", example="guide-de-maintenance-complete"),
-     *                 @OA\Property(property="excerpt", type="string", example="Un guide détaillé pour entretenir votre moto"),
-     *                 @OA\Property(property="excerpt_ar", type="string", example="دليل مفصل لصيانة دراجتك النارية"),
+     *                 @OA\Property(property="title", type="string", example="Ultimate Guide to Motorcycle Maintenance"),
+     *                 @OA\Property(property="title_ar", type="string", example="الدليل الشامل لصيانة الدراجات النارية"),
+     *                 @OA\Property(property="slug", type="string", example="ultimate-guide-motorcycle-maintenance"),
+     *                 @OA\Property(property="excerpt", type="string", example="Everything you need to know about keeping your bike in top condition."),
+     *                 @OA\Property(property="excerpt_ar", type="string", example="كل ما تحتاج معرفته للحفاظ على دراجتك في أفضل حالة."),
      *                 @OA\Property(property="featured_image", type="string", example="https://example.com/images/maintenance.jpg"),
      *                 @OA\Property(property="status", type="string", example="draft"),
      *                 @OA\Property(property="views_count", type="integer", example=0),
@@ -827,12 +830,12 @@ class GuideAdminController extends Controller
      *         required=true,
      *         description="Données à mettre à jour (tous les champs sont optionnels)",
      *         @OA\JsonContent(
-     *             @OA\Property(property="title", type="string", example="Titre modifié", description="Nouveau titre (max 255)"),
-     *             @OA\Property(property="title_ar", type="string", example="العنوان المعدل"),
-     *             @OA\Property(property="excerpt", type="string", example="Résumé modifié"),
-     *             @OA\Property(property="excerpt_ar", type="string", example="الملخص المعدل"),
-     *             @OA\Property(property="content", type="string", example="<p>Nouveau contenu...</p>"),
-     *             @OA\Property(property="content_ar", type="string", example="<p>محتوى جديد...</p>"),
+     *             @OA\Property(property="title", type="string", example="Ultimate Guide to Motorcycle Maintenance (Updated)", description="New title (max 255)"),
+     *             @OA\Property(property="title_ar", type="string", example="الدليل الشامل لصيانة الدراجات النارية (محدث)", description="New Arabic title"),
+     *             @OA\Property(property="excerpt", type="string", example="Updated summary of the guide."),
+     *             @OA\Property(property="excerpt_ar", type="string", example="ملخص محدث للدليل."),
+     *             @OA\Property(property="content", type="string", example="<p>Updated content...</p>"),
+     *             @OA\Property(property="content_ar", type="string", example="<p>محتوى محدث...</p>"),
      *             @OA\Property(property="featured_image", type="string", example="https://example.com/new-image.jpg"),
      *             @OA\Property(property="category_id", type="integer", example=2),
      *             @OA\Property(property="author_id", type="integer", example=3),
@@ -840,13 +843,13 @@ class GuideAdminController extends Controller
      *             @OA\Property(
      *                 property="tags",
      *                 type="array",
-     *                 description="Nouveaux tags (remplace les anciens)",
+     *                 description="New tags (replaces old ones)",
      *                 @OA\Items(type="integer"),
      *                 example={1, 2, 5}
      *             ),
-     *             @OA\Property(property="meta_title", type="string", example="Nouveau titre SEO"),
-     *             @OA\Property(property="meta_description", type="string", example="Nouvelle description SEO"),
-     *             @OA\Property(property="meta_keywords", type="string", example="nouveaux, mots-clés")
+     *             @OA\Property(property="meta_title", type="string", example="Updated SEO Title"),
+     *             @OA\Property(property="meta_description", type="string", example="Updated SEO Description"),
+     *             @OA\Property(property="meta_keywords", type="string", example="updated, keywords")
      *         )
      *     ),
      *     @OA\Response(
