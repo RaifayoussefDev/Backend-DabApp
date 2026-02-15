@@ -225,8 +225,8 @@ class GuideController extends Controller
             $guide = Guide::create([
                 'title' => $request->title,
                 'title_ar' => $request->title_ar,
-                'content' => $request->content,
-                'content_ar' => $request->content_ar,
+                'content' => $this->processContentImages($request->content),
+                'content_ar' => $this->processContentImages($request->content_ar),
                 'excerpt' => $request->excerpt,
                 'excerpt_ar' => $request->excerpt_ar,
                 'featured_image' => $this->handleImageUpload($request->featured_image),
@@ -253,8 +253,8 @@ class GuideController extends Controller
                         'type' => $sectionData['type'],
                         'title' => $sectionData['title'] ?? null,
                         'title_ar' => $sectionData['title_ar'] ?? null,
-                        'description' => $sectionData['description'] ?? null,
-                        'description_ar' => $sectionData['description_ar'] ?? null,
+                        'description' => $this->processContentImages($sectionData['description'] ?? null),
+                        'description_ar' => $this->processContentImages($sectionData['description_ar'] ?? null),
                         'image_url' => $this->handleImageUpload($sectionData['image_url'] ?? null),
                         'image_position' => $sectionData['image_position'] ?? 'top',
                         'media' => $sectionData['media'] ?? null,
@@ -429,6 +429,12 @@ class GuideController extends Controller
             if ($request->has('featured_image')) {
                 $data['featured_image'] = $this->handleImageUpload($request->featured_image);
             }
+            if (isset($data['content'])) {
+                $data['content'] = $this->processContentImages($data['content']);
+            }
+            if (isset($data['content_ar'])) {
+                $data['content_ar'] = $this->processContentImages($data['content_ar']);
+            }
 
             $guide->update($data);
 
@@ -448,8 +454,8 @@ class GuideController extends Controller
                                 'type' => $sectionData['type'],
                                 'title' => $sectionData['title'] ?? null,
                                 'title_ar' => $sectionData['title_ar'] ?? null,
-                                'description' => $sectionData['description'] ?? null,
-                                'description_ar' => $sectionData['description_ar'] ?? null,
+                                'description' => $this->processContentImages($sectionData['description'] ?? null),
+                                'description_ar' => $this->processContentImages($sectionData['description_ar'] ?? null),
                                 'image_url' => $this->handleImageUpload($sectionData['image_url'] ?? null),
                                 'image_position' => $sectionData['image_position'] ?? 'top',
                                 'media' => $sectionData['media'] ?? null,
@@ -461,8 +467,8 @@ class GuideController extends Controller
                             'type' => $sectionData['type'],
                             'title' => $sectionData['title'] ?? null,
                             'title_ar' => $sectionData['title_ar'] ?? null,
-                            'description' => $sectionData['description'] ?? null,
-                            'description_ar' => $sectionData['description_ar'] ?? null,
+                            'description' => $this->processContentImages($sectionData['description'] ?? null),
+                            'description_ar' => $this->processContentImages($sectionData['description_ar'] ?? null),
                             'image_url' => $this->handleImageUpload($sectionData['image_url'] ?? null),
                             'image_position' => $sectionData['image_position'] ?? 'top',
                             'media' => $sectionData['media'] ?? null,
@@ -1177,6 +1183,34 @@ class GuideController extends Controller
             'meta_keywords_ar' => $guide->meta_keywords_ar,
         ];
     }
+    /**
+     * Process HTML content to handle Base64 images.
+     * Finds all <img> tags with Base64 src, uploads them, and replaces src with URL.
+     *
+     * @param string|null $content
+     * @return string|null
+     */
+    private function processContentImages(?string $content): ?string
+    {
+        if (empty($content)) {
+            return $content;
+        }
+
+        // Use regex to find all img tags with base64 src
+        // Pattern matches: src="data:image/[type];base64,[data]"
+        $pattern = '/src="(data:image\/(\w+);base64,([^"]+))"/';
+
+        return preg_replace_callback($pattern, function ($matches) {
+            $fullSrc = $matches[1]; // data:image/...;base64,...
+            // Use existing handleImageUpload logic
+            // Note: handleImageUpload expects the full data URI
+            $url = $this->handleImageUpload($fullSrc);
+
+            // Return new src attribute
+            return 'src="' . $url . '"';
+        }, $content);
+    }
+
     /**
      * Handle Base64 image upload.
      * Check if the input is a base64 string, correct specific prefixes (e.g. jpe -> jpeg),
