@@ -5004,16 +5004,66 @@
                                         ],
                                         "example": "draft"
                                     },
-                                    "tags": {
-                                        "description": "Tag IDs",
+                                    "sections": {
+                                        "description": "Content sections",
                                         "type": "array",
                                         "items": {
-                                            "type": "integer"
+                                            "required": [
+                                                "type",
+                                                "title"
+                                            ],
+                                            "properties": {
+                                                "type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "text",
+                                                        "image",
+                                                        "text_image",
+                                                        "video"
+                                                    ],
+                                                    "example": "text"
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Introduction"
+                                                },
+                                                "title_ar": {
+                                                    "type": "string",
+                                                    "example": "مقدمة"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "<p>Welcome to the guide...</p>"
+                                                },
+                                                "description_ar": {
+                                                    "type": "string",
+                                                    "example": "<p>مرحبًا بك في الدليل...</p>"
+                                                },
+                                                "order_position": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
                                         },
                                         "example": [
-                                            1,
-                                            2,
-                                            3
+                                            {
+                                                "type": "text",
+                                                "title": "Introduction",
+                                                "title_ar": "مقدمة",
+                                                "description": "<p>Welcome to the guide...</p>",
+                                                "description_ar": "<p>مرحبًا بك في الدليل...</p>",
+                                                "order_position": 1
+                                            },
+                                            {
+                                                "type": "image",
+                                                "title": "Visual Aid",
+                                                "title_ar": "مساعدة بصرية",
+                                                "description": "<p>See this diagram.</p>",
+                                                "description_ar": "<p>انظر هذا الرسم البياني.</p>",
+                                                "image_url": "https://example.com/diagram.jpg",
+                                                "order_position": 2
+                                            }
                                         ]
                                     },
                                     "meta_title": {
@@ -5916,7 +5966,17 @@
                                                 }
                                             },
                                             "type": "object"
-                                        }
+                                        },
+                                        "example": [
+                                            {
+                                                "id": 1,
+                                                "title": "Introduction (Updated)",
+                                                "title_ar": "مقدمة (محدثة)",
+                                                "description": "<p>Updated content...</p>",
+                                                "description_ar": "<p>محتوى محدث...</p>",
+                                                "order_position": 1
+                                            }
+                                        ]
                                     },
                                     "meta_title": {
                                         "type": "string",
