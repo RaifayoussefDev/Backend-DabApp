@@ -489,7 +489,6 @@ class GuideAdminController extends Controller
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(
-     *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=1),

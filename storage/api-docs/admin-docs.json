@@ -4730,19 +4730,27 @@
                                                     },
                                                     "title": {
                                                         "type": "string",
-                                                        "example": "Guide complet de maintenance moto"
+                                                        "example": "Ultimate Guide to Motorcycle Maintenance"
+                                                    },
+                                                    "title_ar": {
+                                                        "type": "string",
+                                                        "example": "الدليل الشامل لصيانة الدراجات النارية"
                                                     },
                                                     "slug": {
                                                         "type": "string",
-                                                        "example": "guide-complet-maintenance-moto"
+                                                        "example": "ultimate-guide-motorcycle-maintenance"
                                                     },
                                                     "excerpt": {
                                                         "type": "string",
-                                                        "example": "Apprenez à entretenir votre moto comme un pro"
+                                                        "example": "Everything you need to know about keeping your bike in top condition."
+                                                    },
+                                                    "excerpt_ar": {
+                                                        "type": "string",
+                                                        "example": "كل ما تحتاج معرفته للحفاظ على دراجتك في أفضل حالة."
                                                     },
                                                     "featured_image": {
                                                         "type": "string",
-                                                        "example": "https://example.com/images/guide1.jpg"
+                                                        "example": "https://example.com/images/guide-maintenance.jpg"
                                                     },
                                                     "status": {
                                                         "type": "string",
@@ -4785,15 +4793,15 @@
                                                             },
                                                             "name": {
                                                                 "type": "string",
-                                                                "example": "John Doe"
+                                                                "example": "Ahmed Hassan"
                                                             },
                                                             "email": {
                                                                 "type": "string",
-                                                                "example": "john@example.com"
+                                                                "example": "ahmed@example.com"
                                                             },
                                                             "profile_picture": {
                                                                 "type": "string",
-                                                                "example": "https://example.com/profiles/john.jpg"
+                                                                "example": "https://example.com/profiles/ahmed.jpg"
                                                             }
                                                         },
                                                         "type": "object"
@@ -4808,11 +4816,11 @@
                                                                 },
                                                                 "name": {
                                                                     "type": "string",
-                                                                    "example": "Entretien"
+                                                                    "example": "DIY"
                                                                 },
                                                                 "slug": {
                                                                     "type": "string",
-                                                                    "example": "entretien"
+                                                                    "example": "diy"
                                                                 }
                                                             },
                                                             "type": "object"
@@ -4820,15 +4828,15 @@
                                                     },
                                                     "meta_title": {
                                                         "type": "string",
-                                                        "example": "Guide Maintenance Moto - DabApp"
+                                                        "example": "Motorcycle Maintenance Guide - DabApp"
                                                     },
                                                     "meta_description": {
                                                         "type": "string",
-                                                        "example": "Guide complet pour entretenir votre moto"
+                                                        "example": "Learn how to maintain your motorcycle like a pro."
                                                     },
                                                     "meta_keywords": {
                                                         "type": "string",
-                                                        "example": "maintenance, moto, entretien"
+                                                        "example": "maintenance, motorcycle, tips, guide"
                                                     },
                                                     "created_at": {
                                                         "type": "string",
@@ -4847,32 +4855,32 @@
                                             }
                                         },
                                         "current_page": {
-                                            "description": "Page actuelle (uniquement si paginé)",
+                                            "description": "Current page number",
                                             "type": "integer",
                                             "example": 1
                                         },
                                         "last_page": {
-                                            "description": "Dernière page (uniquement si paginé)",
+                                            "description": "Last page number",
                                             "type": "integer",
                                             "example": 10
                                         },
                                         "per_page": {
-                                            "description": "Éléments par page (uniquement si paginé)",
+                                            "description": "Items per page",
                                             "type": "integer",
                                             "example": 20
                                         },
                                         "total": {
-                                            "description": "Nombre total d'éléments",
+                                            "description": "Total items count",
                                             "type": "integer",
                                             "example": 195
                                         },
                                         "from": {
-                                            "description": "Index du premier élément (uniquement si paginé)",
+                                            "description": "First item index",
                                             "type": "integer",
                                             "example": 1
                                         },
                                         "to": {
-                                            "description": "Index du dernier élément (uniquement si paginé)",
+                                            "description": "Last item index",
                                             "type": "integer",
                                             "example": 20
                                         }
@@ -4942,37 +4950,52 @@
                                 ],
                                 "properties": {
                                     "title": {
-                                        "description": "Titre du guide (max 255 caractères)",
+                                        "description": "Guide title (max 255 chars)",
                                         "type": "string",
-                                        "example": "Guide de maintenance complète"
+                                        "example": "Ultimate Guide to Motorcycle Maintenance"
+                                    },
+                                    "title_ar": {
+                                        "description": "Arabic title",
+                                        "type": "string",
+                                        "example": "الدليل الشامل لصيانة الدراجات النارية"
                                     },
                                     "excerpt": {
-                                        "description": "Résumé court du guide",
+                                        "description": "Short summary",
                                         "type": "string",
-                                        "example": "Un guide détaillé pour entretenir votre moto"
+                                        "example": "Everything you need to know about keeping your bike in top condition."
+                                    },
+                                    "excerpt_ar": {
+                                        "description": "Arabic summary",
+                                        "type": "string",
+                                        "example": "كل ما تحتاج معرفته للحفاظ على دراجتك في أفضل حالة."
                                     },
                                     "content": {
-                                        "description": "Contenu complet du guide en HTML",
+                                        "description": "Full HTML content",
                                         "type": "string",
-                                        "example": "<p>Contenu HTML complet du guide...</p>"
+                                        "example": "<p>Regular oil changes are crucial...</p>"
+                                    },
+                                    "content_ar": {
+                                        "description": "Arabic HTML content",
+                                        "type": "string",
+                                        "example": "<p>تغيير الزيت بانتظام ضروري...</p>"
                                     },
                                     "featured_image": {
-                                        "description": "URL de l'image principale",
+                                        "description": "Main image URL",
                                         "type": "string",
                                         "example": "https://example.com/images/maintenance.jpg"
                                     },
                                     "category_id": {
-                                        "description": "ID de la catégorie (doit exister)",
+                                        "description": "Category ID",
                                         "type": "integer",
                                         "example": 1
                                     },
                                     "author_id": {
-                                        "description": "ID de l'auteur (doit exister)",
+                                        "description": "Author ID",
                                         "type": "integer",
                                         "example": 5
                                     },
                                     "status": {
-                                        "description": "Statut du guide",
+                                        "description": "Guide status",
                                         "type": "string",
                                         "enum": [
                                             "draft",
@@ -4982,7 +5005,7 @@
                                         "example": "draft"
                                     },
                                     "tags": {
-                                        "description": "IDs des tags à associer",
+                                        "description": "Tag IDs",
                                         "type": "array",
                                         "items": {
                                             "type": "integer"
@@ -4994,19 +5017,19 @@
                                         ]
                                     },
                                     "meta_title": {
-                                        "description": "Titre SEO (max 255)",
+                                        "description": "SEO Title",
                                         "type": "string",
-                                        "example": "Guide Maintenance Moto - DabApp"
+                                        "example": "Motorcycle Maintenance Guide - DabApp"
                                     },
                                     "meta_description": {
-                                        "description": "Description SEO",
+                                        "description": "SEO Description",
                                         "type": "string",
-                                        "example": "Apprenez à entretenir votre moto avec notre guide complet"
+                                        "example": "Learn how to maintain your motorcycle like a pro."
                                     },
                                     "meta_keywords": {
-                                        "description": "Mots-clés SEO",
+                                        "description": "SEO Keywords",
                                         "type": "string",
-                                        "example": "maintenance, moto, entretien, guide"
+                                        "example": "maintenance, motorcycle, tips, guide"
                                     }
                                 },
                                 "type": "object"
@@ -5033,15 +5056,23 @@
                                                 },
                                                 "title": {
                                                     "type": "string",
-                                                    "example": "Guide de maintenance complète"
+                                                    "example": "Ultimate Guide to Motorcycle Maintenance"
+                                                },
+                                                "title_ar": {
+                                                    "type": "string",
+                                                    "example": "الدليل الشامل لصيانة الدراجات النارية"
                                                 },
                                                 "slug": {
                                                     "type": "string",
-                                                    "example": "guide-de-maintenance-complete"
+                                                    "example": "ultimate-guide-motorcycle-maintenance"
                                                 },
                                                 "excerpt": {
                                                     "type": "string",
-                                                    "example": "Un guide détaillé pour entretenir votre moto"
+                                                    "example": "Everything you need to know about keeping your bike in top condition."
+                                                },
+                                                "excerpt_ar": {
+                                                    "type": "string",
+                                                    "example": "كل ما تحتاج معرفته للحفاظ على دراجتك في أفضل حالة."
                                                 },
                                                 "featured_image": {
                                                     "type": "string",
@@ -5510,23 +5541,35 @@
                                                 },
                                                 "title": {
                                                     "type": "string",
-                                                    "example": "Guide complet de maintenance moto"
+                                                    "example": "Ultimate Guide to Motorcycle Maintenance"
+                                                },
+                                                "title_ar": {
+                                                    "type": "string",
+                                                    "example": "الدليل الشامل لصيانة الدراجات النارية"
                                                 },
                                                 "slug": {
                                                     "type": "string",
-                                                    "example": "guide-complet-maintenance-moto"
+                                                    "example": "ultimate-guide-motorcycle-maintenance"
                                                 },
                                                 "excerpt": {
                                                     "type": "string",
-                                                    "example": "Apprenez à entretenir votre moto comme un pro"
+                                                    "example": "Everything you need to know about keeping your bike in top condition."
+                                                },
+                                                "excerpt_ar": {
+                                                    "type": "string",
+                                                    "example": "كل ما تحتاج معرفته للحفاظ على دراجتك في أفضل حالة."
                                                 },
                                                 "content": {
                                                     "type": "string",
-                                                    "example": "<p>Contenu HTML complet du guide...</p>"
+                                                    "example": "<p>Regular oil changes are crucial for engine longevity...</p>"
+                                                },
+                                                "content_ar": {
+                                                    "type": "string",
+                                                    "example": "<p>تغيير الزيت بانتظام أمر بالغ الأهمية لطول عمر المحرك...</p>"
                                                 },
                                                 "featured_image": {
                                                     "type": "string",
-                                                    "example": "https://example.com/images/guide1.jpg"
+                                                    "example": "https://example.com/images/guide-maintenance.jpg"
                                                 },
                                                 "status": {
                                                     "type": "string",
@@ -5569,15 +5612,15 @@
                                                         },
                                                         "name": {
                                                             "type": "string",
-                                                            "example": "John Doe"
+                                                            "example": "Ahmed Hassan"
                                                         },
                                                         "email": {
                                                             "type": "string",
-                                                            "example": "john@example.com"
+                                                            "example": "ahmed@example.com"
                                                         },
                                                         "profile_picture": {
                                                             "type": "string",
-                                                            "example": "https://example.com/profiles/john.jpg"
+                                                            "example": "https://example.com/profiles/ahmed.jpg"
                                                         }
                                                     },
                                                     "type": "object"
@@ -5592,18 +5635,18 @@
                                                             },
                                                             "name": {
                                                                 "type": "string",
-                                                                "example": "Entretien"
+                                                                "example": "DIY"
                                                             },
                                                             "slug": {
                                                                 "type": "string",
-                                                                "example": "entretien"
+                                                                "example": "diy"
                                                             }
                                                         },
                                                         "type": "object"
                                                     }
                                                 },
                                                 "sections": {
-                                                    "description": "Sections du guide",
+                                                    "description": "Guide sections",
                                                     "type": "array",
                                                     "items": {
                                                         "properties": {
@@ -5613,11 +5656,19 @@
                                                             },
                                                             "title": {
                                                                 "type": "string",
-                                                                "example": "Introduction"
+                                                                "example": "Oil Change"
                                                             },
-                                                            "content": {
+                                                            "title_ar": {
                                                                 "type": "string",
-                                                                "example": "<p>Contenu de la section...</p>"
+                                                                "example": "تغيير الزيت"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "<p>Step 1: Warm up the engine...</p>"
+                                                            },
+                                                            "description_ar": {
+                                                                "type": "string",
+                                                                "example": "<p>الخطوة 1: قم بتسخين المحرك...</p>"
                                                             },
                                                             "order_position": {
                                                                 "type": "integer",
@@ -5628,7 +5679,7 @@
                                                     }
                                                 },
                                                 "images": {
-                                                    "description": "Images du guide",
+                                                    "description": "Guide images",
                                                     "type": "array",
                                                     "items": {
                                                         "properties": {
@@ -5642,7 +5693,7 @@
                                                             },
                                                             "caption": {
                                                                 "type": "string",
-                                                                "example": "Première étape"
+                                                                "example": "Drain bolt location"
                                                             },
                                                             "order_position": {
                                                                 "type": "integer",
@@ -5653,7 +5704,7 @@
                                                     }
                                                 },
                                                 "recent_comments": {
-                                                    "description": "10 commentaires les plus récents",
+                                                    "description": "10 most recent comments",
                                                     "type": "array",
                                                     "items": {
                                                         "properties": {
@@ -5663,11 +5714,11 @@
                                                             },
                                                             "content": {
                                                                 "type": "string",
-                                                                "example": "Excellent guide, très utile!"
+                                                                "example": "Great guide, thanks!"
                                                             },
                                                             "user_name": {
                                                                 "type": "string",
-                                                                "example": "Jane Smith"
+                                                                "example": "Sarah Jones"
                                                             },
                                                             "created_at": {
                                                                 "type": "string",
@@ -5679,15 +5730,15 @@
                                                 },
                                                 "meta_title": {
                                                     "type": "string",
-                                                    "example": "Guide Maintenance Moto - DabApp"
+                                                    "example": "Motorcycle Maintenance Guide - DabApp"
                                                 },
                                                 "meta_description": {
                                                     "type": "string",
-                                                    "example": "Guide complet pour entretenir votre moto"
+                                                    "example": "Learn how to maintain your motorcycle like a pro."
                                                 },
                                                 "meta_keywords": {
                                                     "type": "string",
-                                                    "example": "maintenance, moto, entretien"
+                                                    "example": "maintenance, motorcycle, tips, guide"
                                                 },
                                                 "created_at": {
                                                     "type": "string",
@@ -5776,17 +5827,30 @@
                             "schema": {
                                 "properties": {
                                     "title": {
-                                        "description": "Nouveau titre (max 255)",
+                                        "description": "New title (max 255)",
                                         "type": "string",
-                                        "example": "Titre modifié"
+                                        "example": "Ultimate Guide to Motorcycle Maintenance (Updated)"
+                                    },
+                                    "title_ar": {
+                                        "description": "New Arabic title",
+                                        "type": "string",
+                                        "example": "الدليل الشامل لصيانة الدراجات النارية (محدث)"
                                     },
                                     "excerpt": {
                                         "type": "string",
-                                        "example": "Résumé modifié"
+                                        "example": "Updated summary of the guide."
+                                    },
+                                    "excerpt_ar": {
+                                        "type": "string",
+                                        "example": "ملخص محدث للدليل."
                                     },
                                     "content": {
                                         "type": "string",
-                                        "example": "<p>Nouveau contenu...</p>"
+                                        "example": "<p>Updated content...</p>"
+                                    },
+                                    "content_ar": {
+                                        "type": "string",
+                                        "example": "<p>محتوى محدث...</p>"
                                     },
                                     "featured_image": {
                                         "type": "string",
@@ -5810,7 +5874,7 @@
                                         "example": "published"
                                     },
                                     "tags": {
-                                        "description": "Nouveaux tags (remplace les anciens)",
+                                        "description": "New tags (replaces old ones)",
                                         "type": "array",
                                         "items": {
                                             "type": "integer"
@@ -5821,17 +5885,50 @@
                                             5
                                         ]
                                     },
+                                    "sections": {
+                                        "description": "Updated sections",
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Introduction (Updated)"
+                                                },
+                                                "title_ar": {
+                                                    "type": "string",
+                                                    "example": "مقدمة (محدثة)"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "<p>Updated content...</p>"
+                                                },
+                                                "description_ar": {
+                                                    "type": "string",
+                                                    "example": "<p>محتوى محدث...</p>"
+                                                },
+                                                "order_position": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
                                     "meta_title": {
                                         "type": "string",
-                                        "example": "Nouveau titre SEO"
+                                        "example": "Updated SEO Title"
                                     },
                                     "meta_description": {
                                         "type": "string",
-                                        "example": "Nouvelle description SEO"
+                                        "example": "Updated SEO Description"
                                     },
                                     "meta_keywords": {
                                         "type": "string",
-                                        "example": "nouveaux, mots-clés"
+                                        "example": "updated, keywords"
                                     }
                                 },
                                 "type": "object"
@@ -11779,6 +11876,96 @@
                         "bearerAuth": []
                     }
                 ]
+            },
+            "post": {
+                "tags": [
+                    "Admin User Subscriptions"
+                ],
+                "summary": "Create a new subscription manually (Admin)",
+                "operationId": "adminCreateSubscription",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "provider_id",
+                                    "plan_id",
+                                    "billing_cycle"
+                                ],
+                                "properties": {
+                                    "provider_id": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "plan_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "active",
+                                            "pending",
+                                            "cancelled",
+                                            "expired",
+                                            "trial"
+                                        ],
+                                        "example": "active"
+                                    },
+                                    "billing_cycle": {
+                                        "type": "string",
+                                        "enum": [
+                                            "monthly",
+                                            "yearly"
+                                        ],
+                                        "example": "monthly"
+                                    },
+                                    "starts_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-02-11"
+                                    },
+                                    "expires_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-03-11"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Subscription created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/admin/subscriptions/{id}": {
@@ -11801,6 +11988,62 @@
                 "responses": {
                     "200": {
                         "description": "Subscription details retrieved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin User Subscriptions"
+                ],
+                "summary": "Update a subscription (Admin)",
+                "operationId": "adminUpdateSubscription",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "plan_id": {
+                                        "type": "integer"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "active",
+                                            "pending",
+                                            "cancelled",
+                                            "expired",
+                                            "trial"
+                                        ]
+                                    },
+                                    "expires_at": {
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Subscription updated successfully"
                     }
                 },
                 "security": [
@@ -11877,6 +12120,69 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Subscription cancelled successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/subscriptions/stats": {
+            "get": {
+                "tags": [
+                    "Admin User Subscriptions"
+                ],
+                "summary": "Get subscription statistics (Admin)",
+                "operationId": "adminGetSubscriptionStats",
+                "responses": {
+                    "200": {
+                        "description": "Statistics retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_subscriptions": {
+                                                    "type": "integer",
+                                                    "example": 150
+                                                },
+                                                "active_subscriptions": {
+                                                    "type": "integer",
+                                                    "example": 120
+                                                },
+                                                "cancelled_subscriptions": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "expired_subscriptions": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                },
+                                                "revenue_this_month": {
+                                                    "type": "number",
+                                                    "example": 5000
+                                                },
+                                                "subscriptions_by_plan": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string"
                                         }
                                     },
                                     "type": "object"
@@ -12191,6 +12497,65 @@
                 "responses": {
                     "200": {
                         "description": "Plan deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/subscription-plans/{id}/toggle-status": {
+            "patch": {
+                "tags": [
+                    "Admin Subscription Plans"
+                ],
+                "summary": "Toggle subscription plan active status (Admin)",
+                "operationId": "adminToggleSubscriptionPlanStatus",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Plan status updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Subscription plan deactivated successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
