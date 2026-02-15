@@ -143,13 +143,17 @@ class GuideController extends Controller
      *                     {
      *                         "type": "text",
      *                         "title": "Introduction",
+     *                         "title_ar": "مقدمة",
      *                         "description": "Welcome to the maintenance guide. Here is what you need to know...",
+     *                         "description_ar": "مرحبًا بكم في دليل الصيانة. إليك ما تحتاج إلى معرفته...",
      *                         "order_position": 0
      *                     },
      *                     {
      *                         "type": "text_image",
      *                         "title": "Checking Oil Level",
+     *                         "title_ar": "فحص مستوى الزيت",
      *                         "description": "Ensure the bike is upright and check the sight glass.",
+     *                         "description_ar": "تأكد من أن الدراجة مستقيمة وتحقق من زجاج الرؤية.",
      *                         "image_url": "https://example.com/oil-check.jpg",
      *                         "image_position": "left",
      *                         "order_position": 1
@@ -157,7 +161,9 @@ class GuideController extends Controller
      *                     {
      *                         "type": "video",
      *                         "title": "Chain Cleaning Tutorial",
+     *                         "title_ar": "درس تنظيف السلسلة",
      *                         "description": "Watch this video to see proper chain cleaning technique.",
+     *                         "description_ar": "شاهد هذا الفيديو لترى تقنية تنظيف السلسلة الصحيحة.",
      *                         "image_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
      *                         "order_position": 2
      *                     }
@@ -317,10 +323,10 @@ class GuideController extends Controller
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", description="Section ID for update, omit for new section"),
      *                     @OA\Property(property="type", type="string", enum={"text", "image", "text_image", "gallery", "video"}),
-     *                     @OA\Property(property="title", type="string"),
-     *                     @OA\Property(property="title_ar", type="string"),
-     *                     @OA\Property(property="description", type="string"),
-     *                     @OA\Property(property="description_ar", type="string"),
+     *                     @OA\Property(property="title", type="string", example="Updated Title"),
+     *                     @OA\Property(property="title_ar", type="string", example="عنوان محدث"),
+     *                     @OA\Property(property="description", type="string", example="Updated description"),
+     *                     @OA\Property(property="description_ar", type="string", example="وصف محدث"),
      *                     @OA\Property(property="image_url", type="string"),
      *                     @OA\Property(property="image_position", type="string", enum={"top", "right", "left", "bottom"}),
      *                     @OA\Property(property="media", type="array", @OA\Items(type="object")),

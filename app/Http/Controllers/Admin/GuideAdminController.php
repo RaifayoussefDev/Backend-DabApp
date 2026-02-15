@@ -539,8 +539,8 @@ class GuideAdminController extends Controller
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="title", type="string", example="Oil Change"),
      *                         @OA\Property(property="title_ar", type="string", example="تغيير الزيت"),
-     *                         @OA\Property(property="content", type="string", example="<p>Step 1: Warm up the engine...</p>"),
-     *                         @OA\Property(property="content_ar", type="string", example="<p>الخطوة 1: قم بتسخين المحرك...</p>"),
+     *                         @OA\Property(property="description", type="string", example="<p>Step 1: Warm up the engine...</p>"),
+     *                         @OA\Property(property="description_ar", type="string", example="<p>الخطوة 1: قم بتسخين المحرك...</p>"),
      *                         @OA\Property(property="order_position", type="integer", example=1)
      *                     )
      *                 ),
@@ -846,6 +846,20 @@ class GuideAdminController extends Controller
      *                 description="New tags (replaces old ones)",
      *                 @OA\Items(type="integer"),
      *                 example={1, 2, 5}
+     *             ),
+     *             @OA\Property(
+     *                 property="sections",
+     *                 type="array",
+     *                 description="Updated sections",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="title", type="string", example="Introduction (Updated)"),
+     *                     @OA\Property(property="title_ar", type="string", example="مقدمة (محدثة)"),
+     *                     @OA\Property(property="description", type="string", example="<p>Updated content...</p>"),
+     *                     @OA\Property(property="description_ar", type="string", example="<p>محتوى محدث...</p>"),
+     *                     @OA\Property(property="order_position", type="integer", example=1)
+     *                 )
      *             ),
      *             @OA\Property(property="meta_title", type="string", example="Updated SEO Title"),
      *             @OA\Property(property="meta_description", type="string", example="Updated SEO Description"),
@@ -1497,7 +1511,9 @@ class GuideAdminController extends Controller
             return [
                 'id' => $section->id,
                 'title' => $section->title,
-                'content' => $section->content,
+                'title_ar' => $section->title_ar,
+                'description' => $section->description,
+                'description_ar' => $section->description_ar,
                 'order_position' => $section->order_position,
             ];
         });

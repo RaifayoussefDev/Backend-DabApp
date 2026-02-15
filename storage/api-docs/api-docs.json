@@ -11710,13 +11710,17 @@
                                             {
                                                 "type": "text",
                                                 "title": "Introduction",
+                                                "title_ar": "مقدمة",
                                                 "description": "Welcome to the maintenance guide. Here is what you need to know...",
+                                                "description_ar": "مرحبًا بكم في دليل الصيانة. إليك ما تحتاج إلى معرفته...",
                                                 "order_position": 0
                                             },
                                             {
                                                 "type": "text_image",
                                                 "title": "Checking Oil Level",
+                                                "title_ar": "فحص مستوى الزيت",
                                                 "description": "Ensure the bike is upright and check the sight glass.",
+                                                "description_ar": "تأكد من أن الدراجة مستقيمة وتحقق من زجاج الرؤية.",
                                                 "image_url": "https://example.com/oil-check.jpg",
                                                 "image_position": "left",
                                                 "order_position": 1
@@ -11724,7 +11728,9 @@
                                             {
                                                 "type": "video",
                                                 "title": "Chain Cleaning Tutorial",
+                                                "title_ar": "درس تنظيف السلسلة",
                                                 "description": "Watch this video to see proper chain cleaning technique.",
+                                                "description_ar": "شاهد هذا الفيديو لترى تقنية تنظيف السلسلة الصحيحة.",
                                                 "image_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
                                                 "order_position": 2
                                             }
@@ -11853,16 +11859,20 @@
                                                     ]
                                                 },
                                                 "title": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "example": "Updated Title"
                                                 },
                                                 "title_ar": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "example": "عنوان محدث"
                                                 },
                                                 "description": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "example": "Updated description"
                                                 },
                                                 "description_ar": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "example": "وصف محدث"
                                                 },
                                                 "image_url": {
                                                     "type": "string"
