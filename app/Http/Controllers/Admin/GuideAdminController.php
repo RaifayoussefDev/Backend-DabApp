@@ -858,7 +858,7 @@ class GuideAdminController extends Controller
 
             return response()->json([
                 'message' => 'Guide created successfully',
-                'data' => $this->formatGuideForAdmin($guide->load(['author', 'category', 'tags']))
+                'data' => $this->formatGuideDetailsForAdmin($guide->load(['author', 'category', 'tags', 'sections']))
             ], 201);
 
         } catch (\Exception $e) {
@@ -1080,7 +1080,7 @@ class GuideAdminController extends Controller
 
             return response()->json([
                 'message' => 'Guide updated successfully',
-                'data' => $this->formatGuideForAdmin($guide->load(['author', 'category', 'tags']))
+                'data' => $this->formatGuideDetailsForAdmin($guide->load(['author', 'category', 'tags', 'sections']))
             ]);
 
         } catch (\Exception $e) {
