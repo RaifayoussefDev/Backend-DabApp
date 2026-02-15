@@ -331,7 +331,6 @@ class GuideController extends Controller
      *                     @OA\Property(property="image_position", type="string", enum={"top", "right", "left", "bottom"}),
      *                     @OA\Property(property="media", type="array", @OA\Items(type="object")),
      *                     @OA\Property(property="order_position", type="integer")
-     *                 )
      *                 ),
      *                 example={
      *                     {
