@@ -5071,15 +5071,30 @@
                                         "type": "string",
                                         "example": "Motorcycle Maintenance Guide - DabApp"
                                     },
+                                    "meta_title_ar": {
+                                        "description": "Arabic SEO Title",
+                                        "type": "string",
+                                        "example": "دليل صيانة الدراجات النارية - DabApp"
+                                    },
                                     "meta_description": {
                                         "description": "SEO Description",
                                         "type": "string",
                                         "example": "Learn how to maintain your motorcycle like a pro."
                                     },
+                                    "meta_description_ar": {
+                                        "description": "Arabic SEO Description",
+                                        "type": "string",
+                                        "example": "تعلم كيفية صيانة دراجتك النارية بمهارة."
+                                    },
                                     "meta_keywords": {
                                         "description": "SEO Keywords",
                                         "type": "string",
                                         "example": "maintenance, motorcycle, tips, guide"
+                                    },
+                                    "meta_keywords_ar": {
+                                        "description": "Arabic SEO Keywords",
+                                        "type": "string",
+                                        "example": "صيانة, دراجة نارية, نصائح, دليل"
                                     }
                                 },
                                 "type": "object"
@@ -5982,13 +5997,25 @@
                                         "type": "string",
                                         "example": "Updated SEO Title"
                                     },
+                                    "meta_title_ar": {
+                                        "type": "string",
+                                        "example": "عنوان SEO محدث"
+                                    },
                                     "meta_description": {
                                         "type": "string",
                                         "example": "Updated SEO Description"
                                     },
+                                    "meta_description_ar": {
+                                        "type": "string",
+                                        "example": "وصف SEO محدث"
+                                    },
                                     "meta_keywords": {
                                         "type": "string",
                                         "example": "updated, keywords"
+                                    },
+                                    "meta_keywords_ar": {
+                                        "type": "string",
+                                        "example": "كلمات, مفتاحية, محدثة"
                                     }
                                 },
                                 "type": "object"

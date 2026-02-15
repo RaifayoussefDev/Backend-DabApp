@@ -11735,6 +11735,36 @@
                                                 "order_position": 3
                                             }
                                         ]
+                                    },
+                                    "meta_title": {
+                                        "description": "SEO Title",
+                                        "type": "string",
+                                        "example": "Motorcycle Maintenance Guide - DabApp"
+                                    },
+                                    "meta_title_ar": {
+                                        "description": "Arabic SEO Title",
+                                        "type": "string",
+                                        "example": "دليل صيانة الدراجات النارية - DabApp"
+                                    },
+                                    "meta_description": {
+                                        "description": "SEO Description",
+                                        "type": "string",
+                                        "example": "Learn how to maintain your motorcycle like a pro."
+                                    },
+                                    "meta_description_ar": {
+                                        "description": "Arabic SEO Description",
+                                        "type": "string",
+                                        "example": "تعلم كيفية صيانة دراجتك النارية بمهارة."
+                                    },
+                                    "meta_keywords": {
+                                        "description": "SEO Keywords",
+                                        "type": "string",
+                                        "example": "maintenance, motorcycle, tips, guide"
+                                    },
+                                    "meta_keywords_ar": {
+                                        "description": "Arabic SEO Keywords",
+                                        "type": "string",
+                                        "example": "صيانة, دراجة نارية, نصائح, دليل"
                                     }
                                 },
                                 "type": "object"
@@ -11908,6 +11938,36 @@
                                                 "order_position": 1
                                             }
                                         ]
+                                    },
+                                    "meta_title": {
+                                        "description": "SEO Title",
+                                        "type": "string",
+                                        "example": "Motorcycle Maintenance Guide - DabApp"
+                                    },
+                                    "meta_title_ar": {
+                                        "description": "Arabic SEO Title",
+                                        "type": "string",
+                                        "example": "دليل صيانة الدراجات النارية - DabApp"
+                                    },
+                                    "meta_description": {
+                                        "description": "SEO Description",
+                                        "type": "string",
+                                        "example": "Learn how to maintain your motorcycle like a pro."
+                                    },
+                                    "meta_description_ar": {
+                                        "description": "Arabic SEO Description",
+                                        "type": "string",
+                                        "example": "تعلم كيفية صيانة دراجتك النارية بمهارة."
+                                    },
+                                    "meta_keywords": {
+                                        "description": "SEO Keywords",
+                                        "type": "string",
+                                        "example": "maintenance, motorcycle, tips, guide"
+                                    },
+                                    "meta_keywords_ar": {
+                                        "description": "Arabic SEO Keywords",
+                                        "type": "string",
+                                        "example": "صيانة, دراجة نارية, نصائح, دليل"
                                     }
                                 },
                                 "type": "object"

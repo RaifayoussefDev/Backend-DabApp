@@ -29,6 +29,12 @@ class Guide extends Model
         'views_count',
         'is_featured',
         'published_at',
+        'meta_title',
+        'meta_title_ar',
+        'meta_description',
+        'meta_description_ar',
+        'meta_keywords',
+        'meta_keywords_ar',
     ];
 
     protected $casts = [

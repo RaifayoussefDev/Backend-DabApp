@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Services\NotificationService;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * @OA\Tag(
@@ -168,7 +170,13 @@ class GuideController extends Controller
      *                         "order_position": 3
      *                     }
      *                 }
-     *             )
+     *             ),
+     *             @OA\Property(property="meta_title", type="string", example="Motorcycle Maintenance Guide - DabApp", description="SEO Title"),
+     *             @OA\Property(property="meta_title_ar", type="string", example="دليل صيانة الدراجات النارية - DabApp", description="Arabic SEO Title"),
+     *             @OA\Property(property="meta_description", type="string", example="Learn how to maintain your motorcycle like a pro.", description="SEO Description"),
+     *             @OA\Property(property="meta_description_ar", type="string", example="تعلم كيفية صيانة دراجتك النارية بمهارة.", description="Arabic SEO Description"),
+     *             @OA\Property(property="meta_keywords", type="string", example="maintenance, motorcycle, tips, guide", description="SEO Keywords"),
+     *             @OA\Property(property="meta_keywords_ar", type="string", example="صيانة, دراجة نارية, نصائح, دليل", description="Arabic SEO Keywords")
      *         )
      *     ),
      *     @OA\Response(response=201, description="Guide created successfully"),
@@ -199,6 +207,12 @@ class GuideController extends Controller
             'sections.*.image_position' => 'nullable|in:top,right,left,bottom',
             'sections.*.media' => 'nullable|array',
             'sections.*.order_position' => 'nullable|integer|min:0',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_title_ar' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string',
+            'meta_description_ar' => 'nullable|string',
+            'meta_keywords' => 'nullable|string',
+            'meta_keywords_ar' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -215,11 +229,17 @@ class GuideController extends Controller
                 'content_ar' => $request->content_ar,
                 'excerpt' => $request->excerpt,
                 'excerpt_ar' => $request->excerpt_ar,
-                'featured_image' => $request->featured_image,
+                'featured_image' => $this->handleImageUpload($request->featured_image),
                 'category_id' => $request->category_id,
                 'author_id' => Auth::id(),
                 'status' => 'draft',
                 'is_featured' => $request->is_featured ?? false,
+                'meta_title' => $request->meta_title,
+                'meta_title_ar' => $request->meta_title_ar,
+                'meta_description' => $request->meta_description,
+                'meta_description_ar' => $request->meta_description_ar,
+                'meta_keywords' => $request->meta_keywords,
+                'meta_keywords_ar' => $request->meta_keywords_ar,
             ]);
 
             if ($request->has('tags')) {
@@ -235,7 +255,7 @@ class GuideController extends Controller
                         'title_ar' => $sectionData['title_ar'] ?? null,
                         'description' => $sectionData['description'] ?? null,
                         'description_ar' => $sectionData['description_ar'] ?? null,
-                        'image_url' => $sectionData['image_url'] ?? null,
+                        'image_url' => $this->handleImageUpload($sectionData['image_url'] ?? null),
                         'image_position' => $sectionData['image_position'] ?? 'top',
                         'media' => $sectionData['media'] ?? null,
                         'order_position' => $sectionData['order_position'] ?? $index,
@@ -342,7 +362,13 @@ class GuideController extends Controller
      *                         "order_position": 1
      *                     }
      *                 }
-     *             )
+     *             ),
+     *             @OA\Property(property="meta_title", type="string", example="Motorcycle Maintenance Guide - DabApp", description="SEO Title"),
+     *             @OA\Property(property="meta_title_ar", type="string", example="دليل صيانة الدراجات النارية - DabApp", description="Arabic SEO Title"),
+     *             @OA\Property(property="meta_description", type="string", example="Learn how to maintain your motorcycle like a pro.", description="SEO Description"),
+     *             @OA\Property(property="meta_description_ar", type="string", example="تعلم كيفية صيانة دراجتك النارية بمهارة.", description="Arabic SEO Description"),
+     *             @OA\Property(property="meta_keywords", type="string", example="maintenance, motorcycle, tips, guide", description="SEO Keywords"),
+     *             @OA\Property(property="meta_keywords_ar", type="string", example="صيانة, دراجة نارية, نصائح, دليل", description="Arabic SEO Keywords")
      *         )
      *     ),
      *     @OA\Response(response=200, description="Guide updated successfully"),
@@ -383,6 +409,12 @@ class GuideController extends Controller
             'sections.*.image_position' => 'nullable|in:top,right,left,bottom',
             'sections.*.media' => 'nullable|array',
             'sections.*.order_position' => 'nullable|integer|min:0',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_title_ar' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string',
+            'meta_description_ar' => 'nullable|string',
+            'meta_keywords' => 'nullable|string',
+            'meta_keywords_ar' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -392,7 +424,13 @@ class GuideController extends Controller
         DB::beginTransaction();
 
         try {
-            $guide->update($request->only(['title', 'title_ar', 'excerpt', 'excerpt_ar', 'content', 'content_ar', 'featured_image', 'category_id', 'is_featured']));
+            $data = $request->only(['title', 'title_ar', 'excerpt', 'excerpt_ar', 'content', 'content_ar', 'category_id', 'is_featured', 'meta_title', 'meta_title_ar', 'meta_description', 'meta_description_ar', 'meta_keywords', 'meta_keywords_ar']);
+
+            if ($request->has('featured_image')) {
+                $data['featured_image'] = $this->handleImageUpload($request->featured_image);
+            }
+
+            $guide->update($data);
 
             if ($request->has('tags')) {
                 $guide->tags()->sync($request->tags);
@@ -412,7 +450,7 @@ class GuideController extends Controller
                                 'title_ar' => $sectionData['title_ar'] ?? null,
                                 'description' => $sectionData['description'] ?? null,
                                 'description_ar' => $sectionData['description_ar'] ?? null,
-                                'image_url' => $sectionData['image_url'] ?? null,
+                                'image_url' => $this->handleImageUpload($sectionData['image_url'] ?? null),
                                 'image_position' => $sectionData['image_position'] ?? 'top',
                                 'media' => $sectionData['media'] ?? null,
                                 'order_position' => $sectionData['order_position'] ?? $index,
@@ -425,7 +463,7 @@ class GuideController extends Controller
                             'title_ar' => $sectionData['title_ar'] ?? null,
                             'description' => $sectionData['description'] ?? null,
                             'description_ar' => $sectionData['description_ar'] ?? null,
-                            'image_url' => $sectionData['image_url'] ?? null,
+                            'image_url' => $this->handleImageUpload($sectionData['image_url'] ?? null),
                             'image_position' => $sectionData['image_position'] ?? 'top',
                             'media' => $sectionData['media'] ?? null,
                             'order_position' => $sectionData['order_position'] ?? $index,
@@ -1037,6 +1075,12 @@ class GuideController extends Controller
             }),
             'liked' => $isLiked,
             'bookmarked' => $isBookmarked,
+            'meta_title' => $guide->meta_title,
+            'meta_title_ar' => $guide->meta_title_ar,
+            'meta_description' => $guide->meta_description,
+            'meta_description_ar' => $guide->meta_description_ar,
+            'meta_keywords' => $guide->meta_keywords,
+            'meta_keywords_ar' => $guide->meta_keywords_ar,
         ];
     }
 
@@ -1125,6 +1169,56 @@ class GuideController extends Controller
             }),
             'created_at' => $guide->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $guide->updated_at->format('Y-m-d H:i:s'),
+            'meta_title' => $guide->meta_title,
+            'meta_title_ar' => $guide->meta_title_ar,
+            'meta_description' => $guide->meta_description,
+            'meta_description_ar' => $guide->meta_description_ar,
+            'meta_keywords' => $guide->meta_keywords,
+            'meta_keywords_ar' => $guide->meta_keywords_ar,
         ];
+    }
+    /**
+     * Handle Base64 image upload.
+     * Check if the input is a base64 string, correct specific prefixes (e.g. jpe -> jpeg),
+     * decode and store it, then return the URL.
+     * Otherwise return the input as is.
+     *
+     * @param string|null $input
+     * @return string|null
+     */
+    private function handleImageUpload(?string $input): ?string
+    {
+        if (!$input) {
+            return null;
+        }
+
+        // Check for Base64 pattern: data:image/...;base64,...
+        if (preg_match('/^data:image\/(\w+);base64,/', $input, $matches)) {
+            $extension = $matches[1];
+
+            // Correction for common base64 mishandling if necessary (e.g. jpe -> jpeg)
+            if ($extension === 'jpe') {
+                $extension = 'jpeg';
+            }
+
+            // Remove prefix to get raw base64 data
+            $base64Data = substr($input, strpos($input, ',') + 1);
+            $imageData = base64_decode($base64Data);
+
+            if ($imageData === false) {
+                return $input; // Failed to decode, return original (maybe it wasn't base64 after all?)
+            }
+
+            $fileName = 'guide_' . time() . '_' . Str::random(10) . '.' . $extension;
+            $path = 'guides/' . $fileName;
+
+            // Store in specific disk (e.g., public)
+            Storage::disk('public')->put($path, $imageData);
+
+            // Return full URL
+            return Storage::url($path);
+        }
+
+        return $input; // Input is likely already a URL
     }
 }

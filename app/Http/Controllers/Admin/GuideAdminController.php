@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -684,8 +685,11 @@ class GuideAdminController extends Controller
      *                 }
      *             ),
      *             @OA\Property(property="meta_title", type="string", example="Motorcycle Maintenance Guide - DabApp", description="SEO Title"),
+     *             @OA\Property(property="meta_title_ar", type="string", example="دليل صيانة الدراجات النارية - DabApp", description="Arabic SEO Title"),
      *             @OA\Property(property="meta_description", type="string", example="Learn how to maintain your motorcycle like a pro.", description="SEO Description"),
-     *             @OA\Property(property="meta_keywords", type="string", example="maintenance, motorcycle, tips, guide", description="SEO Keywords")
+     *             @OA\Property(property="meta_description_ar", type="string", example="تعلم كيفية صيانة دراجتك النارية بمهارة.", description="Arabic SEO Description"),
+     *             @OA\Property(property="meta_keywords", type="string", example="maintenance, motorcycle, tips, guide", description="SEO Keywords"),
+     *             @OA\Property(property="meta_keywords_ar", type="string", example="صيانة, دراجة نارية, نصائح, دليل", description="Arabic SEO Keywords")
      *         )
      *     ),
      *     @OA\Response(
@@ -789,8 +793,11 @@ class GuideAdminController extends Controller
             'tags' => 'nullable|array',
             'tags.*' => 'exists:guide_tags,id',
             'meta_title' => 'nullable|string|max:255',
+            'meta_title_ar' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',
+            'meta_description_ar' => 'nullable|string',
             'meta_keywords' => 'nullable|string',
+            'meta_keywords_ar' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -820,13 +827,16 @@ class GuideAdminController extends Controller
                 'excerpt_ar' => $request->excerpt_ar,
                 'content' => $request->content,
                 'content_ar' => $request->content_ar,
-                'featured_image' => $request->featured_image,
+                'featured_image' => $this->handleImageUpload($request->featured_image),
                 'category_id' => $request->category_id,
                 'author_id' => $request->author_id,
                 'status' => $request->status,
                 'meta_title' => $request->meta_title,
+                'meta_title_ar' => $request->meta_title_ar,
                 'meta_description' => $request->meta_description,
+                'meta_description_ar' => $request->meta_description_ar,
                 'meta_keywords' => $request->meta_keywords,
+                'meta_keywords_ar' => $request->meta_keywords_ar,
                 'views_count' => 0,
                 'published_at' => $request->status === 'published' ? now() : null,
             ]);
@@ -846,7 +856,7 @@ class GuideAdminController extends Controller
                         'title_ar' => $sectionData['title_ar'] ?? null,
                         'description' => $sectionData['description'] ?? null,
                         'description_ar' => $sectionData['description_ar'] ?? null,
-                        'image_url' => $sectionData['image_url'] ?? null,
+                        'image_url' => $this->handleImageUpload($sectionData['image_url'] ?? null),
                         'image_position' => $sectionData['image_position'] ?? 'top',
                         'media' => $sectionData['media'] ?? null,
                         'order_position' => $sectionData['order_position'] ?? $index,
@@ -927,8 +937,11 @@ class GuideAdminController extends Controller
      *                 }
      *             ),
      *             @OA\Property(property="meta_title", type="string", example="Updated SEO Title"),
+     *             @OA\Property(property="meta_title_ar", type="string", example="عنوان SEO محدث"),
      *             @OA\Property(property="meta_description", type="string", example="Updated SEO Description"),
-     *             @OA\Property(property="meta_keywords", type="string", example="updated, keywords")
+     *             @OA\Property(property="meta_description_ar", type="string", example="وصف SEO محدث"),
+     *             @OA\Property(property="meta_keywords", type="string", example="updated, keywords"),
+     *             @OA\Property(property="meta_keywords_ar", type="string", example="كلمات, مفتاحية, محدثة")
      *         )
      *     ),
      *     @OA\Response(
@@ -1000,8 +1013,11 @@ class GuideAdminController extends Controller
             'tags' => 'nullable|array',
             'tags.*' => 'exists:guide_tags,id',
             'meta_title' => 'nullable|string|max:255',
+            'meta_title_ar' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',
+            'meta_description_ar' => 'nullable|string',
             'meta_keywords' => 'nullable|string',
+            'meta_keywords_ar' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -1032,7 +1048,17 @@ class GuideAdminController extends Controller
                 $guide->published_at = now();
             }
 
-            $guide->update($request->except(['tags']));
+            $data = $request->except(['tags', 'sections']);
+            if ($request->has('featured_image')) {
+                $data['featured_image'] = $this->handleImageUpload($request->featured_image);
+            }
+
+            $data = $request->except(['tags', 'sections']);
+            if ($request->has('featured_image')) {
+                $data['featured_image'] = $this->handleImageUpload($request->featured_image);
+            }
+
+            $guide->update($data);
 
             // Mettre à jour les tags
             if ($request->has('tags')) {
@@ -1054,7 +1080,7 @@ class GuideAdminController extends Controller
                                 'title_ar' => $sectionData['title_ar'] ?? null,
                                 'description' => $sectionData['description'] ?? null,
                                 'description_ar' => $sectionData['description_ar'] ?? null,
-                                'image_url' => $sectionData['image_url'] ?? null,
+                                'image_url' => $this->handleImageUpload($sectionData['image_url'] ?? null),
                                 'image_position' => $sectionData['image_position'] ?? 'top',
                                 'media' => $sectionData['media'] ?? null,
                                 'order_position' => $sectionData['order_position'] ?? $index,
@@ -1067,7 +1093,7 @@ class GuideAdminController extends Controller
                             'title_ar' => $sectionData['title_ar'] ?? null,
                             'description' => $sectionData['description'] ?? null,
                             'description_ar' => $sectionData['description_ar'] ?? null,
-                            'image_url' => $sectionData['image_url'] ?? null,
+                            'image_url' => $this->handleImageUpload($sectionData['image_url'] ?? null),
                             'image_position' => $sectionData['image_position'] ?? 'top',
                             'media' => $sectionData['media'] ?? null,
                             'order_position' => $sectionData['order_position'] ?? $index,
@@ -1602,8 +1628,11 @@ class GuideAdminController extends Controller
                 ];
             }),
             'meta_title' => $guide->meta_title,
+            'meta_title_ar' => $guide->meta_title_ar,
             'meta_description' => $guide->meta_description,
+            'meta_description_ar' => $guide->meta_description_ar,
             'meta_keywords' => $guide->meta_keywords,
+            'meta_keywords_ar' => $guide->meta_keywords_ar,
             'created_at' => $guide->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $guide->updated_at->format('Y-m-d H:i:s'),
             'published_at' => $guide->published_at?->format('Y-m-d H:i:s'),
@@ -1647,5 +1676,49 @@ class GuideAdminController extends Controller
         });
 
         return $data;
+    }
+    /**
+     * Handle Base64 image upload.
+     * Check if the input is a base64 string, correct specific prefixes (e.g. jpe -> jpeg),
+     * decode and store it, then return the URL.
+     * Otherwise return the input as is.
+     *
+     * @param string|null $input
+     * @return string|null
+     */
+    private function handleImageUpload(?string $input): ?string
+    {
+        if (!$input) {
+            return null;
+        }
+
+        // Check for Base64 pattern: data:image/...;base64,...
+        if (preg_match('/^data:image\/(\w+);base64,/', $input, $matches)) {
+            $extension = $matches[1];
+
+            // Correction for common base64 mishandling if necessary (e.g. jpe -> jpeg)
+            if ($extension === 'jpe') {
+                $extension = 'jpeg';
+            }
+
+            // Remove prefix to get raw base64 data
+            $base64Data = substr($input, strpos($input, ',') + 1);
+            $imageData = base64_decode($base64Data);
+
+            if ($imageData === false) {
+                return $input; // Failed to decode, return original (maybe it wasn't base64 after all?)
+            }
+
+            $fileName = 'guide_' . time() . '_' . Str::random(10) . '.' . $extension;
+            $path = 'guides/' . $fileName;
+
+            // Store in specific disk (e.g., public)
+            Storage::disk('public')->put($path, $imageData);
+
+            // Return full URL
+            return Storage::url($path);
+        }
+
+        return $input; // Input is likely already a URL
     }
 }
