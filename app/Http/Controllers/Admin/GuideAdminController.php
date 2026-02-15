@@ -809,52 +809,62 @@ class GuideAdminController extends Controller
             $count++;
         }
 
-        $guide = Guide::create([
-            'title' => $request->title,
-            'title_ar' => $request->title_ar,
-            'slug' => $slug,
-            'excerpt' => $request->excerpt,
-            'excerpt_ar' => $request->excerpt_ar,
-            'content' => $request->content,
-            'content_ar' => $request->content_ar,
-            'featured_image' => $request->featured_image,
-            'category_id' => $request->category_id,
-            'author_id' => $request->author_id,
-            'status' => $request->status,
-            'meta_title' => $request->meta_title,
-            'meta_description' => $request->meta_description,
-            'meta_keywords' => $request->meta_keywords,
-            'views_count' => 0,
-            'published_at' => $request->status === 'published' ? now() : null,
-        ]);
+        DB::beginTransaction();
 
-        // Attacher les tags
-        if ($request->has('tags')) {
-            $guide->tags()->sync($request->tags);
-        }
+        try {
+            $guide = Guide::create([
+                'title' => $request->title,
+                'title_ar' => $request->title_ar,
+                'slug' => $slug,
+                'excerpt' => $request->excerpt,
+                'excerpt_ar' => $request->excerpt_ar,
+                'content' => $request->content,
+                'content_ar' => $request->content_ar,
+                'featured_image' => $request->featured_image,
+                'category_id' => $request->category_id,
+                'author_id' => $request->author_id,
+                'status' => $request->status,
+                'meta_title' => $request->meta_title,
+                'meta_description' => $request->meta_description,
+                'meta_keywords' => $request->meta_keywords,
+                'views_count' => 0,
+                'published_at' => $request->status === 'published' ? now() : null,
+            ]);
 
-        // Ajouter les sections
-        if ($request->has('sections') && is_array($request->sections)) {
-            foreach ($request->sections as $index => $sectionData) {
-                GuideSection::create([
-                    'guide_id' => $guide->id,
-                    'type' => $sectionData['type'],
-                    'title' => $sectionData['title'] ?? null,
-                    'title_ar' => $sectionData['title_ar'] ?? null,
-                    'description' => $sectionData['description'] ?? null,
-                    'description_ar' => $sectionData['description_ar'] ?? null,
-                    'image_url' => $sectionData['image_url'] ?? null,
-                    'image_position' => $sectionData['image_position'] ?? 'top',
-                    'media' => $sectionData['media'] ?? null,
-                    'order_position' => $sectionData['order_position'] ?? $index,
-                ]);
+            // Attacher les tags
+            if ($request->has('tags')) {
+                $guide->tags()->sync($request->tags);
             }
-        }
 
-        return response()->json([
-            'message' => 'Guide created successfully',
-            'data' => $this->formatGuideForAdmin($guide->load(['author', 'category', 'tags']))
-        ], 201);
+            // Ajouter les sections
+            if ($request->has('sections') && is_array($request->sections)) {
+                foreach ($request->sections as $index => $sectionData) {
+                    GuideSection::create([
+                        'guide_id' => $guide->id,
+                        'type' => $sectionData['type'],
+                        'title' => $sectionData['title'] ?? null,
+                        'title_ar' => $sectionData['title_ar'] ?? null,
+                        'description' => $sectionData['description'] ?? null,
+                        'description_ar' => $sectionData['description_ar'] ?? null,
+                        'image_url' => $sectionData['image_url'] ?? null,
+                        'image_position' => $sectionData['image_position'] ?? 'top',
+                        'media' => $sectionData['media'] ?? null,
+                        'order_position' => $sectionData['order_position'] ?? $index,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Guide created successfully',
+                'data' => $this->formatGuideForAdmin($guide->load(['author', 'category', 'tags']))
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Error creating guide', 'error' => $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -1000,42 +1010,58 @@ class GuideAdminController extends Controller
             ], 422);
         }
 
-        // Si le titre change, régénérer le slug
-        if ($request->has('title') && $request->title !== $guide->title) {
-            $slug = Str::slug($request->title);
-            $originalSlug = $slug;
-            $count = 1;
+        DB::beginTransaction();
 
-            while (Guide::where('slug', $slug)->where('id', '!=', $id)->exists()) {
-                $slug = $originalSlug . '-' . $count;
-                $count++;
+        try {
+            // Si le titre change, régénérer le slug
+            if ($request->has('title') && $request->title !== $guide->title) {
+                $slug = Str::slug($request->title);
+                $originalSlug = $slug;
+                $count = 1;
+
+                while (Guide::where('slug', $slug)->where('id', '!=', $id)->exists()) {
+                    $slug = $originalSlug . '-' . $count;
+                    $count++;
+                }
+
+                $guide->slug = $slug;
             }
 
-            $guide->slug = $slug;
-        }
+            // Mettre à jour published_at si le statut passe à published
+            if ($request->has('status') && $request->status === 'published' && $guide->status !== 'published') {
+                $guide->published_at = now();
+            }
 
-        // Mettre à jour published_at si le statut passe à published
-        if ($request->has('status') && $request->status === 'published' && $guide->status !== 'published') {
-            $guide->published_at = now();
-        }
+            $guide->update($request->except(['tags']));
 
-        $guide->update($request->except(['tags']));
+            // Mettre à jour les tags
+            if ($request->has('tags')) {
+                $guide->tags()->sync($request->tags);
+            }
 
-        // Mettre à jour les tags
-        if ($request->has('tags')) {
-            $guide->tags()->sync($request->tags);
-        }
+            // Mettre à jour les sections
+            if ($request->has('sections')) {
+                $sectionIdsToKeep = collect($request->sections)->pluck('id')->filter()->toArray();
+                $guide->sections()->whereNotIn('id', $sectionIdsToKeep)->delete();
 
-        // Mettre à jour les sections
-        if ($request->has('sections')) {
-            $sectionIdsToKeep = collect($request->sections)->pluck('id')->filter()->toArray();
-            $guide->sections()->whereNotIn('id', $sectionIdsToKeep)->delete();
-
-            foreach ($request->sections as $index => $sectionData) {
-                if (isset($sectionData['id'])) {
-                    GuideSection::where('id', $sectionData['id'])
-                        ->where('guide_id', $guide->id)
-                        ->update([
+                foreach ($request->sections as $index => $sectionData) {
+                    if (isset($sectionData['id'])) {
+                        GuideSection::where('id', $sectionData['id'])
+                            ->where('guide_id', $guide->id)
+                            ->update([
+                                'type' => $sectionData['type'],
+                                'title' => $sectionData['title'] ?? null,
+                                'title_ar' => $sectionData['title_ar'] ?? null,
+                                'description' => $sectionData['description'] ?? null,
+                                'description_ar' => $sectionData['description_ar'] ?? null,
+                                'image_url' => $sectionData['image_url'] ?? null,
+                                'image_position' => $sectionData['image_position'] ?? 'top',
+                                'media' => $sectionData['media'] ?? null,
+                                'order_position' => $sectionData['order_position'] ?? $index,
+                            ]);
+                    } else {
+                        GuideSection::create([
+                            'guide_id' => $guide->id,
                             'type' => $sectionData['type'],
                             'title' => $sectionData['title'] ?? null,
                             'title_ar' => $sectionData['title_ar'] ?? null,
@@ -1046,27 +1072,21 @@ class GuideAdminController extends Controller
                             'media' => $sectionData['media'] ?? null,
                             'order_position' => $sectionData['order_position'] ?? $index,
                         ]);
-                } else {
-                    GuideSection::create([
-                        'guide_id' => $guide->id,
-                        'type' => $sectionData['type'],
-                        'title' => $sectionData['title'] ?? null,
-                        'title_ar' => $sectionData['title_ar'] ?? null,
-                        'description' => $sectionData['description'] ?? null,
-                        'description_ar' => $sectionData['description_ar'] ?? null,
-                        'image_url' => $sectionData['image_url'] ?? null,
-                        'image_position' => $sectionData['image_position'] ?? 'top',
-                        'media' => $sectionData['media'] ?? null,
-                        'order_position' => $sectionData['order_position'] ?? $index,
-                    ]);
+                    }
                 }
             }
-        }
 
-        return response()->json([
-            'message' => 'Guide updated successfully',
-            'data' => $this->formatGuideForAdmin($guide->load(['author', 'category', 'tags']))
-        ]);
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Guide updated successfully',
+                'data' => $this->formatGuideForAdmin($guide->load(['author', 'category', 'tags']))
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Error updating guide', 'error' => $e->getMessage()], 500);
+        }
     }
 
     /**
