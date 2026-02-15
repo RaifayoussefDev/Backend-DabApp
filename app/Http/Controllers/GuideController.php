@@ -265,17 +265,17 @@ class GuideController extends Controller
 
             DB::commit();
 
-            // Send Notification
+            // Send Notification (Submission Confirmation)
             try {
-                $this->notificationService->sendToUser(Auth::user(), 'new_guide_published', [
-                    'guide_id' => $guide->id,  // ✅ AJOUTER guide_id
+                $this->notificationService->sendToUser(Auth::user(), 'guide_submitted', [
+                    'guide_id' => $guide->id,
                     'guide_title' => $guide->title
                 ], [
-                    'entity' => $guide,  // ✅ AJOUTER entity pour action_url
+                    'entity' => $guide,
                     'priority' => 'normal',
                 ]);
             } catch (\Exception $e) {
-                \Log::error('Failed to send guide created notification: ' . $e->getMessage());
+                \Log::error('Failed to send guide submission notification: ' . $e->getMessage());
             }
 
             $guide->load(['author', 'category', 'tags', 'sections']);

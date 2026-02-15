@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\NotificationMail;
+use Illuminate\Support\Str;
 
 class NotificationService
 {
@@ -889,5 +890,30 @@ class NotificationService
             'entity' => $guide,
             'priority' => 'normal',
         ]);
+    }
+
+    /**
+     * Notification: Guide Published (Broadcast to all active users)
+     */
+    public function notifyGuidePublished($guide): void
+    {
+        // Find all active users
+        User::active()
+            ->chunk(100, function ($users) use ($guide) {
+                foreach ($users as $user) {
+                    try {
+                        $this->sendToUser($user, 'new_guide_published', [
+                            'guide_id' => $guide->id,
+                            'guide_title' => $guide->title,
+                            'excerpt' => Str::limit(strip_tags($guide->excerpt), 100),
+                        ], [
+                            'entity' => $guide,
+                            'priority' => 'normal',
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error("Failed to notify user {$user->id} for guide published {$guide->id}: " . $e->getMessage());
+                    }
+                }
+            });
     }
 }

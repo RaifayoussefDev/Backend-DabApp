@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
+use App\Services\NotificationService;
+
 /**
  * @OA\Tag(
  *     name="Admin - Guides",
@@ -23,6 +25,12 @@ use Illuminate\Support\Str;
  */
 class GuideAdminController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     /**
      * @OA\Get(
      *     path="/api/admin/guides",
@@ -866,6 +874,15 @@ class GuideAdminController extends Controller
 
             DB::commit();
 
+            // Notify users if published
+            if ($guide->status === 'published') {
+                try {
+                    $this->notificationService->notifyGuidePublished($guide);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send guide published notification: ' . $e->getMessage());
+                }
+            }
+
             return response()->json([
                 'message' => 'Guide created successfully',
                 'data' => $this->formatGuideDetailsForAdmin($guide->load(['author', 'category', 'tags', 'sections']))
@@ -1059,7 +1076,11 @@ class GuideAdminController extends Controller
                 $data['content_ar'] = $this->processContentImages($data['content_ar']);
             }
 
+            $isStatusChangedToPublished = $request->has('status') && $request->status === 'published' && $guide->status !== 'published';
+
             $guide->update($data);
+
+            // ... (tags and sections updates) ...
 
             // Mettre à jour les tags
             if ($request->has('tags')) {
@@ -1104,6 +1125,15 @@ class GuideAdminController extends Controller
             }
 
             DB::commit();
+
+            // Notify users if status changed to published
+            if ($isStatusChangedToPublished) {
+                try {
+                    $this->notificationService->notifyGuidePublished($guide);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send guide published notification: ' . $e->getMessage());
+                }
+            }
 
             return response()->json([
                 'message' => 'Guide updated successfully',
