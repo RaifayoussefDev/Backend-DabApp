@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Guide;
 use App\Models\GuideCategory;
 use App\Models\GuideTag;
+use App\Models\GuideSection;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -832,6 +833,24 @@ class GuideAdminController extends Controller
             $guide->tags()->sync($request->tags);
         }
 
+        // Ajouter les sections
+        if ($request->has('sections') && is_array($request->sections)) {
+            foreach ($request->sections as $index => $sectionData) {
+                GuideSection::create([
+                    'guide_id' => $guide->id,
+                    'type' => $sectionData['type'],
+                    'title' => $sectionData['title'] ?? null,
+                    'title_ar' => $sectionData['title_ar'] ?? null,
+                    'description' => $sectionData['description'] ?? null,
+                    'description_ar' => $sectionData['description_ar'] ?? null,
+                    'image_url' => $sectionData['image_url'] ?? null,
+                    'image_position' => $sectionData['image_position'] ?? 'top',
+                    'media' => $sectionData['media'] ?? null,
+                    'order_position' => $sectionData['order_position'] ?? $index,
+                ]);
+            }
+        }
+
         return response()->json([
             'message' => 'Guide created successfully',
             'data' => $this->formatGuideForAdmin($guide->load(['author', 'category', 'tags']))
@@ -1005,6 +1024,43 @@ class GuideAdminController extends Controller
         // Mettre à jour les tags
         if ($request->has('tags')) {
             $guide->tags()->sync($request->tags);
+        }
+
+        // Mettre à jour les sections
+        if ($request->has('sections')) {
+            $sectionIdsToKeep = collect($request->sections)->pluck('id')->filter()->toArray();
+            $guide->sections()->whereNotIn('id', $sectionIdsToKeep)->delete();
+
+            foreach ($request->sections as $index => $sectionData) {
+                if (isset($sectionData['id'])) {
+                    GuideSection::where('id', $sectionData['id'])
+                        ->where('guide_id', $guide->id)
+                        ->update([
+                            'type' => $sectionData['type'],
+                            'title' => $sectionData['title'] ?? null,
+                            'title_ar' => $sectionData['title_ar'] ?? null,
+                            'description' => $sectionData['description'] ?? null,
+                            'description_ar' => $sectionData['description_ar'] ?? null,
+                            'image_url' => $sectionData['image_url'] ?? null,
+                            'image_position' => $sectionData['image_position'] ?? 'top',
+                            'media' => $sectionData['media'] ?? null,
+                            'order_position' => $sectionData['order_position'] ?? $index,
+                        ]);
+                } else {
+                    GuideSection::create([
+                        'guide_id' => $guide->id,
+                        'type' => $sectionData['type'],
+                        'title' => $sectionData['title'] ?? null,
+                        'title_ar' => $sectionData['title_ar'] ?? null,
+                        'description' => $sectionData['description'] ?? null,
+                        'description_ar' => $sectionData['description_ar'] ?? null,
+                        'image_url' => $sectionData['image_url'] ?? null,
+                        'image_position' => $sectionData['image_position'] ?? 'top',
+                        'media' => $sectionData['media'] ?? null,
+                        'order_position' => $sectionData['order_position'] ?? $index,
+                    ]);
+                }
+            }
         }
 
         return response()->json([
