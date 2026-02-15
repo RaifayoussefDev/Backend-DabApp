@@ -144,28 +144,28 @@ class GuideController extends Controller
      *                         "type": "text",
      *                         "title": "Introduction",
      *                         "title_ar": "مقدمة",
-     *                         "description": "Welcome to the maintenance guide. Here is what you need to know...",
-     *                         "description_ar": "مرحبًا بكم في دليل الصيانة. إليك ما تحتاج إلى معرفته...",
-     *                         "order_position": 0
+     *                         "description": "<p>Welcome to the maintenance guide...</p>",
+     *                         "description_ar": "<p>مرحبًا بكم في دليل الصيانة...</p>",
+     *                         "order_position": 1
      *                     },
      *                     {
      *                         "type": "text_image",
      *                         "title": "Checking Oil Level",
      *                         "title_ar": "فحص مستوى الزيت",
-     *                         "description": "Ensure the bike is upright and check the sight glass.",
-     *                         "description_ar": "تأكد من أن الدراجة مستقيمة وتحقق من زجاج الرؤية.",
+     *                         "description": "<p>Ensure the bike is upright...</p>",
+     *                         "description_ar": "<p>تأكد من أن الدراجة مستقيمة...</p>",
      *                         "image_url": "https://example.com/oil-check.jpg",
      *                         "image_position": "left",
-     *                         "order_position": 1
+     *                         "order_position": 2
      *                     },
      *                     {
      *                         "type": "video",
      *                         "title": "Chain Cleaning Tutorial",
      *                         "title_ar": "درس تنظيف السلسلة",
-     *                         "description": "Watch this video to see proper chain cleaning technique.",
-     *                         "description_ar": "شاهد هذا الفيديو لترى تقنية تنظيف السلسلة الصحيحة.",
+     *                         "description": "<p>Watch this video...</p>",
+     *                         "description_ar": "<p>شاهد هذا الفيديو...</p>",
      *                         "image_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-     *                         "order_position": 2
+     *                         "order_position": 3
      *                     }
      *                 }
      *             )
@@ -332,6 +332,17 @@ class GuideController extends Controller
      *                     @OA\Property(property="media", type="array", @OA\Items(type="object")),
      *                     @OA\Property(property="order_position", type="integer")
      *                 )
+     *                 ),
+     *                 example={
+     *                     {
+     *                         "id": 1,
+     *                         "title": "Updated Title",
+     *                         "title_ar": "عنوان محدث",
+     *                         "description": "<p>Updated description...</p>",
+     *                         "description_ar": "<p>وصف محدث...</p>",
+     *                         "order_position": 1
+     *                     }
+     *                 }
      *             )
      *         )
      *     ),

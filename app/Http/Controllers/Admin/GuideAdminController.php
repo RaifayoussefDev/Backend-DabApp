@@ -649,11 +649,38 @@ class GuideAdminController extends Controller
      *             @OA\Property(property="author_id", type="integer", example=5, description="Author ID"),
      *             @OA\Property(property="status", type="string", enum={"draft", "published", "archived"}, example="draft", description="Guide status"),
      *             @OA\Property(
-     *                 property="tags",
+     *                 property="sections",
      *                 type="array",
-     *                 description="Tag IDs",
-     *                 @OA\Items(type="integer"),
-     *                 example={1, 2, 3}
+     *                 description="Content sections",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     required={"type", "title"},
+     *                     @OA\Property(property="type", type="string", enum={"text", "image", "text_image", "video"}, example="text"),
+     *                     @OA\Property(property="title", type="string", example="Introduction"),
+     *                     @OA\Property(property="title_ar", type="string", example="مقدمة"),
+     *                     @OA\Property(property="description", type="string", example="<p>Welcome to the guide...</p>"),
+     *                     @OA\Property(property="description_ar", type="string", example="<p>مرحبًا بك في الدليل...</p>"),
+     *                     @OA\Property(property="order_position", type="integer", example=1)
+     *                 ),
+     *                 example={
+     *                     {
+     *                         "type": "text",
+     *                         "title": "Introduction",
+     *                         "title_ar": "مقدمة",
+     *                         "description": "<p>Welcome to the guide...</p>",
+     *                         "description_ar": "<p>مرحبًا بك في الدليل...</p>",
+     *                         "order_position": 1
+     *                     },
+     *                     {
+     *                         "type": "image",
+     *                         "title": "Visual Aid",
+     *                         "title_ar": "مساعدة بصرية",
+     *                         "description": "<p>See this diagram.</p>",
+     *                         "description_ar": "<p>انظر هذا الرسم البياني.</p>",
+     *                         "image_url": "https://example.com/diagram.jpg",
+     *                         "order_position": 2
+     *                     }
+     *                 }
      *             ),
      *             @OA\Property(property="meta_title", type="string", example="Motorcycle Maintenance Guide - DabApp", description="SEO Title"),
      *             @OA\Property(property="meta_description", type="string", example="Learn how to maintain your motorcycle like a pro.", description="SEO Description"),
@@ -858,7 +885,17 @@ class GuideAdminController extends Controller
      *                     @OA\Property(property="description", type="string", example="<p>Updated content...</p>"),
      *                     @OA\Property(property="description_ar", type="string", example="<p>محتوى محدث...</p>"),
      *                     @OA\Property(property="order_position", type="integer", example=1)
-     *                 )
+     *                 ),
+     *                 example={
+     *                     {
+     *                         "id": 1,
+     *                         "title": "Introduction (Updated)",
+     *                         "title_ar": "مقدمة (محدثة)",
+     *                         "description": "<p>Updated content...</p>",
+     *                         "description_ar": "<p>محتوى محدث...</p>",
+     *                         "order_position": 1
+     *                     }
+     *                 }
      *             ),
      *             @OA\Property(property="meta_title", type="string", example="Updated SEO Title"),
      *             @OA\Property(property="meta_description", type="string", example="Updated SEO Description"),
