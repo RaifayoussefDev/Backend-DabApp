@@ -1197,8 +1197,8 @@ class GuideController extends Controller
         }
 
         // Use regex to find all img tags with base64 src
-        // Pattern matches: src="data:image/[type];base64,[data]"
-        $pattern = '/src="(data:image\/(\w+);base64,([^"]+))"/';
+        // Pattern matches: src="data:image/[type];base64,[data]" or src='...'
+        $pattern = '/src=["\'](data:image\/(\w+);base64,([^"\']+))["\']/';
 
         return preg_replace_callback($pattern, function ($matches) {
             $fullSrc = $matches[1]; // data:image/...;base64,...
@@ -1206,7 +1206,7 @@ class GuideController extends Controller
             // Note: handleImageUpload expects the full data URI
             $url = $this->handleImageUpload($fullSrc);
 
-            // Return new src attribute
+            // Return new src attribute with double quotes
             return 'src="' . $url . '"';
         }, $content);
     }

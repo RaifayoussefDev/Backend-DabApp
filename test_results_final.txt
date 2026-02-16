@@ -1,0 +1,17 @@
+Running tests...
+Test: Double quotes
+Input: <img src="data:image/png;base64,iVBORw0KGgoAAAANSU...
+Output: <img src="https://example.com/uploaded_image.jpg">
+----------------------------------------
+Test: Single quotes
+Input: <img src='data:image/jpeg;base64,/9j/4AAQSkZJRgABA...
+Output: <img src="https://example.com/uploaded_image.jpg">
+----------------------------------------
+Test: Mixed content
+Input: <p>Test</p><img src="data:image/png;base64,abc"><b...
+Output: <p>Test</p><img src="https://example.com/uploaded_image.jpg"><br><img src="https://example.com/uploaded_image.jpg">
+----------------------------------------
+Test: Already URL
+Input: <img src="https://example.com/image.jpg">...
+Output: <img src="https://example.com/image.jpg">
+----------------------------------------

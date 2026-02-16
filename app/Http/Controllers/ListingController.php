@@ -700,7 +700,61 @@ class ListingController extends Controller
 
             // ✅ Paiement uniquement au step 3 (avec conversion vers AED)
             if ($step >= 3) {
-                $originalAmount = $request->amount;
+                // 🔒 SECURITY CHECK: Validate Amount against Pricing Rules
+                $requiredAmount = 0;
+
+                if ($listing->category_id == 1 && $listing->motorcycle) {
+                    // Motorcycle Pricing
+                    $typeId = $listing->motorcycle->type_id;
+                    // If type_id missing on motorcycle, try to get from model
+                    if (!$typeId && $listing->motorcycle->model) {
+                        $typeId = $listing->motorcycle->model->type_id;
+                    }
+
+                    if ($typeId) {
+                        $rule = \App\Models\PricingRulesMotorcycle::where('motorcycle_type_id', $typeId)->first();
+                        $requiredAmount = $rule ? (float) $rule->price : 0;
+                    }
+                } elseif ($listing->category_id == 2 && $listing->sparePart) {
+                    // Spare Part Pricing
+                    $catId = $listing->sparePart->bike_part_category_id;
+                    if ($catId) {
+                        $rule = \App\Models\PricingRulesSparepart::where('bike_part_category_id', $catId)->first();
+                        $requiredAmount = $rule ? (float) $rule->price : 0;
+                    }
+                } elseif ($listing->category_id == 3) {
+                    // License Plate Pricing (Assuming single price or first rule)
+                    $rule = \App\Models\PricingRulesLicencePlate::first();
+                    $requiredAmount = $rule ? (float) $rule->price : 0;
+                }
+
+                $originalAmount = (float) $request->amount;
+
+                // Allow small floating point difference or if required is 0 (free)
+                // If requiredAmount > 0 and sent amount is less, REJECT
+                if ($requiredAmount > 0 && $originalAmount < $requiredAmount) {
+                    // Exception: if a promo code is APPLIED later, we might allow it, 
+                    // BUT the initial "amount" sent from front should match the base price before discount.
+                    // However, usually front sends the *final* amount. 
+                    // IF the front sends the base price, we compare against requiredAmount.
+                    // IF the front sends the discounted price, we need to validate that *after* promo application.
+                    // STANDARD FLOW: Front sends the PRICE user sees. If user sees 599, they send 599.
+
+                    // Let's assume Front sends the BASE price and Promo is applied on backend to reduce it?
+                    // OR Front sends the Final price? 
+                    // Looking at code: $originalAmount = $request->amount; then promo potentially reduces it.
+                    // So $request->amount SHOULD BE the base price usually, or the price they agree to pay.
+
+                    // SECURITY: We must ensure $originalAmount is at least the database price.
+                    // If we want to support "Front sends discounted amount", we'd need to send base amount separately.
+                    // For now, enforcing Base Price >= Required DB Price is safest.
+
+                    return response()->json([
+                        'error' => 'Invalid payment amount. expected: ' . $requiredAmount . ', got: ' . $originalAmount,
+                        'required_amount' => $requiredAmount
+                    ], 422);
+                }
+
                 $aedAmount = $originalAmount;
                 $originalCurrency = 'AED';
                 $exchangeRate = 1;
@@ -1956,6 +2010,16 @@ class ListingController extends Controller
                 \Log::error('Failed to send listing_updated notification: ' . $e->getMessage());
             }
 
+            // ✅ Prepare Display Data
+            $currentBid = null;
+            if ($listing->auction_enabled) {
+                $currentBid = \App\Models\AuctionHistory::where('listing_id', $listing->id)->max('bid_amount');
+            }
+
+            $currentBidFloat = (float) $currentBid;
+            $displayPrice = ($listing->auction_enabled && $currentBidFloat > 0) ? $currentBid : ($listing->auction_enabled ? $listing->minimum_bid : $listing->price);
+            $isAuction = $listing->auction_enabled;
+
             return response()->json([
                 'success' => true,
                 'message' => 'Listing updated successfully. You have used your one-time edit.',
@@ -1964,7 +2028,11 @@ class ListingController extends Controller
                 'can_edit_again' => false,
                 'last_edited_at' => $listing->last_edited_at->format('Y-m-d H:i:s'),
                 'updated_fields' => array_unique($updatedFields),
-                'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart.motorcycles', 'licensePlate.fieldValues'])
+                'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart.motorcycles', 'licensePlate.fieldValues']),
+                'display_price' => $displayPrice,
+                'is_auction' => $isAuction,
+                'current_bid' => $currentBid,
+                'minimum_bid' => $listing->minimum_bid
             ], 200);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
