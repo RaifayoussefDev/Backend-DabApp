@@ -62,6 +62,36 @@
                 ],
                 "summary": "Admin: Get all event categories",
                 "operationId": "8171a30a60635ee656c68771b65c1e4a",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Vide = tous",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Music"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of event categories",
@@ -74,6 +104,18 @@
                                             "items": {
                                                 "$ref": "#/components/schemas/EventCategory"
                                             }
+                                        },
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
                                         }
                                     },
                                     "type": "object"
@@ -1081,6 +1123,36 @@
                 ],
                 "summary": "Admin: Get all sponsors",
                 "operationId": "3ab965a53b43846fb15d0b27c9d36f04",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Vide = tous",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Tech"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of sponsors",
@@ -1093,6 +1165,18 @@
                                             "items": {
                                                 "$ref": "#/components/schemas/EventSponsor"
                                             }
+                                        },
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
                                         }
                                     },
                                     "type": "object"

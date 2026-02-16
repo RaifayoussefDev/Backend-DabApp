@@ -14,18 +14,37 @@ class AdminEventSponsorController extends Controller
      *     summary="Admin: Get all sponsors",
      *     tags={"Admin Event Sponsors"},
      *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="page", in="query", required=false, @OA\Schema(type="integer", default=1)),
+     *     @OA\Parameter(name="per_page", in="query", description="Vide = tous", required=false, @OA\Schema(type="integer", example=20)),
+     *     @OA\Parameter(name="search", in="query", required=false, @OA\Schema(type="string", example="Tech")),
      *     @OA\Response(
      *         response=200,
      *         description="List of sponsors",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/EventSponsor"))
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/EventSponsor")),
+     *             @OA\Property(property="current_page", type="integer"),
+     *             @OA\Property(property="last_page", type="integer"),
+     *             @OA\Property(property="per_page", type="integer"),
+     *             @OA\Property(property="total", type="integer")
      *         )
      *     )
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
-        $sponsors = EventSponsor::all();
+        $query = EventSponsor::query();
+
+        if ($request->has('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%')
+                ->orWhere('description', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->has('per_page')) {
+            $sponsors = $query->paginate($request->per_page);
+        } else {
+            $sponsors = $query->get();
+        }
+
         return response()->json(['data' => $sponsors]);
     }
 

@@ -13,16 +13,32 @@ class RouteTagController extends Controller
     /**
      * Display a listing of route tags.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $tags = RouteTag::withCount('routes')
-            ->orderBy('usage_count', 'desc')
-            ->get();
+        $query = RouteTag::withCount('routes')->orderBy('usage_count', 'desc');
 
-        return response()->json([
-            'success' => true,
-            'data' => $tags,
-        ]);
+        if ($request->has('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%')
+                ->orWhere('slug', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->has('per_page')) {
+            $tags = $query->paginate($request->per_page);
+            return response()->json([
+                'success' => true,
+                'data' => $tags->items(),
+                'current_page' => $tags->currentPage(),
+                'last_page' => $tags->lastPage(),
+                'per_page' => $tags->perPage(),
+                'total' => $tags->total(),
+            ]);
+        } else {
+            $tags = $query->get();
+            return response()->json([
+                'success' => true,
+                'data' => $tags,
+            ]);
+        }
     }
 
     /**

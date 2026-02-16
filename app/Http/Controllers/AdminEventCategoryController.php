@@ -14,18 +14,37 @@ class AdminEventCategoryController extends Controller
      *     path="/api/admin/event-categories",
      *     summary="Admin: Get all event categories",
      *     tags={"Admin Event Categories"},
+     *     @OA\Parameter(name="page", in="query", required=false, @OA\Schema(type="integer", default=1)),
+     *     @OA\Parameter(name="per_page", in="query", description="Vide = tous", required=false, @OA\Schema(type="integer", example=20)),
+     *     @OA\Parameter(name="search", in="query", required=false, @OA\Schema(type="string", example="Music")),
      *     @OA\Response(
      *         response=200,
      *         description="List of event categories",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/EventCategory"))
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/EventCategory")),
+     *             @OA\Property(property="current_page", type="integer"),
+     *             @OA\Property(property="last_page", type="integer"),
+     *             @OA\Property(property="per_page", type="integer"),
+     *             @OA\Property(property="total", type="integer")
      *         )
      *     )
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
-        $categories = EventCategory::all();
+        $query = EventCategory::query();
+
+        if ($request->has('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%')
+                ->orWhere('name_ar', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->has('per_page')) {
+            $categories = $query->paginate($request->per_page);
+        } else {
+            $categories = $query->get();
+        }
+
         return response()->json(['data' => $categories]);
     }
 
