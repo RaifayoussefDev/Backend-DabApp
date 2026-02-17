@@ -285,6 +285,95 @@ class ImageUploadController extends Controller
 
     /**
      * @OA\Post(
+     *     path="/api/upload-video-no-watermark",
+     *     summary="Upload multiple videos without watermark",
+     *     description="Allows users to upload multiple videos to the server without processing or watermark.",
+     *     operationId="uploadVideosNoWatermark",
+     *     tags={"Video Upload"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"videos[]"},
+     *                 @OA\Property(
+     *                     property="videos[]",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="string",
+     *                         format="binary"
+     *                     ),
+     *                     description="Multiple video files to upload (mp4, mov, ogg, qt, max 100MB)"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Videos uploaded successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Videos uploaded successfully"),
+     *             @OA\Property(
+     *                 property="paths",
+     *                 type="array",
+     *                 @OA\Items(type="string", example="http://yourdomain.com/storage/videos/video1.mp4")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Bad Request"),
+     *     @OA\Response(response=413, description="Payload Too Large"),
+     *     @OA\Response(response=422, description="Validation Error"),
+     *     @OA\Response(response=500, description="Internal Server Error")
+     * )
+     */
+    public function uploadVideoNoWatermark(Request $request)
+    {
+        try {
+            // Check server limits
+            if (empty($request->all()) && empty($request->allFiles()) && count($request->all()) == 0 && request()->server('CONTENT_LENGTH') > 0) {
+                $maxSize = ini_get('post_max_size');
+                return response()->json([
+                    'error' => "Server limit exceeded.",
+                    'message' => "The total size of the request exceeds the 'post_max_size' limit of {$maxSize}."
+                ], 413);
+            }
+
+            $request->validate([
+                'videos.*' => 'required|mimes:mp4,mov,ogg,qt|max:102400' // Max 100MB
+            ]);
+
+            if (!$request->hasFile('videos')) {
+                return response()->json(['error' => 'No videos found in request. Key must be "videos[]".'], 400);
+            }
+
+            $paths = [];
+            foreach ($request->file('videos') as $uploadedFile) {
+                $filename = Str::random(20) . '.' . $uploadedFile->getClientOriginalExtension();
+
+                // Save directly without processing
+                $videoPath = "videos/{$filename}";
+                Storage::disk('public')->putFileAs('videos', $uploadedFile, $filename);
+
+                $paths[] = asset('storage/' . $videoPath);
+
+                Log::info("Video saved successfully", ['filename' => $filename, 'path' => $videoPath]);
+            }
+
+            return response()->json([
+                'message' => 'Videos uploaded successfully',
+                'paths' => $paths
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => 'Validation failed', 'details' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Video upload failed: ' . $e->getMessage());
+            return response()->json(['error' => 'An error occurred while uploading videos.'], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
      *     path="/api/upload-icon",
      *     summary="Upload an icon",
      *     description="Allows users to upload an icon (original size kept)",

@@ -2389,6 +2389,36 @@
       <input type="hidden" class="s-id" value="${data?.id || ""}">
       <div class="form-grid">
         <div class="form-group">
+            <label>Type</label>
+            <select class="s-type" onchange="updateSectionFields(this)">
+                <option value="text" ${!data?.type || data?.type === "text" ? "selected" : ""}>Text Only</option>
+                <option value="text_image" ${data?.type === "text_image" ? "selected" : ""}>Text + Image</option>
+                <option value="video" ${data?.type === "video" ? "selected" : ""}>Video (YouTube)</option>
+            </select>
+        </div>
+        <div class="form-group media-field" style="display:none">
+            <label>Media URL (Image or YouTube)</label>
+            <div style="display:flex; gap:10px;">
+                <input type="text" class="s-image-url" placeholder="https://..." value="${escHtml(data?.image_url || "")}">
+                <button type="button" class="btn-secondary" onclick="triggerSectionUpload(this, 'image')">Upload Image</button>
+                <button type="button" class="btn-secondary" onclick="triggerSectionUpload(this, 'video')">Upload Video</button>
+                <input type="file" class="s-file-input" style="display:none" onchange="handleSectionFile(this)">
+            </div>
+            <div class="s-media-preview" style="margin-top:5px; max-width:200px;">
+                ${data?.image_url ? renderMediaPreview(data.image_url, data.type) : ""}
+            </div>
+        </div>
+        <div class="form-group position-field" style="display:none">
+            <label>Image Position</label>
+            <select class="s-image-position">
+                <option value="left" ${!data?.image_position || data?.image_position === "left" ? "selected" : ""}>Left</option>
+                <option value="right" ${data?.image_position === "right" ? "selected" : ""}>Right</option>
+            </select>
+        </div>
+        
+        <div class="form-group" style="grid-column:1/-1"></div> <!-- Spacer -->
+
+        <div class="form-group">
           <label>Title (EN)</label>
           <input type="text" class="s-title" placeholder="Section title..." value="${escHtml(data?.title || "")}">
         </div>
@@ -2397,16 +2427,120 @@
           <input type="text" class="s-title-ar" placeholder="عنوان القسم..." value="${escHtml(data?.title_ar || "")}">
         </div>
         <div class="form-group" style="grid-column:1/-1">
-          <label>Description (EN)</label>
+          <label>Description (EN) ${data?.type !== "text" ? "(Optional)" : ""}</label>
           <textarea class="s-desc" rows="3" placeholder="Section content...">${escHtml(data?.description || "")}</textarea>
         </div>
         <div class="form-group" style="grid-column:1/-1" dir="rtl">
-          <label>الوصف (AR)</label>
+          <label>الوصف (AR) ${data?.type !== "text" ? "(اختياري)" : ""}</label>
           <textarea class="s-desc-ar" rows="3" placeholder="وصف القسم...">${escHtml(data?.description_ar || "")}</textarea>
         </div>
       </div>
     `;
                 container.appendChild(div);
+                // Initialize visibility based on current type
+                updateSectionFields(div.querySelector(".s-type"));
+            }
+
+            function triggerSectionUpload(btn, type) {
+                const container = btn.closest(".media-field");
+                const input = container.querySelector(".s-file-input");
+                input.accept = type === "image" ? "image/*" : "video/*";
+                input.dataset.uploadType = type;
+                input.click();
+            }
+
+            async function handleSectionFile(input) {
+                const file = input.files[0];
+                if (!file) return;
+
+                const type = input.dataset.uploadType;
+                const endpoint =
+                    type === "image"
+                        ? "/api/upload-image-no-watermark"
+                        : "/api/upload-video-no-watermark";
+                const formData = new FormData();
+                // Ensure key matches what controller expects
+                if (type === "image") {
+                    formData.append("images[]", file);
+                } else {
+                    formData.append("videos[]", file);
+                }
+
+                const container = input.closest(".media-field");
+                const urlInput = container.querySelector(".s-image-url");
+                const previewDiv = container.querySelector(".s-media-preview");
+
+                toast("Uploading...", "info");
+
+                try {
+                    const token = localStorage.getItem("token");
+                    const response = await fetch(`${getBase()}${endpoint}`, {
+                        method: "POST",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: formData,
+                    });
+
+                    if (!response.ok) throw new Error("Upload failed");
+
+                    const result = await response.json();
+                    let url = "";
+                    if (result.paths && result.paths.length > 0) {
+                        url = result.paths[0];
+                    } else if (result.url) {
+                        url = result.url;
+                    }
+
+                    urlInput.value = url;
+                    previewDiv.innerHTML = renderMediaPreview(
+                        url,
+                        type === "image" ? "text_image" : "video",
+                    );
+                    toast("Upload successful", "success");
+                } catch (e) {
+                    console.error(e);
+                    toast("Upload failed", "error");
+                }
+            }
+
+            function renderMediaPreview(url, type) {
+                if (!url) return "";
+                if (type === "video" || url.match(/\.(mp4|mov|ogg|qt)$/i)) {
+                    return `<video src="${url}" controls style="max-width:100%; height:auto;"></video>`;
+                } else {
+                    return `<img src="${url}" style="max-width:100%; height:auto; border-radius:4px;">`;
+                }
+            }
+
+            function updateSectionFields(select) {
+                const type = select.value;
+                const container = select.closest(".form-grid");
+                const mediaField = container.querySelector(".media-field");
+                const posField = container.querySelector(".position-field");
+                const btns = mediaField.querySelectorAll("button");
+
+                // Toggle upload buttons visibility based on type
+                if (type === "text_image") {
+                    btns[0].style.display = "inline-block"; // Image
+                    btns[1].style.display = "none"; // Video
+                } else if (type === "video") {
+                    btns[0].style.display = "none";
+                    btns[1].style.display = "inline-block"; // Video
+                }
+
+                if (type === "text_image") {
+                    mediaField.style.display = "block";
+                    posField.style.display = "block";
+                    mediaField.querySelector("label").textContent = "Image URL";
+                } else if (type === "video") {
+                    mediaField.style.display = "block";
+                    posField.style.display = "none";
+                    mediaField.querySelector("label").textContent = "Video URL";
+                } else {
+                    mediaField.style.display = "none";
+                    posField.style.display = "none";
+                }
             }
 
             function renumberSections() {
@@ -2499,7 +2633,29 @@
                     "Create a new DabApp guide";
                 clearForm();
                 loadTags();
+                loadAuthors(); // Load authors
                 document.getElementById("guide-modal").classList.add("open");
+            }
+
+            async function loadAuthors() {
+                try {
+                    const data = await api(
+                        "GET",
+                        "/api/admin/users?role_id=1&per_page=100",
+                    ); // Assuming role_id 1 is admin/author
+                    const select = document.getElementById("f-author-id");
+                    select.innerHTML =
+                        '<option value="">Select Author</option>';
+                    data.data.data.forEach((user) => {
+                        const option = document.createElement("option");
+                        option.value = user.id;
+                        option.textContent = `${user.first_name} ${user.last_name} (${user.email})`;
+                        select.appendChild(option);
+                    });
+                } catch (e) {
+                    console.error("Error loading authors", e);
+                    toast("Error loading authors", "error");
+                }
             }
 
             async function openEditModal(id) {
@@ -2561,7 +2717,12 @@
                     // Load sections
                     (g.sections || []).forEach((s) => addSection(s));
 
+                    (g.sections || []).forEach((s) => addSection(s));
+
                     await loadTags();
+                    await loadAuthors();
+                    document.getElementById("f-author-id").value =
+                        g.author_id || g.author?.id || "";
                 } catch (e) {
                     toast(
                         "Error loading guide: " + (e.data?.message || "Error"),
@@ -2634,8 +2795,9 @@
                 document
                     .querySelectorAll(".section-item")
                     .forEach((el, idx) => {
+                        const type = el.querySelector(".s-type").value;
                         const sec = {
-                            type: "text",
+                            type: type,
                             title: el.querySelector(".s-title")?.value || "",
                             title_ar:
                                 el.querySelector(".s-title-ar")?.value || "",
@@ -2643,6 +2805,13 @@
                                 el.querySelector(".s-desc")?.value || "",
                             description_ar:
                                 el.querySelector(".s-desc-ar")?.value || "",
+                            image_url:
+                                el.querySelector(".s-image-url")?.value || null,
+                            image_position:
+                                type === "text_image"
+                                    ? el.querySelector(".s-image-position")
+                                          ?.value
+                                    : null,
                             order_position: idx,
                         };
                         const sid = el.querySelector(".s-id")?.value;
