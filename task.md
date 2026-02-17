@@ -9,3 +9,4 @@
     - [x] Add Logout Button <!-- id: 6 -->
     - [x] Fix CORS error during login <!-- id: 7 -->
 - [x] Translate UI to English (Keep Arabic inputs) <!-- id: 8 -->
+- [x] Fix Production 404 Errors (Login & Base URL) <!-- id: 9 -->

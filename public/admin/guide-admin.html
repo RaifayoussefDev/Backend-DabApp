@@ -1633,7 +1633,6 @@
                     <input
                         type="text"
                         id="api-base-url"
-                        value="https://be.dabapp.co/"
                         placeholder="https://be.dabapp.co/"
                     />
                     <div style="margin-top: 8px">
@@ -1944,14 +1943,17 @@
                 btn.textContent = "Connecting...";
 
                 try {
-                    const response = await fetch(`${getBase()}/api/login`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            login: loginInput,
-                            password: passInput,
-                        }),
-                    });
+                    const response = await fetch(
+                        `${getBase()}/api/admin/login`,
+                        {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                login: loginInput,
+                                password: passInput,
+                            }),
+                        },
+                    );
 
                     const data = await response.json();
 
@@ -1987,13 +1989,19 @@
 
             // ─── API ───
             function getBase() {
-                return (
-                    localStorage.getItem("api_url") ||
-                    document
-                        .getElementById("api-base-url")
-                        .value.replace(/\/$/, "") ||
-                    "https://be.dabapp.co/"
-                );
+                if (localStorage.getItem("api_url"))
+                    return localStorage.getItem("api_url");
+                const val = document
+                    .getElementById("api-base-url")
+                    .value.replace(/\/$/, "");
+                if (val) return val;
+                if (
+                    window.location.hostname !== "localhost" &&
+                    window.location.hostname !== "127.0.0.1"
+                ) {
+                    return window.location.origin;
+                }
+                return "http://localhost:8000";
             }
 
             function getToken() {
@@ -2811,7 +2819,15 @@
             }
 
             // Start App
+            initBaseUrl();
             checkAuth();
+
+            function initBaseUrl() {
+                const input = document.getElementById("api-base-url");
+                if (!input.value) {
+                    input.value = getBase();
+                }
+            }
         </script>
     </body>
 </html>
