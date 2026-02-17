@@ -151,8 +151,7 @@ Route::post('/prospect-listings', [App\Http\Controllers\ProspectController::clas
 Route::post('/prospect/upload', [App\Http\Controllers\ImageUploadController::class, 'upload']);
 Route::post('/upload-image-public', [App\Http\Controllers\ImageUploadController::class, 'uploadPublic']);
 Route::post('/upload-icon', [App\Http\Controllers\ImageUploadController::class, 'uploadIcon']);
-Route::post('/upload-video-no-watermark', [App\Http\Controllers\ImageUploadController::class, 'uploadVideoNoWatermark']);
-Route::post('/upload-image-no-watermark', [App\Http\Controllers\ImageUploadController::class, 'uploadNoWatermark']);
+
 Route::get('/dealers', [\App\Http\Controllers\DealerController::class, 'index']);
 
 
@@ -287,6 +286,10 @@ Route::prefix('admin')->group(function () {
         // Admin Users
         Route::get('/users/autocomplete', [AdminListingController::class, 'autocomplete']);
         Route::apiResource('users', UserController::class);
+
+        // Admin Uploads
+        Route::post('/upload-video-no-watermark', [App\Http\Controllers\ImageUploadController::class, 'uploadVideoNoWatermark']);
+        Route::post('/upload-image-no-watermark', [App\Http\Controllers\ImageUploadController::class, 'uploadNoWatermark']);
 
         // Admin Stats
         Route::get('/dashboard/stats', [App\Http\Controllers\AdminDashboardController::class, 'stats']);
