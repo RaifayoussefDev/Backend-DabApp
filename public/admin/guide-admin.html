@@ -2570,10 +2570,6 @@
             }
 
             async function processImageFile(file) {
-                if (file.size > 5 * 1024 * 1024) {
-                    toast("Image too large (max 5MB)", "error");
-                    return;
-                }
                 // Show preview immediately
                 const reader = new FileReader();
                 reader.onload = (e) => {
