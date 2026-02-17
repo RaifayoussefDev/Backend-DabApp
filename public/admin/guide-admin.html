@@ -1443,8 +1443,7 @@
                                     Drag image here or
                                     <span>browse</span>
                                 </p>
-                                <p style="font-size: 11px; margin-top: 4px">
-                                    PNG, JPG — Max 5MB
+                                    PNG, JPG
                                 </p>
                             </div>
                             <img
@@ -2047,9 +2046,9 @@
 
             async function uploadImage(file) {
                 const formData = new FormData();
-                formData.append("image", file);
+                formData.append("images[]", file);
                 const res = await fetch(
-                    getBase() + "/api/upload-image-public",
+                    getBase() + "/api/upload-image-no-watermark",
                     {
                         method: "POST",
                         headers: { Authorization: `Bearer ${getToken()}` },
@@ -2058,6 +2057,10 @@
                 );
                 const json = await res.json();
                 if (!res.ok) throw { status: res.status, data: json };
+                // Adapt response format (paths vs url)
+                if (json.paths && json.paths.length > 0) {
+                    return { url: json.paths[0] };
+                }
                 return json;
             }
 
