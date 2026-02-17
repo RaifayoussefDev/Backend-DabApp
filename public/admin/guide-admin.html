@@ -2465,7 +2465,7 @@
                 toast("Uploading...", "info");
 
                 try {
-                    const token = localStorage.getItem("token");
+                    const token = getToken();
                     const response = await fetch(`${getBase()}${endpoint}`, {
                         method: "POST",
                         headers: {
