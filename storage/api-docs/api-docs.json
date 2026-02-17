@@ -13762,6 +13762,76 @@
                 }
             }
         },
+        "/api/upload-video-no-watermark": {
+            "post": {
+                "tags": [
+                    "Video Upload"
+                ],
+                "summary": "Upload multiple videos without watermark",
+                "description": "Allows users to upload multiple videos to the server without processing or watermark.",
+                "operationId": "uploadVideosNoWatermark",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "videos[]"
+                                ],
+                                "properties": {
+                                    "videos[]": {
+                                        "description": "Multiple video files to upload (mp4, mov, ogg, qt, max 100MB)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Videos uploaded successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Videos uploaded successfully"
+                                        },
+                                        "paths": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string",
+                                                "example": "http://yourdomain.com/storage/videos/video1.mp4"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "413": {
+                        "description": "Payload Too Large"
+                    },
+                    "422": {
+                        "description": "Validation Error"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/api/upload-icon": {
             "post": {
                 "tags": [
@@ -39068,6 +39138,10 @@
         {
             "name": "Image Upload",
             "description": "Image Upload"
+        },
+        {
+            "name": "Video Upload",
+            "description": "Video Upload"
         },
         {
             "name": "Listings",

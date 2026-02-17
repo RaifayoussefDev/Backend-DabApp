@@ -550,7 +550,11 @@ class GuideAdminController extends Controller
      *                         @OA\Property(property="title_ar", type="string", example="تغيير الزيت"),
      *                         @OA\Property(property="description", type="string", example="<p>Step 1: Warm up the engine...</p>"),
      *                         @OA\Property(property="description_ar", type="string", example="<p>الخطوة 1: قم بتسخين المحرك...</p>"),
-     *                         @OA\Property(property="order_position", type="integer", example=1)
+     *                         @OA\Property(property="order_position", type="integer", example=1),
+     *                         @OA\Property(property="type", type="string", example="text_image"),
+     *                         @OA\Property(property="image_url", type="string", example="https://example.com/image.jpg"),
+     *                         @OA\Property(property="video_url", type="string", example="https://youtube.com/..."),
+     *                         @OA\Property(property="image_position", type="string", example="left")
      *                     )
      *                 ),
      *                 @OA\Property(
@@ -1687,6 +1691,10 @@ class GuideAdminController extends Controller
                 'description' => $section->description,
                 'description_ar' => $section->description_ar,
                 'order_position' => $section->order_position,
+                'type' => $section->type,
+                'image_url' => $section->image_url,
+                'video_url' => $section->video_url, // In case it's separate
+                'image_position' => $section->image_position,
             ];
         });
         $data['images'] = $guide->images->map(function ($image) {

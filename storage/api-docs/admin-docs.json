@@ -5822,6 +5822,22 @@
                                                             "order_position": {
                                                                 "type": "integer",
                                                                 "example": 1
+                                                            },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "example": "text_image"
+                                                            },
+                                                            "image_url": {
+                                                                "type": "string",
+                                                                "example": "https://example.com/image.jpg"
+                                                            },
+                                                            "video_url": {
+                                                                "type": "string",
+                                                                "example": "https://youtube.com/..."
+                                                            },
+                                                            "image_position": {
+                                                                "type": "string",
+                                                                "example": "left"
                                                             }
                                                         },
                                                         "type": "object"
