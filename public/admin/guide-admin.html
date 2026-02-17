@@ -1989,19 +1989,23 @@
 
             // ─── API ───
             function getBase() {
-                if (localStorage.getItem("api_url"))
-                    return localStorage.getItem("api_url");
-                const val = document
-                    .getElementById("api-base-url")
-                    .value.replace(/\/$/, "");
-                if (val) return val;
-                if (
-                    window.location.hostname !== "localhost" &&
-                    window.location.hostname !== "127.0.0.1"
-                ) {
-                    return window.location.origin;
+                let url;
+                if (localStorage.getItem("api_url")) {
+                    url = localStorage.getItem("api_url");
+                } else {
+                    url = document.getElementById("api-base-url").value;
+                    if (!url) {
+                        if (
+                            window.location.hostname !== "localhost" &&
+                            window.location.hostname !== "127.0.0.1"
+                        ) {
+                            url = window.location.origin;
+                        } else {
+                            url = "http://localhost:8000";
+                        }
+                    }
                 }
-                return "http://localhost:8000";
+                return url.replace(/\/$/, "");
             }
 
             function getToken() {
