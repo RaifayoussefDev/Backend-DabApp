@@ -1,0 +1,2817 @@
+<!doctype html>
+<html lang="fr" dir="ltr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>DabApp — Guide Manager</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --bg: #0d0f14;
+                --surface: #13161e;
+                --surface2: #1a1e28;
+                --surface3: #222736;
+                --border: #2a3045;
+                --border2: #343c55;
+                --accent: #f97316;
+                --accent2: #fb923c;
+                --accent-glow: rgba(249, 115, 22, 0.15);
+                --text: #e8eaf0;
+                --text2: #9ba3bc;
+                --text3: #5c6480;
+                --green: #22d3a5;
+                --red: #f25c78;
+                --yellow: #f5c842;
+                --blue: #60a5fa;
+                --purple: #a78bfa;
+                --radius: 12px;
+                --radius-sm: 8px;
+                --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+                --shadow-lg: 0 8px 48px rgba(0, 0, 0, 0.6);
+            }
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                background: var(--bg);
+                color: var(--text);
+                font-family: "DM Sans", sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+                min-height: 100vh;
+                overflow-x: hidden;
+            }
+            h1,
+            h2,
+            h3,
+            h4,
+            h5 {
+                font-family: "Syne", sans-serif;
+            }
+
+            /* ─── TOAST ─── */
+            #toast-container {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .toast {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-left: 3px solid var(--accent);
+                padding: 14px 18px;
+                border-radius: var(--radius-sm);
+                color: var(--text);
+                font-size: 13px;
+                min-width: 260px;
+                box-shadow: var(--shadow);
+                animation: slideIn 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .toast.success {
+                border-left-color: var(--green);
+            }
+            .toast.error {
+                border-left-color: var(--red);
+            }
+            @keyframes slideIn {
+                from {
+                    transform: translateX(40px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            /* ─── LAYOUT ─── */
+            .app {
+                display: flex;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            /* ─── SIDEBAR ─── */
+            .sidebar {
+                width: 240px;
+                background: var(--surface);
+                border-right: 1px solid var(--border);
+                display: flex;
+                flex-direction: column;
+                padding: 0;
+                flex-shrink: 0;
+                overflow-y: auto;
+            }
+            .sidebar-logo {
+                padding: 24px 20px 20px;
+                border-bottom: 1px solid var(--border);
+            }
+            .sidebar-logo h2 {
+                font-size: 20px;
+                font-weight: 800;
+                letter-spacing: -0.5px;
+                color: var(--text);
+            }
+            .sidebar-logo h2 span {
+                color: var(--accent);
+            }
+            .sidebar-logo p {
+                font-size: 11px;
+                color: var(--text3);
+                margin-top: 2px;
+                letter-spacing: 0.5px;
+                text-transform: uppercase;
+            }
+            .nav-section {
+                padding: 16px 12px 8px;
+            }
+            .nav-label {
+                font-size: 10px;
+                color: var(--text3);
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                font-weight: 600;
+                padding: 0 8px 8px;
+            }
+            .nav-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px 12px;
+                border-radius: var(--radius-sm);
+                cursor: pointer;
+                transition: all 0.15s;
+                color: var(--text2);
+                font-size: 13.5px;
+                font-weight: 500;
+                margin-bottom: 2px;
+                border: 1px solid transparent;
+            }
+            .nav-item:hover {
+                background: var(--surface2);
+                color: var(--text);
+            }
+            .nav-item.active {
+                background: var(--accent-glow);
+                color: var(--accent);
+                border-color: rgba(249, 115, 22, 0.2);
+            }
+            .nav-item .icon {
+                width: 18px;
+                height: 18px;
+                flex-shrink: 0;
+                opacity: 0.9;
+            }
+            .nav-badge {
+                margin-left: auto;
+                background: var(--accent);
+                color: white;
+                font-size: 10px;
+                font-weight: 700;
+                padding: 2px 7px;
+                border-radius: 20px;
+            }
+
+            /* ─── API CONFIG ─── */
+            .api-config {
+                margin-top: auto;
+                padding: 16px;
+                border-top: 1px solid var(--border);
+            }
+            .api-config label {
+                font-size: 11px;
+                color: var(--text3);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                display: block;
+                margin-bottom: 6px;
+            }
+            .api-config input {
+                width: 100%;
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                color: var(--text);
+                padding: 8px 10px;
+                border-radius: var(--radius-sm);
+                font-size: 12px;
+                font-family: monospace;
+            }
+            .api-config input:focus {
+                outline: none;
+                border-color: var(--accent);
+            }
+
+            /* ─── MAIN ─── */
+            .main {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            /* ─── TOPBAR ─── */
+            .topbar {
+                padding: 16px 28px;
+                background: var(--surface);
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                flex-shrink: 0;
+            }
+            .topbar h1 {
+                font-size: 18px;
+                font-weight: 700;
+            }
+            .topbar-sub {
+                font-size: 12px;
+                color: var(--text3);
+                margin-top: 1px;
+            }
+            .topbar-actions {
+                margin-left: auto;
+                display: flex;
+                gap: 10px;
+            }
+
+            /* ─── BUTTONS ─── */
+            .btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                padding: 9px 18px;
+                border-radius: var(--radius-sm);
+                font-family: "Syne", sans-serif;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                border: none;
+                transition: all 0.15s;
+                letter-spacing: 0.2px;
+            }
+            .btn-primary {
+                background: var(--accent);
+                color: white;
+                box-shadow: 0 2px 12px rgba(249, 115, 22, 0.3);
+            }
+            .btn-primary:hover {
+                background: var(--accent2);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 16px rgba(249, 115, 22, 0.4);
+            }
+            .btn-ghost {
+                background: transparent;
+                color: var(--text2);
+                border: 1px solid var(--border);
+            }
+            .btn-ghost:hover {
+                background: var(--surface2);
+                color: var(--text);
+                border-color: var(--border2);
+            }
+            .btn-danger {
+                background: rgba(242, 92, 120, 0.15);
+                color: var(--red);
+                border: 1px solid rgba(242, 92, 120, 0.3);
+            }
+            .btn-danger:hover {
+                background: rgba(242, 92, 120, 0.25);
+            }
+            .btn-success {
+                background: rgba(34, 211, 165, 0.15);
+                color: var(--green);
+                border: 1px solid rgba(34, 211, 165, 0.3);
+            }
+            .btn-success:hover {
+                background: rgba(34, 211, 165, 0.25);
+            }
+            .btn-sm {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            .btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                transform: none !important;
+            }
+
+            /* ─── CONTENT AREA ─── */
+            .content {
+                flex: 1;
+                overflow-y: auto;
+                padding: 24px 28px;
+            }
+
+            /* ─── PANELS ─── */
+            .panel {
+                display: none;
+            }
+            .panel.active {
+                display: block;
+            }
+
+            /* ─── STATS GRID ─── */
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 16px;
+                margin-bottom: 24px;
+            }
+            .stat-card {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 20px;
+                position: relative;
+                overflow: hidden;
+            }
+            .stat-card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+            }
+            .stat-card.orange::before {
+                background: var(--accent);
+            }
+            .stat-card.green::before {
+                background: var(--green);
+            }
+            .stat-card.blue::before {
+                background: var(--blue);
+            }
+            .stat-card.purple::before {
+                background: var(--purple);
+            }
+            .stat-label {
+                font-size: 11px;
+                color: var(--text3);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 10px;
+            }
+            .stat-value {
+                font-family: "Syne", sans-serif;
+                font-size: 28px;
+                font-weight: 800;
+            }
+            .stat-sub {
+                font-size: 11px;
+                color: var(--text3);
+                margin-top: 4px;
+            }
+
+            /* ─── FILTERS ─── */
+            .filters {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 16px 20px;
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+            .search-wrap {
+                position: relative;
+                flex: 1;
+                min-width: 200px;
+            }
+            .search-wrap svg {
+                position: absolute;
+                left: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: var(--text3);
+                width: 15px;
+                height: 15px;
+            }
+            .search-wrap input {
+                padding-left: 34px;
+            }
+            input,
+            select,
+            textarea {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                color: var(--text);
+                padding: 9px 12px;
+                border-radius: var(--radius-sm);
+                font-size: 13px;
+                font-family: "DM Sans", sans-serif;
+                width: 100%;
+                transition: border-color 0.15s;
+            }
+            input:focus,
+            select:focus,
+            textarea:focus {
+                outline: none;
+                border-color: var(--accent);
+                box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+            }
+            select option {
+                background: var(--surface2);
+            }
+            textarea {
+                resize: vertical;
+            }
+
+            /* ─── TABLE ─── */
+            .table-wrap {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                overflow: hidden;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            thead th {
+                padding: 12px 16px;
+                background: var(--surface2);
+                font-family: "Syne", sans-serif;
+                font-size: 11px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: var(--text3);
+                text-align: left;
+                border-bottom: 1px solid var(--border);
+                white-space: nowrap;
+            }
+            thead th:first-child {
+                padding-left: 20px;
+            }
+            tbody tr {
+                border-bottom: 1px solid var(--border);
+                transition: background 0.1s;
+            }
+            tbody tr:last-child {
+                border-bottom: none;
+            }
+            tbody tr:hover {
+                background: rgba(255, 255, 255, 0.02);
+            }
+            tbody td {
+                padding: 14px 16px;
+                vertical-align: middle;
+            }
+            tbody td:first-child {
+                padding-left: 20px;
+            }
+
+            .guide-thumb {
+                width: 52px;
+                height: 36px;
+                border-radius: 6px;
+                object-fit: cover;
+                background: var(--surface3);
+                flex-shrink: 0;
+            }
+            .guide-title-cell {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            .guide-info h4 {
+                font-size: 13.5px;
+                font-weight: 500;
+                color: var(--text);
+                line-height: 1.3;
+            }
+            .guide-info p {
+                font-size: 11px;
+                color: var(--text3);
+                margin-top: 2px;
+            }
+            .guide-info .guide-slug {
+                font-family: monospace;
+                font-size: 10px;
+                color: var(--text3);
+            }
+
+            .badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                padding: 3px 10px;
+                border-radius: 20px;
+                font-size: 11px;
+                font-weight: 600;
+                letter-spacing: 0.3px;
+            }
+            .badge-published {
+                background: rgba(34, 211, 165, 0.12);
+                color: var(--green);
+            }
+            .badge-draft {
+                background: rgba(245, 200, 66, 0.12);
+                color: var(--yellow);
+            }
+            .badge-archived {
+                background: rgba(91, 100, 130, 0.2);
+                color: var(--text3);
+            }
+            .badge-dot {
+                width: 5px;
+                height: 5px;
+                border-radius: 50%;
+                background: currentColor;
+            }
+
+            .actions-cell {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .icon-btn {
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                border: 1px solid var(--border);
+                background: transparent;
+                color: var(--text2);
+                transition: all 0.15s;
+            }
+            .icon-btn:hover {
+                background: var(--surface2);
+                color: var(--text);
+                border-color: var(--border2);
+            }
+            .icon-btn.danger:hover {
+                background: rgba(242, 92, 120, 0.1);
+                color: var(--red);
+                border-color: rgba(242, 92, 120, 0.3);
+            }
+            .icon-btn svg {
+                width: 14px;
+                height: 14px;
+            }
+
+            .meta-stat {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                color: var(--text3);
+                font-size: 12px;
+            }
+            .meta-stat svg {
+                width: 12px;
+                height: 12px;
+            }
+
+            /* ─── PAGINATION ─── */
+            .pagination {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 14px 20px;
+                border-top: 1px solid var(--border);
+                font-size: 13px;
+                color: var(--text3);
+            }
+            .pagination-btns {
+                display: flex;
+                gap: 6px;
+            }
+            .page-btn {
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                border: 1px solid var(--border);
+                background: var(--surface2);
+                color: var(--text2);
+                font-size: 13px;
+                transition: all 0.15s;
+            }
+            .page-btn:hover {
+                border-color: var(--accent);
+                color: var(--accent);
+            }
+            .page-btn.active {
+                background: var(--accent);
+                border-color: var(--accent);
+                color: white;
+            }
+
+            /* ─── MODAL ─── */
+            .modal-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 1000;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                backdrop-filter: blur(4px);
+            }
+            .modal-overlay.open {
+                display: flex;
+            }
+            .modal {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 16px;
+                width: 100%;
+                max-width: 820px;
+                max-height: 90vh;
+                display: flex;
+                flex-direction: column;
+                box-shadow: var(--shadow-lg);
+                animation: modalIn 0.2s ease;
+            }
+            @keyframes modalIn {
+                from {
+                    transform: scale(0.97) translateY(10px);
+                    opacity: 0;
+                }
+                to {
+                    transform: scale(1) translateY(0);
+                    opacity: 1;
+                }
+            }
+            .modal-header {
+                padding: 22px 26px 18px;
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-shrink: 0;
+            }
+            .modal-header h2 {
+                font-size: 18px;
+                font-weight: 700;
+            }
+            .modal-header p {
+                font-size: 12px;
+                color: var(--text3);
+                margin-top: 2px;
+            }
+            .modal-close {
+                width: 34px;
+                height: 34px;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                border: 1px solid var(--border);
+                background: transparent;
+                color: var(--text3);
+                transition: all 0.15s;
+            }
+            .modal-close:hover {
+                background: var(--surface2);
+                color: var(--text);
+            }
+            .modal-body {
+                padding: 24px 26px;
+                overflow-y: auto;
+                flex: 1;
+            }
+            .modal-footer {
+                padding: 16px 26px;
+                border-top: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                gap: 10px;
+                flex-shrink: 0;
+                background: var(--surface);
+            }
+
+            /* ─── FORM ─── */
+            .form-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 18px;
+            }
+            .form-grid.full {
+                grid-template-columns: 1fr;
+            }
+            .form-group {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+            .form-group label {
+                font-size: 12px;
+                color: var(--text2);
+                font-weight: 500;
+                letter-spacing: 0.3px;
+            }
+            .form-group label .req {
+                color: var(--red);
+                margin-left: 2px;
+            }
+
+            .form-section {
+                border-top: 1px solid var(--border);
+                padding-top: 20px;
+                margin-top: 20px;
+            }
+            .form-section-title {
+                font-family: "Syne", sans-serif;
+                font-size: 13px;
+                font-weight: 700;
+                color: var(--text3);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 16px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .form-section-title::after {
+                content: "";
+                flex: 1;
+                height: 1px;
+                background: var(--border);
+            }
+
+            /* ─── IMAGE UPLOAD ─── */
+            .image-upload-zone {
+                border: 2px dashed var(--border2);
+                border-radius: var(--radius);
+                padding: 28px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.2s;
+                position: relative;
+            }
+            .image-upload-zone:hover {
+                border-color: var(--accent);
+                background: var(--accent-glow);
+            }
+            .image-upload-zone.dragover {
+                border-color: var(--accent);
+                background: var(--accent-glow);
+            }
+            .image-upload-zone input[type="file"] {
+                position: absolute;
+                inset: 0;
+                opacity: 0;
+                cursor: pointer;
+            }
+            .image-upload-zone .upload-icon {
+                width: 40px;
+                height: 40px;
+                margin: 0 auto 12px;
+                color: var(--text3);
+            }
+            .image-upload-zone p {
+                font-size: 13px;
+                color: var(--text3);
+            }
+            .image-upload-zone span {
+                color: var(--accent);
+                font-weight: 600;
+            }
+            .image-preview {
+                width: 100%;
+                height: 160px;
+                object-fit: cover;
+                border-radius: var(--radius-sm);
+                border: 1px solid var(--border);
+                display: none;
+            }
+            .image-preview.show {
+                display: block;
+            }
+            .remove-image {
+                display: none;
+                position: absolute;
+                top: 8px;
+                right: 8px;
+            }
+            .image-preview.show + .remove-image {
+                display: flex;
+            }
+
+            /* ─── SECTIONS ─── */
+            .section-item {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 16px;
+                margin-bottom: 12px;
+                position: relative;
+            }
+            .section-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 14px;
+            }
+            .section-num {
+                width: 26px;
+                height: 26px;
+                border-radius: 6px;
+                background: var(--accent-glow);
+                color: var(--accent);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: "Syne", sans-serif;
+                font-size: 12px;
+                font-weight: 700;
+                flex-shrink: 0;
+            }
+            .section-header-title {
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--text2);
+                flex: 1;
+            }
+            .remove-section {
+                background: transparent;
+                border: 1px solid transparent;
+                color: var(--text3);
+                cursor: pointer;
+                padding: 5px;
+                border-radius: 6px;
+                display: flex;
+                align-items: center;
+                transition: all 0.15s;
+            }
+            .remove-section:hover {
+                background: rgba(242, 92, 120, 0.1);
+                color: var(--red);
+                border-color: rgba(242, 92, 120, 0.2);
+            }
+
+            /* ─── TAGS ─── */
+            .tag-select-wrap {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .tag-chip {
+                padding: 5px 12px;
+                border-radius: 20px;
+                border: 1px solid var(--border2);
+                background: var(--surface2);
+                color: var(--text2);
+                font-size: 12px;
+                cursor: pointer;
+                transition: all 0.15s;
+            }
+            .tag-chip:hover {
+                border-color: var(--accent);
+                color: var(--accent);
+            }
+            .tag-chip.selected {
+                background: var(--accent-glow);
+                border-color: var(--accent);
+                color: var(--accent);
+            }
+
+            /* ─── EMPTY ─── */
+            .empty-state {
+                text-align: center;
+                padding: 60px 20px;
+                color: var(--text3);
+            }
+            .empty-state svg {
+                width: 48px;
+                height: 48px;
+                margin: 0 auto 16px;
+                opacity: 0.3;
+            }
+            .empty-state h3 {
+                font-size: 16px;
+                color: var(--text2);
+                margin-bottom: 6px;
+            }
+
+            /* ─── LOADING ─── */
+            .loading {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 60px;
+            }
+            .spinner {
+                width: 32px;
+                height: 32px;
+                border: 3px solid var(--border);
+                border-top-color: var(--accent);
+                border-radius: 50%;
+                animation: spin 0.7s linear infinite;
+            }
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            /* ─── PREVIEW VIEW ─── */
+            .preview-header {
+                background: var(--surface2);
+                border-radius: var(--radius);
+                padding: 20px;
+                margin-bottom: 20px;
+                display: flex;
+                gap: 20px;
+            }
+            .preview-img {
+                width: 120px;
+                height: 80px;
+                object-fit: cover;
+                border-radius: 8px;
+                flex-shrink: 0;
+            }
+            .preview-meta {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 16px;
+                margin-top: 8px;
+            }
+            .preview-meta-item {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 12px;
+                color: var(--text3);
+            }
+
+            /* ─── CONFIRM ─── */
+            .confirm-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 2000;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(4px);
+            }
+            .confirm-overlay.open {
+                display: flex;
+            }
+            .confirm-box {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                padding: 28px;
+                max-width: 380px;
+                width: 90%;
+                box-shadow: var(--shadow-lg);
+                text-align: center;
+                animation: modalIn 0.2s ease;
+            }
+            .confirm-icon {
+                width: 52px;
+                height: 52px;
+                border-radius: 50%;
+                background: rgba(242, 92, 120, 0.12);
+                color: var(--red);
+                margin: 0 auto 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .confirm-box h3 {
+                font-size: 16px;
+                margin-bottom: 8px;
+            }
+            .confirm-box p {
+                color: var(--text3);
+                font-size: 13px;
+                margin-bottom: 20px;
+            }
+            .confirm-actions {
+                display: flex;
+                gap: 10px;
+                justify-content: center;
+            }
+
+            /* ─── SCROLLBAR ─── */
+            ::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: var(--border2);
+                border-radius: 3px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background: var(--text3);
+            }
+
+            /* ─── LANG TABS ─── */
+            .lang-tabs {
+                display: flex;
+                gap: 4px;
+                margin-bottom: 16px;
+            }
+            .lang-tab {
+                padding: 7px 16px;
+                border-radius: 8px;
+                font-size: 12px;
+                font-weight: 600;
+                cursor: pointer;
+                border: 1px solid var(--border);
+                background: transparent;
+                color: var(--text3);
+                transition: all 0.15s;
+                font-family: "Syne", sans-serif;
+            }
+            .lang-tab.active {
+                background: var(--accent-glow);
+                border-color: var(--accent);
+                color: var(--accent);
+            }
+
+            /* ─── CHECKBOX ─── */
+            input[type="checkbox"] {
+                width: 16px;
+                height: 16px;
+                cursor: pointer;
+                accent-color: var(--accent);
+            }
+
+            /* ─── HELP TEXT ─── */
+            .help {
+                font-size: 11px;
+                color: var(--text3);
+                margin-top: 4px;
+            }
+
+            /* ─── CHAR COUNT ─── */
+            .char-count {
+                font-size: 11px;
+                color: var(--text3);
+                text-align: right;
+            }
+            /* ─── LOGIN OVERLAY ─── */
+            .login-overlay {
+                position: fixed;
+                inset: 0;
+                background: var(--bg);
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+            }
+            .login-overlay.hidden {
+                display: none;
+            }
+            .login-box {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 16px;
+                padding: 40px;
+                width: 100%;
+                max-width: 400px;
+                box-shadow: var(--shadow-lg);
+                text-align: center;
+            }
+            .login-logo {
+                margin-bottom: 24px;
+            }
+            .login-logo img {
+                height: 48px;
+            }
+            .login-title {
+                font-size: 20px;
+                font-weight: 700;
+                margin-bottom: 8px;
+            }
+            .login-sub {
+                color: var(--text3);
+                font-size: 13px;
+                margin-bottom: 32px;
+            }
+            .login-form .form-group {
+                margin-bottom: 16px;
+                text-align: left;
+            }
+            .login-btn {
+                width: 100%;
+                justify-content: center;
+                margin-top: 8px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="toast-container"></div>
+
+        <!-- LOGIN OVERLAY -->
+        <div class="login-overlay" id="login-overlay">
+            <div class="login-box">
+                <div class="login-logo">
+                    <img src="/LogoDabApp.png" alt="DabApp Logo" />
+                </div>
+                <h2 class="login-title">Admin Login</h2>
+                <p class="login-sub">Access guide management</p>
+                <div class="login-form">
+                    <div class="form-group">
+                        <label>Email or Phone</label>
+                        <input
+                            type="text"
+                            id="login-user"
+                            placeholder="admin@dabapp.com"
+                            onkeyup="
+                                if (event.key === 'Enter')
+                                    document
+                                        .getElementById('login-pass')
+                                        .focus();
+                            "
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input
+                            type="password"
+                            id="login-pass"
+                            placeholder="••••••••"
+                            onkeyup="if (event.key === 'Enter') login();"
+                        />
+                    </div>
+                    <button
+                        class="btn btn-primary login-btn"
+                        onclick="login()"
+                        id="btn-login"
+                    >
+                        Login
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONFIRM DIALOG -->
+        <div class="confirm-overlay" id="confirm-overlay">
+            <div class="confirm-box">
+                <div class="confirm-icon">
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        width="24"
+                        height="24"
+                    >
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14H6L5 6" />
+                        <path d="M10 11v6" />
+                        <path d="M14 11v6" />
+                        <path d="M9 6V4h6v2" />
+                    </svg>
+                </div>
+                <h3 id="confirm-title">Confirm Deletion</h3>
+                <p id="confirm-msg">
+                    This action is irreversible. Are you sure?
+                </p>
+                <div class="confirm-actions">
+                    <button class="btn btn-ghost" onclick="closeConfirm()">
+                        Cancel
+                    </button>
+                    <button
+                        class="btn btn-danger"
+                        id="confirm-ok-btn"
+                        onclick="confirmAction()"
+                    >
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GUIDE MODAL -->
+        <div class="modal-overlay" id="guide-modal">
+            <div class="modal">
+                <div class="modal-header">
+                    <div>
+                        <h2 id="modal-title">New Guide</h2>
+                        <p id="modal-subtitle">Fill in guide information</p>
+                    </div>
+                    <button class="modal-close" onclick="closeModal()">
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            width="16"
+                            height="16"
+                        >
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- LANG TABS -->
+                    <div class="lang-tabs">
+                        <button
+                            class="lang-tab active"
+                            onclick="switchLang('fr', this)"
+                        >
+                            🇺🇸 English
+                        </button>
+                        <button
+                            class="lang-tab"
+                            onclick="switchLang('ar', this)"
+                        >
+                            🇸🇦 العربية
+                        </button>
+                    </div>
+
+                    <!-- ENGLISH CONTENT -->
+                    <div id="lang-fr">
+                        <div class="form-grid">
+                            <div class="form-group" style="grid-column: 1/-1">
+                                <label>Title <span class="req">*</span></label>
+                                <input
+                                    type="text"
+                                    id="f-title"
+                                    placeholder="Guide title..."
+                                    maxlength="255"
+                                />
+                            </div>
+                            <div class="form-group" style="grid-column: 1/-1">
+                                <label>Excerpt</label>
+                                <textarea
+                                    id="f-excerpt"
+                                    rows="2"
+                                    placeholder="Short summary displayed in lists..."
+                                ></textarea>
+                            </div>
+                            <div class="form-group" style="grid-column: 1/-1">
+                                <label>Main Content</label>
+                                <textarea
+                                    id="f-content"
+                                    rows="5"
+                                    placeholder="Main content (HTML supported)..."
+                                ></textarea>
+                            </div>
+                        </div>
+                        <!-- SEO EN -->
+                        <div class="form-section">
+                            <div class="form-section-title">SEO — English</div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Meta Title</label>
+                                    <input
+                                        type="text"
+                                        id="f-meta-title"
+                                        placeholder="SEO Title..."
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label>Meta Keywords</label>
+                                    <input
+                                        type="text"
+                                        id="f-meta-keywords"
+                                        placeholder="keywords, separated, by, comma"
+                                    />
+                                </div>
+                                <div
+                                    class="form-group"
+                                    style="grid-column: 1/-1"
+                                >
+                                    <label>Meta Description</label>
+                                    <textarea
+                                        id="f-meta-desc"
+                                        rows="2"
+                                        placeholder="SEO Description..."
+                                    ></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ARABIC CONTENT -->
+                    <div id="lang-ar" style="display: none" dir="rtl">
+                        <div class="form-grid">
+                            <div class="form-group" style="grid-column: 1/-1">
+                                <label>العنوان</label>
+                                <input
+                                    type="text"
+                                    id="f-title-ar"
+                                    placeholder="عنوان الدليل بالعربية..."
+                                />
+                            </div>
+                            <div class="form-group" style="grid-column: 1/-1">
+                                <label>الملخص</label>
+                                <textarea
+                                    id="f-excerpt-ar"
+                                    rows="2"
+                                    placeholder="ملخص قصير..."
+                                ></textarea>
+                            </div>
+                            <div class="form-group" style="grid-column: 1/-1">
+                                <label>المحتوى الرئيسي</label>
+                                <textarea
+                                    id="f-content-ar"
+                                    rows="5"
+                                    placeholder="المحتوى الرئيسي للدليل..."
+                                ></textarea>
+                            </div>
+                        </div>
+                        <div class="form-section">
+                            <div class="form-section-title">SEO — عربي</div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>عنوان SEO</label>
+                                    <input
+                                        type="text"
+                                        id="f-meta-title-ar"
+                                        placeholder="عنوان SEO..."
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label>الكلمات المفتاحية</label>
+                                    <input
+                                        type="text"
+                                        id="f-meta-keywords-ar"
+                                        placeholder="كلمات, مفتاحية"
+                                    />
+                                </div>
+                                <div
+                                    class="form-group"
+                                    style="grid-column: 1/-1"
+                                >
+                                    <label>وصف SEO</label>
+                                    <textarea
+                                        id="f-meta-desc-ar"
+                                        rows="2"
+                                        placeholder="وصف SEO..."
+                                    ></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SHARED SETTINGS -->
+                    <div class="form-section">
+                        <div class="form-section-title">Settings</div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label
+                                    >Category <span class="req">*</span></label
+                                >
+                                <select id="f-category">
+                                    <option value="">-- Select --</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Status <span class="req">*</span></label>
+                                <select id="f-status">
+                                    <option value="draft">📝 Draft</option>
+                                    <option value="published">
+                                        ✅ Published
+                                    </option>
+                                    <option value="archived">
+                                        📦 Archived
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label
+                                    >Author ID <span class="req">*</span></label
+                                >
+                                <input
+                                    type="number"
+                                    id="f-author-id"
+                                    placeholder="Author ID..."
+                                    min="1"
+                                />
+                                <span class="help"
+                                    >Enter the user ID of the author</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- IMAGE PRINCIPALE -->
+                    <div class="form-section">
+                        <div class="form-section-title">Featured Image</div>
+                        <div style="position: relative">
+                            <div
+                                class="image-upload-zone"
+                                id="upload-zone"
+                                ondragover="handleDragOver(event)"
+                                ondragleave="handleDragLeave(event)"
+                                ondrop="handleDrop(event)"
+                            >
+                                <input
+                                    type="file"
+                                    id="f-image-file"
+                                    accept="image/*"
+                                    onchange="handleImageFile(event)"
+                                />
+                                <svg
+                                    class="upload-icon"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.5"
+                                >
+                                    <rect
+                                        x="3"
+                                        y="3"
+                                        width="18"
+                                        height="18"
+                                        rx="3"
+                                    />
+                                    <circle cx="8.5" cy="8.5" r="1.5" />
+                                    <polyline points="21 15 16 10 5 21" />
+                                </svg>
+                                <p>
+                                    Drag image here or
+                                    <span>browse</span>
+                                </p>
+                                <p style="font-size: 11px; margin-top: 4px">
+                                    PNG, JPG — Max 5MB
+                                </p>
+                            </div>
+                            <img
+                                id="f-image-preview"
+                                class="image-preview"
+                                src=""
+                                alt=""
+                            />
+                            <button
+                                class="btn btn-sm btn-danger remove-image"
+                                onclick="removeImage()"
+                                style="position: absolute; top: 8px; right: 8px"
+                            >
+                                ✕ Remove
+                            </button>
+                        </div>
+                        <input type="hidden" id="f-featured-image" />
+                    </div>
+
+                    <!-- TAGS -->
+                    <div class="form-section">
+                        <div class="form-section-title">Tags</div>
+                        <div id="tag-container" class="tag-select-wrap">
+                            <span style="color: var(--text3); font-size: 12px"
+                                >Loading tags...</span
+                            >
+                        </div>
+                        <input type="hidden" id="f-selected-tags" value="[]" />
+                    </div>
+
+                    <!-- SECTIONS -->
+                    <div class="form-section">
+                        <div
+                            class="form-section-title"
+                            style="margin-bottom: 12px"
+                        >
+                            Content Sections
+                        </div>
+                        <div id="sections-container"></div>
+                        <button
+                            class="btn btn-ghost btn-sm"
+                            onclick="addSection()"
+                            style="margin-top: 4px"
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                width="14"
+                                height="14"
+                            >
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            Add Section
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-ghost" onclick="closeModal()">
+                        Cancel
+                    </button>
+                    <button
+                        class="btn btn-primary"
+                        id="save-btn"
+                        onclick="saveGuide()"
+                    >
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            width="14"
+                            height="14"
+                        >
+                            <path
+                                d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"
+                            />
+                            <polyline points="17 21 17 13 7 13 7 21" />
+                            <polyline points="7 3 7 8 15 8" />
+                        </svg>
+                        Save Guide
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN APP -->
+        <div class="app">
+            <!-- SIDEBAR -->
+            <aside class="sidebar">
+                <div class="sidebar-logo">
+                    <img
+                        src="/LogoDabApp.png"
+                        alt="Logo"
+                        style="
+                            height: 32px;
+                            display: block;
+                            margin-bottom: 10px;
+                        "
+                    />
+                </div>
+                <div class="nav-section">
+                    <div class="nav-label">Navigation</div>
+                    <div class="nav-item active" onclick="showPanel('list')">
+                        <svg
+                            class="icon"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <rect x="3" y="3" width="7" height="7" />
+                            <rect x="14" y="3" width="7" height="7" />
+                            <rect x="14" y="14" width="7" height="7" />
+                            <rect x="3" y="14" width="7" height="7" />
+                        </svg>
+                        All Guides
+                        <span class="nav-badge" id="total-badge">—</span>
+                    </div>
+                    <div class="nav-item" onclick="showPanel('stats')">
+                        <svg
+                            class="icon"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <line x1="18" y1="20" x2="18" y2="10" />
+                            <line x1="12" y1="20" x2="12" y2="4" />
+                            <line x1="6" y1="20" x2="6" y2="14" />
+                        </svg>
+                        Statistics
+                    </div>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-label">Quick Filters</div>
+                    <div class="nav-item" onclick="filterByStatus('published')">
+                        <span
+                            style="
+                                width: 8px;
+                                height: 8px;
+                                border-radius: 50%;
+                                background: var(--green);
+                                flex-shrink: 0;
+                            "
+                        ></span>
+                        Published
+                    </div>
+                    <div class="nav-item" onclick="filterByStatus('draft')">
+                        <span
+                            style="
+                                width: 8px;
+                                height: 8px;
+                                border-radius: 50%;
+                                background: var(--yellow);
+                                flex-shrink: 0;
+                            "
+                        ></span>
+                        Drafts
+                    </div>
+                    <div class="nav-item" onclick="filterByStatus('archived')">
+                        <span
+                            style="
+                                width: 8px;
+                                height: 8px;
+                                border-radius: 50%;
+                                background: var(--text3);
+                                flex-shrink: 0;
+                            "
+                        ></span>
+                        Archived
+                    </div>
+                </div>
+                <div class="api-config">
+                    <label>API Base URL</label>
+                    <input
+                        type="text"
+                        id="api-base-url"
+                        value="http://localhost:8000"
+                        placeholder="http://localhost:8000"
+                    />
+                    <div style="margin-top: 8px">
+                        <label>Bearer Token</label>
+                        <input
+                            type="password"
+                            id="api-token"
+                            placeholder="eyJhbGciOiJ..."
+                        />
+                    </div>
+                </div>
+                <div style="padding: 16px; border-top: 1px solid var(--border)">
+                    <button
+                        class="btn btn-ghost btn-sm"
+                        onclick="logout()"
+                        style="
+                            width: 100%;
+                            justify-content: center;
+                            color: var(--text3);
+                        "
+                    >
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            width="14"
+                            height="14"
+                        >
+                            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                        </svg>
+                        Logout
+                    </button>
+                    <div
+                        style="
+                            font-size: 10px;
+                            text-align: center;
+                            color: var(--text3);
+                            margin-top: 8px;
+                            font-family: monospace;
+                        "
+                    >
+                        v1.0.2
+                    </div>
+                </div>
+            </aside>
+
+            <!-- MAIN -->
+            <main class="main">
+                <div class="topbar">
+                    <div>
+                        <h1 id="page-title">Guide Manager</h1>
+                        <p class="topbar-sub" id="page-sub">
+                            Complete list of DabApp guides
+                        </p>
+                    </div>
+                    <div class="topbar-actions">
+                        <button class="btn btn-ghost" onclick="loadGuides()">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                width="14"
+                                height="14"
+                            >
+                                <path d="M23 4v6h-6" />
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                            </svg>
+                            Refresh
+                        </button>
+                        <button
+                            class="btn btn-primary"
+                            onclick="openCreateModal()"
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                width="14"
+                                height="14"
+                            >
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            New Guide
+                        </button>
+                    </div>
+                </div>
+
+                <div class="content">
+                    <!-- LIST PANEL -->
+                    <div class="panel active" id="panel-list">
+                        <div class="filters">
+                            <div class="search-wrap">
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <circle cx="11" cy="11" r="8" />
+                                    <line
+                                        x1="21"
+                                        y1="21"
+                                        x2="16.65"
+                                        y2="16.65"
+                                    />
+                                </svg>
+                                <input
+                                    type="text"
+                                    id="search-input"
+                                    placeholder="Search for a guide..."
+                                    onkeyup="debounceSearch()"
+                                />
+                            </div>
+                            <select
+                                id="filter-status"
+                                onchange="loadGuides()"
+                                style="width: 150px"
+                            >
+                                <option value="">All Statuses</option>
+                                <option value="published">Published</option>
+                                <option value="draft">Draft</option>
+                                <option value="archived">Archived</option>
+                            </select>
+                            <select
+                                id="filter-category"
+                                onchange="loadGuides()"
+                                style="width: 160px"
+                            >
+                                <option value="">All Categories</option>
+                            </select>
+                            <select
+                                id="sort-by"
+                                onchange="loadGuides()"
+                                style="width: 150px"
+                            >
+                                <option value="created_at">Date Created</option>
+                                <option value="updated_at">Date Updated</option>
+                                <option value="title">Title</option>
+                                <option value="views_count">Views</option>
+                            </select>
+                        </div>
+
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Guide</th>
+                                        <th>Category</th>
+                                        <th>Status</th>
+                                        <th>Stats</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="guides-table-body">
+                                    <tr>
+                                        <td colspan="6">
+                                            <div class="loading">
+                                                <div class="spinner"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="pagination" id="pagination">
+                                <span id="pagination-info">—</span>
+                                <div
+                                    class="pagination-btns"
+                                    id="pagination-btns"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STATS PANEL -->
+                    <div class="panel" id="panel-stats">
+                        <div class="stats-grid">
+                            <div class="stat-card orange">
+                                <div class="stat-label">Total Guides</div>
+                                <div class="stat-value" id="s-total">—</div>
+                            </div>
+                            <div class="stat-card green">
+                                <div class="stat-label">Published</div>
+                                <div class="stat-value" id="s-published">—</div>
+                            </div>
+                            <div class="stat-card blue">
+                                <div class="stat-label">Total Views</div>
+                                <div class="stat-value" id="s-views">—</div>
+                            </div>
+                            <div class="stat-card purple">
+                                <div class="stat-label">Total Likes</div>
+                                <div class="stat-value" id="s-likes">—</div>
+                            </div>
+                        </div>
+                        <div
+                            style="
+                                display: grid;
+                                grid-template-columns: 1fr 1fr;
+                                gap: 20px;
+                            "
+                        >
+                            <div class="table-wrap">
+                                <div
+                                    style="
+                                        padding: 16px 20px;
+                                        border-bottom: 1px solid var(--border);
+                                    "
+                                >
+                                    <h3
+                                        style="
+                                            font-size: 14px;
+                                            font-weight: 700;
+                                        "
+                                    >
+                                        Top Authors
+                                    </h3>
+                                </div>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Author</th>
+                                            <th>Guides</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="s-top-authors"></tbody>
+                                </table>
+                            </div>
+                            <div class="table-wrap">
+                                <div
+                                    style="
+                                        padding: 16px 20px;
+                                        border-bottom: 1px solid var(--border);
+                                    "
+                                >
+                                    <h3
+                                        style="
+                                            font-size: 14px;
+                                            font-weight: 700;
+                                        "
+                                    >
+                                        Most Viewed Guides
+                                    </h3>
+                                </div>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Guide</th>
+                                            <th>Views</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="s-most-viewed"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <script>
+            // ─── STATE ───
+            let state = {
+                guides: [],
+                currentPage: 1,
+                lastPage: 1,
+                total: 0,
+                editingId: null,
+                confirmCallback: null,
+                categories: [],
+                tags: [],
+                selectedTags: [],
+                sections: [],
+                uploadingImage: false,
+                searchTimer: null,
+            };
+
+            // ─── AUTHENTICATION ───
+            function checkAuth() {
+                const token = localStorage.getItem("auth_token");
+                const overlay = document.getElementById("login-overlay");
+
+                if (token) {
+                    document.getElementById("api-token").value = token;
+                    overlay.classList.add("hidden");
+                    init();
+                } else {
+                    overlay.classList.remove("hidden");
+                }
+            }
+
+            async function login() {
+                const loginInput = document.getElementById("login-user").value;
+                const passInput = document.getElementById("login-pass").value;
+                const btn = document.getElementById("btn-login");
+
+                if (!loginInput || !passInput) {
+                    toast("Please fill in all fields", "error");
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.textContent = "Connecting...";
+
+                try {
+                    const response = await fetch(`${getBase()}/api/login`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            login: loginInput,
+                            password: passInput,
+                        }),
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        localStorage.setItem("auth_token", data.token);
+                        document.getElementById("api-token").value = data.token;
+                        document
+                            .getElementById("login-overlay")
+                            .classList.add("hidden");
+                        toast("Login successful", "success");
+                        init();
+                    } else {
+                        toast(data.message || "Login error", "error");
+                    }
+                } catch (e) {
+                    console.error(e);
+                    toast("Network error during login", "error");
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Login";
+                }
+            }
+
+            function logout() {
+                if (confirm("Logout?")) {
+                    localStorage.removeItem("auth_token");
+                    document.getElementById("api-token").value = "";
+                    document
+                        .getElementById("login-overlay")
+                        .classList.remove("hidden");
+                }
+            }
+
+            // ─── API ───
+            function getBase() {
+                return (
+                    localStorage.getItem("api_url") ||
+                    document
+                        .getElementById("api-base-url")
+                        .value.replace(/\/$/, "") ||
+                    "http://localhost:8000"
+                );
+            }
+
+            function getToken() {
+                return (
+                    localStorage.getItem("auth_token") ||
+                    document.getElementById("api-token").value
+                );
+            }
+
+            async function api(method, endpoint, data = null) {
+                // Update Base URL in localStorage if changed manually
+                localStorage.setItem(
+                    "api_url",
+                    document.getElementById("api-base-url").value,
+                );
+
+                const opts = {
+                    method,
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                        Authorization: `Bearer ${getToken()}`,
+                    },
+                };
+                if (data) opts.body = JSON.stringify(data);
+
+                try {
+                    const res = await fetch(getBase() + endpoint, opts);
+                    const json = await res.json();
+
+                    // Handle Unauthorized
+                    if (res.status === 401) {
+                        localStorage.removeItem("auth_token");
+                        document
+                            .getElementById("login-overlay")
+                            .classList.remove("hidden");
+                        toast("Session expired, please login again", "error");
+                        throw { status: 401, message: "Unauthorized" };
+                    }
+
+                    if (!res.ok) throw { status: res.status, data: json };
+                    return json;
+                } catch (e) {
+                    throw e;
+                }
+            }
+
+            async function uploadImage(file) {
+                const formData = new FormData();
+                formData.append("image", file);
+                const res = await fetch(
+                    getBase() + "/api/upload-image-public",
+                    {
+                        method: "POST",
+                        headers: { Authorization: `Bearer ${getToken()}` },
+                        body: formData,
+                    },
+                );
+                const json = await res.json();
+                if (!res.ok) throw { status: res.status, data: json };
+                return json;
+            }
+
+            // ─── TOAST ───
+            function toast(msg, type = "info") {
+                const el = document.createElement("div");
+                el.className = `toast ${type}`;
+                const icons = {
+                    success: "✅",
+                    error: "❌",
+                    info: "ℹ️",
+                };
+                el.innerHTML = `<span>${icons[type] || "•"}</span><span>${msg}</span>`;
+                document.getElementById("toast-container").appendChild(el);
+                setTimeout(() => el.remove(), 3500);
+            }
+
+            // ─── PANELS ───
+            function showPanel(name) {
+                document
+                    .querySelectorAll(".panel")
+                    .forEach((p) => p.classList.remove("active"));
+                document
+                    .querySelectorAll(".nav-item")
+                    .forEach((n) => n.classList.remove("active"));
+                document
+                    .getElementById(`panel-${name}`)
+                    .classList.add("active");
+
+                if (name === "list") {
+                    event &&
+                        event.currentTarget &&
+                        event.currentTarget.classList.add("active");
+                    document
+                        .querySelectorAll(".nav-item")[0]
+                        .classList.add("active");
+                    document.getElementById("page-title").textContent =
+                        "Guide Manager";
+                    document.getElementById("page-sub").textContent =
+                        "Complete list of DabApp guides";
+                } else if (name === "stats") {
+                    event &&
+                        event.currentTarget &&
+                        event.currentTarget.classList.add("active");
+                    document
+                        .querySelectorAll(".nav-item")[1]
+                        .classList.add("active");
+                    document.getElementById("page-title").textContent =
+                        "Statistics";
+                    document.getElementById("page-sub").textContent =
+                        "Global activity overview";
+                    loadStats();
+                }
+            }
+
+            // ─── GUIDES LIST ───
+            async function loadGuides(page = 1) {
+                state.currentPage = page;
+                const tbody = document.getElementById("guides-table-body");
+                tbody.innerHTML =
+                    '<tr><td colspan="6"><div class="loading"><div class="spinner"></div></div></td></tr>';
+
+                try {
+                    const params = new URLSearchParams();
+                    params.set("page", page);
+                    params.set("per_page", 15);
+                    params.set(
+                        "sort_by",
+                        document.getElementById("sort-by").value,
+                    );
+                    params.set("sort_order", "desc");
+                    const search =
+                        document.getElementById("search-input").value;
+                    if (search) params.set("search", search);
+                    const status =
+                        document.getElementById("filter-status").value;
+                    if (status) params.set("status", status);
+                    const cat =
+                        document.getElementById("filter-category").value;
+                    if (cat) params.set("category_id", cat);
+
+                    const data = await api(
+                        "GET",
+                        `/api/admin/guides?${params}`,
+                    );
+                    state.guides = data.data;
+                    state.total = data.total;
+                    state.lastPage = data.last_page || 1;
+
+                    document.getElementById("total-badge").textContent =
+                        state.total;
+                    renderGuides(state.guides);
+                    renderPagination(page, state.lastPage, state.total);
+                } catch (e) {
+                    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p style="color:var(--red)">${e.data?.message || "Erreur de chargement"}</p><p style="font-size:11px;margin-top:6px;color:var(--text3)">Vérifiez l'URL et le token</p></div></td></tr>`;
+                }
+            }
+
+            function renderGuides(guides) {
+                const tbody = document.getElementById("guides-table-body");
+                if (!guides.length) {
+                    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><h3>No guides found</h3><p>Create your first guide or adjust filters</p></div></td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = guides
+                    .map(
+                        (g) => `
+      <tr>
+        <td>
+          <div class="guide-title-cell">
+            <img class="guide-thumb" src="${g.featured_image || ""}" alt="" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 52 36%22><rect width=%2252%22 height=%2236%22 fill=%22%231a1e28%22/><text x=%2226%22 y=%2222%22 text-anchor=%22middle%22 fill=%22%23343c55%22 font-size=%2214%22>📷</text></svg>'">
+            <div class="guide-info">
+              <h4>${escHtml(g.title)}</h4>
+              ${g.title_ar ? `<p style="font-size:11px;color:var(--text3);direction:rtl">${escHtml(g.title_ar)}</p>` : ""}
+              <span class="guide-slug">/guides/${g.slug}</span>
+            </div>
+          </div>
+        </td>
+        <td>${g.category ? `<span style="color:var(--blue);font-size:12px">${escHtml(g.category.name)}</span>` : '<span style="color:var(--text3);font-size:12px">—</span>'}</td>
+        <td>
+          <span class="badge badge-${g.status}">
+            <span class="badge-dot"></span>
+            ${statusLabel(g.status)}
+          </span>
+        </td>
+        <td>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <div class="meta-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> ${(g.views_count || 0).toLocaleString()}</div>
+            <div class="meta-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg> ${(g.likes_count || 0).toLocaleString()}</div>
+          </div>
+        </td>
+        <td style="font-size:12px;color:var(--text3)">${formatDate(g.created_at)}</td>
+        <td>
+          <div class="actions-cell">
+            <button class="icon-btn" onclick="openEditModal(${g.id})" title="Edit">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <select class="icon-btn" style="width:auto;padding:0 6px;font-size:11px;height:32px;border-radius:8px" onchange="quickStatus(${g.id}, this.value, this)" title="Change Status">
+              <option value="draft" ${g.status === "draft" ? "selected" : ""}>📝</option>
+              <option value="published" ${g.status === "published" ? "selected" : ""}>✅</option>
+              <option value="archived" ${g.status === "archived" ? "selected" : ""}>📦</option>
+            </select>
+            <button class="icon-btn danger" onclick="confirmDelete(${g.id}, '${escHtml(g.title)}')" title="Delete">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `,
+                    )
+                    .join("");
+            }
+
+            function renderPagination(page, last, total) {
+                document.getElementById("pagination-info").textContent =
+                    `${total} guide${total > 1 ? "s" : ""} — Page ${page}/${last}`;
+                const btns = document.getElementById("pagination-btns");
+                if (last <= 1) {
+                    btns.innerHTML = "";
+                    return;
+                }
+                let html = "";
+                if (page > 1)
+                    html += `<div class="page-btn" onclick="loadGuides(${page - 1})">‹</div>`;
+                const start = Math.max(1, page - 2),
+                    end = Math.min(last, page + 2);
+                for (let i = start; i <= end; i++)
+                    html += `<div class="page-btn ${i === page ? "active" : ""}" onclick="loadGuides(${i})">${i}</div>`;
+                if (page < last)
+                    html += `<div class="page-btn" onclick="loadGuides(${page + 1})">›</div>`;
+                btns.innerHTML = html;
+            }
+
+            // ─── QUICK STATUS ───
+            async function quickStatus(id, status, sel) {
+                try {
+                    await api("POST", `/api/admin/guides/${id}/change-status`, {
+                        status,
+                    });
+                    toast(`Status updated: ${statusLabel(status)}`, "success");
+                    loadGuides(state.currentPage);
+                } catch (e) {
+                    toast(e.data?.message || "Erreur", "error");
+                }
+            }
+
+            // ─── FILTER BY STATUS ───
+            function filterByStatus(status) {
+                document.getElementById("filter-status").value = status;
+                showPanel("list");
+                loadGuides(1);
+            }
+
+            // ─── STATS ───
+            async function loadStats() {
+                try {
+                    const data = await api("GET", "/api/admin/guides/stats");
+                    document.getElementById("s-total").textContent = (
+                        data.total_guides || 0
+                    ).toLocaleString();
+                    document.getElementById("s-published").textContent = (
+                        data.published_guides || 0
+                    ).toLocaleString();
+                    document.getElementById("s-views").textContent = (
+                        data.total_views || 0
+                    ).toLocaleString();
+                    document.getElementById("s-likes").textContent = (
+                        data.total_likes || 0
+                    ).toLocaleString();
+
+                    document.getElementById("s-top-authors").innerHTML =
+                        (data.top_authors || [])
+                            .map(
+                                (a) =>
+                                    `<tr><td>${escHtml(a.name)}</td><td><strong style="color:var(--accent)">${a.guides_count}</strong></td></tr>`,
+                            )
+                            .join("") ||
+                        '<tr><td colspan="2" style="color:var(--text3);text-align:center;padding:20px">—</td></tr>';
+
+                    document.getElementById("s-most-viewed").innerHTML =
+                        (data.most_viewed_guides || [])
+                            .map(
+                                (g) =>
+                                    `<tr><td style="font-size:12px">${escHtml(g.title)}</td><td><strong style="color:var(--blue)">${(g.views_count || 0).toLocaleString()}</strong></td></tr>`,
+                            )
+                            .join("") ||
+                        '<tr><td colspan="2" style="color:var(--text3);text-align:center;padding:20px">—</td></tr>';
+                } catch (e) {
+                    toast("Error loading stats", "error");
+                }
+            }
+
+            // ─── CATEGORIES & TAGS ───
+            async function loadCategories() {
+                try {
+                    const data = await api(
+                        "GET",
+                        "/api/admin/guide-categories?per_page=100",
+                    );
+                    state.categories = data.data || [];
+                    const sel = document.getElementById("f-category");
+                    const filterSel =
+                        document.getElementById("filter-category");
+                    sel.innerHTML =
+                        '<option value="">-- Select --</option>' +
+                        state.categories
+                            .map(
+                                (c) =>
+                                    `<option value="${c.id}">${escHtml(c.name)}</option>`,
+                            )
+                            .join("");
+                    filterSel.innerHTML =
+                        '<option value="">All Categories</option>' +
+                        state.categories
+                            .map(
+                                (c) =>
+                                    `<option value="${c.id}">${escHtml(c.name)}</option>`,
+                            )
+                            .join("");
+                } catch (e) {
+                    console.warn("Categories not loaded");
+                }
+            }
+
+            async function loadTags() {
+                try {
+                    const data = await api(
+                        "GET",
+                        "/api/admin/guide-tags?per_page=200",
+                    );
+                    state.tags = data.data || [];
+                    renderTagSelector();
+                } catch (e) {
+                    console.warn("Tags not loaded");
+                }
+            }
+
+            function renderTagSelector() {
+                const container = document.getElementById("tag-container");
+                if (!state.tags.length) {
+                    container.innerHTML =
+                        '<span style="color:var(--text3);font-size:12px">No tags available</span>';
+                    return;
+                }
+                container.innerHTML = state.tags
+                    .map(
+                        (t) =>
+                            `<div class="tag-chip ${state.selectedTags.includes(t.id) ? "selected" : ""}" onclick="toggleTag(${t.id}, this)">${escHtml(t.name)}</div>`,
+                    )
+                    .join("");
+            }
+
+            function toggleTag(id, el) {
+                const idx = state.selectedTags.indexOf(id);
+                if (idx >= 0) {
+                    state.selectedTags.splice(idx, 1);
+                    el.classList.remove("selected");
+                } else {
+                    state.selectedTags.push(id);
+                    el.classList.add("selected");
+                }
+            }
+
+            // ─── SECTIONS ───
+            let sectionCount = 0;
+            function addSection(data = null) {
+                sectionCount++;
+                const idx = sectionCount;
+                const container = document.getElementById("sections-container");
+                const div = document.createElement("div");
+                div.className = "section-item";
+                div.dataset.sectionIdx = idx;
+                div.innerHTML = `
+      <div class="section-header">
+        <div class="section-num">${document.querySelectorAll(".section-item").length + 1}</div>
+        <span class="section-header-title">Section ${document.querySelectorAll(".section-item").length + 1}</span>
+        <button class="remove-section" onclick="this.closest('.section-item').remove();renumberSections()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <input type="hidden" class="s-id" value="${data?.id || ""}">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Title (EN)</label>
+          <input type="text" class="s-title" placeholder="Section title..." value="${escHtml(data?.title || "")}">
+        </div>
+        <div class="form-group" dir="rtl">
+          <label>العنوان (AR)</label>
+          <input type="text" class="s-title-ar" placeholder="عنوان القسم..." value="${escHtml(data?.title_ar || "")}">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Description (EN)</label>
+          <textarea class="s-desc" rows="3" placeholder="Section content...">${escHtml(data?.description || "")}</textarea>
+        </div>
+        <div class="form-group" style="grid-column:1/-1" dir="rtl">
+          <label>الوصف (AR)</label>
+          <textarea class="s-desc-ar" rows="3" placeholder="وصف القسم...">${escHtml(data?.description_ar || "")}</textarea>
+        </div>
+      </div>
+    `;
+                container.appendChild(div);
+            }
+
+            function renumberSections() {
+                document.querySelectorAll(".section-item").forEach((el, i) => {
+                    el.querySelector(".section-num").textContent = i + 1;
+                    el.querySelector(".section-header-title").textContent =
+                        `Section ${i + 1}`;
+                });
+            }
+
+            // ─── IMAGE UPLOAD ───
+            function handleDragOver(e) {
+                e.preventDefault();
+                document
+                    .getElementById("upload-zone")
+                    .classList.add("dragover");
+            }
+            function handleDragLeave(e) {
+                document
+                    .getElementById("upload-zone")
+                    .classList.remove("dragover");
+            }
+            function handleDrop(e) {
+                e.preventDefault();
+                document
+                    .getElementById("upload-zone")
+                    .classList.remove("dragover");
+                const file = e.dataTransfer.files[0];
+                if (file) processImageFile(file);
+            }
+
+            function handleImageFile(e) {
+                const file = e.target.files[0];
+                if (file) processImageFile(file);
+            }
+
+            async function processImageFile(file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    toast("Image too large (max 5MB)", "error");
+                    return;
+                }
+                // Show preview immediately
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const preview = document.getElementById("f-image-preview");
+                    preview.src = e.target.result;
+                    preview.classList.add("show");
+                };
+                reader.readAsDataURL(file);
+
+                // Upload
+                toast("Uploading...", "info");
+                try {
+                    const result = await uploadImage(file);
+                    const url =
+                        result.url ||
+                        result.path ||
+                        result.image_url ||
+                        result.data?.url ||
+                        "";
+                    document.getElementById("f-featured-image").value = url;
+                    toast("Image uploaded successfully", "success");
+                } catch (e) {
+                    toast(
+                        "Image upload error: " + (e.data?.message || "Error"),
+                        "error",
+                    );
+                    // Keep the preview but reset hidden input
+                    document.getElementById("f-featured-image").value = "";
+                }
+            }
+
+            function removeImage() {
+                document.getElementById("f-image-preview").src = "";
+                document
+                    .getElementById("f-image-preview")
+                    .classList.remove("show");
+                document.getElementById("f-featured-image").value = "";
+                document.getElementById("f-image-file").value = "";
+            }
+
+            // ─── MODAL ───
+            function openCreateModal() {
+                state.editingId = null;
+                sectionCount = 0;
+                state.selectedTags = [];
+                document.getElementById("modal-title").textContent =
+                    "New Guide";
+                document.getElementById("modal-subtitle").textContent =
+                    "Create a new DabApp guide";
+                clearForm();
+                loadTags();
+                document.getElementById("guide-modal").classList.add("open");
+            }
+
+            async function openEditModal(id) {
+                state.editingId = id;
+                sectionCount = 0;
+                document.getElementById("modal-title").textContent =
+                    "Edit Guide";
+                document.getElementById("modal-subtitle").textContent =
+                    `ID #${id}`;
+                clearForm();
+                document.getElementById("guide-modal").classList.add("open");
+                document.getElementById("save-btn").textContent = "Loading...";
+                document.getElementById("save-btn").disabled = true;
+
+                try {
+                    const data = await api("GET", `/api/admin/guides/${id}`);
+                    const g = data.data;
+                    state.selectedTags = (g.tags || []).map((t) => t.id);
+
+                    document.getElementById("f-title").value = g.title || "";
+                    document.getElementById("f-title-ar").value =
+                        g.title_ar || "";
+                    document.getElementById("f-excerpt").value =
+                        g.excerpt || "";
+                    document.getElementById("f-excerpt-ar").value =
+                        g.excerpt_ar || "";
+                    document.getElementById("f-content").value =
+                        g.content || "";
+                    document.getElementById("f-content-ar").value =
+                        g.content_ar || "";
+                    document.getElementById("f-category").value =
+                        g.category?.id || "";
+                    document.getElementById("f-status").value =
+                        g.status || "draft";
+                    document.getElementById("f-author-id").value =
+                        g.author?.id || "";
+                    document.getElementById("f-featured-image").value =
+                        g.featured_image || "";
+                    document.getElementById("f-meta-title").value =
+                        g.meta_title || "";
+                    document.getElementById("f-meta-title-ar").value =
+                        g.meta_title_ar || "";
+                    document.getElementById("f-meta-desc").value =
+                        g.meta_description || "";
+                    document.getElementById("f-meta-desc-ar").value =
+                        g.meta_description_ar || "";
+                    document.getElementById("f-meta-keywords").value =
+                        g.meta_keywords || "";
+                    document.getElementById("f-meta-keywords-ar").value =
+                        g.meta_keywords_ar || "";
+
+                    if (g.featured_image) {
+                        const preview =
+                            document.getElementById("f-image-preview");
+                        preview.src = g.featured_image;
+                        preview.classList.add("show");
+                    }
+
+                    // Load sections
+                    (g.sections || []).forEach((s) => addSection(s));
+
+                    await loadTags();
+                } catch (e) {
+                    toast(
+                        "Error loading guide: " + (e.data?.message || "Error"),
+                        "error",
+                    );
+                } finally {
+                    document.getElementById("save-btn").innerHTML =
+                        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Guide`;
+                    document.getElementById("save-btn").disabled = false;
+                }
+            }
+
+            function closeModal() {
+                document.getElementById("guide-modal").classList.remove("open");
+                clearForm();
+            }
+
+            function clearForm() {
+                [
+                    "f-title",
+                    "f-title-ar",
+                    "f-excerpt",
+                    "f-excerpt-ar",
+                    "f-content",
+                    "f-content-ar",
+                    "f-featured-image",
+                    "f-meta-title",
+                    "f-meta-title-ar",
+                    "f-meta-desc",
+                    "f-meta-desc-ar",
+                    "f-meta-keywords",
+                    "f-meta-keywords-ar",
+                    "f-author-id",
+                ].forEach((id) => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = "";
+                });
+                document.getElementById("f-status").value = "draft";
+                document.getElementById("f-category").value = "";
+                removeImage();
+                document.getElementById("sections-container").innerHTML = "";
+                state.selectedTags = [];
+                state.sections = [];
+                sectionCount = 0;
+                switchLang("fr", document.querySelector(".lang-tab"));
+            }
+
+            // ─── SAVE GUIDE ───
+            async function saveGuide() {
+                const title = document.getElementById("f-title").value.trim();
+                const category = document.getElementById("f-category").value;
+                const authorId = document.getElementById("f-author-id").value;
+                const status = document.getElementById("f-status").value;
+
+                if (!title) {
+                    toast("Title is required", "error");
+                    return;
+                }
+                if (!category) {
+                    toast("Category is required", "error");
+                    return;
+                }
+                if (!authorId) {
+                    toast("Author ID is required", "error");
+                    return;
+                }
+
+                // Collect sections
+                const sections = [];
+                document
+                    .querySelectorAll(".section-item")
+                    .forEach((el, idx) => {
+                        const sec = {
+                            type: "text",
+                            title: el.querySelector(".s-title")?.value || "",
+                            title_ar:
+                                el.querySelector(".s-title-ar")?.value || "",
+                            description:
+                                el.querySelector(".s-desc")?.value || "",
+                            description_ar:
+                                el.querySelector(".s-desc-ar")?.value || "",
+                            order_position: idx,
+                        };
+                        const sid = el.querySelector(".s-id")?.value;
+                        if (sid) sec.id = parseInt(sid);
+                        sections.push(sec);
+                    });
+
+                const payload = {
+                    title,
+                    title_ar:
+                        document.getElementById("f-title-ar").value || null,
+                    excerpt: document.getElementById("f-excerpt").value || null,
+                    excerpt_ar:
+                        document.getElementById("f-excerpt-ar").value || null,
+                    content: document.getElementById("f-content").value || null,
+                    content_ar:
+                        document.getElementById("f-content-ar").value || null,
+                    featured_image:
+                        document.getElementById("f-featured-image").value ||
+                        null,
+                    category_id: parseInt(category),
+                    author_id: parseInt(authorId),
+                    status,
+                    tags: state.selectedTags,
+                    sections,
+                    meta_title:
+                        document.getElementById("f-meta-title").value || null,
+                    meta_title_ar:
+                        document.getElementById("f-meta-title-ar").value ||
+                        null,
+                    meta_description:
+                        document.getElementById("f-meta-desc").value || null,
+                    meta_description_ar:
+                        document.getElementById("f-meta-desc-ar").value || null,
+                    meta_keywords:
+                        document.getElementById("f-meta-keywords").value ||
+                        null,
+                    meta_keywords_ar:
+                        document.getElementById("f-meta-keywords-ar").value ||
+                        null,
+                };
+
+                const btn = document.getElementById("save-btn");
+                btn.disabled = true;
+                btn.textContent = "Saving...";
+
+                try {
+                    if (state.editingId) {
+                        await api(
+                            "PUT",
+                            `/api/admin/guides/${state.editingId}`,
+                            payload,
+                        );
+                        toast("Guide updated successfully", "success");
+                    } else {
+                        await api("POST", "/api/admin/guides", payload);
+                        toast("Guide created successfully", "success");
+                    }
+                    closeModal();
+                    loadGuides(state.currentPage);
+                } catch (e) {
+                    const errs = e.data?.errors;
+                    if (errs) {
+                        const msg = Object.values(errs).flat().join(" — ");
+                        toast("Validation: " + msg, "error");
+                    } else {
+                        toast(e.data?.message || "Error saving guide", "error");
+                    }
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Guide`;
+                }
+            }
+
+            // ─── DELETE ───
+            function confirmDelete(id, title) {
+                state.confirmCallback = () => deleteGuide(id);
+                document.getElementById("confirm-title").textContent =
+                    "Delete this guide?";
+                document.getElementById("confirm-msg").textContent =
+                    `« ${title} » will be permanently deleted along with its sections, images, and comments.`;
+                document
+                    .getElementById("confirm-overlay")
+                    .classList.add("open");
+            }
+
+            function closeConfirm() {
+                document
+                    .getElementById("confirm-overlay")
+                    .classList.remove("open");
+                state.confirmCallback = null;
+            }
+
+            async function confirmAction() {
+                if (state.confirmCallback) await state.confirmCallback();
+                closeConfirm();
+            }
+
+            async function deleteGuide(id) {
+                try {
+                    await api("DELETE", `/api/admin/guides/${id}`);
+                    toast("Guide deleted", "success");
+                    loadGuides(state.currentPage);
+                } catch (e) {
+                    toast(e.data?.message || "Deletion error", "error");
+                }
+            }
+
+            // ─── LANG TABS ───
+            function switchLang(lang, btn) {
+                document
+                    .querySelectorAll(".lang-tab")
+                    .forEach((t) => t.classList.remove("active"));
+                btn.classList.add("active");
+                document.getElementById("lang-fr").style.display =
+                    lang === "fr" ? "block" : "none";
+                document.getElementById("lang-ar").style.display =
+                    lang === "ar" ? "block" : "none";
+            }
+
+            // ─── DEBOUNCE SEARCH ───
+            function debounceSearch() {
+                clearTimeout(state.searchTimer);
+                state.searchTimer = setTimeout(() => loadGuides(1), 400);
+            }
+
+            // ─── UTILS ───
+            function escHtml(str) {
+                if (!str) return "";
+                return str
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;");
+            }
+            function statusLabel(s) {
+                return (
+                    {
+                        published: "Published",
+                        draft: "Draft",
+                        archived: "Archived",
+                    }[s] || s
+                );
+            }
+            function formatDate(d) {
+                if (!d) return "—";
+                return new Date(d).toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                });
+            }
+
+            // ─── CLOSE ON OVERLAY CLICK ───
+            document
+                .getElementById("guide-modal")
+                .addEventListener("click", function (e) {
+                    if (e.target === this) closeModal();
+                });
+            document
+                .getElementById("confirm-overlay")
+                .addEventListener("click", function (e) {
+                    if (e.target === this) closeConfirm();
+                });
+
+            // ─── KEYBOARD ───
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") {
+                    closeModal();
+                    closeConfirm();
+                }
+            });
+
+            // ─── INIT ───
+            function init() {
+                loadCategories();
+                loadGuides();
+            }
+
+            // Start App
+            checkAuth();
+        </script>
+    </body>
+</html>

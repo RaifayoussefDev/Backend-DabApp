@@ -17,15 +17,7 @@ return [
 
     'allowed_methods' => ['*'],  // Allow all HTTP methods (GET, POST, etc.)
 
-    'allowed_origins' => [
-        'http://localhost:4200',
-        'http://192.168.11.184:5500',
-        'http://localhost:5500',
-        'https://dabapp-frontend-new.pages.dev',
-        'http://localhost:8000',
-        'https://dabapp-adminboard.vercel.app',
-        'adminboard.dabapp.co',
-    ],
+    'allowed_origins' => ['*'],
 
     'allowed_origins_patterns' => [
         '/^https?:\/\/([\w-]+\.)?dabapp\.co$/',  // Accepte dabapp.co et tous ses sous-domaines (http et https)
