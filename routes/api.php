@@ -460,6 +460,11 @@ Route::apiResource('currency-rates', CurrencyExchangeRateController::class);
 Route::apiResource('card-types', CardTypeController::class);
 
 // ============================================
+// PROMO CODES (PUBLIC)
+// ============================================
+Route::get('/promo-codes/displayed', [\App\Http\Controllers\PromoCodeController::class, 'getDisplayed']);
+
+// ============================================
 // ROLES (PUBLIC - READ ONLY)
 // ============================================
 Route::apiResource('roles', RoleController::class);
@@ -746,6 +751,7 @@ Route::middleware('auth:api')->group(function () {
     });
 
     Route::get('admin/promo-codes/usages', [PromoCodeController::class, 'usages'])->middleware('permission:promo-codes.manage');
+    Route::patch('admin/promo-codes/{id}/toggle-display', [PromoCodeController::class, 'toggleDisplay'])->middleware('permission:promo-codes.manage');
     Route::apiResource('admin/promo-codes', PromoCodeController::class)->middleware('permission:promo-codes.manage');
 
     Route::prefix('admin')->group(function () {

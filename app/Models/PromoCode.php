@@ -18,12 +18,14 @@ class PromoCode extends Model
         'valid_from',
         'valid_until',
         'is_active',
+        'display',
     ];
 
     protected $casts = [
         'valid_from' => 'datetime',
         'valid_until' => 'datetime',
         'is_active' => 'boolean',
+        'display' => 'boolean',
         'discount_value' => 'float',
         'max_discount' => 'float',
         'min_listing_price' => 'float',

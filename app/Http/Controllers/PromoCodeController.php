@@ -34,7 +34,9 @@ class PromoCodeController extends Controller
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="code", type="string", example="WELCOME10"),
      *                 @OA\Property(property="discount_type", type="string", example="percentage"),
-     *                 @OA\Property(property="discount_value", type="number", example=10)
+     *                 @OA\Property(property="discount_value", type="number", example=10),
+                @OA\Property(property="is_active", type="boolean", example=true),
+                @OA\Property(property="display", type="boolean", example=true)
      *             )
      *         )
      *     )
@@ -65,7 +67,8 @@ class PromoCodeController extends Controller
      *             @OA\Property(property="per_user_limit", type="integer", default=1),
      *             @OA\Property(property="valid_from", type="string", format="date-time"),
      *             @OA\Property(property="valid_until", type="string", format="date-time"),
-     *             @OA\Property(property="is_active", type="boolean", default=true)
+     *             @OA\Property(property="is_active", type="boolean", default=true),
+            @OA\Property(property="display", type="boolean", default=false)
      *         )
      *     ),
      *     @OA\Response(
@@ -91,7 +94,8 @@ class PromoCodeController extends Controller
             'per_user_limit' => 'nullable|integer|min:1',
             'valid_from' => 'nullable|date',
             'valid_until' => 'nullable|date|after_or_equal:valid_from',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            'display' => 'boolean'
         ]);
 
         if ($validator->fails()) {
@@ -117,11 +121,13 @@ class PromoCodeController extends Controller
      *         response=200,
      *         description="Promo code details",
      *         @OA\JsonContent(
-     *             @OA\Property(property="id", type="integer", example=1),
-     *             @OA\Property(property="code", type="string", example="SAVE20"),
-     *             @OA\Property(property="discount_type", type="string", example="percentage"),
-     *             @OA\Property(property="discount_value", type="number", example=20)
-     *         )
+            @OA\Property(property="id", type="integer", example=1),
+            @OA\Property(property="code", type="string", example="SAVE20"),
+            @OA\Property(property="discount_type", type="string", example="percentage"),
+            @OA\Property(property="discount_value", type="number", example=20),
+            @OA\Property(property="is_active", type="boolean", example=true),
+            @OA\Property(property="display", type="boolean", example=true)
+        )
      *     ),
      *     @OA\Response(response=404, description="Promo code not found")
      * )
@@ -149,7 +155,8 @@ class PromoCodeController extends Controller
      *             @OA\Property(property="description", type="string"),
      *             @OA\Property(property="discount_type", type="string", enum={"percentage", "fixed"}),
      *             @OA\Property(property="discount_value", type="number", format="float"),
-     *             @OA\Property(property="is_active", type="boolean")
+     *             @OA\Property(property="is_active", type="boolean"),
+            @OA\Property(property="display", type="boolean")
      *         )
      *     ),
      *     @OA\Response(
@@ -174,7 +181,8 @@ class PromoCodeController extends Controller
             'code' => 'sometimes|string|unique:promo_codes,code,' . $id,
             'discount_type' => 'sometimes|in:percentage,fixed',
             'discount_value' => 'sometimes|numeric|min:0',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            'display' => 'boolean'
         ]);
 
         if ($validator->fails()) {
@@ -347,5 +355,92 @@ class PromoCodeController extends Controller
             ->get();
 
         return response()->json($usages);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/promo-codes/displayed",
+     *     summary="List displayed promo codes (Public)",
+     *     description="Get list of promo codes marked for display (e.g. for mobile app).",
+     *     tags={"Promo Codes"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of public promo codes",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="code", type="string", example="WELCOME10"),
+     *                 @OA\Property(property="description", type="string", example="Get 10% off"),
+     *                 @OA\Property(property="discount_type", type="string", example="percentage"),
+     *                 @OA\Property(property="discount_value", type="number", example=10)
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function getDisplayed()
+    {
+        $promos = PromoCode::where('display', true)
+            ->where('is_active', true)
+            ->where(function ($query) {
+                $query->whereNull('valid_until')
+                    ->orWhere('valid_until', '>=', now());
+            })
+            ->select('code', 'description', 'discount_type', 'discount_value', 'min_listing_price', 'valid_until')
+            ->get();
+
+        return response()->json($promos);
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/admin/promo-codes/{id}/toggle-display",
+     *     summary="Toggle promo code display status",
+     *     description="Enable or disable the display of a promo code in public listings.",
+     *     tags={"Promo Code - Management"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"display"},
+     *             @OA\Property(property="display", type="boolean", example=true, description="New display status")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Display status updated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Promo code display status updated"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="code", type="string", example="WELCOME10"),
+     *                 @OA\Property(property="display", type="boolean", example=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Promo code not found")
+     * )
+     */
+    public function toggleDisplay(Request $request, $id)
+    {
+        $promo = PromoCode::find($id);
+        if (!$promo) {
+            return response()->json(['message' => 'Promo code not found'], 404);
+        }
+
+        $request->validate([
+            'display' => 'required|boolean'
+        ]);
+
+        $promo->display = $request->display;
+        $promo->save();
+
+        return response()->json([
+            'message' => 'Promo code display status updated',
+            'data' => $promo
+        ]);
     }
 }

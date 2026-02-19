@@ -25222,6 +25222,14 @@
                                             "discount_value": {
                                                 "type": "number",
                                                 "example": 10
+                                            },
+                                            "is_active": {
+                                                "type": "boolean",
+                                                "example": true
+                                            },
+                                            "display": {
+                                                "type": "boolean",
+                                                "example": true
                                             }
                                         },
                                         "type": "object"
@@ -25299,6 +25307,10 @@
                                     "is_active": {
                                         "type": "boolean",
                                         "default": true
+                                    },
+                                    "display": {
+                                        "type": "boolean",
+                                        "default": false
                                     }
                                 },
                                 "type": "object"
@@ -25376,6 +25388,14 @@
                                         "discount_value": {
                                             "type": "number",
                                             "example": 20
+                                        },
+                                        "is_active": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "display": {
+                                            "type": "boolean",
+                                            "example": true
                                         }
                                     },
                                     "type": "object"
@@ -25433,6 +25453,9 @@
                                         "format": "float"
                                     },
                                     "is_active": {
+                                        "type": "boolean"
+                                    },
+                                    "display": {
                                         "type": "boolean"
                                     }
                                 },
@@ -25738,6 +25761,132 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/promo-codes/displayed": {
+            "get": {
+                "tags": [
+                    "Promo Codes"
+                ],
+                "summary": "List displayed promo codes (Public)",
+                "description": "Get list of promo codes marked for display (e.g. for mobile app).",
+                "operationId": "2fcedaa962d6b00a61123dcff295aa57",
+                "responses": {
+                    "200": {
+                        "description": "List of public promo codes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "code": {
+                                                "type": "string",
+                                                "example": "WELCOME10"
+                                            },
+                                            "description": {
+                                                "type": "string",
+                                                "example": "Get 10% off"
+                                            },
+                                            "discount_type": {
+                                                "type": "string",
+                                                "example": "percentage"
+                                            },
+                                            "discount_value": {
+                                                "type": "number",
+                                                "example": 10
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/promo-codes/{id}/toggle-display": {
+            "patch": {
+                "tags": [
+                    "Promo Code - Management"
+                ],
+                "summary": "Toggle promo code display status",
+                "description": "Enable or disable the display of a promo code in public listings.",
+                "operationId": "bd563f53aced18a7eaec678ac5445dd3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "display"
+                                ],
+                                "properties": {
+                                    "display": {
+                                        "description": "New display status",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Display status updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Promo code display status updated"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "WELCOME10"
+                                                },
+                                                "display": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Promo code not found"
                     }
                 },
                 "security": [
