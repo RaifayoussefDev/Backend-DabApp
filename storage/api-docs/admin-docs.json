@@ -6916,6 +6916,10 @@
                                                         "type": "string",
                                                         "example": "Maintenance"
                                                     },
+                                                    "name_ar": {
+                                                        "type": "string",
+                                                        "example": "صيانة"
+                                                    },
                                                     "slug": {
                                                         "type": "string",
                                                         "example": "maintenance"
@@ -6923,6 +6927,10 @@
                                                     "description": {
                                                         "type": "string",
                                                         "example": "Guides de maintenance"
+                                                    },
+                                                    "description_ar": {
+                                                        "type": "string",
+                                                        "example": "أدلة الصيانة"
                                                     },
                                                     "icon": {
                                                         "type": "string",
@@ -6987,9 +6995,17 @@
                                         "type": "string",
                                         "example": "Sécurité"
                                     },
+                                    "name_ar": {
+                                        "type": "string",
+                                        "example": "أمان"
+                                    },
                                     "description": {
                                         "type": "string",
                                         "example": "Guides de sécurité routière"
+                                    },
+                                    "description_ar": {
+                                        "type": "string",
+                                        "example": "أدلة للسلامة على الطريق"
                                     },
                                     "icon": {
                                         "type": "string",
@@ -7120,7 +7136,14 @@
                                         "type": "string",
                                         "example": "Sécurité Routière"
                                     },
+                                    "name_ar": {
+                                        "type": "string",
+                                        "example": "السلامة على الطريق"
+                                    },
                                     "description": {
+                                        "type": "string"
+                                    },
+                                    "description_ar": {
                                         "type": "string"
                                     },
                                     "icon": {

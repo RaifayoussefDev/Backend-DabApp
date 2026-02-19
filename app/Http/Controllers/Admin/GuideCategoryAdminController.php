@@ -57,8 +57,10 @@ class GuideCategoryAdminController extends Controller
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="name", type="string", example="Maintenance"),
+     *                     @OA\Property(property="name_ar", type="string", example="صيانة"),
      *                     @OA\Property(property="slug", type="string", example="maintenance"),
      *                     @OA\Property(property="description", type="string", example="Guides de maintenance"),
+     *                     @OA\Property(property="description_ar", type="string", example="أدلة الصيانة"),
      *                     @OA\Property(property="icon", type="string", example="wrench"),
      *                     @OA\Property(property="color", type="string", example="#FF5722"),
      *                     @OA\Property(property="order_position", type="integer", example=1),
@@ -177,7 +179,9 @@ class GuideCategoryAdminController extends Controller
      *         @OA\JsonContent(
      *             required={"name"},
      *             @OA\Property(property="name", type="string", example="Sécurité"),
+     *             @OA\Property(property="name_ar", type="string", example="أمان"),
      *             @OA\Property(property="description", type="string", example="Guides de sécurité routière"),
+     *             @OA\Property(property="description_ar", type="string", example="أدلة للسلامة على الطريق"),
      *             @OA\Property(property="icon", type="string", example="shield"),
      *             @OA\Property(property="color", type="string", example="#4CAF50"),
      *             @OA\Property(property="order_position", type="integer", example=5)
@@ -201,7 +205,9 @@ class GuideCategoryAdminController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:guide_categories,name',
+            'name_ar' => 'nullable|string|max:255',
             'description' => 'nullable|string',
+            'description_ar' => 'nullable|string',
             'icon' => 'nullable|string|max:255',
             'color' => 'nullable|string|max:20',
             'order_position' => 'nullable|integer|min:0',
@@ -224,8 +230,10 @@ class GuideCategoryAdminController extends Controller
 
         $category = GuideCategory::create([
             'name' => $request->name,
+            'name_ar' => $request->name_ar,
             'slug' => $slug,
             'description' => $request->description,
+            'description_ar' => $request->description_ar,
             'icon' => $request->icon,
             'color' => $request->color,
             'order_position' => $order,
@@ -247,7 +255,9 @@ class GuideCategoryAdminController extends Controller
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             @OA\Property(property="name", type="string", example="Sécurité Routière"),
+     *             @OA\Property(property="name_ar", type="string", example="السلامة على الطريق"),
      *             @OA\Property(property="description", type="string"),
+     *             @OA\Property(property="description_ar", type="string"),
      *             @OA\Property(property="icon", type="string"),
      *             @OA\Property(property="color", type="string"),
      *             @OA\Property(property="order_position", type="integer")
@@ -269,7 +279,9 @@ class GuideCategoryAdminController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:255|unique:guide_categories,name,' . $id,
+            'name_ar' => 'nullable|string|max:255',
             'description' => 'nullable|string',
+            'description_ar' => 'nullable|string',
             'icon' => 'nullable|string|max:255',
             'color' => 'nullable|string|max:20',
             'order_position' => 'nullable|integer|min:0',
@@ -292,7 +304,7 @@ class GuideCategoryAdminController extends Controller
             $category->slug = $slug;
         }
 
-        $category->update($request->only(['name', 'description', 'icon', 'color', 'order_position']));
+        $category->update($request->only(['name', 'name_ar', 'description', 'description_ar', 'icon', 'color', 'order_position']));
 
         return response()->json([
             'message' => 'Category updated successfully',

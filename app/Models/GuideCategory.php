@@ -13,8 +13,10 @@ class GuideCategory extends Model
 
     protected $fillable = [
         'name',
+        'name_ar',
         'slug',
         'description',
+        'description_ar',
         'icon',
         'color',
         'order_position',
