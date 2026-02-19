@@ -9,6 +9,7 @@ class PromoCode extends Model
     protected $fillable = [
         'code',
         'description',
+        'description_ar',
         'discount_type',
         'discount_value',
         'max_discount',

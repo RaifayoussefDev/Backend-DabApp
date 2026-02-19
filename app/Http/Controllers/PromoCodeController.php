@@ -33,6 +33,8 @@ class PromoCodeController extends Controller
      *             @OA\Items(
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="code", type="string", example="WELCOME10"),
+     *                 @OA\Property(property="description", type="string", example="Get 10% off"),
+     *                 @OA\Property(property="description_ar", type="string", example="احصل على خصم 10%"),
      *                 @OA\Property(property="discount_type", type="string", example="percentage"),
      *                 @OA\Property(property="discount_value", type="number", example=10),
                 @OA\Property(property="is_active", type="boolean", example=true),
@@ -59,6 +61,7 @@ class PromoCodeController extends Controller
      *             required={"code", "discount_type", "discount_value"},
      *             @OA\Property(property="code", type="string", example="SAVE20"),
      *             @OA\Property(property="description", type="string", example="Get 20% off"),
+     *             @OA\Property(property="description_ar", type="string", example="احصل على خصم 20%"),
      *             @OA\Property(property="discount_type", type="string", enum={"percentage", "fixed"}),
      *             @OA\Property(property="discount_value", type="number", format="float"),
      *             @OA\Property(property="max_discount", type="number", format="float"),
@@ -86,6 +89,8 @@ class PromoCodeController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'code' => 'required|string|unique:promo_codes',
+            'description' => 'nullable|string',
+            'description_ar' => 'nullable|string',
             'discount_type' => 'required|in:percentage,fixed',
             'discount_value' => 'required|numeric|min:0',
             'max_discount' => 'nullable|numeric|min:0',
@@ -123,6 +128,8 @@ class PromoCodeController extends Controller
      *         @OA\JsonContent(
             @OA\Property(property="id", type="integer", example=1),
             @OA\Property(property="code", type="string", example="SAVE20"),
+            @OA\Property(property="description", type="string", example="Get 20% off"),
+            @OA\Property(property="description_ar", type="string", example="احصل على خصم 20%"),
             @OA\Property(property="discount_type", type="string", example="percentage"),
             @OA\Property(property="discount_value", type="number", example=20),
             @OA\Property(property="is_active", type="boolean", example=true),
@@ -153,6 +160,7 @@ class PromoCodeController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="code", type="string"),
      *             @OA\Property(property="description", type="string"),
+     *             @OA\Property(property="description_ar", type="string"),
      *             @OA\Property(property="discount_type", type="string", enum={"percentage", "fixed"}),
      *             @OA\Property(property="discount_value", type="number", format="float"),
      *             @OA\Property(property="is_active", type="boolean"),
@@ -179,6 +187,8 @@ class PromoCodeController extends Controller
 
         $validator = Validator::make($request->all(), [
             'code' => 'sometimes|string|unique:promo_codes,code,' . $id,
+            'description' => 'nullable|string',
+            'description_ar' => 'nullable|string',
             'discount_type' => 'sometimes|in:percentage,fixed',
             'discount_value' => 'sometimes|numeric|min:0',
             'is_active' => 'boolean',
@@ -244,6 +254,7 @@ class PromoCodeController extends Controller
      *             @OA\Property(property="discount_type", type="string", example="percentage"),
      *             @OA\Property(property="discount_value", type="number", format="float", example=20),
      *             @OA\Property(property="description", type="string", example="20% off on your next purchase"),
+     *             @OA\Property(property="description_ar", type="string", example="خصم 20% على عملية الشراء القادمة"),
      *             @OA\Property(property="usage_count", type="integer", example=1),
      *             @OA\Property(property="total_usage_count", type="integer", example=10)
      *         )
@@ -302,6 +313,7 @@ class PromoCodeController extends Controller
             'discount_type' => $result['promo']->discount_type,
             'discount_value' => number_format($result['promo']->discount_value, 2, '.', ''),
             'description' => $result['promo']->description,
+            'description_ar' => $result['promo']->description_ar,
             'usage_count' => (string) $result['user_usages'],
             'total_usage_count' => (string) $result['total_usages'],
         ]);
@@ -371,6 +383,7 @@ class PromoCodeController extends Controller
      *             @OA\Items(
      *                 @OA\Property(property="code", type="string", example="WELCOME10"),
      *                 @OA\Property(property="description", type="string", example="Get 10% off"),
+     *                 @OA\Property(property="description_ar", type="string", example="احصل على خصم 10%"),
      *                 @OA\Property(property="discount_type", type="string", example="percentage"),
      *                 @OA\Property(property="discount_value", type="number", example=10)
      *             )
@@ -386,7 +399,7 @@ class PromoCodeController extends Controller
                 $query->whereNull('valid_until')
                     ->orWhere('valid_until', '>=', now());
             })
-            ->select('code', 'description', 'discount_type', 'discount_value', 'min_listing_price', 'valid_until')
+            ->select('code', 'description', 'description_ar', 'discount_type', 'discount_value', 'min_listing_price', 'valid_until')
             ->get();
 
         return response()->json($promos);
@@ -415,8 +428,11 @@ class PromoCodeController extends Controller
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
+     *                 @OA\Property(property="discount_value", type="number", example=10),
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="code", type="string", example="WELCOME10"),
+     *                 @OA\Property(property="description", type="string", example="Get 10% off"),
+     *                 @OA\Property(property="description_ar", type="string", example="احصل على خصم 10%"),
      *                 @OA\Property(property="display", type="boolean", example=true)
      *             )
      *         )

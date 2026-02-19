@@ -25215,6 +25215,14 @@
                                                 "type": "string",
                                                 "example": "WELCOME10"
                                             },
+                                            "description": {
+                                                "type": "string",
+                                                "example": "Get 10% off"
+                                            },
+                                            "description_ar": {
+                                                "type": "string",
+                                                "example": "احصل على خصم 10%"
+                                            },
                                             "discount_type": {
                                                 "type": "string",
                                                 "example": "percentage"
@@ -25269,6 +25277,10 @@
                                     "description": {
                                         "type": "string",
                                         "example": "Get 20% off"
+                                    },
+                                    "description_ar": {
+                                        "type": "string",
+                                        "example": "احصل على خصم 20%"
                                     },
                                     "discount_type": {
                                         "type": "string",
@@ -25381,6 +25393,14 @@
                                             "type": "string",
                                             "example": "SAVE20"
                                         },
+                                        "description": {
+                                            "type": "string",
+                                            "example": "Get 20% off"
+                                        },
+                                        "description_ar": {
+                                            "type": "string",
+                                            "example": "احصل على خصم 20%"
+                                        },
                                         "discount_type": {
                                             "type": "string",
                                             "example": "percentage"
@@ -25439,6 +25459,9 @@
                                         "type": "string"
                                     },
                                     "description": {
+                                        "type": "string"
+                                    },
+                                    "description_ar": {
                                         "type": "string"
                                     },
                                     "discount_type": {
@@ -25592,6 +25615,10 @@
                                         "description": {
                                             "type": "string",
                                             "example": "20% off on your next purchase"
+                                        },
+                                        "description_ar": {
+                                            "type": "string",
+                                            "example": "خصم 20% على عملية الشراء القادمة"
                                         },
                                         "usage_count": {
                                             "type": "integer",
@@ -25795,6 +25822,10 @@
                                                 "type": "string",
                                                 "example": "Get 10% off"
                                             },
+                                            "description_ar": {
+                                                "type": "string",
+                                                "example": "احصل على خصم 10%"
+                                            },
                                             "discount_type": {
                                                 "type": "string",
                                                 "example": "percentage"
@@ -25864,6 +25895,10 @@
                                         },
                                         "data": {
                                             "properties": {
+                                                "discount_value": {
+                                                    "type": "number",
+                                                    "example": 10
+                                                },
                                                 "id": {
                                                     "type": "integer",
                                                     "example": 1
@@ -25871,6 +25906,14 @@
                                                 "code": {
                                                     "type": "string",
                                                     "example": "WELCOME10"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Get 10% off"
+                                                },
+                                                "description_ar": {
+                                                    "type": "string",
+                                                    "example": "احصل على خصم 10%"
                                                 },
                                                 "display": {
                                                     "type": "boolean",
