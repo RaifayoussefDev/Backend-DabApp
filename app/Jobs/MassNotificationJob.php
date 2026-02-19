@@ -54,7 +54,7 @@ class MassNotificationJob implements ShouldQueue
 
         // 2. Filter by Listing Criteria
         if (!empty($this->filters['category_id']) || !empty($this->filters['date_from']) || !empty($this->filters['date_to'])) {
-            $query->whereHas('listings', function($q) {
+            $query->whereHas('listings', function ($q) {
                 if (!empty($this->filters['category_id'])) {
                     $q->where('category_id', $this->filters['category_id']);
                 }
@@ -78,7 +78,7 @@ class MassNotificationJob implements ShouldQueue
 
         // 4. Filter by Brand in Garage
         if (!empty($this->filters['brand_in_garage'])) {
-            $query->whereHas('myGarage', function($q) {
+            $query->whereHas('myGarage', function ($q) {
                 $q->where('brand_id', $this->filters['brand_in_garage']);
             });
         }
@@ -90,22 +90,30 @@ class MassNotificationJob implements ShouldQueue
         Log::info("MassNotificationJob: Found {$count} users matching filters.", ['filters' => $this->filters]);
 
         if ($count === 0) {
-           Log::warning("MassNotificationJob: No users found matching the criteria.");
-           return;
+            Log::warning("MassNotificationJob: No users found matching the criteria.");
+            return;
         }
 
         $query->chunk(100, function ($users) use ($notificationService) {
             foreach ($users as $user) {
                 try {
+                    // Determine title and message based on user preference
+                    $lang = $user->language ?? 'en';
+                    $title = ($lang === 'ar' && !empty($this->content['title_ar']))
+                        ? $this->content['title_ar']
+                        : ($this->content['title_en'] ?? 'Notification');
+
+                    $message = ($lang === 'ar' && !empty($this->content['body_ar']))
+                        ? $this->content['body_ar']
+                        : ($this->content['body_en'] ?? '');
+
                     $data = [
-                        'title' => $this->content['title_en'] ?? 'Notification',
-                        'title_ar' => $this->content['title_ar'] ?? ($this->content['title_en'] ?? 'Notification'),
-                        'body' => $this->content['body_en'] ?? '',
-                        'body_ar' => $this->content['body_ar'] ?? ($this->content['body_en'] ?? ''),
+                        'type' => $this->content['type'] ?? 'info',
+                        'original_content' => $this->content
                     ];
 
-                    $result = $notificationService->sendToUser($user, 'admin_broadcast', $data, [
-                        'channels' => $this->channels, 
+                    $result = $notificationService->sendCustomNotification($user, $title, $message, $data, [
+                        'channels' => $this->channels,
                         'priority' => 'high'
                     ]);
 
