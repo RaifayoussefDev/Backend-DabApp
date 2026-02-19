@@ -237,9 +237,7 @@ class PromoCodeController extends Controller
      *             @OA\Property(property="discount_value", type="number", format="float", example=20),
      *             @OA\Property(property="description", type="string", example="20% off on your next purchase"),
      *             @OA\Property(property="usage_count", type="integer", example=1),
-     *             @OA\Property(property="total_usage_count", type="integer", example=10),
-     *             @OA\Property(property="valid_until", type="string", format="date-time", example="2025-12-31 23:59:59"),
-     *             @OA\Property(property="usage_limit", type="integer", example=100)
+     *             @OA\Property(property="total_usage_count", type="integer", example=10)
      *         )
      *     ),
      *     @OA\Response(
@@ -298,8 +296,6 @@ class PromoCodeController extends Controller
             'description' => $result['promo']->description,
             'usage_count' => (string) $result['user_usages'],
             'total_usage_count' => (string) $result['total_usages'],
-            'valid_until' => $result['promo']->valid_until ? $result['promo']->valid_until->format('Y-m-d H:i:s') : null,
-            'usage_limit' => $result['promo']->usage_limit,
         ]);
     }
     /**

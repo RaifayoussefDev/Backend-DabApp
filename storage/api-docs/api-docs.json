@@ -37845,27 +37845,27 @@
                     },
                     "name": {
                         "type": "string",
-                        "example": "Technology"
+                        "example": "Motocross"
                     },
                     "name_ar": {
                         "type": "string",
-                        "example": "تكنولوجيا"
+                        "example": "موتوكروس"
                     },
                     "slug": {
                         "type": "string",
-                        "example": "technology"
+                        "example": "motocross"
                     },
                     "description": {
                         "type": "string",
-                        "example": "Tech events"
+                        "example": "Off-road motorcycle racing events"
                     },
                     "icon": {
                         "type": "string",
-                        "example": "fa-server"
+                        "example": "fa-motorcycle"
                     },
                     "color": {
                         "type": "string",
-                        "example": "#FFFFFF"
+                        "example": "#FF4500"
                     },
                     "is_active": {
                         "type": "boolean",

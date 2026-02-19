@@ -142,15 +142,27 @@
                                 "properties": {
                                     "name": {
                                         "type": "string",
-                                        "example": "Music"
+                                        "example": "Track Days"
                                     },
                                     "name_ar": {
                                         "type": "string",
-                                        "example": "موسيقى"
+                                        "example": "أيام التدريب في الحلبة"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Organized track riding events for all levels"
+                                    },
+                                    "description_ar": {
+                                        "type": "string",
+                                        "example": "فعاليات سباقات منظمة لجميع المستويات"
                                     },
                                     "icon": {
                                         "type": "string",
-                                        "example": "music_note"
+                                        "example": "fa-flag-checkered"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "example": "#FF0000"
                                     }
                                 },
                                 "type": "object"
@@ -171,6 +183,43 @@
             }
         },
         "/api/admin/event-categories/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Event Categories"
+                ],
+                "summary": "Admin: Get event category by id",
+                "operationId": "9c2efe3c2fe41d96d449f2395a94d1de",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Event category details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EventCategory"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
             "put": {
                 "tags": [
                     "Admin Event Categories"
@@ -194,16 +243,32 @@
                             "schema": {
                                 "properties": {
                                     "name": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "Motorcycle Meetups"
                                     },
                                     "name_ar": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "تجمعات الدراجات النارية"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Global community meetups"
+                                    },
+                                    "description_ar": {
+                                        "type": "string",
+                                        "example": "تجمعات مجتمعية عالمية"
                                     },
                                     "icon": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "fa-users"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "example": "#00FF00"
                                     },
                                     "is_active": {
-                                        "type": "boolean"
+                                        "type": "boolean",
+                                        "example": true
                                     }
                                 },
                                 "type": "object"
@@ -16096,27 +16161,27 @@
                     },
                     "name": {
                         "type": "string",
-                        "example": "Technology"
+                        "example": "Motocross"
                     },
                     "name_ar": {
                         "type": "string",
-                        "example": "تكنولوجيا"
+                        "example": "موتوكروس"
                     },
                     "slug": {
                         "type": "string",
-                        "example": "technology"
+                        "example": "motocross"
                     },
                     "description": {
                         "type": "string",
-                        "example": "Tech events"
+                        "example": "Off-road motorcycle racing events"
                     },
                     "icon": {
                         "type": "string",
-                        "example": "fa-server"
+                        "example": "fa-motorcycle"
                     },
                     "color": {
                         "type": "string",
-                        "example": "#FFFFFF"
+                        "example": "#FF4500"
                     },
                     "is_active": {
                         "type": "boolean",

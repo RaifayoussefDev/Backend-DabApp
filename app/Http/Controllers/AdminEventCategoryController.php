@@ -49,6 +49,27 @@ class AdminEventCategoryController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/admin/event-categories/{id}",
+     *     summary="Admin: Get event category by id",
+     *     tags={"Admin Event Categories"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Event category details",
+     *         @OA\JsonContent(ref="#/components/schemas/EventCategory")
+     *     ),
+     *     @OA\Response(response=404, description="Category not found")
+     * )
+     */
+    public function show($id)
+    {
+        $category = EventCategory::findOrFail($id);
+        return response()->json(['data' => $category]);
+    }
+
+    /**
      * @OA\Post(
      *     path="/api/admin/event-categories",
      *     summary="Admin: Create event category",
@@ -58,9 +79,12 @@ class AdminEventCategoryController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"name"},
-     *             @OA\Property(property="name", type="string", example="Music"),
-     *             @OA\Property(property="name_ar", type="string", example="موسيقى"),
-     *             @OA\Property(property="icon", type="string", example="music_note")
+     *             @OA\Property(property="name", type="string", example="Track Days"),
+     *             @OA\Property(property="name_ar", type="string", example="أيام التدريب في الحلبة"),
+     *             @OA\Property(property="description", type="string", example="Organized track riding events for all levels"),
+     *             @OA\Property(property="description_ar", type="string", example="فعاليات سباقات منظمة لجميع المستويات"),
+     *             @OA\Property(property="icon", type="string", example="fa-flag-checkered"),
+     *             @OA\Property(property="color", type="string", example="#FF0000")
      *         )
      *     ),
      *     @OA\Response(response=201, description="Category created")
@@ -71,14 +95,20 @@ class AdminEventCategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'name_ar' => 'nullable|string|max:255',
-            'icon' => 'nullable|string|max:255', // Assuming icon path or class
+            'description' => 'nullable|string',
+            'description_ar' => 'nullable|string',
+            'icon' => 'nullable|string|max:255',
+            'color' => 'nullable|string|max:7',
         ]);
 
         $category = EventCategory::create([
             'name' => $validated['name'],
             'name_ar' => $validated['name_ar'] ?? null,
             'slug' => Str::slug($validated['name']),
+            'description' => $validated['description'] ?? null,
+            'description_ar' => $validated['description_ar'] ?? null,
             'icon' => $validated['icon'] ?? null,
+            'color' => $validated['color'] ?? null,
             'is_active' => true
         ]);
 
@@ -95,10 +125,13 @@ class AdminEventCategoryController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string"),
-     *             @OA\Property(property="name_ar", type="string"),
-     *             @OA\Property(property="icon", type="string"),
-     *             @OA\Property(property="is_active", type="boolean")
+     *             @OA\Property(property="name", type="string", example="Motorcycle Meetups"),
+     *             @OA\Property(property="name_ar", type="string", example="تجمعات الدراجات النارية"),
+     *             @OA\Property(property="description", type="string", example="Global community meetups"),
+     *             @OA\Property(property="description_ar", type="string", example="تجمعات مجتمعية عالمية"),
+     *             @OA\Property(property="icon", type="string", example="fa-users"),
+     *             @OA\Property(property="color", type="string", example="#00FF00"),
+     *             @OA\Property(property="is_active", type="boolean", example=true)
      *         )
      *     ),
      *     @OA\Response(response=200, description="Category updated")
@@ -111,7 +144,10 @@ class AdminEventCategoryController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'name_ar' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'description_ar' => 'nullable|string',
             'icon' => 'nullable|string|max:255',
+            'color' => 'nullable|string|max:7',
             'is_active' => 'boolean'
         ]);
 
