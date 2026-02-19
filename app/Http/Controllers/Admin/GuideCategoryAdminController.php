@@ -202,7 +202,7 @@ class GuideCategoryAdminController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:guide_categories,name',
             'description' => 'nullable|string',
-            'icon' => 'nullable|string|max:50',
+            'icon' => 'nullable|string|max:255',
             'color' => 'nullable|string|max:20',
             'order_position' => 'nullable|integer|min:0',
         ]);
@@ -270,7 +270,7 @@ class GuideCategoryAdminController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:255|unique:guide_categories,name,' . $id,
             'description' => 'nullable|string',
-            'icon' => 'nullable|string|max:50',
+            'icon' => 'nullable|string|max:255',
             'color' => 'nullable|string|max:20',
             'order_position' => 'nullable|integer|min:0',
         ]);
