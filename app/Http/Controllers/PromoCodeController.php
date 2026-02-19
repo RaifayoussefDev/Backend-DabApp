@@ -199,7 +199,9 @@ class PromoCodeController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $promo->update($request->all());
+        $promo->fill($request->all());
+        $promo->save();
+        $promo->refresh();
 
         return response()->json([
             'message' => 'Promo code updated successfully',
