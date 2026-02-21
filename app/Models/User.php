@@ -213,21 +213,23 @@ class User extends Authenticatable implements JWTSubject
         'timezone',
         'two_factor_enabled',
         'country_id',
+    ];
+
+    /**
+     * The attributes that should be appended to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = [
+        'full_name',
         'is_dealer',
         'dealer_title',
         'dealer_address',
         'dealer_phone',
-        'latitude',
-        'longitude',
     ];
 
-    /**
-     * Scope a query to only include dealers.
-     */
-    public function scopeDealers($query)
-    {
-        return $query->where('is_dealer', true);
-    }
+
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -547,4 +549,50 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->hasOne(ServiceProvider::class);
     }
+
+    /**
+     * Get the points of interest associated with the user.
+     */
+    public function pointsOfInterest(): HasMany
+    {
+        return $this->hasMany(PointOfInterest::class, 'owner_id');
+    }
+
+    // ==========================================
+    // COMPATIBILITY ACCESSORS (REMOVE LATER)
+    // ==========================================
+
+    /**
+     * Get whether the user is a dealer (Compatibility)
+     */
+    public function getIsDealerAttribute()
+    {
+        return $this->pointsOfInterest->count() > 0;
+    }
+
+    /**
+     * Get dealer title (Compatibility)
+     */
+    public function getDealerTitleAttribute()
+    {
+        return $this->pointsOfInterest->first()?->name;
+    }
+
+    /**
+     * Get dealer address (Compatibility)
+     */
+    public function getDealerAddressAttribute()
+    {
+        return $this->pointsOfInterest->first()?->address;
+    }
+
+    /**
+     * Get dealer phone (Compatibility)
+     */
+    public function getDealerPhoneAttribute()
+    {
+        return $this->pointsOfInterest->first()?->phone;
+    }
 }
+
+

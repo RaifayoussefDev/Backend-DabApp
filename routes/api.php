@@ -152,7 +152,7 @@ Route::post('/prospect/upload', [App\Http\Controllers\ImageUploadController::cla
 Route::post('/upload-image-public', [App\Http\Controllers\ImageUploadController::class, 'uploadPublic']);
 Route::post('/upload-icon', [App\Http\Controllers\ImageUploadController::class, 'uploadIcon']);
 
-Route::get('/dealers', [\App\Http\Controllers\DealerController::class, 'index']);
+
 
 
 Route::prefix('admin')->group(function () {
@@ -185,7 +185,9 @@ Route::prefix('admin')->group(function () {
         // Notifications
         Route::get('/notifications', [AdminNotificationController::class, 'index']);
         Route::post('/notifications/mass-send', [AdminNotificationController::class, 'sendMassNotification']);
-        Route::post('notification-preferences/mass-update', [AdminNotificationPreferenceController::class, 'massUpdate']);
+        Route::post('notification-preferences/mass-enable-all', [AdminNotificationPreferenceController::class, 'massEnableAll']);
+        Route::post('notification-preferences/mass-disable-all', [AdminNotificationPreferenceController::class, 'massDisableAll']);
+        Route::post('notification-preferences/mass-disable-category', [AdminNotificationPreferenceController::class, 'massDisableCategory']);
         Route::patch('notification-preferences/{id}/enable-all', [AdminNotificationPreferenceController::class, 'enableAll']);
         Route::patch('notification-preferences/{id}/disable-all', [AdminNotificationPreferenceController::class, 'disableAll']);
         Route::apiResource('notification-preferences', AdminNotificationPreferenceController::class);

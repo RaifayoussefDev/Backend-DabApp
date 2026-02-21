@@ -2639,56 +2639,6 @@
                 ]
             }
         },
-        "/api/dealers": {
-            "get": {
-                "tags": [
-                    "Dealers"
-                ],
-                "summary": "Get all dealers",
-                "operationId": "118e1b90d9666dd454f1e8e2d46cf5d3",
-                "responses": {
-                    "200": {
-                        "description": "List of dealers",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "properties": {
-                                            "id": {
-                                                "type": "integer"
-                                            },
-                                            "dealer_title": {
-                                                "type": "string"
-                                            },
-                                            "dealer_address": {
-                                                "type": "string"
-                                            },
-                                            "dealer_phone": {
-                                                "type": "string"
-                                            },
-                                            "latitude": {
-                                                "type": "number"
-                                            },
-                                            "longitude": {
-                                                "type": "number"
-                                            },
-                                            "profile_picture": {
-                                                "type": "string"
-                                            },
-                                            "is_dealer": {
-                                                "type": "boolean"
-                                            }
-                                        },
-                                        "type": "object"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/api/notifications/send": {
             "post": {
                 "tags": [
@@ -39274,10 +39224,6 @@
         {
             "name": "Admin - Dashboard",
             "description": "Admin - Dashboard"
-        },
-        {
-            "name": "Dealers",
-            "description": "Dealers"
         },
         {
             "name": "Event Activities",

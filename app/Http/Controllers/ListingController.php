@@ -2636,6 +2636,7 @@ class ListingController extends Controller
             'category:id,name',
             'country:id,name',
             'city:id,name',
+            'seller',
             'country.currencyExchangeRate:id,country_id,currency_symbol'
         ]);
 
@@ -2723,6 +2724,7 @@ class ListingController extends Controller
                 'wishlist' => $isInWishlist,
                 'display_price' => $displayPrice,
                 'currency' => $currencySymbol,
+                'is_dealer' => (bool) $listing->seller?->is_dealer,
             ];
 
             // ✅ Ajouter les données spécifiques par catégorie
@@ -3273,6 +3275,7 @@ class ListingController extends Controller
                 'country' => $listing->country?->name,
                 'images' => $listing->images->pluck('image_url'),
                 'wishlist' => $isInWishlist,
+                'is_dealer' => (bool) $listing->seller?->is_dealer,
             ];
         });
 
@@ -3395,7 +3398,8 @@ class ListingController extends Controller
             'city',
             'country',
             'country.currencyExchangeRate',
-            'seller:id,first_name,last_name,email,phone,profile_picture,created_at,is_dealer,dealer_title,dealer_address,dealer_phone',
+            'seller:id,first_name,last_name,email,phone,profile_picture,created_at',
+            'seller.pointsOfInterest',
             'motorcycle.brand',
             'motorcycle.model',
             'motorcycle.year',
@@ -3472,6 +3476,21 @@ class ListingController extends Controller
             'display_price' => $displayPrice,
             'is_auction' => $isAuction,
             'current_bid' => $currentBid,
+            'seller' => [
+                'id' => $listing->seller?->id,
+                'name' => $listing->seller?->first_name . ' ' . $listing->seller?->last_name,
+                'email' => $listing->seller?->email,
+                'phone' => $listing->seller?->phone,
+                'address' => $listing->seller?->address,
+                'profile_image' => $listing->seller?->profile_image,
+                'verified' => (bool) $listing->seller?->verified,
+                'member_since' => $listing->seller?->created_at?->format('Y-m-d H:i:s'),
+                'is_dealer' => (bool) $listing->seller?->is_dealer,
+                'dealer_title' => $listing->seller?->dealer_title,
+                'dealer_address' => $listing->seller?->dealer_address,
+                'dealer_phone' => $listing->seller?->dealer_phone,
+                'points_of_interest' => $listing->seller?->pointsOfInterest,
+            ],
         ];
 
         if (!$listing->allow_submission) {
@@ -3496,23 +3515,8 @@ class ListingController extends Controller
                     'min_soom' => $submission->min_soom,
                 ];
             });
-        } else {
-            // ✅ Pour les listings normaux : afficher toutes les infos du seller
-            $data['seller'] = [
-                'id' => $listing->seller?->id,
-                'name' => $listing->seller?->first_name . ' ' . $listing->seller?->last_name,
-                'email' => $listing->seller?->email,
-                'phone' => $listing->seller?->phone,
-                'address' => $listing->seller?->address,
-                'profile_image' => $listing->seller?->profile_image,
-                'verified' => (bool) $listing->seller?->verified,
-                'member_since' => $listing->seller?->created_at->format('Y-m-d H:i:s'),
-                'is_dealer' => (bool) $listing->seller?->is_dealer,
-                'dealer_title' => $listing->seller?->dealer_title,
-                'dealer_address' => $listing->seller?->dealer_address,
-                'dealer_phone' => $listing->seller?->dealer_phone,
-            ];
         }
+
 
         // Motorcycle category
         if ($listing->category_id == 1 && $listing->motorcycle) {
@@ -3704,7 +3708,7 @@ class ListingController extends Controller
         $user = Auth::user();
         $perPage = 10;
 
-        $listings = Listing::with(['images', 'city', 'country'])->where('status', 'published')
+        $listings = Listing::with(['images', 'city', 'country', 'seller'])->where('status', 'published')
             ->paginate($perPage);
 
         $data = $listings->map(function ($listing) use ($user) {
@@ -3728,6 +3732,7 @@ class ListingController extends Controller
                 'images' => $listing->images->pluck('image_url'),
                 'wishlist' => $isInWishlist,
                 'category_id' => $listing->category_id,
+                'is_dealer' => (bool) $listing->seller?->is_dealer,
             ];
 
             if ($listing->category_id == 1) {

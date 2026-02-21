@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class PointOfInterest extends Model
 {
     use HasFactory, SoftDeletes;
-    protected $table = 'points_of_interest'; 
+    protected $table = 'points_of_interest';
     protected $fillable = [
         'name',
         'description',
@@ -52,12 +52,13 @@ class PointOfInterest extends Model
     }
 
     /**
-     * Get the owner of this POI.
+     * Get the seller/owner of this POI.
      */
-    public function owner(): BelongsTo
+    public function seller(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
+
 
     /**
      * Get the city of this POI.

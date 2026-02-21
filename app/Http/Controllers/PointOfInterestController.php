@@ -211,7 +211,7 @@ class PointOfInterestController extends Controller
     {
         $poi = PointOfInterest::with([
             'type',
-            'owner',
+            'seller',
             'city',
             'country',
             'images',
@@ -219,6 +219,7 @@ class PointOfInterestController extends Controller
             'services',
             'brands',
         ])->find($id);
+
 
         if (!$poi) {
             return response()->json([
@@ -328,7 +329,9 @@ class PointOfInterestController extends Controller
             'email' => 'nullable|email|max:255',
             'website' => 'nullable|url|max:255',
             'opening_hours' => 'nullable|array',
+            'owner_id' => 'nullable|exists:users,id',
         ]);
+
 
         if ($validator->fails()) {
             return response()->json([
@@ -337,7 +340,20 @@ class PointOfInterestController extends Controller
             ], 422);
         }
 
-        $poi->update($validator->validated());
+        $validatedData = $validator->validated();
+
+        // Only admins can change the owner
+        if (isset($validatedData['owner_id']) && $validatedData['owner_id'] != $poi->owner_id) {
+            if (!auth()->user()->hasRole('admin')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only administrators can transfer POI ownership',
+                ], 403);
+            }
+        }
+
+        $poi->update($validatedData);
+
         $poi->load(['type', 'city', 'country']);
 
         return response()->json([

@@ -51,7 +51,7 @@ class AdminListingController extends Controller
         }
 
         $query = Listing::with([
-            'seller',
+            'seller.pointsOfInterest',
             'images',
             'category',
             'city',
@@ -426,7 +426,7 @@ class AdminListingController extends Controller
     public function show($id)
     {
         $listing = Listing::with([
-            'seller',
+            'seller.pointsOfInterest',
             'images',
             'category',
             'city',

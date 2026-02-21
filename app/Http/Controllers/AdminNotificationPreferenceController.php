@@ -16,6 +16,77 @@ use Illuminate\Http\JsonResponse;
 class AdminNotificationPreferenceController extends Controller
 {
     /**
+     * Categories of notification preferences for bulk management
+     */
+    protected $categories = [
+        'listings' => [
+            'listing_approved',
+            'listing_rejected',
+            'listing_expired',
+            'listing_sold',
+            'listing_updated'
+        ],
+        'auctions' => [
+            'bid_placed',
+            'bid_accepted',
+            'bid_rejected',
+            'bid_outbid',
+            'auction_ending_soon'
+        ],
+        'soom' => [
+            'soom_new_negotiation',
+            'soom_counter_offer',
+            'soom_accepted',
+            'soom_rejected'
+        ],
+        'payments' => [
+            'payment_success',
+            'payment_failed',
+            'payment_pending'
+        ],
+        'wishlist' => [
+            'wishlist_price_drop',
+            'wishlist_item_sold'
+        ],
+        'messages' => [
+            'new_message'
+        ],
+        'guides' => [
+            'new_guide_published',
+            'guide_published',
+            'guide_comment',
+            'guide_like'
+        ],
+        'events' => [
+            'event_created',
+            'event_published',
+            'event_reminder',
+            'event_updated',
+            'event_cancelled'
+        ],
+        'poi' => [
+            'poi_review',
+            'new_poi_nearby'
+        ],
+        'routes' => [
+            'route_comment',
+            'route_warning'
+        ],
+        'system' => [
+            'system_updates',
+            'promotional',
+            'newsletter',
+            'admin_custom'
+        ],
+        'channels' => [
+            'push_enabled',
+            'in_app_enabled',
+            'email_enabled',
+            'sms_enabled'
+        ]
+    ];
+
+    /**
      * @OA\Get(
      *     path="/api/admin/notification-preferences",
      *     tags={"Admin Notification Preferences"},
@@ -275,122 +346,95 @@ class AdminNotificationPreferenceController extends Controller
      *     )
      * )
      */
+    public function disableAll($id): JsonResponse
+    {
+        $preference = NotificationPreference::findOrFail($id);
+        $preference->disableAll();
+        return response()->json([
+            'success' => true,
+            'message' => 'All notifications disabled',
+            'data' => $preference->fresh(),
+        ]);
+    }
+
     /**
      * @OA\Post(
-     *     path="/api/admin/notification-preferences/mass-update",
+     *     path="/api/admin/notification-preferences/mass-enable-all",
      *     tags={"Admin Notification Preferences"},
-     *     summary="Update preferences for ALL users",
-     *     description="Apply specific preference settings to ALL users in the system. Use with caution.",
+     *     summary="Enable ALL notifications for ALL users",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(response=200, description="Done")
+     * )
+     */
+    public function massEnableAll(): JsonResponse
+    {
+        $fillable = (new NotificationPreference())->getFillable();
+        $data = array_fill_keys(array_diff($fillable, ['user_id', 'quiet_hours_start', 'quiet_hours_end', 'push_priority']), true);
+        $data['quiet_hours_enabled'] = false;
+
+        $count = NotificationPreference::query()->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Enabled all notifications for {$count} records",
+        ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/notification-preferences/mass-disable-all",
+     *     tags={"Admin Notification Preferences"},
+     *     summary="Disable ALL notifications for ALL users",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(response=200, description="Done")
+     * )
+     */
+    public function massDisableAll(): JsonResponse
+    {
+        $fillable = (new NotificationPreference())->getFillable();
+        $data = array_fill_keys(array_diff($fillable, ['user_id', 'quiet_hours_start', 'quiet_hours_end', 'push_priority']), false);
+
+        $count = NotificationPreference::query()->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Disabled all notifications for {$count} records",
+        ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/notification-preferences/mass-disable-category",
+     *     tags={"Admin Notification Preferences"},
+     *     summary="Disable a category of notifications for ALL users",
      *     security={{"bearerAuth": {}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             example={"soom_new_negotiation": true, "push_enabled": true},
-     *             @OA\Property(property="listing_approved", type="boolean"),
-     *             @OA\Property(property="soom_new_negotiation", type="boolean"),
-     *             @OA\Property(property="push_enabled", type="boolean"),
-     *             @OA\Property(property="enable_all", type="boolean", description="If true, enables ALL notifications for everyone")
+     *             @OA\Property(property="category", type="string", example="listings")
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Mass update successful",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Updated 1500 users choices")
-     *         )
-     *     )
+     *     @OA\Response(response=200, description="Done")
      * )
      */
-    public function massUpdate(Request $request): JsonResponse
+    public function massDisableCategory(Request $request): JsonResponse
     {
-        // If "enable_all" is present and true, we enable everything
-        if ($request->input('enable_all')) {
-            // This might be heavy, so we can use a direct DB update for speed
-            // or just iterate (but large userbase = slow).
-            // DB Update is safer for "Create Default" logic if we assume rows exist.
-            // If rows don't exist, we can't update them here easily without creating them first.
-            // Assuming most users have prefs or we update those who have.
+        $request->validate(['category' => 'required|string']);
+        $category = $request->category;
 
-            // For now, let's update existing records.
-            NotificationPreference::query()->update([
-                'listing_approved' => true,
-                'listing_rejected' => true,
-                'listing_expired' => true,
-                'listing_sold' => true,
-                'listing_updated' => true,
-                'bid_placed' => true,
-                'bid_accepted' => true,
-                'bid_rejected' => true,
-                'bid_outbid' => true,
-                'auction_ending_soon' => true,
-                'soom_new_negotiation' => true,
-                'soom_counter_offer' => true,
-                'soom_accepted' => true,
-                'soom_rejected' => true,
-                'dealer_approved' => true,
-                'payment_success' => true,
-                'payment_failed' => true,
-                'payment_pending' => true,
-                'wishlist_price_drop' => true,
-                'wishlist_item_sold' => true,
-                'new_message' => true,
-                'new_guide_published' => true,
-                'guide_published' => true,
-                'guide_comment' => true,
-                'guide_like' => true,
-                'event_created' => true,
-                'event_published' => true,
-                'event_reminder' => true,
-                'event_updated' => true,
-                'event_cancelled' => true,
-                'poi_review' => true,
-                'new_poi_nearby' => true,
-                'route_comment' => true,
-                'route_warning' => true,
-                'system_updates' => true,
-                'promotional' => true,
-                'newsletter' => true,
-                'admin_custom' => true,
-                'push_enabled' => true,
-                'in_app_enabled' => true,
-                'email_enabled' => true,
-                'sms_enabled' => true,
-                'quiet_hours_enabled' => false, // Usually disable quiet hours if enabling all?
-            ]);
-
-            return response()->json(['success' => true, 'message' => 'All notifications enabled for all users (who had preference records)']);
+        if (!isset($this->categories[$category])) {
+            return response()->json(['success' => false, 'message' => 'Invalid category'], 400);
         }
 
-        // Partial Update
-        $validated = $request->validate([
-            'listing_approved' => 'sometimes|boolean',
-            'push_enabled' => 'sometimes|boolean',
-            'soom_new_negotiation' => 'sometimes|boolean',
-            // Add other fields as needed, or allow all generic
-        ]);
+        $fields = $this->categories[$category];
+        $data = array_fill_keys($fields, false);
 
-        // Filter out nulls/non-present keys
-        $dataToUpdate = $request->except(['enable_all']);
-
-        // Security: Ensure only valid columns are updated by checking against schema or model fillable?
-        // Using $fillable is safer, but $request->except might include garbage.
-        // Let's rely on strict validation or intersection with fillable.
-
-        $preferenceModel = new NotificationPreference();
-        $fillable = $preferenceModel->getFillable();
-        $validData = array_intersect_key($dataToUpdate, array_flip($fillable));
-
-        if (empty($validData)) {
-            return response()->json(['success' => false, 'message' => 'No valid fields provided'], 400);
-        }
-
-        NotificationPreference::query()->update($validData);
+        $count = NotificationPreference::query()->update($data);
 
         return response()->json([
             'success' => true,
-            'message' => 'Updated preferences for all users',
-            'fields_updated' => array_keys($validData)
+            'message' => "Disabled category '{$category}' for {$count} records",
+            'fields_updated' => $fields
         ]);
     }
 }

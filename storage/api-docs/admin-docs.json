@@ -3802,46 +3802,26 @@
                 ]
             }
         },
-        "/api/admin/notification-preferences/mass-update": {
-            "post": {
+        "/api/admin/notification-preferences/{id}/disable-all": {
+            "patch": {
                 "tags": [
                     "Admin Notification Preferences"
                 ],
-                "summary": "Update preferences for ALL users",
-                "description": "Apply specific preference settings to ALL users in the system. Use with caution.",
-                "operationId": "4e814407e010113245c311fa4d77de9e",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "listing_approved": {
-                                        "type": "boolean"
-                                    },
-                                    "soom_new_negotiation": {
-                                        "type": "boolean"
-                                    },
-                                    "push_enabled": {
-                                        "type": "boolean"
-                                    },
-                                    "enable_all": {
-                                        "description": "If true, enables ALL notifications for everyone",
-                                        "type": "boolean"
-                                    }
-                                },
-                                "type": "object"
-                            },
-                            "example": {
-                                "soom_new_negotiation": true,
-                                "push_enabled": true
-                            }
+                "summary": "Disable all notifications for a user",
+                "operationId": "de61ce12c16f52847c8fcaf947488752",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
                         }
                     }
-                },
+                ],
                 "responses": {
                     "200": {
-                        "description": "Mass update successful",
+                        "description": "All notifications disabled",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3852,13 +3832,89 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Updated 1500 users choices"
+                                            "example": "All notifications disabled"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/NotificationPreference"
                                         }
                                     },
                                     "type": "object"
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/notification-preferences/mass-enable-all": {
+            "post": {
+                "tags": [
+                    "Admin Notification Preferences"
+                ],
+                "summary": "Enable ALL notifications for ALL users",
+                "operationId": "141574a0f6ff9ae3e449d1d77b69c3b6",
+                "responses": {
+                    "200": {
+                        "description": "Done"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/notification-preferences/mass-disable-all": {
+            "post": {
+                "tags": [
+                    "Admin Notification Preferences"
+                ],
+                "summary": "Disable ALL notifications for ALL users",
+                "operationId": "97e6c0ca0039499ec5269d8997716321",
+                "responses": {
+                    "200": {
+                        "description": "Done"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/notification-preferences/mass-disable-category": {
+            "post": {
+                "tags": [
+                    "Admin Notification Preferences"
+                ],
+                "summary": "Disable a category of notifications for ALL users",
+                "operationId": "3d971590d878fe6c03c2484cc95b7033",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "category": {
+                                        "type": "string",
+                                        "example": "listings"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Done"
                     }
                 },
                 "security": [
@@ -14095,36 +14151,6 @@
                                     "timezone": {
                                         "type": "string",
                                         "example": "Europe/Paris"
-                                    },
-                                    "is_dealer": {
-                                        "description": "Set to true to make user a Dealer, false to remove Dealer status",
-                                        "type": "boolean",
-                                        "example": true
-                                    },
-                                    "dealer_title": {
-                                        "description": "Required if is_dealer is true",
-                                        "type": "string",
-                                        "example": "Best Cars LLC"
-                                    },
-                                    "dealer_address": {
-                                        "description": "Required if is_dealer is true",
-                                        "type": "string",
-                                        "example": "123 Sheikh Zayed Road"
-                                    },
-                                    "dealer_phone": {
-                                        "description": "Required if is_dealer is true",
-                                        "type": "string",
-                                        "example": "+971500000000"
-                                    },
-                                    "latitude": {
-                                        "description": "Required if is_dealer is true",
-                                        "type": "number",
-                                        "example": 25.1234
-                                    },
-                                    "longitude": {
-                                        "description": "Required if is_dealer is true",
-                                        "type": "number",
-                                        "example": 55.1234
                                     }
                                 },
                                 "type": "object"

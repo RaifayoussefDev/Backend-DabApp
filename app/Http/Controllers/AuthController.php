@@ -1303,6 +1303,7 @@ class AuthController extends Controller
             'auctionHistoriesAsSeller.listing',
             'auctionHistoriesAsBuyer.listing',
             'bankCards',
+            'pointsOfInterest',
         ])->find($user->id);
 
         // Decrypt CVV
