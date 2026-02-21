@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use App\Models\PointOfInterest;
 
 class UserController extends Controller
 {
@@ -2817,6 +2818,68 @@ class UserController extends Controller
                 'success' => false,
                 'message' => 'Error retrieving user authentication logs',
                 'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/users/{id}/assign-poi",
+     *     summary="Assign a POI to a user (makes the user a dealer)",
+     *     tags={"Users Management"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="User ID to become owner of the POI",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"poi_id"},
+     *             @OA\Property(property="poi_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="POI assigned successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="POI assigned to user successfully")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="User or POI not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function assignPoi(Request $request, $id)
+    {
+        try {
+            $user = User::findOrFail($id);
+
+            $request->validate([
+                'poi_id' => 'required|exists:points_of_interest,id',
+            ]);
+
+            $poi = PointOfInterest::find($request->poi_id);
+            $poi->owner_id = $user->id;
+            $poi->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'POI assigned to user successfully. This user is now considered a dealer.',
+                'data' => [
+                    'user_id' => (int) $user->id,
+                    'poi_id' => (int) $poi->id,
+                    'is_dealer' => true
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to assign POI: ' . $e->getMessage()
             ], 500);
         }
     }

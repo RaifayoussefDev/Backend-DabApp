@@ -24740,6 +24740,11 @@
                                             "saturday": "09:00-23:45",
                                             "sunday": "09:00-23:45"
                                         }
+                                    },
+                                    "owner_id": {
+                                        "description": "Assign POI to a specific user (Admin only)",
+                                        "type": "integer",
+                                        "example": 123
                                     }
                                 },
                                 "type": "object"
@@ -24893,6 +24898,11 @@
                                             "monday": "closed",
                                             "tuesday": "10:00-18:00"
                                         }
+                                    },
+                                    "owner_id": {
+                                        "description": "Transfer POI ownership (Admin only)",
+                                        "type": "integer",
+                                        "example": 123
                                     }
                                 },
                                 "type": "object"

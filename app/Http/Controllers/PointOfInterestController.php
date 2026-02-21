@@ -132,7 +132,8 @@ class PointOfInterestController extends Controller
      *                     "saturday": "09:00-23:45",
      *                     "sunday": "09:00-23:45"
      *                 }
-     *             )
+     *             ),
+     *             @OA\Property(property="owner_id", type="integer", description="Assign POI to a specific user (Admin only)", example=123)
      *         )
      *     ),
      *     @OA\Response(
@@ -280,7 +281,8 @@ class PointOfInterestController extends Controller
      *                     "monday": "closed",
      *                     "tuesday": "10:00-18:00"
      *                 }
-     *             )
+     *             ),
+     *             @OA\Property(property="owner_id", type="integer", description="Transfer POI ownership (Admin only)", example=123)
      *         )
      *     ),
      *     @OA\Response(

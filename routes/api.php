@@ -721,6 +721,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/{id}/listings', [UserController::class, 'getUserListings'])->middleware('permission:users.view');
         Route::get('/{id}/bank-cards', [UserController::class, 'getUserBankCards'])->middleware('permission:users.view');
         Route::get('/{id}/auction-history', [UserController::class, 'getUserAuctionHistory'])->middleware('permission:users.view');
+        Route::post('/{id}/assign-poi', [UserController::class, 'assignPoi'])->middleware('permission:users.update');
 
         Route::get('/{id}/authentication-logs', [UserController::class, 'getUserAuthenticationLogs'])->middleware('permission:users.view');
     });
