@@ -35,7 +35,9 @@ trait CategoryDataTrait
                     'vehicle_care',
                     'vehicle_care_other',
                     'transmission'
-                ]));
+                ]), function ($value) {
+                    return !is_null($value);
+                });
 
                 // Get type_id from motorcycle_models table
                 if (!empty($motorcycleData['model_id'])) {
@@ -59,7 +61,9 @@ trait CategoryDataTrait
                     'bike_part_brand_id',
                     'bike_part_category_id',
                     'brand_other'
-                ]));
+                ]), function ($value) {
+                    return !is_null($value);
+                });
 
                 if (!empty($sparePartData)) {
                     $sparePart = $listing->sparePart()->updateOrCreate(

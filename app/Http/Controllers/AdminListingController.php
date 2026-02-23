@@ -158,8 +158,11 @@ class AdminListingController extends Controller
 
             // Handle Images
             if ($request->has('images')) {
-                foreach ($request->images as $imageUrl) {
-                    $listing->images()->create(['image_url' => $imageUrl]);
+                foreach ($request->images as $imageData) {
+                    $imageUrl = is_array($imageData) ? ($imageData['image_url'] ?? null) : $imageData;
+                    if ($imageUrl) {
+                        $listing->images()->create(['image_url' => $imageUrl]);
+                    }
                 }
             }
 
@@ -220,8 +223,11 @@ class AdminListingController extends Controller
 
         if ($request->has('images')) {
             $listing->images()->delete();
-            foreach ($request->images as $imageUrl) {
-                $listing->images()->create(['image_url' => $imageUrl]);
+            foreach ($request->images as $imageData) {
+                $imageUrl = is_array($imageData) ? ($imageData['image_url'] ?? null) : $imageData;
+                if ($imageUrl) {
+                    $listing->images()->create(['image_url' => $imageUrl]);
+                }
             }
         }
 
