@@ -253,10 +253,14 @@
         .tags-input-wrap input:focus { outline: none; box-shadow: none; }
 
         /* STAR RATING */
-        .stars { display: flex; gap: 1px; }
+        .stars { display: flex; gap: 2px; justify-content: flex-start; }
         .stars i { font-size: 10px; }
         .stars .filled { color: var(--yellow); }
         .stars .empty { color: var(--text3); }
+        
+        /* TABLE WIDTHS */
+        th.col-rating { width: 100px; }
+        td.cell-rating { width: 100px; white-space: nowrap; }
 
         /* POI TYPE GRID CARDS */
         .type-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
@@ -501,7 +505,7 @@
                                 <th>POI</th>
                                 <th>Type</th>
                                 <th>Location</th>
-                                <th>Rating</th>
+                                <th class="col-rating">Rating</th>
                                 <th>Views</th>
                                 <th>Status</th>
                                 <th style="text-align:right;">Actions</th>
@@ -1246,9 +1250,9 @@ function renderPoisTable(paginatedData) {
             <td style="font-size:12px; color:var(--text2);">
                 ${p.latitude ? `<span title="Lat: ${p.latitude}, Lng: ${p.longitude}"><i class="fas fa-crosshairs" style="color:var(--accent);"></i> ${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}</span>` : '—'}
             </td>
-            <td>
+            <td class="cell-rating">
                 ${stars}
-                <div style="font-size:11px; color:var(--text3); margin-top:2px;">${p.reviews_count||0} reviews</div>
+                <div style="font-size:11px; color:var(--text3); margin-top:2px;">${p.reviews_count||0} rev</div>
                 ${p.google_rating ? `<div style="font-size:10px; color:#4285F4; margin-top:4px; display:flex; align-items:center; gap:3px;"><i class="fab fa-google"></i> ${p.google_rating} (${p.google_reviews_count||0})</div>` : ''}
             </td>
             <td style="font-size:12px; color:var(--text3);">
