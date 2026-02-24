@@ -15,7 +15,9 @@ class PointOfInterest extends Model
     protected $table = 'points_of_interest';
     protected $fillable = [
         'name',
+        'name_ar',
         'description',
+        'description_ar',
         'type_id',
         'owner_id',
         'latitude',

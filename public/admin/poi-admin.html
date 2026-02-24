@@ -253,8 +253,8 @@
         .tags-input-wrap input:focus { outline: none; box-shadow: none; }
 
         /* STAR RATING */
-        .stars { display: flex; gap: 2px; }
-        .stars i { font-size: 12px; }
+        .stars { display: flex; gap: 1px; }
+        .stars i { font-size: 10px; }
         .stars .filled { color: var(--yellow); }
         .stars .empty { color: var(--text3); }
 
@@ -670,9 +670,13 @@
             <div class="form-section">
                 <div class="form-section-title"><i class="fas fa-info-circle"></i> General Information</div>
                 <div class="form-grid">
-                    <div class="form-group full">
+                    <div class="form-group">
                         <label class="form-label">POI Name *</label>
                         <input type="text" id="poi-name" placeholder="Ex: Shell Gas Station Casablanca"/>
+                    </div>
+                    <div class="form-group" dir="rtl">
+                        <label class="form-label">Nom POI (Arabe)</label>
+                        <input type="text" id="poi-name-ar" placeholder="مثال: محطة شيل الدار البيضاء"/>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Type *</label>
@@ -692,9 +696,13 @@
                         <label class="form-label">Website</label>
                         <input type="url" id="poi-website" placeholder="https://..."/>
                     </div>
-                    <div class="form-group full">
+                    <div class="form-group">
                         <label class="form-label">Description</label>
                         <textarea id="poi-description" rows="3" placeholder="Description of the point of interest..."></textarea>
+                    </div>
+                    <div class="form-group" dir="rtl">
+                        <label class="form-label">Description (Arabe)</label>
+                        <textarea id="poi-description-ar" rows="3" placeholder="وصف نقطة الاهتمام..."></textarea>
                     </div>
                 </div>
             </div>
@@ -1310,8 +1318,10 @@ function openPoiModal(poi = null) {
     document.getElementById('modal-poi-title').textContent = poi ? 'Edit POI' : 'New POI';
     document.getElementById('modal-poi-sub').textContent = poi ? `Editing: ${poi.name}` : 'Fill in the information for the point of interest';
     document.getElementById('poi-name').value = poi?.name || '';
+    document.getElementById('poi-name-ar').value = poi?.name_ar || '';
     document.getElementById('poi-type-id').value = poi?.type_id || '';
     document.getElementById('poi-description').value = poi?.description || '';
+    document.getElementById('poi-description-ar').value = poi?.description_ar || '';
     document.getElementById('poi-address').value = poi?.address || '';
     document.getElementById('poi-phone').value = poi?.phone || '';
     document.getElementById('poi-email').value = poi?.email || '';
@@ -1400,8 +1410,10 @@ async function savePoi() {
 
     const body = {
         name: document.getElementById('poi-name').value,
+        name_ar: document.getElementById('poi-name-ar').value || null,
         type_id: parseInt(document.getElementById('poi-type-id').value) || null,
         description: document.getElementById('poi-description').value || null,
+        description_ar: document.getElementById('poi-description-ar').value || null,
         address: document.getElementById('poi-address').value || null,
         phone: document.getElementById('poi-phone').value || null,
         email: document.getElementById('poi-email').value || null,
