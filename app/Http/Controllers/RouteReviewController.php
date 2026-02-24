@@ -132,7 +132,7 @@ class RouteReviewController extends Controller
             ], 404);
         }
 
-        if ($review->user_id !== auth()->id() && !auth()->user()->hasRole('admin')) {
+        if ($review->user_id !== auth()->id() && !auth()->user()->hasPermission('manage_reviews')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized',

@@ -322,7 +322,7 @@ class PointOfInterestController extends Controller
         }
 
         // Check if user is owner or admin
-        if ($poi->owner_id !== auth()->id() && !auth()->user()->hasRole('admin')) {
+        if ($poi->owner_id !== auth()->id() && !auth()->user()->hasPermission('manage_pois')) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not authorized to update this POI',
@@ -362,7 +362,7 @@ class PointOfInterestController extends Controller
 
         // Only admins can change the owner
         if (isset($validatedData['owner_id']) && $validatedData['owner_id'] != $poi->owner_id) {
-            if (!auth()->user()->hasRole('admin')) {
+            if (!auth()->user()->hasPermission('manage_pois')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Only administrators can transfer POI ownership',
@@ -415,7 +415,7 @@ class PointOfInterestController extends Controller
         }
 
         // Check if user is owner or admin
-        if ($poi->owner_id !== auth()->id() && !auth()->user()->hasRole('admin')) {
+        if ($poi->owner_id !== auth()->id() && !auth()->user()->hasPermission('manage_pois')) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not authorized to delete this POI',

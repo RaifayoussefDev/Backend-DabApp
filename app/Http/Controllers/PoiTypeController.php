@@ -201,9 +201,11 @@ class PoiTypeController extends Controller
 
         // Optionally include related POIs
         if ($request->boolean('with_pois', false)) {
-            $query->with(['pointsOfInterest' => function ($q) {
-                $q->active()->with(['mainImage', 'city', 'country'])->limit(10);
-            }]);
+            $query->with([
+                'pointsOfInterest' => function ($q) {
+                    $q->active()->with(['mainImage', 'city', 'country'])->limit(10);
+                }
+            ]);
         }
 
         // Optionally include services
@@ -326,7 +328,7 @@ class PoiTypeController extends Controller
         // Check if there are associated POIs
         if ($poiType->points_of_interest_count > 0) {
             // Only allow force delete if user is admin
-            if (!$request->boolean('force', false) || !auth()->user()->hasRole('admin')) {
+            if (!$request->boolean('force', false) || !auth()->user()->hasPermission('manage_poi_types')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot delete POI type with associated POIs',

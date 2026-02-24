@@ -48,9 +48,14 @@ class RouteController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Route::with(['creator', 'category', 'tags', 'waypoints' => function ($query) {
-            $query->orderBy('order_position', 'asc')->limit(1);
-        }]);
+        $query = Route::with([
+            'creator',
+            'category',
+            'tags',
+            'waypoints' => function ($query) {
+                $query->orderBy('order_position', 'asc')->limit(1);
+            }
+        ]);
 
         if ($request->has('category_id')) {
             $query->inCategory($request->category_id);
@@ -260,7 +265,7 @@ class RouteController extends Controller
             ], 404);
         }
 
-        if ($route->created_by !== auth()->id() && !auth()->user()->hasRole('admin')) {
+        if ($route->created_by !== auth()->id() && !auth()->user()->hasPermission('manage_routes')) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not authorized to update this route',
@@ -322,7 +327,7 @@ class RouteController extends Controller
             ], 404);
         }
 
-        if ($route->created_by !== auth()->id() && !auth()->user()->hasRole('admin')) {
+        if ($route->created_by !== auth()->id() && !auth()->user()->hasPermission('manage_routes')) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not authorized to delete this route',
