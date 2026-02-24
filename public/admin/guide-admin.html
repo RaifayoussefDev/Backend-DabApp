@@ -2527,6 +2527,8 @@
             <select class="s-image-position">
                 <option value="left" ${!data?.image_position || data?.image_position === "left" ? "selected" : ""}>Left</option>
                 <option value="right" ${data?.image_position === "right" ? "selected" : ""}>Right</option>
+                <option value="top" ${data?.image_position === "top" ? "selected" : ""}>Top</option>
+                <option value="bottom" ${data?.image_position === "bottom" ? "selected" : ""}>Bottom</option>
             </select>
         </div>
         
