@@ -72,6 +72,7 @@ use App\Http\Controllers\{
     PoiReviewController,
     PoiServiceController,
     PoiTypeController,
+    PoiTagController,
     PricingRulesLicencePlateController,
     PricingRulesMotorcycleController,
     PricingRulesSparepartController,
@@ -125,6 +126,7 @@ use App\Http\Controllers\Admin\GuideAdminController;
 use App\Http\Controllers\Admin\GuideCategoryAdminController;
 use App\Http\Controllers\Admin\GuideTagAdminController;
 use App\Http\Controllers\Admin\GuideCommentAdminController;
+use App\Http\Controllers\Admin\PoiTagAdminController;
 
 // ============================================
 // ============================================
@@ -149,8 +151,9 @@ Route::get('/get-country', [AuthController::class, 'getCountry'])->name('get.cou
 Route::get('/countries', [AuthController::class, 'getAllCountries']);
 Route::post('/prospect-listings', [App\Http\Controllers\ProspectController::class, 'store']);
 Route::post('/prospect/upload', [App\Http\Controllers\ImageUploadController::class, 'upload']);
-Route::post('/upload-image-public', [App\Http\Controllers\ImageUploadController::class, 'uploadPublic']);
 Route::post('/upload-icon', [App\Http\Controllers\ImageUploadController::class, 'uploadIcon']);
+Route::post('/upload-image-public', [App\Http\Controllers\ImageUploadController::class, 'uploadPublic']);
+Route::post('/upload-image-no-watermark', [App\Http\Controllers\ImageUploadController::class, 'uploadNoWatermark']);
 
 
 
@@ -239,6 +242,14 @@ Route::prefix('admin')->group(function () {
             Route::delete('/cleanup-unused', [GuideTagAdminController::class, 'cleanupUnused']);
         });
         Route::apiResource('guide-tags', GuideTagAdminController::class);
+
+        // POI Tags Management
+        Route::prefix('poi-tags')->group(function () {
+            Route::get('/stats', [PoiTagAdminController::class, 'stats']);
+            Route::post('/bulk-delete', [PoiTagAdminController::class, 'bulkDelete']);
+            Route::delete('/cleanup-unused', [PoiTagAdminController::class, 'cleanupUnused']);
+        });
+        Route::apiResource('poi-tags', PoiTagAdminController::class);
 
         // Guide Comments Management
         Route::prefix('guide-comments')->group(function () {
@@ -596,6 +607,14 @@ Route::get('/poi-types/{id}/pois', [PoiTypeController::class, 'getPois']);
 Route::get('/poi-services', [PoiServiceController::class, 'index']);
 Route::get('/poi-services/{id}', [PoiServiceController::class, 'show']);
 
+// POI Tags
+Route::prefix('poi-tags')->group(function () {
+    Route::get('/', [PoiTagController::class, 'index']);
+    Route::get('/popular', [PoiTagController::class, 'popular']);
+    Route::get('/{slug}', [PoiTagController::class, 'show']);
+    Route::get('/{slug}/pois', [PoiTagController::class, 'getPoisByTag']);
+});
+
 // ============================================
 // ROUTES (PUBLIC)
 // ============================================
@@ -781,6 +800,19 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('/cities/{id}', [LocationController::class, 'adminDestroyCity']);
     });
 
+    // ============================================
+    // POI TAGS (ADMIN)
+    // ============================================
+    Route::prefix('admin/poi-tags')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\PoiTagAdminController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Admin\PoiTagAdminController::class, 'store']);
+        Route::get('/stats', [\App\Http\Controllers\Admin\PoiTagAdminController::class, 'stats']);
+        Route::post('/bulk-delete', [\App\Http\Controllers\Admin\PoiTagAdminController::class, 'bulkDelete']);
+        Route::delete('/cleanup', [\App\Http\Controllers\Admin\PoiTagAdminController::class, 'cleanup']);
+        Route::put('/{id}', [\App\Http\Controllers\Admin\PoiTagAdminController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\PoiTagAdminController::class, 'destroy']);
+    });
+
 
 
     // ============================================
@@ -924,6 +956,7 @@ Route::middleware('auth:api')->group(function () {
     // IMAGE UPLOAD
     // ============================================
     Route::post('/upload-image', [ImageUploadController::class, 'upload']);
+    Route::post('/upload-icon', [ImageUploadController::class, 'uploadIcon']);
     Route::post('/upload-image-no-watermark', [ImageUploadController::class, 'uploadNoWatermark']);
     Route::delete('/delete-image', [ImageUploadController::class, 'delete']);
 
@@ -1144,6 +1177,8 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/pois/{id}/favorite', [PointOfInterestController::class, 'toggleFavorite']);
     Route::get('/pois/nearby', [PointOfInterestController::class, 'nearby']);
     Route::get('/pois/favorites', [PointOfInterestController::class, 'favorites']);
+    Route::post('/pois/{id}/images', [PointOfInterestController::class, 'addImage']);
+    Route::delete('/pois/{id}/images/{imageId}', [PointOfInterestController::class, 'removeImage']);
 
     Route::get('/pois/{poi_id}/reviews', [PoiReviewController::class, 'index']);
     Route::post('/pois/{poi_id}/reviews', [PoiReviewController::class, 'store']);

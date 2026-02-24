@@ -1,0 +1,2339 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DabApp — POI Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <!-- Google Maps API with Places Library -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBznLyPEvm9nm3LerujutDMx1F6zNSpk2E&libraries=places,geometry"></script>
+    <style>
+        :root {
+            --bg: #0d0f14;
+            --surface: #13161e;
+            --surface2: #1a1e28;
+            --surface3: #222736;
+            --border: #2a3045;
+            --border2: #343c55;
+            --accent: #f97316;
+            --accent2: #fb923c;
+            --accent-glow: rgba(249,115,22,0.15);
+            --text: #e8eaf0;
+            --text2: #9ba3bc;
+            --text3: #5c6480;
+            --green: #22d3a5;
+            --red: #f25c78;
+            --yellow: #f5c842;
+            --blue: #60a5fa;
+            --purple: #a78bfa;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+            --shadow-lg: 0 8px 48px rgba(0,0,0,0.6);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text); font-family: "DM Sans", sans-serif; font-size: 14px; line-height: 1.6; min-height: 100vh; overflow-x: hidden; }
+        h1,h2,h3,h4,h5 { font-family: "Syne", sans-serif; }
+
+        /* TOAST */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--accent); padding: 14px 18px; border-radius: var(--radius-sm); color: var(--text); font-size: 13px; min-width: 280px; box-shadow: var(--shadow); animation: slideIn 0.3s ease; display: flex; align-items: center; gap: 10px; }
+        .toast.success { border-left-color: var(--green); }
+        .toast.error { border-left-color: var(--red); }
+        .toast.warning { border-left-color: var(--yellow); }
+        @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* LAYOUT */
+        .app { display: flex; height: 100vh; overflow: hidden; }
+
+        /* SIDEBAR */
+        .sidebar { width: 240px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; }
+        .sidebar-logo { padding: 24px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: center; }
+        .sidebar-logo img { height: 44px; width: auto; object-fit: contain; filter: drop-shadow(0 0 8px rgba(249,115,22,0.2)); }
+        .nav-section { padding: 16px 12px 6px; }
+        .nav-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; padding: 0 8px 8px; opacity: 0.8; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s; color: var(--text2); font-size: 13.5px; font-weight: 500; margin-bottom: 2px; border: 1px solid transparent; text-decoration: none; position: relative; }
+        .nav-item:hover { background: var(--surface2); color: var(--text); }
+        .nav-item.active { background: var(--accent-glow); color: var(--accent); border-color: rgba(249,115,22,0.2); }
+        .nav-item i { width: 18px; text-align: center; flex-shrink: 0; font-size: 14px; opacity: 0.7; }
+        .nav-item.active i { opacity: 1; }
+        .nav-badge { margin-left: auto; background: var(--red); color: white; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; min-width: 20px; text-align: center; }
+        .nav-badge.orange { background: var(--accent); }
+
+        /* SUBMENU */
+        .nav-submenu { max-height: 0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(0,0,0,0.1); border-radius: 8px; margin: 0 4px 4px; }
+        .nav-submenu.open { max-height: 200px; padding: 4px 0; margin-bottom: 8px; }
+        .nav-item.sub-item { padding: 8px 12px 8px 36px; font-size: 12.5px; opacity: 0.8; }
+        .nav-item.sub-item:hover { opacity: 1; }
+        .nav-item.has-submenu .chevron { margin-left: auto; font-size: 10px; transition: transform 0.2s; opacity: 0.5; }
+        .nav-item.has-submenu.open .chevron { transform: rotate(90deg); }
+
+        /* API CONFIG */
+        .api-config { margin-top: auto; padding: 14px 16px; border-top: 1px solid var(--border); }
+        .api-config label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 5px; }
+        .api-config input { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 7px 10px; border-radius: var(--radius-sm); font-size: 11px; font-family: monospace; }
+        .api-config input:focus { outline: none; border-color: var(--accent); }
+
+        /* MAIN */
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* TOPBAR */
+        .topbar { padding: 14px 28px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+        .topbar-icon { width: 38px; height: 38px; border-radius: 10px; background: var(--accent-glow); border: 1px solid rgba(249,115,22,0.25); display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 16px; flex-shrink: 0; }
+        .topbar h1 { font-size: 17px; font-weight: 700; }
+        .topbar-sub { font-size: 12px; color: var(--text3); margin-top: 1px; }
+        .topbar-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+
+        /* BUTTONS */
+        .btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: var(--radius-sm); font-family: "Syne", sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; letter-spacing: 0.2px; }
+        .btn-primary { background: var(--accent); color: white; box-shadow: 0 2px 12px rgba(249,115,22,0.3); }
+        .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(249,115,22,0.4); }
+        .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+        .btn-ghost:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
+        .btn-danger { background: rgba(242,92,120,0.15); color: var(--red); border: 1px solid rgba(242,92,120,0.3); }
+        .btn-danger:hover { background: rgba(242,92,120,0.25); }
+        .btn-success { background: rgba(34,211,165,0.15); color: var(--green); border: 1px solid rgba(34,211,165,0.3); }
+        .btn-success:hover { background: rgba(34,211,165,0.25); }
+        .btn-blue { background: rgba(96,165,250,0.15); color: var(--blue); border: 1px solid rgba(96,165,250,0.3); }
+        .btn-blue:hover { background: rgba(96,165,250,0.25); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-xs { padding: 4px 9px; font-size: 11px; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+        /* CONTENT */
+        .content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        /* STATS GRID */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; position: relative; overflow: hidden; }
+        .stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+        .stat-card.orange::before { background: var(--accent); }
+        .stat-card.green::before { background: var(--green); }
+        .stat-card.blue::before { background: var(--blue); }
+        .stat-card.purple::before { background: var(--purple); }
+        .stat-card.red::before { background: var(--red); }
+        .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+        .stat-value { font-family: "Syne", sans-serif; font-size: 28px; font-weight: 800; }
+        .stat-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+        .stat-icon { position: absolute; right: 18px; top: 18px; font-size: 28px; opacity: 0.08; }
+
+        /* FILTERS */
+        .filters { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .search-wrap { position: relative; flex: 1; min-width: 200px; }
+        .search-wrap i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 13px; }
+        .search-wrap input { padding-left: 32px; }
+        input, select, textarea { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: var(--radius-sm); font-size: 13px; font-family: "DM Sans", sans-serif; width: 100%; transition: border-color 0.15s; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(249,115,22,0.1); }
+        select option { background: var(--surface2); }
+        textarea { resize: vertical; }
+
+        /* TABLE */
+        .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th { padding: 11px 16px; background: var(--surface2); font-family: "Syne", sans-serif; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text3); text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        thead th:first-child { padding-left: 20px; }
+        tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: rgba(255,255,255,0.02); }
+        tbody td { padding: 13px 16px; vertical-align: middle; }
+        tbody td:first-child { padding-left: 20px; }
+        .cell-title { display: flex; align-items: center; gap: 11px; }
+        .cell-thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; background: var(--surface3); flex-shrink: 0; }
+        .cell-info h4 { font-size: 13.5px; font-weight: 500; color: var(--text); }
+        .cell-info p { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+        /* BADGE */
+        .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.3px; white-space: nowrap; }
+        .badge-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+        .badge-active { background: rgba(34,211,165,0.12); color: var(--green); }
+        .badge-inactive { background: rgba(91,100,130,0.2); color: var(--text3); }
+        .badge-verified { background: rgba(96,165,250,0.12); color: var(--blue); }
+        .badge-pending { background: rgba(245,200,66,0.12); color: var(--yellow); }
+        .badge-resolved { background: rgba(34,211,165,0.12); color: var(--green); }
+        .badge-rejected { background: rgba(242,92,120,0.12); color: var(--red); }
+        .badge-orange { background: var(--accent-glow); color: var(--accent); }
+
+        /* ACTIONS */
+        .actions-cell { display: flex; align-items: center; gap: 6px; }
+        .icon-btn { width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text2); transition: all 0.15s; font-size: 13px; }
+        .icon-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
+        .icon-btn.danger:hover { background: rgba(242,92,120,0.1); color: var(--red); border-color: rgba(242,92,120,0.3); }
+        .icon-btn.success:hover { background: rgba(34,211,165,0.1); color: var(--green); border-color: rgba(34,211,165,0.3); }
+
+        /* PAGINATION */
+        .pagination { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text3); }
+        .pagination-btns { display: flex; gap: 6px; }
+        .page-btn { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 13px; transition: all 0.15s; }
+        .page-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .page-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+        /* MODAL */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+        .modal-overlay.open { display: flex; }
+        .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 720px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); animation: modalIn 0.2s ease; }
+        .modal.modal-lg { max-width: 900px; }
+        .modal.modal-sm { max-width: 440px; }
+        @keyframes modalIn { from { transform: scale(0.97) translateY(10px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+        .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+        .modal-header h2 { font-size: 17px; font-weight: 700; }
+        .modal-header p { font-size: 12px; color: var(--text3); margin-top: 2px; }
+        .modal-close { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text3); transition: all 0.15s; font-size: 15px; }
+        .modal-close:hover { background: var(--surface2); color: var(--text); }
+        .modal-body { padding: 22px 24px; overflow-y: auto; flex: 1; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
+
+        /* AUTH MODAL SPECIFIC */
+        #modal-auth .modal-body { padding: 32px; text-align: center; }
+        .auth-icon { width: 64px; height: 64px; background: var(--accent-glow); color: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 20px; }
+
+        /* FORM */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group.full { grid-column: 1 / -1; }
+        .form-label { font-size: 12px; font-weight: 600; color: var(--text2); letter-spacing: 0.3px; text-transform: uppercase; }
+        .form-hint { font-size: 11px; color: var(--text3); margin-top: 3px; }
+        .form-section { margin-bottom: 22px; }
+        .form-section-title { font-family: "Syne", sans-serif; font-size: 13px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+        .form-section-title i { color: var(--accent); }
+
+        /* ICON UPLOAD */
+        .icon-upload-wrap { display: flex; gap: 14px; align-items: flex-start; }
+        .icon-preview-box { width: 80px; height: 80px; border-radius: 12px; background: var(--surface3); border: 2px dashed var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; position: relative; cursor: pointer; transition: border-color 0.15s; }
+        .icon-preview-box:hover { border-color: var(--accent); }
+        .icon-preview-box img { width: 100%; height: 100%; object-fit: contain; }
+        .icon-preview-box .icon-preview-fa { font-size: 32px; }
+        .icon-preview-box .upload-overlay { position: absolute; inset: 0; background: rgba(249,115,22,0.15); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; }
+        .icon-preview-box:hover .upload-overlay { opacity: 1; }
+        .icon-upload-inputs { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+        .icon-type-tabs { display: flex; gap: 0; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+        .icon-type-tab { flex: 1; padding: 8px; text-align: center; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; color: var(--text2); background: var(--surface2); border: none; font-family: "Syne", sans-serif; }
+        .icon-type-tab.active { background: var(--accent); color: white; }
+        .icon-input-group { display: none; }
+        .icon-input-group.active { display: flex; flex-direction: column; gap: 8px; }
+        .file-drop { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 16px; text-align: center; cursor: pointer; transition: all 0.15s; position: relative; }
+        .file-drop:hover, .file-drop.drag-over { border-color: var(--accent); background: var(--accent-glow); }
+        .file-drop input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+        .file-drop-icon { font-size: 20px; color: var(--text3); margin-bottom: 6px; }
+        .file-drop p { font-size: 12px; color: var(--text3); }
+        .file-drop strong { color: var(--accent); }
+
+        /* COLOR PICKER */
+        .color-pick-wrap { display: flex; gap: 10px; align-items: center; }
+        .color-pick-wrap input[type="color"] { width: 40px; height: 40px; padding: 2px; cursor: pointer; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); flex-shrink: 0; }
+        .color-swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+        .color-swatch { width: 24px; height: 24px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: all 0.15s; flex-shrink: 0; }
+        .color-swatch:hover { transform: scale(1.15); border-color: rgba(255,255,255,0.3); }
+        .color-swatch.selected { border-color: white; box-shadow: 0 0 0 2px var(--accent); }
+
+        /* MAP */
+        #map-picker { height: 280px; border-radius: var(--radius-sm); border: 1px solid var(--border); overflow: hidden; margin-top: 8px; }
+        .coords-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
+
+        /* OPENING HOURS */
+        .hours-grid { display: grid; gap: 8px; }
+        .hours-row { display: grid; grid-template-columns: 90px 1fr; gap: 10px; align-items: center; }
+        .hours-day { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: capitalize; }
+        .hours-inputs { display: flex; gap: 8px; align-items: center; }
+        .hours-inputs input { padding: 7px 10px; font-size: 12px; }
+        .hours-sep { color: var(--text3); font-size: 12px; flex-shrink: 0; }
+        .hours-closed-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); cursor: pointer; flex-shrink: 0; }
+        .hours-closed-toggle input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--accent); }
+
+        /* SERVICES TAGS */
+        .tags-input-wrap { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; display: flex; flex-wrap: wrap; gap: 6px; cursor: text; min-height: 42px; background: var(--surface2); }
+        .tags-input-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(249,115,22,0.1); }
+        .tag-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 8px; background: var(--accent-glow); border: 1px solid rgba(249,115,22,0.3); border-radius: 20px; font-size: 12px; color: var(--accent); }
+        .tag-chip .tag-rm { cursor: pointer; opacity: 0.7; font-size: 11px; }
+        .tag-chip .tag-rm:hover { opacity: 1; }
+        .tags-input-wrap input { border: none; background: transparent; padding: 0; width: auto; min-width: 80px; flex: 1; font-size: 12px; box-shadow: none; }
+        .tags-input-wrap input:focus { outline: none; box-shadow: none; }
+
+        /* STAR RATING */
+        .stars { display: flex; gap: 2px; }
+        .stars i { font-size: 12px; }
+        .stars .filled { color: var(--yellow); }
+        .stars .empty { color: var(--text3); }
+
+        /* POI TYPE GRID CARDS */
+        .type-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+        .type-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; transition: all 0.15s; cursor: pointer; position: relative; }
+        .type-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: var(--shadow); }
+        .type-card-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; overflow: hidden; flex-shrink: 0; }
+        .type-card-icon img { width: 100%; height: 100%; object-fit: contain; }
+        .type-card h3 { font-size: 14px; font-weight: 700; }
+        .type-card p { font-size: 11px; color: var(--text3); }
+        .type-card-actions { position: absolute; top: 10px; right: 10px; display: none; gap: 4px; }
+        .type-card:hover .type-card-actions { display: flex; }
+
+        /* SECTION HEADER */
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+        .section-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .section-title i { color: var(--accent); }
+
+        /* LOADING */
+        .loading { display: flex; align-items: center; justify-content: center; padding: 60px; color: var(--text3); flex-direction: column; gap: 12px; }
+        .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* EMPTY STATE */
+        .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px; color: var(--text3); gap: 12px; text-align: center; }
+        .empty i { font-size: 40px; opacity: 0.3; }
+        .empty h3 { font-size: 16px; color: var(--text2); }
+        .empty p { font-size: 13px; max-width: 300px; }
+
+        /* CONFIRM MODAL */
+        .confirm-icon { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px; }
+        .confirm-icon.danger { background: rgba(242,92,120,0.15); color: var(--red); }
+
+        /* MAP SELECT */
+        .map-coord-display { display: flex; gap: 10px; align-items: center; background: var(--surface3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px; font-family: monospace; color: var(--text2); margin-top: 8px; }
+        .map-coord-display i { color: var(--accent); }
+
+        /* REPORTS DETAIL */
+        .report-detail { background: var(--surface2); border-radius: var(--radius-sm); padding: 14px; border: 1px solid var(--border); }
+        .report-detail p { font-size: 13px; line-height: 1.7; }
+
+        /* VIEW TOGGLE */
+        .view-toggle { display: flex; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+        .view-toggle-btn { padding: 7px 12px; cursor: pointer; background: var(--surface2); border: none; color: var(--text2); font-size: 14px; transition: all 0.15s; }
+        .view-toggle-btn.active { background: var(--accent); color: white; }
+
+        /* DASHBOARD QUICK STATS */
+        .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+        .quick-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+        .quick-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+        .quick-card h3 i { color: var(--accent); }
+
+        /* TYPE CHART BAR */
+        .type-bar-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+        .type-bar-item:last-child { border-bottom: none; }
+        .type-bar-name { font-size: 12px; color: var(--text2); min-width: 100px; }
+        .type-bar-track { flex: 1; height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
+        .type-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.5s ease; }
+        .type-bar-count { font-size: 12px; color: var(--text3); min-width: 30px; text-align: right; }
+
+        /* REPORT REASON TAG */
+        .reason-tag { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; background: var(--surface3); color: var(--text2); border: 1px solid var(--border); }
+
+        /* IMAGES PREVIEW */
+        .images-preview-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+        .img-preview-item { aspect-ratio: 1; border-radius: 8px; overflow: hidden; position: relative; background: var(--surface3); border: 1px solid var(--border); }
+        .img-preview-item img { width: 100%; height: 100%; object-fit: cover; }
+        .img-preview-item .img-rm { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%; background: rgba(0,0,0,0.7); color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; opacity: 0; transition: opacity 0.15s; }
+        .img-preview-item:hover .img-rm { opacity: 1; }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+        /* RESPONSIVE */
+        @media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2,1fr); } }
+        @media (max-width: 768px) { .sidebar { width: 200px; } .form-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<!-- APP SHELL -->
+<div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <img src="../LogoDabApp.png" alt="DabApp" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" id="logo-img"/>
+            <div style="display:none; width:44px; height:44px; border-radius:12px; background:var(--accent); align-items:center; justify-content:center; color:white; font-family:'Syne',sans-serif; font-weight:800; font-size:18px;" id="logo-fallback">D</div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">Overview</div>
+            <div class="nav-item active" id="nav-dashboard" onclick="navigate('dashboard')">
+                <i class="fas fa-chart-pie"></i> Dashboard
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">Guides & Routes</div>
+            <div class="nav-item has-submenu" id="nav-guides-parent" onclick="toggleSubmenu(this)">
+                <i class="fas fa-route"></i> <span>Guides & Routes</span>
+                <i class="fas fa-chevron-right chevron"></i>
+            </div>
+            <div class="nav-submenu" id="submenu-guides">
+                <a href="guide-admin.html" class="nav-item sub-item" id="nav-guides">
+                    <i class="fas fa-book"></i> Guides
+                </a>
+                <a href="guide-categories.html" class="nav-item sub-item" id="nav-guide-categories">
+                    <i class="fas fa-tags"></i> Categories
+                </a>
+                <a href="route-admin.html" class="nav-item sub-item" id="nav-routes">
+                    <i class="fas fa-directions"></i> Routes
+                </a>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">Points of Interest</div>
+            <div class="nav-item" id="nav-pois" onclick="navigate('pois')">
+                <i class="fas fa-map-marker-alt"></i> All POIs
+                <span class="nav-badge orange" id="badge-pois">—</span>
+            </div>
+            <div class="nav-item" id="nav-poi-types" onclick="navigate('poi-types')">
+                <i class="fas fa-layer-group"></i> POI Types
+            </div>
+            <div class="nav-item" id="nav-poi-tags" onclick="navigate('poi-tags')">
+                <i class="fas fa-tags"></i> POI Tags
+            </div>
+            <div class="nav-item" id="nav-services" onclick="navigate('services')">
+                <i class="fas fa-concierge-bell"></i> Services
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">Management</div>
+            <div class="nav-item" id="nav-reviews" onclick="navigate('reviews')">
+                <i class="fas fa-star"></i> Reviews
+            </div>
+            <div class="nav-item" id="nav-reports" onclick="navigate('reports')">
+                <i class="fas fa-flag"></i> Reports
+                <span class="nav-badge" id="badge-reports">—</span>
+            </div>
+        </div>
+
+        <div class="api-config">
+            <label>API Base URL</label>
+            <input type="text" id="api-base" value="http://localhost:8000" placeholder="https://api.dabapp.com"/>
+            <div style="margin-top:8px;">
+                <label>Bearer Token</label>
+                <input type="password" id="api-token" placeholder="eyJ..."/>
+            </div>
+            <button class="btn btn-primary btn-sm" style="width:100%; margin-top:10px; justify-content:center;" onclick="saveConfig()">
+                <i class="fas fa-plug"></i> Connect
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main">
+        <!-- TOPBAR -->
+        <div class="topbar">
+            <div class="topbar-icon" id="topbar-icon"><i class="fas fa-chart-pie"></i></div>
+            <div>
+                <h1 id="topbar-title">Dashboard</h1>
+                <div class="topbar-sub" id="topbar-sub">Overview of Points of Interest</div>
+            </div>
+            <div class="topbar-actions" id="topbar-actions"></div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="content">
+
+            <!-- ══════════════ DASHBOARD ══════════════ -->
+            <div class="panel active" id="panel-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card orange">
+                        <div class="stat-icon"><i class="fas fa-map-marker-alt"></i></div>
+                        <div class="stat-label">Total POI</div>
+                        <div class="stat-value" id="stat-total-pois">—</div>
+                        <div class="stat-sub">Active points of interest</div>
+                    </div>
+                    <div class="stat-card blue">
+                        <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
+                        <div class="stat-label">Types</div>
+                        <div class="stat-value" id="stat-total-types">—</div>
+                        <div class="stat-sub">POI categories</div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-icon"><i class="fas fa-star"></i></div>
+                        <div class="stat-label">Reviews</div>
+                        <div class="stat-value" id="stat-total-reviews">—</div>
+                        <div class="stat-sub">Submitted ratings</div>
+                    </div>
+                    <div class="stat-card red">
+                        <div class="stat-icon"><i class="fas fa-flag"></i></div>
+                        <div class="stat-label">Reports</div>
+                        <div class="stat-value" id="stat-pending-reports">—</div>
+                        <div class="stat-sub">Pending processing</div>
+                    </div>
+                </div>
+
+                <div class="quick-grid">
+                    <div class="quick-card">
+                        <h3><i class="fas fa-layer-group"></i> POIs by Type</h3>
+                        <div id="type-bars">
+                            <div class="loading"><div class="spinner"></div></div>
+                        </div>
+                    </div>
+                    <div class="quick-card">
+                        <h3><i class="fas fa-flag"></i> Recent Reports</h3>
+                        <div id="recent-reports-list">
+                            <div class="loading"><div class="spinner"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════ POI LIST ══════════════ -->
+            <div class="panel" id="panel-pois">
+                <div class="filters">
+                    <div class="search-wrap">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="poi-search" placeholder="Search a POI..." oninput="debounce(loadPois,400)()"/>
+                    </div>
+                    <select id="poi-type-filter" onchange="loadPois()" style="width:160px;">
+                        <option value="">All Types</option>
+                    </select>
+                    <select id="poi-verified-filter" onchange="loadPois()" style="width:140px;">
+                        <option value="">All Status</option>
+                        <option value="1">Verified</option>
+                        <option value="0">Not verified</option>
+                    </select>
+                    <button class="btn btn-ghost btn-sm" onclick="loadPois()"><i class="fas fa-sync-alt"></i></button>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>POI</th>
+                                <th>Type</th>
+                                <th>Location</th>
+                                <th>Rating</th>
+                                <th>Views</th>
+                                <th>Status</th>
+                                <th style="text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pois-tbody">
+                            <tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr>
+                        </tbody>
+                    </table>
+                    <div class="pagination">
+                        <span id="pois-pagination-info"></span>
+                        <div class="pagination-btns" id="pois-pagination-btns"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════ POI TYPES ══════════════ -->
+            <div class="panel" id="panel-poi-types">
+                <div class="section-header">
+                    <div class="section-title"><i class="fas fa-layer-group"></i> POI Types</div>
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <div class="view-toggle">
+                            <button class="view-toggle-btn active" id="types-grid-btn" onclick="setTypesView('grid')"><i class="fas fa-th-large"></i></button>
+                            <button class="view-toggle-btn" id="types-list-btn" onclick="setTypesView('list')"><i class="fas fa-list"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRID VIEW -->
+                <div id="types-grid-view">
+                    <div class="type-cards-grid" id="types-cards">
+                        <div style="grid-column:1/-1"><div class="loading"><div class="spinner"></div></div></div>
+                    </div>
+                </div>
+
+                <!-- LIST VIEW -->
+                <div id="types-list-view" style="display:none;">
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Type</th><th>Icon</th><th>Color</th><th>POIs</th><th>Created at</th><th style="text-align:right;">Actions</th></tr></thead>
+                            <tbody id="types-tbody">
+                                <tr><td colspan="6"><div class="loading"><div class="spinner"></div></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════ POI TAGS ══════════════ -->
+            <div class="panel" id="panel-poi-tags">
+                <div class="filters">
+                    <div class="search-wrap">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="tag-search" placeholder="Search a tag..." oninput="debounce(loadTags,400)()"/>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="cleanupUnusedTags()" title="Cleanup Unused Tags"><i class="fas fa-broom"></i></button>
+                    <button class="btn btn-ghost btn-sm" onclick="loadTags()"><i class="fas fa-sync-alt"></i></button>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Slug</th>
+                                <th>POIs Count</th>
+                                <th style="text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tags-tbody">
+                            <tr><td colspan="4"><div class="loading"><div class="spinner"></div></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ══════════════ SERVICES ══════════════ -->
+            <div class="panel" id="panel-services">
+                <div class="filters">
+                    <div class="search-wrap">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="svc-search" placeholder="Search a service..." oninput="debounce(loadServices,400)()"/>
+                    </div>
+                    <select id="svc-type-filter" onchange="loadServices()" style="width:180px;">
+                        <option value="">All Types</option>
+                    </select>
+                    <button class="btn btn-ghost btn-sm" onclick="loadServices()"><i class="fas fa-sync-alt"></i></button>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Service</th><th>POI Type</th><th style="text-align:right;">Actions</th></tr></thead>
+                        <tbody id="services-tbody">
+                            <tr><td colspan="3"><div class="loading"><div class="spinner"></div></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ══════════════ REVIEWS ══════════════ -->
+            <div class="panel" id="panel-reviews">
+                <div class="filters">
+                    <div class="search-wrap">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="rev-search" placeholder="Search..." oninput="debounce(() => loadAllReviews(),400)()"/>
+                    </div>
+                    <select id="rev-rating-filter" onchange="loadAllReviews()" style="width:140px;">
+                        <option value="">All Ratings</option>
+                        <option value="5">⭐⭐⭐⭐⭐ 5</option>
+                        <option value="4">⭐⭐⭐⭐ 4</option>
+                        <option value="3">⭐⭐⭐ 3</option>
+                        <option value="2">⭐⭐ 2</option>
+                        <option value="1">⭐ 1</option>
+                    </select>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>POI</th><th>User</th><th>Rating</th><th>Comment</th><th>Date</th><th style="text-align:right;">Actions</th></tr></thead>
+                        <tbody id="reviews-tbody">
+                            <tr><td colspan="6"><div class="empty"><i class="fas fa-star"></i><p>Select a POI to see its reviews, or use search.</p></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ══════════════ REPORTS ══════════════ -->
+            <div class="panel" id="panel-reports">
+                <div class="filters">
+                    <select id="rep-status-filter" onchange="loadReports()" style="width:160px;">
+                        <option value="pending">Pending</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="dismissed">Dismissed</option>
+                        <option value="all">All Reports</option>
+                    </select>
+                    <button class="btn btn-ghost btn-sm" onclick="loadReports()"><i class="fas fa-sync-alt"></i></button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>POI</th><th>Reason</th><th>Description</th><th>Reporter</th><th>Date</th><th>Status</th><th style="text-align:right;">Actions</th></tr></thead>
+                        <tbody id="reports-tbody">
+                            <tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL: ADD/EDIT POI
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-poi">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <div>
+                <h2 id="modal-poi-title">New POI</h2>
+                <p id="modal-poi-sub">Fill in the information for the point of interest</p>
+            </div>
+            <button class="modal-close" onclick="closeModal('modal-poi')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="poi-id"/>
+
+            <div class="form-section">
+                <div class="form-section-title"><i class="fas fa-info-circle"></i> General Information</div>
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label class="form-label">POI Name *</label>
+                        <input type="text" id="poi-name" placeholder="Ex: Shell Gas Station Casablanca"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Type *</label>
+                        <select id="poi-type-id">
+                            <option value="">-- Select --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="poi-email" placeholder="contact@poi.com"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="text" id="poi-phone" placeholder="+212 6 00 00 00 00"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Website</label>
+                        <input type="url" id="poi-website" placeholder="https://..."/>
+                    </div>
+                    <div class="form-group full">
+                        <label class="form-label">Description</label>
+                        <textarea id="poi-description" rows="3" placeholder="Description of the point of interest..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title"><i class="fas fa-tags"></i> Tags</div>
+                <div class="form-group">
+                    <label class="form-label">Select Tags</label>
+                    <div id="poi-tags-selection" class="tag-badges-container" style="margin-bottom:10px; min-height:40px; border:1px solid var(--border); padding:10px; border-radius:8px;">
+                        <!-- Selected tags will appear here -->
+                    </div>
+                    <select id="poi-tag-select" onchange="addTagToPoi(this.value)">
+                        <option value="">-- Choose a tag to add --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title"><i class="fas fa-map-marker-alt"></i> Location</div>
+                <div class="form-group">
+                    <label class="form-label">Search address or place on Google Maps</label>
+                    <div class="search-wrap">
+                        <i class="fas fa-search-location"></i>
+                        <input type="text" id="map-search" placeholder="Type to search..."/>
+                    </div>
+                </div>
+                <div class="form-grid cols-2" style="margin-top:10px;">
+                    <div class="form-group">
+                        <label class="form-label">Country *</label>
+                        <select id="poi-country-id" onchange="loadCities(this.value)">
+                            <option value="">-- Select Country --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">City *</label>
+                        <select id="poi-city-id">
+                            <option value="">-- Select City --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top:10px;">
+                    <label class="form-label">Address</label>
+                    <input type="text" id="poi-address" placeholder="Full address"/>
+                </div>
+                
+                <p class="form-hint" style="margin-top:8px;"><i class="fas fa-info-circle"></i> Use the search or click on the map to set the position</p>
+                <div id="map-picker" style="height:350px; border-radius:8px; border:1px solid var(--border); background:#1a1a1a;"></div>
+                
+                <div class="coords-row">
+                    <div class="form-group">
+                        <label class="form-label">Latitude *</label>
+                        <input type="number" id="poi-latitude" step="any" placeholder="33.5731" oninput="updateMapFromInputs()"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Longitude *</label>
+                        <input type="number" id="poi-longitude" step="any" placeholder="-7.5898" oninput="updateMapFromInputs()"/>
+                    </div>
+                </div>
+                <!-- Google Rating badge -->
+                <div id="google-rating-badge" style="display:none;margin-top:10px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:12px;display:flex;align-items:center;gap:8px;">
+                    <i class="fab fa-google" style="color:#4285F4;"></i>
+                    <span id="google-rating-text" style="color:var(--text2);"></span>
+                </div>
+                <!-- Hidden Google fields -->
+                <input type="hidden" id="poi-google-place-id"/>
+                <input type="hidden" id="poi-google-rating"/>
+                <input type="hidden" id="poi-google-reviews-count"/>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title"><i class="fas fa-clock"></i> Opening Hours</div>
+                <div class="hours-grid" id="hours-grid"></div>
+            </div>
+
+            <!-- ────── IMAGES ────── -->
+            <div class="form-section">
+                <div class="form-section-title"><i class="fas fa-images"></i> Images</div>
+                <div class="file-drop" id="poi-img-drop" style="margin-bottom:12px;">
+                    <input type="file" id="poi-img-file" accept="image/*" multiple style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;" onchange="handlePoiImagesUpload(this.files)"/>
+                    <div class="file-drop-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                    <p><strong>Click or drag images</strong> here to upload</p>
+                    <p style="font-size:11px;color:var(--text3);margin-top:4px;">JPG, PNG, WEBP · Max 5MB each · Multiple allowed</p>
+                    <div id="poi-img-spinner" style="display:none;margin-top:8px;"><div class="spinner" style="width:20px;height:20px;border-width:2px;"></div></div>
+                </div>
+                <div class="images-preview-grid" id="poi-images-preview"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-poi')">Cancel</button>
+            <button class="btn btn-primary" onclick="savePoi()"><i class="fas fa-save"></i> Save POI</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL: ADD/EDIT POI TYPE
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-type">
+    <div class="modal modal-sm" style="max-width:540px;">
+        <div class="modal-header">
+            <div>
+                <h2 id="modal-type-title">New POI Type</h2>
+                <p>Define name, icon and color</p>
+            </div>
+            <button class="modal-close" onclick="closeModal('modal-type')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="type-id"/>
+            <input type="hidden" id="type-icon-value"/>
+            <div class="form-group" style="margin-bottom:18px;">
+                <label class="form-label">Type Name *</label>
+                <input type="text" id="type-name" placeholder="Ex: Gas Station, Restaurant, Hotel..."/>
+            </div>
+
+            <div class="form-group" style="margin-bottom:18px;">
+                <label class="form-label">Icon</label>
+                <div class="icon-upload-wrap">
+                    <div class="icon-preview-box" onclick="document.getElementById('icon-file-input').click()">
+                        <div class="icon-preview-fa" id="icon-preview-fa" style="color:#f97316;"><i class="fas fa-map-marker-alt"></i></div>
+                        <div class="upload-overlay"><i class="fas fa-camera" style="color:white;font-size:18px;"></i></div>
+                    </div>
+                    <div class="icon-upload-inputs">
+                        <div class="icon-type-tabs">
+                            <button class="icon-type-tab active" onclick="switchIconTab('fa')"><i class="fab fa-font-awesome"></i> FontAwesome</button>
+                            <button class="icon-type-tab" onclick="switchIconTab('upload')"><i class="fas fa-upload"></i> Import Image</button>
+                        </div>
+                        <div class="icon-input-group active" id="icon-group-fa">
+                            <input type="text" id="type-icon-fa" placeholder="fas fa-map-marker-alt" oninput="previewFaIcon(this.value)"/>
+                            <p class="form-hint">Use FontAwesome 6 classes (ex: fas fa-gas-pump)</p>
+                        </div>
+                        <div class="icon-input-group" id="icon-group-upload">
+                            <div class="file-drop" id="icon-drop-zone">
+                                <input type="file" id="icon-file-input" accept="image/*" onchange="handleIconUpload(this)"/>
+                                <div class="file-drop-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                                <p><strong>Drag an image</strong> or click to browse</p>
+                                <p style="font-size:11px; margin-top:4px; color:var(--text3);">PNG, SVG, WEBP recommended · Max 2MB</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Hidden input for actual URL -->
+                <input type="hidden" id="type-icon-value"/>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Color</label>
+                <div class="color-pick-wrap">
+                    <input type="color" id="type-color-picker" value="#f97316" oninput="syncColorFromPicker(this.value)"/>
+                    <input type="text" id="type-color" placeholder="#f97316" style="font-family:monospace; width:110px;" oninput="syncColorToSwatch(this.value)"/>
+                    <div class="color-swatches" id="color-swatches"></div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-type')">Cancel</button>
+            <button class="btn btn-primary" onclick="savePoiType()"><i class="fas fa-save"></i> Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL: ADD/EDIT POI TAG
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-tag">
+    <div class="modal modal-sm" style="max-width:400px;">
+        <div class="modal-header">
+            <div>
+                <h2 id="modal-tag-title">New POI Tag</h2>
+                <p>Add a descriptive label for POIs</p>
+            </div>
+            <button class="modal-close" onclick="closeModal('modal-tag')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="tag-id"/>
+            <div class="form-group">
+                <label class="form-label">Tag Name *</label>
+                <input type="text" id="tag-name" placeholder="Ex: Free Wifi, Open 24h, Parking..."/>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-tag')">Cancel</button>
+            <button class="btn btn-primary" onclick="saveTag()"><i class="fas fa-save"></i> Save Tag</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL: ADD/EDIT SERVICE
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-service">
+    <div class="modal modal-sm">
+        <div class="modal-header">
+            <div>
+                <h2 id="modal-svc-title">New Service</h2>
+                <p>Define an available service for a POI type</p>
+            </div>
+            <button class="modal-close" onclick="closeModal('modal-service')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="svc-id"/>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label">Service Name *</label>
+                <input type="text" id="svc-name" placeholder="Ex: WiFi, Toilets, Parking..."/>
+            </div>
+            <div class="form-group">
+                <label class="form-label">POI Type *</label>
+                <select id="svc-type-id">
+                    <option value="">-- Select a type --</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-service')">Cancel</button>
+            <button class="btn btn-primary" onclick="saveService()"><i class="fas fa-save"></i> Save Service</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL: CONFIRM DELETE
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-confirm">
+    <div class="modal modal-sm">
+        <div class="modal-body" style="text-align:center; padding: 36px 28px;">
+            <div class="confirm-icon danger">
+                <i class="fas fa-trash-alt"></i>
+            </div>
+            <h2 style="font-size:18px; margin-bottom:10px;" id="confirm-title">Confirm Deletion</h2>
+            <p style="color:var(--text2); font-size:13px; line-height:1.6;" id="confirm-text">This action is irreversible. Do you want to continue?</p>
+            <div style="display:flex; gap:12px; margin-top:24px; justify-content:center;">
+                <button class="btn btn-ghost" onclick="closeModal('modal-confirm')">Cancel</button>
+                <button class="btn btn-danger" id="confirm-btn" onclick="confirmAction()"><i class="fas fa-trash-alt"></i> Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL: REPORT DETAIL
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-report">
+    <div class="modal modal-sm">
+        <div class="modal-header">
+            <div>
+                <h2>Détail du Signalement</h2>
+                <p id="modal-report-poi-name">—</p>
+            </div>
+            <button class="modal-close" onclick="closeModal('modal-report')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div style="margin-bottom:14px;">
+                <label class="form-label">Raison</label>
+                <p id="modal-report-reason" style="margin-top:5px; font-size:13px; color:var(--text);"></p>
+            </div>
+            <div style="margin-bottom:14px;">
+                <label class="form-label">Description</label>
+                <div class="report-detail">
+                    <p id="modal-report-desc">—</p>
+                </div>
+            </div>
+            <div style="margin-bottom:14px;">
+                <label class="form-label">Signalé par</label>
+                <p id="modal-report-user" style="margin-top:5px; font-size:13px;"></p>
+            </div>
+            <div>
+                <label class="form-label">Changer le statut</label>
+                <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                    <button class="btn btn-success btn-sm" onclick="updateReportStatus('resolved')"><i class="fas fa-check-circle"></i> Résolu</button>
+                    <button class="btn btn-danger btn-sm" onclick="updateReportStatus('rejected')"><i class="fas fa-ban"></i> Rejeté</button>
+                    <button class="btn btn-ghost btn-sm" onclick="updateReportStatus('pending')"><i class="fas fa-clock"></i> En attente</button>
+                </div>
+            </div>
+        </div>
+    </div>
+<!-- ══════════════════════════════════════════
+     MODAL: AUTH EXPIRED (RE-AUTHENTICATE)
+     ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-auth">
+    <div class="modal modal-sm">
+        <div class="modal-body">
+            <div class="auth-icon">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h2 style="font-size: 18px; margin-bottom: 8px;">Session Expirée</h2>
+            <p style="color: var(--text2); font-size: 13px; line-height: 1.6; margin-bottom: 24px;">Votre session a expiré ou votre jeton est invalide. Veuillez vous reconnecter pour continuer.</p>
+            
+            <div class="form-group" style="text-align: left; margin-bottom: 16px;">
+                <label class="form-label">Bearer Token</label>
+                <input type="password" id="auth-modal-token" placeholder="Coller votre nouveau jeton ici..."/>
+            </div>
+            
+            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="reauthenticate()">
+                <i class="fas fa-sign-in-alt"></i> Se reconnecter
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+const state = {
+    currentPanel: 'dashboard',
+    poisPage: 1,
+    poiTypes: [],
+    poiTags: [],         // All available tags
+    currentPoiTags: [],  // Tags for current POI
+    currentPoiImages: [], // {url, is_main, id (if existing)}
+    iconUploadMode: 'fa',
+    iconUploadedUrl: null,
+    confirmCallback: null,
+    currentReportId: null,
+    currentReportPoiId: null,
+    map: null,
+    marker: null,
+    autocomplete: null,
+    countries: [],
+    cities: [],
+};
+
+const COLOR_SWATCHES = [
+    '#f97316','#ef4444','#22d3a5','#60a5fa','#a78bfa',
+    '#f5c842','#ec4899','#14b8a6','#f59e0b','#8b5cf6',
+    '#10b981','#3b82f6','#e11d48','#06b6d4','#84cc16',
+];
+
+// ════════════════════════════════════════════
+// API
+// ════════════════════════════════════════════
+function getBase() { return document.getElementById('api-base').value.replace(/\/$/, ''); }
+function getToken() { return document.getElementById('api-token').value; }
+function headers(json = true) {
+    const h = { 'Authorization': `Bearer ${getToken()}` };
+    if (json) h['Content-Type'] = 'application/json';
+    return h;
+}
+
+async function api(path, method = 'GET', body = null, formData = false) {
+    const opts = { method, headers: formData ? { 'Authorization': `Bearer ${getToken()}` } : headers() };
+    if (body) opts.body = formData ? body : JSON.stringify(body);
+    try {
+        const res = await fetch(getBase() + path, opts);
+        const data = await res.json();
+        if (res.status === 401) {
+            handleUnauthorized();
+            throw { message: 'Session expired. Please log in again.', status: 401 };
+        }
+        if (!res.ok) throw data;
+        return data;
+    } catch (err) {
+        if (err.status === 401) throw err;
+        throw err;
+    }
+}
+
+function handleUnauthorized() {
+    localStorage.removeItem('auth_token');
+    document.getElementById('api-token').value = '';
+    openModal('modal-auth');
+}
+
+function reauthenticate() {
+    const newToken = document.getElementById('auth-modal-token').value.trim();
+    if (!newToken) { toast('Please enter a token', 'error'); return; }
+    
+    document.getElementById('api-token').value = newToken;
+    localStorage.setItem('auth_token', newToken);
+    closeModal('modal-auth');
+    toast('Session restored', 'success');
+    loadAll();
+}
+
+function saveConfig() {
+    const base = getBase();
+    const token = getToken();
+    localStorage.setItem('api_url', base);
+    localStorage.setItem('auth_token', token);
+    toast('Configuration saved', 'success');
+    loadAll();
+}
+
+function toggleSubmenu(el) {
+    const submenu = el.nextElementSibling;
+    const isOpen = submenu.classList.contains('open');
+    
+    // Close other submenus if needed (optional)
+    // document.querySelectorAll('.nav-submenu').forEach(s => s.classList.remove('open'));
+    // document.querySelectorAll('.has-submenu').forEach(i => i.classList.remove('open'));
+
+    if (isOpen) {
+        submenu.classList.remove('open');
+        el.classList.remove('open');
+    } else {
+        submenu.classList.add('open');
+        el.classList.add('open');
+    }
+}
+
+// ════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════
+const NAV_META = {
+    dashboard: { title: 'Dashboard', sub: 'Overview of Points of Interest', icon: 'fas fa-chart-pie' },
+    pois: { title: 'Points of Interest', sub: 'Manage all POIs', icon: 'fas fa-map-marker-alt' },
+    'poi-types': { title: 'POI Types', sub: 'Categories and icons', icon: 'fas fa-layer-group' },
+    'poi-tags': { title: 'POI Tags', sub: 'Labels and tags', icon: 'fas fa-tags' },
+    services: { title: 'Services', sub: 'Available services by type', icon: 'fas fa-concierge-bell' },
+    reviews: { title: 'Reviews', sub: 'Manage POI ratings', icon: 'fas fa-star' },
+    reports: { title: 'Reports', sub: 'Process user reports', icon: 'fas fa-flag' },
+};
+
+function navigate(panel) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('panel-' + panel).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => {
+        if (n.getAttribute('onclick')?.includes(`'${panel}'`)) n.classList.add('active');
+    });
+    const meta = NAV_META[panel] || {};
+    document.getElementById('topbar-title').textContent = meta.title || panel;
+    document.getElementById('topbar-sub').textContent = meta.sub || '';
+    document.getElementById('topbar-icon').innerHTML = `<i class="${meta.icon || 'fas fa-circle'}"></i>`;
+    state.currentPanel = panel;
+    updateTopbarActions(panel);
+    if (panel === 'dashboard') loadDashboard();
+    if (panel === 'pois') loadPois();
+    if (panel === 'poi-types') loadPoiTypes();
+    if (panel === 'poi-tags') loadTags();
+    if (panel === 'services') loadServices();
+    if (panel === 'reviews') loadAllReviews();
+    if (panel === 'reports') loadReports();
+}
+
+function updateTopbarActions(panel) {
+    const el = document.getElementById('topbar-actions');
+    const map = {
+        pois: `<button class="btn btn-primary" onclick="openPoiModal()"><i class="fas fa-plus"></i> New POI</button>`,
+        'poi-types': `<button class="btn btn-primary" onclick="openTypeModal()"><i class="fas fa-plus"></i> New Type</button>`,
+        'poi-tags': `<button class="btn btn-primary" onclick="openTagModal()"><i class="fas fa-plus"></i> New Tag</button>`,
+        services: `<button class="btn btn-primary" onclick="openServiceModal()"><i class="fas fa-plus"></i> New Service</button>`,
+    };
+    el.innerHTML = map[panel] || '';
+}
+
+// ════════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════════
+async function loadDashboard() {
+    try {
+        const [typesStats, reports] = await Promise.all([
+            api('/api/poi-types/stats'),
+            api('/api/reports/pending'),
+        ]);
+
+        const ts = typesStats.data;
+        document.getElementById('stat-total-pois').textContent = ts.total_pois ?? '—';
+        document.getElementById('stat-total-types').textContent = ts.total_types ?? '—';
+        document.getElementById('badge-pois').textContent = ts.total_pois ?? '—';
+
+        const pending = reports.data?.total ?? reports.data?.length ?? 0;
+        document.getElementById('stat-pending-reports').textContent = pending;
+        document.getElementById('badge-reports').textContent = pending;
+        document.getElementById('stat-total-reviews').textContent = '—';
+
+        // Type bars
+        const types = ts.types_with_counts || [];
+        const max = Math.max(...types.map(t => t.pois_count), 1);
+        document.getElementById('type-bars').innerHTML = types.length === 0
+            ? '<div class="empty"><i class="fas fa-layer-group"></i><p>No types found</p></div>'
+            : types.slice(0,8).map(t => `
+                <div class="type-bar-item">
+                    <div class="type-bar-name">${t.name}</div>
+                    <div class="type-bar-track"><div class="type-bar-fill" style="width:${(t.pois_count/max*100).toFixed(1)}%; background:${t.color||'var(--accent)'}"></div></div>
+                    <div class="type-bar-count">${t.pois_count}</div>
+                </div>`).join('');
+
+        // Recent reports
+        const reps = reports.data?.data || reports.data || [];
+        document.getElementById('recent-reports-list').innerHTML = reps.length === 0
+            ? '<div class="empty"><i class="fas fa-flag"></i><p>No pending reports</p></div>'
+            : reps.slice(0,5).map(r => `
+                <div class="type-bar-item">
+                    <div style="flex:1;">
+                        <div style="font-size:12px; font-weight:500; color:var(--text);">${r.poi?.name || 'POI #'+r.poi_id}</div>
+                        <div style="font-size:11px; color:var(--text3);">${r.reason}</div>
+                    </div>
+                    <span class="badge badge-pending">${r.status}</span>
+                </div>`).join('');
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+// ════════════════════════════════════════════
+// POI LIST
+// ════════════════════════════════════════════
+async function loadPois() {
+    try {
+        const search = document.getElementById('poi-search').value;
+        const type = document.getElementById('poi-type-filter').value;
+        const verified = document.getElementById('poi-verified-filter').value;
+        let url = `/api/pois?page=${state.poisPage}&per_page=20`;
+        if (type) url += `&type_id=${type}`;
+        if (verified !== '') url += `&is_verified=${verified}`;
+        const data = await api(url);
+        renderPoisTable(data.data);
+    } catch(e) {
+        document.getElementById('pois-tbody').innerHTML = `<tr><td colspan="7"><div class="empty"><i class="fas fa-exclamation-circle"></i><p>Error: ${e.message || 'Could not load POIs'}</p></div></td></tr>`;
+    }
+}
+
+function renderPoisTable(paginatedData) {
+    const items = paginatedData.data || [];
+    const tbody = document.getElementById('pois-tbody');
+    if (!items.length) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><i class="fas fa-map-marker-alt"></i><h3>No POI found</h3><p>Create your first point of interest</p></div></td></tr>`;
+        return;
+    }
+    tbody.innerHTML = items.map(p => {
+        const thumb = p.main_image?.url || p.mainImage?.url || '';
+        const typeColor = p.type?.color || '#f97316';
+        const typeIcon = p.type?.icon || 'fas fa-map-marker-alt';
+        const stars = renderStars(p.rating_average);
+        return `
+        <tr>
+            <td>
+                <div class="cell-title">
+                    ${thumb ? `<img class="cell-thumb" src="${thumb}" alt="" onerror="this.style.display='none'"/>` : `<div class="cell-thumb" style="background:${typeColor}22; display:flex; align-items:center; justify-content:center; color:${typeColor}; font-size:20px;"><i class="${typeIcon}"></i></div>`}
+                    <div class="cell-info">
+                        <h4>${esc(p.name)}</h4>
+                        <p>${p.address || p.city?.name || '—'}</p>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <span class="badge badge-orange" style="background:${typeColor}22; color:${typeColor};">
+                    <i class="${typeIcon}"></i> ${esc(p.type?.name || '—')}
+                </span>
+            </td>
+            <td style="font-size:12px; color:var(--text2);">
+                ${p.latitude ? `<span title="Lat: ${p.latitude}, Lng: ${p.longitude}"><i class="fas fa-crosshairs" style="color:var(--accent);"></i> ${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}</span>` : '—'}
+            </td>
+            <td>
+                ${stars}
+                <div style="font-size:11px; color:var(--text3); margin-top:2px;">${p.reviews_count||0} reviews</div>
+                ${p.google_rating ? `<div style="font-size:10px; color:#4285F4; margin-top:4px; display:flex; align-items:center; gap:3px;"><i class="fab fa-google"></i> ${p.google_rating} (${p.google_reviews_count||0})</div>` : ''}
+            </td>
+            <td style="font-size:12px; color:var(--text3);">
+                <i class="fas fa-eye"></i> ${p.views_count||0}
+            </td>
+            <td>
+                <span class="badge ${p.is_active !== false ? 'badge-active' : 'badge-inactive'}">
+                    <span class="badge-dot"></span> ${p.is_active !== false ? 'Active' : 'Inactive'}
+                </span>
+                ${p.is_verified ? `<span class="badge badge-verified" style="margin-left:4px;"><i class="fas fa-check-circle"></i> Verified</span>` : ''}
+            </td>
+            <td>
+                <div class="actions-cell" style="justify-content:flex-end;">
+                    <button class="icon-btn" onclick="openPoiModal(${JSON.stringify(p).replace(/"/g,'&quot;')})" title="Edit"><i class="fas fa-edit"></i></button>
+                    <button class="icon-btn" onclick="navigate('reviews'); loadReviewsForPoi(${p.id})" title="View reviews"><i class="fas fa-star"></i></button>
+                    <button class="icon-btn danger" onclick="confirmDelete('poi', ${p.id}, '${esc(p.name)}')" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+
+    // Pagination
+    const info = document.getElementById('pois-pagination-info');
+    const btns = document.getElementById('pois-pagination-btns');
+    info.textContent = `${paginatedData.from||0}–${paginatedData.to||0} of ${paginatedData.total||0}`;
+    btns.innerHTML = '';
+    const totalPages = paginatedData.last_page || 1;
+    for (let i = 1; i <= Math.min(totalPages, 7); i++) {
+        btns.innerHTML += `<div class="page-btn ${i===state.poisPage?'active':''}" onclick="state.poisPage=${i}; loadPois();">${i}</div>`;
+    }
+}
+
+function renderStars(avg) {
+    const n = Math.round(avg || 0);
+    return `<div class="stars">${Array.from({length:5}).map((_,i) => `<i class="fas fa-star ${i<n?'filled':'empty'}"></i>`).join('')}</div>`;
+}
+
+// ════════════════════════════════════════════
+// POI MODAL
+// ════════════════════════════════════════════
+function buildHoursGrid() {
+    const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+    const daysEn = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    document.getElementById('hours-grid').innerHTML = days.map((d,i) => `
+        <div class="hours-row">
+            <div class="hours-day">${daysEn[i]}</div>
+            <div class="hours-inputs">
+                <input type="time" id="hours-${d}-open" style="width:100px;" value="09:00"/>
+                <span class="hours-sep">–</span>
+                <input type="time" id="hours-${d}-close" style="width:100px;" value="18:00"/>
+                <label class="hours-closed-toggle">
+                    <input type="checkbox" id="hours-${d}-closed" onchange="toggleDayClosed('${d}')"/>
+                    Closed
+                </label>
+            </div>
+        </div>`).join('');
+}
+
+function toggleDayClosed(day) {
+    const closed = document.getElementById(`hours-${day}-closed`).checked;
+    document.getElementById(`hours-${day}-open`).disabled = closed;
+    document.getElementById(`hours-${day}-close`).disabled = closed;
+}
+
+function openPoiModal(poi = null) {
+    document.getElementById('poi-id').value = poi?.id || '';
+    document.getElementById('modal-poi-title').textContent = poi ? 'Edit POI' : 'New POI';
+    document.getElementById('modal-poi-sub').textContent = poi ? `Editing: ${poi.name}` : 'Fill in the information for the point of interest';
+    document.getElementById('poi-name').value = poi?.name || '';
+    document.getElementById('poi-type-id').value = poi?.type_id || '';
+    document.getElementById('poi-description').value = poi?.description || '';
+    document.getElementById('poi-address').value = poi?.address || '';
+    document.getElementById('poi-phone').value = poi?.phone || '';
+    document.getElementById('poi-email').value = poi?.email || '';
+    document.getElementById('poi-website').value = poi?.website || '';
+    document.getElementById('poi-latitude').value = poi?.latitude || '';
+    document.getElementById('poi-longitude').value = poi?.longitude || '';
+
+    // Google fields
+    document.getElementById('poi-google-place-id').value = poi?.google_place_id || '';
+    document.getElementById('poi-google-rating').value = poi?.google_rating || '';
+    document.getElementById('poi-google-reviews-count').value = poi?.google_reviews_count || '';
+    const badge = document.getElementById('google-rating-badge');
+    if (poi?.google_rating) {
+        document.getElementById('google-rating-text').textContent =
+            `Google Rating: ${poi.google_rating} ★ (${poi.google_reviews_count || 0} reviews)`;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+
+    // Country & City
+    document.getElementById('poi-country-id').value = poi?.country_id || '';
+    if (poi?.country_id) {
+        loadCities(poi.country_id).then(() => {
+            document.getElementById('poi-city-id').value = poi?.city_id || '';
+        });
+    } else {
+        document.getElementById('poi-city-id').innerHTML = '<option value="">-- Select City --</option>';
+    }
+
+    // Tags
+    state.currentPoiTags = poi?.tags ? [...poi.tags] : [];
+    renderSelectedTags();
+
+    // Images
+    state.currentPoiImages = [];
+    if (poi?.images?.length) {
+        state.currentPoiImages = poi.images.map(img => ({ id: img.id, url: img.image_url, is_main: img.is_main }));
+    } else if (poi?.main_image) {
+        state.currentPoiImages = [{ id: poi.main_image.id, url: poi.main_image.image_url || poi.main_image.url, is_main: true }];
+    }
+    renderPoiImagePreviews();
+
+    buildHoursGrid();
+    if (poi?.opening_hours) fillHours(poi.opening_hours);
+
+    openModal('modal-poi');
+    setTimeout(() => initMap(poi), 300);
+}
+function openPoiTypeSpecifics(typeId) {
+    // Placeholder: extend here to show type-specific fields based on typeId
+}
+
+function fillHours(hours) {
+    const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+    days.forEach(d => {
+        const val = hours[d];
+        const closedBox = document.getElementById(`hours-${d}-closed`);
+        if (!val || val === 'closed') {
+            closedBox.checked = true;
+        } else {
+            closedBox.checked = false;
+            const parts = val.split('-');
+            if (parts[0]) document.getElementById(`hours-${d}-open`).value = parts[0];
+            if (parts[1]) document.getElementById(`hours-${d}-close`).value = parts[1];
+        }
+        toggleDayClosed(d);
+    });
+}
+
+async function savePoi() {
+    const id = document.getElementById('poi-id').value;
+    const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+    const opening_hours = {};
+    days.forEach(d => {
+        const closed = document.getElementById(`hours-${d}-closed`).checked;
+        if (closed) { opening_hours[d] = 'closed'; return; }
+        const open = document.getElementById(`hours-${d}-open`).value;
+        const close = document.getElementById(`hours-${d}-close`).value;
+        opening_hours[d] = `${open}-${close}`;
+    });
+
+    const googleRating = document.getElementById('poi-google-rating').value;
+    const googlePlaceId = document.getElementById('poi-google-place-id').value;
+    const googleReviewsCount = document.getElementById('poi-google-reviews-count').value;
+
+    const body = {
+        name: document.getElementById('poi-name').value,
+        type_id: parseInt(document.getElementById('poi-type-id').value) || null,
+        description: document.getElementById('poi-description').value || null,
+        address: document.getElementById('poi-address').value || null,
+        phone: document.getElementById('poi-phone').value || null,
+        email: document.getElementById('poi-email').value || null,
+        website: document.getElementById('poi-website').value || null,
+        latitude: parseFloat(document.getElementById('poi-latitude').value) || null,
+        longitude: parseFloat(document.getElementById('poi-longitude').value) || null,
+        city_id: parseInt(document.getElementById('poi-city-id').value) || null,
+        country_id: parseInt(document.getElementById('poi-country-id').value) || null,
+        opening_hours,
+        tags: state.currentPoiTags.map(t => t.id),
+    };
+
+    if (googlePlaceId) body.google_place_id = googlePlaceId;
+    if (googleRating)  body.google_rating = parseFloat(googleRating);
+    if (googleReviewsCount) body.google_reviews_count = parseInt(googleReviewsCount);
+
+    if (!body.name || !body.type_id || !body.latitude || !body.longitude) {
+        toast('Please fill in required fields (name, type, location)', 'error'); return;
+    }
+
+    try {
+        let savedPoi;
+        if (id) {
+            savedPoi = await api(`/api/pois/${id}`, 'PUT', body);
+            toast('POI updated successfully', 'success');
+        } else {
+            savedPoi = await api('/api/pois', 'POST', body);
+            toast('POI created successfully', 'success');
+        }
+
+        // Upload any new images (those without an id are newly added)
+        const poiId = savedPoi?.data?.id || id;
+        const newImages = state.currentPoiImages.filter(img => !img.id);
+        const isFirst = !(savedPoi?.data?.images?.length);
+        for (let i = 0; i < newImages.length; i++) {
+            await api(`/api/pois/${poiId}/images`, 'POST', {
+                image_url: newImages[i].url,
+                is_main: (i === 0 && isFirst),
+                order_position: i,
+            });
+        }
+
+        closeModal('modal-poi');
+        loadPois();
+    } catch(e) {
+        const msg = e.errors ? Object.values(e.errors).flat().join(', ') : (e.message || 'Error');
+        toast(msg, 'error');
+    }
+}
+
+// ════════════════════════════════════════════
+// COUNTRIES & CITIES
+// ════════════════════════════════════════════
+async function loadCountries() {
+    try {
+        const data = await api('/api/countries-list');
+        state.countries = Array.isArray(data) ? data : (data.data || []);
+        const sel = document.getElementById('poi-country-id');
+        sel.innerHTML = '<option value="">-- Select Country --</option>' + 
+            state.countries.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    } catch (e) { console.error('Error loading countries:', e); }
+}
+
+async function loadCities(countryId) {
+    if (!countryId) {
+        document.getElementById('poi-city-id').innerHTML = '<option value="">-- Select City --</option>';
+        return;
+    }
+    try {
+        const data = await api(`/api/cities?country_id=${countryId}`);
+        state.cities = Array.isArray(data) ? data : (data.data || []);
+        const sel = document.getElementById('poi-city-id');
+        sel.innerHTML = '<option value="">-- Select City --</option>' + 
+            state.cities.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    } catch (e) { console.error('Error loading cities:', e); }
+}
+
+// ════════════════════════════════════════════
+// POI TAGS
+// ════════════════════════════════════════════
+async function loadTags() {
+    try {
+        const search = document.getElementById('tag-search')?.value || '';
+        const data = await api(`/api/poi-tags?search=${search}`);
+        state.poiTags = data.data?.data || data.data || data;
+        
+        // Update tags in POI Modal selection
+        const sel = document.getElementById('poi-tag-select');
+        if (sel) {
+            sel.innerHTML = '<option value="">-- Choose a tag to add --</option>' + 
+                state.poiTags.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+        }
+
+        // Update tags table
+        if (state.currentPanel === 'poi-tags') {
+            const tbody = document.getElementById('tags-tbody');
+            if (state.poiTags.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4"><div class="empty">No tags found</div></td></tr>';
+            } else {
+                tbody.innerHTML = state.poiTags.map(t => `
+                    <tr>
+                        <td><strong>${esc(t.name)}</strong></td>
+                        <td><code style="font-size:12px;">${t.slug}</code></td>
+                        <td><span class="badge badge-blue">${t.pois_count || 0}</span></td>
+                        <td style="text-align:right;">
+                            <button class="icon-btn" onclick="openTagModal(${JSON.stringify(t).replace(/"/g,'&quot;')})"><i class="fas fa-edit"></i></button>
+                            <button class="icon-btn danger" onclick="confirmDelete('tag', ${t.id}, '${esc(t.name)}')"><i class="fas fa-trash-alt"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+    } catch (e) { console.error('Error loading tags:', e); }
+}
+
+function openTagModal(tag = null) {
+    document.getElementById('tag-id').value = tag?.id || '';
+    document.getElementById('modal-tag-title').textContent = tag ? 'Edit POI Tag' : 'New POI Tag';
+    document.getElementById('tag-name').value = tag?.name || '';
+    openModal('modal-tag');
+}
+
+async function saveTag() {
+    const id = document.getElementById('tag-id').value;
+    const name = document.getElementById('tag-name').value;
+    if (!name) { toast('Please enter a tag name', 'error'); return; }
+
+    try {
+        if (id) {
+            await api(`/api/admin/poi-tags/${id}`, 'PUT', { name });
+            toast('Tag updated successfully', 'success');
+        } else {
+            await api('/api/admin/poi-tags', 'POST', { name });
+            toast('Tag created successfully', 'success');
+        }
+        closeModal('modal-tag');
+        loadAll();
+    } catch (e) { toast(e.message || 'Error saving tag', 'error'); }
+}
+
+async function cleanupUnusedTags() {
+    if (!confirm('Are you sure you want to delete all tags that are not associated with any POI?')) return;
+    try {
+        const res = await api('/api/admin/poi-tags/cleanup', 'DELETE');
+        toast(res.message || 'Cleanup complete', 'success');
+        loadTags();
+    } catch (e) { toast(e.message || 'Error cleaning up tags', 'error'); }
+}
+
+function addTagToPoi(tagId) {
+    if (!tagId) return;
+    const tag = state.poiTags.find(t => t.id == tagId);
+    if (!tag) return;
+    if (state.currentPoiTags.some(t => t.id == tagId)) {
+        toast('Tag already added', 'warning');
+        return;
+    }
+    state.currentPoiTags.push(tag);
+    renderSelectedTags();
+    document.getElementById('poi-tag-select').value = '';
+}
+
+function removeTagFromPoi(tagId) {
+    state.currentPoiTags = state.currentPoiTags.filter(t => t.id != tagId);
+    renderSelectedTags();
+}
+
+function renderSelectedTags() {
+    const container = document.getElementById('poi-tags-selection');
+    if (state.currentPoiTags.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:12px;">No tags selected...</p>';
+        return;
+    }
+    container.innerHTML = state.currentPoiTags.map(t => `
+        <span class="tag-badge">
+            ${esc(t.name)}
+            <i class="fas fa-times" onclick="removeTagFromPoi(${t.id})"></i>
+        </span>
+    `).join('');
+}
+
+// ════════════════════════════════════════════
+// MAP
+// ════════════════════════════════════════════
+function initMap(poi) {
+    const lat = poi?.latitude ? parseFloat(poi.latitude) : 33.5731;
+    const lng = poi?.longitude ? parseFloat(poi.longitude) : -7.5898;
+    const center = { lat, lng };
+
+    state.map = new google.maps.Map(document.getElementById('map-picker'), {
+        zoom: 13,
+        center: center,
+        styles: [ { "featureType": "all", "elementType": "all", "stylers": [ { "invert_lightness": true }, { "saturation": 10 }, { "lightness": 30 }, { "gamma": 0.5 }, { "hue": "#435158" } ] } ]
+    });
+
+    state.marker = new google.maps.Marker({
+        position: center,
+        map: state.map,
+        draggable: true,
+        icon: {
+            path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+            scale: 8,
+            fillColor: "#f97316",
+            fillOpacity: 1,
+            strokeWeight: 2,
+            strokeColor: "#ffffff",
+        }
+    });
+
+    state.marker.addListener('dragend', () => {
+        const pos = state.marker.getPosition();
+        document.getElementById('poi-latitude').value = pos.lat().toFixed(6);
+        document.getElementById('poi-longitude').value = pos.lng().toFixed(6);
+    });
+
+    state.map.addListener('click', (e) => {
+        state.marker.setPosition(e.latLng);
+        document.getElementById('poi-latitude').value = e.latLng.lat().toFixed(6);
+        document.getElementById('poi-longitude').value = e.latLng.lng().toFixed(6);
+    });
+
+    // Autocomplete with Places API to capture Google rating
+    const input = document.getElementById('map-search');
+    state.autocomplete = new google.maps.places.Autocomplete(input, {
+        fields: ['geometry', 'formatted_address', 'name', 'rating', 'user_ratings_total', 'place_id', 'opening_hours']
+    });
+
+    state.autocomplete.addListener('place_changed', () => {
+        const place = state.autocomplete.getPlace();
+        if (!place.geometry || !place.geometry.location) return;
+
+        state.map.setCenter(place.geometry.location);
+        state.map.setZoom(17);
+        state.marker.setPosition(place.geometry.location);
+        document.getElementById('poi-latitude').value = place.geometry.location.lat().toFixed(6);
+        document.getElementById('poi-longitude').value = place.geometry.location.lng().toFixed(6);
+        document.getElementById('poi-address').value = place.formatted_address || '';
+
+        // Google rating fields
+        const badge = document.getElementById('google-rating-badge');
+        if (place.rating) {
+            document.getElementById('poi-google-place-id').value = place.place_id || '';
+            document.getElementById('poi-google-rating').value = place.rating;
+            document.getElementById('poi-google-reviews-count').value = place.user_ratings_total || 0;
+            document.getElementById('google-rating-text').textContent =
+                `Google Rating: ${place.rating} \u2605 (${place.user_ratings_total || 0} reviews)`;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+            document.getElementById('poi-google-place-id').value = place.place_id || '';
+            document.getElementById('poi-google-rating').value = '';
+            document.getElementById('poi-google-reviews-count').value = '';
+        }
+
+        // Auto-populate opening hours if available
+        if (place.opening_hours) {
+            fillHoursWithGoogleData(place.opening_hours);
+        }
+    });
+}
+
+function fillHoursWithGoogleData(googleHours) {
+    if (!googleHours || !googleHours.periods) return;
+    
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const opening_hours = {};
+    
+    // Check for Always Open (24/7)
+    const isAlwaysOpen = googleHours.periods.length === 1 && googleHours.periods[0].open && !googleHours.periods[0].close && googleHours.periods[0].open.time === "0000";
+    
+    if (isAlwaysOpen) {
+        ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].forEach(d => {
+            opening_hours[d] = "00:00-23:59";
+        });
+    } else {
+        // Initialize all as closed first
+        ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].forEach(d => opening_hours[d] = 'closed');
+        
+        googleHours.periods.forEach(p => {
+            if (!p.open) return;
+            const dayIndex = p.open.day; 
+            const dayName = days[dayIndex];
+            
+            const openTime = p.open.time.substring(0,2) + ':' + p.open.time.substring(2,4);
+            let closeTime = '23:59';
+            if (p.close) {
+                closeTime = p.close.time.substring(0,2) + ':' + p.close.time.substring(2,4);
+            }
+            
+            opening_hours[dayName] = `${openTime}-${closeTime}`;
+        });
+    }
+    
+    fillHours(opening_hours);
+    toast('Opening hours imported from Google', 'success');
+}
+
+// ════════════════════════════════════════════
+// POI IMAGE UPLOAD
+// ════════════════════════════════════════════
+async function handlePoiImagesUpload(files) {
+    if (!files || files.length === 0) return;
+    const spinner = document.getElementById('poi-img-spinner');
+    spinner.style.display = 'block';
+
+    const base = document.getElementById('api-base').value.replace(/\/$/, '');
+    const token = document.getElementById('api-token').value;
+
+    for (const file of Array.from(files)) {
+        if (file.size > 5 * 1024 * 1024) { toast(`${file.name} is too large (max 5MB)`, 'error'); continue; }
+        const formData = new FormData();
+        formData.append('images[]', file);
+        try {
+            const resp = await fetch(`${base}/api/upload-image-no-watermark`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData,
+            });
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.message || 'Upload failed');
+            // The controller returns { paths: [...] } or { path: '...' }
+            const urls = data.paths || (data.path ? [data.path] : []);
+            urls.forEach(url => {
+                state.currentPoiImages.push({ url, is_main: state.currentPoiImages.length === 0 });
+            });
+        } catch(e) {
+            toast(e.message || 'Upload error', 'error');
+        }
+    }
+
+    spinner.style.display = 'none';
+    document.getElementById('poi-img-file').value = '';
+    renderPoiImagePreviews();
+}
+
+function renderPoiImagePreviews() {
+    const grid = document.getElementById('poi-images-preview');
+    if (!state.currentPoiImages.length) { grid.innerHTML = ''; return; }
+    grid.innerHTML = state.currentPoiImages.map((img, i) => `
+        <div class="img-preview-item">
+            <img src="${img.url}" alt="" onerror="this.style.display='none'"/>
+            ${img.is_main ? '<div style="position:absolute;top:4px;left:4px;background:var(--accent);color:white;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;">MAIN</div>' : ''}
+            <div class="img-rm" onclick="removePendingImage(${i})"><i class="fas fa-times"></i></div>
+        </div>`).join('');
+}
+
+async function removePendingImage(index) {
+    const img = state.currentPoiImages[index];
+    const poiId = document.getElementById('poi-id').value;
+    if (img.id && poiId) {
+        try {
+            await api(`/api/pois/${poiId}/images/${img.id}`, 'DELETE');
+        } catch(e) { toast(e.message || 'Error removing image', 'error'); return; }
+    }
+    state.currentPoiImages.splice(index, 1);
+    // Ensure first image is main
+    if (state.currentPoiImages.length > 0 && !state.currentPoiImages.some(i => i.is_main)) {
+        state.currentPoiImages[0].is_main = true;
+    }
+    renderPoiImagePreviews();
+}
+
+
+function updateMapFromInputs() {
+    const lat = parseFloat(document.getElementById('poi-latitude').value);
+    const lng = parseFloat(document.getElementById('poi-longitude').value);
+    if (!state.map || isNaN(lat) || isNaN(lng)) return;
+    const pos = { lat, lng };
+    state.map.setCenter(pos);
+    if (state.marker) state.marker.setPosition(pos);
+}
+
+// ════════════════════════════════════════════
+// POI TYPES
+// ════════════════════════════════════════════
+async function loadPoiTypes() {
+    try {
+        const data = await api('/api/poi-types?with_count=true');
+        state.poiTypes = data.data?.data || data.data || [];
+        renderTypeCards(state.poiTypes);
+        renderTypeTable(state.poiTypes);
+        populateTypeSelects(state.poiTypes);
+    } catch(e) {
+        document.getElementById('types-cards').innerHTML = `<div style="grid-column:1/-1"><div class="empty"><i class="fas fa-exclamation-circle"></i><p>Error: ${e.message||'Could not load types'}</p></div></div>`;
+    }
+}
+
+function renderTypeCards(types) {
+    if (!types.length) {
+        document.getElementById('types-cards').innerHTML = `<div style="grid-column:1/-1"><div class="empty"><i class="fas fa-layer-group"></i><h3>No POI types</h3><p>Create your first type</p></div></div>`;
+        return;
+    }
+    document.getElementById('types-cards').innerHTML = types.map(t => {
+        const iconHtml = getIconHtml(t.icon, t.color, 26, 56);
+        return `
+        <div class="type-card" onclick="openTypeModal(${JSON.stringify(t).replace(/"/g,'&quot;')})">
+            <div class="type-card-icon" style="background:${t.color||'#f97316'}22;">${iconHtml}</div>
+            <h3>${esc(t.name)}</h3>
+            <p>${t.points_of_interest_count ?? t.pois_count ?? 0} POIs</p>
+            <div class="type-card-actions">
+                <button class="icon-btn danger" onclick="event.stopPropagation(); confirmDelete('type', ${t.id}, '${esc(t.name)}')"><i class="fas fa-trash-alt"></i></button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderTypeTable(types) {
+    if (!types.length) {
+        document.getElementById('types-tbody').innerHTML = `<tr><td colspan="6"><div class="empty"><i class="fas fa-layer-group"></i><p>No POI types found</p></div></td></tr>`;
+        return;
+    }
+    document.getElementById('types-tbody').innerHTML = types.map(t => {
+        const iconHtml = getIconHtml(t.icon, t.color, 18, 36);
+        return `
+        <tr>
+            <td>
+                <div class="cell-title">
+                    <div style="width:36px;height:36px;border-radius:8px;background:${t.color||'#f97316'}22;display:flex;align-items:center;justify-content:center;">${iconHtml}</div>
+                    <strong style="font-size:13.5px;">${esc(t.name)}</strong>
+                </div>
+            </td>
+            <td><code style="font-size:11px;color:var(--text3);">${esc(t.icon||'—')}</code></td>
+            <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:16px;height:16px;border-radius:4px;background:${t.color||'#ccc'};border:1px solid rgba(255,255,255,0.1);"></div>
+                    <code style="font-size:11px;color:var(--text3);">${t.color||'—'}</code>
+                </div>
+            </td>
+            <td><span class="badge badge-orange">${t.points_of_interest_count ?? t.pois_count ?? 0} POIs</span></td>
+            <td style="font-size:11px;color:var(--text3);">${formatDate(t.created_at)}</td>
+            <td>
+                <div class="actions-cell" style="justify-content:flex-end;">
+                    <button class="icon-btn" onclick="openTypeModal(${JSON.stringify(t).replace(/"/g,'&quot;')})" title="Edit"><i class="fas fa-edit"></i></button>
+                    <button class="icon-btn danger" onclick="confirmDelete('type', ${t.id}, '${esc(t.name)}')" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function getIconHtml(icon, color, fontSize = 20, boxSize = 40) {
+    if (!icon) return `<i class="fas fa-map-marker-alt" style="font-size:${fontSize}px;color:${color||'var(--accent)'};"></i>`;
+    if (icon.startsWith('http') || icon.startsWith('data:') || icon.startsWith('/')) {
+        return `<img src="${icon}" style="width:${Math.round(boxSize*0.7)}px;height:${Math.round(boxSize*0.7)}px;object-fit:contain;" onerror="this.outerHTML='<i class=\\'fas fa-image\\' style=\\'font-size:${fontSize}px;color:${color||'var(--accent)'}\\'></i>'"/>`;
+    }
+    return `<i class="${esc(icon)}" style="font-size:${fontSize}px;color:${color||'var(--accent)'};"></i>`;
+}
+
+function setTypesView(mode) {
+    document.getElementById('types-grid-view').style.display = mode === 'grid' ? '' : 'none';
+    document.getElementById('types-list-view').style.display = mode === 'list' ? '' : 'none';
+    document.getElementById('types-grid-btn').classList.toggle('active', mode === 'grid');
+    document.getElementById('types-list-btn').classList.toggle('active', mode === 'list');
+}
+
+// TYPE MODAL
+function openTypeModal(type = null) {
+    document.getElementById('type-id').value = type?.id || '';
+    document.getElementById('modal-type-title').textContent = type ? 'Edit Type' : 'New POI Type';
+    document.getElementById('type-name').value = type?.name || '';
+
+    // Icon
+    state.iconUploadMode = 'fa';
+    state.iconBase64 = null;
+    state.iconUploadedUrl = null;
+    const icon = type?.icon || '';
+    document.getElementById('type-icon-value').value = icon;
+
+    if (icon && !icon.startsWith('fa') && (icon.startsWith('http')||icon.startsWith('/')||icon.startsWith('data:'))) {
+        switchIconTab('upload');
+        showIconPreviewImage(icon);
+    } else {
+        switchIconTab('fa');
+        document.getElementById('type-icon-fa').value = icon;
+        previewFaIcon(icon);
+    }
+
+    // Color
+    const color = type?.color || '#f97316';
+    document.getElementById('type-color').value = color;
+    document.getElementById('type-color-picker').value = color;
+    buildSwatches(color);
+
+    openModal('modal-type');
+}
+
+function switchIconTab(mode) {
+    state.iconUploadMode = mode;
+    document.querySelectorAll('.icon-type-tab').forEach((t,i) => {
+        t.classList.toggle('active', (i===0 && mode==='fa') || (i===1 && mode==='upload'));
+    });
+    document.getElementById('icon-group-fa').classList.toggle('active', mode==='fa');
+    document.getElementById('icon-group-upload').classList.toggle('active', mode==='upload');
+}
+
+function previewFaIcon(cls) {
+    const box = document.getElementById('icon-preview-fa');
+    const color = document.getElementById('type-color').value || '#f97316';
+    if (!cls) { box.innerHTML = `<i class="fas fa-map-marker-alt" style="color:${color};"></i>`; return; }
+    box.innerHTML = `<i class="${esc(cls)}" style="color:${color};"></i>`;
+}
+
+function showIconPreviewImage(src) {
+    const box = document.getElementById('icon-preview-fa');
+    box.innerHTML = `<img src="${src}" style="width:56px;height:56px;object-fit:contain;" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-image\\' style=\\'color:var(--accent);\\'></i>'"/>`;
+}
+
+async function handleIconUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 2*1024*1024) { toast('File too large (max 2MB)', 'error'); return; }
+
+    const formData = new FormData();
+    formData.append('icon', file);
+
+    const box = document.getElementById('icon-preview-fa');
+    const originalContent = box.innerHTML;
+    box.innerHTML = '<div class="spinner" style="width:24px;height:24px;border-width:2px;margin:auto;"></div>';
+
+    try {
+        const data = await api('/api/upload-icon', 'POST', formData, true);
+        const url = data.path;
+        state.iconUploadedUrl = url;
+        showIconPreviewImage(url);
+        document.getElementById('type-icon-value').value = url;
+        toast('Icon uploaded', 'success');
+    } catch (e) {
+        box.innerHTML = originalContent;
+        toast(e.message || 'Upload failed', 'error');
+    } finally {
+        input.value = '';
+    }
+}
+
+// Drag & Drop
+document.addEventListener('DOMContentLoaded', () => {
+    const zone = document.getElementById('icon-drop-zone');
+    if (!zone) return;
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault(); zone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const fakeInput = { files: [file] };
+            handleIconUpload(fakeInput);
+        }
+    });
+});
+
+function buildSwatches(selected) {
+    document.getElementById('color-swatches').innerHTML = COLOR_SWATCHES.map(c => `
+        <div class="color-swatch ${c===selected?'selected':''}" style="background:${c};"
+            onclick="selectSwatch('${c}')"></div>`).join('');
+}
+
+function selectSwatch(color) {
+    document.getElementById('type-color').value = color;
+    document.getElementById('type-color-picker').value = color;
+    buildSwatches(color);
+    previewFaIcon(document.getElementById('type-icon-fa').value);
+}
+
+function syncColorFromPicker(val) {
+    document.getElementById('type-color').value = val;
+    buildSwatches(val);
+    previewFaIcon(document.getElementById('type-icon-fa').value);
+}
+
+function syncColorToSwatch(val) {
+    document.getElementById('type-color-picker').value = val;
+    buildSwatches(val);
+    previewFaIcon(document.getElementById('type-icon-fa').value);
+}
+
+async function savePoiType() {
+    const id = document.getElementById('type-id').value;
+    const name = document.getElementById('type-name').value.trim();
+    if (!name) { toast('Type name is required', 'error'); return; }
+
+    let icon = '';
+    if (state.iconUploadMode === 'fa') {
+        icon = document.getElementById('type-icon-fa').value.trim();
+    } else {
+        icon = document.getElementById('type-icon-value').value;
+    }
+
+    const body = {
+        name,
+        icon: icon || null,
+        color: document.getElementById('type-color').value || null,
+        type: state.iconUploadMode === 'upload' ? 'image' : 'fontawesome',
+    };
+
+    try {
+        if (id) {
+            await api(`/api/poi-types/${id}`, 'PUT', body);
+            toast('Type updated', 'success');
+        } else {
+            await api('/api/poi-types', 'POST', body);
+            toast('Type created successfully', 'success');
+        }
+        closeModal('modal-type');
+        loadPoiTypes();
+    } catch(e) {
+        const msg = e.errors ? Object.values(e.errors).flat().join(', ') : (e.message || 'Error');
+        toast(msg, 'error');
+    }
+}
+
+// ════════════════════════════════════════════
+// SERVICES
+// ════════════════════════════════════════════
+async function loadServices() {
+    try {
+        const typeId = document.getElementById('svc-type-filter').value;
+        let url = '/api/poi-services';
+        if (typeId) url += `?type_id=${typeId}`;
+        const data = await api(url);
+        const services = data.data || [];
+        const search = document.getElementById('svc-search').value.toLowerCase();
+        const filtered = search ? services.filter(s => s.name.toLowerCase().includes(search)) : services;
+        renderServicesTable(filtered);
+    } catch(e) {
+        document.getElementById('services-tbody').innerHTML = `<tr><td colspan="3"><div class="empty"><i class="fas fa-exclamation-circle"></i><p>Error: ${e.message||'Error'}</p></div></td></tr>`;
+    }
+}
+
+function renderServicesTable(services) {
+    const tbody = document.getElementById('services-tbody');
+    if (!services.length) {
+        tbody.innerHTML = `<tr><td colspan="3"><div class="empty"><i class="fas fa-concierge-bell"></i><h3>No services</h3><p>Create your first service</p></div></td></tr>`;
+        return;
+    }
+    tbody.innerHTML = services.map(s => {
+        const typeColor = s.poi_type?.color || '#f97316';
+        return `
+        <tr>
+            <td><strong style="font-size:13.5px;">${esc(s.name)}</strong></td>
+            <td>
+                ${s.poi_type ? `<span class="badge" style="background:${typeColor}22; color:${typeColor};"><i class="${s.poi_type.icon||'fas fa-layer-group'}"></i> ${esc(s.poi_type.name)}</span>` : '—'}
+            </td>
+            <td>
+                <div class="actions-cell" style="justify-content:flex-end;">
+                    <button class="icon-btn" onclick="openServiceModal(${JSON.stringify(s).replace(/"/g,'&quot;')})" title="Modifier"><i class="fas fa-edit"></i></button>
+                    <button class="icon-btn danger" onclick="confirmDelete('service', ${s.id}, '${esc(s.name)}')" title="Supprimer"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function openServiceModal(svc = null) {
+    document.getElementById('svc-id').value = svc?.id || '';
+    document.getElementById('modal-svc-title').textContent = svc ? 'Edit Service' : 'New Service';
+    document.getElementById('svc-name').value = svc?.name || '';
+    document.getElementById('svc-type-id').value = svc?.type_id || '';
+    openModal('modal-service');
+}
+
+async function saveService() {
+    const id = document.getElementById('svc-id').value;
+    const name = document.getElementById('svc-name').value.trim();
+    const type_id = document.getElementById('svc-type-id').value;
+    if (!name || !type_id) { toast('Name and type are required', 'error'); return; }
+    try {
+        if (id) await api(`/api/poi-services/${id}`, 'PUT', { name, type_id: parseInt(type_id) });
+        else await api('/api/poi-services', 'POST', { name, type_id: parseInt(type_id) });
+        toast(id ? 'Service updated' : 'Service created', 'success');
+        closeModal('modal-service');
+        loadServices();
+    } catch(e) {
+        toast(e.message || 'Error', 'error');
+    }
+}
+
+// ════════════════════════════════════════════
+// REVIEWS
+// ════════════════════════════════════════════
+let reviewsPoiId = null;
+
+async function loadAllReviews() {
+    // Reviews API requires a poi_id, so show message
+    if (!reviewsPoiId) {
+        document.getElementById('reviews-tbody').innerHTML = `
+            <tr><td colspan="6">
+                <div class="empty">
+                    <i class="fas fa-star"></i>
+                    <h3>Select a POI</h3>
+                    <p>Click on the ⭐ icon of a POI to see its reviews</p>
+                </div>
+            </td></tr>`;
+        return;
+    }
+    loadReviewsForPoi(reviewsPoiId);
+}
+
+async function loadReviewsForPoi(poiId) {
+    reviewsPoiId = poiId;
+    try {
+        const data = await api(`/api/pois/${poiId}/reviews`);
+        renderReviewsTable(data.data?.data || data.data || []);
+    } catch(e) {
+        document.getElementById('reviews-tbody').innerHTML = `<tr><td colspan="6"><div class="empty"><i class="fas fa-exclamation-circle"></i><p>Error: ${e.message||'Error'}</p></div></td></tr>`;
+    }
+}
+
+function renderReviewsTable(reviews) {
+    const tbody = document.getElementById('reviews-tbody');
+    if (!reviews.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><i class="fas fa-star"></i><h3>No reviews</h3><p>This POI has no reviews yet</p></div></td></tr>`;
+        return;
+    }
+    tbody.innerHTML = reviews.map(r => `
+        <tr>
+            <td><span class="badge badge-orange">POI #${r.poi_id}</span></td>
+            <td>
+                <div class="cell-info">
+                    <h4>${esc(r.user?.name || 'User #'+r.user_id)}</h4>
+                    <p>${r.user?.email || '—'}</p>
+                </div>
+            </td>
+            <td>${renderStars(r.rating)} <small style="color:var(--text3);">${r.rating}/5</small></td>
+            <td style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:12px; color:var(--text2);">${esc(r.comment||'—')}</td>
+            <td style="font-size:11px; color:var(--text3);">${formatDate(r.created_at)}</td>
+            <td>
+                <div class="actions-cell" style="justify-content:flex-end;">
+                    <button class="icon-btn danger" onclick="confirmDelete('review', ${r.id}, 'this review', ${r.poi_id})" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </td>
+        </tr>`).join('');
+}
+
+// ════════════════════════════════════════════
+// REPORTS
+// ════════════════════════════════════════════
+async function loadReports() {
+    try {
+        const data = await api('/api/reports/pending');
+        const reports = data.data?.data || data.data || [];
+        renderReportsTable(reports);
+        document.getElementById('badge-reports').textContent = reports.filter(r => r.status === 'pending').length || 0;
+    } catch(e) {
+        document.getElementById('reports-tbody').innerHTML = `<tr><td colspan="7"><div class="empty"><i class="fas fa-exclamation-circle"></i><p>Error: ${e.message||'Error'}</p></div></td></tr>`;
+    }
+}
+
+function renderReportsTable(reports) {
+    const tbody = document.getElementById('reports-tbody');
+    if (!reports.length) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><i class="fas fa-flag"></i><h3>No reports</h3><p>Everything is under control!</p></div></td></tr>`;
+        return;
+    }
+    tbody.innerHTML = reports.map(r => `
+        <tr>
+            <td>
+                <div class="cell-info">
+                    <h4>${esc(r.poi?.name || 'POI #'+r.poi_id)}</h4>
+                </div>
+            </td>
+            <td><span class="reason-tag">${esc(r.reason)}</span></td>
+            <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:12px; color:var(--text2);">${esc(r.description||'—')}</td>
+            <td style="font-size:12px;">${esc(r.user?.name || 'User #'+r.user_id)}</td>
+            <td style="font-size:11px; color:var(--text3);">${formatDate(r.created_at)}</td>
+            <td><span class="badge badge-${r.status==='pending'?'pending':r.status==='resolved'?'resolved':'rejected'}"><span class="badge-dot"></span>${r.status}</span></td>
+            <td>
+                <div class="actions-cell" style="justify-content:flex-end;">
+                    <button class="icon-btn" onclick="openReportModal(${JSON.stringify(r).replace(/"/g,'&quot;')})" title="View details"><i class="fas fa-eye"></i></button>
+                    <button class="icon-btn success" onclick="quickUpdateReport(${r.id}, ${r.poi_id}, 'resolved')" title="Mark as resolved"><i class="fas fa-check"></i></button>
+                    <button class="icon-btn danger" onclick="quickUpdateReport(${r.id}, ${r.poi_id}, 'rejected')" title="Reject"><i class="fas fa-ban"></i></button>
+                </div>
+            </td>
+        </tr>`).join('');
+}
+
+function openReportModal(report) {
+    state.currentReportId = report.id;
+    state.currentReportPoiId = report.poi_id;
+    document.getElementById('modal-report-poi-name').textContent = report.poi?.name || 'POI #'+report.poi_id;
+    document.getElementById('modal-report-reason').textContent = report.reason;
+    document.getElementById('modal-report-desc').textContent = report.description || 'No description provided.';
+    document.getElementById('modal-report-user').textContent = (report.user?.name || 'User #'+report.user_id) + (report.user?.email ? ` (${report.user.email})` : '');
+    openModal('modal-report');
+}
+
+async function updateReportStatus(status) {
+    try {
+        await api(`/api/pois/${state.currentReportPoiId}/reports/${state.currentReportId}/status`, 'PUT', { status });
+        toast(`Report marked as: ${status}`, 'success');
+        closeModal('modal-report');
+        loadReports();
+    } catch(e) { toast(e.message || 'Error', 'error'); }
+}
+
+async function quickUpdateReport(id, poiId, status) {
+    try {
+        await api(`/api/pois/${poiId}/reports/${id}/status`, 'PUT', { status });
+        toast(`Report ${status}`, 'success');
+        loadReports();
+    } catch(e) { toast(e.message || 'Error', 'error'); }
+}
+
+// ════════════════════════════════════════════
+// DELETE
+// ════════════════════════════════════════════
+let deleteTarget = null;
+
+function confirmDelete(type, id, name, extraId = null) {
+    deleteTarget = { type, id, name, extraId };
+    document.getElementById('confirm-title').textContent = `Delete "${name}"?`;
+    document.getElementById('confirm-text').textContent = `This action is irreversible. The ${type} "${name}" will be permanently deleted.`;
+    openModal('modal-confirm');
+}
+
+async function confirmAction() {
+    if (!deleteTarget) return;
+    const { type, id, extraId } = deleteTarget;
+    try {
+        if (type === 'poi') await api(`/api/pois/${id}`, 'DELETE');
+        else if (type === 'type') await api(`/api/poi-types/${id}`, 'DELETE');
+        else if (type === 'tag') await api(`/api/admin/poi-tags/${id}`, 'DELETE');
+        else if (type === 'service') await api(`/api/poi-services/${id}`, 'DELETE');
+        else if (type === 'review') await api(`/api/pois/${extraId}/reviews/${id}`, 'DELETE');
+        toast('Deleted successfully', 'success');
+        closeModal('modal-confirm');
+        if (type === 'poi') loadPois();
+        else if (type === 'type') loadPoiTypes();
+        else if (type === 'tag') loadTags();
+        else if (type === 'service') loadServices();
+        else if (type === 'review') loadReviewsForPoi(extraId);
+    } catch(e) {
+        toast(e.message || 'Error during deletion', 'error');
+        closeModal('modal-confirm');
+    }
+}
+
+// ════════════════════════════════════════════
+// POPULATE SELECTS
+// ════════════════════════════════════════════
+function populateTypeSelects(types) {
+    const selects = ['poi-type-filter', 'poi-type-id', 'svc-type-filter', 'svc-type-id'];
+    selects.forEach(sid => {
+        const sel = document.getElementById(sid);
+        if (!sel) return;
+        const firstOpt = sel.options[0];
+        sel.innerHTML = '';
+        sel.appendChild(firstOpt);
+        types.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.name;
+            sel.appendChild(opt);
+        });
+    });
+}
+
+// ════════════════════════════════════════════
+// MODAL HELPERS
+// ════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    if (id === 'modal-poi' && state.map) {
+        state.map = null;
+        state.marker = null;
+        state.autocomplete = null;
+    }
+}
+document.addEventListener('click', e => {
+    if (e.target.classList.contains('modal-overlay')) closeModal(e.target.id);
+});
+
+// ════════════════════════════════════════════
+// UTILITIES
+// ════════════════════════════════════════════
+function toast(msg, type = 'info') {
+    const icons = { success: 'fas fa-check-circle', error: 'fas fa-exclamation-circle', warning: 'fas fa-exclamation-triangle', info: 'fas fa-info-circle' };
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<i class="${icons[type]||icons.info}" style="flex-shrink:0;"></i> ${msg}`;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function formatDate(d) {
+    if (!d) return '—';
+    const dt = new Date(d);
+    return dt.toLocaleDateString('en-US', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function debounce(fn, ms) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
+async function loadAll() {
+    try {
+        const [types, tags] = await Promise.all([
+            api('/api/poi-types?with_count=true'),
+            api('/api/poi-tags')
+        ]);
+        state.poiTypes = types.data?.data || types.data || [];
+        state.poiTags = tags.data?.data || tags.data || tags || [];
+        populateTypeSelects(state.poiTypes);
+        loadCountries();
+        loadTags(); // To populate select in POI modal if needed separately
+    } catch(e) { console.error('Error loadAll:', e); }
+    loadDashboard();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    // Restore config
+    const savedBase = localStorage.getItem('api_url');
+    const savedToken = localStorage.getItem('auth_token');
+    if (savedBase) document.getElementById('api-base').value = savedBase;
+    if (savedToken) document.getElementById('api-token').value = savedToken;
+
+    // Init logo
+    const logoImg = document.getElementById('logo-img');
+    logoImg.onload = () => { document.getElementById('logo-fallback').style.display = 'none'; };
+    logoImg.onerror = () => { logoImg.style.display = 'none'; document.getElementById('logo-fallback').style.display = 'flex'; };
+
+    // Color swatches initial
+    buildSwatches('#f97316');
+
+    loadAll();
+});
+</script>
+</body>
+</html>

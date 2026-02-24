@@ -61,10 +61,29 @@
         .btn-success:hover { background: rgba(34,211,165,.25); }
 
         /* ── LAYOUT ── */
-        .app { display: flex; height: calc(100vh - 60px); }
+        .app-container { display: flex; height: 100vh; overflow: hidden; }
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .app { display: flex; flex: 1; overflow: hidden; }
 
-        /* ── SIDEBAR ── */
-        .sidebar {
+        /* ── ADMIN SIDEBAR ── */
+        .sidebar { width: 240px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; z-index: 200; }
+        .sidebar-logo { padding: 20px 20px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+        .sidebar-logo img { height: 36px; width: auto; object-fit: contain; }
+        .sidebar-logo-text h2 { font-size: 16px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); }
+        .sidebar-logo-text h2 span { color: var(--accent); }
+        .sidebar-logo-text p { font-size: 10px; color: var(--text3); letter-spacing: 0.5px; text-transform: uppercase; }
+        .nav-section { padding: 16px 12px 8px; }
+        .nav-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; padding: 0 8px 8px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s; color: var(--text2); font-size: 13.5px; font-weight: 500; margin-bottom: 2px; border: 1px solid transparent; text-decoration: none; }
+        .nav-item:hover { background: var(--surface2); color: var(--text); }
+        .nav-item.active { background: var(--accent-glow); color: var(--accent); border-color: rgba(249, 115, 22, 0.2); }
+        .nav-item i { width: 18px; text-align: center; flex-shrink: 0; font-size: 14px; }
+        .api-config { margin-top: auto; padding: 16px; border-top: 1px solid var(--border); }
+        .api-config label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 6px; }
+        .api-config input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px 10px; font-size: 12px; }
+
+        /* ── ITINERARY SIDEBAR (Renamed from .sidebar) ── */
+        .sidebar-itinerary {
             width: 380px;
             flex-shrink: 0;
             background: var(--surface);
@@ -388,135 +407,207 @@
 </head>
 <body>
 
-<!-- ════════════════ HEADER ════════════════ -->
-<div class="header">
-    <div class="header-left">
-        <div class="header-logo">Dab<span>App</span></div>
-        <div style="width:1px;height:28px;background:var(--border)"></div>
-        <div>
-            <div class="header-title" id="headerTitle">Loading route...</div>
-            <div class="header-sub" id="headerSub">Route Itinerary</div>
-        </div>
-    </div>
-    <div class="header-right">
-        <span id="authBadge" style="font-size:11px;padding:4px 10px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--text3)">⏳ Loading...</span>
-        <button class="btn btn-ghost" id="btnToggleSidebar" onclick="toggleSidebar()" style="display:none">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-            Details
-        </button>
-        <button class="btn btn-ghost" onclick="goBack()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-            Back
-        </button>
-    </div>
-</div>
-
-<!-- ════════════════ APP ════════════════ -->
-<div class="app">
-
-    <!-- ── SIDEBAR ── -->
-    <div class="sidebar" id="sidebar">
-
-        <!-- Tabs -->
-        <div class="sidebar-tabs">
-            <div class="sidebar-tab active" onclick="switchTab('info', this)">Route Info</div>
-            <div class="sidebar-tab" onclick="switchTab('waypoints', this)">Waypoints</div>
-            <div class="sidebar-tab" onclick="switchTab('steps', this)">Navigation</div>
+<div class="app-container">
+    <!-- ADMIN SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <img src="../LogoDabApp.png" alt="DabApp" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" id="logo-img"/>
+            <div style="display:none; width:36px; height:36px; border-radius:10px; background:var(--accent); align-items:center; justify-content:center; color:white; font-family:'Syne',sans-serif; font-weight:800; font-size:14px;" id="logo-fallback">D</div>
+            <div class="sidebar-logo-text">
+                <h2>Dab<span>App</span></h2>
+                <p>Admin Portal</p>
+            </div>
         </div>
 
-        <!-- TAB: Route Info -->
-        <div class="tab-panel active" id="tab-info">
-            <div id="routeInfoContent">
-                <div class="loading-state" style="height:200px">
-                    <div class="spinner"></div>
-                    <span>Loading route...</span>
+        <div class="nav-section">
+            <div class="nav-label">Overview</div>
+            <a href="poi-admin.html" class="nav-item">
+                <i class="fas fa-chart-pie"></i> Dashboard
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">Guides & Routes</div>
+            <a href="guide-admin.html" class="nav-item">
+                <i class="fas fa-book"></i> Guides
+            </a>
+            <a href="guide-categories.html" class="nav-item">
+                <i class="fas fa-tags"></i> Categories
+            </a>
+            <a href="route-admin.html" class="nav-item active">
+                <i class="fas fa-route"></i> Routes
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">Points d'Intérêt</div>
+            <a href="poi-admin.html" class="nav-item">
+                <i class="fas fa-map-marker-alt"></i> All POIs
+            </a>
+            <a href="poi-admin.html" class="nav-item">
+                <i class="fas fa-layer-group"></i> POI Types
+            </a>
+            <a href="poi-admin.html" class="nav-item">
+                <i class="fas fa-concierge-bell"></i> Services
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">Gestion</div>
+            <a href="poi-admin.html" class="nav-item">
+                <i class="fas fa-star"></i> Reviews
+            </a>
+            <a href="poi-admin.html" class="nav-item">
+                <i class="fas fa-flag"></i> Reports
+            </a>
+        </div>
+
+        <div class="api-config">
+            <label>API Base URL</label>
+            <input type="text" id="api-base-url-sidebar" placeholder="https://be.dabapp.co" />
+            <div style="margin-top: 8px">
+                <label>Bearer Token</label>
+                <input type="password" id="api-token-sidebar" placeholder="eyJhbGciOiJ..." />
+            </div>
+        </div>
+        <div style="padding: 16px; border-top: 1px solid var(--border)">
+            <button class="btn btn-ghost btn-sm" onclick="logout()" style="width: 100%; justify-content: center; color: var(--text3);">
+                <i class="fas fa-power-off" style="margin-right: 8px"></i> Logout
+            </button>
+        </div>
+    </aside>
+
+    <div class="main">
+        <!-- ════════════════ HEADER ════════════════ -->
+        <div class="header">
+            <div class="header-left">
+                <!-- Removed duplicate logo as it is now in sidebar -->
+                <div>
+                    <div class="header-title" id="headerTitle">Loading route...</div>
+                    <div class="header-sub" id="headerSub">Route Itinerary</div>
                 </div>
             </div>
-        </div>
-
-        <!-- TAB: Waypoints -->
-        <div class="tab-panel" id="tab-waypoints">
-            <div class="section-title">Waypoints</div>
-            <div id="waypointsList">
-                <div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Load a route to see waypoints</div>
+            <div class="header-right">
+                <span id="authBadge" style="font-size:11px;padding:4px 10px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--text3)">⏳ Loading...</span>
+                <button class="btn btn-ghost" id="btnToggleSidebar" onclick="toggleSidebar()" style="display:none">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    Details
+                </button>
+                <button class="btn btn-ghost" onclick="goBack()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                    Back
+                </button>
             </div>
         </div>
 
-        <!-- TAB: Steps -->
-        <div class="tab-panel" id="tab-steps">
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px 8px">
-                <span style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-weight:700">Turn-by-turn</span>
-                <span id="stepCounter" style="font-size:11px;color:var(--text3)">— steps</span>
-            </div>
-            <div id="stepsList">
-                <div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Load a route to see navigation steps</div>
-            </div>
-        </div>
+        <!-- ════════════════ APP ════════════════ -->
+        <div class="app">
 
-        <!-- Moto animation panel (always visible at bottom) -->
-        <div class="moto-panel" id="motoPanel" style="display:none">
-            <div class="moto-title">🏍️ Motorcycle Animation</div>
-            <div class="moto-btns">
-                <button class="btn btn-success btn-sm" onclick="animateMotorcycle()">▶ Start</button>
-                <button class="btn btn-ghost btn-sm" onclick="pauseAnimation()">⏸ Pause</button>
-                <button class="btn btn-danger btn-sm" onclick="stopAnimation()">⏹ Stop</button>
-            </div>
-            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-            <div class="progress-text" id="progressText">0%</div>
-        </div>
-    </div>
+            <!-- ── ITINERARY SIDEBAR ── -->
+            <div class="sidebar-itinerary" id="sidebar">
 
-    <!-- ── MAP ── -->
-    <div class="map-area">
-        <div id="map">
-            <div class="loading-state">
-                <div class="spinner"></div>
-                <span>Initializing map...</span>
-            </div>
-        </div>
-
-        <!-- NAV PANEL (floating) -->
-        <div class="nav-panel hidden" id="navPanel">
-            <div class="nav-panel-header">
-                <span>🧭 Navigation Mode</span>
-                <button class="nav-close" onclick="stopNavigation()">✕</button>
-            </div>
-            <div class="nav-main">
-                <div class="nav-icon" id="navIcon">⬆️</div>
-                <div class="nav-distance" id="navDistance">—</div>
-                <div class="nav-text" id="navText">—</div>
-            </div>
-            <div class="nav-stats-row">
-                <div class="nav-stat">
-                    <div class="nav-stat-val" id="navStep">1/1</div>
-                    <div class="nav-stat-lbl">Step</div>
+                <!-- Tabs -->
+                <div class="sidebar-tabs">
+                    <div class="sidebar-tab active" onclick="switchTab('info', this)">Route Info</div>
+                    <div class="sidebar-tab" onclick="switchTab('waypoints', this)">Waypoints</div>
+                    <div class="sidebar-tab" onclick="switchTab('steps', this)">Navigation</div>
                 </div>
-                <div class="nav-stat">
-                    <div class="nav-stat-val" id="navTime">—</div>
-                    <div class="nav-stat-lbl">Duration</div>
+
+                <!-- TAB: Route Info -->
+                <div class="tab-panel active" id="tab-info">
+                    <div id="routeInfoContent">
+                        <div class="loading-state" style="height:200px">
+                            <div class="spinner"></div>
+                            <span>Loading route...</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="nav-stat">
-                    <div class="nav-stat-val" id="navRemaining">—</div>
-                    <div class="nav-stat-lbl">Remaining</div>
+
+                <!-- TAB: Waypoints -->
+                <div class="tab-panel" id="tab-waypoints">
+                    <div class="section-title">Waypoints</div>
+                    <div id="waypointsList">
+                        <div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Load a route to see waypoints</div>
+                    </div>
+                </div>
+
+                <!-- TAB: Steps -->
+                <div class="tab-panel" id="tab-steps">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px 8px">
+                        <span style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-weight:700">Turn-by-turn</span>
+                        <span id="stepCounter" style="font-size:11px;color:var(--text3)">— steps</span>
+                    </div>
+                    <div id="stepsList">
+                        <div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Load a route to see navigation steps</div>
+                    </div>
+                </div>
+
+                <!-- Moto animation panel (always visible at bottom) -->
+                <div class="moto-panel" id="motoPanel" style="display:none">
+                    <div class="moto-title">🏍️ Motorcycle Animation</div>
+                    <div class="moto-btns">
+                        <button class="btn btn-success btn-sm" onclick="animateMotorcycle()">▶ Start</button>
+                        <button class="btn btn-ghost btn-sm" onclick="pauseAnimation()">⏸ Pause</button>
+                        <button class="btn btn-danger btn-sm" onclick="stopAnimation()">⏹ Stop</button>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                    <div class="progress-text" id="progressText">0%</div>
                 </div>
             </div>
-            <div class="nav-next" id="navNext">
-                <span class="nav-next-label">Next →</span>
-                <span class="nav-next-text" id="navNextText">—</span>
-            </div>
-            <div class="nav-controls">
-                <button class="btn btn-ghost" onclick="prevStep()">← Previous</button>
-                <button class="btn btn-primary" onclick="nextStep()">Next →</button>
+
+            <!-- ── MAP ── -->
+            <div class="map-area">
+                <div id="map">
+                    <div class="loading-state">
+                        <div class="spinner"></div>
+                        <span>Initializing map...</span>
+                    </div>
+                </div>
+
+                <!-- NAV PANEL (floating) -->
+                <div class="nav-panel hidden" id="navPanel">
+                    <div class="nav-panel-header">
+                        <span>🧭 Navigation Mode</span>
+                        <button class="nav-close" onclick="stopNavigation()">✕</button>
+                    </div>
+                    <div class="nav-main">
+                        <div class="nav-icon" id="navIcon">⬆️</div>
+                        <div class="nav-distance" id="navDistance">—</div>
+                        <div class="nav-text" id="navText">—</div>
+                    </div>
+                    <div class="nav-stats-row">
+                        <div class="nav-stat">
+                            <div class="nav-stat-val" id="navStep">1/1</div>
+                            <div class="nav-stat-lbl">Step</div>
+                        </div>
+                        <div class="nav-stat">
+                            <div class="nav-stat-val" id="navTime">—</div>
+                            <div class="nav-stat-lbl">Duration</div>
+                        </div>
+                        <div class="nav-stat">
+                            <div class="nav-stat-val" id="navRemaining">—</div>
+                            <div class="nav-stat-lbl">Remaining</div>
+                        </div>
+                    </div>
+                    <div class="nav-next" id="navNext">
+                        <span class="nav-next-label">Next →</span>
+                        <span class="nav-next-text" id="navNextText">—</span>
+                    </div>
+                    <div class="nav-controls">
+                        <button class="btn btn-ghost" onclick="prevStep()">← Previous</button>
+                        <button class="btn btn-primary" onclick="nextStep()">Next →</button>
+                    </div>
+                </div>
+
+                <!-- Start Navigation button -->
+                <button class="btn btn-primary start-nav-btn hidden" id="btnStartNav" onclick="startNavigation()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Start Navigation
+                </button>
+
+                <div class="map-hint" id="mapHint">📍 Click on a waypoint to focus</div>
             </div>
         </div>
-
-        <!-- Start Navigation button -->
-        <button class="btn btn-primary start-nav-btn hidden" id="btnStartNav" onclick="startNavigation()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            Start Navigation
-        </button>
-
-        <div class="map-hint" id="mapHint">📍 Click on a waypoint to focus</div>
     </div>
 </div>
 

@@ -32,12 +32,16 @@ class PointOfInterest extends Model
         'rating_average',
         'reviews_count',
         'views_count',
+        'google_place_id',
+        'google_rating',
+        'google_reviews_count',
     ];
 
     protected $casts = [
         'is_verified' => 'boolean',
         'is_active' => 'boolean',
         'rating_average' => 'decimal:2',
+        'google_rating' => 'decimal:1',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
         'opening_hours' => 'array',
@@ -87,9 +91,9 @@ class PointOfInterest extends Model
     /**
      * Get the main image for this POI.
      */
-    public function mainImage(): HasMany
+    public function mainImage(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        return $this->hasMany(PoiImage::class, 'poi_id')->where('is_main', true);
+        return $this->hasOne(PoiImage::class, 'poi_id')->where('is_main', true);
     }
 
     /**
@@ -148,6 +152,15 @@ class PointOfInterest extends Model
     public function routeWaypoints(): HasMany
     {
         return $this->hasMany(RouteWaypoint::class, 'poi_id');
+    }
+
+    /**
+     * Get the tags associated with this POI.
+     */
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(PoiTag::class, 'poi_tag_relations', 'poi_id', 'tag_id')
+            ->withTimestamps();
     }
 
     /**

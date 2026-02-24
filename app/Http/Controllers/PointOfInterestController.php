@@ -169,6 +169,11 @@ class PointOfInterestController extends Controller
             'email' => 'nullable|email|max:255',
             'website' => 'nullable|url|max:255',
             'opening_hours' => 'nullable|array',
+            'tags' => 'nullable|array',
+            'tags.*' => 'exists:poi_tags,id',
+            'google_place_id' => 'nullable|string|max:255',
+            'google_rating' => 'nullable|numeric|between:0,5',
+            'google_reviews_count' => 'nullable|integer|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -182,7 +187,12 @@ class PointOfInterestController extends Controller
         $validatedData['owner_id'] = auth()->id();
 
         $poi = PointOfInterest::create($validatedData);
-        $poi->load(['type', 'city', 'country']);
+
+        if ($request->has('tags')) {
+            $poi->tags()->sync($request->tags);
+        }
+
+        $poi->load(['type', 'city', 'country', 'tags', 'images', 'mainImage']);
 
         return response()->json([
             'success' => true,
@@ -216,6 +226,7 @@ class PointOfInterestController extends Controller
             'city',
             'country',
             'images',
+            'mainImage',
             'approvedReviews.user',
             'services',
             'brands',
@@ -332,6 +343,11 @@ class PointOfInterestController extends Controller
             'website' => 'nullable|url|max:255',
             'opening_hours' => 'nullable|array',
             'owner_id' => 'nullable|exists:users,id',
+            'tags' => 'nullable|array',
+            'tags.*' => 'exists:poi_tags,id',
+            'google_place_id' => 'nullable|string|max:255',
+            'google_rating' => 'nullable|numeric|between:0,5',
+            'google_reviews_count' => 'nullable|integer|min:0',
         ]);
 
 
@@ -356,7 +372,11 @@ class PointOfInterestController extends Controller
 
         $poi->update($validatedData);
 
-        $poi->load(['type', 'city', 'country']);
+        if ($request->has('tags')) {
+            $poi->tags()->sync($request->tags);
+        }
+
+        $poi->load(['type', 'city', 'country', 'tags', 'images', 'mainImage']);
 
         return response()->json([
             'success' => true,
@@ -607,5 +627,89 @@ class PointOfInterestController extends Controller
                 // Ignore unique constraint violation
             }
         }
+    }
+
+    // ═══════════════════════════
+    // POI IMAGES
+    // ═══════════════════════════
+
+    /**
+     * @OA\Post(
+     *     path="/api/pois/{id}/images",
+     *     summary="Add an image to a POI",
+     *     tags={"Points of Interest"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"image_url"},
+     *             @OA\Property(property="image_url", type="string", example="https://example.com/image.jpg"),
+     *             @OA\Property(property="is_main", type="boolean", example=false),
+     *             @OA\Property(property="order_position", type="integer", example=0)
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Image added"),
+     *     @OA\Response(response=404, description="POI not found")
+     * )
+     */
+    public function addImage(Request $request, int $id): JsonResponse
+    {
+        $poi = PointOfInterest::find($id);
+        if (!$poi) {
+            return response()->json(['success' => false, 'message' => 'POI not found'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'image_url' => 'required|string|max:2048',
+            'is_main' => 'boolean',
+            'order_position' => 'integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        // If marked as main, demote existing mains
+        if ($request->boolean('is_main', false)) {
+            $poi->images()->update(['is_main' => false]);
+        }
+
+        $image = $poi->images()->create([
+            'image_url' => $request->image_url,
+            'is_main' => $request->boolean('is_main', false),
+            'order_position' => $request->input('order_position', $poi->images()->count()),
+        ]);
+
+        return response()->json(['success' => true, 'data' => $image], 201);
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/pois/{id}/images/{imageId}",
+     *     summary="Remove an image from a POI",
+     *     tags={"Points of Interest"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="imageId", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Image removed"),
+     *     @OA\Response(response=404, description="Not found")
+     * )
+     */
+    public function removeImage(int $id, int $imageId): JsonResponse
+    {
+        $poi = PointOfInterest::find($id);
+        if (!$poi) {
+            return response()->json(['success' => false, 'message' => 'POI not found'], 404);
+        }
+
+        $image = $poi->images()->find($imageId);
+        if (!$image) {
+            return response()->json(['success' => false, 'message' => 'Image not found'], 404);
+        }
+
+        $image->delete();
+
+        return response()->json(['success' => true, 'message' => 'Image removed']);
     }
 }

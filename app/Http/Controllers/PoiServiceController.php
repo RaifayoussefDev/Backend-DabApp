@@ -15,7 +15,7 @@ class PoiServiceController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = PoiService::with('poiType');
+        $query = PoiService::with('type');
 
         if ($request->has('type_id')) {
             $query->where('type_id', $request->type_id);
@@ -47,7 +47,7 @@ class PoiServiceController extends Controller
         }
 
         $service = PoiService::create($validator->validated());
-        $service->load('poiType');
+        $service->load('type');
 
         return response()->json([
             'success' => true,
@@ -61,7 +61,7 @@ class PoiServiceController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $service = PoiService::with('poiType')->find($id);
+        $service = PoiService::with('type')->find($id);
 
         if (!$service) {
             return response()->json([
@@ -103,7 +103,7 @@ class PoiServiceController extends Controller
         }
 
         $service->update($validator->validated());
-        $service->load('poiType');
+        $service->load('type');
 
         return response()->json([
             'success' => true,
@@ -134,3 +134,4 @@ class PoiServiceController extends Controller
         ]);
     }
 }
+
