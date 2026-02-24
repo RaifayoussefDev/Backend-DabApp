@@ -142,8 +142,9 @@
         tbody td:first-child { padding-left: 20px; }
         .cell-title { display: flex; align-items: center; gap: 11px; }
         .cell-thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; background: var(--surface3); flex-shrink: 0; }
-        .cell-info h4 { font-size: 13.5px; font-weight: 500; color: var(--text); }
-        .cell-info p { font-size: 11px; color: var(--text3); margin-top: 2px; }
+        .cell-info { overflow: hidden; min-width: 0; }
+        .cell-info h4 { font-size: 13.5px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+        .cell-info p { font-size: 11px; color: var(--text3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
 
         /* BADGE */
         .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.3px; white-space: nowrap; }
@@ -253,14 +254,17 @@
         .tags-input-wrap input:focus { outline: none; box-shadow: none; }
 
         /* STAR RATING */
-        .stars { display: flex !important; gap: 1px !important; justify-content: flex-start !important; width: fit-content !important; }
-        .stars i { font-size: 10px !important; flex: none !important; }
-        .stars .filled { color: var(--yellow); }
-        .stars .empty { color: var(--text3); }
+        /* STAR RATING */
+        .stars-container { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+        .stars { display: inline-flex !important; gap: 2px !important; width: auto !important; margin: 0 !important; padding: 0 !important; justify-content: flex-start !important; }
+        .stars i { font-size: 10px !important; width: 10px !important; height: 10px !important; display: flex !important; align-items: center !important; justify-content: center !important; flex: none !important; margin: 0 !important; padding: 0 !important; }
+        .stars .filled { color: #ffca28 !important; }
+        .stars .empty { color: rgba(255,255,255,0.15) !important; }
         
         /* TABLE WIDTHS */
-        th.col-rating { width: 80px; }
-        td.cell-rating { width: 80px; white-space: nowrap; }
+        th.col-rating { width: 70px !important; max-width: 70px !important; }
+        td.cell-rating { width: 70px !important; max-width: 70px !important; white-space: nowrap; overflow: hidden; }
+        .cell-rating .rev-count { font-size: 10px; color: var(--text3); margin-top: 1px; }
 
         /* POI TYPE GRID CARDS */
         .type-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
@@ -1235,7 +1239,10 @@ function renderPoisTable(paginatedData) {
         <tr>
             <td>
                 <div class="cell-title">
-                    ${thumb ? `<img class="cell-thumb" src="${thumb}" alt="" onerror="this.style.display='none'"/>` : `<div class="cell-thumb" style="background:${typeColor}22; display:flex; align-items:center; justify-content:center; color:${typeColor}; font-size:20px;"><i class="${typeIcon}"></i></div>`}
+                    <div class="cell-thumb" style="background:${typeColor}; display:flex; align-items:center; justify-content:center; color:white; font-size:18px; position:relative; overflow:hidden; border: 1px solid rgba(255,255,255,0.1);">
+                        ${getIconHtml(p.type?.icon, 'white', 18, 44)}
+                        ${thumb ? `<img src="${thumb}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'"/>` : ''}
+                    </div>
                     <div class="cell-info">
                         <h4>${esc(p.name)}</h4>
                         <p>${p.address || p.city?.name || '—'}</p>
@@ -1251,9 +1258,11 @@ function renderPoisTable(paginatedData) {
                 ${p.latitude ? `<span title="Lat: ${p.latitude}, Lng: ${p.longitude}"><i class="fas fa-crosshairs" style="color:var(--accent);"></i> ${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}</span>` : '—'}
             </td>
             <td class="cell-rating">
-                ${stars}
-                <div style="font-size:11px; color:var(--text3); margin-top:2px;">${p.reviews_count||0} rev</div>
-                ${p.google_rating ? `<div style="font-size:10px; color:#4285F4; margin-top:4px; display:flex; align-items:center; gap:3px;"><i class="fab fa-google"></i> ${p.google_rating} (${p.google_reviews_count||0})</div>` : ''}
+                <div class="stars-container">
+                    ${stars}
+                    <div class="rev-count">${p.reviews_count||0} rev</div>
+                </div>
+                ${p.google_rating ? `<div style="font-size:9px; color:#4285F4; margin-top:3px; display:flex; align-items:center; gap:2px;"><i class="fab fa-google"></i> ${p.google_rating}</div>` : ''}
             </td>
             <td style="font-size:12px; color:var(--text3);">
                 <i class="fas fa-eye"></i> ${p.views_count||0}
