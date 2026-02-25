@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.FadelBrothers.dab.app",
+      "sha256_cert_fingerprints": [
+        "B6:6C:50:2B:5E:29:41:82:B8:AB:8F:DC:A0:0F:6C:FB:7F:50:64:68:90:E9:8A:7D:F2:B7:66:A9:3F:A4:89:F9"
+      ]
+    }
+  }
+]

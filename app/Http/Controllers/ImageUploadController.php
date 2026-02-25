@@ -376,7 +376,7 @@ class ImageUploadController extends Controller
      * @OA\Post(
      *     path="/api/upload-icon",
      *     summary="Upload an icon",
-     *     description="Allows users to upload an icon (original size kept)",
+     *     description="Allows users to upload an icon (original size kept). Supports raster images (PNG, JPEG, WebP) and vector images (SVG).",
      *     operationId="uploadIcon",
      *     tags={"Image Upload"},
      *     @OA\RequestBody(
@@ -389,7 +389,7 @@ class ImageUploadController extends Controller
      *                     property="icon",
      *                     type="string",
      *                     format="binary",
-     *                     description="Icon file to upload"
+     *                     description="Icon file to upload (PNG, JPEG, WebP, ICO, SVG; max 2MB)"
      *                 )
      *             )
      *         )
@@ -431,7 +431,7 @@ class ImageUploadController extends Controller
             Log::info('Icon upload request received');
 
             $request->validate([
-                'icon' => 'required|image|mimes:jpeg,jpg,png,webp,ico|max:2048'
+                'icon' => 'required|mimes:jpeg,jpg,png,webp,ico,svg|max:2048'
             ]);
 
             if (!$request->hasFile('icon')) {
@@ -446,14 +446,32 @@ class ImageUploadController extends Controller
                 'mime_type' => $uploadedFile->getMimeType()
             ]);
 
-            // Nom de fichier aléatoire
-            $filename = 'icon_' . Str::random(15) . '.png'; // Toujours sauvegarder en PNG pour préserver la transparence
+            // Gérer le SVG séparément car GD/Intervention ne le supporte pas
+            if ($uploadedFile->getClientOriginalExtension() === 'svg' || $uploadedFile->getMimeType() === 'image/svg+xml') {
+                $filename = 'icon_' . Str::random(15) . '.svg';
+                $iconPath = "icons/{$filename}";
 
-            // Redimensionner l'icône à 16x16
-            $processedIcon = $this->processIcon($uploadedFile);
+                Storage::disk('public')->putFileAs('icons', $uploadedFile, $filename);
 
-            // Sauvegarder dans icons/
-            $iconPath = $this->saveImage($processedIcon, "icons/{$filename}");
+                Log::info("SVG Icon saved successfully (without processing)", [
+                    'filename' => $filename,
+                    'path' => $iconPath
+                ]);
+            } else {
+                // Nom de fichier aléatoire pour les images raster
+                $filename = 'icon_' . Str::random(15) . '.png'; // Toujours sauvegarder en PNG pour préserver la transparence
+
+                // Redimensionner l'icône si nécessaire (processIcon garde la taille originale actuellement)
+                $processedIcon = $this->processIcon($uploadedFile);
+
+                // Sauvegarder dans icons/
+                $iconPath = $this->saveImage($processedIcon, "icons/{$filename}");
+
+                Log::info("Raster Icon saved successfully", [
+                    'filename' => $filename,
+                    'path' => $iconPath
+                ]);
+            }
 
             // Ajouter le chemin public
             $publicPath = asset('storage/' . $iconPath);
