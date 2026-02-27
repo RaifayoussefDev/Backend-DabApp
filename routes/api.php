@@ -836,6 +836,15 @@ Route::middleware('auth:api')->group(function () {
     // Transaction History
     Route::get('/subscription/transactions', [App\Http\Controllers\Services\SubscriptionTransactionController::class, 'index']);
 
+    // ============================================
+    // SUBSCRIPTION PLANS (PROVIDER)
+    // ============================================
+    Route::prefix('service-provider')->group(function () {
+        Route::get('subscription-plans', [SubscriptionPlanController::class, 'index']);
+        Route::get('subscription-plans/featured', [SubscriptionPlanController::class, 'featured']);
+        Route::get('subscription-plans/compare', [SubscriptionPlanController::class, 'compare']);
+        Route::get('subscription-plans/{id}', [SubscriptionPlanController::class, 'show']);
+    });
 
     // ============================================
     // LISTINGS MANAGEMENT
@@ -1589,7 +1598,20 @@ Route::middleware('auth:api')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| 🔍 Search & Filter Routes (Optional - for advanced search)
+| � Subscription Plans Routes
+|--------------------------------------------------------------------------
+| Routes for viewing and comparing subscription plans
+*/
+Route::prefix('subscription-plans')->group(function () {
+    Route::get('/', [SubscriptionPlanController::class, 'index']);
+    Route::get('/featured', [SubscriptionPlanController::class, 'featured']);
+    Route::get('/compare', [SubscriptionPlanController::class, 'compare']);
+    Route::get('/{id}', [SubscriptionPlanController::class, 'show']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| �🔍 Search & Filter Routes (Optional - for advanced search)
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth:api')->group(function () {
@@ -1640,4 +1662,21 @@ Route::get('/health', function () {
         'timestamp' => now()->toIso8601String(),
         'database' => DB::connection()->getDatabaseName()
     ]);
+});
+
+/*
+|--------------------------------------------------------------------------
+| 💳 Service Subscriptions Routes (Provider)
+|--------------------------------------------------------------------------
+*/
+// Public Routes (Callbacks from PayTabs)
+Route::post('/subscriptions/callback', [ServiceSubscriptionController::class, 'handleCallback'])->name('api.subscriptions.callback');
+Route::any('/subscriptions/return', [ServiceSubscriptionController::class, 'handleReturn'])->name('api.subscriptions.return'); // Handle GET/POST returns
+
+// Protected Routes
+Route::middleware('auth:api')->group(function () {
+    Route::get('/my-subscription', [ServiceSubscriptionController::class, 'mySubscription']);
+    Route::post('/subscriptions/subscribe', [ServiceSubscriptionController::class, 'subscribe']);
+    Route::post('/subscriptions/cancel', [ServiceSubscriptionController::class, 'cancel']);
+    Route::get('/subscription/transactions', [SubscriptionTransactionController::class, 'index']);
 });
