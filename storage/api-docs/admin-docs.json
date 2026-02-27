@@ -2242,7 +2242,7 @@
                         "name": "query",
                         "in": "query",
                         "description": "Search string (Phone, First Name, or Last Name)",
-                        "required": true,
+                        "required": false,
                         "schema": {
                             "type": "string",
                             "example": "John"

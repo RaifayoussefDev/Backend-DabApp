@@ -463,7 +463,7 @@ class AdminListingController extends Controller
      *     @OA\Parameter(
      *         name="query",
      *         in="query",
-     *         required=true,
+     *         required=false,
      *         description="Search string (Phone, First Name, or Last Name)",
      *         @OA\Schema(type="string", example="John")
      *     ),
@@ -493,16 +493,17 @@ class AdminListingController extends Controller
         $search = $request->input('query');
         $perPage = $request->input('per_page', 10);
 
-        if (empty($search)) {
-            return response()->json([]);
+        $query = User::query();
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('phone', 'like', "%{$search}%")
+                    ->orWhere('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%");
+            });
         }
 
-        $users = User::where(function ($q) use ($search) {
-            $q->where('phone', 'like', "%{$search}%")
-                ->orWhere('first_name', 'like', "%{$search}%")
-                ->orWhere('last_name', 'like', "%{$search}%");
-        })
-            ->select('id', 'first_name', 'last_name', 'email', 'phone')
+        $users = $query->select('id', 'first_name', 'last_name', 'email', 'phone')
             ->paginate($perPage);
 
         // Append full_name attribute
