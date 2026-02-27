@@ -32898,6 +32898,26 @@
                             ]
                         },
                         "example": "monthly"
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
                     }
                 ],
                 "responses": {
@@ -33017,95 +33037,30 @@
                                                 },
                                                 "type": "object"
                                             }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
-                                },
-                                "example": {
-                                    "success": true,
-                                    "data": [
-                                        {
-                                            "id": 1,
-                                            "name": "Basic Plan",
-                                            "name_ar": "الخطة الأساسية",
-                                            "slug": "basic-plan",
-                                            "description": "Perfect for getting started",
-                                            "description_ar": "مثالية للبدء",
-                                            "price": 19,
-                                            "price_monthly": 19,
-                                            "price_yearly": 190,
-                                            "billing_cycle": "monthly",
-                                            "yearly_discount_percentage": 17,
-                                            "features": [
-                                                "Up to 5 services",
-                                                "Up to 50 bookings per month",
-                                                "Basic analytics",
-                                                "Email support"
-                                            ],
-                                            "max_services": 5,
-                                            "max_bookings_per_month": 50,
-                                            "has_unlimited_services": false,
-                                            "has_unlimited_bookings": false,
-                                            "priority_support": false,
-                                            "analytics_access": false,
-                                            "is_featured": false,
-                                            "active_subscriptions_count": 15
-                                        },
-                                        {
-                                            "id": 2,
-                                            "name": "Business Plan",
-                                            "name_ar": "خطة الأعمال",
-                                            "slug": "business-plan",
-                                            "description": "Flexible pricing that grows with you",
-                                            "description_ar": "تسعير مرن ينمو معك",
-                                            "price": 29,
-                                            "price_monthly": 29,
-                                            "price_yearly": 290,
-                                            "billing_cycle": "monthly",
-                                            "yearly_discount_percentage": 17,
-                                            "features": [
-                                                "Up to 15 services",
-                                                "Up to 200 bookings per month",
-                                                "Advanced analytics",
-                                                "Priority support"
-                                            ],
-                                            "max_services": 15,
-                                            "max_bookings_per_month": 200,
-                                            "has_unlimited_services": false,
-                                            "has_unlimited_bookings": false,
-                                            "priority_support": true,
-                                            "analytics_access": true,
-                                            "is_featured": true,
-                                            "active_subscriptions_count": 42
-                                        },
-                                        {
-                                            "id": 3,
-                                            "name": "Enterprise Plan",
-                                            "name_ar": "الخطة المؤسسية",
-                                            "slug": "enterprise-plan",
-                                            "description": "Advanced features for professionals",
-                                            "description_ar": "ميزات متقدمة للمحترفين",
-                                            "price": 39,
-                                            "price_monthly": 39,
-                                            "price_yearly": 390,
-                                            "billing_cycle": "monthly",
-                                            "yearly_discount_percentage": 17,
-                                            "features": [
-                                                "Unlimited services",
-                                                "Unlimited bookings",
-                                                "Full analytics suite",
-                                                "24/7 Priority support"
-                                            ],
-                                            "max_services": null,
-                                            "max_bookings_per_month": null,
-                                            "has_unlimited_services": true,
-                                            "has_unlimited_bookings": true,
-                                            "priority_support": true,
-                                            "analytics_access": true,
-                                            "is_featured": false,
-                                            "active_subscriptions_count": 8
-                                        }
-                                    ]
                                 }
                             }
                         }
@@ -33233,33 +33188,6 @@
                                         }
                                     },
                                     "type": "object"
-                                },
-                                "example": {
-                                    "success": true,
-                                    "data": {
-                                        "id": 1,
-                                        "name": "Basic Plan",
-                                        "name_ar": "الخطة الأساسية",
-                                        "slug": "basic-plan",
-                                        "description": "Perfect for getting started",
-                                        "description_ar": "مثالية للبدء",
-                                        "price_monthly": 19,
-                                        "price_yearly": 190,
-                                        "yearly_discount_percentage": 17,
-                                        "features": [
-                                            "Up to 5 services",
-                                            "Up to 50 bookings per month",
-                                            "Basic analytics"
-                                        ],
-                                        "max_services": 5,
-                                        "max_bookings_per_month": 50,
-                                        "has_unlimited_services": false,
-                                        "has_unlimited_bookings": false,
-                                        "priority_support": false,
-                                        "analytics_access": false,
-                                        "is_featured": false,
-                                        "active_subscriptions_count": 15
-                                    }
                                 }
                             }
                         }
@@ -33270,9 +33198,13 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
                                         "message": {
                                             "type": "string",
-                                            "example": "No query results for model [App\\\\Models\\\\SubscriptionPlan] 999"
+                                            "example": "Subscription plan not found or is inactive."
                                         }
                                     },
                                     "type": "object"

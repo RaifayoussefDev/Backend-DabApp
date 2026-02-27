@@ -6,6 +6,10 @@
 - [x] Implement pagination in `SubscriptionPlanController@index`
 - [x] Improve error handling in `SubscriptionPlanController@show`
 - [x] Update Swagger documentation for paginated `SubscriptionPlanController@index`
+- [x] Create User Statistics API
+    - [x] Design `stats` method in `UserController`
+    - [x] Add route in `api.php`
+    - [x] Add Swagger documentation
 - [x] Add Login Modal / Overlay for initial auth <!-- id: 4 -->
     - [x] Handle 401 (Unauthorized) updates (auto logout) <!-- id: 5 -->
     - [x] Add Logout Button <!-- id: 6 -->

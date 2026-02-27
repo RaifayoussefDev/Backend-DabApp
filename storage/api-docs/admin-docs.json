@@ -15383,10 +15383,11 @@
                     "Users Management"
                 ],
                 "summary": "Get users statistics",
-                "operationId": "getUsersStatistics",
+                "description": "Returns detailed statistics about users, including total counts, active status, verification status, registration completion, and counts by role/country.",
+                "operationId": "getUsersStats",
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved statistics",
+                        "description": "Successfully retrieved users statistics",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -15405,13 +15406,53 @@
                                                     "type": "integer",
                                                     "example": 980
                                                 },
+                                                "inactive_users": {
+                                                    "type": "integer",
+                                                    "example": 270
+                                                },
                                                 "verified_users": {
                                                     "type": "integer",
                                                     "example": 750
                                                 },
+                                                "unverified_users": {
+                                                    "type": "integer",
+                                                    "example": 500
+                                                },
                                                 "online_users": {
                                                     "type": "integer",
                                                     "example": 45
+                                                },
+                                                "registration_completed": {
+                                                    "type": "integer",
+                                                    "example": 1100
+                                                },
+                                                "new_users_today": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "new_users_this_week": {
+                                                    "type": "integer",
+                                                    "example": 87
+                                                },
+                                                "new_users_this_month": {
+                                                    "type": "integer",
+                                                    "example": 345
+                                                },
+                                                "new_users_this_year": {
+                                                    "type": "integer",
+                                                    "example": 1200
+                                                },
+                                                "users_by_role": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "users_by_country": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
                                                 }
                                             },
                                             "type": "object"
@@ -15421,6 +15462,9 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     }
                 },
                 "security": [

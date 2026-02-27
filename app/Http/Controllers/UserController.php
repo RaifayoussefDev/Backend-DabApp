@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use App\Models\PointOfInterest;
+use App\Models\Role;
+use App\Models\Permission;
 
 class UserController extends Controller
 {
@@ -1592,13 +1594,14 @@ class UserController extends Controller
     /**
      * @OA\Get(
      *     path="/api/admin/users/stats",
-     *     operationId="getUsersStatistics",
+     *     operationId="getUsersStats",
      *     tags={"Users Management"},
      *     summary="Get users statistics",
+     *     description="Returns detailed statistics about users, including total counts, active status, verification status, registration completion, and counts by role/country.",
      *     security={{"bearerAuth":{}}},
      *     @OA\Response(
      *         response=200,
-     *         description="Successfully retrieved statistics",
+     *         description="Successfully retrieved users statistics",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
@@ -1606,66 +1609,105 @@ class UserController extends Controller
      *                 type="object",
      *                 @OA\Property(property="total_users", type="integer", example=1250),
      *                 @OA\Property(property="active_users", type="integer", example=980),
+     *                 @OA\Property(property="inactive_users", type="integer", example=270),
      *                 @OA\Property(property="verified_users", type="integer", example=750),
-     *                 @OA\Property(property="online_users", type="integer", example=45)
+     *                 @OA\Property(property="unverified_users", type="integer", example=500),
+     *                 @OA\Property(property="online_users", type="integer", example=45),
+     *                 @OA\Property(property="registration_completed", type="integer", example=1100),
+     *                 @OA\Property(property="new_users_today", type="integer", example=15),
+     *                 @OA\Property(property="new_users_this_week", type="integer", example=87),
+     *                 @OA\Property(property="new_users_this_month", type="integer", example=345),
+     *                 @OA\Property(property="new_users_this_year", type="integer", example=1200),
+     *                 @OA\Property(
+     *                     property="users_by_role",
+     *                     type="array",
+     *                     @OA\Items(type="object")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="users_by_country",
+     *                     type="array",
+     *                     @OA\Items(type="object")
+     *                 )
      *             )
      *         )
-     *     )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
     public function stats()
     {
-        $totalUsers = User::count();
-        $activeUsers = User::where('is_active', true)->count();
-        $verifiedUsers = User::where('verified', true)->count();
-        $onlineUsers = User::where('is_online', true)->count();
+        try {
+            $totalUsers = User::count();
+            $activeUsers = User::where('is_active', true)->count();
+            $inactiveUsers = $totalUsers - $activeUsers;
 
-        $usersByRole = User::select('role_id', DB::raw('count(*) as count'))
-            ->with('role:id,name')
-            ->groupBy('role_id')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'role_id' => $item->role_id,
-                    'role_name' => $item->role->name ?? 'Unknown',
-                    'count' => $item->count
-                ];
-            });
+            $verifiedUsers = User::where('verified', true)->count();
+            $unverifiedUsers = $totalUsers - $verifiedUsers;
 
-        $newUsersThisMonth = User::whereMonth('created_at', Carbon::now()->month)
-            ->whereYear('created_at', Carbon::now()->year)
-            ->count();
+            $onlineUsers = User::where('is_online', true)->count();
 
-        $newUsersThisYear = User::whereYear('created_at', Carbon::now()->year)->count();
+            $registrationCompleted = User::where('is_registration_completed', true)->count();
 
-        $usersByCountry = User::select('country_id', DB::raw('count(*) as count'))
-            ->with('country:id,name')
-            ->whereNotNull('country_id')
-            ->groupBy('country_id')
-            ->orderBy('count', 'desc')
-            ->limit(10)
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'country_id' => $item->country_id,
-                    'country_name' => $item->country->name ?? 'Unknown',
-                    'count' => $item->count
-                ];
-            });
+            $newUsersToday = User::whereDate('created_at', Carbon::today())->count();
+            $newUsersThisWeek = User::where('created_at', '>=', Carbon::now()->startOfWeek())->count();
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'total_users' => $totalUsers,
-                'active_users' => $activeUsers,
-                'verified_users' => $verifiedUsers,
-                'online_users' => $onlineUsers,
-                'users_by_role' => $usersByRole,
-                'new_users_this_month' => $newUsersThisMonth,
-                'new_users_this_year' => $newUsersThisYear,
-                'users_by_country' => $usersByCountry,
-            ]
-        ]);
+            $newUsersThisMonth = User::whereMonth('created_at', Carbon::now()->month)
+                ->whereYear('created_at', Carbon::now()->year)
+                ->count();
+
+            $newUsersThisYear = User::whereYear('created_at', Carbon::now()->year)->count();
+
+            $usersByRole = User::select('role_id', DB::raw('count(*) as count'))
+                ->with('role:id,name')
+                ->groupBy('role_id')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'role_id' => $item->role_id,
+                        'role_name' => $item->role->name ?? 'Unknown',
+                        'count' => $item->count
+                    ];
+                });
+
+            $usersByCountry = User::select('country_id', DB::raw('count(*) as count'))
+                ->with('country:id,name')
+                ->whereNotNull('country_id')
+                ->groupBy('country_id')
+                ->orderBy('count', 'desc')
+                ->limit(10)
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'country_id' => $item->country_id,
+                        'country_name' => $item->country->name ?? 'Unknown',
+                        'count' => $item->count
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'total_users' => $totalUsers,
+                    'active_users' => $activeUsers,
+                    'inactive_users' => $inactiveUsers,
+                    'verified_users' => $verifiedUsers,
+                    'unverified_users' => $unverifiedUsers,
+                    'online_users' => $onlineUsers,
+                    'registration_completed' => $registrationCompleted,
+                    'new_users_today' => $newUsersToday,
+                    'new_users_this_week' => $newUsersThisWeek,
+                    'new_users_this_month' => $newUsersThisMonth,
+                    'new_users_this_year' => $newUsersThisYear,
+                    'users_by_role' => $usersByRole,
+                    'users_by_country' => $usersByCountry,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch user statistics: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -2854,6 +2896,7 @@ class UserController extends Controller
      *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
+
     public function assignPoi(Request $request, $id)
     {
         try {

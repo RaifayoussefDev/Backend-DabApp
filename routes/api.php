@@ -298,6 +298,7 @@ Route::prefix('admin')->group(function () {
         Route::apiResource('organizers', AdminOrganizerController::class);
 
         // Admin Users
+        Route::get('/users/stats', [UserController::class, 'stats']);
         Route::get('/users/autocomplete', [AdminListingController::class, 'autocomplete']);
         Route::apiResource('users', UserController::class);
 
