@@ -2230,6 +2230,52 @@
                 ]
             }
         },
+        "/api/admin/listings/stats": {
+            "get": {
+                "tags": [
+                    "Admin Listings"
+                ],
+                "summary": "Get listings statistics (Admin)",
+                "operationId": "2670ca8742bc5e4a3749a9e2909d2b80",
+                "responses": {
+                    "200": {
+                        "description": "Listings statistics retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_listings": {
+                                            "type": "integer"
+                                        },
+                                        "status_counts": {
+                                            "type": "object"
+                                        },
+                                        "category_counts": {
+                                            "type": "object"
+                                        },
+                                        "new_today": {
+                                            "type": "integer"
+                                        },
+                                        "new_this_week": {
+                                            "type": "integer"
+                                        },
+                                        "total_views": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/users/autocomplete": {
             "get": {
                 "tags": [

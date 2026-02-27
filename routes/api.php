@@ -202,6 +202,7 @@ Route::prefix('admin')->group(function () {
         Route::apiResource('reports', \App\Http\Controllers\Admin\ReportController::class)->only(['index', 'show', 'update']);
 
         // Admin Listings
+        Route::get('/listings/stats', [AdminListingController::class, 'stats']);
         Route::apiResource('listings', AdminListingController::class);
         Route::patch('/listings/{id}/status', [AdminListingController::class, 'changeStatus']);
         Route::post('/listings/{id}/images/reorder', [AdminListingController::class, 'reorderImages']);

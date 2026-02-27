@@ -456,6 +456,45 @@ class AdminListingController extends Controller
 
     /**
      * @OA\Get(
+     *     path="/api/admin/listings/stats",
+     *     summary="Get listings statistics (Admin)",
+     *     tags={"Admin Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Listings statistics retrieved",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total_listings", type="integer"),
+     *             @OA\Property(property="status_counts", type="object"),
+     *             @OA\Property(property="category_counts", type="object"),
+     *             @OA\Property(property="new_today", type="integer"),
+     *             @OA\Property(property="new_this_week", type="integer"),
+     *             @OA\Property(property="total_views", type="integer")
+     *         )
+     *     )
+     * )
+     */
+    public function stats()
+    {
+        $stats = [
+            'total_listings' => Listing::count(),
+            'status_counts' => Listing::select('status', DB::raw('count(*) as count'))
+                ->groupBy('status')
+                ->pluck('count', 'status'),
+            'category_counts' => Listing::select('categories.name', DB::raw('count(*) as count'))
+                ->join('categories', 'listings.category_id', '=', 'categories.id')
+                ->groupBy('categories.name')
+                ->pluck('count', 'categories.name'),
+            'new_today' => Listing::whereDate('created_at', now()->today())->count(),
+            'new_this_week' => Listing::where('created_at', '>=', now()->startOfWeek())->count(),
+            'total_views' => Listing::sum('views_count') ?? 0,
+        ];
+
+        return response()->json($stats);
+    }
+
+    /**
+     * @OA\Get(
      *     path="/api/admin/users/autocomplete",
      *     summary="Search users by name or phone",
      *     tags={"Admin Listings"},
