@@ -2258,9 +2258,6 @@
                                         },
                                         "new_this_week": {
                                             "type": "integer"
-                                        },
-                                        "total_views": {
-                                            "type": "integer"
                                         }
                                     },
                                     "type": "object"

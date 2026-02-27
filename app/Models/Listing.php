@@ -42,9 +42,9 @@ class Listing extends Model
         'contacting_channel',
         'seller_type',
         'payment_pending',
-        'step',                   
-        'edit_count',             
-        'last_edited_at',         
+        'step',
+        'edit_count',
+        'last_edited_at',
         'created_by', // ✅ Added
     ];
 
@@ -55,7 +55,6 @@ class Listing extends Model
         'auction_enabled' => 'boolean',
         'allow_submission' => 'boolean',
         'payment_pending' => 'boolean',
-        'views_count' => 'integer',
         'edit_count' => 'integer',           // ✅ NOUVEAU
         'last_edited_at' => 'datetime',      // ✅ NOUVEAU
         'published_at' => 'datetime',

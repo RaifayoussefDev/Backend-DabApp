@@ -468,8 +468,7 @@ class AdminListingController extends Controller
      *             @OA\Property(property="status_counts", type="object"),
      *             @OA\Property(property="category_counts", type="object"),
      *             @OA\Property(property="new_today", type="integer"),
-     *             @OA\Property(property="new_this_week", type="integer"),
-     *             @OA\Property(property="total_views", type="integer")
+     *             @OA\Property(property="new_this_week", type="integer")
      *         )
      *     )
      * )
@@ -487,7 +486,6 @@ class AdminListingController extends Controller
                 ->pluck('count', 'categories.name'),
             'new_today' => Listing::whereDate('created_at', now()->today())->count(),
             'new_this_week' => Listing::where('created_at', '>=', now()->startOfWeek())->count(),
-            'total_views' => Listing::sum('views_count') ?? 0,
         ];
 
         return response()->json($stats);
