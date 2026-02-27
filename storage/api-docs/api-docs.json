@@ -13788,7 +13788,7 @@
                     "Image Upload"
                 ],
                 "summary": "Upload an icon",
-                "description": "Allows users to upload an icon (original size kept)",
+                "description": "Allows users to upload an icon (original size kept). Supports raster images (PNG, JPEG, WebP) and vector images (SVG).",
                 "operationId": "uploadIcon",
                 "requestBody": {
                     "required": true,
@@ -13800,7 +13800,7 @@
                                 ],
                                 "properties": {
                                     "icon": {
-                                        "description": "Icon file to upload",
+                                        "description": "Icon file to upload (PNG, JPEG, WebP, ICO, SVG; max 2MB)",
                                         "type": "string",
                                         "format": "binary"
                                     }
@@ -24080,6 +24080,83 @@
                 ]
             }
         },
+        "/api/poi-tags": {
+            "get": {
+                "tags": [
+                    "POI Tags"
+                ],
+                "summary": "Liste tous les tags de POI",
+                "description": "Récupère tous les tags de POI publics",
+                "operationId": "fcad97efe87a28aa52ce94f3ae1f63f2",
+                "responses": {
+                    "200": {
+                        "description": "Liste des tags"
+                    }
+                }
+            }
+        },
+        "/api/poi-tags/popular": {
+            "get": {
+                "tags": [
+                    "POI Tags"
+                ],
+                "summary": "Liste les tags de POI populaires",
+                "operationId": "99eec85b40c975b34420d241e020177e",
+                "responses": {
+                    "200": {
+                        "description": "Liste des tags populaires"
+                    }
+                }
+            }
+        },
+        "/api/poi-tags/{slug}": {
+            "get": {
+                "tags": [
+                    "POI Tags"
+                ],
+                "summary": "Détails d'un tag de POI",
+                "operationId": "129dfd599bf19e3a5aa31a843456ffee",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du tag"
+                    }
+                }
+            }
+        },
+        "/api/poi-tags/{slug}/pois": {
+            "get": {
+                "tags": [
+                    "POI Tags"
+                ],
+                "summary": "Liste les POIs par tag",
+                "operationId": "9ff82476adfae6e512f881a326736560",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des POIs"
+                    }
+                }
+            }
+        },
         "/api/poi-types": {
             "get": {
                 "tags": [
@@ -25142,6 +25219,105 @@
                     },
                     "401": {
                         "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/pois/{id}/images": {
+            "post": {
+                "tags": [
+                    "Points of Interest"
+                ],
+                "summary": "Add an image to a POI",
+                "operationId": "62675b4c5e62cf19fba95d5ffc465410",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "image_url"
+                                ],
+                                "properties": {
+                                    "image_url": {
+                                        "type": "string",
+                                        "example": "https://example.com/image.jpg"
+                                    },
+                                    "is_main": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "order_position": {
+                                        "type": "integer",
+                                        "example": 0
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Image added"
+                    },
+                    "404": {
+                        "description": "POI not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/pois/{id}/images/{imageId}": {
+            "delete": {
+                "tags": [
+                    "Points of Interest"
+                ],
+                "summary": "Remove an image from a POI",
+                "operationId": "879583c487d53a138939e6a6925ade04",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "imageId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Image removed"
+                    },
+                    "404": {
+                        "description": "Not found"
                     }
                 },
                 "security": [
@@ -39106,6 +39282,10 @@
         {
             "name": "POI Reviews",
             "description": "API Endpoints for POI Reviews"
+        },
+        {
+            "name": "POI Tags",
+            "description": "API Endpoints pour les tags de POI"
         },
         {
             "name": "POI Types",

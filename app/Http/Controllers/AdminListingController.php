@@ -467,19 +467,23 @@ class AdminListingController extends Controller
      *         description="Search string (Phone, First Name, or Last Name)",
      *         @OA\Schema(type="string", example="John")
      *     ),
+     *     @OA\Parameter(name="page", in="query", description="Page number", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="per_page", in="query", description="Items per page (default 10)", @OA\Schema(type="integer")),
      *     @OA\Response(
      *         response=200,
      *         description="Users found",
      *         @OA\JsonContent(
-     *             type="array",
-     *             @OA\Items(
+     *             type="object",
+     *             @OA\Property(property="current_page", type="integer"),
+     *             @OA\Property(property="data", type="array", @OA\Items(
      *                 @OA\Property(property="id", type="integer"),
      *                 @OA\Property(property="first_name", type="string"),
      *                 @OA\Property(property="last_name", type="string"),
      *                 @OA\Property(property="email", type="string"),
      *                 @OA\Property(property="phone", type="string"),
      *                 @OA\Property(property="full_name", type="string")
-     *             )
+     *             )),
+     *             @OA\Property(property="total", type="integer")
      *         )
      *     )
      * )
@@ -487,6 +491,7 @@ class AdminListingController extends Controller
     public function autocomplete(Request $request)
     {
         $search = $request->input('query');
+        $perPage = $request->input('per_page', 10);
 
         if (empty($search)) {
             return response()->json([]);
@@ -498,11 +503,10 @@ class AdminListingController extends Controller
                 ->orWhere('last_name', 'like', "%{$search}%");
         })
             ->select('id', 'first_name', 'last_name', 'email', 'phone')
-            ->limit(10)
-            ->get();
+            ->paginate($perPage);
 
         // Append full_name attribute
-        $users->transform(function ($user) {
+        $users->getCollection()->transform(function ($user) {
             $user->full_name = $user->first_name . ' ' . $user->last_name;
             return $user;
         });

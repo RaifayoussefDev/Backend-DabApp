@@ -2247,6 +2247,22 @@
                             "type": "string",
                             "example": "John"
                         }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (default 10)",
+                        "schema": {
+                            "type": "integer"
+                        }
                     }
                 ],
                 "responses": {
@@ -2255,30 +2271,41 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "properties": {
-                                            "id": {
-                                                "type": "integer"
-                                            },
-                                            "first_name": {
-                                                "type": "string"
-                                            },
-                                            "last_name": {
-                                                "type": "string"
-                                            },
-                                            "email": {
-                                                "type": "string"
-                                            },
-                                            "phone": {
-                                                "type": "string"
-                                            },
-                                            "full_name": {
-                                                "type": "string"
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "first_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "last_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "email": {
+                                                        "type": "string"
+                                                    },
+                                                    "phone": {
+                                                        "type": "string"
+                                                    },
+                                                    "full_name": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
                                             }
                                         },
-                                        "type": "object"
-                                    }
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -7825,6 +7852,205 @@
                 ],
                 "summary": "Supprimer tous les tags non utilisés (Admin)",
                 "operationId": "2b2c03e0c678afbd312720d8d40430fc",
+                "responses": {
+                    "200": {
+                        "description": "Tags non utilisés supprimés"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-tags": {
+            "get": {
+                "tags": [
+                    "Admin - POI Tags"
+                ],
+                "summary": "Liste tous les tags de POI (Admin)",
+                "description": "Récupère tous les tags avec le nombre de POIs associés",
+                "operationId": "bdb809318045466c83ea5ac27ebd3267",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Vide = tous",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "station"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des tags"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - POI Tags"
+                ],
+                "summary": "Créer un tag de POI (Admin)",
+                "operationId": "feb469079d8a0e90cfab8fdc6dd81bfe",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Station 24/7"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tag créé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-tags/stats": {
+            "get": {
+                "tags": [
+                    "Admin - POI Tags"
+                ],
+                "summary": "Statistiques des tags de POI (Admin)",
+                "operationId": "f86c27a681a666bb0e3bde22976882b8",
+                "responses": {
+                    "200": {
+                        "description": "Statistiques"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-tags/{id}": {
+            "put": {
+                "tags": [
+                    "Admin - POI Tags"
+                ],
+                "summary": "Mettre à jour un tag de POI (Admin)",
+                "operationId": "9f11e02a877dfee10ec429917797825e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag mis à jour"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - POI Tags"
+                ],
+                "summary": "Supprimer un tag de POI (Admin)",
+                "operationId": "f1e9a9bf7dea05c8527d42d58beffc80",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag supprimé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-tags/bulk-delete": {
+            "post": {
+                "tags": [
+                    "Admin - POI Tags"
+                ],
+                "summary": "Suppression en masse de tags de POI (Admin)",
+                "operationId": "791433d37368cc6688e4a416b982bef3",
+                "responses": {
+                    "200": {
+                        "description": "Tags supprimés"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-tags/cleanup": {
+            "delete": {
+                "tags": [
+                    "Admin - POI Tags"
+                ],
+                "summary": "Supprimer tous les tags de POI non utilisés (Admin)",
+                "operationId": "fb5576abbbebb74b0ccabe732c537bc6",
                 "responses": {
                     "200": {
                         "description": "Tags non utilisés supprimés"
@@ -17516,6 +17742,10 @@
         {
             "name": "Admin - Guide Tags",
             "description": "API Endpoints pour l'administration des tags de guides"
+        },
+        {
+            "name": "Admin - POI Tags",
+            "description": "API Endpoints pour l'administration des tags de POI"
         },
         {
             "name": "Admin Reports",
