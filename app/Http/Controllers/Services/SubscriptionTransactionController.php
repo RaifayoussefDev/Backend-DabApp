@@ -68,7 +68,14 @@ class SubscriptionTransactionController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $provider = ServiceProvider::where('user_id', $user->id)->firstOrFail();
+        $provider = ServiceProvider::where('user_id', $user->id)->first();
+
+        if (!$provider) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Service provider profile not found for the authenticated user.',
+            ], 404);
+        }
 
         $transactions = SubscriptionTransaction::whereHas('subscription', function ($query) use ($provider) {
             $query->where('provider_id', $provider->id);

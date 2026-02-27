@@ -137,7 +137,14 @@ class ServiceSubscriptionController extends Controller
     public function mySubscription(Request $request)
     {
         $user = $request->user();
-        $provider = ServiceProvider::where('user_id', $user->id)->firstOrFail();
+        $provider = ServiceProvider::where('user_id', $user->id)->first();
+
+        if (!$provider) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Service provider profile not found for the authenticated user.',
+            ], 404);
+        }
 
         $subscription = $provider->activeSubscription;
 
@@ -585,7 +592,14 @@ class ServiceSubscriptionController extends Controller
         }
 
         $user = $request->user();
-        $provider = ServiceProvider::where('user_id', $user->id)->firstOrFail();
+        $provider = ServiceProvider::where('user_id', $user->id)->first();
+
+        if (!$provider) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Service provider profile not found for the authenticated user.',
+            ], 404);
+        }
 
         $subscription = $provider->activeSubscription;
 

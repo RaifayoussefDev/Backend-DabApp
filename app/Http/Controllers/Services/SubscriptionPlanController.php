@@ -35,6 +35,20 @@ class SubscriptionPlanController extends Controller
      *         ),
      *         example="monthly"
      *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=15)
+     *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=1)
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Successful operation",
@@ -73,87 +87,28 @@ class SubscriptionPlanController extends Controller
      *                     @OA\Property(property="active_subscriptions_count", type="integer", example=15, description="Number of active subscriptions")
      *                 )
      *             ),
-     *             example={
-     *                 "success": true,
-     *                 "data": {
-     *                     {
-     *                         "id": 1,
-     *                         "name": "Basic Plan",
-     *                         "name_ar": "الخطة الأساسية",
-     *                         "slug": "basic-plan",
-     *                         "description": "Perfect for getting started",
-     *                         "description_ar": "مثالية للبدء",
-     *                         "price": 19.00,
-     *                         "price_monthly": 19.00,
-     *                         "price_yearly": 190.00,
-     *                         "billing_cycle": "monthly",
-     *                         "yearly_discount_percentage": 17,
-     *                         "features": {"Up to 5 services", "Up to 50 bookings per month", "Basic analytics", "Email support"},
-     *                         "max_services": 5,
-     *                         "max_bookings_per_month": 50,
-     *                         "has_unlimited_services": false,
-     *                         "has_unlimited_bookings": false,
-     *                         "priority_support": false,
-     *                         "analytics_access": false,
-     *                         "is_featured": false,
-     *                         "active_subscriptions_count": 15
-     *                     },
-     *                     {
-     *                         "id": 2,
-     *                         "name": "Business Plan",
-     *                         "name_ar": "خطة الأعمال",
-     *                         "slug": "business-plan",
-     *                         "description": "Flexible pricing that grows with you",
-     *                         "description_ar": "تسعير مرن ينمو معك",
-     *                         "price": 29.00,
-     *                         "price_monthly": 29.00,
-     *                         "price_yearly": 290.00,
-     *                         "billing_cycle": "monthly",
-     *                         "yearly_discount_percentage": 17,
-     *                         "features": {"Up to 15 services", "Up to 200 bookings per month", "Advanced analytics", "Priority support"},
-     *                         "max_services": 15,
-     *                         "max_bookings_per_month": 200,
-     *                         "has_unlimited_services": false,
-     *                         "has_unlimited_bookings": false,
-     *                         "priority_support": true,
-     *                         "analytics_access": true,
-     *                         "is_featured": true,
-     *                         "active_subscriptions_count": 42
-     *                     },
-     *                     {
-     *                         "id": 3,
-     *                         "name": "Enterprise Plan",
-     *                         "name_ar": "الخطة المؤسسية",
-     *                         "slug": "enterprise-plan",
-     *                         "description": "Advanced features for professionals",
-     *                         "description_ar": "ميزات متقدمة للمحترفين",
-     *                         "price": 39.00,
-     *                         "price_monthly": 39.00,
-     *                         "price_yearly": 390.00,
-     *                         "billing_cycle": "monthly",
-     *                         "yearly_discount_percentage": 17,
-     *                         "features": {"Unlimited services", "Unlimited bookings", "Full analytics suite", "24/7 Priority support"},
-     *                         "max_services": null,
-     *                         "max_bookings_per_month": null,
-     *                         "has_unlimited_services": true,
-     *                         "has_unlimited_bookings": true,
-     *                         "priority_support": true,
-     *                         "analytics_access": true,
-     *                         "is_featured": false,
-     *                         "active_subscriptions_count": 8
-     *                     }
-     *                 }
-     *             }
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="current_page", type="integer", example=1),
+     *                 @OA\Property(property="last_page", type="integer", example=1),
+     *                 @OA\Property(property="per_page", type="integer", example=15),
+     *                 @OA\Property(property="total", type="integer", example=3)
+     *             )
      *         )
      *     )
      * )
      */
     public function index(Request $request)
     {
-        $query = SubscriptionPlan::active()->ordered();
         $billingCycle = $request->query('billing_cycle', 'monthly');
+        $perPage = $request->query('per_page', 15);
 
-        $plans = $query->get()->map(function ($plan) use ($billingCycle) {
+        $plansPaginated = SubscriptionPlan::active()
+            ->ordered()
+            ->paginate($perPage);
+
+        $plans = collect($plansPaginated->items())->map(function ($plan) use ($billingCycle) {
             return [
                 'id' => $plan->id,
                 'name' => $plan->name,
@@ -181,6 +136,12 @@ class SubscriptionPlanController extends Controller
         return response()->json([
             'success' => true,
             'data' => $plans,
+            'meta' => [
+                'current_page' => $plansPaginated->currentPage(),
+                'last_page' => $plansPaginated->lastPage(),
+                'per_page' => $plansPaginated->perPage(),
+                'total' => $plansPaginated->total(),
+            ],
         ]);
     }
 
@@ -232,44 +193,29 @@ class SubscriptionPlanController extends Controller
      *                 @OA\Property(property="analytics_access", type="boolean", example=false),
      *                 @OA\Property(property="is_featured", type="boolean", example=false),
      *                 @OA\Property(property="active_subscriptions_count", type="integer", example=15)
-     *             ),
-     *             example={
-     *                 "success": true,
-     *                 "data": {
-     *                     "id": 1,
-     *                     "name": "Basic Plan",
-     *                     "name_ar": "الخطة الأساسية",
-     *                     "slug": "basic-plan",
-     *                     "description": "Perfect for getting started",
-     *                     "description_ar": "مثالية للبدء",
-     *                     "price_monthly": 19.00,
-     *                     "price_yearly": 190.00,
-     *                     "yearly_discount_percentage": 17,
-     *                     "features": {"Up to 5 services", "Up to 50 bookings per month", "Basic analytics"},
-     *                     "max_services": 5,
-     *                     "max_bookings_per_month": 50,
-     *                     "has_unlimited_services": false,
-     *                     "has_unlimited_bookings": false,
-     *                     "priority_support": false,
-     *                     "analytics_access": false,
-     *                     "is_featured": false,
-     *                     "active_subscriptions_count": 15
-     *                 }
-     *             }
+     *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=404,
      *         description="Plan not found",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No query results for model [App\\Models\\SubscriptionPlan] 999")
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Subscription plan not found or is inactive.")
      *         )
      *     )
      * )
      */
     public function show($id)
     {
-        $plan = SubscriptionPlan::active()->findOrFail($id);
+        $plan = SubscriptionPlan::active()->find($id);
+
+        if (!$plan) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Subscription plan not found or is inactive.',
+            ], 404);
+        }
 
         return response()->json([
             'success' => true,
