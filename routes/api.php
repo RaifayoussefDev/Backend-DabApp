@@ -636,7 +636,7 @@ Route::get('/reports/reasons', [ReportController::class, 'getReasons']);
 // ============================================
 // TEST ROUTES
 // ============================================
-Route::get('/test-email', [SoomController::class, 'testEmail']);
+Route::post('/test-email', [AuthController::class, 'testEmail']);
 Route::get('/test-time', function (\Illuminate\Http\Request $request) {
     $requestedTimezone = $request->query('timezone');
     $serverTime = \Carbon\Carbon::now();
