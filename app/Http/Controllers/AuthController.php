@@ -1072,15 +1072,21 @@ class AuthController extends Controller
             ]
         );
 
-        // Use the same logic as login - force email only by temporarily removing phone
-        $originalPhone = $user->phone;
-        $user->phone = null; // Temporarily remove phone to force email
+        // Use email only for resendOtpEmail endpoint
+        try {
+            $user->notify(new SendOtpNotification($otp));
+            $otpSentVia = 'email';
 
-        $otpSentVia = $this->sendOtpWithWhatsAppFirst($user, $otp);
+            Log::info('OTP sent via Email for resendOtpEmail', [
+                'user_id' => $user->id,
+                'email' => $user->email
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send OTP via email', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
 
-        $user->phone = $originalPhone; // Restore original phone
-
-        if ($otpSentVia === 'failed') {
             return response()->json([
                 'error' => 'Failed to send OTP via email. Please try again later.'
             ], 500);
