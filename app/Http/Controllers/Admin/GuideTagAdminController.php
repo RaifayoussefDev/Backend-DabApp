@@ -20,7 +20,7 @@ class GuideTagAdminController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/api/admin/guide-tags",
+     *     path="/admin/guide-tags",
      *     summary="Liste tous les tags (Admin)",
      *     description="Récupère tous les tags avec le nombre de guides associés",
      *     tags={"Admin - Guide Tags"},
@@ -64,7 +64,7 @@ class GuideTagAdminController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/admin/guide-tags/stats",
+     *     path="/admin/guide-tags/stats",
      *     summary="Statistiques des tags (Admin)",
      *     tags={"Admin - Guide Tags"},
      *     security={{"bearerAuth":{}}},
@@ -93,7 +93,7 @@ class GuideTagAdminController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/admin/guide-tags",
+     *     path="/admin/guide-tags",
      *     summary="Créer un tag (Admin)",
      *     tags={"Admin - Guide Tags"},
      *     security={{"bearerAuth":{}}},
@@ -137,7 +137,7 @@ class GuideTagAdminController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/api/admin/guide-tags/{id}",
+     *     path="/admin/guide-tags/{id}",
      *     summary="Mettre à jour un tag (Admin)",
      *     tags={"Admin - Guide Tags"},
      *     security={{"bearerAuth":{}}},
@@ -180,7 +180,7 @@ class GuideTagAdminController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/api/admin/guide-tags/{id}",
+     *     path="/admin/guide-tags/{id}",
      *     summary="Supprimer un tag (Admin)",
      *     tags={"Admin - Guide Tags"},
      *     security={{"bearerAuth":{}}},
@@ -207,7 +207,7 @@ class GuideTagAdminController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/admin/guide-tags/bulk-delete",
+     *     path="/admin/guide-tags/bulk-delete",
      *     summary="Suppression en masse de tags (Admin)",
      *     tags={"Admin - Guide Tags"},
      *     security={{"bearerAuth":{}}},
@@ -237,7 +237,7 @@ class GuideTagAdminController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/api/admin/guide-tags/cleanup-unused",
+     *     path="/admin/guide-tags/cleanup-unused",
      *     summary="Supprimer tous les tags non utilisés (Admin)",
      *     tags={"Admin - Guide Tags"},
      *     security={{"bearerAuth":{}}},

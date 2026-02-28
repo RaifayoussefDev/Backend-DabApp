@@ -17,7 +17,7 @@ class ReportTypeController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/api/admin/report-types",
+     *     path="/admin/report-types",
      *     summary="List all report types",
      *     tags={"Admin Report Types"},
      *     security={{"bearerAuth":{}}},
@@ -49,7 +49,7 @@ class ReportTypeController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/admin/report-types",
+     *     path="/admin/report-types",
      *     summary="Create a new report type",
      *     tags={"Admin Report Types"},
      *     security={{"bearerAuth":{}}},
@@ -97,7 +97,7 @@ class ReportTypeController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/admin/report-types/{id}",
+     *     path="/admin/report-types/{id}",
      *     summary="Get specific report type",
      *     tags={"Admin Report Types"},
      *     security={{"bearerAuth":{}}},
@@ -128,7 +128,7 @@ class ReportTypeController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/api/admin/report-types/{id}",
+     *     path="/admin/report-types/{id}",
      *     summary="Update a report type",
      *     tags={"Admin Report Types"},
      *     security={{"bearerAuth":{}}},
@@ -183,7 +183,7 @@ class ReportTypeController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/api/admin/report-types/{id}",
+     *     path="/admin/report-types/{id}",
      *     summary="Delete a report type",
      *     tags={"Admin Report Types"},
      *     security={{"bearerAuth":{}}},

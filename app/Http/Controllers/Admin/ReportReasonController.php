@@ -17,7 +17,7 @@ class ReportReasonController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/api/admin/report-reasons",
+     *     path="/admin/report-reasons",
      *     summary="List all report reasons",
      *     tags={"Admin Report Reasons"},
      *     security={{"bearerAuth":{}}},
@@ -72,7 +72,7 @@ class ReportReasonController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/admin/report-reasons",
+     *     path="/admin/report-reasons",
      *     summary="Create a new report reason",
      *     tags={"Admin Report Reasons"},
      *     security={{"bearerAuth":{}}},
@@ -120,7 +120,7 @@ class ReportReasonController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/admin/report-reasons/{id}",
+     *     path="/admin/report-reasons/{id}",
      *     summary="Get specific report reason",
      *     tags={"Admin Report Reasons"},
      *     security={{"bearerAuth":{}}},
@@ -152,7 +152,7 @@ class ReportReasonController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/api/admin/report-reasons/{id}",
+     *     path="/admin/report-reasons/{id}",
      *     summary="Update a report reason",
      *     tags={"Admin Report Reasons"},
      *     security={{"bearerAuth":{}}},
@@ -207,7 +207,7 @@ class ReportReasonController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/api/admin/report-reasons/{id}",
+     *     path="/admin/report-reasons/{id}",
      *     summary="Delete a report reason",
      *     tags={"Admin Report Reasons"},
      *     security={{"bearerAuth":{}}},
@@ -233,7 +233,7 @@ class ReportReasonController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/admin/report-reasons/types",
+     *     path="/admin/report-reasons/types",
      *     summary="Get all report reason types",
      *     tags={"Admin Report Reasons"},
      *     security={{"bearerAuth":{}}},

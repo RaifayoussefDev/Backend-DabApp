@@ -1593,7 +1593,7 @@ class UserController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/admin/users/stats",
+     *     path="/admin/users/stats",
      *     operationId="getUsersStats",
      *     tags={"Users Management"},
      *     summary="Get users statistics",
