@@ -1,0 +1,213 @@
+{
+	"info": {
+		"name": "DabApp - Services API",
+		"description": "Exemples pour créer et afficher les services avec de bonnes donnees (Transport, Remorquage...)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. GET - Lister les Catégories de Services",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/service-categories",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"service-categories"
+					]
+				}
+			}
+		},
+		{
+			"name": "2. POST - Créer un Service (Bike Transport)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{provider_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"category_id\": 2,\n  \"name\": \"Premium Bike Transport Riyadh to Jeddah\",\n  \"name_ar\": \"نقل دراجات نارية ممتاز الرياض - جدة\",\n  \"description\": \"Secure motorcycle carrier service with fully enclosed trailer and insurance. Available 24/7.\",\n  \"description_ar\": \"خدمة نقل آمنة لدراجتك النارية باستخدام مقطورة مغلقة وتأمين شامل.\",\n  \"price\": 150.00,\n  \"price_type\": \"per_hour\",\n  \"currency\": \"SAR\",\n  \"duration_minutes\": 60,\n  \"is_available\": true,\n  \"requires_booking\": true,\n  \"max_capacity\": 2,\n  \"schedules\": [\n    {\n      \"day_of_week\": 1,\n      \"start_time\": \"08:00\",\n      \"end_time\": \"20:00\",\n      \"is_available\": true\n    },\n    {\n      \"day_of_week\": 2,\n      \"start_time\": \"08:00\",\n      \"end_time\": \"20:00\",\n      \"is_available\": true\n    }\n  ],\n  \"pricing_rules\": [\n    {\n      \"type\": \"fixed_route\",\n      \"price\": 500,\n      \"origin_city_id\": 1,\n      \"destination_city_id\": 2\n    },\n    {\n      \"type\": \"per_km\",\n      \"price\": 5.50\n    }\n  ]\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/my-services",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"my-services"
+					]
+				}
+			}
+		},
+		{
+			"name": "3. POST - Créer un Service (Tow Service)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{provider_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"category_id\": 1,\n  \"name\": \"Emergency Tow Service - Riyadh\",\n  \"name_ar\": \"خدمة سحب طوارئ - الرياض\",\n  \"description\": \"Quick roadside assistance to get your bike moving again. We offer flatbed towing specialized for motorcycles.\",\n  \"description_ar\": \"مساعدة سريعة على الطريق. نقدم خدمة السحب بمسطحة مخصصة للدراجات النارية.\",\n  \"price\": 100.00,\n  \"price_type\": \"fixed\",\n  \"currency\": \"SAR\",\n  \"duration_minutes\": 30,\n  \"is_available\": true,\n  \"requires_booking\": false,\n  \"max_capacity\": 1,\n  \"schedules\": [\n    {\n      \"day_of_week\": 0,\n      \"is_available\": true\n    },\n    {\n      \"day_of_week\": 1,\n      \"is_available\": true\n    },\n    {\n      \"day_of_week\": 2,\n      \"is_available\": true\n    }\n  ],\n  \"pricing_rules\": [\n    {\n      \"type\": \"per_km\",\n      \"price\": 10.00\n    }\n  ]\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/my-services",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"my-services"
+					]
+				}
+			}
+		},
+		{
+			"name": "4. GET - Afficher la liste des services filtrés (Bike Transport)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/services?category_id=2",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"services"
+					],
+					"query": [
+						{
+							"key": "category_id",
+							"value": "2",
+							"description": "Filtrer par Bike Transport (ID 2 généralement)"
+						}
+					]
+				}
+			}
+		},
+		{
+			"name": "5. GET - Afficher la liste des services filtrés (Tow Service)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/services?category_id=1",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"services"
+					],
+					"query": [
+						{
+							"key": "category_id",
+							"value": "1",
+							"description": "Filtrer par Tow Service (ID 1 généralement)"
+						}
+					]
+				}
+			}
+		},
+		{
+			"name": "6. GET - Mes Services (Espace Provider)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{provider_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/my-services",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"my-services"
+					]
+				}
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://be.dabapp.co",
+			"type": "string"
+		},
+		{
+			"key": "provider_token",
+			"value": "VOTRE_TOKEN_PROVIDER_ICI",
+			"type": "string"
+		}
+	]
+}

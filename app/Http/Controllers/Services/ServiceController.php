@@ -428,8 +428,8 @@ class ServiceController extends Controller
                     \App\Models\ServiceSchedule::create([
                         'service_id' => $service->id,
                         'day_of_week' => $schedule['day_of_week'],
-                        'start_time' => $schedule['start_time'] ?? null,
-                        'end_time' => $schedule['end_time'] ?? null,
+                        'start_time' => $schedule['start_time'] ?? '00:00',
+                        'end_time' => $schedule['end_time'] ?? '23:59',
                         'is_available' => $schedule['is_available'] ?? true
                     ]);
                 }
@@ -603,8 +603,8 @@ class ServiceController extends Controller
                         \App\Models\ServiceSchedule::create([
                             'service_id' => $service->id,
                             'day_of_week' => $schedule['day_of_week'],
-                            'start_time' => $schedule['start_time'] ?? null,
-                            'end_time' => $schedule['end_time'] ?? null,
+                            'start_time' => $schedule['start_time'] ?? '00:00',
+                            'end_time' => $schedule['end_time'] ?? '23:59',
                             'is_available' => $schedule['is_available'] ?? true
                         ]);
                     }
