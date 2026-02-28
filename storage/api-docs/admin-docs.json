@@ -7708,14 +7708,14 @@
                 ]
             }
         },
-        "/api/admin/guide-tags": {
+        "/admin/guide-tags": {
             "get": {
                 "tags": [
                     "Admin - Guide Tags"
                 ],
                 "summary": "Liste tous les tags (Admin)",
                 "description": "Récupère tous les tags avec le nombre de guides associés",
-                "operationId": "6253ce448da3759be1900ef0b993d54e",
+                "operationId": "6de27f236504124bc2635b7d56ba2b2c",
                 "parameters": [
                     {
                         "name": "page",
@@ -7762,7 +7762,7 @@
                     "Admin - Guide Tags"
                 ],
                 "summary": "Créer un tag (Admin)",
-                "operationId": "4b8192af13a5096325f6068e05e67956",
+                "operationId": "1eb4eacf51bdfca13389dae055115ad6",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -7794,13 +7794,13 @@
                 ]
             }
         },
-        "/api/admin/guide-tags/stats": {
+        "/admin/guide-tags/stats": {
             "get": {
                 "tags": [
                     "Admin - Guide Tags"
                 ],
                 "summary": "Statistiques des tags (Admin)",
-                "operationId": "068675f7120a4440ff04d03d2da4e627",
+                "operationId": "187b17ea1e83c4c4830878de25f3952a",
                 "responses": {
                     "200": {
                         "description": "Statistiques"
@@ -7813,13 +7813,13 @@
                 ]
             }
         },
-        "/api/admin/guide-tags/{id}": {
+        "/admin/guide-tags/{id}": {
             "put": {
                 "tags": [
                     "Admin - Guide Tags"
                 ],
                 "summary": "Mettre à jour un tag (Admin)",
-                "operationId": "63fde7f40d3ced05519227864652444f",
+                "operationId": "54d79ceaa410790023cfcb15dc30be06",
                 "parameters": [
                     {
                         "name": "id",
@@ -7846,7 +7846,7 @@
                     "Admin - Guide Tags"
                 ],
                 "summary": "Supprimer un tag (Admin)",
-                "operationId": "628753bb91e371c1ad7a03d406d902f8",
+                "operationId": "3e87126f27bd120b36a90919fb4fe025",
                 "parameters": [
                     {
                         "name": "id",
@@ -7869,13 +7869,13 @@
                 ]
             }
         },
-        "/api/admin/guide-tags/bulk-delete": {
+        "/admin/guide-tags/bulk-delete": {
             "post": {
                 "tags": [
                     "Admin - Guide Tags"
                 ],
                 "summary": "Suppression en masse de tags (Admin)",
-                "operationId": "9f554a9244c8f7c458a01a0c1dc5b2d4",
+                "operationId": "ec4c9f9e8e9da6f9e9d45e7f43ce2d92",
                 "responses": {
                     "200": {
                         "description": "Tags supprimés"
@@ -7888,13 +7888,13 @@
                 ]
             }
         },
-        "/api/admin/guide-tags/cleanup-unused": {
+        "/admin/guide-tags/cleanup-unused": {
             "delete": {
                 "tags": [
                     "Admin - Guide Tags"
                 ],
                 "summary": "Supprimer tous les tags non utilisés (Admin)",
-                "operationId": "2b2c03e0c678afbd312720d8d40430fc",
+                "operationId": "2e2c3c156d7a4e844042e7413fdc9f2b",
                 "responses": {
                     "200": {
                         "description": "Tags non utilisés supprimés"
@@ -8648,13 +8648,13 @@
                 ]
             }
         },
-        "/api/admin/report-types": {
+        "/admin/report-types": {
             "get": {
                 "tags": [
                     "Admin Report Types"
                 ],
                 "summary": "List all report types",
-                "operationId": "dab5513f41936dafd438f4725feac147",
+                "operationId": "b374641171ce26dacb8ce813217961a3",
                 "responses": {
                     "200": {
                         "description": "List of report types",
@@ -8703,7 +8703,7 @@
                     "Admin Report Types"
                 ],
                 "summary": "Create a new report type",
-                "operationId": "68a4f95b5a03a572c6946d1f37c79f7a",
+                "operationId": "942d92bb6cb9f3584cc362b481edee4f",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -8775,13 +8775,13 @@
                 ]
             }
         },
-        "/api/admin/report-types/{id}": {
+        "/admin/report-types/{id}": {
             "get": {
                 "tags": [
                     "Admin Report Types"
                 ],
                 "summary": "Get specific report type",
-                "operationId": "35ec4826c37946cfc3a6fbf5bfa9c7c2",
+                "operationId": "11ced7b390c0345fdd430ef61e96364c",
                 "parameters": [
                     {
                         "name": "id",
@@ -8832,7 +8832,7 @@
                     "Admin Report Types"
                 ],
                 "summary": "Update a report type",
-                "operationId": "53b22b014aa0f722bd98d38c417c2ad3",
+                "operationId": "34454d81b980a81e3a7a79a6f667d36e",
                 "parameters": [
                     {
                         "name": "id",
@@ -8907,7 +8907,7 @@
                     "Admin Report Types"
                 ],
                 "summary": "Delete a report type",
-                "operationId": "0cacfccca2570eb21695e8d8603f55c8",
+                "operationId": "251c0a2e969ee83b6d234a33e51c5fb7",
                 "parameters": [
                     {
                         "name": "id",
@@ -15377,7 +15377,7 @@
                 ]
             }
         },
-        "/api/admin/users/stats": {
+        "/admin/users/stats": {
             "get": {
                 "tags": [
                     "Users Management"
