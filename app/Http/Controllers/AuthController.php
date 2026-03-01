@@ -585,76 +585,14 @@ class AuthController extends Controller
      */
     private function sendOtpBasedOnLoginMethod(User $user, $otp, $isEmailLogin)
     {
-        if ($isEmailLogin) {
-            // L'utilisateur s'est connecté avec email → Envoyer OTP par email
-            try {
-                if (empty($user->email)) {
-                    throw new \Exception('User has no email address');
-                }
+        // ⭐ Toujours prioriser WhatsApp même si le login est par email
+        Log::info('OTP delivery: prioritizing WhatsApp', [
+            'user_id' => $user->id,
+            'login_method' => $isEmailLogin ? 'email' : 'phone',
+            'has_phone' => !empty($user->phone)
+        ]);
 
-                $user->notify(new SendOtpNotification($otp));
-
-                Log::info('OTP sent via Email (user logged in with email)', [
-                    'user_id' => $user->id,
-                    'email' => $user->email
-                ]);
-
-                return 'email';
-            } catch (\Exception $e) {
-                Log::error('Failed to send OTP via email', [
-                    'user_id' => $user->id,
-                    'error' => $e->getMessage()
-                ]);
-
-                // Fallback vers WhatsApp si email échoue
-                if (!empty($user->phone)) {
-                    $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
-                    if ($whatsappSent) {
-                        Log::info('OTP sent via WhatsApp (email fallback)', [
-                            'user_id' => $user->id
-                        ]);
-                        return 'whatsapp';
-                    }
-                }
-
-                return 'failed';
-            }
-        } else {
-            // L'utilisateur s'est connecté avec téléphone → Envoyer OTP par WhatsApp
-            if (!empty($user->phone)) {
-                $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
-
-                if ($whatsappSent) {
-                    Log::info('OTP sent via WhatsApp (user logged in with phone)', [
-                        'user_id' => $user->id,
-                        'phone' => $user->phone
-                    ]);
-                    return 'whatsapp';
-                }
-            }
-
-            // Fallback vers email si WhatsApp échoue
-            try {
-                if (empty($user->email)) {
-                    throw new \Exception('User has no email address');
-                }
-
-                $user->notify(new SendOtpNotification($otp));
-
-                Log::info('OTP sent via Email (WhatsApp fallback)', [
-                    'user_id' => $user->id,
-                    'email' => $user->email
-                ]);
-
-                return 'email';
-            } catch (\Exception $e) {
-                Log::error('Failed to send OTP via both WhatsApp and Email', [
-                    'user_id' => $user->id,
-                    'error' => $e->getMessage()
-                ]);
-                return 'failed';
-            }
-        }
+        return $this->sendOtpWithWhatsAppFirst($user, $otp);
     }
     private function sendOtpWithWhatsAppFirst(User $user, $otp)
     {
