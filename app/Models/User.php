@@ -249,7 +249,7 @@ class User extends Authenticatable implements JWTSubject
      * @var array<string, string>
      */
     protected $casts = [
-        'birthday' => 'date',
+        'birthday' => 'date:Y-m-d',
         'verified' => 'boolean',
         'is_registration_completed' => 'boolean',
         'is_active' => 'boolean',
