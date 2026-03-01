@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Log;
 class AuthAdminController extends Controller
 {
     private $whatsappApiUrl = 'https://api.360messenger.com/v2/sendMessage';
-    private $whatsappApiToken = 'fFUXfEtxJDqxX2lnteWxheeazIYyDriNBDn';
+    private $whatsappApiToken = 'lEv2uJJUFIZl9houMUQtkCQzgyWepWEzywf';
 
     private const ACCESS_TOKEN_DURATION = 60;
     private const REFRESH_TOKEN_DURATION = 43200;
@@ -147,22 +147,22 @@ class AuthAdminController extends Controller
 
         if ($isEmailLogin) {
             // Login is an email
-            $user = User::where('email', $login)->first();
+            $user = User::withTrashed()->where('email', $login)->first();
             Log::info('Login attempt with email', ['email' => $login]);
         } else {
             // Login is potentially a phone number - try direct match or with/without + prefix
 
             // First, try exact match
-            $user = User::where('phone', $login)->first();
+            $user = User::withTrashed()->where('phone', $login)->first();
 
             if (!$user) {
                 // Try removing/adding + prefix
                 if (str_starts_with($login, '+')) {
                     $phoneWithoutPlus = substr($login, 1);
-                    $user = User::where('phone', $phoneWithoutPlus)->first();
+                    $user = User::withTrashed()->where('phone', $phoneWithoutPlus)->first();
                 } else {
                     $phoneWithPlus = '+' . $login;
-                    $user = User::where('phone', $phoneWithPlus)->first();
+                    $user = User::withTrashed()->where('phone', $phoneWithPlus)->first();
                 }
             }
 
@@ -181,6 +181,36 @@ class AuthAdminController extends Controller
                 'user_found' => $user ? true : false
             ]);
             return response()->json(['error' => 'Invalid credentials'], 401);
+        }
+
+        // ⭐ HANDLE SOFT DELETED USER (30-day reactivation)
+        if ($user->trashed()) {
+            $daysSinceDeletion = $user->deleted_at->diffInDays(now());
+
+            if ($daysSinceDeletion > 30) {
+                Log::warning('Login failed - account permanently deleted (past 30 days)', [
+                    'user_id' => $user->id,
+                    'deleted_at' => $user->deleted_at
+                ]);
+                return response()->json(['error' => 'Invalid credentials'], 401);
+            }
+
+            // Restore account
+            $user->restore();
+            Log::info('Account reactivated on login', ['user_id' => $user->id]);
+
+            // ✅ SEND REACTIVATION NOTIFICATIONS
+            try {
+                // Email
+                $user->notify(new \App\Notifications\AccountReactivationNotification());
+
+                // WhatsApp
+                if (!empty($user->phone)) {
+                    $this->sendReactivationWhatsApp($user->phone, $user->first_name);
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send reactivation notifications', ['error' => $e->getMessage()]);
+            }
         }
 
         // ✅ VÉRIFIER SI L'UTILISATEUR A FINALISÉ SON INSCRIPTION
@@ -453,6 +483,34 @@ class AuthAdminController extends Controller
         }
 
         return $phone;
+    }
+
+    private function sendReactivationWhatsApp($phone, $name)
+    {
+        try {
+            $phoneNumber = $this->formatPhoneNumber($phone);
+
+            $text = "🎉 Account Reactivated / تم تفعيل الحساب\n\n" .
+                "Hello {$name},\n" .
+                "Your account has been successfully reactivated. Welcome back!\n\n" .
+                "مرحباً {$name}،\n" .
+                "تم إعادة تفعيل حسابك بنجاح. أهلاً بعودتك!";
+
+            $payload = [
+                'phonenumber' => '+' . $phoneNumber,
+                'text' => $text
+            ];
+
+            Http::timeout(10)->withHeaders([
+                'Authorization' => "Bearer {$this->whatsappApiToken}",
+                'Content-Type' => 'application/json',
+            ])->post($this->whatsappApiUrl, $payload);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('WhatsApp reactivation send failed', ['error' => $e->getMessage()]);
+            return false;
+        }
     }
 
     /**
