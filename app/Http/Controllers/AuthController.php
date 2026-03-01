@@ -1463,13 +1463,32 @@ class AuthController extends Controller
             'phone' => 'nullable|string|unique:users,phone,' . $user->id,
             'birthday' => 'nullable|date',
             'profile_picture' => 'nullable|string|max:255',
+            'gender' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:255',
+            'postal_code' => 'nullable|string|max:20',
+            'country_id' => 'nullable|integer|exists:countries,id',
+            'language' => 'nullable|string|max:10',
+            'timezone' => 'nullable|string|max:100',
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        $data = $request->only('first_name', 'last_name', 'email', 'phone', 'birthday', 'profile_picture');
+        $data = $request->only(
+            'first_name',
+            'last_name',
+            'email',
+            'phone',
+            'birthday',
+            'profile_picture',
+            'gender',
+            'address',
+            'postal_code',
+            'country_id',
+            'language',
+            'timezone'
+        );
 
         $user->update($data);
 

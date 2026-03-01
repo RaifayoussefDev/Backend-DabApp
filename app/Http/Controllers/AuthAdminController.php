@@ -7,6 +7,7 @@ use App\Models\Authentication;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Notifications\SendOtpNotification;
+use App\Notifications\AccountReactivationNotification;
 use App\Notifications\PasswordResetNotification;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -1139,13 +1140,36 @@ class AuthAdminController extends Controller
             'email' => 'nullable|email|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|unique:users,phone,' . $user->id,
             'birthday' => 'nullable|date',
+            'profile_picture' => 'nullable|string|max:255',
+            'gender' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:255',
+            'postal_code' => 'nullable|string|max:20',
+            'country_id' => 'nullable|integer|exists:countries,id',
+            'language' => 'nullable|string|max:10',
+            'timezone' => 'nullable|string|max:100',
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        $user->update($request->only('first_name', 'last_name', 'email', 'phone', 'birthday'));
+        $user->update($request->only(
+            'first_name',
+            'last_name',
+            'email',
+            'phone',
+            'birthday',
+            'profile_picture',
+            'gender',
+            'address',
+            'postal_code',
+            'country_id',
+            'language',
+            'timezone'
+        ));
+
+        // Refresh user to get updated fields
+        $user->refresh();
 
         return response()->json([
             'message' => 'Profile updated successfully',
