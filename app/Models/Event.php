@@ -64,6 +64,8 @@ class Event extends Model
         'is_published',
         'participants_count',
         'organizer_profile_id',
+        'social_url',
+        'ticket_url',
     ];
 
     protected $casts = [

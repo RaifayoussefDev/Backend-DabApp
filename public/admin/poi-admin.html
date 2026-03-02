@@ -692,9 +692,36 @@
                             <option value="">-- Select --</option>
                         </select>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" style="grid-column: 1 / -1;">
                         <label class="form-label">Icône Personnalisée (Optionnel)</label>
-                        <input type="text" id="poi-custom-icon" placeholder="Ex: fas fa-star ou lien d'image"/>
+                        <div class="icon-upload-wrap">
+                            <div class="icon-preview-box" onclick="document.getElementById('poi-custom-icon-file').click()">
+                                <div class="icon-preview-fa" id="poi-custom-icon-preview" style="color:var(--accent);">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                                <div class="upload-overlay"><i class="fas fa-camera" style="color:white;font-size:18px;"></i></div>
+                            </div>
+                            <div class="icon-upload-inputs" style="flex: 1;">
+                                <div class="icon-type-tabs" style="margin-bottom: 8px;">
+                                    <button class="icon-type-tab active" id="poi-icon-tab-upload" onclick="switchPoiIconTab('upload')" type="button"><i class="fas fa-upload"></i> Import Image</button>
+                                    <button class="icon-type-tab" id="poi-icon-tab-fa" onclick="switchPoiIconTab('fa')" type="button"><i class="fab fa-font-awesome"></i> FontAwesome / URL</button>
+                                </div>
+                                
+                                <div class="icon-input-group active" id="poi-icon-group-upload">
+                                    <div class="file-drop" id="poi-custom-icon-drop" style="margin-bottom:0; padding:12px;">
+                                        <input type="file" id="poi-custom-icon-file" accept="image/*" onchange="handlePoiCustomIconUpload(this)"/>
+                                        <div class="file-drop-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                                        <p><strong>Drag an image</strong> or click to browse</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="icon-input-group" id="poi-icon-group-fa" style="display:none;">
+                                    <input type="text" id="poi-custom-icon-text" placeholder="Ex: fas fa-star ou lien d'image" oninput="previewPoiCustomIcon(this.value)"/>
+                                    <p class="form-hint">Use FontAwesome 6 classes (ex: fas fa-gas-pump) or a direct image URL.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="poi-custom-icon-hidden"/>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Email</label>
@@ -1337,7 +1364,15 @@ function openPoiModal(poi = null) {
     document.getElementById('poi-name').value = poi?.name || '';
     document.getElementById('poi-name-ar').value = poi?.name_ar || '';
     document.getElementById('poi-type-id').value = poi?.type_id || '';
-    document.getElementById('poi-custom-icon').value = poi?.custom_icon || '';
+    const customIcon = poi?.custom_icon || '';
+    document.getElementById('poi-custom-icon-hidden').value = customIcon;
+    document.getElementById('poi-custom-icon-text').value = customIcon;
+    
+    if (customIcon && !customIcon.startsWith('fa') && (customIcon.startsWith('http') || customIcon.startsWith('/') || customIcon.startsWith('data:'))) {
+        switchPoiIconTab('upload');
+    } else {
+        switchPoiIconTab('fa');
+    }
     document.getElementById('poi-description').value = poi?.description || '';
     document.getElementById('poi-description-ar').value = poi?.description_ar || '';
     document.getElementById('poi-address').value = poi?.address || '';
@@ -1389,6 +1424,59 @@ function openPoiModal(poi = null) {
     openModal('modal-poi');
     setTimeout(() => initMap(poi), 300);
 }
+function switchPoiIconTab(mode) {
+    document.getElementById('poi-icon-tab-upload').classList.toggle('active', mode === 'upload');
+    document.getElementById('poi-icon-tab-fa').classList.toggle('active', mode === 'fa');
+    document.getElementById('poi-icon-group-upload').classList.toggle('active', mode === 'upload');
+    document.getElementById('poi-icon-group-fa').classList.toggle('active', mode === 'fa');
+    
+    if (mode === 'fa') {
+        previewPoiCustomIcon(document.getElementById('poi-custom-icon-text').value);
+    } else {
+        previewPoiCustomIcon(document.getElementById('poi-custom-icon-hidden').value);
+    }
+}
+
+function previewPoiCustomIcon(val) {
+    const box = document.getElementById('poi-custom-icon-preview');
+    if (!val) { 
+        box.innerHTML = `<i class="fas fa-image" style="color:var(--accent);"></i>`; 
+        return; 
+    }
+    if (val.startsWith('http') || val.startsWith('data:') || val.startsWith('/')) {
+        box.innerHTML = `<img src="${val}" style="width:56px;height:56px;object-fit:contain;" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-image\\' style=\\'color:var(--accent);\\'></i>'"/>`;
+    } else {
+        box.innerHTML = `<i class="${esc(val)}" style="color:var(--accent);"></i>`;
+    }
+}
+
+async function handlePoiCustomIconUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 2*1024*1024) { toast('File too large (max 2MB)', 'error'); return; }
+
+    const formData = new FormData();
+    formData.append('icon', file);
+
+    const box = document.getElementById('poi-custom-icon-preview');
+    const originalContent = box.innerHTML;
+    box.innerHTML = '<div class="spinner" style="width:24px;height:24px;border-width:2px;margin:auto;"></div>';
+
+    try {
+        const data = await api('/api/upload-icon', 'POST', formData, true);
+        const url = data.path;
+        document.getElementById('poi-custom-icon-hidden').value = url;
+        document.getElementById('poi-custom-icon-text').value = url;
+        previewPoiCustomIcon(url);
+        toast('Custom icon uploaded', 'success');
+    } catch (e) {
+        box.innerHTML = originalContent;
+        toast(e.message || 'Upload failed', 'error');
+    } finally {
+        input.value = '';
+    }
+}
+
 function openPoiTypeSpecifics(typeId) {
     // Placeholder: extend here to show type-specific fields based on typeId
 }
@@ -1430,7 +1518,7 @@ async function savePoi() {
         name: document.getElementById('poi-name').value,
         name_ar: document.getElementById('poi-name-ar').value || null,
         type_id: parseInt(document.getElementById('poi-type-id').value) || null,
-        custom_icon: document.getElementById('poi-custom-icon').value || null,
+        custom_icon: (document.getElementById('poi-icon-tab-fa').classList.contains('active') ? document.getElementById('poi-custom-icon-text').value.trim() : document.getElementById('poi-custom-icon-hidden').value) || null,
         description: document.getElementById('poi-description').value || null,
         description_ar: document.getElementById('poi-description-ar').value || null,
         address: document.getElementById('poi-address').value || null,

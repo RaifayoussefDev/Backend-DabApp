@@ -25,6 +25,47 @@ class AdminEventController extends Controller
 
     /**
      * @OA\Get(
+     *     path="/api/admin/events/stats",
+     *     summary="Admin: Get events statistics",
+     *     tags={"Admin Events"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Statistics retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total_events", type="integer", example=150),
+     *             @OA\Property(property="published_events", type="integer", example=100),
+     *             @OA\Property(property="draft_events", type="integer", example=30),
+     *             @OA\Property(property="upcoming_events", type="integer", example=40),
+     *             @OA\Property(property="past_events", type="integer", example=110),
+     *             @OA\Property(property="total_participants", type="integer", example=5000),
+     *             @OA\Property(property="featured_events", type="integer", example=10)
+     *         )
+     *     )
+     * )
+     */
+    public function stats()
+    {
+        $today = now()->toDateString();
+
+        $stats = [
+            'total_events' => Event::count(),
+            'published_events' => Event::where('is_published', true)->count(),
+            'draft_events' => Event::where('status', 'draft')->count(),
+            'upcoming_events' => Event::whereDate('event_date', '>=', $today)->count(),
+            'past_events' => Event::whereDate('event_date', '<', $today)->count(),
+            'total_participants' => Event::sum('participants_count') ?? 0,
+            'featured_events' => Event::where('is_featured', true)->count(),
+        ];
+
+        return response()->json([
+            'message' => 'Event statistics retrieved successfully',
+            'data' => $stats
+        ]);
+    }
+
+    /**
+     * @OA\Get(
      *     path="/api/admin/events",
      *     summary="Admin: Get all events with filters",
      *     tags={"Admin Events"},
@@ -259,6 +300,8 @@ class AdminEventController extends Controller
             'faqs.*.question_ar' => 'nullable|string',
             'faqs.*.answer' => 'required|string',
             'faqs.*.answer_ar' => 'nullable|string',
+            'social_url' => 'nullable|url|max:255',
+            'ticket_url' => 'nullable|url|max:255',
             // Admin specific
             'organizer_profile_id' => 'nullable|exists:organizers,id',
             'organizer_id' => 'nullable|exists:users,id',
@@ -473,6 +516,8 @@ class AdminEventController extends Controller
             'faqs.*.question_ar' => 'nullable|string',
             'faqs.*.answer' => 'required|string',
             'faqs.*.answer_ar' => 'nullable|string',
+            'social_url' => 'nullable|url|max:255',
+            'ticket_url' => 'nullable|url|max:255',
             // Admin specific
             'organizer_profile_id' => 'nullable|exists:organizers,id',
             // Admin might update organizer_id

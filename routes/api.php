@@ -260,6 +260,7 @@ Route::prefix('admin')->group(function () {
         Route::apiResource('guide-comments', GuideCommentAdminController::class)->except(['store']);
 
         // Admin Events
+        Route::get('/events/stats', [AdminEventController::class, 'stats']);
         Route::apiResource('events', AdminEventController::class);
         Route::patch('/events/{id}/toggle-publish', [AdminEventController::class, 'togglePublish']);
         Route::patch('/events/{id}/approve', [AdminEventController::class, 'approve']);
