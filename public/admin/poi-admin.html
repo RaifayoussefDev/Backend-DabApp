@@ -693,6 +693,10 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <label class="form-label">Icône Personnalisée (Optionnel)</label>
+                        <input type="text" id="poi-custom-icon" placeholder="Ex: fas fa-star ou lien d'image"/>
+                    </div>
+                    <div class="form-group">
                         <label class="form-label">Email</label>
                         <input type="email" id="poi-email" placeholder="contact@poi.com"/>
                     </div>
@@ -1240,7 +1244,7 @@ function renderPoisTable(paginatedData) {
             <td>
                 <div class="cell-title">
                     <div class="cell-thumb" style="background:${typeColor}; display:flex; align-items:center; justify-content:center; color:white; font-size:18px; position:relative; overflow:hidden; border: 1px solid rgba(255,255,255,0.1);">
-                        ${getIconHtml(p.type?.icon, 'white', 18, 44)}
+                        ${getIconHtml(p.custom_icon || p.type?.icon, 'white', 18, 44)}
                         ${thumb ? `<img src="${thumb}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'"/>` : ''}
                     </div>
                     <div class="cell-info">
@@ -1333,6 +1337,7 @@ function openPoiModal(poi = null) {
     document.getElementById('poi-name').value = poi?.name || '';
     document.getElementById('poi-name-ar').value = poi?.name_ar || '';
     document.getElementById('poi-type-id').value = poi?.type_id || '';
+    document.getElementById('poi-custom-icon').value = poi?.custom_icon || '';
     document.getElementById('poi-description').value = poi?.description || '';
     document.getElementById('poi-description-ar').value = poi?.description_ar || '';
     document.getElementById('poi-address').value = poi?.address || '';
@@ -1425,6 +1430,7 @@ async function savePoi() {
         name: document.getElementById('poi-name').value,
         name_ar: document.getElementById('poi-name-ar').value || null,
         type_id: parseInt(document.getElementById('poi-type-id').value) || null,
+        custom_icon: document.getElementById('poi-custom-icon').value || null,
         description: document.getElementById('poi-description').value || null,
         description_ar: document.getElementById('poi-description-ar').value || null,
         address: document.getElementById('poi-address').value || null,

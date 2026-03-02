@@ -19,6 +19,7 @@ class PointOfInterest extends Model
         'description',
         'description_ar',
         'type_id',
+        'custom_icon',
         'owner_id',
         'latitude',
         'longitude',
@@ -37,6 +38,10 @@ class PointOfInterest extends Model
         'google_place_id',
         'google_rating',
         'google_reviews_count',
+    ];
+
+    protected $appends = [
+        'custom_icon'
     ];
 
     protected $casts = [
@@ -205,5 +210,31 @@ class PointOfInterest extends Model
             ->selectRaw("{$haversine} AS distance")
             ->whereRaw("{$haversine} < ?", [$radiusKm])
             ->orderBy('distance');
+    }
+
+    /**
+     * Get the custom icon for the POI (Own icon, User's logo if exists, else Type's icon)
+     */
+    public function getCustomIconAttribute($value)
+    {
+        if ($value) {
+            return $value;
+        }
+
+        // If owner has a service provider with a logo, use it
+        if (
+            $this->relationLoaded('seller') && $this->seller &&
+            $this->seller->relationLoaded('serviceProvider') &&
+            $this->seller->serviceProvider && $this->seller->serviceProvider->logo
+        ) {
+            return $this->seller->serviceProvider->logoUrl;
+        }
+
+        // Fallback to type's icon
+        if ($this->relationLoaded('type') && $this->type) {
+            return $this->type->icon;
+        }
+
+        return null;
     }
 }

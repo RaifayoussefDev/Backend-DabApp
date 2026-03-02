@@ -68,7 +68,7 @@ class PointOfInterestController extends Controller
     public function index(Request $request): JsonResponse
     {
         // Ne charger que mainImage au lieu de images et mainImage
-        $query = PointOfInterest::with(['type', 'city', 'country', 'mainImage']);
+        $query = PointOfInterest::with(['type', 'city', 'country', 'mainImage', 'seller.serviceProvider']);
 
         // Filter by type
         if ($request->has('type_id')) {
@@ -162,6 +162,7 @@ class PointOfInterestController extends Controller
             'description' => 'nullable|string',
             'description_ar' => 'nullable|string',
             'type_id' => 'required|exists:poi_types,id',
+            'custom_icon' => 'nullable|string|max:255',
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'address' => 'nullable|string',
@@ -224,7 +225,7 @@ class PointOfInterestController extends Controller
     {
         $poi = PointOfInterest::with([
             'type',
-            'seller',
+            'seller.serviceProvider',
             'city',
             'country',
             'images',
@@ -337,6 +338,7 @@ class PointOfInterestController extends Controller
             'description' => 'nullable|string',
             'description_ar' => 'nullable|string',
             'type_id' => 'sometimes|required|exists:poi_types,id',
+            'custom_icon' => 'nullable|string|max:255',
             'latitude' => 'sometimes|required|numeric|between:-90,90',
             'longitude' => 'sometimes|required|numeric|between:-180,180',
             'address' => 'nullable|string',
@@ -534,7 +536,7 @@ class PointOfInterestController extends Controller
 
         $radius = $request->input('radius', 10);
 
-        $pois = PointOfInterest::with(['type', 'city', 'country', 'mainImage'])
+        $pois = PointOfInterest::with(['type', 'city', 'country', 'mainImage', 'seller.serviceProvider'])
             ->active()
             ->nearby($request->latitude, $request->longitude, $radius)
             ->get();
@@ -585,7 +587,7 @@ class PointOfInterestController extends Controller
     {
         $user = auth()->user();
 
-        $query = PointOfInterest::with(['type', 'city', 'country', 'images', 'mainImage'])
+        $query = PointOfInterest::with(['type', 'city', 'country', 'images', 'mainImage', 'seller.serviceProvider'])
             ->whereHas('favorites', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             })
