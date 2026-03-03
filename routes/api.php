@@ -135,6 +135,12 @@ use App\Http\Controllers\AdminPoiServiceController;
 use App\Http\Controllers\AdminPoiTagController;
 use App\Http\Controllers\AdminPoiTypeController;
 
+use App\Http\Controllers\AdminMotorcycleBrandController;
+use App\Http\Controllers\AdminMotorcycleYearController;
+use App\Http\Controllers\AdminMotorcycleTypeController;
+use App\Http\Controllers\AdminMotorcycleModelController;
+use App\Http\Controllers\AdminBikePartBrandController;
+use App\Http\Controllers\AdminBikePartCategoryController;
 // ============================================
 // ============================================
 // PUBLIC ROUTES (NO AUTHENTICATION)
@@ -287,6 +293,34 @@ Route::prefix('admin')->group(function () {
         // POI Types
         Route::get('/poi-types/stats/overview', [AdminPoiTypeController::class, 'stats']);
         Route::apiResource('poi-types', AdminPoiTypeController::class);
+
+        // ============================================
+        // ADMIN MOTORCYCLE & BIKE PARTS MANAGEMENT
+        // ============================================
+
+        // Motorcycle Brands
+        Route::get('/motorcycle-brands/stats/overview', [AdminMotorcycleBrandController::class, 'stats']);
+        Route::apiResource('motorcycle-brands', AdminMotorcycleBrandController::class);
+
+        // Motorcycle Years
+        Route::get('/motorcycle-years/stats/overview', [AdminMotorcycleYearController::class, 'stats']);
+        Route::apiResource('motorcycle-years', AdminMotorcycleYearController::class);
+
+        // Motorcycle Types
+        Route::get('/motorcycle-types/stats/overview', [AdminMotorcycleTypeController::class, 'stats']);
+        Route::apiResource('motorcycle-types', AdminMotorcycleTypeController::class);
+
+        // Motorcycle Models
+        Route::get('/motorcycle-models/stats/overview', [AdminMotorcycleModelController::class, 'stats']);
+        Route::apiResource('motorcycle-models', AdminMotorcycleModelController::class);
+
+        // Bike Part Brands
+        Route::get('/bike-part-brands/stats/overview', [AdminBikePartBrandController::class, 'stats']);
+        Route::apiResource('bike-part-brands', AdminBikePartBrandController::class);
+
+        // Bike Part Categories
+        Route::get('/bike-part-categories/stats/overview', [AdminBikePartCategoryController::class, 'stats']);
+        Route::apiResource('bike-part-categories', AdminBikePartCategoryController::class);
 
         // Guide Comments Management
         Route::prefix('guide-comments')->group(function () {

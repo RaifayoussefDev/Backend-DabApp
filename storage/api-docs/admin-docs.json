@@ -9,6 +9,537 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/admin/bike-part-brands": {
+            "get": {
+                "tags": [
+                    "Admin Bike Part Brands"
+                ],
+                "summary": "Get all bike part brands (Admin)",
+                "operationId": "cfd1b9784b84dfe6a6b936e4922b4b24",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by brand name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all results.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Bike Part Brands"
+                ],
+                "summary": "Create a new bike part brand (Admin)",
+                "operationId": "6c85d16ca2a6145ce003dfbbbedd2045",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Shimano"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "name": "Shimano"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Brand created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/bike-part-brands/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Bike Part Brands"
+                ],
+                "summary": "Get a specific bike part brand (Admin)",
+                "operationId": "f835b08e48083ab113ddfdf38423f0ea",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Brand not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Bike Part Brands"
+                ],
+                "summary": "Update a bike part brand (Admin)",
+                "operationId": "026b819ddea1db2098810f6af2f01100",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "name": "SRAM"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Brand updated successfully"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Bike Part Brands"
+                ],
+                "summary": "Delete a bike part brand (Admin)",
+                "operationId": "cd1b6ded72465c2e7161e8ebb126e15b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Brand deleted successfully"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/bike-part-brands/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin Bike Part Brands"
+                ],
+                "summary": "Get bike part brands statistics (Admin)",
+                "operationId": "a14255303b816f9dda5391e50f495120",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/bike-part-categories": {
+            "get": {
+                "tags": [
+                    "Admin Bike Part Categories"
+                ],
+                "summary": "Get all bike part categories (Admin)",
+                "operationId": "90692f58f2dec3af477f27117b867c92",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by category name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all results.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Bike Part Categories"
+                ],
+                "summary": "Create a new bike part category (Admin)",
+                "operationId": "72effc3ef3d9e09d1a7bd57591e02f2d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Brakes"
+                                    },
+                                    "name_ar": {
+                                        "type": "string",
+                                        "example": "فرامل"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "name": "Brakes",
+                                "name_ar": "فرامل"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Category created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/bike-part-categories/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Bike Part Categories"
+                ],
+                "summary": "Get a specific bike part category (Admin)",
+                "operationId": "f84573706f44601e134c1c280eb36ba8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Bike Part Categories"
+                ],
+                "summary": "Update a bike part category (Admin)",
+                "operationId": "7534abaadc8adb063ab11d370301aef8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "name_ar": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "name": "Brakes Setup",
+                                "name_ar": "نظام الفرامل"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Category updated successfully"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Bike Part Categories"
+                ],
+                "summary": "Delete a bike part category (Admin)",
+                "operationId": "56576f20ce8930665cc92d6a51d8e603",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category deleted successfully"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/bike-part-categories/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin Bike Part Categories"
+                ],
+                "summary": "Get bike part categories statistics (Admin)",
+                "operationId": "bc2abd3ee004806f50fcf4777da6adb4",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/dashboard/stats": {
             "get": {
                 "tags": [
@@ -3360,6 +3891,1104 @@
                     },
                     "401": {
                         "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/motorcycle-brands": {
+            "get": {
+                "tags": [
+                    "Admin Motorcycle Brands"
+                ],
+                "summary": "Get all motorcycle brands (Admin)",
+                "operationId": "d5c6fc1816a268f3d9a28437568512d6",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by brand name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all results.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Motorcycle Brands"
+                ],
+                "summary": "Create a new motorcycle brand (Admin)",
+                "operationId": "d0d635049d5c1d4ec6c68169d2ef94a4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Ducati"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "name": "Ducati"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Motorcycle brand created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/motorcycle-brands/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Motorcycle Brands"
+                ],
+                "summary": "Get a specific motorcycle brand (Admin)",
+                "operationId": "3a2d874f37c5d76a0bccdfdf0162a2f9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Brand not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Motorcycle Brands"
+                ],
+                "summary": "Update a motorcycle brand (Admin)",
+                "operationId": "2403f16892ae1c3d7809f2962212ebc6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "name": "Ducati Motor Holding"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle brand updated"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Motorcycle Brands"
+                ],
+                "summary": "Delete a motorcycle brand (Admin)",
+                "operationId": "51e6a557647c316df3e443a38402d8ca",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle brand deleted successfully"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/motorcycle-brands/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin Motorcycle Brands"
+                ],
+                "summary": "Get motorcycle brands statistics (Admin)",
+                "operationId": "48cbfb7f08f5f243f6965b83463b0f6c",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/motorcycle-models": {
+            "get": {
+                "tags": [
+                    "Admin Motorcycle Models"
+                ],
+                "summary": "Get all motorcycle models (Admin)",
+                "operationId": "83312b7277bf9a46bffbfe0bac090ccf",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by model name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "brand_id",
+                        "in": "query",
+                        "description": "Filter by brand",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type_id",
+                        "in": "query",
+                        "description": "Filter by type",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all results.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Motorcycle Models"
+                ],
+                "summary": "Create a new motorcycle model (Admin)",
+                "operationId": "113488ea49e3c906c1d0891186b1427a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "brand_id",
+                                    "name",
+                                    "type_id"
+                                ],
+                                "properties": {
+                                    "brand_id": {
+                                        "type": "integer"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "type_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "brand_id": 1,
+                                "name": "Panigale V4",
+                                "type_id": 2
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Motorcycle model created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/motorcycle-models/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Motorcycle Models"
+                ],
+                "summary": "Get a specific motorcycle model (Admin)",
+                "operationId": "617a46cbb2cc00d63904ee0abd7b4f6f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Model not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Motorcycle Models"
+                ],
+                "summary": "Update a motorcycle model (Admin)",
+                "operationId": "99d17653bae4bc99fe8d1f4d3243cef9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "brand_id",
+                                    "name",
+                                    "type_id"
+                                ],
+                                "properties": {
+                                    "brand_id": {
+                                        "type": "integer"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "type_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "brand_id": 1,
+                                "name": "Panigale V4 S",
+                                "type_id": 2
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle model updated"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Motorcycle Models"
+                ],
+                "summary": "Delete a motorcycle model (Admin)",
+                "operationId": "1d2be506deaa1ce56c09d4c24aec9bb2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle model deleted successfully"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/motorcycle-models/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin Motorcycle Models"
+                ],
+                "summary": "Get motorcycle models statistics (Admin)",
+                "operationId": "6d8de339fccea04ddb4f0aa5d21d7e3c",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/motorcycle-types": {
+            "get": {
+                "tags": [
+                    "Admin Motorcycle Types"
+                ],
+                "summary": "Get all motorcycle types (Admin)",
+                "operationId": "4d611bbd980e438bbfcaab09d9066bce",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by type name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all results.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Motorcycle Types"
+                ],
+                "summary": "Create a new motorcycle type (Admin)",
+                "operationId": "c18dc52c39e9a2c97994900d94765cb2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Cruiser"
+                                    },
+                                    "name_ar": {
+                                        "type": "string",
+                                        "example": "كروزر"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "url-to-icon.png"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "name": "Cruiser",
+                                "name_ar": "كروزر",
+                                "icon": "https://api.dabapp.co/storage/icons/cruiser.png"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Motorcycle type created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/motorcycle-types/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Motorcycle Types"
+                ],
+                "summary": "Get a specific motorcycle type (Admin)",
+                "operationId": "1bf3134cf3a318b7fe0f37c177b72712",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Type not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Motorcycle Types"
+                ],
+                "summary": "Update a motorcycle type (Admin)",
+                "operationId": "88ed9ac72700d3a827f66b990b5f9ca3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "name_ar": {
+                                        "type": "string"
+                                    },
+                                    "icon": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "name": "Sport Cruiser",
+                                "name_ar": "كروزر رياضي"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle type updated"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Motorcycle Types"
+                ],
+                "summary": "Delete a motorcycle type (Admin)",
+                "operationId": "6145c811325bd866ef8c3d1441bd92fb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle type deleted successfully"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/motorcycle-types/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin Motorcycle Types"
+                ],
+                "summary": "Get motorcycle types statistics (Admin)",
+                "operationId": "579061b4bcb72061c24da05cce8714d5",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/motorcycle-years": {
+            "get": {
+                "tags": [
+                    "Admin Motorcycle Years"
+                ],
+                "summary": "Get all motorcycle years (Admin)",
+                "operationId": "49076426323546500d1cc671a08aab63",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by year",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all results.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Motorcycle Years"
+                ],
+                "summary": "Create a new motorcycle year (Admin)",
+                "operationId": "93c9c6c8c07f4334556d1a17c90a8499",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "year"
+                                ],
+                                "properties": {
+                                    "year": {
+                                        "type": "integer",
+                                        "example": 2026
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "year": 2026
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Motorcycle year created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/motorcycle-years/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Motorcycle Years"
+                ],
+                "summary": "Get a specific motorcycle year (Admin)",
+                "operationId": "afdc0cc008673bd0a42bbf7de4e59173",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Year not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Motorcycle Years"
+                ],
+                "summary": "Update a motorcycle year (Admin)",
+                "operationId": "d9088334f491699c0763f79b4db31399",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "year"
+                                ],
+                                "properties": {
+                                    "year": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "year": 2027
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle year updated"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Motorcycle Years"
+                ],
+                "summary": "Delete a motorcycle year (Admin)",
+                "operationId": "1af8fc67226ba0774267e8a26368a43b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Motorcycle year deleted successfully"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/motorcycle-years/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin Motorcycle Years"
+                ],
+                "summary": "Get motorcycle years statistics (Admin)",
+                "operationId": "6bd179487402b4286edbb80168ca0a28",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
                     }
                 },
                 "security": [
@@ -19452,6 +21081,30 @@
         }
     },
     "tags": [
+        {
+            "name": "Admin Bike Part Brands",
+            "description": "Admin API Endpoints for managing bike part brands"
+        },
+        {
+            "name": "Admin Bike Part Categories",
+            "description": "Admin API Endpoints for managing bike part categories"
+        },
+        {
+            "name": "Admin Motorcycle Brands",
+            "description": "Admin API Endpoints for managing motorcycle brands"
+        },
+        {
+            "name": "Admin Motorcycle Models",
+            "description": "Admin API Endpoints for managing motorcycle models"
+        },
+        {
+            "name": "Admin Motorcycle Types",
+            "description": "Admin API Endpoints for managing motorcycle types"
+        },
+        {
+            "name": "Admin Motorcycle Years",
+            "description": "Admin API Endpoints for managing motorcycle years"
+        },
         {
             "name": "Admin Notifications",
             "description": "API Endpoints for Admin Mass Notifications"
