@@ -315,6 +315,62 @@
                 ]
             }
         },
+        "/api/admin/events/stats": {
+            "get": {
+                "tags": [
+                    "Admin Events"
+                ],
+                "summary": "Admin: Get events statistics",
+                "operationId": "5742e21557b70da77c12afc050d44db4",
+                "responses": {
+                    "200": {
+                        "description": "Statistics retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_events": {
+                                            "type": "integer",
+                                            "example": 150
+                                        },
+                                        "published_events": {
+                                            "type": "integer",
+                                            "example": 100
+                                        },
+                                        "draft_events": {
+                                            "type": "integer",
+                                            "example": 30
+                                        },
+                                        "upcoming_events": {
+                                            "type": "integer",
+                                            "example": 40
+                                        },
+                                        "past_events": {
+                                            "type": "integer",
+                                            "example": 110
+                                        },
+                                        "total_participants": {
+                                            "type": "integer",
+                                            "example": 5000
+                                        },
+                                        "featured_events": {
+                                            "type": "integer",
+                                            "example": 10
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/events": {
             "get": {
                 "tags": [
@@ -4198,6 +4254,1596 @@
                 "responses": {
                     "200": {
                         "description": "Organizer deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-reports": {
+            "get": {
+                "tags": [
+                    "Admin POI Reports"
+                ],
+                "summary": "Get all POI reports (Admin)",
+                "operationId": "faa28a01a8e9863c7470a2de86d050fa",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by reason or description",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by report status (pending, resolved, rejected)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all results.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-reports/{id}": {
+            "get": {
+                "tags": [
+                    "Admin POI Reports"
+                ],
+                "summary": "Get a specific POI report (Admin)",
+                "operationId": "8b4217bc63bfd1a6514456b82f98d0f8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Report not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin POI Reports"
+                ],
+                "summary": "Delete a POI report (Admin)",
+                "operationId": "5aa09fe7cf0ee51348c60f63624c8175",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Report deleted successfully"
+                    },
+                    "404": {
+                        "description": "Report not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-reports/{id}/status": {
+            "put": {
+                "tags": [
+                    "Admin POI Reports"
+                ],
+                "summary": "Update a POI report status (Admin)",
+                "operationId": "d190881fe104b6f750b6ed073aa4d3ea",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "resolved",
+                                            "rejected"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "status": "resolved"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Report status updated successfully"
+                    },
+                    "404": {
+                        "description": "Report not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-reports/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin POI Reports"
+                ],
+                "summary": "Get POI report statistics (Admin)",
+                "operationId": "5c27958683cc026426c195e9bb9eafa9",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-reviews": {
+            "get": {
+                "tags": [
+                    "Admin POI Reviews"
+                ],
+                "summary": "Get all POI reviews (Admin)",
+                "operationId": "a10fcae4190798e52b6a98a73787ce06",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by comment",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_approved",
+                        "in": "query",
+                        "description": "Filter by approval status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "poi_id",
+                        "in": "query",
+                        "description": "Filter by POI",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all results.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-reviews/{id}": {
+            "get": {
+                "tags": [
+                    "Admin POI Reviews"
+                ],
+                "summary": "Get a specific POI review (Admin)",
+                "operationId": "582dda7d5842656753c8897f7133647d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin POI Reviews"
+                ],
+                "summary": "Update a POI review (Admin)",
+                "operationId": "f52f5461503aef597132ed7a516626ad",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "rating": {
+                                        "type": "integer",
+                                        "maximum": 5,
+                                        "minimum": 1
+                                    },
+                                    "comment": {
+                                        "type": "string"
+                                    },
+                                    "is_approved": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "rating": 5,
+                                "comment": "Excellent place, loved the food!",
+                                "is_approved": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Review updated successfully"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin POI Reviews"
+                ],
+                "summary": "Delete a POI review (Admin)",
+                "operationId": "bfc08dda7cacd99e8605dd2bbd87f97c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review deleted successfully"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-reviews/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin POI Reviews"
+                ],
+                "summary": "Get POI review statistics (Admin)",
+                "operationId": "2d17817d51f5f983c3ae50ea10592340",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-services": {
+            "get": {
+                "tags": [
+                    "Admin POI Services"
+                ],
+                "summary": "Get all POI services (Admin)",
+                "operationId": "9e0b54e4f998e66831270aa164136f10",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by service name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "type_id",
+                        "in": "query",
+                        "description": "Filter by POI type",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all results.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin POI Services"
+                ],
+                "summary": "Create a new POI service (Admin)",
+                "operationId": "24f61d9c34ba7371b8ff24bc8cd9a8c5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "type_id"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Wheelchair Accessible"
+                                    },
+                                    "type_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "name": "Wheelchair Accessible",
+                                "type_id": 1
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "POI service created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-services/{id}": {
+            "get": {
+                "tags": [
+                    "Admin POI Services"
+                ],
+                "summary": "Get a specific POI service (Admin)",
+                "operationId": "cecc5b0c0e94190dd993f2e2df6322b2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "POI service not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin POI Services"
+                ],
+                "summary": "Update a POI service (Admin)",
+                "operationId": "da6fd14880d07cced6a13019f8526638",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Wheelchair Accessible (Updated)"
+                                    },
+                                    "type_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "name": "Wheelchair Accessible (Updated)"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "POI service updated successfully"
+                    },
+                    "404": {
+                        "description": "POI service not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin POI Services"
+                ],
+                "summary": "Delete a POI service (Admin)",
+                "operationId": "1d8e2060e77dd51031c96538a04ebd57",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "POI service deleted successfully"
+                    },
+                    "404": {
+                        "description": "POI service not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-services/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin POI Services"
+                ],
+                "summary": "Get POI service statistics (Admin)",
+                "operationId": "b16e2c8415bddd35ec6f1785ac629320",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-admin-tags": {
+            "get": {
+                "tags": [
+                    "Admin POI Tags"
+                ],
+                "summary": "Get all POI tags (Admin)",
+                "operationId": "adc5f2e768eeb9ae227833276b09b9a8",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by tag name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all results.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin POI Tags"
+                ],
+                "summary": "Create a new POI tag (Admin)",
+                "operationId": "a7215b8b4851f8b464155f7667150e7d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Kid Friendly"
+                                    },
+                                    "slug": {
+                                        "description": "Optional, auto-generated if omitted",
+                                        "type": "string",
+                                        "example": "kid-friendly"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "name": "Kid Friendly",
+                                "slug": "kid-friendly"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tag created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-admin-tags/{id}": {
+            "get": {
+                "tags": [
+                    "Admin POI Tags"
+                ],
+                "summary": "Get a specific POI tag (Admin)",
+                "operationId": "289c9be06dc16e4fa94dfab8727b7686",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Tag not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin POI Tags"
+                ],
+                "summary": "Update a POI tag (Admin)",
+                "operationId": "0aa84cc51744b4164c82e89cc843819d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Kid Friendly (Updated)"
+                                    },
+                                    "slug": {
+                                        "type": "string",
+                                        "example": "kid-friendly-updated"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "name": "Kid Friendly (Updated)",
+                                "slug": "kid-friendly-updated"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tag updated successfully"
+                    },
+                    "404": {
+                        "description": "Tag not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin POI Tags"
+                ],
+                "summary": "Delete a POI tag (Admin)",
+                "operationId": "bec73ca874c5d71df35c7a6e7add52a4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag deleted successfully"
+                    },
+                    "404": {
+                        "description": "Tag not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-admin-tags/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin POI Tags"
+                ],
+                "summary": "Get POI tag statistics (Admin)",
+                "operationId": "976c35fa912b5c349ee3b0f953a86f3c",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-types": {
+            "get": {
+                "tags": [
+                    "Admin POI Types"
+                ],
+                "summary": "Get all POI types (Admin)",
+                "operationId": "132571b8c91d3d6f3c0bc25d91dc66d8",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by type name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all results.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin POI Types"
+                ],
+                "summary": "Create a new POI type (Admin)",
+                "operationId": "3437d00454027c9a0cd381a5bbdf49c2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Restaurant"
+                                    },
+                                    "name_ar": {
+                                        "type": "string",
+                                        "example": "مطعم"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "fa-utensils"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "example": "#FF0000"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "name": "Restaurant",
+                                "name_ar": "مطعم",
+                                "icon": "fa-utensils",
+                                "color": "#FF0000"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Type created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-types/{id}": {
+            "get": {
+                "tags": [
+                    "Admin POI Types"
+                ],
+                "summary": "Get a specific POI type (Admin)",
+                "operationId": "51e865022aad5c35792182620155a148",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "Type not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin POI Types"
+                ],
+                "summary": "Update a POI type (Admin)",
+                "operationId": "ae35b78f48b3e31fa454d6263f8deae4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "name_ar": {
+                                        "type": "string"
+                                    },
+                                    "icon": {
+                                        "type": "string"
+                                    },
+                                    "color": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "name": "Restaurant (Updated)",
+                                "color": "#FF5733"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Type updated successfully"
+                    },
+                    "404": {
+                        "description": "Type not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin POI Types"
+                ],
+                "summary": "Delete a POI type (Admin)",
+                "operationId": "08bc7d6ac5baaf02cbe5d3368be9114a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "force",
+                        "in": "query",
+                        "description": "Force delete even if there are POIs attached (cascades or fails)",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Type deleted successfully"
+                    },
+                    "400": {
+                        "description": "Cannot delete type with associated POIs without force"
+                    },
+                    "404": {
+                        "description": "Type not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/poi-types/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin POI Types"
+                ],
+                "summary": "Get POI Types statistics (Admin)",
+                "operationId": "f6ccb14bb72503d7bff65b878800e938",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/pois": {
+            "get": {
+                "tags": [
+                    "Admin POIs"
+                ],
+                "summary": "Get all points of interest (Admin)",
+                "operationId": "aed64178a9a70845bcc8530b24c1845d",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by name or address",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "type_id",
+                        "in": "query",
+                        "description": "Filter by POI type",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "is_verified",
+                        "in": "query",
+                        "description": "Filter by verification status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all results.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin POIs"
+                ],
+                "summary": "Create a new point of interest (Admin)",
+                "operationId": "51e20d387e075e9d663dcdd3fa689c57",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "type_id",
+                                    "latitude",
+                                    "longitude"
+                                ]
+                            },
+                            "example": {
+                                "name": "Le Louvre",
+                                "name_ar": "اللوفر",
+                                "description": "The world's largest art museum.",
+                                "type_id": 2,
+                                "latitude": 48.8606,
+                                "longitude": 2.3376,
+                                "address": "Rue de Rivoli, 75001 Paris",
+                                "phone": "+33140205050",
+                                "email": "info@louvre.fr",
+                                "website": "https://www.louvre.fr",
+                                "is_verified": true,
+                                "is_active": true,
+                                "owner_id": 5,
+                                "tags": [
+                                    1,
+                                    3,
+                                    5
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "POI created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/pois/{id}": {
+            "get": {
+                "tags": [
+                    "Admin POIs"
+                ],
+                "summary": "Get a specific point of interest (Admin)",
+                "operationId": "296ccd5ecf93a17e4fc9e16229d9ab4f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "404": {
+                        "description": "POI not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin POIs"
+                ],
+                "summary": "Update a point of interest (Admin)",
+                "operationId": "f8ebbee1a9078c9030a4b4de4d715165",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {},
+                            "example": {
+                                "name": "Le Louvre (Updated)",
+                                "is_verified": true,
+                                "is_active": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "POI updated successfully"
+                    },
+                    "404": {
+                        "description": "POI not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin POIs"
+                ],
+                "summary": "Delete a point of interest (Admin)",
+                "operationId": "c4e7973e5f831143059794124af6012c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "POI deleted successfully"
+                    },
+                    "404": {
+                        "description": "POI not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/pois/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin POIs"
+                ],
+                "summary": "Get POI statistics (Admin)",
+                "operationId": "05d2b57523eb1c366debcbc77adefaad",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
                     }
                 },
                 "security": [
@@ -17813,6 +19459,30 @@
         {
             "name": "Admin Notification Preferences",
             "description": "Admin management of user notification preferences"
+        },
+        {
+            "name": "Admin POI Reports",
+            "description": "Admin API Endpoints for managing all POI reports"
+        },
+        {
+            "name": "Admin POI Reviews",
+            "description": "Admin API Endpoints for managing all POI reviews"
+        },
+        {
+            "name": "Admin POI Services",
+            "description": "Admin API Endpoints for managing POI services"
+        },
+        {
+            "name": "Admin POI Tags",
+            "description": "Admin API Endpoints for managing POI tags"
+        },
+        {
+            "name": "Admin POI Types",
+            "description": "Admin API Endpoints for managing POI types"
+        },
+        {
+            "name": "Admin POIs",
+            "description": "Admin API Endpoints for Points of Interest"
         },
         {
             "name": "Admin - Guides",

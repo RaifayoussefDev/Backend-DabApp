@@ -128,6 +128,13 @@ use App\Http\Controllers\Admin\GuideTagAdminController;
 use App\Http\Controllers\Admin\GuideCommentAdminController;
 use App\Http\Controllers\Admin\PoiTagAdminController;
 
+use App\Http\Controllers\AdminPointOfInterestController;
+use App\Http\Controllers\AdminPoiReportController;
+use App\Http\Controllers\AdminPoiReviewController;
+use App\Http\Controllers\AdminPoiServiceController;
+use App\Http\Controllers\AdminPoiTagController;
+use App\Http\Controllers\AdminPoiTypeController;
+
 // ============================================
 // ============================================
 // PUBLIC ROUTES (NO AUTHENTICATION)
@@ -244,13 +251,42 @@ Route::prefix('admin')->group(function () {
         });
         Route::apiResource('guide-tags', GuideTagAdminController::class);
 
-        // POI Tags Management
+        // POI Tags Management (Legacy)
         Route::prefix('poi-tags')->group(function () {
             Route::get('/stats', [PoiTagAdminController::class, 'stats']);
             Route::post('/bulk-delete', [PoiTagAdminController::class, 'bulkDelete']);
             Route::delete('/cleanup-unused', [PoiTagAdminController::class, 'cleanupUnused']);
         });
         Route::apiResource('poi-tags', PoiTagAdminController::class);
+
+        // ============================================
+        // ADMIN POI MANAGEMENT
+        // ============================================
+
+        // Points of Interest
+        Route::get('/pois/stats/overview', [AdminPointOfInterestController::class, 'stats']);
+        Route::apiResource('pois', AdminPointOfInterestController::class);
+
+        // POI Reports
+        Route::get('/poi-reports/stats/overview', [AdminPoiReportController::class, 'stats']);
+        Route::put('/poi-reports/{id}/status', [AdminPoiReportController::class, 'updateStatus']);
+        Route::apiResource('poi-reports', AdminPoiReportController::class)->except(['store', 'update']);
+
+        // POI Reviews
+        Route::get('/poi-reviews/stats/overview', [AdminPoiReviewController::class, 'stats']);
+        Route::apiResource('poi-reviews', AdminPoiReviewController::class)->except(['store']);
+
+        // POI Services
+        Route::get('/poi-services/stats/overview', [AdminPoiServiceController::class, 'stats']);
+        Route::apiResource('poi-services', AdminPoiServiceController::class);
+
+        // POI Tags (New standardized CRUD)
+        Route::get('/poi-admin-tags/stats/overview', [AdminPoiTagController::class, 'stats']);
+        Route::apiResource('poi-admin-tags', AdminPoiTagController::class);
+
+        // POI Types
+        Route::get('/poi-types/stats/overview', [AdminPoiTypeController::class, 'stats']);
+        Route::apiResource('poi-types', AdminPoiTypeController::class);
 
         // Guide Comments Management
         Route::prefix('guide-comments')->group(function () {
