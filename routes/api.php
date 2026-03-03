@@ -141,6 +141,13 @@ use App\Http\Controllers\AdminMotorcycleTypeController;
 use App\Http\Controllers\AdminMotorcycleModelController;
 use App\Http\Controllers\AdminBikePartBrandController;
 use App\Http\Controllers\AdminBikePartCategoryController;
+use App\Http\Controllers\AdminRouteCategoryController;
+use App\Http\Controllers\AdminRouteCompletionController;
+use App\Http\Controllers\AdminRouteController;
+use App\Http\Controllers\AdminRouteReviewController;
+use App\Http\Controllers\AdminRouteTagController;
+use App\Http\Controllers\AdminRouteWarningController;
+use App\Http\Controllers\AdminRouteWaypointController;
 // ============================================
 // ============================================
 // PUBLIC ROUTES (NO AUTHENTICATION)
@@ -321,6 +328,40 @@ Route::prefix('admin')->group(function () {
         // Bike Part Categories
         Route::get('/bike-part-categories/stats/overview', [AdminBikePartCategoryController::class, 'stats']);
         Route::apiResource('bike-part-categories', AdminBikePartCategoryController::class);
+
+        // ============================================
+        // ADMIN ROUTE MANAGEMENT
+        // ============================================
+
+        // Routes
+        Route::get('/routes/stats/overview', [AdminRouteController::class, 'stats']);
+        Route::apiResource('routes', AdminRouteController::class);
+
+        // Route Categories
+        Route::get('/route-categories/stats/overview', [AdminRouteCategoryController::class, 'stats']);
+        Route::apiResource('route-categories', AdminRouteCategoryController::class);
+
+        // Route Completions
+        Route::get('/route-completions/stats/overview', [AdminRouteCompletionController::class, 'stats']);
+        Route::apiResource('route-completions', AdminRouteCompletionController::class)->except(['store', 'update']);
+
+        // Route Reviews
+        Route::get('/route-reviews/stats/overview', [AdminRouteReviewController::class, 'stats']);
+        Route::put('/route-reviews/{id}/status', [AdminRouteReviewController::class, 'updateStatus']);
+        Route::apiResource('route-reviews', AdminRouteReviewController::class)->except(['store', 'update']);
+
+        // Route Tags
+        Route::get('/route-tags/stats/overview', [AdminRouteTagController::class, 'stats']);
+        Route::apiResource('route-tags', AdminRouteTagController::class);
+
+        // Route Warnings
+        Route::get('/route-warnings/stats/overview', [AdminRouteWarningController::class, 'stats']);
+        Route::apiResource('route-warnings', AdminRouteWarningController::class)->except(['store', 'update']);
+
+        // Route Waypoints
+        Route::get('/route-waypoints/stats/overview', [AdminRouteWaypointController::class, 'stats']);
+        Route::put('/route-waypoints/{id}/reorder', [AdminRouteWaypointController::class, 'reorder']);
+        Route::apiResource('route-waypoints', AdminRouteWaypointController::class);
 
         // Guide Comments Management
         Route::prefix('guide-comments')->group(function () {

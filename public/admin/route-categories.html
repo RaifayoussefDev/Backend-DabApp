@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>DabApp — Guide Categories</title>
+        <title>DabApp — Route Categories</title>
         <link
             href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
             rel="stylesheet"
@@ -692,8 +692,8 @@
             <div class="modal">
                 <div class="modal-header">
                     <div>
-                        <h2 id="cat-modal-title">New Category</h2>
-                        <p id="cat-modal-subtitle">Manage guide category</p>
+                        <h2 id="cat-modal-title">New Route Category</h2>
+                        <p id="cat-modal-subtitle">Manage route category</p>
                     </div>
                     <button class="modal-close" onclick="closeCategoryModal()">
                         <svg
@@ -1402,7 +1402,7 @@
                 try {
                     const data = await api(
                         "GET",
-                        "/api/admin/guide-categories?per_page=100",
+                        "/api/admin/route-categories?per_page=100",
                     );
                     // API returns { data: [...], total: ... } or [...]
                     let categories = [];
@@ -1424,7 +1424,7 @@
                     if (tbody) {
                         tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state" style="padding:40px;text-align:center;color:var(--red)">Error loading categories: ${escHtml(e.message || "Unknown error")}</div></td></tr>`;
                     }
-                    console.error("Failed to load categories:", e);
+                    console.error("Failed to load route categories:", e);
                 }
             }
 
@@ -1599,8 +1599,8 @@
                 try {
                     const method = id ? "PUT" : "POST";
                     const url = id
-                        ? `/api/admin/guide-categories/${id}`
-                        : "/api/admin/guide-categories";
+                        ? `/api/admin/route-categories/${id}`
+                        : "/api/admin/route-categories";
 
                     await api(method, url, payload);
                     toast(
@@ -1624,7 +1624,7 @@
                     try {
                         await api(
                             "DELETE",
-                            `/api/admin/guide-categories/${id}`,
+                            `/api/admin/route-categories/${id}`,
                         );
                         toast("Category deleted", "success");
                         loadCategoriesList();

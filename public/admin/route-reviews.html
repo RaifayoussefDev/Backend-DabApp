@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>DabApp — Guide Categories</title>
+        <title>DabApp — Route Reviews</title>
         <link
             href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
             rel="stylesheet"
@@ -692,8 +692,8 @@
             <div class="modal">
                 <div class="modal-header">
                     <div>
-                        <h2 id="cat-modal-title">New Category</h2>
-                        <p id="cat-modal-subtitle">Manage guide category</p>
+                        <h2 id="cat-modal-title">Review Details</h2>
+                        <p id="cat-modal-subtitle">Manage route review</p>
                     </div>
                     <button class="modal-close" onclick="closeCategoryModal()">
                         <svg
@@ -710,162 +710,49 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <!-- LANG TABS -->
-                    <div class="lang-tabs">
-                        <button
-                            class="lang-tab active"
-                            onclick="switchCategoryLang('en', this)"
-                        >
-                            🇺🇸 English
-                        </button>
-                        <button
-                            class="lang-tab"
-                            onclick="switchCategoryLang('ar', this)"
-                        >
-                            🇸🇦 العربية
-                        </button>
-                    </div>
-
                     <input type="hidden" id="c-id" />
-
-                    <!-- EN -->
-                    <div id="c-lang-en">
-                        <div class="form-group">
-                            <label
-                                >Name
-                                <span style="color: var(--red)">*</span></label
-                            >
-                            <input
-                                type="text"
-                                id="c-name"
-                                placeholder="Category name"
-                            />
-                        </div>
-                        <div class="form-group">
-                            <label>Description</label>
-                            <textarea
-                                id="c-desc"
-                                rows="3"
-                                placeholder="Short description"
-                            ></textarea>
-                        </div>
+                    <div class="form-group">
+                        <label
+                            >User ID
+                            <span style="color: var(--red)">*</span></label
+                        >
+                        <input
+                            type="number"
+                            id="c-user-id"
+                            placeholder="User ID"
+                        />
                     </div>
-
-                    <!-- AR -->
-                    <div id="c-lang-ar" style="display: none" dir="rtl">
-                        <div class="form-group">
-                            <label>الاسم</label>
-                            <input
-                                type="text"
-                                id="c-name-ar"
-                                placeholder="اسم الفئة"
-                            />
-                        </div>
-                        <div class="form-group">
-                            <label>الوصف</label>
-                            <textarea
-                                id="c-desc-ar"
-                                rows="3"
-                                placeholder="وصف قصير"
-                            ></textarea>
-                        </div>
+                    <div class="form-group">
+                        <label
+                            >Route ID
+                            <span style="color: var(--red)">*</span></label
+                        >
+                        <input
+                            type="number"
+                            id="c-route-id"
+                            placeholder="Route ID"
+                        />
                     </div>
-
-                    <div class="form-section">
-                        <div class="form-section-title">Settings</div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Icon</label>
-                                <div
-                                    class="icon-upload-container"
-                                    style="
-                                        display: flex;
-                                        gap: 10px;
-                                        align-items: center;
-                                    "
-                                >
-                                    <div
-                                        id="c-icon-preview-container"
-                                        style="
-                                            display: none;
-                                            width: 40px;
-                                            height: 40px;
-                                            border: 1px solid var(--border);
-                                            border-radius: 4px;
-                                            align-items: center;
-                                            justify-content: center;
-                                            overflow: hidden;
-                                            background: var(--bg2);
-                                        "
-                                    >
-                                        <img
-                                            id="c-icon-img"
-                                            src=""
-                                            style="
-                                                max-width: 100%;
-                                                max-height: 100%;
-                                                object-fit: contain;
-                                            "
-                                        />
-                                    </div>
-                                    <input type="hidden" id="c-icon" />
-                                    <input
-                                        type="file"
-                                        id="c-icon-file"
-                                        accept="image/*"
-                                        onchange="handleIconUpload(this)"
-                                        style="display: none"
-                                    />
-                                    <button
-                                        type="button"
-                                        class="btn btn-ghost btn-sm"
-                                        onclick="
-                                            document
-                                                .getElementById('c-icon-file')
-                                                .click()
-                                        "
-                                        style="border: 1px solid var(--border)"
-                                    >
-                                        Upload
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class="btn btn-ghost btn-sm"
-                                        id="c-remove-icon-btn"
-                                        onclick="removeCategoryIcon()"
-                                        style="
-                                            display: none;
-                                            color: var(--red);
-                                            border-color: rgba(
-                                                242,
-                                                92,
-                                                120,
-                                                0.3
-                                            );
-                                        "
-                                    >
-                                        Remove
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Color</label>
-                                <input
-                                    type="color"
-                                    id="c-color"
-                                    style="height: 40px; padding: 2px"
-                                />
-                            </div>
-                        </div>
-                        <div class="form-group" style="margin-top: 10px">
-                            <label>Order</label>
-                            <input
-                                type="number"
-                                id="c-order"
-                                placeholder="0"
-                                min="0"
-                            />
-                        </div>
+                    <div class="form-group">
+                        <label
+                            >Rating
+                            <span style="color: var(--red)">*</span></label
+                        >
+                        <input
+                            type="number"
+                            id="c-rating"
+                            min="1"
+                            max="5"
+                            placeholder="1-5"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>Comment</label>
+                        <textarea
+                            id="c-comment"
+                            rows="3"
+                            placeholder="Review comment"
+                        ></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -880,7 +767,7 @@
                         onclick="saveCategory()"
                         id="btn-save-category"
                     >
-                        Save Category
+                        Save Review
                     </button>
                 </div>
             </div>
@@ -947,7 +834,7 @@
                         </a>
                         <a
                             href="guide-categories.html"
-                            class="nav-item sub-item active"
+                            class="nav-item sub-item"
                             id="nav-guide-categories"
                         >
                             <i class="fas fa-tags"></i> Categories
@@ -968,7 +855,7 @@
                         </a>
                         <a
                             href="route-reviews.html"
-                            class="nav-item sub-item"
+                            class="nav-item sub-item active"
                             id="nav-route-reviews"
                         >
                             <i class="fas fa-star"></i> Route Reviews
@@ -1032,9 +919,9 @@
             <main class="main">
                 <div class="topbar">
                     <div>
-                        <h1 id="page-title">Guide Categories</h1>
+                        <h1 id="page-title">Route Reviews</h1>
                         <p class="topbar-sub" id="page-sub">
-                            Manage guide categories and metadata
+                            Manage user route reviews
                         </p>
                     </div>
                 </div>
@@ -1057,7 +944,7 @@
                                 <line x1="12" y1="5" x2="12" y2="19" />
                                 <line x1="5" y1="12" x2="19" y2="12" />
                             </svg>
-                            New Category
+                            New Review
                         </button>
                     </div>
 
@@ -1065,10 +952,10 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Description</th>
-                                    <th>Icon/Color</th>
-                                    <th>Order</th>
+                                    <th>User ID</th>
+                                    <th>Route ID</th>
+                                    <th>Rating</th>
+                                    <th>Comment</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -1402,29 +1289,28 @@
                 try {
                     const data = await api(
                         "GET",
-                        "/api/admin/guide-categories?per_page=100",
+                        "/api/admin/route-reviews?per_page=100",
                     );
-                    // API returns { data: [...], total: ... } or [...]
-                    let categories = [];
+                    let reviews = [];
                     if (Array.isArray(data)) {
-                        categories = data;
+                        reviews = data;
                     } else if (data && Array.isArray(data.data)) {
-                        categories = data.data;
+                        reviews = data.data;
                     } else if (data && typeof data === "object") {
                         // Fallback for cases where data might be nested differently or just objects
-                        categories = Object.values(data).filter(
+                        reviews = Object.values(data).filter(
                             (item) =>
                                 item && typeof item === "object" && item.id,
                         );
                     }
 
-                    state.categories = categories;
-                    renderCategoriesList(categories);
+                    state.categories = reviews;
+                    renderCategoriesList(reviews);
                 } catch (e) {
                     if (tbody) {
                         tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state" style="padding:40px;text-align:center;color:var(--red)">Error loading categories: ${escHtml(e.message || "Unknown error")}</div></td></tr>`;
                     }
-                    console.error("Failed to load categories:", e);
+                    console.error("Failed to load route categories:", e);
                 }
             }
 
@@ -1445,35 +1331,17 @@
                             return `
                             <tr>
                                 <td style="font-weight:600">
-                                    ${escHtml(c.name || "Unnamed")}
-                                    ${c.name_ar ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">${escHtml(c.name_ar)}</div>` : ""}
-                                </td>
-                                <td style="color:var(--text2);font-size:13px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                                    ${escHtml(c.description || "—")}
+                                    ${escHtml(c.user_id || "Unknown")}
                                 </td>
                                 <td>
-                                    <div style="display:flex;align-items:center;gap:8px">
-                                        ${
-                                            c.icon
-                                                ? String(c.icon).match(
-                                                      /^http/,
-                                                  ) ||
-                                                  String(c.icon).match(/^\//)
-                                                    ? `<img src="${escHtml(c.icon)}" style="width:24px;height:24px;object-fit:contain;border-radius:4px">`
-                                                    : String(c.icon).includes(
-                                                            "fa-",
-                                                        ) ||
-                                                        String(c.icon).includes(
-                                                            "mdi-",
-                                                        )
-                                                      ? `<i class="${escHtml(c.icon)}" style="font-size:18px;width:24px;text-align:center"></i>`
-                                                      : `<span style="font-size:16px">${escHtml(c.icon)}</span>`
-                                                : '<span style="color:var(--text3)">—</span>'
-                                        }
-                                        ${c.color ? `<span style="width:12px;height:12px;border-radius:50%;background:${c.color};border:1px solid var(--border)"></span>` : ""}
-                                    </div>
+                                    ${escHtml(c.route_id || "Unknown")}
                                 </td>
-                                <td style="font-family:monospace;color:var(--text3)">${c.order_position || 0}</td>
+                                <td>
+                                    <span style="color:var(--accent); font-weight: bold;">${escHtml(c.rating || "0")} ★</span>
+                                </td>
+                                <td style="color:var(--text2);font-size:13px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                                    ${escHtml(c.comment || "—")}
+                                </td>
                                 <td>
                                     <div class="actions-cell">
                                         <button class="icon-btn" onclick="openEditCategoryModal(${c.id})">
@@ -1482,7 +1350,7 @@
                                                 <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                                             </svg>
                                         </button>
-                                        <button class="icon-btn danger" onclick="confirmDeleteCategory(${c.id}, '${escHtml(c.name || "Category")}')">
+                                        <button class="icon-btn danger" onclick="confirmDeleteCategory(${c.id}, ${c.user_id}, ${c.route_id})">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
                                                 <polyline points="3 6 5 6 21 6" />
                                                 <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
@@ -1503,25 +1371,15 @@
             function openCategoryModal() {
                 document.getElementById("c-id").value = "";
                 document.getElementById("cat-modal-title").textContent =
-                    "New Category";
+                    "New Review";
                 document.getElementById("btn-save-category").textContent =
-                    "Create Category";
+                    "Create Review";
 
-                document.getElementById("c-name").value = "";
-                document.getElementById("c-desc").value = "";
-                document.getElementById("c-name-ar").value = "";
-                document.getElementById("c-desc-ar").value = "";
+                document.getElementById("c-user-id").value = "";
+                document.getElementById("c-route-id").value = "";
+                document.getElementById("c-rating").value = "5";
+                document.getElementById("c-comment").value = "";
 
-                document.getElementById("c-icon").value = "";
-                document.getElementById(
-                    "c-icon-preview-container",
-                ).style.display = "none";
-                document.getElementById("c-icon-img").src = "";
-                document.getElementById("c-remove-icon-btn").style.display =
-                    "none";
-
-                document.getElementById("c-color").value = "#000000";
-                document.getElementById("c-order").value = 0;
                 document.getElementById("category-modal").classList.add("open");
             }
 
@@ -1537,59 +1395,37 @@
 
                 document.getElementById("c-id").value = cat.id;
                 document.getElementById("cat-modal-title").textContent =
-                    "Edit Category";
+                    "Edit Review";
                 document.getElementById("btn-save-category").textContent =
-                    "Update Category";
+                    "Update Review";
 
-                document.getElementById("c-name").value = cat.name;
-                document.getElementById("c-desc").value = cat.description || "";
-                document.getElementById("c-name-ar").value = cat.name_ar || "";
-                document.getElementById("c-desc-ar").value =
-                    cat.description_ar || "";
-
-                document.getElementById("c-icon").value = cat.icon || "";
-                if (
-                    cat.icon &&
-                    (cat.icon.match(/^http/) || cat.icon.match(/^\//))
-                ) {
-                    document.getElementById("c-icon-img").src = cat.icon;
-                    document.getElementById(
-                        "c-icon-preview-container",
-                    ).style.display = "flex";
-                    document.getElementById("c-remove-icon-btn").style.display =
-                        "block";
-                } else {
-                    document.getElementById(
-                        "c-icon-preview-container",
-                    ).style.display = "none";
-                    document.getElementById("c-remove-icon-btn").style.display =
-                        "none";
-                }
-
-                document.getElementById("c-color").value =
-                    cat.color || "#000000";
-                document.getElementById("c-order").value =
-                    cat.order_position || 0;
+                document.getElementById("c-user-id").value = cat.user_id;
+                document.getElementById("c-route-id").value = cat.route_id;
+                document.getElementById("c-rating").value = cat.rating;
+                document.getElementById("c-comment").value = cat.comment || "";
 
                 document.getElementById("category-modal").classList.add("open");
             }
 
             async function saveCategory() {
                 const id = document.getElementById("c-id").value;
-                const name = document.getElementById("c-name").value;
-                if (!name) {
-                    toast("Name is required", "error");
+                const userId = document.getElementById("c-user-id").value;
+                const routeId = document.getElementById("c-route-id").value;
+                const rating = document.getElementById("c-rating").value;
+
+                if (!userId || !routeId || !rating) {
+                    toast(
+                        "User ID, Route ID, and Rating are required",
+                        "error",
+                    );
                     return;
                 }
 
                 const payload = {
-                    name,
-                    description: document.getElementById("c-desc").value,
-                    name_ar: document.getElementById("c-name-ar").value,
-                    description_ar: document.getElementById("c-desc-ar").value,
-                    icon: document.getElementById("c-icon").value,
-                    color: document.getElementById("c-color").value,
-                    order_position: document.getElementById("c-order").value,
+                    user_id: userId,
+                    route_id: routeId,
+                    rating: rating,
+                    comment: document.getElementById("c-comment").value,
                 };
 
                 const btn = document.getElementById("btn-save-category");
@@ -1599,8 +1435,8 @@
                 try {
                     const method = id ? "PUT" : "POST";
                     const url = id
-                        ? `/api/admin/guide-categories/${id}`
-                        : "/api/admin/guide-categories";
+                        ? `/api/admin/route-reviews/${id}`
+                        : "/api/admin/route-reviews";
 
                     await api(method, url, payload);
                     toast(
@@ -1617,98 +1453,20 @@
                 }
             }
 
-            async function confirmDeleteCategory(id, name) {
+            async function confirmDeleteCategory(id, userId, routeId) {
                 if (
-                    confirm(`Delete category "${name}"? This cannot be undone.`)
+                    confirm(
+                        `Delete review by User ${userId} for Route ${routeId}? This cannot be undone.`,
+                    )
                 ) {
                     try {
-                        await api(
-                            "DELETE",
-                            `/api/admin/guide-categories/${id}`,
-                        );
+                        await api("DELETE", `/api/admin/route-reviews/${id}`);
                         toast("Category deleted", "success");
                         loadCategoriesList();
                     } catch (e) {
                         toast("Error deleting category", "error");
                     }
                 }
-            }
-
-            function switchCategoryLang(lang, btn) {
-                document
-                    .querySelectorAll(".lang-tab")
-                    .forEach((t) => t.classList.remove("active"));
-                btn.classList.add("active");
-
-                if (lang === "en") {
-                    document.getElementById("c-lang-en").style.display =
-                        "block";
-                    document.getElementById("c-lang-ar").style.display = "none";
-                } else {
-                    document.getElementById("c-lang-en").style.display = "none";
-                    document.getElementById("c-lang-ar").style.display =
-                        "block";
-                }
-            }
-
-            // ─── ICON UPLOAD ───
-            async function handleIconUpload(input) {
-                const file = input.files[0];
-                if (!file) return;
-
-                const formData = new FormData();
-                formData.append("icon", file);
-
-                const btn = input.nextElementSibling;
-                const originalText = btn.textContent;
-                btn.textContent = "Uploading...";
-                btn.disabled = true;
-
-                try {
-                    const res = await fetch(getBase() + "/api/upload-icon", {
-                        method: "POST",
-                        headers: {
-                            Authorization: `Bearer ${getToken()}`,
-                        },
-                        body: formData,
-                    });
-                    const data = await res.json();
-
-                    if (!res.ok) throw { status: res.status, data: data };
-
-                    const url = data.path;
-                    document.getElementById("c-icon").value = url;
-
-                    const previewContainer = document.getElementById(
-                        "c-icon-preview-container",
-                    );
-                    const previewImg = document.getElementById("c-icon-img");
-                    const removeBtn =
-                        document.getElementById("c-remove-icon-btn");
-
-                    previewImg.src = url;
-                    previewContainer.style.display = "flex";
-                    removeBtn.style.display = "block";
-
-                    toast("Icon uploaded successfully", "success");
-                } catch (e) {
-                    console.error(e);
-                    toast(e.data?.error || "Icon upload failed", "error");
-                } finally {
-                    btn.textContent = originalText;
-                    btn.disabled = false;
-                    input.value = "";
-                }
-            }
-
-            function removeCategoryIcon() {
-                document.getElementById("c-icon").value = "";
-                document.getElementById(
-                    "c-icon-preview-container",
-                ).style.display = "none";
-                document.getElementById("c-icon-img").src = "";
-                document.getElementById("c-remove-icon-btn").style.display =
-                    "none";
             }
 
             // INIT

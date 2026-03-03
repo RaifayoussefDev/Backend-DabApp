@@ -4,8 +4,14 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>DabApp — Route Manager</title>
-        <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
         <style>
             :root {
                 --bg: #0d0f14;
@@ -27,194 +33,854 @@
                 --purple: #a78bfa;
                 --radius: 12px;
                 --radius-sm: 8px;
-                --shadow: 0 4px 24px rgba(0,0,0,.4);
-                --shadow-lg: 0 8px 48px rgba(0,0,0,.6);
+                --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+                --shadow-lg: 0 8px 48px rgba(0, 0, 0, 0.6);
             }
-            * { box-sizing: border-box; margin: 0; padding: 0; }
-            body { background: var(--bg); color: var(--text); font-family: "DM Sans", sans-serif; font-size: 14px; line-height: 1.6; min-height: 100vh; overflow-x: hidden; }
-            h1,h2,h3,h4,h5 { font-family: "Syne", sans-serif; }
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                background: var(--bg);
+                color: var(--text);
+                font-family: "DM Sans", sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+                min-height: 100vh;
+                overflow-x: hidden;
+            }
+            h1,
+            h2,
+            h3,
+            h4,
+            h5 {
+                font-family: "Syne", sans-serif;
+            }
 
             /* ─── HIDDEN UTILITY ─── */
-            .hidden { display: none !important; }
+            .hidden {
+                display: none !important;
+            }
 
             /* ─── TOAST ─── */
-            #toast-container { position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px; }
-            .toast { background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);padding:14px 18px;border-radius:var(--radius-sm);color:var(--text);font-size:13px;min-width:260px;box-shadow:var(--shadow);animation:slideIn .3s ease;display:flex;align-items:center;gap:10px; }
-            .toast.success { border-left-color:var(--green); }
-            .toast.error { border-left-color:var(--red); }
-            @keyframes slideIn { from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1} }
+            #toast-container {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .toast {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-left: 3px solid var(--accent);
+                padding: 14px 18px;
+                border-radius: var(--radius-sm);
+                color: var(--text);
+                font-size: 13px;
+                min-width: 260px;
+                box-shadow: var(--shadow);
+                animation: slideIn 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .toast.success {
+                border-left-color: var(--green);
+            }
+            .toast.error {
+                border-left-color: var(--red);
+            }
+            @keyframes slideIn {
+                from {
+                    transform: translateX(40px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
 
             /* ─── LAYOUT ─── */
-            .app { display:flex;height:100vh;overflow:hidden; }
+            .app {
+                display: flex;
+                height: 100vh;
+                overflow: hidden;
+            }
 
             /* ─── SIDEBAR ─── */
-            .sidebar { width: 240px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 0; flex-shrink: 0; overflow-y: auto; }
-            .sidebar-logo { padding: 24px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: center; }
-            .sidebar-logo img { height: 44px; width: auto; object-fit: contain; filter: drop-shadow(0 0 8px rgba(249,115,22,0.2)); }
-            .nav-section { padding: 16px 12px 6px; }
-            .nav-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; padding: 0 8px 8px; opacity: 0.8; }
-            .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s; color: var(--text2); font-size: 13.5px; font-weight: 500; margin-bottom: 2px; border: 1px solid transparent; text-decoration: none; position: relative; }
-            .nav-item:hover { background: var(--surface2); color: var(--text); }
-            .nav-item.active { background: var(--accent-glow); color: var(--accent); border-color: rgba(249, 115, 22, 0.2); }
-            .nav-item i { width: 18px; text-align: center; flex-shrink: 0; font-size: 14px; opacity: 0.7; }
-            .nav-item.active i { opacity: 1; }
+            .sidebar {
+                width: 240px;
+                background: var(--surface);
+                border-right: 1px solid var(--border);
+                display: flex;
+                flex-direction: column;
+                padding: 0;
+                flex-shrink: 0;
+                overflow-y: auto;
+            }
+            .sidebar-logo {
+                padding: 24px 20px;
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                justify-content: center;
+            }
+            .sidebar-logo img {
+                height: 44px;
+                width: auto;
+                object-fit: contain;
+                filter: drop-shadow(0 0 8px rgba(249, 115, 22, 0.2));
+            }
+            .nav-section {
+                padding: 16px 12px 6px;
+            }
+            .nav-label {
+                font-size: 10px;
+                color: var(--text3);
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                font-weight: 600;
+                padding: 0 8px 8px;
+                opacity: 0.8;
+            }
+            .nav-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px 12px;
+                border-radius: var(--radius-sm);
+                cursor: pointer;
+                transition: all 0.15s;
+                color: var(--text2);
+                font-size: 13.5px;
+                font-weight: 500;
+                margin-bottom: 2px;
+                border: 1px solid transparent;
+                text-decoration: none;
+                position: relative;
+            }
+            .nav-item:hover {
+                background: var(--surface2);
+                color: var(--text);
+            }
+            .nav-item.active {
+                background: var(--accent-glow);
+                color: var(--accent);
+                border-color: rgba(249, 115, 22, 0.2);
+            }
+            .nav-item i {
+                width: 18px;
+                text-align: center;
+                flex-shrink: 0;
+                font-size: 14px;
+                opacity: 0.7;
+            }
+            .nav-item.active i {
+                opacity: 1;
+            }
 
             /* SUBMENU */
-            .nav-submenu { max-height: 0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(0,0,0,0.1); border-radius: 8px; margin: 0 4px 4px; }
-            .nav-submenu.open { max-height: 200px; padding: 4px 0; margin-bottom: 8px; }
-            .nav-item.sub-item { padding: 8px 12px 8px 36px; font-size: 12.5px; opacity: 0.8; }
-            .nav-item.sub-item:hover { opacity: 1; }
-            .nav-item.has-submenu .chevron { margin-left: auto; font-size: 10px; transition: transform 0.2s; opacity: 0.5; }
-            .nav-item.has-submenu.open .chevron { transform: rotate(90deg); }
+            .nav-submenu {
+                max-height: 0;
+                overflow: hidden;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                background: rgba(0, 0, 0, 0.1);
+                border-radius: 8px;
+                margin: 0 4px 4px;
+            }
+            .nav-submenu.open {
+                max-height: 200px;
+                padding: 4px 0;
+                margin-bottom: 8px;
+            }
+            .nav-item.sub-item {
+                padding: 8px 12px 8px 36px;
+                font-size: 12.5px;
+                opacity: 0.8;
+            }
+            .nav-item.sub-item:hover {
+                opacity: 1;
+            }
+            .nav-item.has-submenu .chevron {
+                margin-left: auto;
+                font-size: 10px;
+                transition: transform 0.2s;
+                opacity: 0.5;
+            }
+            .nav-item.has-submenu.open .chevron {
+                transform: rotate(90deg);
+            }
 
             /* ─── API CONFIG ─── */
-            .api-config { margin-top: auto; padding: 16px; border-top: 1px solid var(--border); }
-            .api-config label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
-            .api-config input { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: var(--radius-sm); font-size: 12px; font-family: monospace; }
-            .api-config input:focus { outline: none; border-color: var(--accent); }
+            .api-config {
+                margin-top: auto;
+                padding: 16px;
+                border-top: 1px solid var(--border);
+            }
+            .api-config label {
+                font-size: 11px;
+                color: var(--text3);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                display: block;
+                margin-bottom: 6px;
+            }
+            .api-config input {
+                width: 100%;
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                color: var(--text);
+                padding: 8px 10px;
+                border-radius: var(--radius-sm);
+                font-size: 12px;
+                font-family: monospace;
+            }
+            .api-config input:focus {
+                outline: none;
+                border-color: var(--accent);
+            }
 
             /* ─── MAIN ─── */
-            .main { flex:1;display:flex;flex-direction:column;overflow:hidden; }
-            .topbar { padding:24px 28px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-end;gap:16px;justify-content:space-between; }
-            .topbar h1 { font-size:22px;font-weight:700; }
-            .topbar-sub { color:var(--text3);font-size:13px;margin-top:2px; }
-            .content { flex:1;overflow-y:auto;padding:24px 28px; }
+            .main {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+            .topbar {
+                padding: 24px 28px 20px;
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                align-items: flex-end;
+                gap: 16px;
+                justify-content: space-between;
+            }
+            .topbar h1 {
+                font-size: 22px;
+                font-weight: 700;
+            }
+            .topbar-sub {
+                color: var(--text3);
+                font-size: 13px;
+                margin-top: 2px;
+            }
+            .content {
+                flex: 1;
+                overflow-y: auto;
+                padding: 24px 28px;
+            }
 
             /* ─── FILTERS ─── */
-            .filters { display:flex;gap:10px;margin-bottom:20px;align-items:center;flex-wrap:wrap; }
-            .filters input,.filters select { background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:8px 12px;font-size:13px; }
-            .filters input:focus,.filters select:focus { outline:none;border-color:var(--accent); }
-            .filters select option { background:var(--surface2); }
+            .filters {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 20px;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+            .filters input,
+            .filters select {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: var(--radius-sm);
+                color: var(--text);
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+            .filters input:focus,
+            .filters select:focus {
+                outline: none;
+                border-color: var(--accent);
+            }
+            .filters select option {
+                background: var(--surface2);
+            }
 
             /* ─── BUTTONS ─── */
-            .btn { display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit; }
-            .btn-primary { background:var(--accent);color:#fff; }
-            .btn-primary:hover { background:var(--accent2); }
-            .btn-ghost { background:transparent;color:var(--text2);border:1px solid var(--border); }
-            .btn-ghost:hover { background:var(--surface2);color:var(--text); }
-            .btn-danger { background:rgba(242,92,120,.15);color:var(--red);border:1px solid rgba(242,92,120,.25); }
-            .btn-danger:hover { background:rgba(242,92,120,.25); }
-            .btn-sm { padding:6px 12px;font-size:12px; }
-            .btn:disabled { opacity:.5;cursor:not-allowed; }
+            .btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 9px 16px;
+                border-radius: var(--radius-sm);
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                border: none;
+                transition: all 0.15s;
+                font-family: inherit;
+            }
+            .btn-primary {
+                background: var(--accent);
+                color: #fff;
+            }
+            .btn-primary:hover {
+                background: var(--accent2);
+            }
+            .btn-ghost {
+                background: transparent;
+                color: var(--text2);
+                border: 1px solid var(--border);
+            }
+            .btn-ghost:hover {
+                background: var(--surface2);
+                color: var(--text);
+            }
+            .btn-danger {
+                background: rgba(242, 92, 120, 0.15);
+                color: var(--red);
+                border: 1px solid rgba(242, 92, 120, 0.25);
+            }
+            .btn-danger:hover {
+                background: rgba(242, 92, 120, 0.25);
+            }
+            .btn-sm {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            .btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
 
             /* ─── TABLE ─── */
-            .table-wrap { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden; }
-            table { width:100%;border-collapse:collapse; }
-            thead th { background:var(--surface2);padding:12px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);border-bottom:1px solid var(--border); }
-            tbody tr { border-bottom:1px solid var(--border);transition:background .1s; }
-            tbody tr:last-child { border-bottom:none; }
-            tbody tr:hover { background:var(--surface2); }
-            tbody td { padding:14px 16px;font-size:13px;vertical-align:middle; }
-            .actions-cell { display:flex;gap:6px;align-items:center; }
-            .icon-btn { display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;transition:all .15s; }
-            .icon-btn:hover { background:var(--surface3);color:var(--text); }
-            .icon-btn.danger { color:var(--red);border-color:rgba(242,92,120,.25); }
-            .icon-btn.danger:hover { background:rgba(242,92,120,.15); }
-            .icon-btn.view { color:var(--blue);border-color:rgba(96,165,250,.25); }
-            .icon-btn.view:hover { background:rgba(96,165,250,.1); }
-            .empty-state { padding:60px 20px;text-align:center;color:var(--text3); }
-            .empty-state h3 { font-size:16px;margin-bottom:8px;color:var(--text2); }
+            .table-wrap {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                overflow: hidden;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            thead th {
+                background: var(--surface2);
+                padding: 12px 16px;
+                text-align: left;
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.8px;
+                color: var(--text3);
+                border-bottom: 1px solid var(--border);
+            }
+            tbody tr {
+                border-bottom: 1px solid var(--border);
+                transition: background 0.1s;
+            }
+            tbody tr:last-child {
+                border-bottom: none;
+            }
+            tbody tr:hover {
+                background: var(--surface2);
+            }
+            tbody td {
+                padding: 14px 16px;
+                font-size: 13px;
+                vertical-align: middle;
+            }
+            .actions-cell {
+                display: flex;
+                gap: 6px;
+                align-items: center;
+            }
+            .icon-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 30px;
+                height: 30px;
+                border-radius: 6px;
+                border: 1px solid var(--border);
+                background: var(--surface2);
+                color: var(--text2);
+                cursor: pointer;
+                transition: all 0.15s;
+            }
+            .icon-btn:hover {
+                background: var(--surface3);
+                color: var(--text);
+            }
+            .icon-btn.danger {
+                color: var(--red);
+                border-color: rgba(242, 92, 120, 0.25);
+            }
+            .icon-btn.danger:hover {
+                background: rgba(242, 92, 120, 0.15);
+            }
+            .icon-btn.view {
+                color: var(--blue);
+                border-color: rgba(96, 165, 250, 0.25);
+            }
+            .icon-btn.view:hover {
+                background: rgba(96, 165, 250, 0.1);
+            }
+            .empty-state {
+                padding: 60px 20px;
+                text-align: center;
+                color: var(--text3);
+            }
+            .empty-state h3 {
+                font-size: 16px;
+                margin-bottom: 8px;
+                color: var(--text2);
+            }
 
             /* ─── BADGES ─── */
-            .badge { display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600; }
-            .badge-green { background:rgba(34,211,165,.12);color:var(--green); }
-            .badge-orange { background:var(--accent-glow);color:var(--accent); }
-            .badge-red { background:rgba(242,92,120,.12);color:var(--red); }
-            .badge-blue { background:rgba(96,165,250,.12);color:var(--blue); }
-            .badge-yellow { background:rgba(245,200,66,.12);color:var(--yellow); }
-            .badge-purple { background:rgba(167,139,250,.12);color:var(--purple); }
+            .badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 3px 8px;
+                border-radius: 20px;
+                font-size: 11px;
+                font-weight: 600;
+            }
+            .badge-green {
+                background: rgba(34, 211, 165, 0.12);
+                color: var(--green);
+            }
+            .badge-orange {
+                background: var(--accent-glow);
+                color: var(--accent);
+            }
+            .badge-red {
+                background: rgba(242, 92, 120, 0.12);
+                color: var(--red);
+            }
+            .badge-blue {
+                background: rgba(96, 165, 250, 0.12);
+                color: var(--blue);
+            }
+            .badge-yellow {
+                background: rgba(245, 200, 66, 0.12);
+                color: var(--yellow);
+            }
+            .badge-purple {
+                background: rgba(167, 139, 250, 0.12);
+                color: var(--purple);
+            }
 
             /* MODAL */
             .modal-overlay {
-                position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.7);
+                backdrop-filter: blur(4px);
+                z-index: 2000;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
             }
-            .modal-overlay.open { display: flex; }
+            .modal-overlay.open {
+                display: flex;
+            }
             .modal {
-                background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); animation: modalIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 16px;
+                width: 100%;
+                max-width: 600px;
+                max-height: 90vh;
+                display: flex;
+                flex-direction: column;
+                box-shadow: var(--shadow-lg);
+                animation: modalIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             }
-            .modal.modal-sm { max-width: 440px; }
+            .modal.modal-sm {
+                max-width: 440px;
+            }
             @keyframes modalIn {
-                from { opacity: 0; transform: scale(0.95) translateY(10px); }
-                to { opacity: 1; transform: scale(1) translateY(0); }
+                from {
+                    opacity: 0;
+                    transform: scale(0.95) translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: scale(1) translateY(0);
+                }
             }
-            .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-            .modal-header h2 { font-size: 18px; font-weight: 700; }
-            .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
-            .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--surface); flex-shrink: 0; }
+            .modal-header {
+                padding: 20px 24px;
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-shrink: 0;
+            }
+            .modal-header h2 {
+                font-size: 18px;
+                font-weight: 700;
+            }
+            .modal-body {
+                padding: 24px;
+                overflow-y: auto;
+                flex: 1;
+            }
+            .modal-footer {
+                padding: 16px 24px;
+                border-top: 1px solid var(--border);
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+                background: var(--surface);
+                flex-shrink: 0;
+            }
 
             /* AUTH MODAL SPECIFIC */
-            #modal-auth .modal-body { padding: 32px; text-align: center; }
-            .auth-icon { width: 64px; height: 64px; background: var(--accent-glow); color: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 20px; }
+            #modal-auth .modal-body {
+                padding: 32px;
+                text-align: center;
+            }
+            .auth-icon {
+                width: 64px;
+                height: 64px;
+                background: var(--accent-glow);
+                color: var(--accent);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+                margin: 0 auto 20px;
+            }
 
             /* ─── FORM ─── */
-            .form-group { margin-bottom:16px; }
-            .form-group label { display:block;font-size:11px;text-transform:uppercase;color:var(--text3);font-weight:700;letter-spacing:.5px;margin-bottom:6px; }
-            .form-group input,.form-group select,.form-group textarea { width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:9px 12px;font-size:13px;font-family:inherit;transition:border .15s; }
-            .form-group input:focus,.form-group select:focus,.form-group textarea:focus { outline:none;border-color:var(--accent); }
-            .form-group select option { background:var(--surface2); }
-            .form-group textarea { resize:vertical; }
-            .form-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
-            .form-section { background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px; }
-            .form-section-title { font-size:11px;text-transform:uppercase;color:var(--text3);font-weight:700;letter-spacing:.8px;margin-bottom:14px; }
+            .form-group {
+                margin-bottom: 16px;
+            }
+            .form-group label {
+                display: block;
+                font-size: 11px;
+                text-transform: uppercase;
+                color: var(--text3);
+                font-weight: 700;
+                letter-spacing: 0.5px;
+                margin-bottom: 6px;
+            }
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                width: 100%;
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: var(--radius-sm);
+                color: var(--text);
+                padding: 9px 12px;
+                font-size: 13px;
+                font-family: inherit;
+                transition: border 0.15s;
+            }
+            .form-group input:focus,
+            .form-group select:focus,
+            .form-group textarea:focus {
+                outline: none;
+                border-color: var(--accent);
+            }
+            .form-group select option {
+                background: var(--surface2);
+            }
+            .form-group textarea {
+                resize: vertical;
+            }
+            .form-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+            }
+            .form-section {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: var(--radius-sm);
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+            .form-section-title {
+                font-size: 11px;
+                text-transform: uppercase;
+                color: var(--text3);
+                font-weight: 700;
+                letter-spacing: 0.8px;
+                margin-bottom: 14px;
+            }
 
             /* ─── CREATE ROUTE LAYOUT (split modal) ─── */
-            .route-create-layout { display:grid;grid-template-columns:1fr 1fr;gap:0;height:calc(100vh - 80px);max-height:780px; }
-            .route-create-form { overflow-y:auto;padding:24px;border-right:1px solid var(--border); }
-            .route-create-map { position:relative;background:var(--bg); }
-            #creation-map { width:100%;height:100%; }
+            .route-create-layout {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0;
+                height: calc(100vh - 80px);
+                max-height: 780px;
+            }
+            .route-create-form {
+                overflow-y: auto;
+                padding: 24px;
+                border-right: 1px solid var(--border);
+            }
+            .route-create-map {
+                position: relative;
+                background: var(--bg);
+            }
+            #creation-map {
+                width: 100%;
+                height: 100%;
+            }
 
             /* ─── VIEW ROUTE LAYOUT ─── */
-            .route-view-layout { display:grid;grid-template-columns:360px 1fr;gap:0;height:calc(100vh - 80px);max-height:780px; }
-            .route-view-info { overflow-y:auto;padding:20px;border-right:1px solid var(--border); }
-            #display-map { width:100%;height:100%; }
+            .route-view-layout {
+                display: grid;
+                grid-template-columns: 360px 1fr;
+                gap: 0;
+                height: calc(100vh - 80px);
+                max-height: 780px;
+            }
+            .route-view-info {
+                overflow-y: auto;
+                padding: 20px;
+                border-right: 1px solid var(--border);
+            }
+            #display-map {
+                width: 100%;
+                height: 100%;
+            }
 
             /* ─── WAYPOINTS ─── */
-            .waypoint-list { display:flex;flex-direction:column;gap:8px;margin-top:8px; }
-            .waypoint-item { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:flex-start;gap:10px;position:relative; }
-            .waypoint-num { width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px; }
-            .waypoint-num.start { background:var(--green); }
-            .waypoint-num.end { background:var(--red); }
-            .waypoint-item-content { flex:1;min-width:0; }
-            .waypoint-item-name { font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-            .waypoint-item-type { font-size:11px;color:var(--text3);margin-top:1px; }
-            .waypoint-remove { position:absolute;top:8px;right:8px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px;line-height:1; }
-            .waypoint-remove:hover { color:var(--red); }
+            .waypoint-list {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                margin-top: 8px;
+            }
+            .waypoint-item {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: var(--radius-sm);
+                padding: 10px 12px;
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                position: relative;
+            }
+            .waypoint-num {
+                width: 22px;
+                height: 22px;
+                border-radius: 50%;
+                background: var(--accent);
+                color: #fff;
+                font-size: 11px;
+                font-weight: 700;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+                margin-top: 1px;
+            }
+            .waypoint-num.start {
+                background: var(--green);
+            }
+            .waypoint-num.end {
+                background: var(--red);
+            }
+            .waypoint-item-content {
+                flex: 1;
+                min-width: 0;
+            }
+            .waypoint-item-name {
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--text);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .waypoint-item-type {
+                font-size: 11px;
+                color: var(--text3);
+                margin-top: 1px;
+            }
+            .waypoint-remove {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                background: none;
+                border: none;
+                color: var(--text3);
+                cursor: pointer;
+                font-size: 14px;
+                padding: 2px;
+                line-height: 1;
+            }
+            .waypoint-remove:hover {
+                color: var(--red);
+            }
 
             /* ─── MAP OVERLAY INFO ─── */
-            .map-hint { position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:8px 16px;font-size:12px;color:var(--text2);white-space:nowrap;pointer-events:none; }
+            .map-hint {
+                position: absolute;
+                bottom: 16px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 20px;
+                padding: 8px 16px;
+                font-size: 12px;
+                color: var(--text2);
+                white-space: nowrap;
+                pointer-events: none;
+            }
 
             /* ─── ROUTE STATS BAR ─── */
-            .route-stats-bar { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px; }
-            .stat-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px; }
-            .stat-card .stat-val { font-size:24px;font-weight:800;font-family:"Syne",sans-serif;color:var(--accent); }
-            .stat-card .stat-lbl { font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:4px; }
+            .route-stats-bar {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 12px;
+                margin-bottom: 20px;
+            }
+            .stat-card {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 16px;
+            }
+            .stat-card .stat-val {
+                font-size: 24px;
+                font-weight: 800;
+                font-family: "Syne", sans-serif;
+                color: var(--accent);
+            }
+            .stat-card .stat-lbl {
+                font-size: 11px;
+                color: var(--text3);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-top: 4px;
+            }
 
             /* ─── LOGIN OVERLAY ─── */
-            #login-overlay { position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;align-items:center;justify-content:center; }
-            #login-overlay .login-box { background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:40px;width:100%;max-width:400px;text-align:center; }
-            #login-overlay h2 { font-size:20px;margin-bottom:8px; }
-            #login-overlay p { color:var(--text3);font-size:13px;margin-bottom:24px; }
-            #login-overlay input { width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:10px 12px;font-size:13px;font-family:inherit; }
-            #login-overlay input:focus { outline:none;border-color:var(--accent); }
+            #login-overlay {
+                position: fixed;
+                inset: 0;
+                background: var(--bg);
+                z-index: 2000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            #login-overlay .login-box {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 24px;
+                padding: 40px;
+                width: 100%;
+                max-width: 400px;
+                text-align: center;
+            }
+            #login-overlay h2 {
+                font-size: 20px;
+                margin-bottom: 8px;
+            }
+            #login-overlay p {
+                color: var(--text3);
+                font-size: 13px;
+                margin-bottom: 24px;
+            }
+            #login-overlay input {
+                width: 100%;
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: var(--radius-sm);
+                color: var(--text);
+                padding: 10px 12px;
+                font-size: 13px;
+                font-family: inherit;
+            }
+            #login-overlay input:focus {
+                outline: none;
+                border-color: var(--accent);
+            }
 
             /* ─── WAYPOINT MODAL ─── */
-            #waypoint-modal .modal { max-width:440px; }
+            #waypoint-modal .modal {
+                max-width: 440px;
+            }
 
             /* ─── MAP PIN LEGEND ─── */
-            .pin-legend { display:flex;flex-wrap:wrap;gap:8px;margin-top:6px; }
-            .pin-legend-item { display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3); }
-            .pin-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
+            .pin-legend {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-top: 6px;
+            }
+            .pin-legend-item {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 11px;
+                color: var(--text3);
+            }
+            .pin-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
 
             /* ─── SEARCH ─── */
-            .search-wrap { position:relative; }
-            .search-wrap input { padding-left:32px; }
-            .search-wrap .search-icon { position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none; }
+            .search-wrap {
+                position: relative;
+            }
+            .search-wrap input {
+                padding-left: 32px;
+            }
+            .search-wrap .search-icon {
+                position: absolute;
+                left: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: var(--text3);
+                pointer-events: none;
+            }
 
             /* ─── WAYPOINT STEP CARDS (view) ─── */
-            .step-card { background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s;display:flex;gap:12px;align-items:flex-start; }
-            .step-card:hover { border-color:var(--accent);background:var(--surface3); }
-            .step-card.active { border-color:var(--accent);background:var(--accent-glow); }
-            .step-badge { width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0; }
+            .step-card {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: var(--radius-sm);
+                padding: 12px 14px;
+                margin-bottom: 8px;
+                cursor: pointer;
+                transition: all 0.15s;
+                display: flex;
+                gap: 12px;
+                align-items: flex-start;
+            }
+            .step-card:hover {
+                border-color: var(--accent);
+                background: var(--surface3);
+            }
+            .step-card.active {
+                border-color: var(--accent);
+                background: var(--accent-glow);
+            }
+            .step-badge {
+                width: 26px;
+                height: 26px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 11px;
+                font-weight: 700;
+                color: #fff;
+                flex-shrink: 0;
+            }
         </style>
     </head>
     <body>
@@ -223,25 +889,121 @@
         <!-- ─── AUTH OVERLAY ─── -->
         <div id="login-overlay">
             <div class="login-box">
-                <div style="width:48px;height:48px;background:var(--accent-glow);border-radius:12px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" width="24" height="24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                <div
+                    style="
+                        width: 48px;
+                        height: 48px;
+                        background: var(--accent-glow);
+                        border-radius: 12px;
+                        margin: 0 auto 20px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--accent)"
+                        stroke-width="2"
+                        width="24"
+                        height="24"
+                    >
+                        <path
+                            d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+                        />
+                    </svg>
                 </div>
                 <h2>Admin Login</h2>
                 <p>Enter your credentials to continue</p>
-                <div style="display:flex;flex-direction:column;gap:12px;text-align:left;">
+                <div
+                    style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+                        text-align: left;
+                    "
+                >
                     <div>
-                        <label style="font-size:11px;text-transform:uppercase;color:var(--text3);font-weight:700;display:block;margin-bottom:6px">Email / Username</label>
-                        <input type="text" id="login-user" placeholder="admin@dabapp.co" onkeydown="if(event.key==='Enter')login()">
+                        <label
+                            style="
+                                font-size: 11px;
+                                text-transform: uppercase;
+                                color: var(--text3);
+                                font-weight: 700;
+                                display: block;
+                                margin-bottom: 6px;
+                            "
+                            >Email / Username</label
+                        >
+                        <input
+                            type="text"
+                            id="login-user"
+                            placeholder="admin@dabapp.co"
+                            onkeydown="if (event.key === 'Enter') login();"
+                        />
                     </div>
                     <div>
-                        <label style="font-size:11px;text-transform:uppercase;color:var(--text3);font-weight:700;display:block;margin-bottom:6px">Password</label>
-                        <input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
+                        <label
+                            style="
+                                font-size: 11px;
+                                text-transform: uppercase;
+                                color: var(--text3);
+                                font-weight: 700;
+                                display: block;
+                                margin-bottom: 6px;
+                            "
+                            >Password</label
+                        >
+                        <input
+                            type="password"
+                            id="login-pass"
+                            placeholder="••••••••"
+                            onkeydown="if (event.key === 'Enter') login();"
+                        />
                     </div>
-                    <button id="btn-login" class="btn btn-primary" onclick="login()" style="justify-content:center;height:42px;margin-top:6px">Log in</button>
-                    <div style="text-align:center;font-size:12px;color:var(--text3)">— or —</div>
+                    <button
+                        id="btn-login"
+                        class="btn btn-primary"
+                        onclick="login()"
+                        style="
+                            justify-content: center;
+                            height: 42px;
+                            margin-top: 6px;
+                        "
+                    >
+                        Log in
+                    </button>
+                    <div
+                        style="
+                            text-align: center;
+                            font-size: 12px;
+                            color: var(--text3);
+                        "
+                    >
+                        — or —
+                    </div>
                     <div>
-                        <label style="font-size:11px;text-transform:uppercase;color:var(--text3);font-weight:700;display:block;margin-bottom:6px">Bearer Token</label>
-                        <input type="text" id="manual-token" placeholder="eyJ..." oninput="if(this.value.length>20)manualLogin(this.value)">
+                        <label
+                            style="
+                                font-size: 11px;
+                                text-transform: uppercase;
+                                color: var(--text3);
+                                font-weight: 700;
+                                display: block;
+                                margin-bottom: 6px;
+                            "
+                            >Bearer Token</label
+                        >
+                        <input
+                            type="text"
+                            id="manual-token"
+                            placeholder="eyJ..."
+                            oninput="
+                                if (this.value.length > 20)
+                                    manualLogin(this.value);
+                            "
+                        />
                     </div>
                 </div>
             </div>
@@ -249,31 +1011,82 @@
 
         <!-- ─── CREATE/EDIT ROUTE MODAL (full-screen split) ─── -->
         <div class="modal-overlay" id="create-modal">
-            <div class="modal modal-wide" style="max-width:1080px;height:calc(100vh - 40px);display:flex;flex-direction:column;margin:20px auto;">
-                <div class="modal-header" style="flex-shrink:0">
+            <div
+                class="modal modal-wide"
+                style="
+                    max-width: 1080px;
+                    height: calc(100vh - 40px);
+                    display: flex;
+                    flex-direction: column;
+                    margin: 20px auto;
+                "
+            >
+                <div class="modal-header" style="flex-shrink: 0">
                     <div>
                         <h2 id="create-modal-title">New Route</h2>
-                        <p style="font-size:12px;color:var(--text3);margin-top:2px">Click on the map to add waypoints, then fill in the route details</p>
+                        <p
+                            style="
+                                font-size: 12px;
+                                color: var(--text3);
+                                margin-top: 2px;
+                            "
+                        >
+                            Click on the map to add waypoints, then fill in the
+                            route details
+                        </p>
                     </div>
                     <button class="modal-close" onclick="closeCreateModal()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            width="16"
+                            height="16"
+                        >
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
                     </button>
                 </div>
-                <div class="route-create-layout" style="flex:1;overflow:hidden;">
+                <div
+                    class="route-create-layout"
+                    style="flex: 1; overflow: hidden"
+                >
                     <!-- LEFT: Form -->
                     <div class="route-create-form">
-                        <input type="hidden" id="r-id">
+                        <input type="hidden" id="r-id" />
 
                         <!-- Route Info -->
                         <div class="form-section">
-                            <div class="form-section-title">📝 Route Information</div>
-                            <div class="form-group">
-                                <label>Title <span style="color:var(--red)">*</span></label>
-                                <input type="text" id="r-title" placeholder="e.g. Atlas Mountain Loop">
+                            <div class="form-section-title">
+                                📝 Route Information
                             </div>
                             <div class="form-group">
-                                <label>Description <span style="color:var(--red)">*</span></label>
-                                <textarea id="r-desc" rows="3" placeholder="Describe the route, highlights, tips..."></textarea>
+                                <label
+                                    >Title
+                                    <span style="color: var(--red)"
+                                        >*</span
+                                    ></label
+                                >
+                                <input
+                                    type="text"
+                                    id="r-title"
+                                    placeholder="e.g. Atlas Mountain Loop"
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label
+                                    >Description
+                                    <span style="color: var(--red)"
+                                        >*</span
+                                    ></label
+                                >
+                                <textarea
+                                    id="r-desc"
+                                    rows="3"
+                                    placeholder="Describe the route, highlights, tips..."
+                                ></textarea>
                             </div>
                             <div class="form-grid">
                                 <div class="form-group">
@@ -286,8 +1099,12 @@
                                     <label>Difficulty</label>
                                     <select id="r-difficulty">
                                         <option value="easy">Easy</option>
-                                        <option value="moderate" selected>Moderate</option>
-                                        <option value="difficult">Difficult</option>
+                                        <option value="moderate" selected>
+                                            Moderate
+                                        </option>
+                                        <option value="difficult">
+                                            Difficult
+                                        </option>
                                         <option value="expert">Expert</option>
                                     </select>
                                 </div>
@@ -295,11 +1112,19 @@
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label>Est. Duration</label>
-                                    <input type="text" id="r-duration" placeholder="e.g. 3h 30min">
+                                    <input
+                                        type="text"
+                                        id="r-duration"
+                                        placeholder="e.g. 3h 30min"
+                                    />
                                 </div>
                                 <div class="form-group">
                                     <label>Best Season</label>
-                                    <input type="text" id="r-season" placeholder="e.g. Spring, Summer">
+                                    <input
+                                        type="text"
+                                        id="r-season"
+                                        placeholder="e.g. Spring, Summer"
+                                    />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -316,19 +1141,81 @@
 
                         <!-- Waypoints -->
                         <div class="form-section">
-                            <div class="form-section-title">📍 Waypoints (<span id="wp-count">0</span>) — click map to add</div>
+                            <div class="form-section-title">
+                                📍 Waypoints (<span id="wp-count">0</span>) —
+                                click map to add
+                            </div>
                             <div class="pin-legend">
-                                <div class="pin-legend-item"><div class="pin-dot" style="background:#22d3a5"></div> Start</div>
-                                <div class="pin-legend-item"><div class="pin-dot" style="background:#f97316"></div> Waypoint</div>
-                                <div class="pin-legend-item"><div class="pin-dot" style="background:#60a5fa"></div> Gas Station</div>
-                                <div class="pin-legend-item"><div class="pin-dot" style="background:#a78bfa"></div> Rest Stop</div>
-                                <div class="pin-legend-item"><div class="pin-dot" style="background:#f5c842"></div> Viewpoint</div>
-                                <div class="pin-legend-item"><div class="pin-dot" style="background:#f25c78"></div> End</div>
+                                <div class="pin-legend-item">
+                                    <div
+                                        class="pin-dot"
+                                        style="background: #22d3a5"
+                                    ></div>
+                                    Start
+                                </div>
+                                <div class="pin-legend-item">
+                                    <div
+                                        class="pin-dot"
+                                        style="background: #f97316"
+                                    ></div>
+                                    Waypoint
+                                </div>
+                                <div class="pin-legend-item">
+                                    <div
+                                        class="pin-dot"
+                                        style="background: #60a5fa"
+                                    ></div>
+                                    Gas Station
+                                </div>
+                                <div class="pin-legend-item">
+                                    <div
+                                        class="pin-dot"
+                                        style="background: #a78bfa"
+                                    ></div>
+                                    Rest Stop
+                                </div>
+                                <div class="pin-legend-item">
+                                    <div
+                                        class="pin-dot"
+                                        style="background: #f5c842"
+                                    ></div>
+                                    Viewpoint
+                                </div>
+                                <div class="pin-legend-item">
+                                    <div
+                                        class="pin-dot"
+                                        style="background: #f25c78"
+                                    ></div>
+                                    End
+                                </div>
                             </div>
-                            <div id="wp-list" class="waypoint-list" style="margin-top:12px">
-                                <div style="color:var(--text3);font-size:12px;text-align:center;padding:16px 0">Click the map to start adding waypoints</div>
+                            <div
+                                id="wp-list"
+                                class="waypoint-list"
+                                style="margin-top: 12px"
+                            >
+                                <div
+                                    style="
+                                        color: var(--text3);
+                                        font-size: 12px;
+                                        text-align: center;
+                                        padding: 16px 0;
+                                    "
+                                >
+                                    Click the map to start adding waypoints
+                                </div>
                             </div>
-                            <button class="btn btn-ghost btn-sm" onclick="clearWaypoints()" style="margin-top:10px;width:100%;justify-content:center">Clear all waypoints</button>
+                            <button
+                                class="btn btn-ghost btn-sm"
+                                onclick="clearWaypoints()"
+                                style="
+                                    margin-top: 10px;
+                                    width: 100%;
+                                    justify-content: center;
+                                "
+                            >
+                                Clear all waypoints
+                            </button>
                         </div>
 
                         <!-- Route selector (injected here dynamically) -->
@@ -338,13 +1225,35 @@
                     <!-- RIGHT: Map -->
                     <div class="route-create-map">
                         <div id="creation-map"></div>
-                        <div class="map-hint">🗺️ Click to add waypoints · Right-click to remove last</div>
+                        <div class="map-hint">
+                            🗺️ Click to add waypoints · Right-click to remove
+                            last
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer" style="flex-shrink:0">
-                    <button class="btn btn-ghost" onclick="closeCreateModal()">Cancel</button>
-                    <button class="btn btn-primary" id="btn-save-route" onclick="saveRoute()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                <div class="modal-footer" style="flex-shrink: 0">
+                    <button class="btn btn-ghost" onclick="closeCreateModal()">
+                        Cancel
+                    </button>
+                    <button
+                        class="btn btn-primary"
+                        id="btn-save-route"
+                        onclick="saveRoute()"
+                    >
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            width="14"
+                            height="14"
+                        >
+                            <path
+                                d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"
+                            />
+                            <polyline points="17 21 17 13 7 13 7 21" />
+                            <polyline points="7 3 7 8 15 8" />
+                        </svg>
                         Create Route
                     </button>
                 </div>
@@ -353,30 +1262,74 @@
 
         <!-- ─── VIEW ROUTE MODAL ─── -->
         <div class="modal-overlay" id="view-modal">
-            <div class="modal modal-wide" style="max-width:1080px;height:calc(100vh - 40px);display:flex;flex-direction:column;margin:20px auto;">
-                <div class="modal-header" style="flex-shrink:0">
+            <div
+                class="modal modal-wide"
+                style="
+                    max-width: 1080px;
+                    height: calc(100vh - 40px);
+                    display: flex;
+                    flex-direction: column;
+                    margin: 20px auto;
+                "
+            >
+                <div class="modal-header" style="flex-shrink: 0">
                     <div>
                         <h2 id="view-modal-title">Route Details</h2>
-                        <p style="font-size:12px;color:var(--text3);margin-top:2px" id="view-modal-sub">Loading...</p>
+                        <p
+                            style="
+                                font-size: 12px;
+                                color: var(--text3);
+                                margin-top: 2px;
+                            "
+                            id="view-modal-sub"
+                        >
+                            Loading...
+                        </p>
                     </div>
-                    <div style="display:flex;gap:8px;align-items:center;">
-                        <button class="btn btn-ghost btn-sm" onclick="openItinerary()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                    <div style="display: flex; gap: 8px; align-items: center">
+                        <button
+                            class="btn btn-ghost btn-sm"
+                            onclick="openItinerary()"
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                width="14"
+                                height="14"
+                            >
+                                <circle cx="12" cy="12" r="10" />
+                                <polygon points="10 8 16 12 10 16 10 8" />
+                            </svg>
                             Itinerary
                         </button>
                         <button class="modal-close" onclick="closeViewModal()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                width="16"
+                                height="16"
+                            >
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
                         </button>
                     </div>
                 </div>
-                <div class="route-view-layout" style="flex:1;overflow:hidden;">
+                <div
+                    class="route-view-layout"
+                    style="flex: 1; overflow: hidden"
+                >
                     <!-- LEFT: Route info + steps -->
                     <div class="route-view-info">
-                        <div id="view-stats" style="margin-bottom:16px"></div>
+                        <div id="view-stats" style="margin-bottom: 16px"></div>
                         <div id="view-waypoints"></div>
                     </div>
                     <!-- RIGHT: Map -->
-                    <div style="position:relative">
+                    <div style="position: relative">
                         <div id="display-map"></div>
                     </div>
                 </div>
@@ -385,24 +1338,43 @@
 
         <!-- ─── WAYPOINT EDIT MODAL ─── -->
         <div class="modal-overlay" id="waypoint-modal">
-            <div class="modal" style="max-width:440px">
+            <div class="modal" style="max-width: 440px">
                 <div class="modal-header">
                     <h2>Edit Waypoint</h2>
                     <button class="modal-close" onclick="closeWaypointModal()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            width="16"
+                            height="16"
+                        >
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" id="wp-edit-idx">
+                    <input type="hidden" id="wp-edit-idx" />
                     <div class="form-group">
-                        <label>Name <span style="color:var(--red)">*</span></label>
-                        <input type="text" id="wp-name" placeholder="Waypoint name">
+                        <label
+                            >Name
+                            <span style="color: var(--red)">*</span></label
+                        >
+                        <input
+                            type="text"
+                            id="wp-name"
+                            placeholder="Waypoint name"
+                        />
                     </div>
                     <div class="form-group">
                         <label>Type</label>
                         <select id="wp-type">
                             <option value="start">🏁 Start</option>
-                            <option value="waypoint" selected>📍 Waypoint</option>
+                            <option value="waypoint" selected>
+                                📍 Waypoint
+                            </option>
                             <option value="poi">🎯 Point of Interest</option>
                             <option value="rest_stop">☕ Rest Stop</option>
                             <option value="gas_station">⛽ Gas Station</option>
@@ -412,48 +1384,199 @@
                     </div>
                     <div class="form-group">
                         <label>Notes / Description</label>
-                        <textarea id="wp-desc" rows="2" placeholder="Optional notes..."></textarea>
+                        <textarea
+                            id="wp-desc"
+                            rows="2"
+                            placeholder="Optional notes..."
+                        ></textarea>
                     </div>
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Pause (min)</label>
-                            <input type="number" id="wp-pause" placeholder="e.g. 15" min="0">
+                            <input
+                                type="number"
+                                id="wp-pause"
+                                placeholder="e.g. 15"
+                                min="0"
+                            />
                         </div>
                         <div class="form-group">
                             <label>Pause Reason</label>
-                            <input type="text" id="wp-pause-reason" placeholder="Lunch, Gas...">
+                            <input
+                                type="text"
+                                id="wp-pause-reason"
+                                placeholder="Lunch, Gas..."
+                            />
                         </div>
                     </div>
                     <div class="form-group">
                         <label>Services</label>
-                        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
-                            <label style="display:flex;align-items:center;gap:6px;font-size:12px;text-transform:none;color:var(--text2);letter-spacing:0;cursor:pointer"><input type="checkbox" id="wp-gas"> ⛽ Gas</label>
-                            <label style="display:flex;align-items:center;gap:6px;font-size:12px;text-transform:none;color:var(--text2);letter-spacing:0;cursor:pointer"><input type="checkbox" id="wp-food"> 🍽️ Food</label>
-                            <label style="display:flex;align-items:center;gap:6px;font-size:12px;text-transform:none;color:var(--text2);letter-spacing:0;cursor:pointer"><input type="checkbox" id="wp-toilet"> 🚻 Toilets</label>
-                            <label style="display:flex;align-items:center;gap:6px;font-size:12px;text-transform:none;color:var(--text2);letter-spacing:0;cursor:pointer"><input type="checkbox" id="wp-parking"> 🅿️ Parking</label>
-                            <label style="display:flex;align-items:center;gap:6px;font-size:12px;text-transform:none;color:var(--text2);letter-spacing:0;cursor:pointer"><input type="checkbox" id="wp-hotel"> 🏨 Hotel</label>
+                        <div
+                            style="
+                                display: flex;
+                                flex-wrap: wrap;
+                                gap: 8px;
+                                margin-top: 4px;
+                            "
+                        >
+                            <label
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 6px;
+                                    font-size: 12px;
+                                    text-transform: none;
+                                    color: var(--text2);
+                                    letter-spacing: 0;
+                                    cursor: pointer;
+                                "
+                                ><input type="checkbox" id="wp-gas" /> ⛽
+                                Gas</label
+                            >
+                            <label
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 6px;
+                                    font-size: 12px;
+                                    text-transform: none;
+                                    color: var(--text2);
+                                    letter-spacing: 0;
+                                    cursor: pointer;
+                                "
+                                ><input type="checkbox" id="wp-food" /> 🍽️
+                                Food</label
+                            >
+                            <label
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 6px;
+                                    font-size: 12px;
+                                    text-transform: none;
+                                    color: var(--text2);
+                                    letter-spacing: 0;
+                                    cursor: pointer;
+                                "
+                                ><input type="checkbox" id="wp-toilet" /> 🚻
+                                Toilets</label
+                            >
+                            <label
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 6px;
+                                    font-size: 12px;
+                                    text-transform: none;
+                                    color: var(--text2);
+                                    letter-spacing: 0;
+                                    cursor: pointer;
+                                "
+                                ><input type="checkbox" id="wp-parking" /> 🅿️
+                                Parking</label
+                            >
+                            <label
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 6px;
+                                    font-size: 12px;
+                                    text-transform: none;
+                                    color: var(--text2);
+                                    letter-spacing: 0;
+                                    cursor: pointer;
+                                "
+                                ><input type="checkbox" id="wp-hotel" /> 🏨
+                                Hotel</label
+                            >
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-ghost" onclick="closeWaypointModal()">Cancel</button>
-                    <button class="btn btn-primary" onclick="saveWaypointEdit()">Save Waypoint</button>
+                    <button
+                        class="btn btn-ghost"
+                        onclick="closeWaypointModal()"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        class="btn btn-primary"
+                        onclick="saveWaypointEdit()"
+                    >
+                        Save Waypoint
+                    </button>
                 </div>
             </div>
         </div>
 
         <!-- ─── DELETE CONFIRM MODAL ─── -->
         <div class="modal-overlay" id="delete-modal">
-            <div class="modal" style="max-width:400px">
-                <div class="modal-body" style="padding:32px;text-align:center">
-                    <div style="width:52px;height:52px;background:rgba(242,92,120,.12);border-radius:12px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" width="24" height="24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            <div class="modal" style="max-width: 400px">
+                <div
+                    class="modal-body"
+                    style="padding: 32px; text-align: center"
+                >
+                    <div
+                        style="
+                            width: 52px;
+                            height: 52px;
+                            background: rgba(242, 92, 120, 0.12);
+                            border-radius: 12px;
+                            margin: 0 auto 16px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        "
+                    >
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="var(--red)"
+                            stroke-width="2"
+                            width="24"
+                            height="24"
+                        >
+                            <polyline points="3 6 5 6 21 6" />
+                            <path
+                                d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
+                            />
+                        </svg>
                     </div>
-                    <h2 style="font-size:17px;margin-bottom:8px">Delete Route</h2>
-                    <p style="color:var(--text3);font-size:13px;margin-bottom:24px">Are you sure you want to delete "<span id="delete-route-name" style="color:var(--text)"></span>"? This cannot be undone.</p>
-                    <div style="display:flex;gap:10px;justify-content:center">
-                        <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
-                        <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+                    <h2 style="font-size: 17px; margin-bottom: 8px">
+                        Delete Route
+                    </h2>
+                    <p
+                        style="
+                            color: var(--text3);
+                            font-size: 13px;
+                            margin-bottom: 24px;
+                        "
+                    >
+                        Are you sure you want to delete "<span
+                            id="delete-route-name"
+                            style="color: var(--text)"
+                        ></span
+                        >"? This cannot be undone.
+                    </p>
+                    <div
+                        style="
+                            display: flex;
+                            gap: 10px;
+                            justify-content: center;
+                        "
+                    >
+                        <button
+                            class="btn btn-ghost"
+                            onclick="closeDeleteModal()"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            class="btn btn-danger"
+                            onclick="confirmDelete()"
+                        >
+                            Delete
+                        </button>
                     </div>
                 </div>
             </div>
@@ -464,8 +1587,33 @@
             <!-- SIDEBAR -->
             <aside class="sidebar">
                 <div class="sidebar-logo">
-                    <img src="../LogoDabApp.png" alt="DabApp" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" id="logo-img"/>
-                    <div style="display:none; width:44px; height:44px; border-radius:12px; background:var(--accent); align-items:center; justify-content:center; color:white; font-family:'Syne',sans-serif; font-weight:800; font-size:18px;" id="logo-fallback">D</div>
+                    <img
+                        src="../LogoDabApp.png"
+                        alt="DabApp"
+                        onerror="
+                            this.style.display = 'none';
+                            this.nextElementSibling.style.display = 'flex';
+                        "
+                        id="logo-img"
+                    />
+                    <div
+                        style="
+                            display: none;
+                            width: 44px;
+                            height: 44px;
+                            border-radius: 12px;
+                            background: var(--accent);
+                            align-items: center;
+                            justify-content: center;
+                            color: white;
+                            font-family: &quot;Syne&quot;, sans-serif;
+                            font-weight: 800;
+                            font-size: 18px;
+                        "
+                        id="logo-fallback"
+                    >
+                        D
+                    </div>
                 </div>
 
                 <div class="nav-section">
@@ -477,19 +1625,73 @@
 
                 <div class="nav-section">
                     <div class="nav-label">Guides & Routes</div>
-                    <div class="nav-item has-submenu open" id="nav-guides-parent" onclick="toggleSubmenu(this)">
-                        <i class="fas fa-route"></i> <span>Guides & Routes</span>
+                    <div
+                        class="nav-item has-submenu open"
+                        id="nav-guides-parent"
+                        onclick="toggleSubmenu(this)"
+                    >
+                        <i class="fas fa-route"></i>
+                        <span>Guides & Routes</span>
                         <i class="fas fa-chevron-right chevron"></i>
                     </div>
                     <div class="nav-submenu open" id="submenu-guides">
-                        <a href="guide-admin.html" class="nav-item sub-item" id="nav-guides">
+                        <a
+                            href="guide-admin.html"
+                            class="nav-item sub-item"
+                            id="nav-guides"
+                        >
                             <i class="fas fa-book"></i> Guides
                         </a>
-                        <a href="guide-categories.html" class="nav-item sub-item" id="nav-guide-categories">
+                        <a
+                            href="guide-categories.html"
+                            class="nav-item sub-item"
+                            id="nav-guide-categories"
+                        >
                             <i class="fas fa-tags"></i> Categories
                         </a>
-                        <a href="route-admin.html" class="nav-item sub-item active" id="nav-routes">
+                        <a
+                            href="route-admin.html"
+                            class="nav-item sub-item active"
+                            id="nav-routes"
+                        >
                             <i class="fas fa-directions"></i> Routes
+                        </a>
+                        <a
+                            href="route-categories.html"
+                            class="nav-item sub-item"
+                            id="nav-route-categories"
+                        >
+                            <i class="fas fa-layer-group"></i> Route Categories
+                        </a>
+                        <a
+                            href="route-reviews.html"
+                            class="nav-item sub-item"
+                            id="nav-route-reviews"
+                        >
+                            <i class="fas fa-star"></i> Route Reviews
+                        </a>
+                        <a
+                            href="route-tags.html"
+                            class="nav-item sub-item"
+                            id="nav-route-tags"
+                        >
+                            <i class="fas fa-tags"></i> Route Tags
+                        </a>
+                        <a
+                            href="route-warnings.html"
+                            class="nav-item sub-item"
+                            id="nav-route-warnings"
+                        >
+                            <i class="fas fa-exclamation-triangle"></i> Route
+                            Warnings
+                        </a>
+                        <a
+                            href="route-completions.html"
+                            class="nav-item sub-item"
+                            id="nav-route-completions"
+                        >
+                            <i class="fas fa-flag-checkered"></i> Route
+                            Completions
                         </a>
                     </div>
                 </div>
@@ -503,10 +1705,22 @@
 
                 <div class="api-config">
                     <label>API Base URL</label>
-                    <input type="text" id="api-base-url" placeholder="http://localhost:8000" onchange="localStorage.setItem('api_url', this.value)"/>
-                    <div style="margin-top:10px;">
+                    <input
+                        type="text"
+                        id="api-base-url"
+                        placeholder="http://localhost:8000"
+                        onchange="localStorage.setItem('api_url', this.value)"
+                    />
+                    <div style="margin-top: 10px">
                         <label>Bearer Token</label>
-                        <input type="password" id="api-token" placeholder="eyJ..." onchange="localStorage.setItem('auth_token', this.value)"/>
+                        <input
+                            type="password"
+                            id="api-token"
+                            placeholder="eyJ..."
+                            onchange="
+                                localStorage.setItem('auth_token', this.value)
+                            "
+                        />
                     </div>
                 </div>
             </aside>
@@ -516,31 +1730,65 @@
                 <div class="topbar">
                     <div>
                         <h1>Routes</h1>
-                        <p class="topbar-sub">Manage motorcycle routes, waypoints and itineraries</p>
+                        <p class="topbar-sub">
+                            Manage motorcycle routes, waypoints and itineraries
+                        </p>
                     </div>
                     <button class="btn btn-primary" onclick="openCreateModal()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            width="14"
+                            height="14"
+                        >
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
                         New Route
                     </button>
                 </div>
 
                 <div class="content">
                     <!-- STATS -->
-                    <div class="route-stats-bar" id="stats-bar" style="display:none">
+                    <div
+                        class="route-stats-bar"
+                        id="stats-bar"
+                        style="display: none"
+                    >
                         <div class="stat-card">
                             <div class="stat-val" id="stat-total">—</div>
                             <div class="stat-lbl">Total Routes</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-val" id="stat-featured" style="color:var(--yellow)">—</div>
+                            <div
+                                class="stat-val"
+                                id="stat-featured"
+                                style="color: var(--yellow)"
+                            >
+                                —
+                            </div>
                             <div class="stat-lbl">Featured</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-val" id="stat-views" style="color:var(--blue)">—</div>
+                            <div
+                                class="stat-val"
+                                id="stat-views"
+                                style="color: var(--blue)"
+                            >
+                                —
+                            </div>
                             <div class="stat-lbl">Total Views</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-val" id="stat-avg-rating" style="color:var(--green)">—</div>
+                            <div
+                                class="stat-val"
+                                id="stat-avg-rating"
+                                style="color: var(--green)"
+                            >
+                                —
+                            </div>
                             <div class="stat-lbl">Avg Rating</div>
                         </div>
                     </div>
@@ -548,10 +1796,30 @@
                     <!-- FILTERS -->
                     <div class="filters">
                         <div class="search-wrap">
-                            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                            <input type="text" id="filter-search" placeholder="Search routes..." oninput="filterRoutes()" style="padding-left:32px;width:220px">
+                            <svg
+                                class="search-icon"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                width="14"
+                                height="14"
+                            >
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                            <input
+                                type="text"
+                                id="filter-search"
+                                placeholder="Search routes..."
+                                oninput="filterRoutes()"
+                                style="padding-left: 32px; width: 220px"
+                            />
                         </div>
-                        <select id="filter-difficulty" onchange="filterRoutes()">
+                        <select
+                            id="filter-difficulty"
+                            onchange="filterRoutes()"
+                        >
                             <option value="">All Difficulties</option>
                             <option value="easy">Easy</option>
                             <option value="moderate">Moderate</option>
@@ -561,8 +1829,22 @@
                         <select id="filter-category" onchange="filterRoutes()">
                             <option value="">All Categories</option>
                         </select>
-                        <button class="btn btn-ghost btn-sm" onclick="loadRoutes()" title="Refresh">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+                        <button
+                            class="btn btn-ghost btn-sm"
+                            onclick="loadRoutes()"
+                            title="Refresh"
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                width="14"
+                                height="14"
+                            >
+                                <polyline points="23 4 23 10 17 10" />
+                                <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
+                            </svg>
                         </button>
                     </div>
 
@@ -583,7 +1865,14 @@
                             <tbody id="routes-table-body">
                                 <tr>
                                     <td colspan="8">
-                                        <div class="loading" style="padding:40px;text-align:center;color:var(--text3)">
+                                        <div
+                                            class="loading"
+                                            style="
+                                                padding: 40px;
+                                                text-align: center;
+                                                color: var(--text3);
+                                            "
+                                        >
                                             Loading routes...
                                         </div>
                                     </td>
@@ -604,15 +1893,38 @@
                     <div class="auth-icon">
                         <i class="fas fa-lock"></i>
                     </div>
-                    <h2 style="font-size: 18px; margin-bottom: 8px;">Session Expired</h2>
-                    <p style="color: var(--text2); font-size: 13px; line-height: 1.6; margin-bottom: 24px;">Your session has expired or your token is invalid. Please log in again to continue.</p>
-                    
-                    <div class="form-group" style="text-align: left; margin-bottom: 16px;">
+                    <h2 style="font-size: 18px; margin-bottom: 8px">
+                        Session Expired
+                    </h2>
+                    <p
+                        style="
+                            color: var(--text2);
+                            font-size: 13px;
+                            line-height: 1.6;
+                            margin-bottom: 24px;
+                        "
+                    >
+                        Your session has expired or your token is invalid.
+                        Please log in again to continue.
+                    </p>
+
+                    <div
+                        class="form-group"
+                        style="text-align: left; margin-bottom: 16px"
+                    >
                         <label class="form-label">Bearer Token</label>
-                        <input type="password" id="auth-modal-token" placeholder="Paste your new token here..."/>
+                        <input
+                            type="password"
+                            id="auth-modal-token"
+                            placeholder="Paste your new token here..."
+                        />
                     </div>
-                    
-                    <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="reauthenticate()">
+
+                    <button
+                        class="btn btn-primary"
+                        style="width: 100%; justify-content: center"
+                        onclick="reauthenticate()"
+                    >
                         <i class="fas fa-sign-in-alt"></i> Log in again
                     </button>
                 </div>
@@ -623,7 +1935,7 @@
             // ═══════════════════════════════════════════════════
             // STATE
             // ═══════════════════════════════════════════════════
-            const GMAPS_KEY = 'AIzaSyBznLyPEvm9nm3LerujutDMx1F6zNSpk2E';
+            const GMAPS_KEY = "AIzaSyBznLyPEvm9nm3LerujutDMx1F6zNSpk2E";
 
             let state = {
                 routes: [],
@@ -645,14 +1957,46 @@
             let mapsLoaded = false;
 
             const mapStyles = [
-                {"featureType":"all","elementType":"geometry","stylers":[{"color":"#1a1e28"}]},
-                {"featureType":"road","elementType":"geometry.fill","stylers":[{"color":"#2a3045"}]},
-                {"featureType":"road","elementType":"labels.text.fill","stylers":[{"color":"#f97316"}]},
-                {"featureType":"road.highway","elementType":"geometry.stroke","stylers":[{"color":"#f97316"}]},
-                {"featureType":"water","elementType":"geometry","stylers":[{"color":"#0d0f14"}]},
-                {"featureType":"poi","elementType":"geometry","stylers":[{"color":"#13161e"}]},
-                {"featureType":"transit","elementType":"all","stylers":[{"visibility":"off"}]},
-                {"featureType":"administrative","elementType":"labels.text.fill","stylers":[{"color":"#9ba3bc"}]}
+                {
+                    featureType: "all",
+                    elementType: "geometry",
+                    stylers: [{ color: "#1a1e28" }],
+                },
+                {
+                    featureType: "road",
+                    elementType: "geometry.fill",
+                    stylers: [{ color: "#2a3045" }],
+                },
+                {
+                    featureType: "road",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#f97316" }],
+                },
+                {
+                    featureType: "road.highway",
+                    elementType: "geometry.stroke",
+                    stylers: [{ color: "#f97316" }],
+                },
+                {
+                    featureType: "water",
+                    elementType: "geometry",
+                    stylers: [{ color: "#0d0f14" }],
+                },
+                {
+                    featureType: "poi",
+                    elementType: "geometry",
+                    stylers: [{ color: "#13161e" }],
+                },
+                {
+                    featureType: "transit",
+                    elementType: "all",
+                    stylers: [{ visibility: "off" }],
+                },
+                {
+                    featureType: "administrative",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#9ba3bc" }],
+                },
             ];
 
             // ═══════════════════════════════════════════════════
@@ -660,21 +2004,32 @@
             // ═══════════════════════════════════════════════════
             function checkAuth() {
                 const params = new URLSearchParams(window.location.search);
-                const urlToken = params.get('token');
-                const urlApi = params.get('api_url');
-                if (urlApi) { localStorage.setItem('api_url', urlApi); document.getElementById('api-base-url').value = urlApi; }
+                const urlToken = params.get("token");
+                const urlApi = params.get("api_url");
+                if (urlApi) {
+                    localStorage.setItem("api_url", urlApi);
+                    document.getElementById("api-base-url").value = urlApi;
+                }
                 if (urlToken) {
-                    localStorage.setItem('auth_token', urlToken);
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    document.getElementById('api-token').value = urlToken;
-                    document.getElementById('login-overlay').classList.add('hidden');
+                    localStorage.setItem("auth_token", urlToken);
+                    window.history.replaceState(
+                        {},
+                        document.title,
+                        window.location.pathname,
+                    );
+                    document.getElementById("api-token").value = urlToken;
+                    document
+                        .getElementById("login-overlay")
+                        .classList.add("hidden");
                     init();
                     return;
                 }
-                const token = localStorage.getItem('auth_token');
+                const token = localStorage.getItem("auth_token");
                 if (token) {
-                    document.getElementById('api-token').value = token;
-                    document.getElementById('login-overlay').classList.add('hidden');
+                    document.getElementById("api-token").value = token;
+                    document
+                        .getElementById("login-overlay")
+                        .classList.add("hidden");
                     init();
                 } else {
                     if (!window._authRetry) {
@@ -682,56 +2037,87 @@
                         setTimeout(checkAuth, 300);
                         return;
                     }
-                    document.getElementById('login-overlay').classList.remove('hidden');
+                    document
+                        .getElementById("login-overlay")
+                        .classList.remove("hidden");
                 }
             }
 
             async function login() {
-                const user = document.getElementById('login-user').value;
-                const pass = document.getElementById('login-pass').value;
-                const btn = document.getElementById('btn-login');
-                if (!user || !pass) { toast('Fill in all fields', 'error'); return; }
-                btn.disabled = true; btn.textContent = 'Connecting...';
+                const user = document.getElementById("login-user").value;
+                const pass = document.getElementById("login-pass").value;
+                const btn = document.getElementById("btn-login");
+                if (!user || !pass) {
+                    toast("Fill in all fields", "error");
+                    return;
+                }
+                btn.disabled = true;
+                btn.textContent = "Connecting...";
                 try {
                     const res = await fetch(`${getBase()}/api/admin/login`, {
-                        method: 'POST',
-                        headers: {'Content-Type':'application/json','Accept':'application/json'},
-                        body: JSON.stringify({login: user, password: pass})
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Accept: "application/json",
+                        },
+                        body: JSON.stringify({ login: user, password: pass }),
                     });
                     const data = await res.json();
                     if (res.ok && data.token) {
-                        localStorage.setItem('auth_token', data.token);
-                        document.getElementById('api-token').value = data.token;
-                        document.getElementById('login-overlay').classList.add('hidden');
-                        toast('Login successful', 'success');
+                        localStorage.setItem("auth_token", data.token);
+                        document.getElementById("api-token").value = data.token;
+                        document
+                            .getElementById("login-overlay")
+                            .classList.add("hidden");
+                        toast("Login successful", "success");
                         init();
-                    } else { toast(data.message || 'Login failed', 'error'); }
-                } catch(e) { toast('Network error', 'error'); }
-                finally { btn.disabled = false; btn.textContent = 'Log in'; }
+                    } else {
+                        toast(data.message || "Login failed", "error");
+                    }
+                } catch (e) {
+                    toast("Network error", "error");
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Log in";
+                }
             }
 
             function manualLogin(token) {
                 if (!token) return;
-                localStorage.setItem('auth_token', token);
-                document.getElementById('api-token').value = token;
-                document.getElementById('login-overlay').classList.add('hidden');
-                toast('Token saved', 'success');
+                localStorage.setItem("auth_token", token);
+                document.getElementById("api-token").value = token;
+                document
+                    .getElementById("login-overlay")
+                    .classList.add("hidden");
+                toast("Token saved", "success");
                 init();
             }
 
             function logout() {
-                if (!confirm('Logout?')) return;
-                localStorage.removeItem('auth_token');
-                document.getElementById('api-token').value = '';
-                document.getElementById('login-overlay').classList.remove('hidden');
+                if (!confirm("Logout?")) return;
+                localStorage.removeItem("auth_token");
+                document.getElementById("api-token").value = "";
+                document
+                    .getElementById("login-overlay")
+                    .classList.remove("hidden");
             }
 
-            function getToken() { return localStorage.getItem('auth_token') || document.getElementById('api-token').value; }
+            function getToken() {
+                return (
+                    localStorage.getItem("auth_token") ||
+                    document.getElementById("api-token").value
+                );
+            }
             function getBase() {
-                let url = document.getElementById('api-base-url').value;
-                if (!url) url = localStorage.getItem('api_url') || '';
-                if (!url) url = window.location.protocol !== 'file:' && window.location.hostname !== 'localhost' ? window.location.origin : 'http://localhost:8000';
-                return url.replace(/\/$/, '');
+                let url = document.getElementById("api-base-url").value;
+                if (!url) url = localStorage.getItem("api_url") || "";
+                if (!url)
+                    url =
+                        window.location.protocol !== "file:" &&
+                        window.location.hostname !== "localhost"
+                            ? window.location.origin
+                            : "http://localhost:8000";
+                return url.replace(/\/$/, "");
             }
 
             async function api(method, endpoint, data = null) {
@@ -768,9 +2154,14 @@
             }
 
             function reauthenticate() {
-                const newToken = document.getElementById("auth-modal-token").value.trim();
-                if (!newToken) { toast("Please enter a token", "error"); return; }
-                
+                const newToken = document
+                    .getElementById("auth-modal-token")
+                    .value.trim();
+                if (!newToken) {
+                    toast("Please enter a token", "error");
+                    return;
+                }
+
                 document.getElementById("api-token").value = newToken;
                 localStorage.setItem("auth_token", newToken);
                 closeModal("modal-auth");
@@ -812,89 +2203,128 @@
             // ═══════════════════════════════════════════════════
             async function loadCategories() {
                 try {
-                    const data = await api('GET', '/api/admin/guide-categories?per_page=100');
-                    state.categories = Array.isArray(data) ? data : (data.data || []);
+                    const data = await api(
+                        "GET",
+                        "/api/admin/guide-categories?per_page=100",
+                    );
+                    state.categories = Array.isArray(data)
+                        ? data
+                        : data.data || [];
                     // Populate filter select
-                    const fSel = document.getElementById('filter-category');
-                    const rSel = document.getElementById('r-category');
-                    state.categories.forEach(c => {
+                    const fSel = document.getElementById("filter-category");
+                    const rSel = document.getElementById("r-category");
+                    state.categories.forEach((c) => {
                         const o1 = new Option(c.name, c.id);
                         const o2 = new Option(c.name, c.id);
                         fSel.appendChild(o1);
                         rSel.appendChild(o2);
                     });
-                } catch(e) { console.warn('Categories not loaded'); }
+                } catch (e) {
+                    console.warn("Categories not loaded");
+                }
             }
 
             // ═══════════════════════════════════════════════════
             // ROUTES LIST
             // ═══════════════════════════════════════════════════
             async function loadRoutes() {
-                const tbody = document.getElementById('routes-table-body');
-                tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state">Loading...</div></td></tr>';
+                const tbody = document.getElementById("routes-table-body");
+                tbody.innerHTML =
+                    '<tr><td colspan="8"><div class="empty-state">Loading...</div></td></tr>';
                 try {
-                    const data = await api('GET', '/api/routes?per_page=100');
-                    const routes = Array.isArray(data) ? data : (data.data?.data || data.data || []);
+                    const data = await api("GET", "/api/routes?per_page=100");
+                    const routes = Array.isArray(data)
+                        ? data
+                        : data.data?.data || data.data || [];
                     state.routes = routes;
                     updateStats(routes);
                     state.filtered = [...routes];
                     renderRoutes(state.filtered);
-                } catch(e) {
-                    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><h3 style="color:var(--red)">Error loading routes</h3><p>${e.data?.message || 'Network error'}</p></div></td></tr>`;
+                } catch (e) {
+                    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><h3 style="color:var(--red)">Error loading routes</h3><p>${e.data?.message || "Network error"}</p></div></td></tr>`;
                 }
             }
 
             function updateStats(routes) {
                 if (!routes.length) return;
-                document.getElementById('stats-bar').style.display = 'grid';
-                document.getElementById('stat-total').textContent = routes.length;
-                document.getElementById('stat-featured').textContent = routes.filter(r => r.is_featured).length;
-                document.getElementById('stat-views').textContent = routes.reduce((s, r) => s + (r.views_count || 0), 0).toLocaleString();
-                const avgRating = routes.filter(r => r.rating_average > 0);
-                document.getElementById('stat-avg-rating').textContent = avgRating.length
-                    ? (avgRating.reduce((s, r) => s + r.rating_average, 0) / avgRating.length).toFixed(1) + ' ⭐'
-                    : '—';
+                document.getElementById("stats-bar").style.display = "grid";
+                document.getElementById("stat-total").textContent =
+                    routes.length;
+                document.getElementById("stat-featured").textContent =
+                    routes.filter((r) => r.is_featured).length;
+                document.getElementById("stat-views").textContent = routes
+                    .reduce((s, r) => s + (r.views_count || 0), 0)
+                    .toLocaleString();
+                const avgRating = routes.filter((r) => r.rating_average > 0);
+                document.getElementById("stat-avg-rating").textContent =
+                    avgRating.length
+                        ? (
+                              avgRating.reduce(
+                                  (s, r) => s + r.rating_average,
+                                  0,
+                              ) / avgRating.length
+                          ).toFixed(1) + " ⭐"
+                        : "—";
             }
 
             function filterRoutes() {
-                const search = document.getElementById('filter-search').value.toLowerCase();
-                const diff = document.getElementById('filter-difficulty').value;
-                const cat = document.getElementById('filter-category').value;
-                state.filtered = state.routes.filter(r => {
-                    if (search && !r.title?.toLowerCase().includes(search) && !r.description?.toLowerCase().includes(search)) return false;
+                const search = document
+                    .getElementById("filter-search")
+                    .value.toLowerCase();
+                const diff = document.getElementById("filter-difficulty").value;
+                const cat = document.getElementById("filter-category").value;
+                state.filtered = state.routes.filter((r) => {
+                    if (
+                        search &&
+                        !r.title?.toLowerCase().includes(search) &&
+                        !r.description?.toLowerCase().includes(search)
+                    )
+                        return false;
                     if (diff && r.difficulty !== diff) return false;
-                    if (cat && String(r.category_id) !== String(cat)) return false;
+                    if (cat && String(r.category_id) !== String(cat))
+                        return false;
                     return true;
                 });
                 renderRoutes(state.filtered);
             }
 
             function esc(s) {
-                if (!s) return '';
-                return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+                if (!s) return "";
+                return String(s)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
             }
 
             const diffBadge = {
-                easy: 'badge-green', moderate: 'badge-blue', difficult: 'badge-orange', expert: 'badge-red'
+                easy: "badge-green",
+                moderate: "badge-blue",
+                difficult: "badge-orange",
+                expert: "badge-red",
             };
 
             function renderRoutes(routes) {
-                const tbody = document.getElementById('routes-table-body');
+                const tbody = document.getElementById("routes-table-body");
                 if (!routes.length) {
-                    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><h3>No routes found</h3><p>Create your first motorcycle route</p></div></td></tr>';
+                    tbody.innerHTML =
+                        '<tr><td colspan="8"><div class="empty-state"><h3>No routes found</h3><p>Create your first motorcycle route</p></div></td></tr>';
                     return;
                 }
-                tbody.innerHTML = routes.map(r => `
+                tbody.innerHTML = routes
+                    .map(
+                        (r) => `
                     <tr>
                         <td style="color:var(--text3);font-family:monospace;font-size:12px">#${r.id}</td>
                         <td>
                             <div style="font-weight:600;color:var(--text)">${esc(r.title)}</div>
-                            ${r.is_featured ? '<span class="badge badge-yellow" style="margin-top:3px;font-size:10px">★ Featured</span>' : ''}
+                            ${r.is_featured ? '<span class="badge badge-yellow" style="margin-top:3px;font-size:10px">★ Featured</span>' : ""}
                         </td>
-                        <td style="color:var(--text2);font-size:12px">${esc(r.category?.name || '—')}</td>
-                        <td><span class="badge ${diffBadge[r.difficulty] || 'badge-blue'}">${esc(r.difficulty || '—')}</span></td>
-                        <td style="color:var(--text2);font-size:12px">${r.total_distance ? r.total_distance + ' km' : '—'}</td>
-                        <td style="color:var(--yellow);font-size:12px">${r.rating_average > 0 ? '★ ' + Number(r.rating_average).toFixed(1) : '—'}</td>
+                        <td style="color:var(--text2);font-size:12px">${esc(r.category?.name || "—")}</td>
+                        <td><span class="badge ${diffBadge[r.difficulty] || "badge-blue"}">${esc(r.difficulty || "—")}</span></td>
+                        <td style="color:var(--text2);font-size:12px">${r.total_distance ? r.total_distance + " km" : "—"}</td>
+                        <td style="color:var(--yellow);font-size:12px">${r.rating_average > 0 ? "★ " + Number(r.rating_average).toFixed(1) : "—"}</td>
                         <td style="color:var(--text3);font-size:12px">${(r.views_count || 0).toLocaleString()}</td>
                         <td>
                             <div class="actions-cell">
@@ -907,17 +2337,25 @@
                             </div>
                         </td>
                     </tr>
-                `).join('');
+                `,
+                    )
+                    .join("");
             }
 
             // ═══════════════════════════════════════════════════
             // GOOGLE MAPS LOADER
             // ═══════════════════════════════════════════════════
             function loadGoogleMaps(cb) {
-                if (mapsLoaded && window.google) { cb(); return; }
-                const script = document.createElement('script');
+                if (mapsLoaded && window.google) {
+                    cb();
+                    return;
+                }
+                const script = document.createElement("script");
                 script.src = `https://maps.googleapis.com/maps/api/js?key=${GMAPS_KEY}&libraries=places,geometry`;
-                script.onload = () => { mapsLoaded = true; cb(); };
+                script.onload = () => {
+                    mapsLoaded = true;
+                    cb();
+                };
                 document.head.appendChild(script);
             }
 
@@ -926,103 +2364,152 @@
             // ═══════════════════════════════════════════════════
             function openCreateModal() {
                 // Reset form
-                document.getElementById('r-id').value = '';
-                document.getElementById('r-title').value = '';
-                document.getElementById('r-desc').value = '';
-                document.getElementById('r-category').value = '';
-                document.getElementById('r-difficulty').value = 'moderate';
-                document.getElementById('r-duration').value = '';
-                document.getElementById('r-season').value = '';
-                document.getElementById('r-road').value = '';
-                document.getElementById('create-modal-title').textContent = 'New Route';
-                document.getElementById('btn-save-route').textContent = 'Create Route';
+                document.getElementById("r-id").value = "";
+                document.getElementById("r-title").value = "";
+                document.getElementById("r-desc").value = "";
+                document.getElementById("r-category").value = "";
+                document.getElementById("r-difficulty").value = "moderate";
+                document.getElementById("r-duration").value = "";
+                document.getElementById("r-season").value = "";
+                document.getElementById("r-road").value = "";
+                document.getElementById("create-modal-title").textContent =
+                    "New Route";
+                document.getElementById("btn-save-route").textContent =
+                    "Create Route";
                 waypoints = [];
                 alternativeRoutes = [];
                 selectedRouteIdx = 0;
-                document.getElementById('route-selector-wrap').innerHTML = '';
+                document.getElementById("route-selector-wrap").innerHTML = "";
                 updateWaypointsList();
 
-                document.getElementById('create-modal').classList.add('open');
+                document.getElementById("create-modal").classList.add("open");
 
                 loadGoogleMaps(() => {
                     if (!creationMap) setupCreationMap();
                     else {
                         // Clear existing markers
-                        creationMarkers.forEach(m => m.setMap(null));
+                        creationMarkers.forEach((m) => m.setMap(null));
                         creationMarkers = [];
-                        if (creationDirRenderer) { creationDirRenderer.setMap(null); creationDirRenderer.setMap(creationMap); }
+                        if (creationDirRenderer) {
+                            creationDirRenderer.setMap(null);
+                            creationDirRenderer.setMap(creationMap);
+                        }
                     }
                     getUserLocation();
                 });
             }
 
             function closeCreateModal() {
-                document.getElementById('create-modal').classList.remove('open');
+                document
+                    .getElementById("create-modal")
+                    .classList.remove("open");
             }
 
             function setupCreationMap() {
-                creationMap = new google.maps.Map(document.getElementById('creation-map'), {
-                    zoom: 6,
-                    center: {lat: 31.7917, lng: -7.0926}, // Morocco center
-                    styles: mapStyles,
-                    mapTypeControl: true,
-                    mapTypeControlOptions: {style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR, position: google.maps.ControlPosition.TOP_LEFT},
-                    streetViewControl: false,
-                    fullscreenControl: false,
-                });
+                creationMap = new google.maps.Map(
+                    document.getElementById("creation-map"),
+                    {
+                        zoom: 6,
+                        center: { lat: 31.7917, lng: -7.0926 }, // Morocco center
+                        styles: mapStyles,
+                        mapTypeControl: true,
+                        mapTypeControlOptions: {
+                            style: google.maps.MapTypeControlStyle
+                                .HORIZONTAL_BAR,
+                            position: google.maps.ControlPosition.TOP_LEFT,
+                        },
+                        streetViewControl: false,
+                        fullscreenControl: false,
+                    },
+                );
 
                 creationDirService = new google.maps.DirectionsService();
                 creationDirRenderer = new google.maps.DirectionsRenderer({
                     map: creationMap,
                     suppressMarkers: true,
-                    polylineOptions: {strokeColor:'#f97316',strokeWeight:5,strokeOpacity:.8},
-                    provideRouteAlternatives: true
+                    polylineOptions: {
+                        strokeColor: "#f97316",
+                        strokeWeight: 5,
+                        strokeOpacity: 0.8,
+                    },
+                    provideRouteAlternatives: true,
                 });
 
-                creationMap.addListener('click', e => addWaypoint(e.latLng));
-                creationMap.addListener('rightclick', () => {
-                    if (waypoints.length > 0) removeWaypoint(waypoints.length - 1);
+                creationMap.addListener("click", (e) => addWaypoint(e.latLng));
+                creationMap.addListener("rightclick", () => {
+                    if (waypoints.length > 0)
+                        removeWaypoint(waypoints.length - 1);
                 });
             }
 
             function getUserLocation() {
                 if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(pos => {
-                        creationMap.setCenter({lat: pos.coords.latitude, lng: pos.coords.longitude});
-                        creationMap.setZoom(11);
-                    }, () => {});
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            creationMap.setCenter({
+                                lat: pos.coords.latitude,
+                                lng: pos.coords.longitude,
+                            });
+                            creationMap.setZoom(11);
+                        },
+                        () => {},
+                    );
                 }
             }
 
             function getWaypointColor(type, index) {
-                if (index === 0 || type === 'start') return '#22d3a5';
-                if (type === 'end') return '#f25c78';
-                if (type === 'gas_station') return '#60a5fa';
-                if (type === 'rest_stop') return '#a78bfa';
-                if (type === 'viewpoint') return '#f5c842';
-                return '#f97316';
+                if (index === 0 || type === "start") return "#22d3a5";
+                if (type === "end") return "#f25c78";
+                if (type === "gas_station") return "#60a5fa";
+                if (type === "rest_stop") return "#a78bfa";
+                if (type === "viewpoint") return "#f5c842";
+                return "#f97316";
             }
 
             function addWaypoint(latLng) {
-                const pos = {lat: latLng.lat(), lng: latLng.lng()};
+                const pos = { lat: latLng.lat(), lng: latLng.lng() };
                 const idx = waypoints.length;
 
                 const marker = new google.maps.Marker({
-                    position: pos, map: creationMap,
-                    label: {text: String(idx + 1), color: 'white', fontWeight: 'bold', fontSize: '11px'},
-                    icon: {path: google.maps.SymbolPath.CIRCLE, scale: 13, fillColor: idx === 0 ? '#22d3a5' : '#f97316', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2}
+                    position: pos,
+                    map: creationMap,
+                    label: {
+                        text: String(idx + 1),
+                        color: "white",
+                        fontWeight: "bold",
+                        fontSize: "11px",
+                    },
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 13,
+                        fillColor: idx === 0 ? "#22d3a5" : "#f97316",
+                        fillOpacity: 1,
+                        strokeColor: "#fff",
+                        strokeWeight: 2,
+                    },
                 });
                 creationMarkers.push(marker);
 
                 // Geocode
                 const geocoder = new google.maps.Geocoder();
-                geocoder.geocode({location: pos}, (results, status) => {
-                    const name = (status === 'OK' && results[0]) ? results[0].formatted_address : `Point ${idx + 1}`;
+                geocoder.geocode({ location: pos }, (results, status) => {
+                    const name =
+                        status === "OK" && results[0]
+                            ? results[0].formatted_address
+                            : `Point ${idx + 1}`;
                     const wp = {
-                        name, latitude: pos.lat, longitude: pos.lng,
-                        waypoint_type: idx === 0 ? 'start' : 'waypoint',
-                        description: '', pause_duration: null, pause_reason: '',
-                        has_gas_station: false, has_restaurant: false, has_toilets: false, has_parking: false, has_hotel: false
+                        name,
+                        latitude: pos.lat,
+                        longitude: pos.lng,
+                        waypoint_type: idx === 0 ? "start" : "waypoint",
+                        description: "",
+                        pause_duration: null,
+                        pause_reason: "",
+                        has_gas_station: false,
+                        has_restaurant: false,
+                        has_toilets: false,
+                        has_parking: false,
+                        has_hotel: false,
                     };
                     waypoints.push(wp);
                     updateWaypointsList();
@@ -1038,37 +2525,74 @@
                 waypoints.splice(index, 1);
                 // Re-number markers
                 creationMarkers.forEach((m, i) => {
-                    m.setLabel({text: String(i + 1), color: 'white', fontWeight: 'bold', fontSize: '11px'});
-                    m.setIcon({path: google.maps.SymbolPath.CIRCLE, scale: 13, fillColor: getWaypointColor(waypoints[i]?.waypoint_type, i), fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2});
+                    m.setLabel({
+                        text: String(i + 1),
+                        color: "white",
+                        fontWeight: "bold",
+                        fontSize: "11px",
+                    });
+                    m.setIcon({
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 13,
+                        fillColor: getWaypointColor(
+                            waypoints[i]?.waypoint_type,
+                            i,
+                        ),
+                        fillOpacity: 1,
+                        strokeColor: "#fff",
+                        strokeWeight: 2,
+                    });
                 });
                 updateWaypointsList();
                 if (waypoints.length >= 2) calculateRoute();
-                else { creationDirRenderer.setMap(null); creationDirRenderer.setMap(creationMap); document.getElementById('route-selector-wrap').innerHTML = ''; }
+                else {
+                    creationDirRenderer.setMap(null);
+                    creationDirRenderer.setMap(creationMap);
+                    document.getElementById("route-selector-wrap").innerHTML =
+                        "";
+                }
             }
 
             function clearWaypoints() {
-                if (!confirm('Clear all waypoints?')) return;
-                creationMarkers.forEach(m => m.setMap(null));
-                creationMarkers = []; waypoints = []; alternativeRoutes = [];
-                if (creationDirRenderer) { creationDirRenderer.setMap(null); creationDirRenderer.setMap(creationMap); }
-                document.getElementById('route-selector-wrap').innerHTML = '';
+                if (!confirm("Clear all waypoints?")) return;
+                creationMarkers.forEach((m) => m.setMap(null));
+                creationMarkers = [];
+                waypoints = [];
+                alternativeRoutes = [];
+                if (creationDirRenderer) {
+                    creationDirRenderer.setMap(null);
+                    creationDirRenderer.setMap(creationMap);
+                }
+                document.getElementById("route-selector-wrap").innerHTML = "";
                 updateWaypointsList();
             }
 
             function updateWaypointsList() {
-                const list = document.getElementById('wp-list');
-                document.getElementById('wp-count').textContent = waypoints.length;
+                const list = document.getElementById("wp-list");
+                document.getElementById("wp-count").textContent =
+                    waypoints.length;
                 if (!waypoints.length) {
-                    list.innerHTML = '<div style="color:var(--text3);font-size:12px;text-align:center;padding:16px 0">Click the map to start adding waypoints</div>';
+                    list.innerHTML =
+                        '<div style="color:var(--text3);font-size:12px;text-align:center;padding:16px 0">Click the map to start adding waypoints</div>';
                     return;
                 }
-                const typeLabel = {start:'🏁 Start',waypoint:'📍 Waypoint',poi:'🎯 POI',rest_stop:'☕ Rest Stop',gas_station:'⛽ Gas Station',viewpoint:'🌄 Viewpoint',end:'🏁 End'};
-                list.innerHTML = waypoints.map((wp, i) => `
+                const typeLabel = {
+                    start: "🏁 Start",
+                    waypoint: "📍 Waypoint",
+                    poi: "🎯 POI",
+                    rest_stop: "☕ Rest Stop",
+                    gas_station: "⛽ Gas Station",
+                    viewpoint: "🌄 Viewpoint",
+                    end: "🏁 End",
+                };
+                list.innerHTML = waypoints
+                    .map(
+                        (wp, i) => `
                     <div class="waypoint-item">
-                        <div class="waypoint-num ${i===0?'start':i===waypoints.length-1?'end':''}">${i+1}</div>
+                        <div class="waypoint-num ${i === 0 ? "start" : i === waypoints.length - 1 ? "end" : ""}">${i + 1}</div>
                         <div class="waypoint-item-content">
                             <div class="waypoint-item-name" title="${esc(wp.name)}">${esc(wp.name)}</div>
-                            <div class="waypoint-item-type">${typeLabel[wp.waypoint_type]||'📍 Waypoint'}${wp.pause_duration?` · ⏱️ ${wp.pause_duration}min`:''}</div>
+                            <div class="waypoint-item-type">${typeLabel[wp.waypoint_type] || "📍 Waypoint"}${wp.pause_duration ? ` · ⏱️ ${wp.pause_duration}min` : ""}</div>
                         </div>
                         <div style="display:flex;gap:4px;margin-left:auto;flex-shrink:0">
                             <button class="icon-btn" style="width:24px;height:24px" title="Edit" onclick="editWaypoint(${i})">
@@ -1079,22 +2603,47 @@
                             </button>
                         </div>
                     </div>
-                `).join('');
+                `,
+                    )
+                    .join("");
             }
 
             function calculateRoute() {
                 if (waypoints.length < 2) return;
-                const origin = new google.maps.LatLng(waypoints[0].latitude, waypoints[0].longitude);
-                const dest = new google.maps.LatLng(waypoints[waypoints.length-1].latitude, waypoints[waypoints.length-1].longitude);
-                const wps = waypoints.slice(1,-1).map(wp => ({location: new google.maps.LatLng(wp.latitude, wp.longitude), stopover: true}));
-                creationDirService.route({origin, destination: dest, waypoints: wps, travelMode: google.maps.TravelMode.DRIVING, provideRouteAlternatives: true}, (result, status) => {
-                    if (status === 'OK') {
-                        alternativeRoutes = result.routes;
-                        selectedRouteIdx = 0;
-                        showSelectedRoute();
-                        renderRouteSelector();
-                    }
-                });
+                const origin = new google.maps.LatLng(
+                    waypoints[0].latitude,
+                    waypoints[0].longitude,
+                );
+                const dest = new google.maps.LatLng(
+                    waypoints[waypoints.length - 1].latitude,
+                    waypoints[waypoints.length - 1].longitude,
+                );
+                const wps = waypoints
+                    .slice(1, -1)
+                    .map((wp) => ({
+                        location: new google.maps.LatLng(
+                            wp.latitude,
+                            wp.longitude,
+                        ),
+                        stopover: true,
+                    }));
+                creationDirService.route(
+                    {
+                        origin,
+                        destination: dest,
+                        waypoints: wps,
+                        travelMode: google.maps.TravelMode.DRIVING,
+                        provideRouteAlternatives: true,
+                    },
+                    (result, status) => {
+                        if (status === "OK") {
+                            alternativeRoutes = result.routes;
+                            selectedRouteIdx = 0;
+                            showSelectedRoute();
+                            renderRouteSelector();
+                        }
+                    },
+                );
             }
 
             function showSelectedRoute() {
@@ -1104,32 +2653,40 @@
                     routes: [routes[selectedRouteIdx]],
                     request: {
                         origin: routes[selectedRouteIdx].legs[0].start_location,
-                        destination: routes[selectedRouteIdx].legs[routes[selectedRouteIdx].legs.length-1].end_location,
-                        travelMode: google.maps.TravelMode.DRIVING
-                    }
+                        destination:
+                            routes[selectedRouteIdx].legs[
+                                routes[selectedRouteIdx].legs.length - 1
+                            ].end_location,
+                        travelMode: google.maps.TravelMode.DRIVING,
+                    },
                 });
             }
 
             function renderRouteSelector() {
-                const wrap = document.getElementById('route-selector-wrap');
-                if (!alternativeRoutes.length) { wrap.innerHTML = ''; return; }
+                const wrap = document.getElementById("route-selector-wrap");
+                if (!alternativeRoutes.length) {
+                    wrap.innerHTML = "";
+                    return;
+                }
                 wrap.innerHTML = `
                     <div class="form-section" style="margin-bottom:0">
                         <div class="form-section-title">🛣️ Available Routes (${alternativeRoutes.length})</div>
-                        ${alternativeRoutes.map((r,i) => {
-                            const leg = r.legs[0];
-                            const sel = i === selectedRouteIdx;
-                            return `
-                            <div onclick="selectRoute(${i})" style="cursor:pointer;background:${sel?'var(--accent-glow)':'var(--surface)'};border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:8px;padding:10px 12px;margin-bottom:8px;transition:all .15s">
+                        ${alternativeRoutes
+                            .map((r, i) => {
+                                const leg = r.legs[0];
+                                const sel = i === selectedRouteIdx;
+                                return `
+                            <div onclick="selectRoute(${i})" style="cursor:pointer;background:${sel ? "var(--accent-glow)" : "var(--surface)"};border:1px solid ${sel ? "var(--accent)" : "var(--border)"};border-radius:8px;padding:10px 12px;margin-bottom:8px;transition:all .15s">
                                 <div style="display:flex;justify-content:space-between;align-items:center">
                                     <div>
-                                        <div style="font-size:12px;font-weight:600;color:${sel?'var(--accent)':'var(--text)'}">${i===0?'🏆 Recommended':'📍 Alternative '+i}</div>
-                                        <div style="font-size:11px;color:var(--text3);margin-top:3px">📏 ${leg.distance.text} · ⏱️ ${leg.duration.text}${r.summary?` · via ${r.summary}`:''}</div>
+                                        <div style="font-size:12px;font-weight:600;color:${sel ? "var(--accent)" : "var(--text)"}">${i === 0 ? "🏆 Recommended" : "📍 Alternative " + i}</div>
+                                        <div style="font-size:11px;color:var(--text3);margin-top:3px">📏 ${leg.distance.text} · ⏱️ ${leg.duration.text}${r.summary ? ` · via ${r.summary}` : ""}</div>
                                     </div>
-                                    <div style="font-size:16px">${sel?'✅':'⚪'}</div>
+                                    <div style="font-size:16px">${sel ? "✅" : "⚪"}</div>
                                 </div>
                             </div>`;
-                        }).join('')}
+                            })
+                            .join("")}
                     </div>`;
             }
 
@@ -1139,40 +2696,72 @@
                 renderRouteSelector();
             }
 
-            // ─── WAYPOINT EDIT MODAL ─── 
+            // ─── WAYPOINT EDIT MODAL ───
             function editWaypoint(index) {
                 const wp = waypoints[index];
-                document.getElementById('wp-edit-idx').value = index;
-                document.getElementById('wp-name').value = wp.name;
-                document.getElementById('wp-type').value = wp.waypoint_type;
-                document.getElementById('wp-desc').value = wp.description || '';
-                document.getElementById('wp-pause').value = wp.pause_duration || '';
-                document.getElementById('wp-pause-reason').value = wp.pause_reason || '';
-                document.getElementById('wp-gas').checked = wp.has_gas_station || false;
-                document.getElementById('wp-food').checked = wp.has_restaurant || false;
-                document.getElementById('wp-toilet').checked = wp.has_toilets || false;
-                document.getElementById('wp-parking').checked = wp.has_parking || false;
-                document.getElementById('wp-hotel').checked = wp.has_hotel || false;
-                document.getElementById('waypoint-modal').classList.add('open');
+                document.getElementById("wp-edit-idx").value = index;
+                document.getElementById("wp-name").value = wp.name;
+                document.getElementById("wp-type").value = wp.waypoint_type;
+                document.getElementById("wp-desc").value = wp.description || "";
+                document.getElementById("wp-pause").value =
+                    wp.pause_duration || "";
+                document.getElementById("wp-pause-reason").value =
+                    wp.pause_reason || "";
+                document.getElementById("wp-gas").checked =
+                    wp.has_gas_station || false;
+                document.getElementById("wp-food").checked =
+                    wp.has_restaurant || false;
+                document.getElementById("wp-toilet").checked =
+                    wp.has_toilets || false;
+                document.getElementById("wp-parking").checked =
+                    wp.has_parking || false;
+                document.getElementById("wp-hotel").checked =
+                    wp.has_hotel || false;
+                document.getElementById("waypoint-modal").classList.add("open");
             }
 
-            function closeWaypointModal() { document.getElementById('waypoint-modal').classList.remove('open'); }
+            function closeWaypointModal() {
+                document
+                    .getElementById("waypoint-modal")
+                    .classList.remove("open");
+            }
 
             function saveWaypointEdit() {
-                const i = parseInt(document.getElementById('wp-edit-idx').value);
-                waypoints[i].name = document.getElementById('wp-name').value;
-                waypoints[i].waypoint_type = document.getElementById('wp-type').value;
-                waypoints[i].description = document.getElementById('wp-desc').value;
-                waypoints[i].pause_duration = document.getElementById('wp-pause').value || null;
-                waypoints[i].pause_reason = document.getElementById('wp-pause-reason').value;
-                waypoints[i].has_gas_station = document.getElementById('wp-gas').checked;
-                waypoints[i].has_restaurant = document.getElementById('wp-food').checked;
-                waypoints[i].has_toilets = document.getElementById('wp-toilet').checked;
-                waypoints[i].has_parking = document.getElementById('wp-parking').checked;
-                waypoints[i].has_hotel = document.getElementById('wp-hotel').checked;
+                const i = parseInt(
+                    document.getElementById("wp-edit-idx").value,
+                );
+                waypoints[i].name = document.getElementById("wp-name").value;
+                waypoints[i].waypoint_type =
+                    document.getElementById("wp-type").value;
+                waypoints[i].description =
+                    document.getElementById("wp-desc").value;
+                waypoints[i].pause_duration =
+                    document.getElementById("wp-pause").value || null;
+                waypoints[i].pause_reason =
+                    document.getElementById("wp-pause-reason").value;
+                waypoints[i].has_gas_station =
+                    document.getElementById("wp-gas").checked;
+                waypoints[i].has_restaurant =
+                    document.getElementById("wp-food").checked;
+                waypoints[i].has_toilets =
+                    document.getElementById("wp-toilet").checked;
+                waypoints[i].has_parking =
+                    document.getElementById("wp-parking").checked;
+                waypoints[i].has_hotel =
+                    document.getElementById("wp-hotel").checked;
                 // Update marker color
                 if (creationMarkers[i]) {
-                    creationMarkers[i].setIcon({path: google.maps.SymbolPath.CIRCLE, scale: 13, fillColor: getWaypointColor(waypoints[i].waypoint_type, i), fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2});
+                    creationMarkers[i].setIcon({
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 13,
+                        fillColor: getWaypointColor(
+                            waypoints[i].waypoint_type,
+                            i,
+                        ),
+                        fillOpacity: 1,
+                        strokeColor: "#fff",
+                        strokeWeight: 2,
+                    });
                 }
                 updateWaypointsList();
                 closeWaypointModal();
@@ -1180,27 +2769,42 @@
 
             // ─── SAVE ROUTE ───
             async function saveRoute() {
-                const title = document.getElementById('r-title').value.trim();
-                const desc = document.getElementById('r-desc').value.trim();
-                if (!title) { toast('Title is required', 'error'); document.getElementById('r-title').focus(); return; }
-                if (!desc) { toast('Description is required', 'error'); return; }
-                if (waypoints.length < 2) { toast('Add at least 2 waypoints on the map', 'error'); return; }
+                const title = document.getElementById("r-title").value.trim();
+                const desc = document.getElementById("r-desc").value.trim();
+                if (!title) {
+                    toast("Title is required", "error");
+                    document.getElementById("r-title").focus();
+                    return;
+                }
+                if (!desc) {
+                    toast("Description is required", "error");
+                    return;
+                }
+                if (waypoints.length < 2) {
+                    toast("Add at least 2 waypoints on the map", "error");
+                    return;
+                }
 
                 // Mark last waypoint as end
-                waypoints[waypoints.length - 1].waypoint_type = 'end';
+                waypoints[waypoints.length - 1].waypoint_type = "end";
                 updateWaypointsList();
 
-                const btn = document.getElementById('btn-save-route');
-                btn.disabled = true; btn.textContent = 'Saving...';
+                const btn = document.getElementById("btn-save-route");
+                btn.disabled = true;
+                btn.textContent = "Saving...";
 
                 const payload = {
                     title,
                     description: desc,
-                    category_id: document.getElementById('r-category').value || null,
-                    difficulty: document.getElementById('r-difficulty').value,
-                    estimated_duration: document.getElementById('r-duration').value || null,
-                    best_season: document.getElementById('r-season').value || null,
-                    road_condition: document.getElementById('r-road').value || null,
+                    category_id:
+                        document.getElementById("r-category").value || null,
+                    difficulty: document.getElementById("r-difficulty").value,
+                    estimated_duration:
+                        document.getElementById("r-duration").value || null,
+                    best_season:
+                        document.getElementById("r-season").value || null,
+                    road_condition:
+                        document.getElementById("r-road").value || null,
                     waypoints: waypoints,
                 };
 
@@ -1209,25 +2813,36 @@
                     const route = alternativeRoutes[selectedRouteIdx];
                     payload.route_info = {
                         selected_route_index: selectedRouteIdx,
-                        route_summary: route.summary || '',
+                        route_summary: route.summary || "",
                         total_distance_meters: route.legs[0].distance.value,
-                        total_duration_seconds: route.legs[0].duration.value
+                        total_duration_seconds: route.legs[0].duration.value,
                     };
                 }
 
                 try {
-                    const id = document.getElementById('r-id').value;
-                    const method = id ? 'PUT' : 'POST';
-                    const endpoint = id ? `/api/routes/${id}` : '/api/routes';
+                    const id = document.getElementById("r-id").value;
+                    const method = id ? "PUT" : "POST";
+                    const endpoint = id ? `/api/routes/${id}` : "/api/routes";
                     await api(method, endpoint, payload);
-                    toast(`Route ${id ? 'updated' : 'created'} successfully`, 'success');
+                    toast(
+                        `Route ${id ? "updated" : "created"} successfully`,
+                        "success",
+                    );
                     closeCreateModal();
                     loadRoutes();
-                } catch(e) {
-                    toast(e.data?.message || JSON.stringify(e.data?.errors || 'Error saving route'), 'error');
+                } catch (e) {
+                    toast(
+                        e.data?.message ||
+                            JSON.stringify(
+                                e.data?.errors || "Error saving route",
+                            ),
+                        "error",
+                    );
                 } finally {
                     btn.disabled = false;
-                    btn.textContent = document.getElementById('r-id').value ? 'Update Route' : 'Create Route';
+                    btn.textContent = document.getElementById("r-id").value
+                        ? "Update Route"
+                        : "Create Route";
                 }
             }
 
@@ -1236,86 +2851,131 @@
             // ═══════════════════════════════════════════════════
             async function openViewModal(id) {
                 state.viewRouteId = id;
-                document.getElementById('view-modal-title').textContent = 'Loading route...';
-                document.getElementById('view-modal-sub').textContent = '';
-                document.getElementById('view-stats').innerHTML = '<div style="color:var(--text3);text-align:center;padding:20px">Loading...</div>';
-                document.getElementById('view-waypoints').innerHTML = '';
-                document.getElementById('view-modal').classList.add('open');
+                document.getElementById("view-modal-title").textContent =
+                    "Loading route...";
+                document.getElementById("view-modal-sub").textContent = "";
+                document.getElementById("view-stats").innerHTML =
+                    '<div style="color:var(--text3);text-align:center;padding:20px">Loading...</div>';
+                document.getElementById("view-waypoints").innerHTML = "";
+                document.getElementById("view-modal").classList.add("open");
 
                 loadGoogleMaps(async () => {
                     if (!displayMap) setupDisplayMap();
-                    else { displayMarkers.forEach(m => m.setMap(null)); displayMarkers = []; if (displayDirRenderer) { displayDirRenderer.setMap(null); displayDirRenderer.setMap(displayMap); } }
+                    else {
+                        displayMarkers.forEach((m) => m.setMap(null));
+                        displayMarkers = [];
+                        if (displayDirRenderer) {
+                            displayDirRenderer.setMap(null);
+                            displayDirRenderer.setMap(displayMap);
+                        }
+                    }
 
                     try {
-                        const data = await api('GET', `/api/routes/${id}`);
+                        const data = await api("GET", `/api/routes/${id}`);
                         const route = data.data || data;
                         renderViewModal(route);
                         displayRouteOnMap(route);
-                    } catch(e) {
-                        document.getElementById('view-modal-title').textContent = 'Error';
-                        document.getElementById('view-stats').innerHTML = `<div style="color:var(--red);text-align:center;padding:20px">${e.data?.message || 'Failed to load route'}</div>`;
+                    } catch (e) {
+                        document.getElementById(
+                            "view-modal-title",
+                        ).textContent = "Error";
+                        document.getElementById("view-stats").innerHTML =
+                            `<div style="color:var(--red);text-align:center;padding:20px">${e.data?.message || "Failed to load route"}</div>`;
                     }
                 });
             }
 
-            function closeViewModal() { document.getElementById('view-modal').classList.remove('open'); }
+            function closeViewModal() {
+                document.getElementById("view-modal").classList.remove("open");
+            }
 
             function renderViewModal(route) {
-                document.getElementById('view-modal-title').textContent = route.title;
-                document.getElementById('view-modal-sub').textContent = route.description?.substring(0,80) + (route.description?.length > 80 ? '...' : '');
+                document.getElementById("view-modal-title").textContent =
+                    route.title;
+                document.getElementById("view-modal-sub").textContent =
+                    route.description?.substring(0, 80) +
+                    (route.description?.length > 80 ? "..." : "");
 
-                const diff = {easy:'var(--green)',moderate:'var(--blue)',difficult:'var(--accent)',expert:'var(--red)'};
-                document.getElementById('view-stats').innerHTML = `
+                const diff = {
+                    easy: "var(--green)",
+                    moderate: "var(--blue)",
+                    difficult: "var(--accent)",
+                    expert: "var(--red)",
+                };
+                document.getElementById("view-stats").innerHTML = `
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
                         <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center">
-                            <div style="font-size:18px;font-weight:800;color:var(--accent)">${route.total_distance ? route.total_distance + ' km' : '—'}</div>
+                            <div style="font-size:18px;font-weight:800;color:var(--accent)">${route.total_distance ? route.total_distance + " km" : "—"}</div>
                             <div style="font-size:10px;text-transform:uppercase;color:var(--text3);margin-top:2px">Distance</div>
                         </div>
                         <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center">
-                            <div style="font-size:18px;font-weight:800;color:${diff[route.difficulty]||'var(--blue)'}">${route.difficulty || '—'}</div>
+                            <div style="font-size:18px;font-weight:800;color:${diff[route.difficulty] || "var(--blue)"}">${route.difficulty || "—"}</div>
                             <div style="font-size:10px;text-transform:uppercase;color:var(--text3);margin-top:2px">Difficulty</div>
                         </div>
                         <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center">
-                            <div style="font-size:18px;font-weight:800;color:var(--yellow)">${route.rating_average > 0 ? '★ ' + Number(route.rating_average).toFixed(1) : '—'}</div>
+                            <div style="font-size:18px;font-weight:800;color:var(--yellow)">${route.rating_average > 0 ? "★ " + Number(route.rating_average).toFixed(1) : "—"}</div>
                             <div style="font-size:10px;text-transform:uppercase;color:var(--text3);margin-top:2px">Rating</div>
                         </div>
                         <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center">
-                            <div style="font-size:18px;font-weight:800;color:var(--blue)">${(route.views_count||0).toLocaleString()}</div>
+                            <div style="font-size:18px;font-weight:800;color:var(--blue)">${(route.views_count || 0).toLocaleString()}</div>
                             <div style="font-size:10px;text-transform:uppercase;color:var(--text3);margin-top:2px">Views</div>
                         </div>
                     </div>
-                    ${route.estimated_duration ? `<div style="font-size:12px;color:var(--text3);margin-bottom:4px">⏱️ ${route.estimated_duration}</div>` : ''}
-                    ${route.best_season ? `<div style="font-size:12px;color:var(--text3);margin-bottom:4px">🌿 ${route.best_season}</div>` : ''}
-                    ${route.road_condition ? `<div style="font-size:12px;color:var(--text3);margin-bottom:12px">🛣️ Road: ${route.road_condition}</div>` : ''}
+                    ${route.estimated_duration ? `<div style="font-size:12px;color:var(--text3);margin-bottom:4px">⏱️ ${route.estimated_duration}</div>` : ""}
+                    ${route.best_season ? `<div style="font-size:12px;color:var(--text3);margin-bottom:4px">🌿 ${route.best_season}</div>` : ""}
+                    ${route.road_condition ? `<div style="font-size:12px;color:var(--text3);margin-bottom:12px">🛣️ Road: ${route.road_condition}</div>` : ""}
                 `;
 
                 // Waypoints
-                const typeLabel = {start:'🏁',waypoint:'📍',poi:'🎯',rest_stop:'☕',gas_station:'⛽',viewpoint:'🌄',end:'🏁'};
+                const typeLabel = {
+                    start: "🏁",
+                    waypoint: "📍",
+                    poi: "🎯",
+                    rest_stop: "☕",
+                    gas_station: "⛽",
+                    viewpoint: "🌄",
+                    end: "🏁",
+                };
                 const wps = route.waypoints || [];
-                document.getElementById('view-waypoints').innerHTML = `
+                document.getElementById("view-waypoints").innerHTML = `
                     <div style="font-size:11px;text-transform:uppercase;color:var(--text3);font-weight:700;letter-spacing:.8px;margin-bottom:10px">Waypoints (${wps.length})</div>
-                    ${wps.map((wp, i) => `
+                    ${wps
+                        .map(
+                            (wp, i) => `
                         <div class="step-card" onclick="focusWaypoint(${parseFloat(wp.latitude)}, ${parseFloat(wp.longitude)})">
-                            <div class="step-badge" style="background:${getWaypointColor(wp.waypoint_type, i)}">${i+1}</div>
+                            <div class="step-badge" style="background:${getWaypointColor(wp.waypoint_type, i)}">${i + 1}</div>
                             <div>
-                                <div style="font-size:12px;font-weight:600;color:var(--text)">${typeLabel[wp.waypoint_type]||'📍'} ${esc(wp.name)}</div>
-                                ${wp.description ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">${esc(wp.description)}</div>` : ''}
-                                ${wp.pause_duration ? `<div style="font-size:11px;color:var(--accent);margin-top:2px">⏱️ Pause: ${wp.pause_duration}min${wp.pause_reason?' — '+wp.pause_reason:''}</div>` : ''}
+                                <div style="font-size:12px;font-weight:600;color:var(--text)">${typeLabel[wp.waypoint_type] || "📍"} ${esc(wp.name)}</div>
+                                ${wp.description ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">${esc(wp.description)}</div>` : ""}
+                                ${wp.pause_duration ? `<div style="font-size:11px;color:var(--accent);margin-top:2px">⏱️ Pause: ${wp.pause_duration}min${wp.pause_reason ? " — " + wp.pause_reason : ""}</div>` : ""}
                             </div>
                         </div>
-                    `).join('')}
+                    `,
+                        )
+                        .join("")}
                 `;
             }
 
             function setupDisplayMap() {
-                displayMap = new google.maps.Map(document.getElementById('display-map'), {
-                    zoom: 6, center: {lat: 31.7917, lng: -7.0926},
-                    styles: mapStyles, mapTypeControl: false, streetViewControl: false
-                });
+                displayMap = new google.maps.Map(
+                    document.getElementById("display-map"),
+                    {
+                        zoom: 6,
+                        center: { lat: 31.7917, lng: -7.0926 },
+                        styles: mapStyles,
+                        mapTypeControl: false,
+                        streetViewControl: false,
+                    },
+                );
                 displayDirService = new google.maps.DirectionsService();
                 displayDirRenderer = new google.maps.DirectionsRenderer({
-                    map: displayMap, suppressMarkers: true,
-                    polylineOptions: {strokeColor:'#f97316',strokeWeight:5,strokeOpacity:.8}
+                    map: displayMap,
+                    suppressMarkers: true,
+                    polylineOptions: {
+                        strokeColor: "#f97316",
+                        strokeWeight: 5,
+                        strokeOpacity: 0.8,
+                    },
                 });
             }
 
@@ -1324,29 +2984,72 @@
                 if (wps.length < 2) return;
 
                 wps.forEach((wp, i) => {
-                    const pos = {lat: parseFloat(wp.latitude), lng: parseFloat(wp.longitude)};
+                    const pos = {
+                        lat: parseFloat(wp.latitude),
+                        lng: parseFloat(wp.longitude),
+                    };
                     const marker = new google.maps.Marker({
-                        position: pos, map: displayMap,
-                        label: {text: String(i+1), color: 'white', fontWeight: 'bold', fontSize: '11px'},
-                        icon: {path: google.maps.SymbolPath.CIRCLE, scale: 12, fillColor: getWaypointColor(wp.waypoint_type, i), fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2}
+                        position: pos,
+                        map: displayMap,
+                        label: {
+                            text: String(i + 1),
+                            color: "white",
+                            fontWeight: "bold",
+                            fontSize: "11px",
+                        },
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 12,
+                            fillColor: getWaypointColor(wp.waypoint_type, i),
+                            fillOpacity: 1,
+                            strokeColor: "#fff",
+                            strokeWeight: 2,
+                        },
                     });
-                    const info = new google.maps.InfoWindow({content: `<div style="color:#000;padding:8px;max-width:200px"><strong>${wp.name}</strong>${wp.description?'<br><span style="font-size:12px">'+wp.description+'</span>':''}</div>`});
-                    marker.addListener('click', () => info.open(displayMap, marker));
+                    const info = new google.maps.InfoWindow({
+                        content: `<div style="color:#000;padding:8px;max-width:200px"><strong>${wp.name}</strong>${wp.description ? '<br><span style="font-size:12px">' + wp.description + "</span>" : ""}</div>`,
+                    });
+                    marker.addListener("click", () =>
+                        info.open(displayMap, marker),
+                    );
                     displayMarkers.push(marker);
                 });
 
-                const origin = new google.maps.LatLng(parseFloat(wps[0].latitude), parseFloat(wps[0].longitude));
-                const dest = new google.maps.LatLng(parseFloat(wps[wps.length-1].latitude), parseFloat(wps[wps.length-1].longitude));
-                const intermediate = wps.slice(1,-1).map(wp => ({location: new google.maps.LatLng(parseFloat(wp.latitude), parseFloat(wp.longitude)), stopover: true}));
+                const origin = new google.maps.LatLng(
+                    parseFloat(wps[0].latitude),
+                    parseFloat(wps[0].longitude),
+                );
+                const dest = new google.maps.LatLng(
+                    parseFloat(wps[wps.length - 1].latitude),
+                    parseFloat(wps[wps.length - 1].longitude),
+                );
+                const intermediate = wps
+                    .slice(1, -1)
+                    .map((wp) => ({
+                        location: new google.maps.LatLng(
+                            parseFloat(wp.latitude),
+                            parseFloat(wp.longitude),
+                        ),
+                        stopover: true,
+                    }));
 
-                displayDirService.route({origin, destination: dest, waypoints: intermediate, travelMode: google.maps.TravelMode.DRIVING}, (result, status) => {
-                    if (status === 'OK') displayDirRenderer.setDirections(result);
-                });
+                displayDirService.route(
+                    {
+                        origin,
+                        destination: dest,
+                        waypoints: intermediate,
+                        travelMode: google.maps.TravelMode.DRIVING,
+                    },
+                    (result, status) => {
+                        if (status === "OK")
+                            displayDirRenderer.setDirections(result);
+                    },
+                );
             }
 
             function focusWaypoint(lat, lng) {
                 if (!displayMap) return;
-                displayMap.panTo({lat, lng});
+                displayMap.panTo({ lat, lng });
                 displayMap.setZoom(14);
             }
 
@@ -1354,7 +3057,7 @@
                 if (!state.viewRouteId) return;
                 const token = getToken();
                 const url = `route-itinerary-with-auth.html?id=${state.viewRouteId}&token=${token}`;
-                window.open(url, '_blank');
+                window.open(url, "_blank");
             }
 
             // ═══════════════════════════════════════════════════
@@ -1362,21 +3065,25 @@
             // ═══════════════════════════════════════════════════
             function openDeleteModal(id, name) {
                 state.deleteId = id;
-                document.getElementById('delete-route-name').textContent = name;
-                document.getElementById('delete-modal').classList.add('open');
+                document.getElementById("delete-route-name").textContent = name;
+                document.getElementById("delete-modal").classList.add("open");
             }
 
-            function closeDeleteModal() { document.getElementById('delete-modal').classList.remove('open'); }
+            function closeDeleteModal() {
+                document
+                    .getElementById("delete-modal")
+                    .classList.remove("open");
+            }
 
             async function confirmDelete() {
                 if (!state.deleteId) return;
                 try {
-                    await api('DELETE', `/api/routes/${state.deleteId}`);
-                    toast('Route deleted', 'success');
+                    await api("DELETE", `/api/routes/${state.deleteId}`);
+                    toast("Route deleted", "success");
                     closeDeleteModal();
                     loadRoutes();
-                } catch(e) {
-                    toast(e.data?.message || 'Error deleting route', 'error');
+                } catch (e) {
+                    toast(e.data?.message || "Error deleting route", "error");
                 }
                 state.deleteId = null;
             }
@@ -1386,39 +3093,41 @@
             // ═══════════════════════════════════════════════════
             function openGuidePage(e) {
                 e.preventDefault();
-                navigateTo('guide-admin.html');
+                navigateTo("guide-admin.html");
             }
 
             function openCategoriesPage(e) {
                 e.preventDefault();
-                navigateTo('guide-categories.html');
+                navigateTo("guide-categories.html");
             }
 
             function navigateTo(page) {
                 const token = getToken();
                 const apiUrl = getBase();
                 const params = new URLSearchParams();
-                if (token) params.set('token', token);
-                if (apiUrl) params.set('api_url', apiUrl);
-                window.location.href = params.toString() ? `${page}?${params.toString()}` : page;
+                if (token) params.set("token", token);
+                if (apiUrl) params.set("api_url", apiUrl);
+                window.location.href = params.toString()
+                    ? `${page}?${params.toString()}`
+                    : page;
             }
 
             // ═══════════════════════════════════════════════════
             // TOAST
             // ═══════════════════════════════════════════════════
-            function toast(msg, type = 'info') {
-                const el = document.createElement('div');
+            function toast(msg, type = "info") {
+                const el = document.createElement("div");
                 el.className = `toast ${type}`;
-                const icons = {success:'✅',error:'❌',info:'ℹ️'};
-                el.innerHTML = `<span>${icons[type]||'•'}</span><span>${msg}</span>`;
-                document.getElementById('toast-container').appendChild(el);
+                const icons = { success: "✅", error: "❌", info: "ℹ️" };
+                el.innerHTML = `<span>${icons[type] || "•"}</span><span>${msg}</span>`;
+                document.getElementById("toast-container").appendChild(el);
                 setTimeout(() => el.remove(), 3500);
             }
 
             // ═══════════════════════════════════════════════════
             // INIT
             // ═══════════════════════════════════════════════════
-            window.addEventListener('DOMContentLoaded', () => {
+            window.addEventListener("DOMContentLoaded", () => {
                 checkAuth();
             });
         </script>

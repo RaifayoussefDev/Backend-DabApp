@@ -1657,6 +1657,21 @@
                         <a href="route-admin.html" class="nav-item sub-item" id="nav-routes">
                             <i class="fas fa-directions"></i> Routes
                         </a>
+                        <a href="route-categories.html" class="nav-item sub-item" id="nav-route-categories">
+                            <i class="fas fa-layer-group"></i> Route Categories
+                        </a>
+                        <a href="route-reviews.html" class="nav-item sub-item" id="nav-route-reviews">
+                            <i class="fas fa-star"></i> Route Reviews
+                        </a>
+                        <a href="route-tags.html" class="nav-item sub-item" id="nav-route-tags">
+                            <i class="fas fa-tags"></i> Route Tags
+                        </a>
+                        <a href="route-warnings.html" class="nav-item sub-item" id="nav-route-warnings">
+                            <i class="fas fa-exclamation-triangle"></i> Route Warnings
+                        </a>
+                        <a href="route-completions.html" class="nav-item sub-item" id="nav-route-completions">
+                            <i class="fas fa-flag-checkered"></i> Route Completions
+                        </a>
                     </div>
                 </div>
 
@@ -2526,6 +2541,21 @@
                 if (token) params.set("token", token);
                 if (apiUrl) params.set("api_url", apiUrl);
                 
+                if (params.toString()) {
+                    window.location.href = `${url}?${params.toString()}`;
+                } else {
+                    window.location.href = url;
+                }
+            }
+
+            function openRouteCategories(e) {
+                e.preventDefault();
+                const token = getToken();
+                const apiUrl = getBase();
+                let url = "route-categories.html";
+                const params = new URLSearchParams();
+                if (token) params.set("token", token);
+                if (apiUrl) params.set("api_url", apiUrl);
                 if (params.toString()) {
                     window.location.href = `${url}?${params.toString()}`;
                 } else {

@@ -7950,6 +7950,1639 @@
                 ]
             }
         },
+        "/api/admin/route-categories": {
+            "get": {
+                "tags": [
+                    "Admin - Route Categories"
+                ],
+                "summary": "Get all route categories (Admin)",
+                "operationId": "816e7af2518abaa05050d6b985d0f0f4",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all items.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Route Categories"
+                ],
+                "summary": "Create a new route category (Admin)",
+                "operationId": "026946c5074487b9fb65d9fd2eeb9e49",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Mountain Passes"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "fas fa-mountain"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "example": "#2E8B57"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Category created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-categories/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Route Categories"
+                ],
+                "summary": "Get a specific route category (Admin)",
+                "operationId": "d2e71da5e745d85f18484965fc5511b9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Route Categories"
+                ],
+                "summary": "Update a route category (Admin)",
+                "operationId": "8524c6a151108fce977cf26c817033b1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Coastal Routes"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "fas fa-water"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "example": "#1E90FF"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Category updated successfully"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Route Categories"
+                ],
+                "summary": "Delete a route category (Admin)",
+                "operationId": "b4907fc49a73b9a6d7eada95324b0124",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category deleted successfully"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "409": {
+                        "description": "Cannot delete category with associated routes"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-categories/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin - Route Categories"
+                ],
+                "summary": "Get route category statistics (Admin)",
+                "operationId": "23181461c4d91e67535b026888a6211a",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-completions": {
+            "get": {
+                "tags": [
+                    "Admin - Route Completions"
+                ],
+                "summary": "Get all route completions (Admin)",
+                "operationId": "8e0564301e2f6939c252d90106b3b7b4",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all items.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "route_id",
+                        "in": "query",
+                        "description": "Filter by route ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-completions/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Route Completions"
+                ],
+                "summary": "Get a specific route completion (Admin)",
+                "operationId": "63965e0a85230e4e223188ab99281293",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "404": {
+                        "description": "Completion not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Route Completions"
+                ],
+                "summary": "Delete a route completion (Admin)",
+                "operationId": "6e0a46ffc1e55b78ca5ba5c38160d600",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Completion deleted successfully"
+                    },
+                    "404": {
+                        "description": "Completion not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-completions/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin - Route Completions"
+                ],
+                "summary": "Get route completions statistics (Admin)",
+                "operationId": "735ef22b25be6d839eacbba5d86275ad",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/routes": {
+            "get": {
+                "tags": [
+                    "Admin - Routes"
+                ],
+                "summary": "Get all routes (Admin)",
+                "operationId": "f6541ba2c2d5d1f75184114a62923358",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all items.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by title",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Filter by category ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Routes"
+                ],
+                "summary": "Create a new route (Admin)",
+                "operationId": "fb52d336d8958adb7bdd5816e5e8c321",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "description",
+                                    "waypoints"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "category_id": {
+                                        "type": "integer"
+                                    },
+                                    "difficulty": {
+                                        "type": "string",
+                                        "enum": [
+                                            "easy",
+                                            "moderate",
+                                            "difficult",
+                                            "expert"
+                                        ]
+                                    },
+                                    "created_by": {
+                                        "description": "User ID of the creator",
+                                        "type": "integer"
+                                    },
+                                    "waypoints": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Route created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/routes/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Routes"
+                ],
+                "summary": "Get a specific route (Admin)",
+                "operationId": "ab0bdc210fe0ff0cea4397a0617fc8c5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "404": {
+                        "description": "Route not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Routes"
+                ],
+                "summary": "Update a route (Admin)",
+                "operationId": "7a2c83688d9741e05c4f69e73b213228",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "category_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Route updated successfully"
+                    },
+                    "404": {
+                        "description": "Route not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Routes"
+                ],
+                "summary": "Delete a route (Admin)",
+                "operationId": "ba9dcdb4d57f2b52ec9def9db8bcdb66",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Route deleted successfully"
+                    },
+                    "404": {
+                        "description": "Route not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/routes/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin - Routes"
+                ],
+                "summary": "Get routes statistics (Admin)",
+                "operationId": "d8e056579ced61fa023af4f2ea00fe35",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-reviews": {
+            "get": {
+                "tags": [
+                    "Admin - Route Reviews"
+                ],
+                "summary": "Get all route reviews (Admin)",
+                "operationId": "7fa216249aed10db9ed2501b683c4483",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all items.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "route_id",
+                        "in": "query",
+                        "description": "Filter by route ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status (pending, approved, rejected)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-reviews/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Route Reviews"
+                ],
+                "summary": "Get a specific route review (Admin)",
+                "operationId": "268a230f89af71566ece12f358791425",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Route Reviews"
+                ],
+                "summary": "Delete a route review (Admin)",
+                "operationId": "67f50e65d5e20c819f2f099e04b83515",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review deleted successfully"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-reviews/{id}/status": {
+            "put": {
+                "tags": [
+                    "Admin - Route Reviews"
+                ],
+                "summary": "Update review status (Admin)",
+                "operationId": "1c22c290a981738a8f1a8140c0144fd8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "approved",
+                                            "rejected"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Status updated successfully"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-reviews/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin - Route Reviews"
+                ],
+                "summary": "Get route reviews statistics (Admin)",
+                "operationId": "996947fe634129f352e939cc439b57ff",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-tags": {
+            "get": {
+                "tags": [
+                    "Admin - Route Tags"
+                ],
+                "summary": "Get all route tags (Admin)",
+                "operationId": "7fb2e45ecc29ef04bed4ad35a776f831",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all items.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Route Tags"
+                ],
+                "summary": "Create a new route tag (Admin)",
+                "operationId": "d543edbdedbacefaeb58405e19c9f057",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Off-road"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tag created successfully"
+                    },
+                    "409": {
+                        "description": "Tag already exists"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-tags/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Route Tags"
+                ],
+                "summary": "Get a specific route tag (Admin)",
+                "operationId": "47aa893998727e825e4c877b91a55819",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "404": {
+                        "description": "Tag not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Route Tags"
+                ],
+                "summary": "Update a route tag (Admin)",
+                "operationId": "c68a49b9894de10c69496605d3af5a47",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Scenic"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tag updated successfully"
+                    },
+                    "404": {
+                        "description": "Tag not found"
+                    },
+                    "409": {
+                        "description": "Another tag with this name already exists"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Route Tags"
+                ],
+                "summary": "Delete a route tag (Admin)",
+                "operationId": "403884e53dd75501b573c324660e0509",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag deleted successfully"
+                    },
+                    "404": {
+                        "description": "Tag not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-tags/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin - Route Tags"
+                ],
+                "summary": "Get route tags statistics (Admin)",
+                "operationId": "1d8df0b106b0d7cae6945a881a2f5645",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-warnings": {
+            "get": {
+                "tags": [
+                    "Admin - Route Warnings"
+                ],
+                "summary": "Get all route warnings (Admin)",
+                "operationId": "73b13f5684337e80db30218da788b6de",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all items.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "route_id",
+                        "in": "query",
+                        "description": "Filter by route ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "warning_type",
+                        "in": "query",
+                        "description": "Filter by warning type",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "active_only",
+                        "in": "query",
+                        "description": "Get only active warnings",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-warnings/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Route Warnings"
+                ],
+                "summary": "Get a specific route warning (Admin)",
+                "operationId": "162b9b2eb55851ab89c8648f2a1136af",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "404": {
+                        "description": "Warning not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Route Warnings"
+                ],
+                "summary": "Delete a route warning (Admin)",
+                "operationId": "561cebfb2f4c7a7a2703df2284fb242b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Warning deleted successfully"
+                    },
+                    "404": {
+                        "description": "Warning not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-warnings/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin - Route Warnings"
+                ],
+                "summary": "Get route warnings statistics (Admin)",
+                "operationId": "d28423bdc484d5009c6ae91eddbf8db9",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-waypoints": {
+            "get": {
+                "tags": [
+                    "Admin - Route Waypoints"
+                ],
+                "summary": "Get all route waypoints (Admin)",
+                "operationId": "55851c9fe78cbc21d3d8b4240a3e4fbd",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all items.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "route_id",
+                        "in": "query",
+                        "description": "Filter by route ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Route Waypoints"
+                ],
+                "summary": "Create a new route waypoint (Admin)",
+                "operationId": "aa23375dd6ca6f29a360473e8b2417f1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "route_id",
+                                    "name",
+                                    "latitude",
+                                    "longitude",
+                                    "waypoint_type"
+                                ],
+                                "properties": {
+                                    "route_id": {
+                                        "type": "integer"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "waypoint_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "start",
+                                            "end",
+                                            "waypoint",
+                                            "poi",
+                                            "rest_stop",
+                                            "gas_station",
+                                            "viewpoint"
+                                        ]
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "order_position": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Waypoint created successfully"
+                    },
+                    "404": {
+                        "description": "Route not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-waypoints/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Route Waypoints"
+                ],
+                "summary": "Get a specific route waypoint (Admin)",
+                "operationId": "45ae8e002f3bcecbfc10acebec889a11",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "404": {
+                        "description": "Waypoint not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Route Waypoints"
+                ],
+                "summary": "Update a route waypoint (Admin)",
+                "operationId": "1e5f370ca75a3b3d18d087c322e956e7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "waypoint_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "start",
+                                            "end",
+                                            "waypoint",
+                                            "poi",
+                                            "rest_stop",
+                                            "gas_station",
+                                            "viewpoint"
+                                        ]
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "order_position": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Waypoint updated successfully"
+                    },
+                    "404": {
+                        "description": "Waypoint not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Route Waypoints"
+                ],
+                "summary": "Delete a route waypoint (Admin)",
+                "operationId": "d748a61c573e7c3293e6a25d6427b30a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Waypoint deleted successfully"
+                    },
+                    "404": {
+                        "description": "Waypoint not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-waypoints/{id}/reorder": {
+            "put": {
+                "tags": [
+                    "Admin - Route Waypoints"
+                ],
+                "summary": "Reorder a waypoint (Admin)",
+                "operationId": "80c06eb6ef39df464b31954bc01e2b53",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "new_position"
+                                ],
+                                "properties": {
+                                    "new_position": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Waypoint reordered successfully"
+                    },
+                    "404": {
+                        "description": "Waypoint not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/route-waypoints/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin - Route Waypoints"
+                ],
+                "summary": "Get route waypoints statistics (Admin)",
+                "operationId": "04575859f55813b196096b7d56852f1c",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/sooms": {
             "get": {
                 "tags": [
@@ -21136,6 +22769,34 @@
         {
             "name": "Admin POIs",
             "description": "Admin API Endpoints for Points of Interest"
+        },
+        {
+            "name": "Admin - Route Categories",
+            "description": "API Endpoints for Managing Route Categories by Admins"
+        },
+        {
+            "name": "Admin - Route Completions",
+            "description": "API Endpoints for Managing Route Completions by Admins"
+        },
+        {
+            "name": "Admin - Routes",
+            "description": "API Endpoints for Managing Routes by Admins"
+        },
+        {
+            "name": "Admin - Route Reviews",
+            "description": "API Endpoints for Managing Route Reviews by Admins"
+        },
+        {
+            "name": "Admin - Route Tags",
+            "description": "API Endpoints for Managing Route Tags by Admins"
+        },
+        {
+            "name": "Admin - Route Warnings",
+            "description": "API Endpoints for Managing Route Warnings by Admins"
+        },
+        {
+            "name": "Admin - Route Waypoints",
+            "description": "API Endpoints for Managing Route Waypoints by Admins"
         },
         {
             "name": "Admin - Guides",
