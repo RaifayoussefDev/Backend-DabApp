@@ -806,58 +806,55 @@ Route::middleware('auth:api')->group(function () {
     // USERS MANAGEMENT (ADMIN)
     // ============================================
     Route::prefix('admin/users')->group(function () {
-
+        // 1. STATIC ROUTES (No parameters) - FIRST PRIORITY
         Route::get('/stats', [UserController::class, 'stats'])->middleware('permission:users.view');
         Route::get('/stats/detailed', [UserController::class, 'detailedStats'])->middleware('permission:users.view');
         Route::get('/trashed', [UserController::class, 'getTrashed'])->middleware('permission:users.view');
         Route::get('/export', [UserController::class, 'export'])->middleware('permission:users.view');
-
         Route::get('/authentication-logs', [UserController::class, 'getAuthenticationLogs'])->middleware('permission:users.view');
-
-        // Routes POST sans ID
         Route::post('/search', [UserController::class, 'search'])->middleware('permission:users.view');
         Route::post('/bulk-action', [UserController::class, 'bulkAction'])->middleware('permission:users.delete');
-
-        // Routes de liste et création
         Route::get('/', [UserController::class, 'index'])->middleware('permission:users.view');
         Route::post('/', [UserController::class, 'store'])->middleware('permission:users.create');
 
-        // ⭐ ROUTES AVEC {id} - EN DERNIER
-        Route::get('/{id}', [UserController::class, 'show'])->middleware('permission:users.view')->where('id', '[0-9]+');
-        Route::put('/{id}', [UserController::class, 'update'])->middleware('permission:users.update')->where('id', '[0-9]+');
-        Route::delete('/{id}', [UserController::class, 'destroy'])->middleware('permission:users.delete')->where('id', '[0-9]+');
+        // 2. ID-BASED ROUTES - LAST PRIORITY
+        Route::where(['id' => '[0-9]+'])->group(function () {
+            Route::get('/{id}', [UserController::class, 'show'])->middleware('permission:users.view');
+            Route::put('/{id}', [UserController::class, 'update'])->middleware('permission:users.update');
+            Route::delete('/{id}', [UserController::class, 'destroy'])->middleware('permission:users.delete');
 
-        // Actions sur utilisateur spécifique
-        Route::post('/{id}/activate', [UserController::class, 'activate'])->middleware('permission:users.update')->where('id', '[0-9]+');
-        Route::post('/{id}/deactivate', [UserController::class, 'deactivate'])->middleware('permission:users.update')->where('id', '[0-9]+');
-        Route::post('/{id}/verify', [UserController::class, 'verifyUser'])->middleware('permission:users.update')->where('id', '[0-9]+');
-        Route::post('/{id}/restore', [UserController::class, 'restore'])->middleware('permission:users.update')->where('id', '[0-9]+');
-        Route::delete('/{id}/force-delete', [UserController::class, 'forceDelete'])->middleware('permission:users.delete')->where('id', '[0-9]+');
-        Route::post('/{id}/toggle-verified', [UserController::class, 'toggleVerified'])->middleware('permission:users.update')->where('id', '[0-9]+');
-        Route::post('/{id}/toggle-active', [UserController::class, 'toggleActive'])->middleware('permission:users.update')->where('id', '[0-9]+');
+            // Actions sur utilisateur spécifique
+            Route::post('/{id}/activate', [UserController::class, 'activate'])->middleware('permission:users.update');
+            Route::post('/{id}/deactivate', [UserController::class, 'deactivate'])->middleware('permission:users.update');
+            Route::post('/{id}/verify', [UserController::class, 'verifyUser'])->middleware('permission:users.update');
+            Route::post('/{id}/restore', [UserController::class, 'restore'])->middleware('permission:users.update');
+            Route::delete('/{id}/force-delete', [UserController::class, 'forceDelete'])->middleware('permission:users.delete');
+            Route::post('/{id}/toggle-verified', [UserController::class, 'toggleVerified'])->middleware('permission:users.update');
+            Route::post('/{id}/toggle-active', [UserController::class, 'toggleActive'])->middleware('permission:users.update');
 
-        // Password management
-        Route::post('/{id}/reset-password', [UserController::class, 'resetPassword'])->middleware('permission:users.update')->where('id', '[0-9]+');
-        Route::put('/{id}/change-password', [UserController::class, 'changePassword'])->middleware('permission:users.update')->where('id', '[0-9]+');
+            // Password management
+            Route::post('/{id}/reset-password', [UserController::class, 'resetPassword'])->middleware('permission:users.update');
+            Route::put('/{id}/change-password', [UserController::class, 'changePassword'])->middleware('permission:users.update');
 
-        // Profile management
-        Route::post('/{id}/profile-picture', [UserController::class, 'updateProfilePicture'])->middleware('permission:users.update')->where('id', '[0-9]+');
-        Route::put('/{id}/last-login', [UserController::class, 'updateLastLogin'])->middleware('permission:users.update')->where('id', '[0-9]+');
-        Route::put('/{id}/online-status', [UserController::class, 'updateOnlineStatus'])->middleware('permission:users.update')->where('id', '[0-9]+');
+            // Profile management
+            Route::post('/{id}/profile-picture', [UserController::class, 'updateProfilePicture'])->middleware('permission:users.update');
+            Route::put('/{id}/last-login', [UserController::class, 'updateLastLogin'])->middleware('permission:users.update');
+            Route::put('/{id}/online-status', [UserController::class, 'updateOnlineStatus'])->middleware('permission:users.update');
 
-        // Two-factor authentication
-        Route::post('/{id}/two-factor/enable', [UserController::class, 'enableTwoFactor'])->middleware('permission:users.update')->where('id', '[0-9]+');
-        Route::post('/{id}/two-factor/disable', [UserController::class, 'disableTwoFactor'])->middleware('permission:users.update')->where('id', '[0-9]+');
+            // Two-factor authentication
+            Route::post('/{id}/two-factor/enable', [UserController::class, 'enableTwoFactor'])->middleware('permission:users.update');
+            Route::post('/{id}/two-factor/disable', [UserController::class, 'disableTwoFactor'])->middleware('permission:users.update');
 
-        // Relations
-        Route::get('/{id}/wishlists', [UserController::class, 'getUserWishlists'])->middleware('permission:users.view')->where('id', '[0-9]+');
-        Route::get('/{id}/listings', [UserController::class, 'getUserListings'])->middleware('permission:users.view')->where('id', '[0-9]+');
-        Route::get('/{id}/bank-cards', [UserController::class, 'getUserBankCards'])->middleware('permission:users.view')->where('id', '[0-9]+');
-        Route::get('/{id}/auction-history', [UserController::class, 'getUserAuctionHistory'])->middleware('permission:users.view')->where('id', '[0-9]+');
-        Route::post('/{id}/assign-poi', [UserController::class, 'assignPoi'])->middleware('permission:users.update')->where('id', '[0-9]+');
-        Route::post('/{id}/unassign-poi', [UserController::class, 'unassignPoi'])->middleware('permission:users.update')->where('id', '[0-9]+');
+            // Relations
+            Route::get('/{id}/wishlists', [UserController::class, 'getUserWishlists'])->middleware('permission:users.view');
+            Route::get('/{id}/listings', [UserController::class, 'getUserListings'])->middleware('permission:users.view');
+            Route::get('/{id}/bank-cards', [UserController::class, 'getUserBankCards'])->middleware('permission:users.view');
+            Route::get('/{id}/auction-history', [UserController::class, 'getUserAuctionHistory'])->middleware('permission:users.view');
+            Route::post('/{id}/assign-poi', [UserController::class, 'assignPoi'])->middleware('permission:users.update');
+            Route::post('/{id}/unassign-poi', [UserController::class, 'unassignPoi'])->middleware('permission:users.update');
 
-        Route::get('/{id}/authentication-logs', [UserController::class, 'getUserAuthenticationLogs'])->middleware('permission:users.view')->where('id', '[0-9]+');
+            Route::get('/{id}/authentication-logs', [UserController::class, 'getUserAuthenticationLogs'])->middleware('permission:users.view');
+        });
     });
 
     Route::patch('/users/{id}/activate', [UserController::class, 'activateUser']);

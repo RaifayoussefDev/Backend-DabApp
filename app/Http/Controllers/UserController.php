@@ -593,7 +593,7 @@ class UserController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => "User with ID {$id} not found (from show)"
+                'message' => "User with ID {$id} not found"
             ], 404);
         } catch (\Exception $e) {
             \Log::error('Error in UserController@show', [
@@ -1502,7 +1502,7 @@ class UserController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => "User with ID {$id} not found (from getUserListings)"
+                'message' => "User with ID {$id} not found"
             ], 404);
         } catch (\Exception $e) {
             \Log::error('Error in UserController@getUserListings', [
@@ -2380,7 +2380,7 @@ class UserController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => "User with ID {$id} not found (from toggleVerified)"
+                'message' => "User with ID {$id} not found"
             ], 404);
         } catch (\Exception $e) {
             \Log::error('Error in UserController@toggleVerified', [
@@ -2456,7 +2456,7 @@ class UserController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => "User with ID {$id} not found (from toggleActive)"
+                'message' => "User with ID {$id} not found"
             ], 404);
         } catch (\Exception $e) {
             \Log::error('Error in UserController@toggleActive', [
@@ -2848,7 +2848,7 @@ class UserController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => "User with ID {$id} not found (from getUserAuthLogs)"
+                'message' => "User with ID {$id} not found"
             ], 404);
         } catch (\Exception $e) {
             \Log::error('Error in UserController@getUserAuthenticationLogs', [
