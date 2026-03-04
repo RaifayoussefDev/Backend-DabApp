@@ -93,11 +93,21 @@ class PointOfInterestController extends Controller
 
         $pois = $query->paginate(20);
 
+        // Return raw custom_icon (no fallback to owner logo / type icon).
+        // The fallback logic in getCustomIconAttribute is for display resolution
+        // on the client side only, not for the API response.
+        $pois->through(function ($poi) {
+            $data = $poi->toArray();
+            $data['custom_icon'] = $poi->getRawOriginal('custom_icon');
+            return $data;
+        });
+
         return response()->json([
             'success' => true,
             'data' => $pois,
         ]);
     }
+
 
     /**
      * @OA\Post(

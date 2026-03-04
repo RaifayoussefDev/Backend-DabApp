@@ -105,9 +105,28 @@ class AdminPointOfInterestController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $pois,
+            'data' => $pois instanceof \Illuminate\Pagination\LengthAwarePaginator
+                ? $pois->through(fn($poi) => $this->transformForAdmin($poi))
+                : $pois->map(fn($poi) => $this->transformForAdmin($poi)),
         ]);
     }
+
+    /**
+     * Transform a POI for the admin panel.
+     * Returns the raw stored custom_icon (no fallback to owner logo / type icon).
+     */
+    private function transformForAdmin($poi): array
+    {
+        /** @var PointOfInterest $poi */
+        $data = $poi->toArray();
+
+        // Override custom_icon with the raw DB value — no fallback logic.
+        // This lets the admin frontend show exactly what is stored.
+        $data['custom_icon'] = $poi->getRawOriginal('custom_icon');
+
+        return $data;
+    }
+
 
     /**
      * @OA\Post(
