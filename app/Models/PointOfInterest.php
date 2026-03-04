@@ -40,9 +40,10 @@ class PointOfInterest extends Model
         'google_reviews_count',
     ];
 
-    protected $appends = [
-        'custom_icon'
-    ];
+    // Note: 'custom_icon' is a real DB column, NOT a virtual attribute,
+    // so it must NOT be in $appends. The getCustomIconAttribute accessor
+    // is invoked automatically for real columns during serialization.
+    protected $appends = [];
 
     protected $casts = [
         'is_verified' => 'boolean',
