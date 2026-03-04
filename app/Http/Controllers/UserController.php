@@ -2926,4 +2926,82 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/users/{id}/unassign-poi",
+     *     summary="Unassign a POI from a user",
+     *     tags={"Users Management"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="User ID to unassign the POI from",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"poi_id"},
+     *             @OA\Property(property="poi_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="POI unassigned successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="POI unassigned successfully")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="User or POI not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function unassignPoi(Request $request, $id)
+    {
+        try {
+            $user = User::findOrFail($id);
+
+            $request->validate([
+                'poi_id' => 'required|exists:points_of_interest,id',
+            ]);
+
+            $poi = PointOfInterest::find($request->poi_id);
+
+            // Check if this POI is actually assigned to this user
+            if ($poi->owner_id !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This POI is not assigned to this user.'
+                ], 400);
+            }
+
+            $poi->owner_id = null;
+            $poi->save();
+
+            // Check if user has other POIs to determine dealer status
+            $hasOtherPois = PointOfInterest::where('owner_id', $user->id)->exists();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'POI unassigned successfully.',
+                'data' => [
+                    'user_id' => (int) $user->id,
+                    'is_dealer' => $hasOtherPois
+                ]
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to unassign POI: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
