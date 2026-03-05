@@ -129,13 +129,6 @@ class PointOfInterest extends Model
             ->withPivot('price');
     }
 
-    /**
-     * Get the brands sold/repaired by this POI.
-     */
-    public function brands(): BelongsToMany
-    {
-        return $this->belongsToMany(MotorcycleBrand::class, 'poi_brands', 'poi_id', 'brand_id');
-    }
 
     /**
      * Get the users who favorited this POI.

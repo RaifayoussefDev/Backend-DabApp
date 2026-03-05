@@ -780,6 +780,19 @@
             </div>
 
             <div class="form-section">
+                <div class="form-section-title"><i class="fas fa-concierge-bell"></i> Services</div>
+                <div class="form-group">
+                    <label class="form-label">Select Services</label>
+                    <div id="poi-services-selection" class="tag-badges-container" style="margin-bottom:10px; min-height:40px; border:1px solid var(--border); padding:10px; border-radius:8px;">
+                        <!-- Selected services will appear here -->
+                    </div>
+                    <select id="poi-service-select" onchange="addServiceToPoi(this.value)">
+                        <option value="">-- Choose a service to add --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-section">
                 <div class="form-section-title"><i class="fas fa-map-marker-alt"></i> Location</div>
                 <div class="form-group">
                     <label class="form-label">Search address or place on Google Maps</label>
@@ -1070,6 +1083,8 @@ const state = {
     poiTypes: [],
     poiTags: [],         // All available tags
     currentPoiTags: [],  // Tags for current POI
+    poiServices: [],
+    currentPoiServices: [],
     currentPoiImages: [], // {url, is_main, id (if existing)}
     iconUploadMode: 'fa',
     iconUploadedUrl: null,
@@ -1429,6 +1444,11 @@ function openPoiModal(poi = null) {
     state.currentPoiTags = poi?.tags ? [...poi.tags] : [];
     renderSelectedTags();
 
+    // Services
+    state.currentPoiServices = poi?.services ? [...poi.services] : [];
+    renderSelectedServices();
+    loadPoiServicesForSelect();
+
     // Images
     state.currentPoiImages = [];
     if (poi?.images?.length) {
@@ -1551,6 +1571,7 @@ async function savePoi() {
         country_id: parseInt(document.getElementById('poi-country-id').value) || null,
         opening_hours,
         tags: state.currentPoiTags.map(t => t.id),
+        services: state.currentPoiServices.map(s => s.id),
     };
 
     if (googlePlaceId) body.google_place_id = googlePlaceId;
@@ -1721,6 +1742,54 @@ function renderSelectedTags() {
         </span>
     `).join('');
 }
+
+// ════════════════════════════════════════════
+// POI SERVICES (IN MODAL)
+// ════════════════════════════════════════════
+async function loadPoiServicesForSelect() {
+    try {
+        const data = await api('/api/admin/poi-services?per_page=100');
+        state.poiServices = data.data?.data || data.data || data;
+        const sel = document.getElementById('poi-service-select');
+        if (sel) {
+            sel.innerHTML = '<option value="">-- Choose a service to add --</option>' + 
+                state.poiServices.map(s => `<option value="${s.id}">${s.name} (${s.type?.name || 'All Types'})</option>`).join('');
+        }
+    } catch (e) { console.error('Error loading services for select:', e); }
+}
+
+function addServiceToPoi(svcId) {
+    if (!svcId) return;
+    const svc = state.poiServices.find(s => s.id == svcId);
+    if (!svc) return;
+    if (state.currentPoiServices.some(s => s.id == svcId)) {
+        toast('Service already added', 'warning');
+        return;
+    }
+    state.currentPoiServices.push(svc);
+    renderSelectedServices();
+    document.getElementById('poi-service-select').value = '';
+}
+
+function removeServiceFromPoi(svcId) {
+    state.currentPoiServices = state.currentPoiServices.filter(s => s.id != svcId);
+    renderSelectedServices();
+}
+
+function renderSelectedServices() {
+    const container = document.getElementById('poi-services-selection');
+    if (state.currentPoiServices.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:12px;">No services selected...</p>';
+        return;
+    }
+    container.innerHTML = state.currentPoiServices.map(s => `
+        <span class="tag-badge">
+            ${esc(s.name)}
+            <i class="fas fa-times" onclick="removeServiceFromPoi(${s.id})"></i>
+        </span>
+    `).join('');
+}
+
 
 // ════════════════════════════════════════════
 // MAP

@@ -195,6 +195,8 @@ class AdminPointOfInterestController extends Controller
             'opening_hours' => 'nullable|array',
             'tags' => 'nullable|array',
             'tags.*' => 'exists:poi_tags,id',
+            'services' => 'nullable|array',
+            'services.*' => 'exists:poi_services,id',
             'google_place_id' => 'nullable|string|max:255',
             'google_rating' => 'nullable|numeric|between:0,5',
             'google_reviews_count' => 'nullable|integer|min:0',
@@ -221,7 +223,11 @@ class AdminPointOfInterestController extends Controller
             $poi->tags()->sync($request->tags);
         }
 
-        $poi->load(['type', 'city', 'country', 'tags', 'images', 'mainImage']);
+        if ($request->has('services')) {
+            $poi->services()->sync($request->services);
+        }
+
+        $poi->load(['type', 'city', 'country', 'tags', 'services', 'images', 'mainImage']);
 
         return response()->json([
             'success' => true,
@@ -253,7 +259,6 @@ class AdminPointOfInterestController extends Controller
             'images',
             'mainImage',
             'services',
-            'brands',
             'tags'
         ])->find($id);
 
@@ -323,6 +328,8 @@ class AdminPointOfInterestController extends Controller
             'owner_id' => 'nullable|exists:users,id',
             'tags' => 'nullable|array',
             'tags.*' => 'exists:poi_tags,id',
+            'services' => 'nullable|array',
+            'services.*' => 'exists:poi_services,id',
             'google_place_id' => 'nullable|string|max:255',
             'google_rating' => 'nullable|numeric|between:0,5',
             'google_reviews_count' => 'nullable|integer|min:0',
@@ -345,7 +352,11 @@ class AdminPointOfInterestController extends Controller
             $poi->tags()->sync($request->tags);
         }
 
-        $poi->load(['type', 'city', 'country', 'tags', 'images', 'mainImage']);
+        if ($request->has('services')) {
+            $poi->services()->sync($request->services);
+        }
+
+        $poi->load(['type', 'city', 'country', 'tags', 'services', 'images', 'mainImage']);
 
         return response()->json([
             'success' => true,

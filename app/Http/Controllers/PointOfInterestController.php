@@ -201,6 +201,8 @@ class PointOfInterestController extends Controller
             'opening_hours' => 'nullable|array',
             'tags' => 'nullable|array',
             'tags.*' => 'exists:poi_tags,id',
+            'services' => 'nullable|array',
+            'services.*' => 'exists:poi_services,id',
             'google_place_id' => 'nullable|string|max:255',
             'google_rating' => 'nullable|numeric|between:0,5',
             'google_reviews_count' => 'nullable|integer|min:0',
@@ -222,7 +224,11 @@ class PointOfInterestController extends Controller
             $poi->tags()->sync($request->tags);
         }
 
-        $poi->load(['type', 'city', 'country', 'tags', 'images', 'mainImage']);
+        if ($request->has('services')) {
+            $poi->services()->sync($request->services);
+        }
+
+        $poi->load(['type', 'city', 'country', 'tags', 'services', 'images', 'mainImage']);
 
         $data = $poi->toArray();
         $custom_icon = $poi->getRawOriginal('custom_icon');
@@ -268,7 +274,6 @@ class PointOfInterestController extends Controller
             'mainImage',
             'approvedReviews.user',
             'services',
-            'brands',
             'tags'
         ])->find($id);
 
@@ -407,6 +412,8 @@ class PointOfInterestController extends Controller
             'owner_id' => 'nullable|exists:users,id',
             'tags' => 'nullable|array',
             'tags.*' => 'exists:poi_tags,id',
+            'services' => 'nullable|array',
+            'services.*' => 'exists:poi_services,id',
             'google_place_id' => 'nullable|string|max:255',
             'google_rating' => 'nullable|numeric|between:0,5',
             'google_reviews_count' => 'nullable|integer|min:0',
@@ -438,7 +445,11 @@ class PointOfInterestController extends Controller
             $poi->tags()->sync($request->tags);
         }
 
-        $poi->load(['type', 'city', 'country', 'tags', 'images', 'mainImage']);
+        if ($request->has('services')) {
+            $poi->services()->sync($request->services);
+        }
+
+        $poi->load(['type', 'city', 'country', 'tags', 'services', 'images', 'mainImage']);
 
         $data = $poi->toArray();
         $custom_icon = $poi->getRawOriginal('custom_icon');
