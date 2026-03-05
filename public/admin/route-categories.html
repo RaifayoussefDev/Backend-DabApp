@@ -1404,15 +1404,20 @@
                         "GET",
                         "/api/admin/route-categories?per_page=100",
                     );
-                    // API returns { data: [...], total: ... } or [...]
+                    // API returns { success: true, data: { data: [...] } } (paginated) or { success: true, data: [...] }
                     let categories = [];
-                    if (Array.isArray(data)) {
-                        categories = data;
+
+                    if (data && data.data && Array.isArray(data.data.data)) {
+                        // Laravel pagination inside { success: true, data: { ... } } wrapper
+                        categories = data.data.data;
                     } else if (data && Array.isArray(data.data)) {
+                        // Direct array inside { success: true, data: [...] }
                         categories = data.data;
+                    } else if (Array.isArray(data)) {
+                        // Direct array
+                        categories = data;
                     } else if (data && typeof data === "object") {
-                        // Fallback for cases where data might be nested differently or just objects
-                        categories = Object.values(data).filter(
+                        categories = Object.values(data.data || data).filter(
                             (item) =>
                                 item && typeof item === "object" && item.id,
                         );
