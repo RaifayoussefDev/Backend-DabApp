@@ -64,7 +64,7 @@ class AdminPointOfInterestController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = PointOfInterest::with(['type', 'city', 'country', 'mainImage', 'seller.serviceProvider']);
+        $query = PointOfInterest::with(['type', 'city', 'country', 'mainImage', 'seller.serviceProvider', 'tags']);
 
         if ($request->has('search') && !empty($request->search)) {
             $search = $request->search;
@@ -123,6 +123,19 @@ class AdminPointOfInterestController extends Controller
         // Override custom_icon with the raw DB value — no fallback logic.
         // This lets the admin frontend show exactly what is stored.
         $data['custom_icon'] = $poi->getRawOriginal('custom_icon');
+
+        // Include tags if they are loaded
+        if ($poi->relationLoaded('tags')) {
+            $data['tags'] = $poi->tags->map(function ($tag) {
+                return [
+                    'id' => $tag->id,
+                    'name_en' => $tag->name_en,
+                    'name_ar' => $tag->name_ar,
+                    'name_fr' => $tag->name_fr,
+                    'slug' => $tag->slug,
+                ];
+            });
+        }
 
         return $data;
     }
