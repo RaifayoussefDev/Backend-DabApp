@@ -248,6 +248,11 @@
         .tags-input-wrap { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; display: flex; flex-wrap: wrap; gap: 6px; cursor: text; min-height: 42px; background: var(--surface2); }
         .tags-input-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(249,115,22,0.1); }
         .tag-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 8px; background: var(--accent-glow); border: 1px solid rgba(249,115,22,0.3); border-radius: 20px; font-size: 12px; color: var(--accent); }
+        
+        /* POI TAGS (SELECTION) */
+        .tag-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: var(--surface3); border: 1px solid var(--border2); border-radius: 20px; font-size: 13px; font-weight: 500; color: var(--text); }
+        .tag-badge i { cursor: pointer; color: var(--text3); font-size: 11px; transition: color 0.15s; }
+        .tag-badge i:hover { color: var(--red); }
         .tag-chip .tag-rm { cursor: pointer; opacity: 0.7; font-size: 11px; }
         .tag-chip .tag-rm:hover { opacity: 1; }
         .tags-input-wrap input { border: none; background: transparent; padding: 0; width: auto; min-width: 80px; flex: 1; font-size: 12px; box-shadow: none; }
