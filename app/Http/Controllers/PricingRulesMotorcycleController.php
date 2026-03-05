@@ -21,36 +21,70 @@ class PricingRulesMotorcycleController extends Controller
      *     summary="List all motorcycle pricing rules",
      *     tags={"Pricing Rules Motorcycle Management"},
      *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of items per page. Leave empty to get all items.",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search by motorcycle type name",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="motorcycle_type_id",
+     *         in="query",
+     *         description="Filter by motorcycle type ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Successful operation",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="array",
-     *                 @OA\Items(
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="motorcycle_type_id", type="integer", example=2),
-     *                     @OA\Property(property="price", type="string", example="150.00"),
-     *                     @OA\Property(property="created_at", type="string", example="2024-01-15T10:30:00.000000Z"),
-     *                     @OA\Property(property="updated_at", type="string", example="2024-01-15T10:30:00.000000Z"),
-     *                     @OA\Property(property="motorcycle_type", type="object",
-     *                         @OA\Property(property="id", type="integer", example=2),
-     *                         @OA\Property(property="name_en", type="string", example="Sport"),
-     *                         @OA\Property(property="name_ar", type="string", example="رياضية"),
-     *                         @OA\Property(property="name_fr", type="string", example="Sport"),
-     *                         @OA\Property(property="created_at", type="string", example="2024-01-10T08:00:00.000000Z"),
-     *                         @OA\Property(property="updated_at", type="string", example="2024-01-10T08:00:00.000000Z")
-     *                     )
-     *                 )
-     *             )
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
-        $rules = PricingRulesMotorcycle::with('motorcycleType')->get();
+        $query = PricingRulesMotorcycle::with('motorcycleType');
+
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->whereHas('motorcycleType', function ($q) use ($search) {
+                $q->where('name_en', 'like', '%' . $search . '%')
+                    ->orWhere('name_ar', 'like', '%' . $search . '%')
+                    ->orWhere('name_fr', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('motorcycle_type_id')) {
+            $query->where('motorcycle_type_id', $request->motorcycle_type_id);
+        }
+
+        if ($request->filled('per_page')) {
+            $perPage = $request->input('per_page', 15);
+            $rules = $query->paginate($perPage);
+        } else {
+            $rules = $query->get();
+        }
 
         return response()->json([
+            'success' => true,
             'data' => $rules
         ]);
     }

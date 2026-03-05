@@ -20,34 +20,70 @@ class PricingRulesSparepartController extends Controller
      *     summary="List all sparepart pricing rules",
      *     tags={"Pricing Rules Sparepart Management"},
      *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of items per page. Leave empty to get all items.",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search by category name",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="bike_part_category_id",
+     *         in="query",
+     *         description="Filter by spare part category ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Successful operation",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="array",
-     *                 @OA\Items(
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="bike_part_category_id", type="integer", example=3),
-     *                     @OA\Property(property="price", type="string", example="50.00"),
-     *                     @OA\Property(property="created_at", type="string", example="2024-01-15T10:30:00.000000Z"),
-     *                     @OA\Property(property="updated_at", type="string", example="2024-01-15T10:30:00.000000Z"),
-     *                     @OA\Property(property="category", type="object",
-     *                         @OA\Property(property="id", type="integer", example=3),
-     *                         @OA\Property(property="name_en", type="string", example="Engine Parts"),
-     *                         @OA\Property(property="name_ar", type="string", example="قطع المحرك"),
-     *                         @OA\Property(property="name_fr", type="string", example="Pièces moteur")
-     *                     )
-     *                 )
-     *             )
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
-        $rules = PricingRulesSparepart::with('category')->get();
+        $query = PricingRulesSparepart::with('category');
+
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->whereHas('category', function ($q) use ($search) {
+                $q->where('name_en', 'like', '%' . $search . '%')
+                    ->orWhere('name_ar', 'like', '%' . $search . '%')
+                    ->orWhere('name_fr', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('bike_part_category_id')) {
+            $query->where('bike_part_category_id', $request->bike_part_category_id);
+        }
+
+        if ($request->filled('per_page')) {
+            $perPage = $request->input('per_page', 15);
+            $rules = $query->paginate($perPage);
+        } else {
+            $rules = $query->get();
+        }
 
         return response()->json([
+            'success' => true,
             'data' => $rules
         ]);
     }

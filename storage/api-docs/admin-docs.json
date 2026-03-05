@@ -5378,6 +5378,55 @@
                 ]
             }
         },
+        "/api/admin/notification-preferences/user/{userId}": {
+            "get": {
+                "tags": [
+                    "Admin Notification Preferences"
+                ],
+                "summary": "Get notification preference by User ID",
+                "description": "Retrieve preferences for a specific user ID. Creates defaults if they don't exist.",
+                "operationId": "b907c69715fa5f15089292283ffa3a4c",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Preference details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/NotificationPreference"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/notification-preferences/{id}": {
             "get": {
                 "tags": [
@@ -14661,8 +14710,28 @@
                 "tags": [
                     "Pricing Rules Licence Plate Management"
                 ],
-                "summary": "Get the global licence plate price",
-                "operationId": "64653961508b98d00f84f1b32e653cb3",
+                "summary": "List licence plate pricing rules (with pagination and search)",
+                "operationId": "ce32c28797ab0a50824b753461344dc6",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all items.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Successful operation",
@@ -14670,25 +14739,11 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
                                         "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "price": {
-                                                    "type": "string",
-                                                    "example": "100.00"
-                                                },
-                                                "created_at": {
-                                                    "type": "string",
-                                                    "example": "2024-01-15T10:30:00.000000Z"
-                                                },
-                                                "updated_at": {
-                                                    "type": "string",
-                                                    "example": "2024-01-15T10:30:00.000000Z"
-                                                }
-                                            },
                                             "type": "object"
                                         }
                                     },
@@ -14696,9 +14751,6 @@
                                 }
                             }
                         }
-                    },
-                    "404": {
-                        "description": "Pricing not found"
                     }
                 },
                 "security": [
@@ -14786,13 +14838,13 @@
                 ]
             }
         },
-        "/api/admin/pricing-rules-motorcycle": {
+        "/api/admin/pricing-rules-licence-plate/current": {
             "get": {
                 "tags": [
-                    "Pricing Rules Motorcycle Management"
+                    "Pricing Rules Licence Plate Management"
                 ],
-                "summary": "List all motorcycle pricing rules",
-                "operationId": "59243e5bd497ede7e016c105fa96289b",
+                "summary": "Get the global licence plate price",
+                "operationId": "239365fa6e1c6c92cfc121f0cc2527cc",
                 "responses": {
                     "200": {
                         "description": "Successful operation",
@@ -14800,62 +14852,88 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
                                         "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "motorcycle_type_id": {
-                                                        "type": "integer",
-                                                        "example": 2
-                                                    },
-                                                    "price": {
-                                                        "type": "string",
-                                                        "example": "150.00"
-                                                    },
-                                                    "created_at": {
-                                                        "type": "string",
-                                                        "example": "2024-01-15T10:30:00.000000Z"
-                                                    },
-                                                    "updated_at": {
-                                                        "type": "string",
-                                                        "example": "2024-01-15T10:30:00.000000Z"
-                                                    },
-                                                    "motorcycle_type": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 2
-                                                            },
-                                                            "name_en": {
-                                                                "type": "string",
-                                                                "example": "Sport"
-                                                            },
-                                                            "name_ar": {
-                                                                "type": "string",
-                                                                "example": "رياضية"
-                                                            },
-                                                            "name_fr": {
-                                                                "type": "string",
-                                                                "example": "Sport"
-                                                            },
-                                                            "created_at": {
-                                                                "type": "string",
-                                                                "example": "2024-01-10T08:00:00.000000Z"
-                                                            },
-                                                            "updated_at": {
-                                                                "type": "string",
-                                                                "example": "2024-01-10T08:00:00.000000Z"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Pricing not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/pricing-rules-motorcycle": {
+            "get": {
+                "tags": [
+                    "Pricing Rules Motorcycle Management"
+                ],
+                "summary": "List all motorcycle pricing rules",
+                "operationId": "59243e5bd497ede7e016c105fa96289b",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all items.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by motorcycle type name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "motorcycle_type_id",
+                        "in": "query",
+                        "description": "Filter by motorcycle type ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -15192,6 +15270,44 @@
                 ],
                 "summary": "List all sparepart pricing rules",
                 "operationId": "fb3d4127029f6c42a800a6ad5ee3cc86",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page. Leave empty to get all items.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by category name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "bike_part_category_id",
+                        "in": "query",
+                        "description": "Filter by spare part category ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Successful operation",
@@ -15199,54 +15315,12 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
                                         "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "bike_part_category_id": {
-                                                        "type": "integer",
-                                                        "example": 3
-                                                    },
-                                                    "price": {
-                                                        "type": "string",
-                                                        "example": "50.00"
-                                                    },
-                                                    "created_at": {
-                                                        "type": "string",
-                                                        "example": "2024-01-15T10:30:00.000000Z"
-                                                    },
-                                                    "updated_at": {
-                                                        "type": "string",
-                                                        "example": "2024-01-15T10:30:00.000000Z"
-                                                    },
-                                                    "category": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 3
-                                                            },
-                                                            "name_en": {
-                                                                "type": "string",
-                                                                "example": "Engine Parts"
-                                                            },
-                                                            "name_ar": {
-                                                                "type": "string",
-                                                                "example": "قطع المحرك"
-                                                            },
-                                                            "name_fr": {
-                                                                "type": "string",
-                                                                "example": "Pièces moteur"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -19147,6 +19221,10 @@
                                                             "type": "integer",
                                                             "example": 3
                                                         },
+                                                        "inactive_listings": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
                                                         "published_listings": {
                                                             "type": "integer",
                                                             "example": 2
@@ -19158,6 +19236,10 @@
                                                         "sold_listings": {
                                                             "type": "integer",
                                                             "example": 1
+                                                        },
+                                                        "deleted_listings": {
+                                                            "type": "integer",
+                                                            "example": 0
                                                         },
                                                         "total_wishlists": {
                                                             "type": "integer",

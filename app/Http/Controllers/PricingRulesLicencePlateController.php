@@ -17,6 +17,54 @@ class PricingRulesLicencePlateController extends Controller
     /**
      * @OA\Get(
      *     path="/api/admin/pricing-rules-licence-plate",
+     *     summary="List licence plate pricing rules (with pagination and search)",
+     *     tags={"Pricing Rules Licence Plate Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of items per page. Leave empty to get all items.",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $query = PricingRulesLicencePlate::query();
+
+        // For now, there's only one global price, but we provide pagination for consistency
+        if ($request->filled('per_page')) {
+            $perPage = $request->input('per_page', 15);
+            $rules = $query->paginate($perPage);
+        } else {
+            $rules = $query->get();
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $rules
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/admin/pricing-rules-licence-plate/current",
      *     summary="Get the global licence plate price",
      *     tags={"Pricing Rules Licence Plate Management"},
      *     security={{"bearerAuth": {}}},
@@ -24,12 +72,8 @@ class PricingRulesLicencePlateController extends Controller
      *         response=200,
      *         description="Successful operation",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="price", type="string", example="100.00"),
-     *                 @OA\Property(property="created_at", type="string", example="2024-01-15T10:30:00.000000Z"),
-     *                 @OA\Property(property="updated_at", type="string", example="2024-01-15T10:30:00.000000Z")
-     *             )
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object")
      *         )
      *     ),
      *     @OA\Response(
@@ -44,11 +88,13 @@ class PricingRulesLicencePlateController extends Controller
 
         if (!$rule) {
             return response()->json([
+                'success' => false,
                 'message' => 'Licence plate pricing not found'
             ], Response::HTTP_NOT_FOUND);
         }
 
         return response()->json([
+            'success' => true,
             'data' => $rule
         ]);
     }
@@ -102,6 +148,7 @@ class PricingRulesLicencePlateController extends Controller
             $rule = PricingRulesLicencePlate::create($validated);
 
             return response()->json([
+                'success' => true,
                 'message' => 'Licence plate price created successfully',
                 'data' => $rule,
             ], Response::HTTP_CREATED);
@@ -110,6 +157,7 @@ class PricingRulesLicencePlateController extends Controller
         $rule->update($validated);
 
         return response()->json([
+            'success' => true,
             'message' => 'Licence plate price updated successfully',
             'data' => $rule,
         ]);

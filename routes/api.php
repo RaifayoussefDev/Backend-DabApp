@@ -882,7 +882,8 @@ Route::middleware('auth:api')->group(function () {
     });
 
     Route::prefix('admin/pricing-rules-licence-plate')->group(function () {
-        Route::get('/', [PricingRulesLicencePlateController::class, 'show'])->middleware('permission:pricing-rules-licence-plate.view');
+        Route::get('/', [PricingRulesLicencePlateController::class, 'index'])->middleware('permission:pricing-rules-licence-plate.view');
+        Route::get('/current', [PricingRulesLicencePlateController::class, 'show'])->middleware('permission:pricing-rules-licence-plate.view');
         Route::put('/', [PricingRulesLicencePlateController::class, 'update'])->middleware('permission:pricing-rules-licence-plate.update');
     });
 
