@@ -394,6 +394,7 @@ class UserController extends Controller
      *                     @OA\Property(property="published_listings", type="integer", example=2),
      *                     @OA\Property(property="draft_listings", type="integer", example=1),
      *                     @OA\Property(property="sold_listings", type="integer", example=1),
+     *                     @OA\Property(property="deleted_listings", type="integer", example=0),
      *                     @OA\Property(property="total_wishlists", type="integer", example=10),
      *                     @OA\Property(property="total_bank_cards", type="integer", example=2),
      *                     @OA\Property(property="auction_participations", type="integer", example=15),
@@ -525,6 +526,7 @@ class UserController extends Controller
                 'published_listings' => $user->listings->where('status', 'published')->count(),
                 'draft_listings' => $user->listings->where('status', 'draft')->count(),
                 'sold_listings' => $user->listings->where('status', 'sold')->count(),
+                'deleted_listings' => $user->listings->where('status', 'deleted')->count(),
 
                 // Wishlist stats
                 'total_wishlists' => $user->wishlists->count(),
