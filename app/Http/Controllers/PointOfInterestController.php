@@ -68,7 +68,7 @@ class PointOfInterestController extends Controller
     public function index(Request $request): JsonResponse
     {
         // Ne charger que mainImage au lieu de images et mainImage
-        $query = PointOfInterest::with(['type', 'city', 'country', 'mainImage', 'seller.serviceProvider']);
+        $query = PointOfInterest::with(['type', 'city', 'country', 'mainImage', 'seller.serviceProvider', 'tags']);
 
         // Filter by type
         if ($request->has('type_id')) {
@@ -96,7 +96,7 @@ class PointOfInterestController extends Controller
         // Return raw custom_icon (no fallback to owner logo / type icon).
         // The fallback logic in getCustomIconAttribute is for display resolution
         // on the client side only, not for the API response.
-        $pois->through(function ($poi) {
+        $pois->through(function (\App\Models\PointOfInterest $poi) {
             $data = $poi->toArray();
             $custom_icon = $poi->getRawOriginal('custom_icon');
             $data['custom_icon'] = $custom_icon;
@@ -104,6 +104,18 @@ class PointOfInterestController extends Controller
             // If a custom icon exists, replace the poi type icon with it
             if (!empty($custom_icon) && isset($data['type']) && is_array($data['type'])) {
                 $data['type']['icon'] = $custom_icon;
+            }
+
+            if ($poi->relationLoaded('tags')) {
+                $data['tags'] = $poi->tags->map(function ($tag) {
+                    return [
+                        'id' => $tag->id,
+                        'name_en' => $tag->name_en,
+                        'name_ar' => $tag->name_ar,
+                        'name_fr' => $tag->name_fr,
+                        'slug' => $tag->slug,
+                    ];
+                });
             }
 
             return $data;
@@ -259,6 +271,7 @@ class PointOfInterestController extends Controller
             'approvedReviews.user',
             'services',
             'brands',
+            'tags'
         ])->find($id);
 
 
@@ -289,6 +302,18 @@ class PointOfInterestController extends Controller
         // If a custom icon exists, replace the poi type icon with it
         if (!empty($custom_icon) && isset($data['type']) && is_array($data['type'])) {
             $data['type']['icon'] = $custom_icon;
+        }
+
+        if ($poi->relationLoaded('tags')) {
+            $data['tags'] = $poi->tags->map(function ($tag) {
+                return [
+                    'id' => $tag->id,
+                    'name_en' => $tag->name_en,
+                    'name_ar' => $tag->name_ar,
+                    'name_fr' => $tag->name_fr,
+                    'slug' => $tag->slug,
+                ];
+            });
         }
 
         return response()->json([
@@ -580,12 +605,12 @@ class PointOfInterestController extends Controller
 
         $radius = $request->input('radius', 10);
 
-        $pois = PointOfInterest::with(['type', 'city', 'country', 'mainImage', 'seller.serviceProvider'])
+        $pois = PointOfInterest::with(['type', 'city', 'country', 'mainImage', 'seller.serviceProvider', 'tags'])
             ->active()
             ->nearby($request->latitude, $request->longitude, $radius)
             ->get();
 
-        $pois = $pois->map(function ($poi) {
+        $pois = $pois->map(function (\App\Models\PointOfInterest $poi) {
             $data = $poi->toArray();
             $custom_icon = $poi->getRawOriginal('custom_icon');
             $data['custom_icon'] = $custom_icon;
@@ -593,6 +618,18 @@ class PointOfInterestController extends Controller
             // If a custom icon exists, replace the poi type icon with it
             if (!empty($custom_icon) && isset($data['type']) && is_array($data['type'])) {
                 $data['type']['icon'] = $custom_icon;
+            }
+
+            if ($poi->relationLoaded('tags')) {
+                $data['tags'] = $poi->tags->map(function ($tag) {
+                    return [
+                        'id' => $tag->id,
+                        'name_en' => $tag->name_en,
+                        'name_ar' => $tag->name_ar,
+                        'name_fr' => $tag->name_fr,
+                        'slug' => $tag->slug,
+                    ];
+                });
             }
 
             return $data;
