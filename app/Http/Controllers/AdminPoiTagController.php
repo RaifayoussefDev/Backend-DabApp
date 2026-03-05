@@ -276,18 +276,18 @@ class AdminPoiTagController extends Controller
      */
     public function stats(): JsonResponse
     {
+        $tags = PoiTag::withCount('pois')->orderByDesc('pois_count')->get();
+
         $stats = [
-            'total_tags' => PoiTag::count(),
-            'top_tags' => PoiTag::withCount('pois')
-                ->orderBy('pois_count', 'desc')
-                ->take(10)
-                ->get()
-                ->map(function ($tag) {
-                    return [
-                        'name' => $tag->name,
-                        'pois_count' => $tag->pois_count,
-                    ];
-                })
+            'total_tags' => $tags->count(),
+            'tags_distribution' => $tags->map(function ($tag) {
+                return [
+                    'id' => $tag->id,
+                    'name' => $tag->name,
+                    'slug' => $tag->slug,
+                    'pois_count' => $tag->pois_count,
+                ];
+            })
         ];
 
         return response()->json([

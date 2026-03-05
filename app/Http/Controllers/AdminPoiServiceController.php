@@ -276,12 +276,18 @@ class AdminPoiServiceController extends Controller
      */
     public function stats(): JsonResponse
     {
+        $services = PoiService::with('type')->withCount('pointsOfInterest')->orderByDesc('points_of_interest_count')->get();
+
         $stats = [
-            'total_services' => PoiService::count(),
-            'by_type' => PoiService::select('type_id', \DB::raw('count(*) as count'))
-                ->with('type:id,name')
-                ->groupBy('type_id')
-                ->get()
+            'total_services' => $services->count(),
+            'services_distribution' => $services->map(function ($service) {
+                return [
+                    'id' => $service->id,
+                    'name' => $service->name,
+                    'type' => $service->type ? $service->type->name : null,
+                    'pois_count' => $service->points_of_interest_count,
+                ];
+            })
         ];
 
         return response()->json([
