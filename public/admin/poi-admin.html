@@ -1626,7 +1626,7 @@ async function loadTags() {
         const sel = document.getElementById('poi-tag-select');
         if (sel) {
             sel.innerHTML = '<option value="">-- Choose a tag to add --</option>' + 
-                state.poiTags.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+                state.poiTags.map(t => `<option value="${t.id}">${t.name_en || t.name_fr || t.name || 'Tag'} (${t.slug})</option>`).join('');
         }
 
         // Update tags table
@@ -1637,12 +1637,12 @@ async function loadTags() {
             } else {
                 tbody.innerHTML = state.poiTags.map(t => `
                     <tr>
-                        <td><strong>${esc(t.name)}</strong></td>
+                        <td><strong>${esc(t.name_en || t.name_fr || t.name || 'Unnamed')}</strong></td>
                         <td><code style="font-size:12px;">${t.slug}</code></td>
                         <td><span class="badge badge-blue">${t.pois_count || 0}</span></td>
                         <td style="text-align:right;">
                             <button class="icon-btn" onclick="openTagModal(${JSON.stringify(t).replace(/"/g,'&quot;')})"><i class="fas fa-edit"></i></button>
-                            <button class="icon-btn danger" onclick="confirmDelete('tag', ${t.id}, '${esc(t.name)}')"><i class="fas fa-trash-alt"></i></button>
+                            <button class="icon-btn danger" onclick="confirmDelete('tag', ${t.id}, '${esc(t.name_en || t.name)}')"><i class="fas fa-trash-alt"></i></button>
                         </td>
                     </tr>
                 `).join('');
@@ -1711,7 +1711,7 @@ function renderSelectedTags() {
     }
     container.innerHTML = state.currentPoiTags.map(t => `
         <span class="tag-badge">
-            ${esc(t.name)}
+            ${esc(t.name_en || t.name_fr || t.name || 'Tag')}
             <i class="fas fa-times" onclick="removeTagFromPoi(${t.id})"></i>
         </span>
     `).join('');
