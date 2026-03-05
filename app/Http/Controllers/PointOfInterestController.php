@@ -98,7 +98,14 @@ class PointOfInterestController extends Controller
         // on the client side only, not for the API response.
         $pois->through(function ($poi) {
             $data = $poi->toArray();
-            $data['custom_icon'] = $poi->getRawOriginal('custom_icon');
+            $custom_icon = $poi->getRawOriginal('custom_icon');
+            $data['custom_icon'] = $custom_icon;
+
+            // If a custom icon exists, replace the poi type icon with it
+            if (!empty($custom_icon) && isset($data['type']) && is_array($data['type'])) {
+                $data['type']['icon'] = $custom_icon;
+            }
+
             return $data;
         });
 
@@ -207,10 +214,19 @@ class PointOfInterestController extends Controller
 
         $poi->load(['type', 'city', 'country', 'tags', 'images', 'mainImage']);
 
+        $data = $poi->toArray();
+        $custom_icon = $poi->getRawOriginal('custom_icon');
+        $data['custom_icon'] = $custom_icon;
+
+        // If a custom icon exists, replace the poi type icon with it
+        if (!empty($custom_icon) && isset($data['type']) && is_array($data['type'])) {
+            $data['type']['icon'] = $custom_icon;
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Point of interest created successfully',
-            'data' => $poi,
+            'data' => $data,
         ], 201);
     }
 
@@ -266,9 +282,18 @@ class PointOfInterestController extends Controller
 
         $poi->is_favorited = $isFavorited;
 
+        $data = $poi->toArray();
+        $custom_icon = $poi->getRawOriginal('custom_icon');
+        $data['custom_icon'] = $custom_icon;
+
+        // If a custom icon exists, replace the poi type icon with it
+        if (!empty($custom_icon) && isset($data['type']) && is_array($data['type'])) {
+            $data['type']['icon'] = $custom_icon;
+        }
+
         return response()->json([
             'success' => true,
-            'data' => $poi,
+            'data' => $data,
         ]);
     }
 
@@ -394,10 +419,19 @@ class PointOfInterestController extends Controller
 
         $poi->load(['type', 'city', 'country', 'tags', 'images', 'mainImage']);
 
+        $data = $poi->toArray();
+        $custom_icon = $poi->getRawOriginal('custom_icon');
+        $data['custom_icon'] = $custom_icon;
+
+        // If a custom icon exists, replace the poi type icon with it
+        if (!empty($custom_icon) && isset($data['type']) && is_array($data['type'])) {
+            $data['type']['icon'] = $custom_icon;
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Point of interest updated successfully',
-            'data' => $poi,
+            'data' => $data,
         ]);
     }
 
@@ -551,6 +585,19 @@ class PointOfInterestController extends Controller
             ->nearby($request->latitude, $request->longitude, $radius)
             ->get();
 
+        $pois = $pois->map(function ($poi) {
+            $data = $poi->toArray();
+            $custom_icon = $poi->getRawOriginal('custom_icon');
+            $data['custom_icon'] = $custom_icon;
+
+            // If a custom icon exists, replace the poi type icon with it
+            if (!empty($custom_icon) && isset($data['type']) && is_array($data['type'])) {
+                $data['type']['icon'] = $custom_icon;
+            }
+
+            return $data;
+        });
+
         return response()->json([
             'success' => true,
             'data' => $pois,
@@ -610,6 +657,19 @@ class PointOfInterestController extends Controller
 
         $perPage = $request->input('per_page', 20);
         $pois = $query->paginate($perPage);
+
+        $pois->through(function ($poi) {
+            $data = $poi->toArray();
+            $custom_icon = $poi->getRawOriginal('custom_icon');
+            $data['custom_icon'] = $custom_icon;
+
+            // If a custom icon exists, replace the poi type icon with it
+            if (!empty($custom_icon) && isset($data['type']) && is_array($data['type'])) {
+                $data['type']['icon'] = $custom_icon;
+            }
+
+            return $data;
+        });
 
         return response()->json([
             'success' => true,
