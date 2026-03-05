@@ -364,7 +364,7 @@ class PromoCodeController extends Controller
      */
     public function usages()
     {
-        $usages = PromoCodeUsage::with(['user:id,name,email', 'listing:id,title', 'promoCode:id,code'])
+        $usages = PromoCodeUsage::with(['user:id,first_name,last_name,email', 'listing:id,title', 'promoCode:id,code'])
             ->orderBy('used_at', 'desc')
             ->get();
 
