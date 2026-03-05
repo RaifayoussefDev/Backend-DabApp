@@ -123,6 +123,7 @@ class PoiReviewController extends Controller
                 'user_id' => auth()->id(),
                 'rating' => $request->rating,
                 'comment' => $request->comment,
+                'is_approved' => true,
             ]);
 
             // Update POI rating average
