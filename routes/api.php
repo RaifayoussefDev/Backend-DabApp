@@ -213,6 +213,7 @@ Route::prefix('admin')->group(function () {
         Route::post('notification-preferences/mass-disable-category', [AdminNotificationPreferenceController::class, 'massDisableCategory']);
         Route::patch('notification-preferences/{id}/enable-all', [AdminNotificationPreferenceController::class, 'enableAll']);
         Route::patch('notification-preferences/{id}/disable-all', [AdminNotificationPreferenceController::class, 'disableAll']);
+        Route::get('notification-preferences/user/{userId}', [AdminNotificationPreferenceController::class, 'getByUserId']);
         Route::apiResource('notification-preferences', AdminNotificationPreferenceController::class);
 
         // Report Reasons & Types

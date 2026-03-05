@@ -130,6 +130,39 @@ class AdminNotificationPreferenceController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/admin/notification-preferences/user/{userId}",
+     *     tags={"Admin Notification Preferences"},
+     *     summary="Get notification preference by User ID",
+     *     description="Retrieve preferences for a specific user ID. Creates defaults if they don't exist.",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(name="userId", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Preference details",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", ref="#/components/schemas/NotificationPreference")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="User not found")
+     * )
+     */
+    public function getByUserId($userId): JsonResponse
+    {
+        $user = User::findOrFail($userId);
+
+        $preference = NotificationPreference::firstOrCreate(
+            ['user_id' => $userId]
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => $preference->load('user')
+        ]);
+    }
+
+    /**
      * @OA\Post(
      *     path="/api/admin/notification-preferences",
      *     tags={"Admin Notification Preferences"},
