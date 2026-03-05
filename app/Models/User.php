@@ -212,6 +212,7 @@ class User extends Authenticatable implements JWTSubject
         'language',
         'timezone',
         'two_factor_enabled',
+        'allow_multi_device',
         'country_id',
     ];
 
@@ -255,6 +256,7 @@ class User extends Authenticatable implements JWTSubject
         'is_active' => 'boolean',
         'is_online' => 'boolean',
         'two_factor_enabled' => 'boolean',
+        'allow_multi_device' => 'boolean',
         'last_login' => 'datetime',
         'token_expiration' => 'datetime',
         'email_verified_at' => 'datetime',

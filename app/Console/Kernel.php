@@ -21,6 +21,11 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground();
 
+        // Update users online status every 15 minutes based on token expiration
+        $schedule->command('user:update-online-status')
+            ->everyFifteenMinutes()
+            ->withoutOverlapping();
+
         // Optionnel : Nettoyer les logs anciens chaque semaine
         $schedule->command('log:clear')
             ->weekly()

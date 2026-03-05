@@ -48,17 +48,20 @@ class AuthController extends Controller
         $refreshToken = Str::random(64);
         $refreshTokenExpiration = now()->addMinutes(self::REFRESH_TOKEN_DURATION);
 
-        Authentication::updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'token' => $accessToken,
-                'token_expiration' => $accessTokenExpiration,
-                'refresh_token' => $refreshToken,
-                'refresh_token_expiration' => $refreshTokenExpiration,
-                'is_online' => true,
-                'connection_date' => now(),
-            ]
-        );
+        // If multi-device is NOT allowed, delete existing sessions
+        if (!$user->allow_multi_device) {
+            Authentication::where('user_id', $user->id)->delete();
+        }
+
+        Authentication::create([
+            'user_id' => $user->id,
+            'token' => $accessToken,
+            'token_expiration' => $accessTokenExpiration,
+            'refresh_token' => $refreshToken,
+            'refresh_token_expiration' => $refreshTokenExpiration,
+            'is_online' => true,
+            'connection_date' => now(),
+        ]);
 
         return [
             'token' => $accessToken,

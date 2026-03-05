@@ -643,6 +643,7 @@ class UserController extends Controller
      *             @OA\Property(property="country_id", type="integer", example=2),
      *             @OA\Property(property="language", type="string", example="fr"),
      *             @OA\Property(property="timezone", type="string", example="Europe/Paris"),
+     *             @OA\Property(property="allow_multi_device", type="boolean", example=true)
      *         )
      *     ),
      *     @OA\Response(
@@ -677,6 +678,7 @@ class UserController extends Controller
             'country_id' => 'nullable|exists:countries,id',
             'language' => 'nullable|string|max:10',
             'timezone' => 'nullable|string|max:50',
+            'allow_multi_device' => 'nullable|boolean',
         ]);
 
         $user->update($validated);
