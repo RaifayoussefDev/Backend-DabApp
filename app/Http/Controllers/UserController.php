@@ -390,6 +390,7 @@ class UserController extends Controller
      *                     type="object",
      *                     @OA\Property(property="total_listings", type="integer", example=5),
      *                     @OA\Property(property="active_listings", type="integer", example=3),
+     *                     @OA\Property(property="inactive_listings", type="integer", example=2),
      *                     @OA\Property(property="published_listings", type="integer", example=2),
      *                     @OA\Property(property="draft_listings", type="integer", example=1),
      *                     @OA\Property(property="sold_listings", type="integer", example=1),
@@ -520,6 +521,7 @@ class UserController extends Controller
                 // Listings stats
                 'total_listings' => $user->listings->count(),
                 'active_listings' => $user->listings->where('status', 'active')->count(),
+                'inactive_listings' => $user->listings->where('status', 'inactive')->count(),
                 'published_listings' => $user->listings->where('status', 'published')->count(),
                 'draft_listings' => $user->listings->where('status', 'draft')->count(),
                 'sold_listings' => $user->listings->where('status', 'sold')->count(),
