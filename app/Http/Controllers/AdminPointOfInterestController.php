@@ -129,9 +129,7 @@ class AdminPointOfInterestController extends Controller
             $data['tags'] = $poi->tags->map(function ($tag) {
                 return [
                     'id' => $tag->id,
-                    'name_en' => $tag->name_en,
-                    'name_ar' => $tag->name_ar,
-                    'name_fr' => $tag->name_fr,
+                    'name' => $tag->name,
                     'slug' => $tag->slug,
                 ];
             });
