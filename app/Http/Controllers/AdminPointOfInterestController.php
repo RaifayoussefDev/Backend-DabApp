@@ -259,7 +259,8 @@ class AdminPointOfInterestController extends Controller
             'images',
             'mainImage',
             'services',
-            'tags'
+            'tags',
+            'approvedReviews.user'
         ])->find($id);
 
         if (!$poi) {
