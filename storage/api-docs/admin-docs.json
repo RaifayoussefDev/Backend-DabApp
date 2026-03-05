@@ -19328,6 +19328,10 @@
                                     "timezone": {
                                         "type": "string",
                                         "example": "Europe/Paris"
+                                    },
+                                    "allow_multi_device": {
+                                        "type": "boolean",
+                                        "example": true
                                     }
                                 },
                                 "type": "object"
@@ -19423,6 +19427,73 @@
                     },
                     "403": {
                         "description": "Forbidden - Missing permission"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/toggle-multi-device": {
+            "patch": {
+                "tags": [
+                    "Users Management"
+                ],
+                "summary": "Toggle user multi-device login permission",
+                "description": "Toggles the allow_multi_device setting for the currently authenticated user.",
+                "operationId": "toggleUserMultiDevice",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "allow_multi_device"
+                                ],
+                                "properties": {
+                                    "allow_multi_device": {
+                                        "description": "Set to true to allow logins from multiple devices simultaneously",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Preference updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Multi-device login enabled"
+                                        },
+                                        "allow_multi_device": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 },
                 "security": [

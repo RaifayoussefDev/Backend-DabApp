@@ -613,6 +613,62 @@ class UserController extends Controller
     }
 
     /**
+     * @OA\Patch(
+     *     path="/api/admin/users/{id}/toggle-multi-device",
+     *     operationId="toggleUserMultiDevice",
+     *     tags={"Users Management"},
+     *     summary="Toggle user multi-device login permission",
+     *     description="Toggles the allow_multi_device setting for a specific user. Intended for admins.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="User ID",
+     *         @OA\Schema(type="integer", example=471)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"allow_multi_device"},
+     *             @OA\Property(property="allow_multi_device", type="boolean", example=true, description="Set to true to allow logins from multiple devices simultaneously")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Preference updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Multi-device login enabled"),
+     *             @OA\Property(property="allow_multi_device", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=404, description="User not found")
+     * )
+     */
+    public function toggleMultiDevice(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'allow_multi_device' => 'required|boolean',
+        ]);
+
+        $user = User::findOrFail($id);
+
+        $user->allow_multi_device = $validated['allow_multi_device'];
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => $user->allow_multi_device
+                ? 'Multi-device login enabled'
+                : 'Multi-device login disabled. Other sessions will be terminated on next login.',
+            'allow_multi_device' => $user->allow_multi_device
+        ]);
+    }
+
+    /**
      * @OA\Put(
      *     path="/api/admin/users/{id}",
      *     operationId="updateUser",
