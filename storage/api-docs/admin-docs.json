@@ -16095,77 +16095,140 @@
                 "tags": [
                     "Promo Code - Management"
                 ],
-                "summary": "List all promo code usages",
-                "description": "Returns a list of all promo code usage records with associated user and listing details.",
+                "summary": "List all promo code usages (with filters)",
+                "description": "Returns a paginated list of all promo code usage records with associated user and listing details.",
                 "operationId": "837f09292f42a0807a962efe9e55f532",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Filter by user ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "promo_code_id",
+                        "in": "query",
+                        "description": "Filter by promo code ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Filter by start date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "Filter by end date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of promo code usages",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "properties": {
-                                            "id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "promo_code_id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "user_id": {
-                                                "type": "integer",
-                                                "example": 5
-                                            },
-                                            "listing_id": {
-                                                "type": "integer",
-                                                "example": 10
-                                            },
-                                            "used_at": {
-                                                "type": "string",
-                                                "format": "date-time"
-                                            },
-                                            "user": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
                                                 "properties": {
                                                     "id": {
-                                                        "type": "integer"
+                                                        "type": "integer",
+                                                        "example": 1
                                                     },
-                                                    "name": {
-                                                        "type": "string"
+                                                    "promo_code_id": {
+                                                        "type": "integer",
+                                                        "example": 1
                                                     },
-                                                    "email": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            },
-                                            "listing": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer"
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 5
                                                     },
-                                                    "title": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            },
-                                            "promo_code": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer"
+                                                    "listing_id": {
+                                                        "type": "integer",
+                                                        "example": 10
                                                     },
-                                                    "code": {
-                                                        "type": "string"
+                                                    "used_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "user": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "email": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "listing": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "title": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "promo_code": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "code": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
                                                     }
                                                 },
                                                 "type": "object"
                                             }
                                         },
-                                        "type": "object"
-                                    }
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 50
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -19436,14 +19499,26 @@
                 ]
             }
         },
-        "/api/user/toggle-multi-device": {
+        "/api/admin/users/{id}/toggle-multi-device": {
             "patch": {
                 "tags": [
                     "Users Management"
                 ],
                 "summary": "Toggle user multi-device login permission",
-                "description": "Toggles the allow_multi_device setting for the currently authenticated user.",
+                "description": "Toggles the allow_multi_device setting for a specific user. Intended for admins.",
                 "operationId": "toggleUserMultiDevice",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 471
+                        }
+                    }
+                ],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -19494,6 +19569,9 @@
                     },
                     "422": {
                         "description": "Validation error"
+                    },
+                    "404": {
+                        "description": "User not found"
                     }
                 },
                 "security": [

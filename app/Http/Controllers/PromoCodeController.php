@@ -323,50 +323,78 @@ class PromoCodeController extends Controller
     /**
      * @OA\Get(
      *     path="/api/admin/promo-codes/usages",
-     *     summary="List all promo code usages",
-     *     description="Returns a list of all promo code usage records with associated user and listing details.",
+     *     summary="List all promo code usages (with filters)",
+     *     description="Returns a paginated list of all promo code usage records with associated user and listing details.",
      *     tags={"Promo Code - Management"},
      *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="user_id", in="query", required=false, description="Filter by user ID", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="promo_code_id", in="query", required=false, description="Filter by promo code ID", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="start_date", in="query", required=false, description="Filter by start date (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="end_date", in="query", required=false, description="Filter by end date (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="per_page", in="query", required=false, description="Items per page", @OA\Schema(type="integer", default=20)),
      *     @OA\Response(
      *         response=200,
      *         description="List of promo code usages",
      *         @OA\JsonContent(
-     *             type="array",
-     *             @OA\Items(
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="promo_code_id", type="integer", example=1),
-     *                 @OA\Property(property="user_id", type="integer", example=5),
-     *                 @OA\Property(property="listing_id", type="integer", example=10),
-     *                 @OA\Property(property="used_at", type="string", format="date-time"),
-     *                 @OA\Property(
-     *                     property="user",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer"),
-     *                     @OA\Property(property="name", type="string"),
-     *                     @OA\Property(property="email", type="string")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="listing",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer"),
-     *                     @OA\Property(property="title", type="string")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="promo_code",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer"),
-     *                     @OA\Property(property="code", type="string")
+     *             type="object",
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="promo_code_id", type="integer", example=1),
+     *                     @OA\Property(property="user_id", type="integer", example=5),
+     *                     @OA\Property(property="listing_id", type="integer", example=10),
+     *                     @OA\Property(property="used_at", type="string", format="date-time"),
+     *                     @OA\Property(
+     *                         property="user",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer"),
+     *                         @OA\Property(property="name", type="string"),
+     *                         @OA\Property(property="email", type="string")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="listing",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer"),
+     *                         @OA\Property(property="title", type="string")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="promo_code",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer"),
+     *                         @OA\Property(property="code", type="string")
+     *                     )
      *                 )
-     *             )
+     *             ),
+     *             @OA\Property(property="current_page", type="integer", example=1),
+     *             @OA\Property(property="total", type="integer", example=50)
      *         )
      *     )
      * )
      */
-    public function usages()
+    public function usages(Request $request)
     {
-        $usages = PromoCodeUsage::with(['user:id,first_name,last_name,email', 'listing:id,title', 'promoCode:id,code'])
-            ->orderBy('used_at', 'desc')
-            ->get();
+        $query = PromoCodeUsage::with(['user:id,first_name,last_name,email', 'listing:id,title', 'promoCode:id,code']);
+
+        if ($request->has('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        if ($request->has('promo_code_id')) {
+            $query->where('promo_code_id', $request->promo_code_id);
+        }
+
+        if ($request->has('start_date')) {
+            $query->whereDate('used_at', '>=', $request->start_date);
+        }
+
+        if ($request->has('end_date')) {
+            $query->whereDate('used_at', '<=', $request->end_date);
+        }
+
+        $perPage = $request->input('per_page', 20);
+        $usages = $query->orderBy('used_at', 'desc')->paginate($perPage);
 
         return response()->json($usages);
     }
