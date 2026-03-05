@@ -264,6 +264,10 @@ class UserController extends Controller
 
     /**
      * @OA\Post(
+     *     path="/api/admin/users",
+     *     operationId="createUser",
+     *     tags={"Users Management"},
+     *     summary="Create a new user",
      *     description="Creates a new user account. Auto-generates a password and sends it via email to the user.",
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
