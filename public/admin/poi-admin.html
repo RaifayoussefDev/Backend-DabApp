@@ -795,6 +795,13 @@
             <div class="form-section">
                 <div class="form-section-title"><i class="fas fa-map-marker-alt"></i> Location</div>
                 <div class="form-group">
+                    <label class="form-label">Import from Google Maps Link</label>
+                    <div class="search-wrap" style="margin-bottom: 8px;">
+                        <i class="fas fa-link"></i>
+                        <input type="text" id="map-url-import" placeholder="Paste Google Maps URL (e.g. https://www.google.com/maps/place/...)" oninput="importFromMapsUrl(this.value)"/>
+                    </div>
+                </div>
+                <div class="form-group">
                     <label class="form-label">Search address or place on Google Maps</label>
                     <div class="search-wrap">
                         <i class="fas fa-search-location"></i>
@@ -1819,6 +1826,28 @@ function initMap(poi) {
         }
     });
 
+    // If it's a new POI, try to get current location
+    if (!poi && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+                const userPos = { lat: userLat, lng: userLng };
+                
+                state.map.setCenter(userPos);
+                state.map.setZoom(15);
+                state.marker.setPosition(userPos);
+                document.getElementById('poi-latitude').value = userLat.toFixed(6);
+                document.getElementById('poi-longitude').value = userLng.toFixed(6);
+            },
+            (err) => console.warn("Geolocation failed:", err.message)
+        );
+    } else if (!poi) {
+        // Just set the defaults for the inputs if no geolocation
+        document.getElementById('poi-latitude').value = lat.toFixed(6);
+        document.getElementById('poi-longitude').value = lng.toFixed(6);
+    }
+
     state.marker.addListener('dragend', () => {
         const pos = state.marker.getPosition();
         document.getElementById('poi-latitude').value = pos.lat().toFixed(6);
@@ -1836,39 +1865,119 @@ function initMap(poi) {
     state.autocomplete = new google.maps.places.Autocomplete(input, {
         fields: ['geometry', 'formatted_address', 'name', 'rating', 'user_ratings_total', 'place_id', 'opening_hours']
     });
+    // Bias results to map bounds
+    state.autocomplete.bindTo('bounds', state.map);
 
     state.autocomplete.addListener('place_changed', () => {
         const place = state.autocomplete.getPlace();
-        if (!place.geometry || !place.geometry.location) return;
+        populateFromPlace(place);
+    });
+}
 
-        state.map.setCenter(place.geometry.location);
-        state.map.setZoom(17);
-        state.marker.setPosition(place.geometry.location);
-        document.getElementById('poi-latitude').value = place.geometry.location.lat().toFixed(6);
-        document.getElementById('poi-longitude').value = place.geometry.location.lng().toFixed(6);
-        document.getElementById('poi-address').value = place.formatted_address || '';
+function importFromMapsUrl(url) {
+    if (!url) return;
+    
+    // Try to extract coordinates or CID/Place data from the URL
+    let lat, lng, query;
+    const coordsMatch = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    const qMatch = url.match(/[?&]q=([^&]+)/);
+    const queryParamMatch = url.match(/[?&]query=([^&]+)/);
+    const cidMatch = url.match(/[?&]cid=(\d+)/);
 
-        // Google rating fields
-        const badge = document.getElementById('google-rating-badge');
-        if (place.rating) {
-            document.getElementById('poi-google-place-id').value = place.place_id || '';
-            document.getElementById('poi-google-rating').value = place.rating;
-            document.getElementById('poi-google-reviews-count').value = place.user_ratings_total || 0;
-            document.getElementById('google-rating-text').textContent =
-                `Google Rating: ${place.rating} \u2605 (${place.user_ratings_total || 0} reviews)`;
-            badge.style.display = 'flex';
-        } else {
-            badge.style.display = 'none';
-            document.getElementById('poi-google-place-id').value = place.place_id || '';
-            document.getElementById('poi-google-rating').value = '';
-            document.getElementById('poi-google-reviews-count').value = '';
-        }
+    if (coordsMatch) {
+        lat = parseFloat(coordsMatch[1]);
+        lng = parseFloat(coordsMatch[2]);
+    } else if (qMatch) {
+        query = decodeURIComponent(qMatch[1]);
+    } else if (queryParamMatch) {
+        query = decodeURIComponent(queryParamMatch[1]);
+    }
 
-        // Auto-populate opening hours if available
-        if (place.opening_hours) {
-            fillHoursWithGoogleData(place.opening_hours);
+    if (!state.map) return;
+    const service = new google.maps.places.PlacesService(state.map);
+
+    if (lat && lng) {
+        // Find place by coordinates
+        service.nearbySearch({ location: { lat, lng }, radius: 50 }, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results[0]) {
+                fetchPlaceDetails(results[0].place_id);
+            } else {
+                const pos = { lat, lng };
+                state.map.setCenter(pos);
+                state.map.setZoom(17);
+                state.marker.setPosition(pos);
+                document.getElementById('poi-latitude').value = lat.toFixed(6);
+                document.getElementById('poi-longitude').value = lng.toFixed(6);
+                toast('Coordinates extracted, but no specific Google Place found.', 'info');
+            }
+        });
+    } else if (query) {
+        service.findPlaceFromQuery({
+            query: query,
+            fields: ['place_id']
+        }, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results[0]) {
+                fetchPlaceDetails(results[0].place_id);
+            } else {
+                toast('Could not find place from the provided URL.', 'warning');
+            }
+        });
+    } else if (cidMatch) {
+        service.textSearch({ query: url }, (results, status) => {
+           if (status === google.maps.places.PlacesServiceStatus.OK && results[0]) {
+               fetchPlaceDetails(results[0].place_id);
+           }
+        });
+    }
+}
+
+function fetchPlaceDetails(placeId) {
+    if (!state.map) return;
+    const service = new google.maps.places.PlacesService(state.map);
+    service.getDetails({
+        placeId: placeId,
+        fields: ['geometry', 'formatted_address', 'name', 'rating', 'user_ratings_total', 'place_id', 'opening_hours']
+    }, (place, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+            populateFromPlace(place);
+            toast(`Imported data for: ${place.name}`, 'success');
         }
     });
+}
+
+function populateFromPlace(place) {
+    if (!place.geometry || !place.geometry.location) return;
+
+    state.map.setCenter(place.geometry.location);
+    state.map.setZoom(17);
+    state.marker.setPosition(place.geometry.location);
+    document.getElementById('poi-latitude').value = place.geometry.location.lat().toFixed(6);
+    document.getElementById('poi-longitude').value = place.geometry.location.lng().toFixed(6);
+    document.getElementById('poi-address').value = place.formatted_address || '';
+    
+    // Automatically set name if empty
+    const nameInput = document.getElementById('poi-name');
+    if (!nameInput.value) nameInput.value = place.name || '';
+
+    // Google rating fields
+    const badge = document.getElementById('google-rating-badge');
+    if (place.rating) {
+        document.getElementById('poi-google-place-id').value = place.place_id || '';
+        document.getElementById('poi-google-rating').value = place.rating;
+        document.getElementById('poi-google-reviews-count').value = place.user_ratings_total || 0;
+        document.getElementById('google-rating-text').textContent =
+            `Google Rating: ${place.rating} \u2605 (${place.user_ratings_total || 0} reviews)`;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+        document.getElementById('poi-google-place-id').value = '';
+        document.getElementById('poi-google-rating').value = '';
+        document.getElementById('poi-google-reviews-count').value = '';
+    }
+
+    if (place.opening_hours) {
+        fillHoursWithGoogleData(place.opening_hours);
+    }
 }
 
 function fillHoursWithGoogleData(googleHours) {
