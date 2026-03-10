@@ -18,10 +18,29 @@ class ExportListingController extends Controller
      *
      * @return \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\JsonResponse
      */
-    public function exportZip()
+    public function exportZip(Request $request)
     {
         try {
-            $listings = Listing::with(['category', 'seller', 'images', 'motorcycle.brand', 'motorcycle.model', 'city', 'country'])->get();
+            $query = Listing::with(['category', 'seller', 'images', 'motorcycle.brand', 'motorcycle.model', 'city', 'country']);
+
+            // Filters
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->filled('category_id')) {
+                $query->where('category_id', $request->category_id);
+            }
+
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('title', 'like', "%{$search}%")
+                        ->orWhere('id', 'like', "%{$search}%");
+                });
+            }
+
+            $listings = $query->get();
 
             if ($listings->isEmpty()) {
                 return response()->json(['message' => 'No listings found to export'], 404);
@@ -80,9 +99,15 @@ class ExportListingController extends Controller
                     foreach ($listing->images as $index => $image) {
                         try {
                             $imageUrl = $image->image_url;
-                            // Convert URL to absolute local path
-                            $relativePath = str_replace(url('/storage'), '', $imageUrl);
-                            $localPath = public_path('storage' . $relativePath);
+
+                            // Handle both full URLs and relative paths
+                            if (str_starts_with($imageUrl, 'http')) {
+                                $relativePath = str_ireplace(url('/storage'), '', $imageUrl);
+                            } else {
+                                $relativePath = $imageUrl;
+                            }
+
+                            $localPath = public_path('storage/' . ltrim($relativePath, '/'));
 
                             if (file_exists($localPath)) {
                                 $extension = pathinfo($localPath, PATHINFO_EXTENSION) ?: 'jpg';
