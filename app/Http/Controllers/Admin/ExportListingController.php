@@ -125,11 +125,19 @@ class ExportListingController extends Controller
 
             // Cleanup Excel file after adding to ZIP
             if (file_exists($excelPath)) {
-                unlink($excelPath);
+                @unlink($excelPath);
+            }
+
+            // Ensure no output buffer corruption
+            if (ob_get_length()) {
+                ob_end_clean();
             }
 
             // Return ZIP for download and delete after sending
-            return response()->download($zipPath)->deleteFileAfterSend(true);
+            return response()->download($zipPath, $zipFileName, [
+                'Content-Type' => 'application/zip',
+                'Content-Transfer-Encoding' => 'Binary',
+            ])->deleteFileAfterSend(true);
 
         } catch (\Exception $e) {
             \Log::error('Export Listings ZIP failed: ' . $e->getMessage());
