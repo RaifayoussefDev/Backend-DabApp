@@ -796,9 +796,12 @@
                 <div class="form-section-title"><i class="fas fa-map-marker-alt"></i> Location</div>
                 <div class="form-group">
                     <label class="form-label">Import from Google Maps Link</label>
-                    <div class="search-wrap" style="margin-bottom: 8px;">
+                    <div class="search-wrap" style="margin-bottom: 8px; position: relative;">
                         <i class="fas fa-link"></i>
                         <input type="text" id="map-url-import" placeholder="Paste Google Maps URL (e.g. https://www.google.com/maps/place/...)" oninput="importFromMapsUrl(this.value)"/>
+                        <div id="url-import-spinner" style="display:none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%);">
+                            <div class="spinner" style="width:16px;height:16px;border-width:2px;"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="form-group">
@@ -1877,6 +1880,8 @@ function initMap(poi) {
 function importFromMapsUrl(url) {
     if (!url) return;
     
+    document.getElementById('url-import-spinner').style.display = 'block';
+
     // Try to extract coordinates or CID/Place data from the URL
     let lat, lng, query;
     const coordsMatch = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
@@ -1891,9 +1896,15 @@ function importFromMapsUrl(url) {
         query = decodeURIComponent(qMatch[1]);
     } else if (queryParamMatch) {
         query = decodeURIComponent(queryParamMatch[1]);
+    } else if (!cidMatch && url.startsWith('http')) {
+        // Fallback: If it's a URL but no specific pattern matched, try using the URL itself as a query (handles some short/redirect URLs)
+        query = url;
     }
 
-    if (!state.map) return;
+    if (!state.map) {
+        document.getElementById('url-import-spinner').style.display = 'none';
+        return;
+    }
     const service = new google.maps.places.PlacesService(state.map);
 
     if (lat && lng) {
@@ -1908,6 +1919,7 @@ function importFromMapsUrl(url) {
                 state.marker.setPosition(pos);
                 document.getElementById('poi-latitude').value = lat.toFixed(6);
                 document.getElementById('poi-longitude').value = lng.toFixed(6);
+                document.getElementById('url-import-spinner').style.display = 'none';
                 toast('Coordinates extracted, but no specific Google Place found.', 'info');
             }
         });
@@ -1919,6 +1931,7 @@ function importFromMapsUrl(url) {
             if (status === google.maps.places.PlacesServiceStatus.OK && results[0]) {
                 fetchPlaceDetails(results[0].place_id);
             } else {
+                document.getElementById('url-import-spinner').style.display = 'none';
                 toast('Could not find place from the provided URL.', 'warning');
             }
         });
@@ -1926,8 +1939,12 @@ function importFromMapsUrl(url) {
         service.textSearch({ query: url }, (results, status) => {
            if (status === google.maps.places.PlacesServiceStatus.OK && results[0]) {
                fetchPlaceDetails(results[0].place_id);
+           } else {
+               document.getElementById('url-import-spinner').style.display = 'none';
            }
         });
+    } else {
+        document.getElementById('url-import-spinner').style.display = 'none';
     }
 }
 
@@ -1938,9 +1955,11 @@ function fetchPlaceDetails(placeId) {
         placeId: placeId,
         fields: ['geometry', 'formatted_address', 'name', 'rating', 'user_ratings_total', 'place_id', 'opening_hours']
     }, (place, status) => {
+        document.getElementById('url-import-spinner').style.display = 'none';
         if (status === google.maps.places.PlacesServiceStatus.OK) {
             populateFromPlace(place);
             toast(`Imported data for: ${place.name}`, 'success');
+            document.getElementById('map-url-import').value = ''; // Clear for next use
         }
     });
 }
@@ -1954,6 +1973,7 @@ function populateFromPlace(place) {
     document.getElementById('poi-latitude').value = place.geometry.location.lat().toFixed(6);
     document.getElementById('poi-longitude').value = place.geometry.location.lng().toFixed(6);
     document.getElementById('poi-address').value = place.formatted_address || '';
+    document.getElementById('map-search').value = place.formatted_address || '';
     
     // Automatically set name if empty
     const nameInput = document.getElementById('poi-name');
