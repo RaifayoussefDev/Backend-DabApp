@@ -224,6 +224,7 @@ Route::prefix('admin')->group(function () {
 
         // Admin Listings
         Route::get('/listings/stats', [AdminListingController::class, 'stats']);
+        Route::get('/listings/export-zip', [\App\Http\Controllers\Admin\ExportListingController::class, 'exportZip']);
         Route::apiResource('listings', AdminListingController::class);
         Route::patch('/listings/{id}/status', [AdminListingController::class, 'changeStatus']);
         Route::post('/listings/{id}/images/reorder', [AdminListingController::class, 'reorderImages']);
