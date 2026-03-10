@@ -1896,8 +1896,11 @@ function importFromMapsUrl(url) {
         query = decodeURIComponent(qMatch[1]);
     } else if (queryParamMatch) {
         query = decodeURIComponent(queryParamMatch[1]);
+    } else if (url.includes('maps.app.goo.gl') || url.includes('goo.gl/maps')) {
+        // Short links need to be searched as text so Google can resolve the redirect
+        query = url;
     } else if (!cidMatch && url.startsWith('http')) {
-        // Fallback: If it's a URL but no specific pattern matched, try using the URL itself as a query (handles some short/redirect URLs)
+        // Fallback: If it's a URL but no specific pattern matched, try using the URL itself as a query
         query = url;
     }
 
@@ -1923,6 +1926,16 @@ function importFromMapsUrl(url) {
                 toast('Coordinates extracted, but no specific Google Place found.', 'info');
             }
         });
+    } else if (cidMatch || (query && (url.includes('goo.gl') || url.includes('maps.app.goo.gl')))) {
+        // For CIDs or short URLs, textSearch is more reliable than findPlaceFromQuery
+        service.textSearch({ query: query || url }, (results, status) => {
+           if (status === google.maps.places.PlacesServiceStatus.OK && results[0]) {
+               fetchPlaceDetails(results[0].place_id);
+           } else {
+               document.getElementById('url-import-spinner').style.display = 'none';
+               toast('Could not resolve this short link. Please try a long URL.', 'warning');
+           }
+        });
     } else if (query) {
         service.findPlaceFromQuery({
             query: query,
@@ -1934,14 +1947,6 @@ function importFromMapsUrl(url) {
                 document.getElementById('url-import-spinner').style.display = 'none';
                 toast('Could not find place from the provided URL.', 'warning');
             }
-        });
-    } else if (cidMatch) {
-        service.textSearch({ query: url }, (results, status) => {
-           if (status === google.maps.places.PlacesServiceStatus.OK && results[0]) {
-               fetchPlaceDetails(results[0].place_id);
-           } else {
-               document.getElementById('url-import-spinner').style.display = 'none';
-           }
         });
     } else {
         document.getElementById('url-import-spinner').style.display = 'none';
