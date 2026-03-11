@@ -67,8 +67,19 @@ class PointOfInterestController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        // Ne charger que mainImage au lieu de images et mainImage
-        $query = PointOfInterest::with(['type', 'city', 'country', 'mainImage', 'seller.serviceProvider', 'tags']);
+        $user = Auth::user();
+
+        $query = PointOfInterest::with([
+            'type',
+            'seller.serviceProvider',
+            'city',
+            'country',
+            'images',
+            'mainImage',
+            'approvedReviews.user',
+            'services',
+            'tags'
+        ]);
 
         // Filter by type
         if ($request->has('type_id')) {
@@ -91,12 +102,19 @@ class PointOfInterestController extends Controller
             $query->nearby($request->latitude, $request->longitude, $radius);
         }
 
-        $pois = $query->paginate(20);
+        // Return all records by default (remove pagination)
+        $pois = $query->get();
 
-        // Return raw custom_icon (no fallback to owner logo / type icon).
-        // The fallback logic in getCustomIconAttribute is for display resolution
-        // on the client side only, not for the API response.
-        $pois->through(function (\App\Models\PointOfInterest $poi) {
+        $pois = $pois->map(function (\App\Models\PointOfInterest $poi) use ($user) {
+            $isFavorited = false;
+            if ($user) {
+                $isFavorited = DB::table('poi_favorites')
+                    ->where('poi_id', $poi->id)
+                    ->where('user_id', $user->id)
+                    ->exists();
+            }
+            $poi->is_favorited = $isFavorited;
+
             $data = $poi->toArray();
             $custom_icon = $poi->getRawOriginal('custom_icon');
             $data['custom_icon'] = $custom_icon;
