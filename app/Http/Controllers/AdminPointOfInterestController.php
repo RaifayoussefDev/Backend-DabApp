@@ -203,6 +203,9 @@ class AdminPointOfInterestController extends Controller
             'owner_id' => 'nullable|exists:users,id',
             'is_verified' => 'boolean',
             'is_active' => 'boolean',
+            'main_image' => 'nullable|string|max:2048',
+            'images' => 'nullable|array',
+            'images.*' => 'string|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -225,6 +228,11 @@ class AdminPointOfInterestController extends Controller
 
         if ($request->has('services')) {
             $poi->services()->sync($request->services);
+        }
+
+        // Handle images
+        if ($request->has('main_image') || $request->has('images')) {
+            $this->syncImages($poi, $request->input('main_image'), $request->input('images', []));
         }
 
         $poi->load(['type', 'city', 'country', 'tags', 'services', 'images', 'mainImage']);
@@ -336,6 +344,9 @@ class AdminPointOfInterestController extends Controller
             'google_reviews_count' => 'nullable|integer|min:0',
             'is_verified' => 'boolean',
             'is_active' => 'boolean',
+            'main_image' => 'nullable|string|max:2048',
+            'images' => 'nullable|array',
+            'images.*' => 'string|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -355,6 +366,11 @@ class AdminPointOfInterestController extends Controller
 
         if ($request->has('services')) {
             $poi->services()->sync($request->services);
+        }
+
+        // Handle images
+        if ($request->has('main_image') || $request->has('images')) {
+            $this->syncImages($poi, $request->input('main_image'), $request->input('images', []));
         }
 
         $poi->load(['type', 'city', 'country', 'tags', 'services', 'images', 'mainImage']);
@@ -396,6 +412,39 @@ class AdminPointOfInterestController extends Controller
             'success' => true,
             'message' => 'Point of interest deleted successfully',
         ]);
+    }
+
+    /**
+     * Sync images for a POI.
+     */
+    private function syncImages($poi, $mainImageUrl, array $otherImages)
+    {
+        // Delete existing images that are not in the new list
+        $newUrls = array_filter(array_merge([$mainImageUrl], $otherImages));
+        $poi->images()->whereNotIn('image_url', $newUrls)->delete();
+
+        // Handle main image
+        if ($mainImageUrl) {
+            $poi->images()->updateOrCreate(
+                ['image_url' => $mainImageUrl],
+                ['is_main' => true, 'order_position' => 0]
+            );
+        }
+
+        // Handle other images
+        foreach ($otherImages as $index => $imageUrl) {
+            if ($imageUrl === $mainImageUrl)
+                continue;
+            $poi->images()->updateOrCreate(
+                ['image_url' => $imageUrl],
+                ['is_main' => false, 'order_position' => $index + 1]
+            );
+        }
+
+        // Ensure only one image is main (optional safety)
+        if ($mainImageUrl) {
+            $poi->images()->where('image_url', '!=', $mainImageUrl)->update(['is_main' => false]);
+        }
     }
 
     /**
