@@ -38,6 +38,7 @@ class PointOfInterest extends Model
         'google_place_id',
         'google_rating',
         'google_reviews_count',
+        'status',
     ];
 
     // Note: 'custom_icon' is a real DB column, NOT a virtual attribute,
@@ -178,6 +179,22 @@ class PointOfInterest extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope to get only published POIs.
+     */
+    public function scopePublished($query)
+    {
+        return $query->where('status', 'published');
+    }
+
+    /**
+     * Scope to get only draft POIs.
+     */
+    public function scopeDraft($query)
+    {
+        return $query->where('status', 'draft');
     }
 
     /**

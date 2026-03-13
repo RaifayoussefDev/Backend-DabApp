@@ -44,13 +44,20 @@ class AdminPointOfInterestController extends Controller
      *         @OA\Schema(type="boolean")
      *     ),
      *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="Filter by status (published, draft, inactive)",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"published", "draft", "inactive"})
+     *     ),
+     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of items per page. Leave empty to get all results.",
      *         required=false,
      *         @OA\Schema(type="integer")
      *     ),
-     *     @OA\Parameter(
+     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",
@@ -77,6 +84,10 @@ class AdminPointOfInterestController extends Controller
 
         if ($request->has('type_id')) {
             $query->ofType($request->type_id);
+        }
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
         }
 
         if ($request->has('is_verified')) {
@@ -148,23 +159,13 @@ class AdminPointOfInterestController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name","type_id","latitude","longitude"},
-     *             example={
-     *                 "name": "Le Louvre",
-     *                 "name_ar": "اللوفر",
-     *                 "description": "The world's largest art museum.",
-     *                 "type_id": 2,
-     *                 "latitude": 48.8606,
-     *                 "longitude": 2.3376,
-     *                 "address": "Rue de Rivoli, 75001 Paris",
-     *                 "phone": "+33140205050",
-     *                 "email": "info@louvre.fr",
-     *                 "website": "https://www.louvre.fr",
-     *                 "is_verified": true,
-     *                 "is_active": true,
-     *                 "owner_id": 5,
-     *                 "tags": {1, 3, 5}
-     *             }
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="Le Louvre"),
+     *             @OA\Property(property="status", type="string", enum={"published", "draft", "inactive"}, default="published"),
+     *             @OA\Property(property="type_id", type="integer", example=2),
+     *             @OA\Property(property="latitude", type="number", format="float", example=48.8606),
+     *             @OA\Property(property="longitude", type="number", format="float", example=2.3376),
+     *             @OA\Property(property="owner_id", type="integer", example=5)
      *         )
      *     ),
      *     @OA\Response(response=201, description="POI created successfully"),
@@ -177,15 +178,17 @@ class AdminPointOfInterestController extends Controller
     {
         $data = $request->json()->all() ?: $request->all();
 
+        $isDraft = ($data['status'] ?? 'published') === 'draft';
+
         $validator = Validator::make($data, [
             'name' => 'required|string|max:255',
             'name_ar' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'description_ar' => 'nullable|string',
-            'type_id' => 'required|exists:poi_types,id',
+            'type_id' => ($isDraft ? 'nullable' : 'required') . '|exists:poi_types,id',
             'custom_icon' => 'nullable|string|max:255',
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
+            'latitude' => ($isDraft ? 'nullable' : 'required') . '|numeric|between:-90,90',
+            'longitude' => ($isDraft ? 'nullable' : 'required') . '|numeric|between:-180,180',
             'address' => 'nullable|string',
             'city_id' => 'nullable|exists:cities,id',
             'country_id' => 'nullable|exists:countries,id',
@@ -203,6 +206,7 @@ class AdminPointOfInterestController extends Controller
             'owner_id' => 'nullable|exists:users,id',
             'is_verified' => 'boolean',
             'is_active' => 'boolean',
+            'status' => 'nullable|string|in:draft,published,inactive',
             'main_image' => 'nullable|string|max:2048',
             'images' => 'nullable|array',
             'images.*' => 'string|max:2048',
@@ -291,14 +295,14 @@ class AdminPointOfInterestController extends Controller
      *     tags={"Admin POIs"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\RequestBody(
+     *     *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             example={
-     *                 "name": "Le Louvre (Updated)",
-     *                 "is_verified": true,
-     *                 "is_active": false
-     *             }
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="status", type="string", enum={"published", "draft", "inactive"}),
+     *             @OA\Property(property="type_id", type="integer"),
+     *             @OA\Property(property="is_verified", type="boolean"),
+     *             @OA\Property(property="is_active", type="boolean")
      *         )
      *     ),
      *     @OA\Response(response=200, description="POI updated successfully"),
@@ -318,15 +322,18 @@ class AdminPointOfInterestController extends Controller
             ], 404);
         }
 
-        $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|required|string|max:255',
+        $data = $request->all();
+        $isDraft = ($data['status'] ?? $poi->status) === 'draft';
+
+        $validator = Validator::make($data, [
+            'name' => ($isDraft ? 'nullable' : 'sometimes|required') . '|string|max:255',
             'name_ar' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'description_ar' => 'nullable|string',
-            'type_id' => 'sometimes|required|exists:poi_types,id',
+            'type_id' => ($isDraft ? 'nullable' : 'sometimes|required') . '|exists:poi_types,id',
             'custom_icon' => 'nullable|string|max:255',
-            'latitude' => 'sometimes|required|numeric|between:-90,90',
-            'longitude' => 'sometimes|required|numeric|between:-180,180',
+            'latitude' => ($isDraft ? 'nullable' : 'sometimes|required') . '|numeric|between:-90,90',
+            'longitude' => ($isDraft ? 'nullable' : 'sometimes|required') . '|numeric|between:-180,180',
             'address' => 'nullable|string',
             'city_id' => 'nullable|exists:cities,id',
             'country_id' => 'nullable|exists:countries,id',
@@ -344,6 +351,7 @@ class AdminPointOfInterestController extends Controller
             'google_reviews_count' => 'nullable|integer|min:0',
             'is_verified' => 'boolean',
             'is_active' => 'boolean',
+            'status' => 'nullable|string|in:draft,published,inactive',
             'main_image' => 'nullable|string|max:2048',
             'images' => 'nullable|array',
             'images.*' => 'string|max:2048',
