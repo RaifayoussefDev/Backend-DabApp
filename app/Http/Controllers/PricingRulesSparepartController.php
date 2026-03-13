@@ -20,19 +20,19 @@ class PricingRulesSparepartController extends Controller
      *     summary="List all sparepart pricing rules",
      *     tags={"Pricing Rules Sparepart Management"},
      *     security={{"bearerAuth": {}}},
-     *     @OA\Parameter(
+     *     *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Number of items per page. Leave empty to get all items.",
+     *         description="Number of items per page.",
      *         required=false,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", default=15)
      *     ),
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",
      *         required=false,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", default=1)
      *     ),
      *     @OA\Parameter(
      *         name="search",
@@ -74,12 +74,8 @@ class PricingRulesSparepartController extends Controller
             $query->where('bike_part_category_id', $request->bike_part_category_id);
         }
 
-        if ($request->filled('per_page')) {
-            $perPage = $request->input('per_page', 15);
-            $rules = $query->paginate($perPage);
-        } else {
-            $rules = $query->get();
-        }
+        $perPage = $request->input('per_page', 15);
+        $rules = $query->paginate($perPage);
 
         return response()->json([
             'success' => true,

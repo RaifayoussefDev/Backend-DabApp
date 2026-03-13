@@ -20,19 +20,19 @@ class PricingRulesLicencePlateController extends Controller
      *     summary="List licence plate pricing rules (with pagination and search)",
      *     tags={"Pricing Rules Licence Plate Management"},
      *     security={{"bearerAuth": {}}},
-     *     @OA\Parameter(
+     *     *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Number of items per page. Leave empty to get all items.",
+     *         description="Number of items per page.",
      *         required=false,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", default=15)
      *     ),
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",
      *         required=false,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="integer", default=1)
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -48,13 +48,8 @@ class PricingRulesLicencePlateController extends Controller
     {
         $query = PricingRulesLicencePlate::query();
 
-        // For now, there's only one global price, but we provide pagination for consistency
-        if ($request->filled('per_page')) {
-            $perPage = $request->input('per_page', 15);
-            $rules = $query->paginate($perPage);
-        } else {
-            $rules = $query->get();
-        }
+        $perPage = $request->input('per_page', 15);
+        $rules = $query->paginate($perPage);
 
         return response()->json([
             'success' => true,
