@@ -37,8 +37,9 @@ class PromoCodeController extends Controller
      *                 @OA\Property(property="description_ar", type="string", example="احصل على خصم 10%"),
      *                 @OA\Property(property="discount_type", type="string", example="percentage"),
      *                 @OA\Property(property="discount_value", type="number", example=10),
-                @OA\Property(property="is_active", type="boolean", example=true),
-                @OA\Property(property="display", type="boolean", example=true)
+     *                 @OA\Property(property="is_active", type="boolean", example=true),
+     *                 @OA\Property(property="display", type="boolean", example=true),
+     *                 @OA\Property(property="usages_count", type="integer", example=5)
      *             )
      *         )
      *     )
@@ -46,7 +47,7 @@ class PromoCodeController extends Controller
      */
     public function index()
     {
-        return response()->json(PromoCode::all());
+        return response()->json(PromoCode::withCount('usages')->get());
     }
 
     /**
@@ -126,22 +127,49 @@ class PromoCodeController extends Controller
      *         response=200,
      *         description="Promo code details",
      *         @OA\JsonContent(
-            @OA\Property(property="id", type="integer", example=1),
-            @OA\Property(property="code", type="string", example="SAVE20"),
-            @OA\Property(property="description", type="string", example="Get 20% off"),
-            @OA\Property(property="description_ar", type="string", example="احصل على خصم 20%"),
-            @OA\Property(property="discount_type", type="string", example="percentage"),
-            @OA\Property(property="discount_value", type="number", example=20),
-            @OA\Property(property="is_active", type="boolean", example=true),
-            @OA\Property(property="display", type="boolean", example=true)
-        )
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="code", type="string", example="SAVE20"),
+     *             @OA\Property(property="description", type="string", example="Get 20% off"),
+     *             @OA\Property(property="description_ar", type="string", example="احصل على خصم 20%"),
+     *             @OA\Property(property="discount_type", type="string", example="percentage"),
+     *             @OA\Property(property="discount_value", type="number", example=20),
+     *             @OA\Property(property="is_active", type="boolean", example=true),
+     *             @OA\Property(property="display", type="boolean", example=true),
+     *             @OA\Property(property="usages_count", type="integer", example=10),
+     *             @OA\Property(
+     *                 property="usages",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer"),
+     *                     @OA\Property(property="user_id", type="integer"),
+     *                     @OA\Property(property="listing_id", type="integer"),
+     *                     @OA\Property(property="used_at", type="string", format="date-time"),
+     *                     @OA\Property(
+     *                         property="user",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer"),
+     *                         @OA\Property(property="name", type="string"),
+     *                         @OA\Property(property="email", type="string")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="listing",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer"),
+     *                         @OA\Property(property="title", type="string")
+     *                     )
+     *                 )
+     *             )
+     *         )
      *     ),
      *     @OA\Response(response=404, description="Promo code not found")
      * )
      */
     public function show($id)
     {
-        $promo = PromoCode::find($id);
+        $promo = PromoCode::withCount('usages')
+            ->with(['usages.user:id,first_name,last_name,email', 'usages.listing:id,title'])
+            ->find($id);
+
         if (!$promo) {
             return response()->json(['message' => 'Promo code not found'], 404);
         }
@@ -164,7 +192,7 @@ class PromoCodeController extends Controller
      *             @OA\Property(property="discount_type", type="string", enum={"percentage", "fixed"}),
      *             @OA\Property(property="discount_value", type="number", format="float"),
      *             @OA\Property(property="is_active", type="boolean"),
-            @OA\Property(property="display", type="boolean")
+     *            @OA\Property(property="display", type="boolean")
      *         )
      *     ),
      *     @OA\Response(

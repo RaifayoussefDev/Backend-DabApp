@@ -36,4 +36,12 @@ class PromoCode extends Model
     {
         return $this->status === 'active' && $this->used_count < $this->max_uses && now()->between($this->start_date, $this->end_date);
     }
+
+    /**
+     * Get the usages for the promo code.
+     */
+    public function usages()
+    {
+        return $this->hasMany(PromoCodeUsage::class);
+    }
 }
