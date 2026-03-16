@@ -49,7 +49,7 @@ class AdminMotorcycleYearController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = MotorcycleYear::query();
+        $query = MotorcycleYear::with(['model.type']);
 
         if ($request->has('search') && !empty($request->search)) {
             $query->where('year', $request->search);
@@ -79,11 +79,13 @@ class AdminMotorcycleYearController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"year"},
+     *             required={"year", "model_id"},
      *             example={
-     *                 "year": 2026
+     *                 "year": 2026,
+     *                 "model_id": 1
      *             },
-     *             @OA\Property(property="year", type="integer", example=2026)
+     *             @OA\Property(property="year", type="integer", example=2026),
+     *             @OA\Property(property="model_id", type="integer", example=1)
      *         )
      *     ),
      *     @OA\Response(response=201, description="Motorcycle year created"),
@@ -95,7 +97,8 @@ class AdminMotorcycleYearController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'year' => 'required|integer|unique:motorcycle_years,year',
+            'year' => 'required|integer',
+            'model_id' => 'required|integer|exists:motorcycle_models,id',
         ]);
 
         if ($validator->fails()) {
@@ -105,7 +108,20 @@ class AdminMotorcycleYearController extends Controller
             ], 422);
         }
 
+        // Check for uniqueness for the specific model
+        $exists = MotorcycleYear::where('year', $request->year)
+            ->where('model_id', $request->model_id)
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['year' => ['The year already exists for this model.']],
+            ], 422);
+        }
+
         $year = MotorcycleYear::create($validator->validated());
+        $year->load(['model.type']);
 
         return response()->json([
             'success' => true,
@@ -134,7 +150,7 @@ class AdminMotorcycleYearController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $year = MotorcycleYear::find($id);
+        $year = MotorcycleYear::with(['model.type'])->find($id);
 
         if (!$year) {
             return response()->json([
@@ -164,11 +180,13 @@ class AdminMotorcycleYearController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"year"},
+     *             required={"year", "model_id"},
      *             example={
-     *                 "year": 2027
+     *                 "year": 2027,
+     *                 "model_id": 1
      *             },
-     *             @OA\Property(property="year", type="integer")
+     *             @OA\Property(property="year", type="integer"),
+     *             @OA\Property(property="model_id", type="integer")
      *         )
      *     ),
      *     @OA\Response(response=200, description="Motorcycle year updated"),
@@ -190,7 +208,8 @@ class AdminMotorcycleYearController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'year' => 'required|integer|unique:motorcycle_years,year,' . $id,
+            'year' => 'required|integer',
+            'model_id' => 'required|integer|exists:motorcycle_models,id',
         ]);
 
         if ($validator->fails()) {
@@ -200,7 +219,21 @@ class AdminMotorcycleYearController extends Controller
             ], 422);
         }
 
+        // Check for uniqueness for the specific model, excluding current record
+        $exists = MotorcycleYear::where('year', $request->year)
+            ->where('model_id', $request->model_id)
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['year' => ['The year already exists for this model.']],
+            ], 422);
+        }
+
         $year->update($validator->validated());
+        $year->load(['model.type']);
 
         return response()->json([
             'success' => true,
