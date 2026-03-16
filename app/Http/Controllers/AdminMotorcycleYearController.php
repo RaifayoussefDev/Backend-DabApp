@@ -24,9 +24,9 @@ class AdminMotorcycleYearController extends Controller
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Search by year",
+     *         description="Search by year, model name, or brand name",
      *         required=false,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="string")
      *     ),
      *     @OA\Parameter(
      *         name="per_page",
@@ -52,7 +52,16 @@ class AdminMotorcycleYearController extends Controller
         $query = MotorcycleYear::with(['model.type', 'model.brand']);
 
         if ($request->has('search') && !empty($request->search)) {
-            $query->where('year', $request->search);
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('year', 'like', '%' . $search . '%')
+                    ->orWhereHas('model', function ($q) use ($search) {
+                        $q->where('name', 'like', '%' . $search . '%')
+                            ->orWhereHas('brand', function ($q) use ($search) {
+                                $q->where('name', 'like', '%' . $search . '%');
+                            });
+                    });
+            });
         }
 
         $perPage = $request->input('per_page');
