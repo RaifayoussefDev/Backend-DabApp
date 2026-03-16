@@ -49,7 +49,7 @@ class AdminMotorcycleYearController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = MotorcycleYear::with(['model.type']);
+        $query = MotorcycleYear::with(['model.type', 'model.brand']);
 
         if ($request->has('search') && !empty($request->search)) {
             $query->where('year', $request->search);
@@ -121,7 +121,7 @@ class AdminMotorcycleYearController extends Controller
         }
 
         $year = MotorcycleYear::create($validator->validated());
-        $year->load(['model.type']);
+        $year->load(['model.type', 'model.brand']);
 
         return response()->json([
             'success' => true,
@@ -150,7 +150,7 @@ class AdminMotorcycleYearController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $year = MotorcycleYear::with(['model.type'])->find($id);
+        $year = MotorcycleYear::with(['model.type', 'model.brand'])->find($id);
 
         if (!$year) {
             return response()->json([
@@ -233,7 +233,7 @@ class AdminMotorcycleYearController extends Controller
         }
 
         $year->update($validator->validated());
-        $year->load(['model.type']);
+        $year->load(['model.type', 'model.brand']);
 
         return response()->json([
             'success' => true,
