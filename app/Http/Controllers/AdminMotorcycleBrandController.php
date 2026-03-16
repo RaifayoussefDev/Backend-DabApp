@@ -49,7 +49,7 @@ class AdminMotorcycleBrandController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = MotorcycleBrand::query();
+        $query = MotorcycleBrand::withCount('models');
 
         if ($request->has('search') && !empty($request->search)) {
             $search = $request->search;
@@ -68,6 +68,45 @@ class AdminMotorcycleBrandController extends Controller
             'success' => true,
             'message' => 'Motorcycle brands retrieved successfully.',
             'data' => $brands,
+        ]);
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/admin/motorcycle-brands/{id}/toggle-display",
+     *     summary="Toggle motorcycle brand display status (Admin)",
+     *     tags={"Admin Motorcycle Brands"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response=200, description="Display status toggled"),
+     *     @OA\Response(response=404, description="Brand not found"),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=403, description="Forbidden")
+     * )
+     */
+    public function toggleDisplay(int $id): JsonResponse
+    {
+        $brand = MotorcycleBrand::find($id);
+
+        if (!$brand) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Motorcycle brand not found.',
+            ], 404);
+        }
+
+        $brand->is_displayed = !$brand->is_displayed;
+        $brand->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Motorcycle brand display status toggled successfully.',
+            'data' => $brand,
         ]);
     }
 
