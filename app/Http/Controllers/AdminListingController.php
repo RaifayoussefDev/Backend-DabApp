@@ -451,7 +451,10 @@ class AdminListingController extends Controller
             'licensePlate.format',
             'licensePlate.city',
             'licensePlate.fieldValues.formatField',
-            'submissions.user'
+            'submissions.user',
+            'submissions.negotiations',
+            'submissions.responses',
+            'auctionHistories.buyer'
         ])->findOrFail($id);
 
         return response()->json($listing);
