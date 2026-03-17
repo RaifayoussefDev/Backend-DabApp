@@ -46,6 +46,7 @@ class Listing extends Model
         'edit_count',
         'last_edited_at',
         'created_by', // ✅ Added
+        'views_count', // ✅ Added
     ];
 
     // ✅ AJOUT DES CASTS
@@ -56,6 +57,7 @@ class Listing extends Model
         'allow_submission' => 'boolean',
         'payment_pending' => 'boolean',
         'edit_count' => 'integer',           // ✅ NOUVEAU
+        'views_count' => 'integer',          // ✅ NOUVEAU
         'last_edited_at' => 'datetime',      // ✅ NOUVEAU
         'published_at' => 'datetime',
         'created_at' => 'datetime',
@@ -154,6 +156,14 @@ class Listing extends Model
     public function submissions()
     {
         return $this->hasMany(Submission::class);
+    }
+
+    /**
+     * Get all of the listing's views.
+     */
+    public function views()
+    {
+        return $this->morphMany(View::class, 'viewable');
     }
 
     // ===========================

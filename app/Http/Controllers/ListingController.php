@@ -3419,6 +3419,8 @@ class ListingController extends Controller
             return response()->json(['message' => 'Listing not found'], 404);
         }
 
+        $this->recordView($listing, $user);
+
         $isInWishlist = false;
         if ($user) {
             $isInWishlist = DB::table('wishlists')
@@ -3491,6 +3493,7 @@ class ListingController extends Controller
                 'dealer_phone' => $listing->seller?->dealer_phone,
                 'points_of_interest' => $listing->seller?->pointsOfInterest,
             ],
+            'views_count' => $listing->views_count,
         ];
 
         if (!$listing->allow_submission) {

@@ -29,7 +29,7 @@ class AdminListingController extends Controller
      *     @OA\Parameter(name="status", in="query", description="Filter by status (published, draft, sold, etc)", @OA\Schema(type="string")),
      *     @OA\Parameter(name="category_id", in="query", description="Filter by category", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="search", in="query", description="Search by title or ID", @OA\Schema(type="string")),
-     *     @OA\Parameter(name="sort_by", in="query", description="Column to sort by", @OA\Schema(type="string", enum={"id", "title", "price", "status", "created_at", "views"})),
+     *     @OA\Parameter(name="sort_by", in="query", description="Column to sort by", @OA\Schema(type="string", enum={"id", "title", "price", "status", "created_at", "views_count"})),
      *     @OA\Parameter(name="sort_order", in="query", description="Sort order (asc/desc)", @OA\Schema(type="string", enum={"asc", "desc"})),
      *     @OA\Response(response=200, description="Listings retrieved")
      * )
@@ -40,7 +40,7 @@ class AdminListingController extends Controller
         $sortBy = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
 
-        $allowedSorts = ['id', 'title', 'price', 'status', 'created_at', 'views', 'updated_at'];
+        $allowedSorts = ['id', 'title', 'price', 'status', 'created_at', 'views_count', 'updated_at'];
 
         if (!in_array($sortBy, $allowedSorts)) {
             $sortBy = 'created_at';
@@ -422,10 +422,11 @@ class AdminListingController extends Controller
      *             @OA\Property(property="submission", type="object", nullable=true),
      *             @OA\Property(property="seller", type="object", nullable=true),
      *             @OA\Property(property="motorcycle", type="object", nullable=true),
-     *             @OA\Property(property="spare_part", type="object", nullable=true),
-     *             @OA\Property(property="license_plate", type="object", nullable=true)
-     *         )
-     *     ),
+             @OA\Property(property="spare_part", type="object", nullable=true),
+             @OA\Property(property="license_plate", type="object", nullable=true),
+             @OA\Property(property="views_count", type="integer", example=10)
+         )
+     ),
      *     @OA\Response(response=404, description="Listing not found")
      * )
      */
