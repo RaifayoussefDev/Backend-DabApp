@@ -4898,4 +4898,45 @@ class ListingController extends Controller
             'listings' => $formattedListings
         ]);
     }
+    /**
+     * @OA\Schema(
+     *     schema="View",
+     *     title="View",
+     *     @OA\Property(property="id", type="integer"),
+     *     @OA\Property(property="user_id", type="integer"),
+     *     @OA\Property(property="viewable_id", type="integer"),
+     *     @OA\Property(property="viewable_type", type="string"),
+     *     @OA\Property(property="ip_address", type="string"),
+     *     @OA\Property(property="user_agent", type="string"),
+     *     @OA\Property(property="created_at", type="string", format="date-time"),
+     *     @OA\Property(property="updated_at", type="string", format="date-time")
+     * )
+     */
+    private function recordView($viewable, $user)
+    {
+        if (!$user) {
+            $viewable->increment('views_count');
+            return;
+        }
+
+        $exists = \App\Models\View::where('user_id', $user->id)
+            ->where('viewable_id', $viewable->id)
+            ->where('viewable_type', get_class($viewable))
+            ->exists();
+
+        if (!$exists) {
+            try {
+                \App\Models\View::create([
+                    'user_id' => $user->id,
+                    'viewable_id' => $viewable->id,
+                    'viewable_type' => get_class($viewable),
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                ]);
+                $viewable->increment('views_count');
+            } catch (\Exception $e) {
+                // Ignore unique constraint violation
+            }
+        }
+    }
 }
