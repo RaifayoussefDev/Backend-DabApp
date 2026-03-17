@@ -424,7 +424,8 @@ class AdminListingController extends Controller
      *             @OA\Property(property="motorcycle", type="object", nullable=true),
              @OA\Property(property="spare_part", type="object", nullable=true),
              @OA\Property(property="license_plate", type="object", nullable=true),
-             @OA\Property(property="views_count", type="integer", example=10)
+             @OA\Property(property="views_count", type="integer", example=10),
+             @OA\Property(property="submissions", type="array", @OA\Items(ref="#/components/schemas/Submission"))
          )
      ),
      *     @OA\Response(response=404, description="Listing not found")
@@ -449,7 +450,8 @@ class AdminListingController extends Controller
             'sparePart.motorcycleAssociations.year',
             'licensePlate.format',
             'licensePlate.city',
-            'licensePlate.fieldValues.formatField'
+            'licensePlate.fieldValues.formatField',
+            'submissions.user'
         ])->findOrFail($id);
 
         return response()->json($listing);
