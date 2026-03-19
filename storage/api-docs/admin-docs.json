@@ -2401,10 +2401,12 @@
                             "enum": [
                                 "id",
                                 "title",
+                                "category_id",
+                                "country_id",
                                 "price",
                                 "status",
                                 "created_at",
-                                "views"
+                                "views_count"
                             ]
                         }
                     },
@@ -2578,6 +2580,16 @@
                                         "license_plate": {
                                             "type": "object",
                                             "nullable": true
+                                        },
+                                        "views_count": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "submissions": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Submission"
+                                            }
                                         }
                                     },
                                     "type": "object"
@@ -5209,11 +5221,43 @@
                                                 "description": "Brand ID in garage",
                                                 "type": "integer"
                                             },
+                                            "is_verified": {
+                                                "description": "Filter by blue tick verification",
+                                                "type": "boolean"
+                                            },
+                                            "role_id": {
+                                                "description": "Filter by user role (1: Admin, 2: User, etc.)",
+                                                "type": "integer"
+                                            },
+                                            "last_login_from": {
+                                                "description": "Filter users who logged in after this date",
+                                                "type": "string",
+                                                "format": "date"
+                                            },
+                                            "last_login_to": {
+                                                "description": "Filter users who logged in before this date",
+                                                "type": "string",
+                                                "format": "date"
+                                            },
+                                            "has_points_of_interest": {
+                                                "description": "Filter users who have at least one POI",
+                                                "type": "boolean"
+                                            },
+                                            "gender": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "male",
+                                                    "female",
+                                                    "other"
+                                                ]
+                                            },
                                             "date_from": {
+                                                "description": "Filter users who registered after this date",
                                                 "type": "string",
                                                 "format": "date"
                                             },
                                             "date_to": {
+                                                "description": "Filter users who registered before this date",
                                                 "type": "string",
                                                 "format": "date"
                                             }
@@ -5248,7 +5292,9 @@
                                                 "enum": [
                                                     "promo",
                                                     "news",
-                                                    "info"
+                                                    "info",
+                                                    "alert",
+                                                    "update"
                                                 ]
                                             }
                                         },
@@ -22929,6 +22975,58 @@
                 "xml": {
                     "name": "ServiceCategory"
                 }
+            },
+            "Submission": {
+                "title": "Submission",
+                "description": "Submission (SOOM) model representing a bid on a listing",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "listing_id": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 1500.5
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "accepted",
+                            "rejected"
+                        ]
+                    },
+                    "submission_date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "acceptance_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "sale_validated": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
             },
             "SubscriptionPlan": {
                 "title": "SubscriptionPlan",

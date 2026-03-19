@@ -38083,6 +38083,38 @@
                 },
                 "type": "object"
             },
+            "View": {
+                "title": "View",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "user_id": {
+                        "type": "integer"
+                    },
+                    "viewable_id": {
+                        "type": "integer"
+                    },
+                    "viewable_type": {
+                        "type": "string"
+                    },
+                    "ip_address": {
+                        "type": "string"
+                    },
+                    "user_agent": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "City": {
                 "title": "City",
                 "required": [
@@ -38991,6 +39023,58 @@
                 "xml": {
                     "name": "ServiceCategory"
                 }
+            },
+            "Submission": {
+                "title": "Submission",
+                "description": "Submission (SOOM) model representing a bid on a listing",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "listing_id": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 1500.5
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "accepted",
+                            "rejected"
+                        ]
+                    },
+                    "submission_date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "acceptance_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "sale_validated": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
             },
             "SubscriptionPlan": {
                 "title": "SubscriptionPlan",

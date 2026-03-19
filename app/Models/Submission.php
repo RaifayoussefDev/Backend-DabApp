@@ -5,6 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
+/**
+ * @OA\Schema(
+ *     schema="Submission",
+ *     type="object",
+ *     title="Submission",
+ *     description="Submission (SOOM) model representing a bid on a listing",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="listing_id", type="integer", example=10),
+ *     @OA\Property(property="user_id", type="integer", example=2),
+ *     @OA\Property(property="amount", type="number", format="float", example=1500.50),
+ *     @OA\Property(property="status", type="string", enum={"pending", "accepted", "rejected"}),
+ *     @OA\Property(property="submission_date", type="string", format="date-time"),
+ *     @OA\Property(property="acceptance_date", type="string", format="date-time", nullable=true),
+ *     @OA\Property(property="sale_validated", type="boolean"),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ */
 class Submission extends Model
 {
     protected $fillable = [
