@@ -10,11 +10,10 @@ use Illuminate\Queue\SerializesModels;
 use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
-use App\Traits\UserFilterTrait;
 
 class MassNotificationJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, UserFilterTrait;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $filters;
     protected $content;
@@ -41,7 +40,48 @@ class MassNotificationJob implements ShouldQueue
     {
         Log::info("Starting Mass Notification Job", ['filters' => $this->filters]);
 
-        $query = $this->buildFilteredUserQuery($this->filters);
+        $query = User::query()->where('is_active', true);
+
+        // 0. Filter by specific User IDs (Direct Notification)
+        if (!empty($this->filters['user_ids'])) {
+            $query->whereIn('id', $this->filters['user_ids']);
+        }
+
+        // 1. Filter by Country (Users who belong to this country)
+        if (!empty($this->filters['country_id'])) {
+            $query->where('country_id', $this->filters['country_id']);
+        }
+
+        // 2. Filter by Listing Criteria
+        if (!empty($this->filters['category_id']) || !empty($this->filters['date_from']) || !empty($this->filters['date_to'])) {
+            $query->whereHas('listings', function ($q) {
+                if (!empty($this->filters['category_id'])) {
+                    $q->where('category_id', $this->filters['category_id']);
+                }
+                if (!empty($this->filters['date_from'])) {
+                    $q->where('created_at', '>=', $this->filters['date_from']);
+                }
+                if (!empty($this->filters['date_to'])) {
+                    $q->where('created_at', '<=', $this->filters['date_to']);
+                }
+            });
+        }
+
+        // 3. Filter by "Has Listing" (Boolean)
+        if (isset($this->filters['has_listing'])) {
+            if ($this->filters['has_listing']) {
+                $query->has('listings');
+            } else {
+                $query->doesntHave('listings');
+            }
+        }
+
+        // 4. Filter by Brand in Garage
+        if (!empty($this->filters['brand_in_garage'])) {
+            $query->whereHas('myGarage', function ($q) {
+                $q->where('brand_id', $this->filters['brand_in_garage']);
+            });
+        }
 
         $totalUsers = $query->count();
         Log::info("Found {$totalUsers} users for mass notification.");
@@ -55,7 +95,6 @@ class MassNotificationJob implements ShouldQueue
         }
 
         $query->chunk(100, function ($users) use ($notificationService) {
-            /** @var User $user */
             foreach ($users as $user) {
                 try {
                     // Determine title and message based on user preference
