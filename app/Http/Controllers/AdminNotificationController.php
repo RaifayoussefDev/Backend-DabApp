@@ -155,10 +155,14 @@ class AdminNotificationController extends Controller
             'content.type' => 'nullable|string|in:promo,news,info',
             'filters.user_ids' => 'nullable|array',
             'filters.user_ids.*' => 'exists:users,id',
+            'filters.is_verified' => 'nullable|boolean',
+            'filters.gender' => 'nullable|string|in:male,female,other',
             'filters.country_id' => 'nullable|exists:countries,id',
+            'filters.role_id' => 'nullable|exists:roles,id',
             'filters.category_id' => 'nullable|exists:categories,id',
-            'filters.has_listing' => 'nullable|boolean',
             'filters.brand_in_garage' => 'nullable|exists:motorcycle_brands,id',
+            'filters.has_points_of_interest' => 'nullable|boolean',
+            'filters.last_login_from' => 'nullable|date',
             'filters.date_from' => 'nullable|date',
             'filters.date_to' => 'nullable|date',
             'channels' => 'nullable|array',
@@ -174,14 +178,13 @@ class AdminNotificationController extends Controller
         $channels = $request->input('channels', ['push']); // Default to push if not specified
 
         // 2. Dispatch Job
-        // 2. Dispatch Job
-        // Using dispatchSync for debugging/immediate execution
-        MassNotificationJob::dispatchSync($filters, $content, $channels);
+        // Using dispatchSync to get immediate results for the admin
+        $summary = MassNotificationJob::dispatchSync($filters, $content, $channels);
 
         return response()->json([
-            'message' => 'Mass notification job dispatched successfully',
+            'message' => 'Mass notification process completed',
             'filters' => $filters,
-            'recipients_estimate' => 'Processing in background'
+            'summary' => $summary
         ]);
     }
 }
