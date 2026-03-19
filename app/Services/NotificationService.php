@@ -220,11 +220,17 @@ class NotificationService
                 'data' => $pushData
             ]);
 
+            // Ensure all data values are strings (required by FCM)
+            $finalPushData = [];
+            foreach ($pushData as $key => $value) {
+                $finalPushData[$key] = is_array($value) ? json_encode($value) : (string)$value;
+            }
+
             $result = $this->firebase->sendToToken(
                 $token->fcm_token,
                 $notification->title,
                 $notification->message,
-                $pushData,
+                $finalPushData,
                 $fcmOptions
             );
 
