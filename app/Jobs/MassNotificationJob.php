@@ -10,10 +10,11 @@ use Illuminate\Queue\SerializesModels;
 use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
+use App\Traits\UserFilterTrait;
 
 class MassNotificationJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, UserFilterTrait;
 
     protected $filters;
     protected $content;
@@ -40,88 +41,7 @@ class MassNotificationJob implements ShouldQueue
     {
         Log::info("Starting Mass Notification Job", ['filters' => $this->filters]);
 
-        $query = User::query()->where('is_active', true);
-
-        // 0. Filter by specific User IDs (Direct Notification)
-        if (!empty($this->filters['user_ids'])) {
-            $query->whereIn('id', $this->filters['user_ids']);
-        }
-
-        // 1. Filter by Country (Users who belong to this country)
-        if (!empty($this->filters['country_id'])) {
-            $query->where('country_id', $this->filters['country_id']);
-        }
-
-        // 2. Filter by Listing Criteria
-        if (!empty($this->filters['category_id']) || !empty($this->filters['date_from']) || !empty($this->filters['date_to'])) {
-            $query->whereHas('listings', function ($q) {
-                if (!empty($this->filters['category_id'])) {
-                    $q->where('category_id', $this->filters['category_id']);
-                }
-                if (!empty($this->filters['date_from'])) {
-                    $q->where('created_at', '>=', $this->filters['date_from']);
-                }
-                if (!empty($this->filters['date_to'])) {
-                    $q->where('created_at', '<=', $this->filters['date_to']);
-                }
-            });
-        }
-
-        // 3. Filter by "Has Listing" (Boolean)
-        if (isset($this->filters['has_listing'])) {
-            if ($this->filters['has_listing']) {
-                $query->has('listings');
-            } else {
-                $query->doesntHave('listings');
-            }
-        }
-
-        // 4. Filter by Brand in Garage
-        if (!empty($this->filters['brand_in_garage'])) {
-            $query->whereHas('myGarage', function ($q) {
-                $q->where('brand_id', $this->filters['brand_in_garage']);
-            });
-        }
-
-        // 5. Filter by Verification Status (Blue Tick)
-        if (isset($this->filters['is_verified'])) {
-            $query->where('verified', $this->filters['is_verified']);
-        }
-
-        // 6. Filter by Role
-        if (!empty($this->filters['role_id'])) {
-            $query->where('role_id', $this->filters['role_id']);
-        }
-
-        // 7. Filter by Last Login
-        if (!empty($this->filters['last_login_from'])) {
-            $query->where('last_login', '>=', $this->filters['last_login_from']);
-        }
-        if (!empty($this->filters['last_login_to'])) {
-            $query->where('last_login', '<=', $this->filters['last_login_to']);
-        }
-
-        // 8. Filter by Date Registered (date_from / date_to)
-        if (!empty($this->filters['date_from'])) {
-            $query->where('created_at', '>=', $this->filters['date_from']);
-        }
-        if (!empty($this->filters['date_to'])) {
-            $query->where('created_at', '<=', $this->filters['date_to']);
-        }
-
-        // 9. Filter by Gender
-        if (!empty($this->filters['gender'])) {
-            $query->where('gender', $this->filters['gender']);
-        }
-
-        // 10. Filter by "Has Points of Interest"
-        if (isset($this->filters['has_points_of_interest'])) {
-            if ($this->filters['has_points_of_interest']) {
-                $query->has('pointsOfInterest');
-            } else {
-                $query->doesntHave('pointsOfInterest');
-            }
-        }
+        $query = $this->buildFilteredUserQuery($this->filters);
 
         $totalUsers = $query->count();
         Log::info("Found {$totalUsers} users for mass notification.");

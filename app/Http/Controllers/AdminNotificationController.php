@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Jobs\MassNotificationJob;
 use Illuminate\Support\Facades\Validator;
 use App\Enums\NotificationType;
+use App\Traits\UserFilterTrait;
+use App\Models\User;
 
 /**
  * @OA\Tag(
@@ -15,6 +17,8 @@ use App\Enums\NotificationType;
  */
 class AdminNotificationController extends Controller
 {
+    use UserFilterTrait;
+
     /**
      * @OA\Get(
      *     path="/api/admin/notifications",
@@ -150,7 +154,53 @@ class AdminNotificationController extends Controller
      *         )
      *     )
      * )
+     *
+     * @OA\Get(
+     *     path="/api/admin/notifications/preview-recipients",
+     *     summary="Preview count and sample of recipients for mass notification",
+     *     tags={"Admin Notifications"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="user_ids[]", in="query", @OA\Schema(type="array", @OA\Items(type="integer"))),
+     *     @OA\Parameter(name="country_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="category_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="has_listing", in="query", @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="brand_in_garage", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="is_verified", in="query", @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="role_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="last_login_from", in="query", @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="last_login_to", in="query", @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="has_points_of_interest", in="query", @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="gender", in="query", @OA\Schema(type="string", enum={"male", "female", "other"})),
+     *     @OA\Parameter(name="date_from", in="query", @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="date_to", in="query", @OA\Schema(type="string", format="date")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Preview results",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total_count", type="integer"),
+     *             @OA\Property(property="sample_users", type="array", @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="full_name", type="string"),
+     *                 @OA\Property(property="email", type="string")
+     *             ))
+     *         )
+     *     )
+     * )
      */
+    public function previewRecipients(Request $request)
+    {
+        $filters = $request->all();
+        $query = $this->buildFilteredUserQuery($filters);
+
+        $totalCount = $query->count();
+        $sampleUsers = $query->limit(5)->get(['id', 'first_name', 'last_name', 'email']);
+
+        return response()->json([
+            'total_count' => $totalCount,
+            'sample_users' => $sampleUsers
+        ]);
+    }
+
     public function sendMassNotification(Request $request)
     {
         // 1. Validation
