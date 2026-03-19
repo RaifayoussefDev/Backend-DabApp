@@ -309,6 +309,7 @@ Route::prefix('admin')->group(function () {
 
         // Motorcycle Brands
         Route::get('/motorcycle-brands/stats/overview', [AdminMotorcycleBrandController::class, 'stats']);
+        Route::patch('/motorcycle-brands/{id}/toggle-display', [AdminMotorcycleBrandController::class, 'toggleDisplay']);
         Route::apiResource('motorcycle-brands', AdminMotorcycleBrandController::class);
 
         // Motorcycle Years

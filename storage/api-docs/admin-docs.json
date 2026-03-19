@@ -4002,6 +4002,44 @@
                 ]
             }
         },
+        "/api/admin/motorcycle-brands/{id}/toggle-display": {
+            "patch": {
+                "tags": [
+                    "Admin Motorcycle Brands"
+                ],
+                "summary": "Toggle motorcycle brand display status (Admin)",
+                "operationId": "2dae78c036ebe83a735d3edf0d2d65c2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Display status toggled"
+                    },
+                    "404": {
+                        "description": "Brand not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/motorcycle-brands/{id}": {
             "get": {
                 "tags": [
@@ -4748,10 +4786,10 @@
                     {
                         "name": "search",
                         "in": "query",
-                        "description": "Search by year",
+                        "description": "Search by year, model name, or brand name",
                         "required": false,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     },
                     {
@@ -4802,18 +4840,24 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "year"
+                                    "year",
+                                    "model_id"
                                 ],
                                 "properties": {
                                     "year": {
                                         "type": "integer",
                                         "example": 2026
+                                    },
+                                    "model_id": {
+                                        "type": "integer",
+                                        "example": 1
                                     }
                                 },
                                 "type": "object"
                             },
                             "example": {
-                                "year": 2026
+                                "year": 2026,
+                                "model_id": 1
                             }
                         }
                     }
@@ -4898,17 +4942,22 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "year"
+                                    "year",
+                                    "model_id"
                                 ],
                                 "properties": {
                                     "year": {
+                                        "type": "integer"
+                                    },
+                                    "model_id": {
                                         "type": "integer"
                                     }
                                 },
                                 "type": "object"
                             },
                             "example": {
-                                "year": 2027
+                                "year": 2027,
+                                "model_id": 1
                             }
                         }
                     }

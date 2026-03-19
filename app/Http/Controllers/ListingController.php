@@ -3419,6 +3419,8 @@ class ListingController extends Controller
             return response()->json(['message' => 'Listing not found'], 404);
         }
 
+        $this->recordView($listing, $user);
+
         $isInWishlist = false;
         if ($user) {
             $isInWishlist = DB::table('wishlists')
@@ -3491,6 +3493,7 @@ class ListingController extends Controller
                 'dealer_phone' => $listing->seller?->dealer_phone,
                 'points_of_interest' => $listing->seller?->pointsOfInterest,
             ],
+            'views_count' => $listing->views_count,
         ];
 
         if (!$listing->allow_submission) {
@@ -4894,5 +4897,46 @@ class ListingController extends Controller
             'total_listings' => $formattedListings->count(),
             'listings' => $formattedListings
         ]);
+    }
+    /**
+     * @OA\Schema(
+     *     schema="View",
+     *     title="View",
+     *     @OA\Property(property="id", type="integer"),
+     *     @OA\Property(property="user_id", type="integer"),
+     *     @OA\Property(property="viewable_id", type="integer"),
+     *     @OA\Property(property="viewable_type", type="string"),
+     *     @OA\Property(property="ip_address", type="string"),
+     *     @OA\Property(property="user_agent", type="string"),
+     *     @OA\Property(property="created_at", type="string", format="date-time"),
+     *     @OA\Property(property="updated_at", type="string", format="date-time")
+     * )
+     */
+    private function recordView($viewable, $user)
+    {
+        if (!$user) {
+            $viewable->increment('views_count');
+            return;
+        }
+
+        $exists = \App\Models\View::where('user_id', $user->id)
+            ->where('viewable_id', $viewable->id)
+            ->where('viewable_type', get_class($viewable))
+            ->exists();
+
+        if (!$exists) {
+            try {
+                \App\Models\View::create([
+                    'user_id' => $user->id,
+                    'viewable_id' => $viewable->id,
+                    'viewable_type' => get_class($viewable),
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                ]);
+                $viewable->increment('views_count');
+            } catch (\Exception $e) {
+                // Ignore unique constraint violation
+            }
+        }
     }
 }

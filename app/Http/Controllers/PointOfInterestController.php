@@ -221,9 +221,9 @@ class PointOfInterestController extends Controller
             'tags.*' => 'exists:poi_tags,id',
             'services' => 'nullable|array',
             'services.*' => 'exists:poi_services,id',
-            'google_place_id' => 'nullable|string|max:255',
             'google_rating' => 'nullable|numeric|between:0,5',
             'google_reviews_count' => 'nullable|integer|min:0',
+            'status' => 'nullable|string|in:draft,published,inactive',
         ]);
 
         if ($validator->fails()) {
@@ -411,7 +411,11 @@ class PointOfInterestController extends Controller
             ], 403);
         }
 
-        $validator = Validator::make($request->all(), [
+        $data = $request->all();
+        // If updating a draft, default to 'published' unless explicitly kept as 'draft'
+        $targetStatus = $data['status'] ?? ($poi->status === 'draft' ? 'published' : $poi->status);
+
+        $validator = Validator::make($data, [
             'name' => 'sometimes|required|string|max:255',
             'name_ar' => 'nullable|string|max:255',
             'description' => 'nullable|string',
@@ -435,6 +439,7 @@ class PointOfInterestController extends Controller
             'google_place_id' => 'nullable|string|max:255',
             'google_rating' => 'nullable|numeric|between:0,5',
             'google_reviews_count' => 'nullable|integer|min:0',
+            'status' => 'nullable|string|in:draft,published,inactive',
         ]);
 
 
@@ -446,6 +451,7 @@ class PointOfInterestController extends Controller
         }
 
         $validatedData = $validator->validated();
+        $validatedData['status'] = $targetStatus;
 
         // Only admins can change the owner
         if (isset($validatedData['owner_id']) && $validatedData['owner_id'] != $poi->owner_id) {

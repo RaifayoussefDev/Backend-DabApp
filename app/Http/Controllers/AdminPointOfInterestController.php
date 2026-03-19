@@ -330,7 +330,10 @@ class AdminPointOfInterestController extends Controller
         }
 
         $data = $request->all();
-        $isDraft = ($data['status'] ?? $poi->status) === 'draft';
+        // If status is not provided in current request, default to 'published'
+        // This ensures that when an admin 'validates' or updates a draft without explicitly keeping it draft, it goes live.
+        $targetStatus = $data['status'] ?? 'published';
+        $isDraft = $targetStatus === 'draft';
 
         $validator = Validator::make($data, [
             'name' => ($isDraft ? 'nullable' : 'sometimes|required') . '|string|max:255',
@@ -372,6 +375,7 @@ class AdminPointOfInterestController extends Controller
         }
 
         $validatedData = $validator->validated();
+        $validatedData['status'] = $targetStatus;
 
         $poi->update($validatedData);
 
