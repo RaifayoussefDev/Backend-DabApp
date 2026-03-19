@@ -36,28 +36,35 @@ class AdminPointOfInterestController extends Controller
      *         required=false,
      *         @OA\Schema(type="integer")
      *     ),
-     *     @OA\Parameter(
+     *     *     @OA\Parameter(
      *         name="is_verified",
      *         in="query",
-     *         description="Filter by verification status",
+     *         description="Filter by verification status (true/false)",
+     *         required=false,
+     *         @OA\Schema(type="boolean")
+     *     ),
+     *     @OA\Parameter(
+     *         name="is_active",
+     *         in="query",
+     *         description="Filter by activation status (true/false)",
      *         required=false,
      *         @OA\Schema(type="boolean")
      *     ),
      *     @OA\Parameter(
      *         name="status",
      *         in="query",
-     *         description="Filter by status (published, draft, inactive)",
+     *         description="Filter by lifecycle status (published, draft, inactive)",
      *         required=false,
      *         @OA\Schema(type="string", enum={"published", "draft", "inactive"})
      *     ),
-     @OA\Parameter(
+     *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Number of items per page. Leave empty to get all results.",
      *         required=false,
      *         @OA\Schema(type="integer")
      *     ),
-     @OA\Parameter(
+     *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",

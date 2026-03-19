@@ -83,6 +83,46 @@ class MassNotificationJob implements ShouldQueue
             });
         }
 
+        // 5. Filter by Verification Status (Blue Tick)
+        if (isset($this->filters['is_verified'])) {
+            $query->where('verified', $this->filters['is_verified']);
+        }
+
+        // 6. Filter by Role
+        if (!empty($this->filters['role_id'])) {
+            $query->where('role_id', $this->filters['role_id']);
+        }
+
+        // 7. Filter by Last Login
+        if (!empty($this->filters['last_login_from'])) {
+            $query->where('last_login', '>=', $this->filters['last_login_from']);
+        }
+        if (!empty($this->filters['last_login_to'])) {
+            $query->where('last_login', '<=', $this->filters['last_login_to']);
+        }
+
+        // 8. Filter by Date Registered (date_from / date_to)
+        if (!empty($this->filters['date_from'])) {
+            $query->where('created_at', '>=', $this->filters['date_from']);
+        }
+        if (!empty($this->filters['date_to'])) {
+            $query->where('created_at', '<=', $this->filters['date_to']);
+        }
+
+        // 9. Filter by Gender
+        if (!empty($this->filters['gender'])) {
+            $query->where('gender', $this->filters['gender']);
+        }
+
+        // 10. Filter by "Has Points of Interest"
+        if (isset($this->filters['has_points_of_interest'])) {
+            if ($this->filters['has_points_of_interest']) {
+                $query->has('pointsOfInterest');
+            } else {
+                $query->doesntHave('pointsOfInterest');
+            }
+        }
+
         $totalUsers = $query->count();
         Log::info("Found {$totalUsers} users for mass notification.");
 
@@ -95,6 +135,7 @@ class MassNotificationJob implements ShouldQueue
         }
 
         $query->chunk(100, function ($users) use ($notificationService) {
+            /** @var User $user */
             foreach ($users as $user) {
                 try {
                     // Determine title and message based on user preference
