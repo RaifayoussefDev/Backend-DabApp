@@ -177,9 +177,10 @@ class AdminNotificationController extends Controller
         $content = $request->input('content');
         $channels = $request->input('channels', ['push']); // Default to push if not specified
 
-        // 2. Dispatch Job
-        // Using dispatchSync to get immediate results for the admin
-        $summary = MassNotificationJob::dispatchSync($filters, $content, $channels);
+        // 2. Execute Logic
+        // We call the handle method directly to ensure we get the summary results
+        $job = new MassNotificationJob($filters, $content, $channels);
+        $summary = $job->handle(app(\App\Services\NotificationService::class));
 
         return response()->json([
             'message' => 'Mass notification process completed',

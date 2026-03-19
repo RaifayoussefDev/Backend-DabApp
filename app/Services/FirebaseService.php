@@ -27,11 +27,29 @@ class FirebaseService
         }
 
         try {
-            $credentialsPath = storage_path('app/' . config('firebase.credentials.file'));
+            $credentialsFile = config('firebase.credentials.file');
+            $credentialsPath = $credentialsFile ? storage_path('app/' . $credentialsFile) : null;
 
-            // Check if file exists to avoid immediate crash
-            if (!file_exists($credentialsPath) && !file_exists($credentialsPath = base_path('firebase_credentials.json'))) {
-                throw new \Exception("Firebase credentials file not found at: $credentialsPath");
+            // Fallback locations
+            if (!$credentialsPath || !file_exists($credentialsPath) || is_dir($credentialsPath)) {
+                $fallbackPaths = [
+                    base_path('app/firebase_credentials.json'),
+                    base_path('firebase_credentials.json'),
+                ];
+
+                reset($fallbackPaths);
+                $found = false;
+                foreach ($fallbackPaths as $path) {
+                    if (file_exists($path) && !is_dir($path)) {
+                        $credentialsPath = $path;
+                        $found = true;
+                        break;
+                    }
+                }
+
+                if (!$found) {
+                    throw new \Exception("Firebase credentials file not found or invalid at: " . ($credentialsPath ?? 'none'));
+                }
             }
 
             $this->factory = (new Factory)->withServiceAccount($credentialsPath);

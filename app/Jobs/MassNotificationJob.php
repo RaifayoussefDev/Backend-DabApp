@@ -86,13 +86,17 @@ class MassNotificationJob implements ShouldQueue
                         'priority' => 'high'
                     ]);
 
-                    if ($result['success']) {
+                    // Check push results for accurate summary
+                    $pushSent = isset($result['push_results']['sent']) && $result['push_results']['sent'] > 0;
+                    $emailSent = isset($result['email_result']) && $result['email_result'] === 'sent';
+
+                    if ($pushSent || $emailSent) {
                         $summary['sent']++;
                     } else {
                         $summary['failed']++;
                         $summary['failed_details'][] = [
                             'user_id' => $user->id,
-                            'error' => $result['message'] ?? 'Unknown error'
+                            'error' => $result['push_results']['message'] ?? ($result['email_result'] ?? 'No delivery channel succeeded')
                         ];
                     }
 

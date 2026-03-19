@@ -139,6 +139,8 @@ class Notification extends Model
         $this->update([
             'push_sent' => true,
             'push_sent_at' => now(),
+            'push_delivered' => true, // Mark as delivered when successfully sent to FCM
+            'push_delivered_at' => now(),
         ]);
     }
 

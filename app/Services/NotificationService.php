@@ -237,12 +237,12 @@ class NotificationService
                 'device_type' => $token->device_type,
                 'device_id' => $token->device_id,
                 'status' => $result['success'] ? 'sent' : 'failed',
-                'fcm_message_id' => isset($result['message_id']) && is_array($result['message_id'])
+                'fcm_message_id' => !is_string($result['message_id'] ?? null) && !is_null($result['message_id'] ?? null)
                     ? json_encode($result['message_id'])
                     : ($result['message_id'] ?? null),
-                'error_message' => isset($result['error']) && is_array($result['error'])
-                    ? json_encode($result['error'])
-                    : ($result['error'] ?? null),
+                'error_message' => ($error = $result['error'] ?? null) 
+                    ? (is_scalar($error) ? (string)$error : json_encode($error)) 
+                    : null,
                 'queued_at' => now(),
             ]);
 
@@ -250,20 +250,26 @@ class NotificationService
                 $results['sent']++;
                 $token->updateLastUsed();
                 $token->resetFailedAttempts();
-                $messageId = isset($result['message_id']) && is_array($result['message_id'])
-                    ? json_encode($result['message_id'])
-                    : ($result['message_id'] ?? null);
-                $log->markAsSent($messageId);
+                $msgId = $result['message_id'] ?? null;
+                $log->markAsSent(is_scalar($msgId) ? (string)$msgId : json_encode($msgId));
             } else {
                 $results['failed']++;
                 $token->incrementFailedAttempts();
-                $log->markAsFailed($result['error']);
+                $rawError = $result['error'] ?? 'Unknown error';
+                $errorMessage = is_scalar($rawError) ? (string)$rawError : json_encode($rawError);
+                $log->markAsFailed($errorMessage);
+                
+                if (!isset($results['message'])) {
+                    $results['message'] = $errorMessage;
+                }
             }
         }
 
         // Mettre à jour la notification
         if ($results['sent'] > 0) {
             $notification->markPushSent();
+        } elseif ($results['failed'] > 0 && !isset($results['message'])) {
+             $results['message'] = 'Push delivery failed for all tokens';
         }
 
         return $results;
@@ -394,6 +400,12 @@ class NotificationService
 
         if ($preferences && $preferences->canSendPush()) {
             $pushResults = $this->sendPushNotification($user, $notification, $options);
+        } else {
+            $pushResults = [
+                'success' => false,
+                'sent' => 0,
+                'message' => !$preferences ? 'No notification preferences found' : 'Push disabled or quiet hours'
+            ];
         }
 
         return [
