@@ -4760,7 +4760,7 @@ class ListingController extends Controller
         $query = Listing::with([
             'images',
             'city',
-            'country',
+            'country.currencyExchangeRate',
             'motorcycle.brand',
             'motorcycle.model',
             'motorcycle.year',
@@ -4806,6 +4806,17 @@ class ListingController extends Controller
 
         $formattedListings = $listings->map(function ($listing) {
 
+            // Logic matching other endpoints: 
+            // If allow_submission (make an offer), display minimum_bid, otherwise price
+            if ($listing->allow_submission) {
+                $displayPrice = $listing->minimum_bid;
+            } else {
+                $displayPrice = $listing->price;
+            }
+
+            $displayPrice = (string) ($displayPrice ?? 0);
+            $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+
             // Base listing data
             $listingData = [
                 'id' => $listing->id,
@@ -4824,6 +4835,8 @@ class ListingController extends Controller
                 'city' => $listing->city?->name,
                 'country' => $listing->country?->name,
                 'images' => $listing->images->pluck('image_url'),
+                'display_price' => $displayPrice,
+                'currency' => $currencySymbol,
             ];
 
             // Category-specific data
