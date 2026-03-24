@@ -9,6 +9,49 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/app-version": {
+            "get": {
+                "tags": [
+                    "App Version"
+                ],
+                "summary": "Get App Version Configuration",
+                "operationId": "354fe3a364031a48242d4c4326fa7de9",
+                "responses": {
+                    "200": {
+                        "description": "App version configuration retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "latest_version": {
+                                            "type": "string",
+                                            "example": "1.1.9"
+                                        },
+                                        "min_supported_version": {
+                                            "type": "string",
+                                            "example": "1.1.7"
+                                        },
+                                        "store_url_android": {
+                                            "type": "string",
+                                            "example": "https://play.google.com/store/apps/details?id=com.dabapp"
+                                        },
+                                        "store_url_ios": {
+                                            "type": "string",
+                                            "example": "https://apps.apple.com/app/dabapp/id123456789"
+                                        },
+                                        "force": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/register": {
             "post": {
                 "tags": [
@@ -39024,58 +39067,6 @@
                     "name": "ServiceCategory"
                 }
             },
-            "Submission": {
-                "title": "Submission",
-                "description": "Submission (SOOM) model representing a bid on a listing",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "listing_id": {
-                        "type": "integer",
-                        "example": 10
-                    },
-                    "user_id": {
-                        "type": "integer",
-                        "example": 2
-                    },
-                    "amount": {
-                        "type": "number",
-                        "format": "float",
-                        "example": 1500.5
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "pending",
-                            "accepted",
-                            "rejected"
-                        ]
-                    },
-                    "submission_date": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "acceptance_date": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "sale_validated": {
-                        "type": "boolean"
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
             "SubscriptionPlan": {
                 "title": "SubscriptionPlan",
                 "description": "Subscription Plan model",
@@ -39511,6 +39502,10 @@
         {
             "name": "Wishlist",
             "description": "Operations related to wishlists"
+        },
+        {
+            "name": "App Version",
+            "description": "App Version"
         },
         {
             "name": "Authentification",

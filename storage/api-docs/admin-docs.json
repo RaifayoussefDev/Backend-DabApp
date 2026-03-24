@@ -9,6 +9,132 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/admin/app-version": {
+            "get": {
+                "tags": [
+                    "Admin App Version"
+                ],
+                "summary": "Get App Version Configuration (Admin)",
+                "operationId": "0b275aa2b85ad411043744fc1e9b904a",
+                "responses": {
+                    "200": {
+                        "description": "App version configuration retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "latest_version": {
+                                            "type": "string",
+                                            "example": "1.1.9"
+                                        },
+                                        "min_supported_version": {
+                                            "type": "string",
+                                            "example": "1.1.7"
+                                        },
+                                        "store_url_android": {
+                                            "type": "string",
+                                            "example": "https://play.google.com..."
+                                        },
+                                        "store_url_ios": {
+                                            "type": "string",
+                                            "example": "https://apps.apple.com..."
+                                        },
+                                        "force": {
+                                            "type": "integer",
+                                            "example": 0
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin App Version"
+                ],
+                "summary": "Update App Version Configuration (Admin)",
+                "operationId": "d320c389b454c6e4ae74e336e6d4a9e9",
+                "requestBody": {
+                    "description": "<strong>Example payload</strong><br><pre>{<br>  &quot;latest_version&quot;: &quot;1.1.9&quot;,<br>  &quot;min_supported_version&quot;: &quot;1.1.7&quot;,<br>  &quot;store_url_android&quot;: &quot;https://play.google.com/store/apps/details?id=com.dabapp&quot;,<br>  &quot;store_url_ios&quot;: &quot;https://apps.apple.com/app/dabapp/id123456789&quot;,<br>  &quot;force&quot;: false<br>}</pre>",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "latest_version",
+                                    "min_supported_version",
+                                    "force"
+                                ],
+                                "properties": {
+                                    "latest_version": {
+                                        "type": "string",
+                                        "example": "1.1.9"
+                                    },
+                                    "min_supported_version": {
+                                        "type": "string",
+                                        "example": "1.1.7"
+                                    },
+                                    "store_url_android": {
+                                        "type": "string",
+                                        "example": "https://play.google.com/store/apps/details?id=com.dabapp"
+                                    },
+                                    "store_url_ios": {
+                                        "type": "string",
+                                        "example": "https://apps.apple.com/app/dabapp/id123456789"
+                                    },
+                                    "force": {
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "App version configuration updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "App version updated successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/bike-part-brands": {
             "get": {
                 "tags": [
@@ -2588,7 +2714,7 @@
                                         "submissions": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/Submission"
+                                                "type": "object"
                                             }
                                         }
                                     },
@@ -5189,7 +5315,7 @@
                     "Admin Notifications"
                 ],
                 "summary": "Send mass notifications to filtered users",
-                "operationId": "0a806ad326fa40618feb03b9e12e6e86",
+                "operationId": "5b3be653f565cbdda97bacfcb2584c61",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -5221,43 +5347,11 @@
                                                 "description": "Brand ID in garage",
                                                 "type": "integer"
                                             },
-                                            "is_verified": {
-                                                "description": "Filter by blue tick verification",
-                                                "type": "boolean"
-                                            },
-                                            "role_id": {
-                                                "description": "Filter by user role (1: Admin, 2: User, etc.)",
-                                                "type": "integer"
-                                            },
-                                            "last_login_from": {
-                                                "description": "Filter users who logged in after this date",
-                                                "type": "string",
-                                                "format": "date"
-                                            },
-                                            "last_login_to": {
-                                                "description": "Filter users who logged in before this date",
-                                                "type": "string",
-                                                "format": "date"
-                                            },
-                                            "has_points_of_interest": {
-                                                "description": "Filter users who have at least one POI",
-                                                "type": "boolean"
-                                            },
-                                            "gender": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "male",
-                                                    "female",
-                                                    "other"
-                                                ]
-                                            },
                                             "date_from": {
-                                                "description": "Filter users who registered after this date",
                                                 "type": "string",
                                                 "format": "date"
                                             },
                                             "date_to": {
-                                                "description": "Filter users who registered before this date",
                                                 "type": "string",
                                                 "format": "date"
                                             }
@@ -5292,9 +5386,7 @@
                                                 "enum": [
                                                     "promo",
                                                     "news",
-                                                    "info",
-                                                    "alert",
-                                                    "update"
+                                                    "info"
                                                 ]
                                             }
                                         },
@@ -5328,159 +5420,6 @@
                                         },
                                         "filters": {
                                             "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/admin/notifications/preview-recipients": {
-            "get": {
-                "tags": [
-                    "Admin Notifications"
-                ],
-                "summary": "Preview count and sample of recipients for mass notification",
-                "operationId": "602236dc39f02cdc2845fa397934360d",
-                "parameters": [
-                    {
-                        "name": "user_ids[]",
-                        "in": "query",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "integer"
-                            }
-                        }
-                    },
-                    {
-                        "name": "country_id",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "category_id",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "has_listing",
-                        "in": "query",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    {
-                        "name": "brand_in_garage",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "is_verified",
-                        "in": "query",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    {
-                        "name": "role_id",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "last_login_from",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "format": "date"
-                        }
-                    },
-                    {
-                        "name": "last_login_to",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "format": "date"
-                        }
-                    },
-                    {
-                        "name": "has_points_of_interest",
-                        "in": "query",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    {
-                        "name": "gender",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "male",
-                                "female",
-                                "other"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "date_from",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "format": "date"
-                        }
-                    },
-                    {
-                        "name": "date_to",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "format": "date"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Preview results",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "total_count": {
-                                            "type": "integer"
-                                        },
-                                        "sample_users": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer"
-                                                    },
-                                                    "full_name": {
-                                                        "type": "string"
-                                                    },
-                                                    "email": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
                                         }
                                     },
                                     "type": "object"
@@ -23129,58 +23068,6 @@
                     "name": "ServiceCategory"
                 }
             },
-            "Submission": {
-                "title": "Submission",
-                "description": "Submission (SOOM) model representing a bid on a listing",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "listing_id": {
-                        "type": "integer",
-                        "example": 10
-                    },
-                    "user_id": {
-                        "type": "integer",
-                        "example": 2
-                    },
-                    "amount": {
-                        "type": "number",
-                        "format": "float",
-                        "example": 1500.5
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "pending",
-                            "accepted",
-                            "rejected"
-                        ]
-                    },
-                    "submission_date": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "acceptance_date": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "sale_validated": {
-                        "type": "boolean"
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
             "SubscriptionPlan": {
                 "title": "SubscriptionPlan",
                 "description": "Subscription Plan model",
@@ -23597,6 +23484,10 @@
         {
             "name": "Admin Transport Routes",
             "description": "API endpoints for managing transport routes (Admin)"
+        },
+        {
+            "name": "Admin App Version",
+            "description": "Admin App Version"
         },
         {
             "name": "Admin Statistics",

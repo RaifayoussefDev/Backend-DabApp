@@ -425,7 +425,7 @@ class AdminListingController extends Controller
              @OA\Property(property="spare_part", type="object", nullable=true),
              @OA\Property(property="license_plate", type="object", nullable=true),
              @OA\Property(property="views_count", type="integer", example=10),
-             @OA\Property(property="submissions", type="array", @OA\Items(ref="#/components/schemas/Submission"))
+             @OA\Property(property="submissions", type="array", @OA\Items(type="object"))
          )
      ),
      *     @OA\Response(response=404, description="Listing not found")

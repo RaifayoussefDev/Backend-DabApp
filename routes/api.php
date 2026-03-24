@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use Illuminate\Support\Facades\Route;
 
@@ -157,6 +157,9 @@ use App\Http\Controllers\AdminRouteWaypointController;
 // ============================================
 // AUTHENTICATION (PUBLIC)
 // ============================================
+// App Version configuration
+Route::get('/app-version', [\App\Http\Controllers\Api\AppVersionController::class, 'index']);
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
@@ -196,6 +199,10 @@ Route::prefix('admin')->group(function () {
     // PROTECTED ADMIN ROUTES (authentification requise)
     // ============================================
     Route::middleware(['auth.admin'])->group(function () {
+        // App Version Configuration
+        Route::get('/app-version', [\App\Http\Controllers\AdminAppVersionController::class, 'show']);
+        Route::put('/app-version', [\App\Http\Controllers\AdminAppVersionController::class, 'update']);
+
         // Authentication & Session
         Route::get('/me', [AuthAdminController::class, 'me']);
         Route::post('/logout', [AuthAdminController::class, 'logout']);
