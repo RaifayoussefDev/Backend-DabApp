@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Illuminate\Support\Facades\Route;
 
@@ -148,6 +148,7 @@ use App\Http\Controllers\AdminRouteReviewController;
 use App\Http\Controllers\AdminRouteTagController;
 use App\Http\Controllers\AdminRouteWarningController;
 use App\Http\Controllers\AdminRouteWaypointController;
+use App\Http\Controllers\AppVersionController;
 // ============================================
 // ============================================
 // PUBLIC ROUTES (NO AUTHENTICATION)
@@ -158,7 +159,7 @@ use App\Http\Controllers\AdminRouteWaypointController;
 // AUTHENTICATION (PUBLIC)
 // ============================================
 // App Version configuration
-Route::get('/app-version', [\App\Http\Controllers\Api\AppVersionController::class, 'index']);
+Route::get('/app-version', [AppVersionController::class, 'index']);
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
