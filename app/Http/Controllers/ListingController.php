@@ -2016,9 +2016,17 @@ class ListingController extends Controller
                 $currentBid = \App\Models\AuctionHistory::where('listing_id', $listing->id)->max('bid_amount');
             }
 
-            $currentBidFloat = (float) $currentBid;
-            $displayPrice = ($listing->auction_enabled && $currentBidFloat > 0) ? $currentBid : ($listing->auction_enabled ? $listing->minimum_bid : $listing->price);
-            $isAuction = $listing->auction_enabled;
+            // Standardized pricing logic:
+            if ($listing->allow_submission) {
+                $displayPrice = $listing->minimum_bid;
+            } else {
+                $displayPrice = $listing->price;
+            }
+
+            // Force string casting for display_price as requested
+            $displayPrice = (string) ($displayPrice ?? 0);
+            
+            $isAuction = (bool) $listing->auction_enabled;
 
             return response()->json([
                 'success' => true,
@@ -2994,14 +3002,18 @@ class ListingController extends Controller
 
         // Formater les résultats
         $formattedListings = $listingsCollection->map(function ($listing) use ($currentBids) {
-            $displayPrice = $listing->price;
-            $isAuction = false;
-            $currentBid = $currentBids[$listing->id] ?? null;
-
-            if (!$displayPrice && $listing->auction_enabled) {
-                $displayPrice = $currentBid ?: $listing->minimum_bid;
-                $isAuction = true;
+            // Standardized pricing logic:
+            if ($listing->allow_submission) {
+                $displayPrice = $listing->minimum_bid;
+            } else {
+                $displayPrice = $listing->price;
             }
+
+            // Force string casting for display_price as requested
+            $displayPrice = (string) ($displayPrice ?? 0);
+
+            $isAuction = (bool) $listing->auction_enabled;
+            $currentBid = $currentBids[$listing->id] ?? null;
 
             $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
             $priceToShow = $listing->price ?? $listing->minimum_bid;
@@ -3443,15 +3455,19 @@ class ListingController extends Controller
                 ->max('bid_amount');
         }
 
-        // Déterminer le prix à afficher
-        $displayPrice = $listing->price;
-        $isAuction = false;
-
-        if ($listing->auction_enabled) {
-            $currentBidFloat = (float) $currentBid;
-            $displayPrice = ($currentBidFloat > 0) ? $currentBid : $listing->minimum_bid;
-            $isAuction = true;
+        // Standardized pricing logic:
+        // If allow_submission (make an offer), display minimum_bid, otherwise price
+        if ($listing->allow_submission) {
+            $displayPrice = $listing->minimum_bid;
+        } else {
+            $displayPrice = $listing->price;
         }
+
+        // Force string casting for display_price as requested in other endpoints
+        $displayPrice = (string) ($displayPrice ?? 0);
+
+        // Keep isAuction for backward compatibility in this specific endpoint
+        $isAuction = (bool) $listing->auction_enabled;
 
         // Récupérer le symbole de devise
         $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';

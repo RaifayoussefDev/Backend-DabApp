@@ -225,19 +225,24 @@ class FilterController extends Controller
         ]);
 
         $formattedMotorcycles = $motorcyclesCollection->map(function ($listing) {
-            $displayPrice = $listing->price;
-            $isAuction = false;
-            if (!$displayPrice && $listing->auction_enabled) {
-                $displayPrice = $listing->current_bid ?: $listing->minimum_bid;
-                $isAuction = true;
+            // Standardized pricing logic:
+            if ($listing->allow_submission) {
+                $displayPrice = $listing->minimum_bid;
+            } else {
+                $displayPrice = $listing->price;
             }
+
+            // Force string casting for display_price as requested
+            $displayPrice = (string) ($displayPrice ?? 0);
+
             $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+            
             return [
                 'id' => $listing->id,
                 'title' => $listing->title,
                 'description' => $listing->description,
                 'price' => $displayPrice,
-                'is_auction' => $isAuction,
+                'is_auction' => (bool) $listing->auction_enabled,
                 'minimum_bid' => $listing->minimum_bid,
                 'current_bid' => $listing->current_bid,
                 'currency' => $currencySymbol,
@@ -442,19 +447,24 @@ class FilterController extends Controller
         ]);
 
         $formattedSpareParts = $sparePartsCollection->map(function ($listing) {
-            $displayPrice = $listing->price;
-            $isAuction = false;
-            if (!$displayPrice && $listing->auction_enabled) {
-                $displayPrice = $listing->current_bid ?: $listing->minimum_bid;
-                $isAuction = true;
+            // Standardized pricing logic:
+            if ($listing->allow_submission) {
+                $displayPrice = $listing->minimum_bid;
+            } else {
+                $displayPrice = $listing->price;
             }
+
+            // Force string casting for display_price as requested
+            $displayPrice = (string) ($displayPrice ?? 0);
+
             $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+            
             return [
                 'id' => $listing->id,
                 'title' => $listing->title,
                 'description' => $listing->description,
                 'price' => $displayPrice,
-                'is_auction' => $isAuction,
+                'is_auction' => (bool) $listing->auction_enabled,
                 'minimum_bid' => $listing->minimum_bid,
                 'current_bid' => $listing->current_bid,
                 'currency' => $currencySymbol,
@@ -647,19 +657,24 @@ class FilterController extends Controller
         ]);
 
         $formattedResults = $resultsCollection->map(function ($listing) {
-            $displayPrice = $listing->price;
-            $isAuction = false;
-            if (!$displayPrice && $listing->auction_enabled) {
-                $displayPrice = $listing->current_bid ?: $listing->minimum_bid;
-                $isAuction = true;
+            // Standardized pricing logic:
+            if ($listing->allow_submission) {
+                $displayPrice = $listing->minimum_bid;
+            } else {
+                $displayPrice = $listing->price;
             }
+
+            // Force string casting for display_price as requested
+            $displayPrice = (string) ($displayPrice ?? 0);
+
             $currencySymbol = $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD';
+            
             return [
                 'id' => $listing->id,
                 'title' => $listing->title,
                 'description' => $listing->description,
                 'price' => $displayPrice,
-                'is_auction' => $isAuction,
+                'is_auction' => (bool) $listing->auction_enabled,
                 'minimum_bid' => $listing->minimum_bid,
                 'current_bid' => $listing->current_bid,
                 'currency' => $currencySymbol,
