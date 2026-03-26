@@ -226,6 +226,7 @@ class AdminMenuV2Seeder extends Seeder
                 'order' => $menu['order'],
                 'type' => isset($menu['sub_items']) ? 'collapse' : 'item',
                 'roles' => ['admin'],
+                'is_main_parent' => true,
                 'is_active' => true,
             ]);
 
@@ -240,6 +241,7 @@ class AdminMenuV2Seeder extends Seeder
                         'order' => $sub['order'],
                         'type' => 'item',
                         'roles' => ['admin'],
+                        'is_main_parent' => false,
                         'is_active' => true,
                     ]);
                 }

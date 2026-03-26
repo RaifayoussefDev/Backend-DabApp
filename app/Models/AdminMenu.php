@@ -218,8 +218,8 @@ class AdminMenu extends Model
                     return false;
                 }
 
-                // Filter parent if no visible children and no route
-                if ($menu->activeChildren->isEmpty() && !$menu->route && !$menu->url && !$menu->link) {
+                // Filter parent if no visible children and no navigation destination
+                if ($menu->activeChildren->isEmpty() && !$menu->route && !$menu->url && !$menu->link && !$menu->path) {
                     return false;
                 }
 
