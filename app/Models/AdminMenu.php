@@ -136,6 +136,9 @@ class AdminMenu extends Model
                         return is_object($role) ? $role->name : $role;
                     }, $user->roles);
                 }
+            } elseif ($user->role) {
+                // Support for single role relationship
+                $userRoles = [$user->role->name];
             }
 
             $hasRole = false;
@@ -180,6 +183,9 @@ class AdminMenu extends Model
                     return is_object($role) ? $role->name : $role;
                 }, $user->roles);
             }
+        } elseif ($user->role) {
+            // Support for single role relationship
+            $userRoles = [$user->role->name];
         }
 
         return self::active()
