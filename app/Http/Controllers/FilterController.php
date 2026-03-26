@@ -226,7 +226,7 @@ class FilterController extends Controller
 
         $formattedMotorcycles = $motorcyclesCollection->map(function ($listing) {
             // Standardized pricing logic:
-            if ($listing->allow_submission) {
+            if ($listing->allow_submission || $listing->auction_enabled) {
                 $displayPrice = $listing->minimum_bid;
             } else {
                 $displayPrice = $listing->price;
@@ -449,7 +449,7 @@ class FilterController extends Controller
 
         $formattedSpareParts = $sparePartsCollection->map(function ($listing) {
             // Standardized pricing logic:
-            if ($listing->allow_submission) {
+            if ($listing->allow_submission || $listing->auction_enabled) {
                 $displayPrice = $listing->minimum_bid;
             } else {
                 $displayPrice = $listing->price;
@@ -660,7 +660,7 @@ class FilterController extends Controller
 
         $formattedResults = $resultsCollection->map(function ($listing) {
             // Standardized pricing logic:
-            if ($listing->allow_submission) {
+            if ($listing->allow_submission || $listing->auction_enabled) {
                 $displayPrice = $listing->minimum_bid;
             } else {
                 $displayPrice = $listing->price;

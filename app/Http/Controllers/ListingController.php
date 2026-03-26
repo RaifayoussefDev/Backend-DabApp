@@ -2017,7 +2017,7 @@ class ListingController extends Controller
             }
 
             // Standardized pricing logic:
-            if ($listing->allow_submission) {
+            if ($listing->allow_submission || $listing->auction_enabled) {
                 $displayPrice = $listing->minimum_bid;
             } else {
                 $displayPrice = $listing->price;
@@ -2708,7 +2708,7 @@ class ListingController extends Controller
             $currentBid = $currentBids[$listing->id] ?? null;
 
             // ✅ Logic updated: If allow_submission (make an offer), display minimum_bid, otherwise price
-            if ($listing->allow_submission) {
+            if ($listing->allow_submission || $listing->auction_enabled) {
                 $displayPrice = $listing->minimum_bid;
             } else {
                 $displayPrice = $listing->price;
@@ -3003,7 +3003,7 @@ class ListingController extends Controller
         // Formater les résultats
         $formattedListings = $listingsCollection->map(function ($listing) use ($currentBids) {
             // Standardized pricing logic:
-            if ($listing->allow_submission) {
+            if ($listing->allow_submission || $listing->auction_enabled) {
                 $displayPrice = $listing->minimum_bid;
             } else {
                 $displayPrice = $listing->price;
@@ -3456,8 +3456,8 @@ class ListingController extends Controller
         }
 
         // Standardized pricing logic:
-        // If allow_submission (make an offer), display minimum_bid, otherwise price
-        if ($listing->allow_submission) {
+        // If allow_submission (make an offer) OR auction_enabled, display minimum_bid, otherwise price
+        if ($listing->allow_submission || $listing->auction_enabled) {
             $displayPrice = $listing->minimum_bid;
         } else {
             $displayPrice = $listing->price;
@@ -4824,7 +4824,7 @@ class ListingController extends Controller
 
             // Logic matching other endpoints: 
             // If allow_submission (make an offer), display minimum_bid, otherwise price
-            if ($listing->allow_submission) {
+            if ($listing->allow_submission || $listing->auction_enabled) {
                 $displayPrice = $listing->minimum_bid;
             } else {
                 $displayPrice = $listing->price;
