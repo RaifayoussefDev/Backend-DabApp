@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class RolePermissionController extends Controller
@@ -230,28 +231,59 @@ class RolePermissionController extends Controller
      */
     public function sync(Request $request, $roleId)
     {
-        $role = Role::findOrFail($roleId);
+        try {
+            $role = Role::findOrFail($roleId);
 
-        $validator = Validator::make($request->all(), [
-            'permission_ids' => 'required|array',
-            'permission_ids.*' => 'exists:permissions,id'
-        ]);
+            // Accept 'permission_ids' (standard) or 'permissions' (frontend friendly)
+            $input = $request->input('permission_ids') ?? $request->input('permissions') ?? [];
 
-        if ($validator->fails()) {
+            if (!is_array($input)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Permissions must be an array'
+                ], 400);
+            }
+
+            $finalIds = [];
+            $namesToResolve = [];
+
+            foreach ($input as $item) {
+                if (is_numeric($item)) {
+                    $finalIds[] = (int)$item;
+                } elseif (is_string($item)) {
+                    $namesToResolve[] = $item;
+                }
+            }
+
+            // Resolve names to IDs
+            if (!empty($namesToResolve)) {
+                $resolvedIds = Permission::whereIn('name', $namesToResolve)->pluck('id')->toArray();
+                $finalIds = array_unique(array_merge($finalIds, $resolvedIds));
+            }
+
+            $role->syncPermissions($finalIds);
+
+            // Clear cache for all users with this role is handled by model observers usually, 
+            // but we'll clear it globally for safety here if needed, or just let it expire.
+            Cache::flush(); 
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Permissions synced successfully',
+                'data' => $role->load('permissions')
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error syncing role permissions', [
+                'role_id' => $roleId,
+                'error' => $e->getMessage()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors()
-            ], 400);
+                'message' => 'Error syncing permissions',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
         }
-
-        $role->syncPermissions($request->permission_ids);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Permissions synced successfully',
-            'data' => $role->load('permissions')
-        ]);
     }
 
     /**
