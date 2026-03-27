@@ -239,6 +239,7 @@ class AdminMenu extends Model
             'description' => $this->description,
             'path' => $this->path,
             'role' => $this->roles,
+            'permission' => $this->permission,
             'disabled' => (bool)$this->disabled,
             'isMainParent' => (bool)$this->is_main_parent,
             'order' => $this->order,
@@ -265,6 +266,14 @@ class AdminMenu extends Model
                 $query->where('is_active', true)->orderBy('order');
             }])
             ->orderBy('order')
-            ->get();
+            ->get()
+            ->map(function($menu) {
+                // Manually load children for formatForFrontend to pick up
+                // Note: activeChildren was used in index, but children is safer for management
+                $menu->setRelation('activeChildren', $menu->children);
+                return $menu->formatForFrontend();
+            })
+            ->values()
+            ->toArray();
     }
 }
