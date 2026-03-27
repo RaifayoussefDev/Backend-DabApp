@@ -109,53 +109,36 @@ class AdminMenu extends Model
      */
     public function userHasAccess($user): bool
     {
-        // Check permission
-        if ($this->permission) {
-            $userPermissions = $user->getAllPermissions();
-
-            if (is_object($userPermissions) && method_exists($userPermissions, 'pluck')) {
-                $userPermissions = $userPermissions->pluck('name')->toArray();
-            } elseif (!is_array($userPermissions)) {
-                $userPermissions = [];
-            }
-
-            if (!in_array($this->permission, $userPermissions)) {
-                return false;
-            }
+        // 1. System Admin Bypass: If the user has the 'admin' role, they see everything.
+        if ($user->role && $user->role->name === 'admin') {
+            return true;
         }
 
-        // Check roles
+        // 2. Permission-Based Access: If the menu has a permission defined and the user has it, grant access.
+        // This is the "automatic" link the user requested.
+        if ($this->permission && $user->hasPermission($this->permission)) {
+            return true;
+        }
+
+        // 3. Role-Based Access (Fallback): If the menu explicitly lists roles, check if the user has one.
         if ($this->roles && !empty($this->roles)) {
             $userRoles = [];
-
-            if ($user->roles) {
-                if (is_object($user->roles) && method_exists($user->roles, 'pluck')) {
-                    $userRoles = $user->roles->pluck('name')->toArray();
-                } elseif (is_array($user->roles)) {
-                    $userRoles = array_map(function($role) {
-                        return is_object($role) ? $role->name : $role;
-                    }, $user->roles);
-                }
-            } elseif ($user->role) {
-                // Support for single role relationship
+            if ($user->role && is_object($user->role)) {
                 $userRoles = [$user->role->name];
+            } elseif ($user->roles && is_object($user->roles)) {
+                $userRoles = $user->roles->pluck('name')->toArray();
             }
-
-            $hasRole = false;
 
             foreach ($this->roles as $role) {
                 if (in_array($role, $userRoles)) {
-                    $hasRole = true;
-                    break;
+                    return true;
                 }
             }
-
-            if (!$hasRole) {
-                return false;
-            }
+            return false;
         }
 
-        return true;
+        // 4. Default: If no permission or roles are defined, the menu is public (rare for admin menus).
+        return empty($this->permission) && empty($this->roles);
     }
 
     /**
