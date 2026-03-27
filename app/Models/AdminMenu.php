@@ -106,6 +106,7 @@ class AdminMenu extends Model
 
     /**
      * Check if user has permission to access this menu
+     * VERSION SIMPLIFIÉE : BASÉE UNIQUEMENT SUR LES RÔLES
      */
     public function userHasAccess($user): bool
     {
@@ -114,84 +115,53 @@ class AdminMenu extends Model
             return true;
         }
 
-        // 2. Permission-Based Access: If the menu has a permission defined and the user has it, grant access.
-        // This is the "automatic" link the user requested.
-        if ($this->permission && $user->hasPermission($this->permission)) {
-            return true;
-        }
-
-        // 3. Role-Based Access (Fallback): If the menu explicitly lists roles, check if the user has one.
+        // 2. Role-Based Access: Check if the user's role is in the authorized roles array
         if ($this->roles && !empty($this->roles)) {
-            $userRoles = [];
-            if ($user->role && is_object($user->role)) {
-                $userRoles = [$user->role->name];
-            } elseif ($user->roles && is_object($user->roles)) {
-                $userRoles = $user->roles->pluck('name')->toArray();
+            $userRoleName = null;
+            
+            if ($user->role) {
+                $userRoleName = $user->role->name;
+            } elseif ($user->roles()->exists()) {
+                $userRoleName = $user->roles()->first()->name;
             }
 
-            foreach ($this->roles as $role) {
-                if (in_array($role, $userRoles)) {
-                    return true;
-                }
+            if ($userRoleName && in_array($userRoleName, $this->roles)) {
+                return true;
             }
+            
             return false;
         }
 
-        // 4. Default: If no permission or roles are defined, the menu is public (rare for admin menus).
-        return empty($this->permission) && empty($this->roles);
+        // 3. Default: If no roles are defined, it's public (rare for admin menus).
+        return true;
     }
 
     /**
-     * Build menu tree for a specific user based on permissions and roles
+     * Build menu tree for a specific user based on roles
      */
     public static function buildTreeForUser($user)
     {
-        // Récupérer les permissions et rôles de l'utilisateur
-        $userPermissions = $user->getAllPermissions();
+        // Récupérer le nom du rôle de l'utilisateur
+        $userRoleName = $user->role ? $user->role->name : null;
+        $isAdmin = ($userRoleName === 'admin');
 
-        // Si c'est une collection, convertir en array
-        if (is_object($userPermissions) && method_exists($userPermissions, 'pluck')) {
-            $userPermissions = $userPermissions->pluck('name')->toArray();
-        } elseif (!is_array($userPermissions)) {
-            $userPermissions = [];
+        $query = self::active()->parents();
+
+        // Si ce n'est pas un admin, filtrer par rôles
+        if (!$isAdmin && $userRoleName) {
+            $query->where(function($q) use ($userRoleName) {
+                $q->whereNull('roles')
+                  ->orWhereJsonContains('roles', $userRoleName);
+            });
         }
 
-        // Récupérer les rôles
-        $userRoles = [];
-        if ($user->roles) {
-            if (is_object($user->roles) && method_exists($user->roles, 'pluck')) {
-                $userRoles = $user->roles->pluck('name')->toArray();
-            } elseif (is_array($user->roles)) {
-                $userRoles = array_map(function($role) {
-                    return is_object($role) ? $role->name : $role;
-                }, $user->roles);
-            }
-        } elseif ($user->role) {
-            // Support for single role relationship
-            $userRoles = [$user->role->name];
-        }
-
-        return self::active()
-            ->parents()
-            ->with(['activeChildren' => function($query) use ($userPermissions, $userRoles) {
-                $query->where(function($q) use ($userPermissions) {
-                    // Check permission
-                    $q->whereNull('permission');
-
-                    if (!empty($userPermissions)) {
-                        $q->orWhereIn('permission', $userPermissions);
-                    }
-                })
-                ->where(function($q) use ($userRoles) {
-                    // Check roles
-                    $q->whereNull('roles');
-
-                    if (!empty($userRoles)) {
-                        foreach ($userRoles as $role) {
-                            $q->orWhereJsonContains('roles', $role);
-                        }
-                    }
-                });
+        return $query->with(['activeChildren' => function($query) use ($userRoleName, $isAdmin) {
+                if (!$isAdmin && $userRoleName) {
+                    $query->where(function($q) use ($userRoleName) {
+                        $q->whereNull('roles')
+                          ->orWhereJsonContains('roles', $userRoleName);
+                    });
+                }
             }])
             ->orderBy('order')
             ->get()
@@ -212,7 +182,7 @@ class AdminMenu extends Model
                 return $menu->formatForFrontend();
             })
             ->values()
-            ->toArray(); // Convertir en array pur
+            ->toArray();
     }
 
     /**
