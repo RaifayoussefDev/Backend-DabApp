@@ -449,7 +449,14 @@ class AdminMenuController extends Controller
                 ], 400);
             }
 
-            $menu->update($request->all());
+            $data = $request->all();
+            
+            // Accept both 'role' or 'roles' for convenience
+            if (isset($data['role']) && !isset($data['roles'])) {
+                $data['roles'] = $data['role'];
+            }
+
+            $menu->update($data);
 
             // Clear all users' menu cache
             $this->clearAllMenuCache();
