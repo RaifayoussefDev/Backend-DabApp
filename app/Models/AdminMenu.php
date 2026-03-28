@@ -141,13 +141,25 @@ class AdminMenu extends Model
         $userRoleName = $user->role ? $user->role->name : null;
         $isAdmin = ($user->role_id === 1);
 
+        \Log::info('AdminMenu::buildTreeForUser', [
+            'user_id' => $user->id,
+            'role_id' => $user->role_id,
+            'role_name' => $userRoleName,
+            'is_admin' => $isAdmin
+        ]);
+
         $query = self::active()->parents();
 
         // Si ce n'est pas un admin (ID 1), filtrer par rôles
-        if (!$isAdmin && $userRoleName) {
+        if (!$isAdmin) {
             $query->where(function($q) use ($userRoleName) {
-                $q->whereNull('roles')
-                  ->orWhereJsonContains('roles', $userRoleName);
+                if ($userRoleName) {
+                    $q->whereNull('roles')
+                      ->orWhereJsonContains('roles', $userRoleName);
+                } else {
+                    // Fallback if role is not loaded correctly for a non-admin
+                    $q->whereNull('roles');
+                }
             });
         }
 

@@ -77,6 +77,13 @@ class AdminMenuController extends Controller
     {
         try {
             $user = $request->user();
+
+            \Log::info('AdminMenuController::index', [
+                'user_id' => $user->id ?? 'GUEST',
+                'role_id' => $user->role_id ?? 'N/A',
+                'role_name' => $user->role->name ?? 'N/A'
+            ]);
+
             $forceRefresh = $request->boolean('force_refresh', false);
 
             $cacheKey = "admin_menu_user_{$user->id}";
