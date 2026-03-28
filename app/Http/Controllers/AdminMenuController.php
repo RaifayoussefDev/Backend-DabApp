@@ -86,10 +86,14 @@ class AdminMenuController extends Controller
 
             $forceRefresh = $request->boolean('force_refresh', false);
 
-            $cacheKey = "admin_menu_user_{$user->id}";
+            $version = Cache::get('admin_menu_version', 1);
+            $cacheKey = "admin_menu_user_{$user->id}_v{$version}";
 
             if ($forceRefresh) {
                 Cache::forget($cacheKey);
+                // Also bump version to clear it for everyone else if forced
+                $version = Cache::increment('admin_menu_version');
+                $cacheKey = "admin_menu_user_{$user->id}_v{$version}";
             }
 
             $menus = Cache::remember($cacheKey, 3600, function() use ($user) {
@@ -718,16 +722,13 @@ class AdminMenuController extends Controller
     private function clearAllMenuCache()
     {
         try {
-            // Try to use cache tags if supported
+            // 1. Increment version for universal invalidation (works with all drivers)
+            Cache::increment('admin_menu_version');
+
+            // 2. Also try to use cache tags if supported
             Cache::tags(['admin_menus'])->flush();
         } catch (\Exception $e) {
-            // Fallback: clear specific pattern or all cache
-            Log::warning('Cache tags not supported, clearing all cache', [
-                'error' => $e->getMessage()
-            ]);
-
-            // Or use a more manual approach to clear user-specific caches
-            // This would require storing a list of user IDs somewhere
+            // Silently ignore if tags are not supported
         }
     }
 }
