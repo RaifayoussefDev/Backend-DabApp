@@ -87,7 +87,7 @@ class AdminMenuController extends Controller
             $forceRefresh = $request->boolean('force_refresh', false);
 
             $version = Cache::get('admin_menu_version', 1);
-            $cacheKey = "admin_menu_user_{$user->id}_v{$version}";
+            $cacheKey = "admin_menu_user_{$user->id}_role_{$user->role_id}_v{$version}";
 
             if ($forceRefresh) {
                 Cache::forget($cacheKey);
