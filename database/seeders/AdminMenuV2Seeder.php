@@ -243,7 +243,7 @@ class AdminMenuV2Seeder extends Seeder
                 'order' => $menu['order'],
                 'permission' => $menu['permission'] ?? null,
                 'type' => isset($menu['sub_items']) ? 'collapse' : 'item',
-                'roles' => ($menu['key'] === 'dashboard' || $menu['key'] === 'users') ? ['admin', 'Manager', 'dashboard'] : (in_array($menu['key'], ['listings', 'events', 'guides', 'services', 'promo-codes', 'reports', 'pois', 'routes']) ? ['admin', 'Manager'] : ['admin']),
+                'roles' => ($menu['key'] === 'dashboard') ? ['admin', 'Manager', 'dashboard'] : (in_array($menu['key'], ['users', 'listings', 'events', 'guides', 'services', 'promo-codes', 'reports', 'pois', 'routes']) ? ['admin', 'Manager'] : ['admin']),
                 'is_main_parent' => true,
                 'is_active' => true,
             ]);
@@ -259,7 +259,7 @@ class AdminMenuV2Seeder extends Seeder
                         'order' => $sub['order'],
                         'permission' => $sub['permission'] ?? null,
                         'type' => 'item',
-                        'roles' => ($parent->name === 'dashboard' || $parent->name === 'users') ? ['admin', 'Manager', 'dashboard'] : (in_array($parent->name, ['listings', 'events', 'guides', 'services', 'promo-codes', 'reports', 'pois', 'routes']) ? ['admin', 'Manager'] : ['admin']),
+                        'roles' => ($parent->name === 'dashboard') ? ['admin', 'Manager', 'dashboard'] : (in_array($parent->name, ['users', 'listings', 'events', 'guides', 'services', 'promo-codes', 'reports', 'pois', 'routes']) ? ['admin', 'Manager'] : ['admin']),
                         'is_main_parent' => false,
                         'is_active' => true,
                     ]);

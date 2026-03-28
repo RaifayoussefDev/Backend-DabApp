@@ -132,6 +132,11 @@ class AdminMenu extends Model
 
     public static function buildTreeForUser($user)
     {
+        // Load role relationship if not already loaded
+        if (!$user->relationLoaded('role')) {
+            $user->load('role');
+        }
+
         // Récupérer le nom du rôle de l'utilisateur
         $userRoleName = $user->role ? $user->role->name : null;
         $isAdmin = ($user->role_id === 1);
