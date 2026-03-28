@@ -8,6 +8,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AdminMenu extends Model
 {
+    protected static function booted()
+    {
+        static::saved(function () {
+            \Illuminate\Support\Facades\Cache::forever('admin_menu_version', time());
+            \Illuminate\Support\Facades\Log::info('AdminMenu cache invalidated (Saved)');
+        });
+
+        static::deleted(function () {
+            \Illuminate\Support\Facades\Cache::forever('admin_menu_version', time());
+            \Illuminate\Support\Facades\Log::info('AdminMenu cache invalidated (Deleted)');
+        });
+    }
+
     protected $fillable = [
         'parent_id',
         'name',

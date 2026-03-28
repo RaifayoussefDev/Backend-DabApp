@@ -92,7 +92,8 @@ class AdminMenuController extends Controller
             if ($forceRefresh) {
                 Cache::forget($cacheKey);
                 // Also bump version to clear it for everyone else if forced
-                $version = Cache::increment('admin_menu_version');
+                $version = time();
+                Cache::forever('admin_menu_version', $version);
                 $cacheKey = "admin_menu_user_{$user->id}_v{$version}";
             }
 
@@ -723,7 +724,7 @@ class AdminMenuController extends Controller
     {
         try {
             // 1. Increment version for universal invalidation (works with all drivers)
-            Cache::increment('admin_menu_version');
+            Cache::forever('admin_menu_version', time());
 
             // 2. Also try to use cache tags if supported
             Cache::tags(['admin_menus'])->flush();
