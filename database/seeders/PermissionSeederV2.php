@@ -96,11 +96,40 @@ class PermissionSeederV2 extends Seeder
             );
         }
 
-        // Assign all permissions to 'admin' role
+        // 1. Assign ALL permissions to 'admin' role
         $adminRole = Role::where('name', 'admin')->first();
         if ($adminRole) {
             $allPermissionIds = Permission::pluck('id')->toArray();
             $adminRole->permissions()->sync($allPermissionIds);
+        }
+
+        // 2. Assign LIMITED permissions to 'Manager' (role_id 3)
+        $managerRole = Role::find(3) ?? Role::where('name', 'Manager')->first();
+        if ($managerRole) {
+            $managerPermissions = Permission::whereIn('name', [
+                'dashboard.view',
+                'users.view',
+                'listings.view',
+                'events.view',
+                'guides.view',
+                'services.view',
+                'promo_codes.view',
+                'reports.view',
+                'pois.view',
+                'routes.view',
+                'settings.view'
+            ])->pluck('id')->toArray();
+            $managerRole->permissions()->sync($managerPermissions);
+        }
+
+        // 3. Assign MINIMAL permissions to 'dashboard' (role_id 7)
+        $dashboardRole = Role::find(7) ?? Role::where('name', 'dashboard')->first();
+        if ($dashboardRole) {
+            $dashboardPermissions = Permission::whereIn('name', [
+                'dashboard.view',
+                'users.view' // Only view users
+            ])->pluck('id')->toArray();
+            $dashboardRole->permissions()->sync($dashboardPermissions);
         }
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');

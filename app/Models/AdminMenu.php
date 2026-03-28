@@ -110,22 +110,63 @@ class AdminMenu extends Model
      */
     public function userHasAccess($user): bool
     {
-        // TOTAL BYPASS FOR DEVELOPMENT: Allow all menus for all authenticated users
+        // 1. System Admin Bypass: If the user has the 'admin' role (ID 1), they see everything.
+        if ($user->role_id === 1) {
+            return true;
+        }
+
+        // 2. Role-Based Access: Check if the user's role is in the authorized roles array
+        if ($this->roles && !empty($this->roles)) {
+            $userRoleName = $user->role ? $user->role->name : null;
+
+            if ($userRoleName && in_array($userRoleName, $this->roles)) {
+                return true;
+            }
+            
+            return false;
+        }
+
+        // 3. Default: If no roles are defined, it's public (rare for admin menus).
         return true;
     }
 
-    /**
-     * Build menu tree for a specific user based on roles
-     */
     public static function buildTreeForUser($user)
     {
+        // Récupérer le nom du rôle de l'utilisateur
+        $userRoleName = $user->role ? $user->role->name : null;
+        $isAdmin = ($user->role_id === 1);
+
         $query = self::active()->parents();
 
-        return $query->with(['activeChildren'])
+        // Si ce n'est pas un admin (ID 1), filtrer par rôles
+        if (!$isAdmin && $userRoleName) {
+            $query->where(function($q) use ($userRoleName) {
+                $q->whereNull('roles')
+                  ->orWhereJsonContains('roles', $userRoleName);
+            });
+        }
+
+        return $query->with(['activeChildren' => function($query) use ($userRoleName, $isAdmin) {
+                if (!$isAdmin && $userRoleName) {
+                    $query->where(function($q) use ($userRoleName) {
+                        $q->whereNull('roles')
+                          ->orWhereJsonContains('roles', $userRoleName);
+                    });
+                }
+            }])
             ->orderBy('order')
             ->get()
             ->filter(function($menu) use ($user) {
-                // TOTAL BYPASS: Every menu is accessible
+                // Filter parent if user doesn't have access
+                if (!$menu->userHasAccess($user)) {
+                    return false;
+                }
+
+                // Filter parent if no visible children and no navigation destination
+                if ($menu->activeChildren->isEmpty() && !$menu->route && !$menu->url && !$menu->link && !$menu->path) {
+                    return false;
+                }
+
                 return true;
             })
             ->map(function($menu) {
