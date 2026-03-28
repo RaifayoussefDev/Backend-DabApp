@@ -125,20 +125,35 @@ class PlateGeneratorController extends Controller
 
             // Générer le HTML selon le pays
             if ($country === 'ksa') {
+                $topLeft = $request->input('top_left');
+                $bottomLeft = $request->input('bottom_left');
+
+                // Trim leading zeros (Latin "0" and Arabic "٠")
+                // Examples: "0001" -> "1", "0045" -> "45", "٠٠١" -> "١", "000" -> "0"
+                if ($topLeft !== null && $topLeft !== '') {
+                    $topLeft = preg_replace('/^[0٠]+/u', '', $topLeft);
+                    if ($topLeft === '') $topLeft = '0';
+                }
+
+                if ($bottomLeft !== null && $bottomLeft !== '') {
+                    $bottomLeft = preg_replace('/^[0٠]+/u', '', $bottomLeft);
+                    if ($bottomLeft === '') $bottomLeft = '0';
+                }
+
                 $viewData = [
-                    'topLeft' => $request->input('top_left'),
+                    'topLeft' => $topLeft,
                     'topRight' => $request->input('top_right'),
-                    'bottomLeft' => $request->input('bottom_left'),
+                    'bottomLeft' => $bottomLeft,
                     'bottomRight' => $request->input('bottom_right'),
-                    'top_left' => $request->input('top_left'),
+                    'top_left' => $topLeft,
                     'top_right' => $request->input('top_right'),
-                    'bottom_left' => $request->input('bottom_left'),
+                    'bottom_left' => $bottomLeft,
                     'bottom_right' => $request->input('bottom_right'),
                     'logoBase64' => $logoBase64,
                     'logo_base64' => $logoBase64,
                 ];
 
-                \Log::info("🎨 KSA Plate data being sent to view", [
+                \Log::info("🎨 KSA Plate data being sent to view (trimmed)", [
                     'topLeft' => $viewData['topLeft'],
                     'topRight' => $viewData['topRight'],
                     'bottomLeft' => $viewData['bottomLeft'],
