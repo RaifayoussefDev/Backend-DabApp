@@ -915,23 +915,7 @@ class NotificationService
      */
     public function notifyGuidePublished($guide): void
     {
-        // Find all active users
-        User::active()
-            ->chunk(100, function ($users) use ($guide) {
-                foreach ($users as $user) {
-                    try {
-                        $this->sendToUser($user, 'new_guide_published', [
-                            'guide_id' => $guide->id,
-                            'guide_title' => $guide->title,
-                            'excerpt' => Str::limit(strip_tags($guide->excerpt), 100),
-                        ], [
-                            'entity' => $guide,
-                            'priority' => 'normal',
-                        ]);
-                    } catch (\Exception $e) {
-                        Log::error("Failed to notify user {$user->id} for guide published {$guide->id}: " . $e->getMessage());
-                    }
-                }
-            });
+        // Enqueue the notification to all active users to avoid API timeouts
+        \App\Jobs\NotifyPublishedGuideJob::dispatch($guide);
     }
 }
