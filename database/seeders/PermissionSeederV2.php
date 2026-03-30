@@ -113,6 +113,7 @@ class PermissionSeederV2 extends Seeder
                 'events.view',
                 'guides.view',
                 'services.view',
+                'services.manage',
                 'promo_codes.view',
                 'reports.view',
                 'pois.view',

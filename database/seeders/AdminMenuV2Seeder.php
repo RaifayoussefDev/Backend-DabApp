@@ -84,7 +84,14 @@ class AdminMenuV2Seeder extends Seeder
                 "label_ar" => "الخدمات",
                 "icon" => "Wrench",
                 "permission" => "services.view",
-                "order" => 6
+                "order" => 6,
+                "sub_items" => [
+                    ["key" => "services-all", "path" => "/services", "label_en" => "All Services", "label_ar" => "كل الخدمات", "permission" => "services.view", "order" => 1],
+                    ["key" => "services-categories", "path" => "/services/categories", "label_en" => "Categories", "label_ar" => "التصنيفات", "permission" => "services.manage", "order" => 2],
+                    ["key" => "services-bookings", "path" => "/services/bookings", "label_en" => "Bookings", "label_ar" => "الحجوزات", "permission" => "services.view", "order" => 3],
+                    ["key" => "services-reviews", "path" => "/services/reviews", "label_en" => "Reviews", "label_ar" => "التقييمات", "permission" => "services.manage", "order" => 4],
+                    ["key" => "services-chat-sessions", "path" => "/services/chat-sessions", "label_en" => "Chat Sessions", "label_ar" => "جلسات المحادثة", "permission" => "services.view", "order" => 5]
+                ]
             ],
             [
                 "key" => "promo-codes",
