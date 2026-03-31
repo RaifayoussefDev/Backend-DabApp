@@ -17681,6 +17681,355 @@
                 ]
             }
         },
+        "/api/admin/service-promo-codes": {
+            "get": {
+                "tags": [
+                    "Admin Service Promo Codes"
+                ],
+                "summary": "List all service promo codes (Admin)",
+                "operationId": "adminGetPromoCodes",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "inactive",
+                                "expired"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Service Promo Codes"
+                ],
+                "summary": "Create a new service promo code (Admin)",
+                "operationId": "adminCreatePromoCode",
+                "responses": {
+                    "201": {
+                        "description": "Promo code created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/service-promo-codes/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Service Promo Codes"
+                ],
+                "summary": "Get service promo code details (Admin)",
+                "operationId": "adminGetPromoCode",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Service Promo Codes"
+                ],
+                "summary": "Update a service promo code (Admin)",
+                "operationId": "adminUpdatePromoCode",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Service Promo Codes"
+                ],
+                "summary": "Delete a service promo code (Admin)",
+                "operationId": "adminDeletePromoCode",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/service-providers": {
+            "get": {
+                "tags": [
+                    "Admin Service Providers"
+                ],
+                "summary": "List all service providers (Admin)",
+                "operationId": "adminGetProviders",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "is_verified",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/service-providers/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Service Providers"
+                ],
+                "summary": "Get service provider details (Admin)",
+                "operationId": "adminGetProvider",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Service Providers"
+                ],
+                "summary": "Update service provider details (Admin)",
+                "operationId": "adminUpdateProvider",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Service Providers"
+                ],
+                "summary": "Delete a service provider (Admin)",
+                "operationId": "adminDeleteProvider",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/service-providers/{id}/verify": {
+            "post": {
+                "tags": [
+                    "Admin Service Providers"
+                ],
+                "summary": "Verify a service provider (Admin)",
+                "operationId": "adminVerifyProvider",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/service-providers/{id}/toggle-status": {
+            "post": {
+                "tags": [
+                    "Admin Service Providers"
+                ],
+                "summary": "Toggle service provider active status (Admin)",
+                "operationId": "adminToggleProviderStatus",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/service-providers/stats": {
+            "get": {
+                "tags": [
+                    "Admin Service Providers"
+                ],
+                "summary": "Get service provider statistics (Admin)",
+                "operationId": "adminGetProviderStats",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/service-reviews": {
             "get": {
                 "tags": [
@@ -17863,6 +18212,25 @@
                 "responses": {
                     "200": {
                         "description": "Review deleted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/services/stats/overview": {
+            "get": {
+                "tags": [
+                    "Admin Service Stats"
+                ],
+                "summary": "Get global services dashboard statistics (Admin)",
+                "operationId": "adminGetServiceDashboardStats",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
                     }
                 },
                 "security": [
@@ -18693,6 +19061,102 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/subscription-transactions": {
+            "get": {
+                "tags": [
+                    "Admin Subscription Transactions"
+                ],
+                "summary": "List all subscription transactions (Admin)",
+                "operationId": "adminGetTransactions",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "completed",
+                                "failed",
+                                "pending",
+                                "refunded"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "provider_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/subscription-transactions/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Subscription Transactions"
+                ],
+                "summary": "Get subscription transaction details (Admin)",
+                "operationId": "adminGetTransaction",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/subscription-transactions/stats": {
+            "get": {
+                "tags": [
+                    "Admin Subscription Transactions"
+                ],
+                "summary": "Get global subscription transaction statistics (Admin)",
+                "operationId": "adminGetTransactionStats",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
                     }
                 },
                 "security": [
@@ -23466,8 +23930,20 @@
             "description": "API endpoints for moderating provider services (Admin)"
         },
         {
+            "name": "Admin Service Promo Codes",
+            "description": "API endpoints for managing service promo codes (Admin)"
+        },
+        {
+            "name": "Admin Service Providers",
+            "description": "API endpoints for managing service providers (Admin)"
+        },
+        {
             "name": "Admin Service Reviews",
             "description": "API endpoints for moderating service reviews (Admin)"
+        },
+        {
+            "name": "Admin Service Stats",
+            "description": "API endpoints for global service statistics (Admin)"
         },
         {
             "name": "Admin User Subscriptions",
@@ -23476,6 +23952,10 @@
         {
             "name": "Admin Subscription Plans",
             "description": "API endpoints for managing subscription plans (Admin)"
+        },
+        {
+            "name": "Admin Subscription Transactions",
+            "description": "API endpoints for viewing all subscription transactions (Admin)"
         },
         {
             "name": "Admin Tow Services",

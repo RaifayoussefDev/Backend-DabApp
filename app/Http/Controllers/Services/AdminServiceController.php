@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Services;
 
 use App\Http\Controllers\Controller;
 use App\Models\Service;
+use App\Models\ServicePricingRule;
+use App\Models\ServiceRequiredDocument;
+use App\Models\ServiceSchedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -239,6 +242,135 @@ class AdminServiceController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Service deleted successfully'
+        ]);
+    }
+
+    /**
+     * Get pricing rules for a service
+     */
+    public function getPricingRules($id)
+    {
+        $service = Service::findOrFail($id);
+        $rules = $service->pricingRules()->with(['originCity', 'destinationCity'])->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $rules,
+            'message' => 'Pricing rules retrieved successfully'
+        ]);
+    }
+
+    /**
+     * Store a pricing rule for a service
+     */
+    public function storePricingRule(Request $request, $id)
+    {
+        $service = Service::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'type' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'origin_city_id' => 'nullable|exists:cities,id',
+            'destination_city_id' => 'nullable|exists:cities,id',
+            'is_active' => 'boolean'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $rule = $service->pricingRules()->create($request->all());
+
+        return response()->json([
+            'success' => true,
+            'data' => $rule,
+            'message' => 'Pricing rule created successfully'
+        ]);
+    }
+
+    /**
+     * Destroy a pricing rule
+     */
+    public function destroyPricingRule($rule_id)
+    {
+        $rule = ServicePricingRule::findOrFail($rule_id);
+        $rule->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pricing rule deleted successfully'
+        ]);
+    }
+
+    /**
+     * Get required documents for a service
+     */
+    public function getRequiredDocuments($id)
+    {
+        $service = Service::findOrFail($id);
+        $docs = $service->requiredDocuments()->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $docs,
+            'message' => 'Required documents retrieved successfully'
+        ]);
+    }
+
+    /**
+     * Store a required document template for a service
+     */
+    public function storeRequiredDocument(Request $request, $id)
+    {
+        $service = Service::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'document_name' => 'required|string|max:255',
+            'document_name_ar' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'is_required' => 'boolean',
+            'order_position' => 'integer'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $doc = $service->requiredDocuments()->create($request->all());
+
+        return response()->json([
+            'success' => true,
+            'data' => $doc,
+            'message' => 'Required document template created successfully'
+        ]);
+    }
+
+    /**
+     * Destroy a required document template
+     */
+    public function destroyRequiredDocument($doc_id)
+    {
+        $doc = ServiceRequiredDocument::findOrFail($doc_id);
+        $doc->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Required document template deleted successfully'
+        ]);
+    }
+
+    /**
+     * Get schedules for a service
+     */
+    public function getSchedules($id)
+    {
+        $service = Service::findOrFail($id);
+        $schedules = $service->schedules()->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $schedules,
+            'message' => 'Service schedules retrieved successfully'
         ]);
     }
 }

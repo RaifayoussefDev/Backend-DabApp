@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use Illuminate\Support\Facades\Route;
 
@@ -121,6 +121,10 @@ use App\Http\Controllers\Services\AdminServiceReviewController;
 use App\Http\Controllers\Services\AdminTransportRouteController;
 use App\Http\Controllers\Services\AdminTowServiceController;
 use App\Http\Controllers\Services\AdminChatSessionController;
+use App\Http\Controllers\Services\AdminServiceProviderController;
+use App\Http\Controllers\Services\AdminServicePromoCodeController;
+use App\Http\Controllers\Services\AdminSubscriptionTransactionController;
+use App\Http\Controllers\Services\AdminServiceStatsController;
 
 use App\Http\Controllers\Admin\GuideAdminController;
 use App\Http\Controllers\Admin\GuideCategoryAdminController;
@@ -484,6 +488,33 @@ Route::prefix('admin')->group(function () {
         // Admin Chat Sessions
         Route::get('chat-sessions', [AdminChatSessionController::class, 'index']);
         Route::get('chat-sessions/{id}', [AdminChatSessionController::class, 'show']);
+
+        // Admin Service Providers
+        Route::get('service-providers/stats', [AdminServiceProviderController::class, 'stats']);
+        Route::post('service-providers/{id}/verify', [AdminServiceProviderController::class, 'verify']);
+        Route::post('service-providers/{id}/toggle-status', [AdminServiceProviderController::class, 'toggleStatus']);
+        Route::apiResource('service-providers', AdminServiceProviderController::class);
+
+        // Admin Subscription Transactions
+        Route::get('subscription-transactions/stats', [AdminSubscriptionTransactionController::class, 'stats']);
+        Route::apiResource('subscription-transactions', AdminSubscriptionTransactionController::class)->only(['index', 'show']);
+
+        // Admin Service Promo Codes
+        Route::apiResource('service-promo-codes', AdminServicePromoCodeController::class);
+
+        // Global Services Stats
+        Route::get('services/stats/overview', [AdminServiceStatsController::class, 'dashboard']);
+
+        // Service Sub-resources (Pricing Rules, Required Documents)
+        Route::get('services/{id}/pricing-rules', [AdminServiceController::class, 'getPricingRules']);
+        Route::post('services/{id}/pricing-rules', [AdminServiceController::class, 'storePricingRule']);
+        Route::delete('services/pricing-rules/{rule_id}', [AdminServiceController::class, 'destroyPricingRule']);
+        
+        Route::get('services/{id}/required-documents', [AdminServiceController::class, 'getRequiredDocuments']);
+        Route::post('services/{id}/required-documents', [AdminServiceController::class, 'storeRequiredDocument']);
+        Route::delete('services/required-documents/{doc_id}', [AdminServiceController::class, 'destroyRequiredDocument']);
+
+        Route::get('services/{id}/schedules', [AdminServiceController::class, 'getSchedules']);
     });
 });
 

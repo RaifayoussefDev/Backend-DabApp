@@ -15,7 +15,7 @@
                     "App Version"
                 ],
                 "summary": "Get App Version Configuration",
-                "operationId": "354fe3a364031a48242d4c4326fa7de9",
+                "operationId": "a5663f19d1e6028113798ad12d71ec30",
                 "responses": {
                     "200": {
                         "description": "App version configuration retrieved",

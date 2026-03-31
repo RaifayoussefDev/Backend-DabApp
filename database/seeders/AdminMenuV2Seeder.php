@@ -94,13 +94,27 @@ class AdminMenuV2Seeder extends Seeder
                 ]
             ],
             [
+                "key" => "subscriptions",
+                "path" => "/subscriptions",
+                "label_en" => "Subscriptions",
+                "label_ar" => "الاشتراكات",
+                "icon" => "CreditCard",
+                "permission" => "subscriptions.view",
+                "order" => 7,
+                "sub_items" => [
+                    ["key" => "subscriptions-all", "path" => "/subscriptions", "label_en" => "All Subscriptions", "label_ar" => "كل الاشتراكات", "permission" => "subscriptions.view", "order" => 1],
+                    ["key" => "subscriptions-plans", "path" => "/subscriptions/plans", "label_en" => "Plans", "label_ar" => "الخطط", "permission" => "subscriptions.manage", "order" => 2],
+                    ["key" => "subscriptions-transactions", "path" => "/subscriptions/transactions", "label_en" => "Transactions", "label_ar" => "المعاملات", "permission" => "subscriptions.view", "order" => 3]
+                ]
+            ],
+            [
                 "key" => "promo-codes",
                 "path" => "/promo-codes",
                 "label_en" => "Promo Codes",
                 "label_ar" => "أكواد الخصم",
                 "icon" => "Tag",
                 "permission" => "promo_codes.view",
-                "order" => 7,
+                "order" => 8,
                 "sub_items" => [
                     ["key" => "promo-codes-all", "path" => "/promo-codes", "label_en" => "All Codes", "label_ar" => "كل الأكواد", "permission" => "promo_codes.view", "order" => 1],
                     ["key" => "promo-codes-usages", "path" => "/promo-codes/usages", "label_en" => "Usages", "label_ar" => "الاستخدامات", "permission" => "promo_codes.manage", "order" => 2]
@@ -113,7 +127,7 @@ class AdminMenuV2Seeder extends Seeder
                 "label_ar" => "البانرات",
                 "icon" => "Image",
                 "permission" => "banners.manage",
-                "order" => 8
+                "order" => 9
             ],
             [
                 "key" => "reports",
@@ -122,7 +136,7 @@ class AdminMenuV2Seeder extends Seeder
                 "label_ar" => "التقارير",
                 "icon" => "Flag",
                 "permission" => "reports.view",
-                "order" => 9,
+                "order" => 10,
                 "sub_items" => [
                     ["key" => "reports-all", "path" => "/reports", "label_en" => "All Reports", "label_ar" => "كل التقارير", "permission" => "reports.view", "order" => 1],
                     ["key" => "reports-types", "path" => "/reports/types", "label_en" => "Report Types", "label_ar" => "أنواع التقارير", "permission" => "reports.resolve", "order" => 2],
@@ -136,7 +150,7 @@ class AdminMenuV2Seeder extends Seeder
                 "label_ar" => "الإشعارات",
                 "icon" => "Bell",
                 "permission" => "notifications.send",
-                "order" => 10,
+                "order" => 11,
                 "sub_items" => [
                     ["key" => "notifications-logs", "path" => "/notifications", "label_en" => "Logs", "label_ar" => "السجلات", "permission" => "notifications.send", "order" => 1],
                     ["key" => "notifications-settings", "path" => "/notifications/settings", "label_en" => "Settings", "label_ar" => "الإعدادات", "permission" => "notifications.settings", "order" => 2]
@@ -149,7 +163,7 @@ class AdminMenuV2Seeder extends Seeder
                 "label_ar" => "قواعد التسعير",
                 "icon" => "DollarSign",
                 "permission" => "pricing.manage",
-                "order" => 11
+                "order" => 12
             ],
             [
                 "key" => "routes",
@@ -158,7 +172,7 @@ class AdminMenuV2Seeder extends Seeder
                 "label_ar" => "المسارات",
                 "icon" => "Navigation",
                 "permission" => "routes.view",
-                "order" => 12,
+                "order" => 13,
                 "sub_items" => [
                     ["key" => "routes-all", "path" => "/routes", "label_en" => "All Routes", "label_ar" => "كل المسارات", "permission" => "routes.view", "order" => 1],
                     ["key" => "route-categories", "path" => "/route-categories", "label_en" => "Categories", "label_ar" => "التصنيفات", "permission" => "routes.manage", "order" => 2],
@@ -173,7 +187,7 @@ class AdminMenuV2Seeder extends Seeder
                 "label_ar" => "نقاط الاهتمام",
                 "icon" => "MapPin",
                 "permission" => "pois.view",
-                "order" => 13,
+                "order" => 14,
                 "sub_items" => [
                     ["key" => "poi-list", "path" => "/pois", "label_en" => "All Locations", "label_ar" => "كل المواقع", "permission" => "pois.view", "order" => 1],
                     ["key" => "poi-types", "path" => "/poi-types", "label_en" => "Categories", "label_ar" => "التصنيفات", "permission" => "pois.manage", "order" => 2],
@@ -188,7 +202,7 @@ class AdminMenuV2Seeder extends Seeder
                 "label_ar" => "إدارة المواقع",
                 "icon" => "ShieldAlert",
                 "permission" => "pois.manage",
-                "order" => 14,
+                "order" => 15,
                 "sub_items" => [
                     ["key" => "poi-reviews", "path" => "/poi-reviews", "label_en" => "Reviews", "label_ar" => "التقييمات", "permission" => "pois.manage", "order" => 1],
                     ["key" => "poi-reports", "path" => "/poi-reports", "label_en" => "Reports", "label_ar" => "التقارير", "permission" => "pois.manage", "order" => 2]
@@ -201,7 +215,7 @@ class AdminMenuV2Seeder extends Seeder
                 "label_ar" => "الدراجات النارية",
                 "icon" => "Bike",
                 "permission" => "catalog.motorcycle",
-                "order" => 15,
+                "order" => 16,
                 "sub_items" => [
                     ["key" => "motorcycle-brands", "path" => "/motorcycle/brands", "label_en" => "Brands", "label_ar" => "العلامات التجارية", "permission" => "catalog.motorcycle", "order" => 1],
                     ["key" => "motorcycle-models", "path" => "/motorcycle/models", "label_en" => "Models", "label_ar" => "الموديلات", "permission" => "catalog.motorcycle", "order" => 2],
@@ -216,7 +230,7 @@ class AdminMenuV2Seeder extends Seeder
                 "label_ar" => "قطع الغيار",
                 "icon" => "Wrench",
                 "permission" => "catalog.spare_parts",
-                "order" => 16,
+                "order" => 17,
                 "sub_items" => [
                     ["key" => "spare-parts-brands", "path" => "/spare-parts/brands", "label_en" => "Brands", "label_ar" => "العلامات التجارية", "permission" => "catalog.spare_parts", "order" => 1],
                     ["key" => "spare-parts-categories", "path" => "/spare-parts/categories", "label_en" => "Categories", "label_ar" => "التصنيفات", "permission" => "catalog.spare_parts", "order" => 2]
@@ -229,7 +243,7 @@ class AdminMenuV2Seeder extends Seeder
                 "label_ar" => "الإعدادات",
                 "icon" => "Settings",
                 "permission" => "settings.view",
-                "order" => 17,
+                "order" => 18,
                 "sub_items" => [
                     ["key" => "settings-general", "path" => "/settings", "label_en" => "General", "label_ar" => "عام", "permission" => "settings.view", "order" => 1],
                     ["key" => "settings-app-version", "path" => "/settings/app-version", "label_en" => "App Version", "label_ar" => "إصدار التطبيق", "permission" => "settings.view", "order" => 2],
@@ -250,7 +264,7 @@ class AdminMenuV2Seeder extends Seeder
                 'order' => $menu['order'],
                 'permission' => $menu['permission'] ?? null,
                 'type' => isset($menu['sub_items']) ? 'collapse' : 'item',
-                'roles' => ($menu['key'] === 'dashboard') ? ['admin', 'Manager', 'dashboard'] : (in_array($menu['key'], ['users', 'listings', 'events', 'guides', 'services', 'promo-codes', 'reports', 'pois', 'routes', 'banners', 'motorcycle', 'spare-parts']) ? ['admin', 'Manager'] : ['admin']),
+                'roles' => ($menu['key'] === 'dashboard') ? ['admin', 'Manager', 'dashboard'] : (in_array($menu['key'], ['users', 'listings', 'events', 'guides', 'services', 'promo-codes', 'subscriptions', 'reports', 'pois', 'routes', 'banners', 'motorcycle', 'spare-parts']) ? ['admin', 'Manager'] : ['admin']),
                 'is_main_parent' => true,
                 'is_active' => true,
             ]);
@@ -266,7 +280,7 @@ class AdminMenuV2Seeder extends Seeder
                         'order' => $sub['order'],
                         'permission' => $sub['permission'] ?? null,
                         'type' => 'item',
-                        'roles' => ($parent->name === 'dashboard') ? ['admin', 'Manager', 'dashboard'] : (in_array($parent->name, ['users', 'listings', 'events', 'guides', 'services', 'promo-codes', 'reports', 'pois', 'routes', 'banners', 'motorcycle', 'spare-parts']) ? ['admin', 'Manager'] : ['admin']),
+                        'roles' => ($parent->name === 'dashboard') ? ['admin', 'Manager', 'dashboard'] : (in_array($parent->name, ['users', 'listings', 'events', 'guides', 'services', 'promo-codes', 'subscriptions', 'reports', 'pois', 'routes', 'banners', 'motorcycle', 'spare-parts']) ? ['admin', 'Manager'] : ['admin']),
                         'is_main_parent' => false,
                         'is_active' => true,
                     ]);
