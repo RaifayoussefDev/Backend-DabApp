@@ -2983,6 +2983,17 @@
                                         },
                                         "new_this_week": {
                                             "type": "integer"
+                                        },
+                                        "total_value": {
+                                            "type": "number",
+                                            "format": "float"
+                                        },
+                                        "average_price": {
+                                            "type": "number",
+                                            "format": "float"
+                                        },
+                                        "category_price_averages": {
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"

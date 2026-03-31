@@ -90,7 +90,9 @@ class AdminMenuV2Seeder extends Seeder
                     ["key" => "services-categories", "path" => "/services/categories", "label_en" => "Categories", "label_ar" => "التصنيفات", "permission" => "services.manage", "order" => 2],
                     ["key" => "services-bookings", "path" => "/services/bookings", "label_en" => "Bookings", "label_ar" => "الحجوزات", "permission" => "services.view", "order" => 3],
                     ["key" => "services-reviews", "path" => "/services/reviews", "label_en" => "Reviews", "label_ar" => "التقييمات", "permission" => "services.manage", "order" => 4],
-                    ["key" => "services-chat-sessions", "path" => "/services/chat-sessions", "label_en" => "Chat Sessions", "label_ar" => "جلسات المحادثة", "permission" => "services.view", "order" => 5]
+                    ["key" => "services-chat-sessions", "path" => "/services/chat-sessions", "label_en" => "Chat Sessions", "label_ar" => "جلسات المحادثة", "permission" => "services.view", "order" => 5],
+                    ["key" => "services-providers", "path" => "/services/providers", "label_en" => "Providers", "label_ar" => "مزودو الخدمة", "permission" => "services.view", "order" => 6],
+                    ["key" => "services-promo-codes", "path" => "/services/promo-codes", "label_en" => "Promo Codes", "label_ar" => "رموز الخصم", "permission" => "services.manage", "order" => 7]
                 ]
             ],
             [
