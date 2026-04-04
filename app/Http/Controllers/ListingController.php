@@ -37,7 +37,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Services\PayTabsConfigService;
 use App\Services\NotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Traits\CategoryDataTrait; // ✅ Added Trait
+use App\Traits\CategoryDataTrait;
 
 class ListingController extends Controller
 {
@@ -733,15 +733,15 @@ class ListingController extends Controller
                 // Allow small floating point difference or if required is 0 (free)
                 // If requiredAmount > 0 and sent amount is less, REJECT
                 if ($requiredAmount > 0 && $originalAmount < $requiredAmount) {
-                    // Exception: if a promo code is APPLIED later, we might allow it, 
+                    // Exception: if a promo code is APPLIED later, we might allow it,
                     // BUT the initial "amount" sent from front should match the base price before discount.
-                    // However, usually front sends the *final* amount. 
+                    // However, usually front sends the *final* amount.
                     // IF the front sends the base price, we compare against requiredAmount.
                     // IF the front sends the discounted price, we need to validate that *after* promo application.
                     // STANDARD FLOW: Front sends the PRICE user sees. If user sees 599, they send 599.
 
                     // Let's assume Front sends the BASE price and Promo is applied on backend to reduce it?
-                    // OR Front sends the Final price? 
+                    // OR Front sends the Final price?
                     // Looking at code: $originalAmount = $request->amount; then promo potentially reduces it.
                     // So $request->amount SHOULD BE the base price usually, or the price they agree to pay.
 
@@ -1709,7 +1709,7 @@ class ListingController extends Controller
             }
 
             // 🔥 VÉRIFICATION 2: Limite d'édition - UNE SEULE FOIS
-            if ($listing->edit_count >= 1) {
+            if ($listing->edit_count >= 3) {
                 \Log::warning("Edit limit reached for listing", [
                     'listing_id' => $listing->id,
                     'seller_id' => $sellerId,
@@ -1718,9 +1718,9 @@ class ListingController extends Controller
                 ]);
 
                 return response()->json([
-                    'error' => 'You have already modified this listing and you have only one modification allowed.',
+                    'error' => 'You have reached the maximum number of modifications allowed (3) for this listing.',
                     'edit_count' => $listing->edit_count,
-                    'max_edits_allowed' => 1,
+                    'max_edits_allowed' => 3,
                     'last_edited_at' => $listing->last_edited_at ? $listing->last_edited_at->format('Y-m-d H:i:s') : null,
                     'listing_id' => $listing->id,
                     'suggestion' => 'Contact support if you need to make additional changes to your listing.'
@@ -2025,15 +2025,15 @@ class ListingController extends Controller
 
             // Force string casting for display_price as requested
             $displayPrice = (string) ($displayPrice ?? 0);
-            
+
             $isAuction = (bool) $listing->auction_enabled;
 
             return response()->json([
                 'success' => true,
-                'message' => 'Listing updated successfully. You have used your one-time edit.',
+                'message' => 'Listing updated successfully.',
                 'listing_id' => $listing->id,
                 'edit_count' => $listing->edit_count,
-                'can_edit_again' => false,
+                'can_edit_again' => $listing->edit_count < 3,
                 'last_edited_at' => $listing->last_edited_at->format('Y-m-d H:i:s'),
                 'updated_fields' => array_unique($updatedFields),
                 'data' => $listing->fresh()->load(['images', 'motorcycle', 'sparePart.motorcycles', 'licensePlate.fieldValues']),
@@ -2107,7 +2107,7 @@ class ListingController extends Controller
             return response()->json(['error' => 'Listing not found or access denied'], 404);
         }
 
-        $maxEdits = 1;
+        $maxEdits = 3;
         $canEdit = $listing->status === 'published' && $listing->edit_count < $maxEdits;
 
         return response()->json([
@@ -4822,7 +4822,7 @@ class ListingController extends Controller
 
         $formattedListings = $listings->map(function ($listing) {
 
-            // Logic matching other endpoints: 
+            // Logic matching other endpoints:
             // If allow_submission (make an offer), display minimum_bid, otherwise price
             if ($listing->allow_submission || $listing->auction_enabled) {
                 $displayPrice = $listing->minimum_bid;
