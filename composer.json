@@ -19,6 +19,8 @@
         "paytabscom/laravel_paytabs": "^1.9",
         "phpoffice/phpspreadsheet": "^5.0",
         "spatie/browsershot": "^5.1",
+        "symfony/http-client": "^7.4",
+        "symfony/mailgun-mailer": "^7.4",
         "tymon/jwt-auth": "^2.2"
     },
     "require-dev": {

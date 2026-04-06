@@ -234,6 +234,17 @@ Route::prefix('admin')->group(function () {
         Route::apiResource('report-types', \App\Http\Controllers\Admin\ReportTypeController::class);
         Route::apiResource('reports', \App\Http\Controllers\Admin\ReportController::class)->only(['index', 'show', 'update']);
 
+        // ─────────────────────────────────────────────────────────────
+        // Reporting & Export (PDF / Excel / CSV)
+        // GET ?format=json|pdf|excel|csv  &date_from=&date_to=&search=
+        // ─────────────────────────────────────────────────────────────
+        Route::prefix('reporting')->group(function () {
+            Route::get('/users',    [\App\Http\Controllers\Admin\ReportingController::class, 'users']);
+            Route::get('/listings', [\App\Http\Controllers\Admin\ReportingController::class, 'listings']);
+            Route::get('/payments', [\App\Http\Controllers\Admin\ReportingController::class, 'payments']);
+            Route::get('/summary',  [\App\Http\Controllers\Admin\ReportingController::class, 'summary']);
+        });
+
         // Admin Listings
         Route::get('/listings/stats', [AdminListingController::class, 'stats']);
         Route::get('/listings/export-zip', [\App\Http\Controllers\Admin\ExportListingController::class, 'exportZip']);

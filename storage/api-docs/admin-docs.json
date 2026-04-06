@@ -2983,17 +2983,6 @@
                                         },
                                         "new_this_week": {
                                             "type": "integer"
-                                        },
-                                        "total_value": {
-                                            "type": "number",
-                                            "format": "float"
-                                        },
-                                        "average_price": {
-                                            "type": "number",
-                                            "format": "float"
-                                        },
-                                        "category_price_averages": {
-                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -14138,6 +14127,968 @@
                 ]
             }
         },
+        "/api/admin/reporting/users": {
+            "get": {
+                "tags": [
+                    "Admin - Reporting"
+                ],
+                "summary": "Users report with export (PDF / Excel / CSV)",
+                "description": "Returns a paginated JSON list of users (default) or triggers a file download when format=pdf|excel|csv. Supports filtering by status, role, date range, and search.",
+                "operationId": "6f9028fab53b54b5e8b5fff651bf323e",
+                "parameters": [
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "description": "Response format",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "json",
+                            "enum": [
+                                "json",
+                                "pdf",
+                                "excel",
+                                "csv"
+                            ],
+                            "example": "excel"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by active status (1 = active, 0 = inactive)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ],
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "role_id",
+                        "in": "query",
+                        "description": "Filter by role ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by first name, last name, email, or phone",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "john"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "description": "Filter registrations from this date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2025-01-01"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "description": "Filter registrations up to this date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2025-12-31"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (JSON format only)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 50,
+                            "example": 25
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated JSON list (format=json) or file download (format=pdf|excel|csv)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 120
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "first_name": {
+                                                                "type": "string",
+                                                                "example": "John"
+                                                            },
+                                                            "last_name": {
+                                                                "type": "string",
+                                                                "example": "Doe"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "john@example.com"
+                                                            },
+                                                            "phone": {
+                                                                "type": "string",
+                                                                "example": "+212600000000"
+                                                            },
+                                                            "is_active": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "gender": {
+                                                                "type": "string",
+                                                                "example": "male"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "example": "2025-03-01 10:00"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "text/csv": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unsupported format",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Unsupported format. Use: json, pdf, excel, csv"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/reporting/listings": {
+            "get": {
+                "tags": [
+                    "Admin - Reporting"
+                ],
+                "summary": "Listings report with export (PDF / Excel / CSV)",
+                "description": "Returns a paginated JSON list of listings (default) or triggers a file download when format=pdf|excel|csv. Supports filtering by status, category, seller, date range, and search.",
+                "operationId": "1fd7fc28b021ce3848343848e37cda22",
+                "parameters": [
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "description": "Response format",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "json",
+                            "enum": [
+                                "json",
+                                "pdf",
+                                "excel",
+                                "csv"
+                            ],
+                            "example": "pdf"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by listing status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "published",
+                                "pending",
+                                "rejected",
+                                "draft"
+                            ],
+                            "example": "published"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Filter by category ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 3
+                        }
+                    },
+                    {
+                        "name": "seller_id",
+                        "in": "query",
+                        "description": "Filter by seller (user) ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by listing title or ID",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Honda"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "description": "Filter listings created from this date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2025-01-01"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "description": "Filter listings created up to this date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2025-12-31"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (JSON format only)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 50,
+                            "example": 25
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated JSON list (format=json) or file download (format=pdf|excel|csv)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 340
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "title": {
+                                                                "type": "string",
+                                                                "example": "Honda CB500 2022"
+                                                            },
+                                                            "price": {
+                                                                "type": "number",
+                                                                "example": 45000
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "published"
+                                                            },
+                                                            "views_count": {
+                                                                "type": "integer",
+                                                                "example": 230
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "example": "2025-04-01 09:00"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "text/csv": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unsupported format",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Unsupported format. Use: json, pdf, excel, csv"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/reporting/payments": {
+            "get": {
+                "tags": [
+                    "Admin - Reporting"
+                ],
+                "summary": "Payments report with export (PDF / Excel / CSV)",
+                "description": "Returns a paginated JSON list of payments (default) or triggers a file download when format=pdf|excel|csv. Supports filtering by status, user, listing, date range, and search by transaction reference.",
+                "operationId": "11c03b9a128231138c60ab048156853d",
+                "parameters": [
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "description": "Response format",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "json",
+                            "enum": [
+                                "json",
+                                "pdf",
+                                "excel",
+                                "csv"
+                            ],
+                            "example": "csv"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by payment status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "completed",
+                                "pending",
+                                "failed"
+                            ],
+                            "example": "completed"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Filter by user ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    },
+                    {
+                        "name": "listing_id",
+                        "in": "query",
+                        "description": "Filter by listing ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by transaction reference or cart ID",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "TST20250101"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "description": "Filter payments from this date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2025-01-01"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "description": "Filter payments up to this date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2025-12-31"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (JSON format only)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 50,
+                            "example": 25
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated JSON list (format=json) or file download (format=pdf|excel|csv)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 85
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "amount": {
+                                                                "type": "number",
+                                                                "example": 150
+                                                            },
+                                                            "total_amount": {
+                                                                "type": "number",
+                                                                "example": 135
+                                                            },
+                                                            "discounted_amount": {
+                                                                "type": "number",
+                                                                "example": 15
+                                                            },
+                                                            "payment_status": {
+                                                                "type": "string",
+                                                                "example": "completed"
+                                                            },
+                                                            "tran_ref": {
+                                                                "type": "string",
+                                                                "example": "TST20250401ABC"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "example": "2025-04-01 14:00"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "text/csv": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unsupported format",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Unsupported format. Use: json, pdf, excel, csv"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/reporting/summary": {
+            "get": {
+                "tags": [
+                    "Admin - Reporting"
+                ],
+                "summary": "Global summary report (Users + Listings + Payments)",
+                "description": "Aggregated statistics across users, listings, and payments. Optionally filtered by a date range. Supports JSON response or file download (PDF / Excel / CSV).",
+                "operationId": "2da7d9a2fbf6f9c3f6c59779f8e9e8c4",
+                "parameters": [
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "description": "Response format",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "json",
+                            "enum": [
+                                "json",
+                                "pdf",
+                                "excel",
+                                "csv"
+                            ],
+                            "example": "json"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "description": "Start of the period (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2025-01-01"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "description": "End of the period (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2025-12-31"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Summary data (format=json) or file download (format=pdf|excel|csv)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "period": {
+                                                    "properties": {
+                                                        "from": {
+                                                            "type": "string",
+                                                            "example": "2025-01-01"
+                                                        },
+                                                        "to": {
+                                                            "type": "string",
+                                                            "example": "2025-12-31"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "users": {
+                                                    "properties": {
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 500
+                                                        },
+                                                        "active": {
+                                                            "type": "integer",
+                                                            "example": 430
+                                                        },
+                                                        "inactive": {
+                                                            "type": "integer",
+                                                            "example": 70
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "listings": {
+                                                    "properties": {
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 1200
+                                                        },
+                                                        "published": {
+                                                            "type": "integer",
+                                                            "example": 900
+                                                        },
+                                                        "pending": {
+                                                            "type": "integer",
+                                                            "example": 150
+                                                        },
+                                                        "rejected": {
+                                                            "type": "integer",
+                                                            "example": 80
+                                                        },
+                                                        "draft": {
+                                                            "type": "integer",
+                                                            "example": 70
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "payments": {
+                                                    "properties": {
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 320
+                                                        },
+                                                        "completed": {
+                                                            "type": "integer",
+                                                            "example": 280
+                                                        },
+                                                        "pending": {
+                                                            "type": "integer",
+                                                            "example": 25
+                                                        },
+                                                        "failed": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        },
+                                                        "total_revenue": {
+                                                            "type": "number",
+                                                            "example": 145000
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "text/csv": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unsupported format",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Unsupported format. Use: json, pdf, excel, csv"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/login": {
             "post": {
                 "tags": [
@@ -24031,6 +24982,10 @@
         {
             "name": "Admin Sooms",
             "description": "Admin Sooms"
+        },
+        {
+            "name": "Admin - Reporting",
+            "description": "Admin - Reporting"
         },
         {
             "name": "Authentification - admin",
