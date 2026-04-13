@@ -49,7 +49,7 @@ class AdminAssistStatsController extends AssistBaseController
      *                 ),
      *                 @OA\Property(property="top_helpers", type="array",
      *                     @OA\Items(type="object",
-     *                         @OA\Property(property="id", type="string", format="uuid"),
+     *                         @OA\Property(property="id", type="integer", example=2),
      *                         @OA\Property(property="name", type="string", example="Ahmed Al-Rashid"),
      *                         @OA\Property(property="rating", type="number", example=4.95),
      *                         @OA\Property(property="total_assists", type="integer", example=47)
@@ -122,7 +122,7 @@ class AdminAssistStatsController extends AssistBaseController
      *         @OA\Schema(type="string", enum={"pending","accepted","en_route","arrived","completed","cancelled"})
      *     ),
      *     @OA\Parameter(name="expertise_type_id", in="query", required=false,
-     *         @OA\Schema(type="string", format="uuid")
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Parameter(name="date_from", in="query", required=false,
      *         description="Filter requests created from this date (YYYY-MM-DD)",

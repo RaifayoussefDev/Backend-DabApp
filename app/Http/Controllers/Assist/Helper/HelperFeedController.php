@@ -87,8 +87,8 @@ class HelperFeedController extends AssistBaseController
      *     tags={"Assist - Helper Feed"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true,
-     *         description="Assistance request UUID",
-     *         @OA\Schema(type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440010")
+     *         description="Assistance request ID",
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,

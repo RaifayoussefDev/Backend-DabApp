@@ -80,8 +80,8 @@ class AdminExpertiseController extends AssistBaseController
      *     tags={"Assist - Admin Expertise"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true,
-     *         description="ExpertiseType UUID",
-     *         @OA\Schema(type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440001")
+     *         description="ExpertiseType ID",
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\RequestBody(
      *         @OA\JsonContent(

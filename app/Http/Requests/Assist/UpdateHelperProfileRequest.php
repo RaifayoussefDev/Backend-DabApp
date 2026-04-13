@@ -15,9 +15,9 @@ class UpdateHelperProfileRequest extends AssistFormRequest
             'service_radius_km' => ['nullable', 'integer', 'min:1', 'max:100'],
             'level'             => ['nullable', 'string', 'in:standard,elite,vanguard'],
             'expertise_ids'     => ['nullable', 'array'],
-            'expertise_ids.*'   => ['integer', 'exists:expertise_types,id'],
-            'country_id'        => ['nullable', 'integer', 'exists:countries,id'],
-            'city_id'           => ['nullable', 'integer', 'exists:cities,id'],
+            'expertise_ids.*'   => ['numeric', 'exists:expertise_types,id'],
+            'country_id'        => ['nullable', 'numeric', 'exists:countries,id'],
+            'city_id'           => ['nullable', 'numeric', 'exists:cities,id'],
         ];
     }
 }

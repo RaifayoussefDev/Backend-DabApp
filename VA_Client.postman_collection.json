@@ -9,11 +9,11 @@
     { "key": "base_url",          "value": "http://localhost:8000" },
     { "key": "helper_token",      "value": "" },
     { "key": "seeker_token",      "value": "" },
-    { "key": "expertise_id",      "value": "" },
-    { "key": "helper_profile_id", "value": "" },
+    { "key": "expertise_id",      "value": "1" },
+    { "key": "helper_profile_id", "value": "2" },
     { "key": "request_id",        "value": "" },
-    { "key": "country_id",        "value": "" },
-    { "key": "city_id",           "value": "" }
+    { "key": "country_id",        "value": "1" },
+    { "key": "city_id",           "value": "1" }
   ],
   "item": [
 
@@ -42,10 +42,10 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"helper@test.com\",\n  \"password\": \"password\"\n}"
+              "raw": "{\n  \"email\": \"Raifadev@gmail.com\",\n  \"password\": \"Raifa98@@\"\n}"
             },
             "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api","login"] },
-            "description": "Login as the helper user.\n→ Change email/password to a real user in your DB.\n→ Token saved automatically to {{helper_token}}."
+            "description": "Login as helper (Raifadev@gmail.com / user_id=84).\n→ Has helper profile #2 with tire_repair, mechanical_check, towing_service expertise.\n→ Token saved automatically to {{helper_token}}."
           }
         },
 
@@ -70,10 +70,10 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"seeker@test.com\",\n  \"password\": \"password\"\n}"
+              "raw": "{\n  \"email\": \"yucefr@gmail.com\",\n  \"password\": \"Raifa98@@\"\n}"
             },
             "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api","login"] },
-            "description": "Login as a different user (the rider who needs help).\n→ Must be a different account than the helper.\n→ Token saved automatically to {{seeker_token}}."
+            "description": "Login as seeker (yucefr@gmail.com / user_id=65).\n→ Different account from the helper — will send assistance requests.\n→ Token saved automatically to {{seeker_token}}."
           }
         }
 
@@ -142,6 +142,38 @@
         },
 
         {
+          "name": "🛠️ Get Expertise Types",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "const list = j.data || j;",
+              "pm.test('Expertise types loaded ✓', () => pm.expect(list).to.be.an('array').that.is.not.empty);",
+              "if (list.length > 0) {",
+              "    const tire = list.find(t => t.name === 'tire_repair') || list[0];",
+              "    pm.collectionVariables.set('expertise_id', String(tire.id));",
+              "    console.log('All types:', list.map(t => t.id + ' = ' + t.name).join(', '));",
+              "    console.log('expertise_id set to:', tire.id, '(' + tire.name + ')');",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/assist/expertise-types",
+              "host": ["{{base_url}}"],
+              "path": ["api","assist","expertise-types"]
+            },
+            "description": "Loads all expertise types and saves tire_repair ID to {{expertise_id}}.\n→ Required before Create Profile and Send Assistance Request.\n→ Console shows all IDs — change expertise_id manually if needed."
+          }
+        },
+
+        {
           "name": "🪪 Create / Update Profile",
           "event": [{
             "listen": "test",
@@ -165,10 +197,10 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"service_radius_km\": 20,\n  \"level\": \"standard\",\n  \"expertise_ids\": [{{expertise_id}}],\n  \"country_id\": {{country_id}},\n  \"city_id\": {{city_id}}\n}"
+              "raw": "{\n  \"service_radius_km\": 20,\n  \"level\": \"standard\",\n  \"expertise_ids\": [\"{{expertise_id}}\"],\n  \"country_id\": \"{{country_id}}\",\n  \"city_id\": \"{{city_id}}\"\n}"
             },
             "url": { "raw": "{{base_url}}/api/assist/helper/profile", "host": ["{{base_url}}"], "path": ["api","assist","helper","profile"] },
-            "description": "Creates or updates the helper profile.\n⚠️  Run in this order:\n  1. List Countries → sets {{country_id}}\n  2. List Cities → sets {{city_id}}\n  3. Admin – Get Expertise Types → sets {{expertise_id}}\n→ {{helper_profile_id}} is saved automatically."
+            "description": "Creates or updates the helper profile.\n\n✅ Pre-filled defaults (raifadev@gmail.com):\n  expertise_id=1 (tire_repair), country_id=1 (Saudi Arabia), city_id=1 (Riyadh)\n\n⚠️  Run in this order:\n  1. Helper – Login     → sets {{helper_token}}\n  2. Get Expertise Types → confirms {{expertise_id}}\n  3. List Countries      → confirms {{country_id}}\n  4. List Cities         → confirms {{city_id}}\n  5. This request        → saves {{helper_profile_id}}\n\n📋 Field reference:\n• service_radius_km: integer 1–100 (km around your GPS position)\n• level:\n    - \"standard\"  → Basic helper, just starting\n    - \"elite\"     → Experienced helper, high rating\n    - \"vanguard\"  → Top-rated expert (assigned by admin)\n• expertise_ids: [1=tire_repair, 2=mechanical_check, 3=towing_service]\n• country_id: 1=Saudi Arabia, 2=UAE, 3=Kuwait, 8=Qatar, 9=Bahrain\n• city_id: 1=Riyadh, 2=Jeddah, 3=Mecca, 18=Medina, 19=Dammam"
           }
         },
 
@@ -274,7 +306,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"expertise_type_id\": {{expertise_id}},\n  \"latitude\": 24.7140,\n  \"longitude\": 46.6750,\n  \"location_label\": \"King Fahd Road, Riyadh – near Exit 7\",\n  \"description\": \"My rear tire is completely flat. Stuck on the side of the road.\"\n}"
+              "raw": "{\n  \"expertise_type_id\": \"{{expertise_id}}\",\n  \"latitude\": 24.7140,\n  \"longitude\": 46.6750,\n  \"location_label\": \"King Fahd Road, Riyadh – near Exit 7\",\n  \"description\": \"My rear tire is completely flat. Stuck on the side of the road.\"\n}"
             },
             "url": { "raw": "{{base_url}}/api/assist/seeker/request", "host": ["{{base_url}}"], "path": ["api","assist","seeker","request"] },
             "description": "Creates a roadside assistance request.\n→ {{request_id}} is saved automatically.\n→ Nearby helpers are notified instantly."

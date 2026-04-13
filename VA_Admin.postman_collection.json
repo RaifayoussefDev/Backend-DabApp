@@ -8,9 +8,9 @@
   "variable": [
     { "key": "base_url",          "value": "http://localhost:8000" },
     { "key": "admin_token",       "value": "" },
-    { "key": "expertise_id",      "value": "" },
+    { "key": "expertise_id",      "value": "1" },
     { "key": "new_expertise_id",  "value": "" },
-    { "key": "helper_profile_id", "value": "" }
+    { "key": "helper_profile_id", "value": "2" }
   ],
   "item": [
 
@@ -39,10 +39,10 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@test.com\",\n  \"password\": \"password\"\n}"
+              "raw": "{\n  \"email\": \"yucefr@gmail.com\",\n  \"password\": \"Raifa98@@\"\n}"
             },
             "url": { "raw": "{{base_url}}/api/admin/login", "host": ["{{base_url}}"], "path": ["api","admin","login"] },
-            "description": "Login as admin.\n→ Change email/password to your admin account.\n→ Token saved automatically to {{admin_token}}."
+            "description": "Login as admin (yucefr@gmail.com).\n→ Token saved automatically to {{admin_token}}.\n⚠️ Uses /api/admin/login — different from client /api/login."
           }
         }
 
@@ -63,8 +63,8 @@
               "pm.test('Has expertise types ✓', () => pm.expect(j.data).to.be.an('array').that.is.not.empty);",
               "if (j.data && j.data.length > 0) {",
               "    const tire = j.data.find(t => t.name === 'tire_repair') || j.data[0];",
-              "    pm.collectionVariables.set('expertise_id', tire.id);",
-              "    pm.test('expertise_id saved: ' + tire.name + ' ✓', () => pm.expect(tire.id).to.be.a('string'));",
+              "    pm.collectionVariables.set('expertise_id', String(tire.id));",
+              "    pm.test('expertise_id saved: ' + tire.name + ' ✓', () => pm.expect(tire.id).to.be.a('number'));",
               "    console.log('expertise_id set to:', tire.name, '→', tire.id);",
               "    console.log('All types:', j.data.map(t => t.name).join(', '));",
               "}"
@@ -127,7 +127,7 @@
               "code": 201,
               "_postman_previewlanguage": "json",
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Expertise type created.\",\n  \"data\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440099\",\n    \"name\": \"battery_jump\",\n    \"icon\": \"battery_charging_full\",\n    \"created_at\": \"2026-04-11T10:00:00.000000Z\",\n    \"updated_at\": \"2026-04-11T10:00:00.000000Z\"\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Expertise type created.\",\n  \"data\": {\n    \"id\": 7,\n    \"name\": \"battery_jump\",\n    \"icon\": \"battery_charging_full\",\n    \"created_at\": \"2026-04-13T10:00:00.000000Z\",\n    \"updated_at\": \"2026-04-13T10:00:00.000000Z\"\n  }\n}"
             },
             {
               "name": "Example 2 – winch_recovery",
@@ -148,7 +148,7 @@
               "code": 201,
               "_postman_previewlanguage": "json",
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Expertise type created.\",\n  \"data\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440100\",\n    \"name\": \"winch_recovery\",\n    \"icon\": \"settings_input_component\",\n    \"created_at\": \"2026-04-11T10:00:00.000000Z\",\n    \"updated_at\": \"2026-04-11T10:00:00.000000Z\"\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Expertise type created.\",\n  \"data\": {\n    \"id\": 8,\n    \"name\": \"winch_recovery\",\n    \"icon\": \"settings_input_component\",\n    \"created_at\": \"2026-04-13T10:00:00.000000Z\",\n    \"updated_at\": \"2026-04-13T10:00:00.000000Z\"\n  }\n}"
             },
             {
               "name": "Example 3 – duplicate name (422)",
@@ -418,7 +418,7 @@
                 { "key": "page",              "value": "1",           "disabled": true }
               ]
             },
-            "description": "Monitor all requests with optional filters.\n→ Uncomment query params:\n   status: pending | accepted | en_route | arrived | completed | cancelled\n   expertise_type_id: UUID\n   date_from / date_to: YYYY-MM-DD"
+            "description": "Monitor all requests with optional filters.\n→ Uncomment query params:\n   status: pending | accepted | en_route | arrived | completed | cancelled\n   expertise_type_id: integer (e.g. 1 = tire_repair)\n   date_from / date_to: YYYY-MM-DD"
           }
         },
 

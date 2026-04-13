@@ -61,12 +61,16 @@ class HelperProfileController extends AssistBaseController
      *             @OA\Property(property="service_radius_km", type="integer", example=20,
      *                 description="Max km radius to accept requests (1-100)"),
      *             @OA\Property(property="level", type="string", enum={"standard","elite","vanguard"},
-     *                 example="standard"),
+     *                 example="standard",
+     *                 description="standard = basic helper, elite = experienced, vanguard = top-rated expert"),
      *             @OA\Property(property="expertise_ids", type="array",
-     *                 description="List of expertise type UUIDs to assign",
-     *                 @OA\Items(type="string", format="uuid",
-     *                     example="550e8400-e29b-41d4-a716-446655440001")
-     *             )
+     *                 description="List of expertise type IDs to assign",
+     *                 @OA\Items(type="integer", example=1)
+     *             ),
+     *             @OA\Property(property="country_id", type="integer", nullable=true, example=1,
+     *                 description="ID from /api/countries-list"),
+     *             @OA\Property(property="city_id", type="integer", nullable=true, example=3,
+     *                 description="ID from /api/cities?country_id=1")
      *         )
      *     ),
      *     @OA\Response(
@@ -88,7 +92,7 @@ class HelperProfileController extends AssistBaseController
             ['is_available' => false, 'is_verified' => false]
         );
 
-        $profile->update($request->only(['service_radius_km', 'level']));
+        $profile->update($request->only(['service_radius_km', 'level', 'country_id', 'city_id']));
 
         if ($request->has('expertise_ids')) {
             $profile->expertiseTypes()->sync($request->expertise_ids);

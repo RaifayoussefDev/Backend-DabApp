@@ -23,10 +23,9 @@ class HelperMatchingService
             ->whereHas('expertiseTypes', function ($q) use ($request) {
                 $q->where('expertise_types.id', $request->expertise_type_id);
             })
-            // HAVING instead of WHERE — distance_km is a SELECT alias, not a column
-            ->having('distance_km', '<=', \DB::raw('service_radius_km'))
             ->with('user')
-            ->get();
+            ->get()
+            ->filter(fn($h) => isset($h->distance_km) && $h->distance_km <= $h->service_radius_km);
 
         foreach ($helpers as $helperProfile) {
             $this->notificationService->notify(

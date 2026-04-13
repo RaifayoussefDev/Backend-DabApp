@@ -1862,8 +1862,37 @@ use App\Http\Controllers\Assist\Helper\HelperMissionController;
 use App\Http\Controllers\Assist\Admin\AdminHelperController;
 use App\Http\Controllers\Assist\Admin\AdminExpertiseController;
 use App\Http\Controllers\Assist\Admin\AdminAssistStatsController;
+use App\Http\Controllers\AdController;
+use App\Http\Controllers\Admin\AdminAdController;
+
+/*
+|--------------------------------------------------------------------------
+| Ads (Paid Advertisements) Routes
+|--------------------------------------------------------------------------
+*/
+
+// Public: mobile app fetches and submits ads (no auth required)
+Route::prefix('ads')->group(function () {
+    Route::get('/',               [AdController::class, 'index']);
+    Route::get('/{id}',           [AdController::class, 'show']);
+    Route::post('/{id}/submit',   [AdController::class, 'submit']);
+});
+
+// Admin: manage ads and view submissions
+Route::prefix('admin/ads')->middleware('auth.admin')->group(function () {
+    Route::get('/',                 [AdminAdController::class, 'index']);
+    Route::post('/',                [AdminAdController::class, 'store']);
+    Route::get('/{id}',             [AdminAdController::class, 'show']);
+    Route::put('/{id}',             [AdminAdController::class, 'update']);
+    Route::delete('/{id}',          [AdminAdController::class, 'destroy']);
+    Route::post('/{id}/toggle',     [AdminAdController::class, 'toggle']);
+    Route::get('/{id}/submissions', [AdminAdController::class, 'submissions']);
+});
 
 Route::prefix('assist')->middleware('auth:api')->group(function () {
+
+    // ── Public (any authenticated user) ─────────────────────────────────────
+    Route::get('expertise-types', [AdminExpertiseController::class, 'index']);
 
     // ── Seeker ───────────────────────────────────────────────────────────────
     Route::prefix('seeker')->group(function () {

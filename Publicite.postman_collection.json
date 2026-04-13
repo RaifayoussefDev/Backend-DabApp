@@ -1,0 +1,325 @@
+{
+  "info": {
+    "name": "Ads – Full Flow",
+    "_postman_id": "ads-full-flow-2026",
+    "description": "Full flow: Admin creates ad → Mobile fetches it → User submits form → Admin views leads",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",    "value": "http://localhost:8000" },
+    { "key": "admin_token", "value": "PASTE_ADMIN_JWT_HERE" },
+    { "key": "ad_id",       "value": "" },
+    { "key": "city_id",     "value": "1" }
+  ],
+  "item": [
+
+    {
+      "name": "0 – Get Cities (pick a city_id)",
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "const j = pm.response.json();",
+          "if (j.data && j.data.length > 0) {",
+          "  pm.collectionVariables.set('city_id', j.data[0].id);",
+          "  console.log('Cities:', j.data.map(c => c.id + ' -> ' + c.name).join(', '));",
+          "  console.log('city_id saved:', j.data[0].id);",
+          "}"
+        ]}
+      }],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": { "raw": "{{base_url}}/api/cities", "host": ["{{base_url}}"], "path": ["api","cities"] }
+      }
+    },
+
+    {
+      "name": "1 – Admin: Create Ad (VIDEO)",
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 201', () => pm.response.to.have.status(201));",
+          "pm.test('Success true', () => pm.expect(pm.response.json().success).to.be.true);",
+          "const j = pm.response.json();",
+          "if (j.data && j.data.id) {",
+          "  pm.collectionVariables.set('ad_id', j.data.id);",
+          "  console.log('ad_id saved:', j.data.id);",
+          "}"
+        ]}
+      }],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+          { "key": "Content-Type",  "value": "application/json" },
+          { "key": "Accept",        "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"New Car 2026\",\n  \"description\": \"Discover the new model exclusively.\",\n  \"type\": \"video\",\n  \"media_url\": \"https://cdn.dabapp.com/ads/car-2026.mp4\",\n  \"image\": \"https://cdn.dabapp.com/ads/car-2026-thumb.jpg\",\n  \"button_text\": \"I am interested\",\n  \"google_sheet_id\": \"15ln515Ecn1lw1ZdHlqe3BdDuXzlxskZLmfdpa7wjXNU\",\n  \"order\": 1,\n  \"is_active\": true,\n  \"start_date\": \"2026-04-14\",\n  \"end_date\": \"2026-12-31\"\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/admin/ads", "host": ["{{base_url}}"], "path": ["api","admin","ads"] }
+      }
+    },
+
+    {
+      "name": "1 – Admin: Create Ad (PHOTO)",
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 201', () => pm.response.to.have.status(201));",
+          "const j = pm.response.json();",
+          "if (j.data && j.data.id) pm.collectionVariables.set('ad_id', j.data.id);"
+        ]}
+      }],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+          { "key": "Content-Type",  "value": "application/json" },
+          { "key": "Accept",        "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Ramadan Special Offer\",\n  \"description\": \"Get 30% off during Ramadan.\",\n  \"type\": \"photo\",\n  \"image\": \"https://cdn.dabapp.com/ads/ramadan.jpg\",\n  \"button_text\": \"Learn More\",\n  \"google_sheet_id\": \"15ln515Ecn1lw1ZdHlqe3BdDuXzlxskZLmfdpa7wjXNU\",\n  \"order\": 2,\n  \"is_active\": true\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/admin/ads", "host": ["{{base_url}}"], "path": ["api","admin","ads"] }
+      }
+    },
+
+    {
+      "name": "2 – Admin: List All Ads",
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "const j = pm.response.json();",
+          "pm.test('Has data array', () => pm.expect(j.data.data).to.be.an('array'));",
+          "if (j.data.data.length > 0) {",
+          "  pm.test('Has ad_submissions_count', () => pm.expect(j.data.data[0]).to.have.property('ad_submissions_count'));",
+          "  pm.test('Has google_sheet_id', () => pm.expect(j.data.data[0]).to.have.property('google_sheet_id'));",
+          "}"
+        ]}
+      }],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+          { "key": "Accept",        "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/admin/ads?per_page=10&search=",
+          "host": ["{{base_url}}"],
+          "path": ["api","admin","ads"],
+          "query": [
+            { "key": "per_page", "value": "10" },
+            { "key": "search",   "value": "" }
+          ]
+        }
+      }
+    },
+
+    {
+      "name": "3 – Admin: Get Single Ad",
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "const d = pm.response.json().data;",
+          "pm.test('All fields present', () => {",
+          "  pm.expect(d).to.have.property('google_sheet_id');",
+          "  pm.expect(d).to.have.property('type');",
+          "  pm.expect(d).to.have.property('media_url');",
+          "  pm.expect(d).to.have.property('ad_submissions_count');",
+          "});"
+        ]}
+      }],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+          { "key": "Accept",        "value": "application/json" }
+        ],
+        "url": { "raw": "{{base_url}}/api/admin/ads/{{ad_id}}", "host": ["{{base_url}}"], "path": ["api","admin","ads","{{ad_id}}"] }
+      }
+    },
+
+    {
+      "name": "4 – Mobile: Get Active Ads",
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "const j = pm.response.json();",
+          "pm.test('Success true', () => pm.expect(j.success).to.be.true);",
+          "pm.test('Data is array', () => pm.expect(j.data).to.be.an('array'));",
+          "if (j.data.length > 0) {",
+          "  const ad = j.data[0];",
+          "  pm.test('has_form is true', () => pm.expect(ad.has_form).to.be.true);",
+          "  pm.test('type is valid', () => pm.expect(['photo','video']).to.include(ad.type));",
+          "  pm.collectionVariables.set('ad_id', ad.id);",
+          "  console.log('ad_id:', ad.id, '| type:', ad.type, '| button:', ad.button_text);",
+          "}"
+        ]}
+      }],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": { "raw": "{{base_url}}/api/ads", "host": ["{{base_url}}"], "path": ["api","ads"] }
+      }
+    },
+
+    {
+      "name": "5 – Mobile: Submit Form (valid)",
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 201', () => pm.response.to.have.status(201));",
+          "pm.test('Success true', () => pm.expect(pm.response.json().success).to.be.true);",
+          "console.log('Check Google Sheet: https://docs.google.com/spreadsheets/d/15ln515Ecn1lw1ZdHlqe3BdDuXzlxskZLmfdpa7wjXNU');"
+        ]}
+      }],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept",       "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"first_name\": \"Ahmed\",\n  \"last_name\": \"Benali\",\n  \"phone\": \"0551234567\",\n  \"email\": \"ahmed.benali@example.com\",\n  \"city_id\": {{city_id}}\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/ads/{{ad_id}}/submit", "host": ["{{base_url}}"], "path": ["api","ads","{{ad_id}}","submit"] }
+      }
+    },
+
+    {
+      "name": "5 – Mobile: Submit Form (invalid – 422)",
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 422', () => pm.response.to.have.status(422));",
+          "pm.test('Has errors', () => pm.expect(pm.response.json().errors).to.be.an('object'));",
+          "console.log('Errors:', JSON.stringify(pm.response.json().errors));"
+        ]}
+      }],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept",       "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"first_name\": \"\",\n  \"city_id\": 99999\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/ads/{{ad_id}}/submit", "host": ["{{base_url}}"], "path": ["api","ads","{{ad_id}}","submit"] }
+      }
+    },
+
+    {
+      "name": "6 – Admin: View Submissions (leads)",
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "const j = pm.response.json();",
+          "pm.test('Has ad info', () => pm.expect(j.ad).to.have.property('title'));",
+          "if (j.data.data.length > 0) {",
+          "  const s = j.data.data[0];",
+          "  pm.test('Lead has all fields', () => {",
+          "    pm.expect(s).to.have.property('first_name');",
+          "    pm.expect(s).to.have.property('last_name');",
+          "    pm.expect(s).to.have.property('phone');",
+          "    pm.expect(s).to.have.property('city');",
+          "    pm.expect(s).to.have.property('synced_to_sheet');",
+          "  });",
+          "  console.log('synced_to_sheet:', s.synced_to_sheet, '| city:', s.city);",
+          "}"
+        ]}
+      }],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+          { "key": "Accept",        "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/admin/ads/{{ad_id}}/submissions?per_page=25&search=",
+          "host": ["{{base_url}}"],
+          "path": ["api","admin","ads","{{ad_id}}","submissions"],
+          "query": [
+            { "key": "per_page", "value": "25" },
+            { "key": "search",   "value": "" }
+          ]
+        }
+      }
+    },
+
+    {
+      "name": "7 – Admin: Toggle Active/Inactive",
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "const j = pm.response.json();",
+          "pm.test('is_active is boolean', () => pm.expect(j.is_active).to.be.a('boolean'));",
+          "console.log('New status:', j.is_active);"
+        ]}
+      }],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+          { "key": "Accept",        "value": "application/json" }
+        ],
+        "url": { "raw": "{{base_url}}/api/admin/ads/{{ad_id}}/toggle", "host": ["{{base_url}}"], "path": ["api","admin","ads","{{ad_id}}","toggle"] }
+      }
+    },
+
+    {
+      "name": "8 – Admin: Update Ad",
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "pm.test('Title updated', () => pm.expect(pm.response.json().data.title).to.include('Updated'));"
+        ]}
+      }],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+          { "key": "Content-Type",  "value": "application/json" },
+          { "key": "Accept",        "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"New Car 2026 – Updated\",\n  \"button_text\": \"Contact Us\",\n  \"google_sheet_id\": \"15ln515Ecn1lw1ZdHlqe3BdDuXzlxskZLmfdpa7wjXNU\"\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/admin/ads/{{ad_id}}", "host": ["{{base_url}}"], "path": ["api","admin","ads","{{ad_id}}"] }
+      }
+    },
+
+    {
+      "name": "9 – Admin: Delete Ad",
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "pm.test('Deleted', () => pm.expect(pm.response.json().success).to.be.true);"
+        ]}
+      }],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+          { "key": "Accept",        "value": "application/json" }
+        ],
+        "url": { "raw": "{{base_url}}/api/admin/ads/{{ad_id}}", "host": ["{{base_url}}"], "path": ["api","admin","ads","{{ad_id}}"] }
+      }
+    }
+
+  ]
+}

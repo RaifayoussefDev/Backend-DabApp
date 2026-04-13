@@ -36,9 +36,9 @@ class AssistanceRequestController extends AssistBaseController
      *         required=true,
      *         @OA\JsonContent(
      *             required={"expertise_type_id","latitude","longitude","location_label"},
-     *             @OA\Property(property="expertise_type_id", type="string", format="uuid",
-     *                 example="550e8400-e29b-41d4-a716-446655440001",
-     *                 description="ID of the required expertise type"),
+     *             @OA\Property(property="expertise_type_id", type="integer",
+     *                 example=1,
+     *                 description="ID of the required expertise type (from GET /api/assist/expertise-types)"),
      *             @OA\Property(property="latitude", type="number", format="float", example=24.7136,
      *                 description="Rider's current latitude"),
      *             @OA\Property(property="longitude", type="number", format="float", example=46.6753,
@@ -47,8 +47,8 @@ class AssistanceRequestController extends AssistBaseController
      *                 description="Human-readable location name"),
      *             @OA\Property(property="description", type="string", nullable=true,
      *                 example="My rear tire is flat, near the gas station"),
-     *             @OA\Property(property="motorcycle_id", type="string", format="uuid", nullable=true,
-     *                 example=null, description="Optional: linked motorcycle UUID")
+     *             @OA\Property(property="motorcycle_id", type="integer", nullable=true,
+     *                 example=null, description="Optional: linked motorcycle ID")
      *         )
      *     ),
      *     @OA\Response(
@@ -115,8 +115,8 @@ class AssistanceRequestController extends AssistBaseController
      *     tags={"Assist - Seeker"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true,
-     *         description="Assistance request UUID",
-     *         @OA\Schema(type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440010")
+     *         description="Assistance request ID",
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,

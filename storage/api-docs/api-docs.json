@@ -9,6 +9,189 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/ads": {
+            "get": {
+                "tags": [
+                    "Ads"
+                ],
+                "summary": "Get active ads for mobile app",
+                "description": "Returns all active ads with a lead form enabled, within the active date range.",
+                "operationId": "8e9e27a8d8034b04ec30d407fc92200d",
+                "responses": {
+                    "200": {
+                        "description": "List of active ads",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "Ramadan Special Offer"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Get 30% off during Ramadan"
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "photo",
+                                                            "video"
+                                                        ],
+                                                        "example": "video"
+                                                    },
+                                                    "image": {
+                                                        "type": "string",
+                                                        "example": "https://cdn.dabapp.com/ads/ramadan-thumb.jpg"
+                                                    },
+                                                    "media_url": {
+                                                        "type": "string",
+                                                        "example": "https://cdn.dabapp.com/ads/ramadan.mp4"
+                                                    },
+                                                    "button_text": {
+                                                        "type": "string",
+                                                        "example": "I am interested"
+                                                    },
+                                                    "has_form": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/ads/{id}": {
+            "get": {
+                "tags": [
+                    "Ads"
+                ],
+                "summary": "Get a single ad",
+                "operationId": "1febe6a8ad4c7e806982ae4dbad768f8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ad details"
+                    },
+                    "404": {
+                        "description": "Ad not found"
+                    }
+                }
+            }
+        },
+        "/api/ads/{id}/submit": {
+            "post": {
+                "tags": [
+                    "Ads"
+                ],
+                "summary": "Submit lead form after viewing an ad",
+                "description": "User submits their info after watching the ad. Saved to DB and synced to the linked Google Sheet.",
+                "operationId": "cadfcc41b788781c219c00e7a12f5476",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "first_name",
+                                    "last_name",
+                                    "phone",
+                                    "city_id"
+                                ],
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": "Ahmed"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Benali"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0551234567"
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Submission saved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Thank you! Your information has been submitted."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Ad not found or inactive"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
         "/api/app-version": {
             "get": {
                 "tags": [
@@ -126,12 +309,11 @@
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "Assistance request UUID",
+                        "description": "Assistance request ID",
                         "required": true,
                         "schema": {
-                            "type": "string",
-                            "format": "uuid",
-                            "example": "550e8400-e29b-41d4-a716-446655440010"
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
@@ -185,12 +367,11 @@
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "Assistance request UUID",
+                        "description": "Assistance request ID",
                         "required": true,
                         "schema": {
-                            "type": "string",
-                            "format": "uuid",
-                            "example": "550e8400-e29b-41d4-a716-446655440010"
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
@@ -316,6 +497,7 @@
                                         "example": 20
                                     },
                                     "level": {
+                                        "description": "standard = basic helper, elite = experienced, vanguard = top-rated expert",
                                         "type": "string",
                                         "enum": [
                                             "standard",
@@ -325,13 +507,24 @@
                                         "example": "standard"
                                     },
                                     "expertise_ids": {
-                                        "description": "List of expertise type UUIDs to assign",
+                                        "description": "List of expertise type IDs to assign",
                                         "type": "array",
                                         "items": {
-                                            "type": "string",
-                                            "format": "uuid",
-                                            "example": "550e8400-e29b-41d4-a716-446655440001"
+                                            "type": "integer",
+                                            "example": 1
                                         }
+                                    },
+                                    "country_id": {
+                                        "description": "ID from /api/countries-list",
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    },
+                                    "city_id": {
+                                        "description": "ID from /api/cities?country_id=1",
+                                        "type": "integer",
+                                        "example": 3,
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -525,10 +718,9 @@
                                 ],
                                 "properties": {
                                     "expertise_type_id": {
-                                        "description": "ID of the required expertise type",
-                                        "type": "string",
-                                        "format": "uuid",
-                                        "example": "550e8400-e29b-41d4-a716-446655440001"
+                                        "description": "ID of the required expertise type (from GET /api/assist/expertise-types)",
+                                        "type": "integer",
+                                        "example": 1
                                     },
                                     "latitude": {
                                         "description": "Rider's current latitude",
@@ -553,9 +745,8 @@
                                         "nullable": true
                                     },
                                     "motorcycle_id": {
-                                        "description": "Optional: linked motorcycle UUID",
-                                        "type": "string",
-                                        "format": "uuid",
+                                        "description": "Optional: linked motorcycle ID",
+                                        "type": "integer",
                                         "example": null,
                                         "nullable": true
                                     }
@@ -623,12 +814,11 @@
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "Assistance request UUID",
+                        "description": "Assistance request ID",
                         "required": true,
                         "schema": {
-                            "type": "string",
-                            "format": "uuid",
-                            "example": "550e8400-e29b-41d4-a716-446655440010"
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
@@ -830,12 +1020,11 @@
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "Assistance request UUID",
+                        "description": "Assistance request ID",
                         "required": true,
                         "schema": {
-                            "type": "string",
-                            "format": "uuid",
-                            "example": "550e8400-e29b-41d4-a716-446655440010"
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
@@ -27263,6 +27452,236 @@
                 }
             }
         },
+        "/api/publicites": {
+            "get": {
+                "tags": [
+                    "Publicités"
+                ],
+                "summary": "Liste des publicités actives (mobile app)",
+                "description": "Retourne toutes les publicités actives avec formulaire (has_form=true) dans la fenêtre de dates.",
+                "operationId": "f41a9a63e9f0a0442ca4d848b7e2ad13",
+                "responses": {
+                    "200": {
+                        "description": "Liste des publicités",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "Offre Ramadan 2026"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Profitez de -30% pendant le Ramadan"
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "photo",
+                                                            "video"
+                                                        ],
+                                                        "example": "video"
+                                                    },
+                                                    "image": {
+                                                        "type": "string",
+                                                        "example": "https://cdn.dabapp.com/ads/ramadan.jpg"
+                                                    },
+                                                    "media_url": {
+                                                        "type": "string",
+                                                        "example": "https://cdn.dabapp.com/ads/ramadan.mp4"
+                                                    },
+                                                    "button_text": {
+                                                        "type": "string",
+                                                        "example": "Je suis intéressé"
+                                                    },
+                                                    "has_form": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/publicites/{id}": {
+            "get": {
+                "tags": [
+                    "Publicités"
+                ],
+                "summary": "Détail d'une publicité",
+                "operationId": "28716c6ed0c03b4fbc81e30577370d2d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détail de la publicité",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Offre Ramadan 2026"
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "photo",
+                                                        "video"
+                                                    ],
+                                                    "example": "video"
+                                                },
+                                                "media_url": {
+                                                    "type": "string",
+                                                    "example": "https://cdn.dabapp.com/ads/ramadan.mp4"
+                                                },
+                                                "button_text": {
+                                                    "type": "string",
+                                                    "example": "Je suis intéressé"
+                                                },
+                                                "has_form": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Publicité non trouvée"
+                    }
+                }
+            }
+        },
+        "/api/publicites/{id}/submit": {
+            "post": {
+                "tags": [
+                    "Publicités"
+                ],
+                "summary": "Soumettre le formulaire de contact d'une publicité",
+                "description": "L'utilisateur remplit nom, prénom, téléphone, ville après avoir vu la pub. Résultat sauvegardé en BD et synchronisé dans Google Sheets.",
+                "operationId": "f7606f5aef627e2234bfc975bd5b33ac",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "nom",
+                                    "prenom",
+                                    "phone",
+                                    "city_id"
+                                ],
+                                "properties": {
+                                    "nom": {
+                                        "type": "string",
+                                        "example": "Benali"
+                                    },
+                                    "prenom": {
+                                        "type": "string",
+                                        "example": "Ahmed"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0551234567"
+                                    },
+                                    "city_id": {
+                                        "description": "ID depuis la table cities",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Soumission enregistrée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Thank you! Your information has been submitted."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Publicité non trouvée ou inactive"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
         "/api/reports/reasons": {
             "get": {
                 "tags": [
@@ -39056,16 +39475,16 @@
                 "description": "In-app notification for the Velocity Assist module",
                 "properties": {
                     "id": {
-                        "type": "string",
-                        "format": "uuid"
+                        "type": "integer",
+                        "example": 1
                     },
                     "user_id": {
                         "type": "integer",
                         "example": 1
                     },
                     "request_id": {
-                        "type": "string",
-                        "format": "uuid",
+                        "type": "integer",
+                        "example": null,
                         "nullable": true
                     },
                     "type": {
@@ -39100,8 +39519,8 @@
                 "description": "A roadside assistance request",
                 "properties": {
                     "id": {
-                        "type": "string",
-                        "format": "uuid"
+                        "type": "integer",
+                        "example": 1
                     },
                     "seeker_id": {
                         "type": "integer",
@@ -39113,13 +39532,13 @@
                         "nullable": true
                     },
                     "motorcycle_id": {
-                        "type": "string",
-                        "format": "uuid",
+                        "type": "integer",
+                        "example": null,
                         "nullable": true
                     },
                     "expertise_type_id": {
-                        "type": "string",
-                        "format": "uuid"
+                        "type": "integer",
+                        "example": 1
                     },
                     "status": {
                         "type": "string",
@@ -39192,9 +39611,8 @@
                 "description": "Type of expertise a helper can offer",
                 "properties": {
                     "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "example": "550e8400-e29b-41d4-a716-446655440001"
+                        "type": "integer",
+                        "example": 1
                     },
                     "name": {
                         "type": "string",
@@ -39220,9 +39638,8 @@
                 "description": "Helper profile for Velocity Assist",
                 "properties": {
                     "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                        "type": "integer",
+                        "example": 1
                     },
                     "user_id": {
                         "type": "integer",
@@ -39268,6 +39685,16 @@
                         "format": "float",
                         "example": 46.6753
                     },
+                    "country_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "city_id": {
+                        "type": "integer",
+                        "example": 3,
+                        "nullable": true
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time"
@@ -39284,8 +39711,8 @@
                 "description": "User motorcycle registered for assistance requests",
                 "properties": {
                     "id": {
-                        "type": "string",
-                        "format": "uuid"
+                        "type": "integer",
+                        "example": 1
                     },
                     "user_id": {
                         "type": "integer",
@@ -39331,12 +39758,12 @@
                 "description": "Rating given after a completed assistance request",
                 "properties": {
                     "id": {
-                        "type": "string",
-                        "format": "uuid"
+                        "type": "integer",
+                        "example": 1
                     },
                     "request_id": {
-                        "type": "string",
-                        "format": "uuid"
+                        "type": "integer",
+                        "example": 1
                     },
                     "rater_id": {
                         "type": "integer",
@@ -40726,6 +41153,10 @@
             "description": "Operations related to wishlists"
         },
         {
+            "name": "Ads",
+            "description": "Ads"
+        },
+        {
             "name": "App Version",
             "description": "App Version"
         },
@@ -40860,6 +41291,10 @@
         {
             "name": "Prospects",
             "description": "Prospects"
+        },
+        {
+            "name": "Publicités",
+            "description": "Publicités"
         },
         {
             "name": "Roles",

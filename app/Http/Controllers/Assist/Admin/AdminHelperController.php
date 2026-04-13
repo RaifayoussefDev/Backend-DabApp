@@ -92,8 +92,8 @@ class AdminHelperController extends AssistBaseController
      *     tags={"Assist - Admin Helpers"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true,
-     *         description="HelperProfile UUID",
-     *         @OA\Schema(type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000")
+     *         description="HelperProfile ID",
+     *         @OA\Schema(type="integer", example=2)
      *     ),
      *     @OA\Response(response=200, description="Helper detail",
      *         @OA\JsonContent(
@@ -125,8 +125,8 @@ class AdminHelperController extends AssistBaseController
      *     tags={"Assist - Admin Helpers"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true,
-     *         description="HelperProfile UUID",
-     *         @OA\Schema(type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000")
+     *         description="HelperProfile ID",
+     *         @OA\Schema(type="integer", example=2)
      *     ),
      *     @OA\Response(response=200, description="Verification status toggled",
      *         @OA\JsonContent(
