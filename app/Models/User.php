@@ -183,7 +183,7 @@ use Laravel\Sanctum\HasApiTokens;
  */
 class User extends Authenticatable implements JWTSubject
 {
-    use HasFactory, SoftDeletes, Notifiable, HasApiTokens, \App\Traits\UserFilterTrait;
+    use HasFactory, SoftDeletes, Notifiable, HasApiTokens, \App\Traits\UserFilterTrait, \App\Traits\HasAssistRelations;
 
     /**
      * The attributes that are mass assignable.

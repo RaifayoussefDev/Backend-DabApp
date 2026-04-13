@@ -1846,3 +1846,55 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/subscriptions/cancel', [ServiceSubscriptionController::class, 'cancel']);
     Route::get('/subscription/transactions', [SubscriptionTransactionController::class, 'index']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Velocity Assist Routes
+| Prefix  : /api/assist
+| Middleware: auth:api (JWT)
+|--------------------------------------------------------------------------
+*/
+use App\Http\Controllers\Assist\Seeker\AssistanceRequestController;
+use App\Http\Controllers\Assist\Seeker\SeekerTrackingController;
+use App\Http\Controllers\Assist\Helper\HelperProfileController;
+use App\Http\Controllers\Assist\Helper\HelperFeedController;
+use App\Http\Controllers\Assist\Helper\HelperMissionController;
+use App\Http\Controllers\Assist\Admin\AdminHelperController;
+use App\Http\Controllers\Assist\Admin\AdminExpertiseController;
+use App\Http\Controllers\Assist\Admin\AdminAssistStatsController;
+
+Route::prefix('assist')->middleware('auth:api')->group(function () {
+
+    // ── Seeker ───────────────────────────────────────────────────────────────
+    Route::prefix('seeker')->group(function () {
+        Route::post('request',              [AssistanceRequestController::class, 'store']);
+        Route::get('request/{id}',          [AssistanceRequestController::class, 'show']);
+        Route::delete('request/{id}',       [AssistanceRequestController::class, 'cancel']);
+        Route::post('request/{id}/rate',    [AssistanceRequestController::class, 'rate']);
+        Route::get('request/{id}/track',    [SeekerTrackingController::class,    'track']);
+    });
+
+    // ── Helper ───────────────────────────────────────────────────────────────
+    Route::prefix('helper')->group(function () {
+        Route::get('profile',                [HelperProfileController::class, 'show']);
+        Route::post('profile',               [HelperProfileController::class, 'upsert']);
+        Route::patch('profile/location',     [HelperProfileController::class, 'updateLocation']);
+        Route::patch('profile/availability', [HelperProfileController::class, 'toggleAvailability']);
+        Route::get('feed',                   [HelperFeedController::class,    'index']);
+        Route::post('feed/{id}/accept',      [HelperFeedController::class,    'accept']);
+        Route::patch('mission/{id}/status',  [HelperMissionController::class, 'updateStatus']);
+    });
+
+    // ── Admin ────────────────────────────────────────────────────────────────
+    Route::prefix('admin')->middleware('auth.admin')->group(function () {
+        Route::get('helpers',                  [AdminHelperController::class,      'index']);
+        Route::get('helpers/{id}',             [AdminHelperController::class,      'show']);
+        Route::patch('helpers/{id}/verify',    [AdminHelperController::class,      'verify']);
+        Route::get('expertise-types',          [AdminExpertiseController::class,   'index']);
+        Route::post('expertise-types',         [AdminExpertiseController::class,   'store']);
+        Route::put('expertise-types/{id}',     [AdminExpertiseController::class,   'update']);
+        Route::delete('expertise-types/{id}',  [AdminExpertiseController::class,   'destroy']);
+        Route::get('stats',                    [AdminAssistStatsController::class, 'stats']);
+        Route::get('requests',                 [AdminAssistStatsController::class, 'requests']);
+    });
+});

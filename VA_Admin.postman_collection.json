@@ -1,0 +1,465 @@
+{
+  "info": {
+    "name": "Velocity Assist – Admin",
+    "_postman_id": "va-admin-2026",
+    "description": "Admin panel: login, verify helpers, manage expertise types, view stats and all requests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",          "value": "http://localhost:8000" },
+    { "key": "admin_token",       "value": "" },
+    { "key": "expertise_id",      "value": "" },
+    { "key": "new_expertise_id",  "value": "" },
+    { "key": "helper_profile_id", "value": "" }
+  ],
+  "item": [
+
+    {
+      "name": "🔑 Auth",
+      "item": [
+
+        {
+          "name": "🔑 Admin – Login",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "if (j.token) {",
+              "    pm.collectionVariables.set('admin_token', j.token);",
+              "    pm.test('Admin token saved ✓', () => pm.expect(j.token).to.be.a('string'));",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept",       "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@test.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/admin/login", "host": ["{{base_url}}"], "path": ["api","admin","login"] },
+            "description": "Login as admin.\n→ Change email/password to your admin account.\n→ Token saved automatically to {{admin_token}}."
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "🛠️ Expertise Types",
+      "item": [
+
+        {
+          "name": "🛠️ List All Expertise Types",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Has expertise types ✓', () => pm.expect(j.data).to.be.an('array').that.is.not.empty);",
+              "if (j.data && j.data.length > 0) {",
+              "    const tire = j.data.find(t => t.name === 'tire_repair') || j.data[0];",
+              "    pm.collectionVariables.set('expertise_id', tire.id);",
+              "    pm.test('expertise_id saved: ' + tire.name + ' ✓', () => pm.expect(tire.id).to.be.a('string'));",
+              "    console.log('expertise_id set to:', tire.name, '→', tire.id);",
+              "    console.log('All types:', j.data.map(t => t.name).join(', '));",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/assist/admin/expertise-types", "host": ["{{base_url}}"], "path": ["api","assist","admin","expertise-types"] },
+            "description": "Lists all 6 expertise types seeded by ExpertiseTypeSeeder.\n→ {{expertise_id}} (tire_repair) is saved automatically for use in the Client collection.\n\n⚠️  Run first: php artisan db:seed --class=ExpertiseTypeSeeder"
+          }
+        },
+
+        {
+          "name": "➕ Create Expertise Type",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 201 ✓', () => pm.response.to.have.status(201));",
+              "pm.test('Created ✓', () => pm.expect(j.data.name).to.equal('battery_jump'));",
+              "pm.collectionVariables.set('new_expertise_id', j.data.id);",
+              "console.log('New expertise ID:', j.data.id);"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"battery_jump\",\n  \"icon\": \"battery_charging_full\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/assist/admin/expertise-types", "host": ["{{base_url}}"], "path": ["api","assist","admin","expertise-types"] },
+            "description": "Creates a new expertise type.\n→ {{new_expertise_id}} is saved for the update/delete steps.\n→ Switch between the 3 examples below in Postman Examples tab."
+          },
+          "response": [
+            {
+              "name": "Example 1 – battery_jump",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+                  { "key": "Content-Type",  "value": "application/json" },
+                  { "key": "Accept",        "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"battery_jump\",\n  \"icon\": \"battery_charging_full\"\n}"
+                },
+                "url": { "raw": "{{base_url}}/api/assist/admin/expertise-types", "host": ["{{base_url}}"], "path": ["api","assist","admin","expertise-types"] }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Expertise type created.\",\n  \"data\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440099\",\n    \"name\": \"battery_jump\",\n    \"icon\": \"battery_charging_full\",\n    \"created_at\": \"2026-04-11T10:00:00.000000Z\",\n    \"updated_at\": \"2026-04-11T10:00:00.000000Z\"\n  }\n}"
+            },
+            {
+              "name": "Example 2 – winch_recovery",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+                  { "key": "Content-Type",  "value": "application/json" },
+                  { "key": "Accept",        "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"winch_recovery\",\n  \"icon\": \"settings_input_component\"\n}"
+                },
+                "url": { "raw": "{{base_url}}/api/assist/admin/expertise-types", "host": ["{{base_url}}"], "path": ["api","assist","admin","expertise-types"] }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Expertise type created.\",\n  \"data\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440100\",\n    \"name\": \"winch_recovery\",\n    \"icon\": \"settings_input_component\",\n    \"created_at\": \"2026-04-11T10:00:00.000000Z\",\n    \"updated_at\": \"2026-04-11T10:00:00.000000Z\"\n  }\n}"
+            },
+            {
+              "name": "Example 3 – duplicate name (422)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+                  { "key": "Content-Type",  "value": "application/json" },
+                  { "key": "Accept",        "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"tire_repair\",\n  \"icon\": \"tire_repair\"\n}"
+                },
+                "url": { "raw": "{{base_url}}/api/assist/admin/expertise-types", "host": ["{{base_url}}"], "path": ["api","assist","admin","expertise-types"] }
+              },
+              "status": "Unprocessable Content",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed.\",\n  \"data\": {\n    \"name\": [\"The name has already been taken.\"]\n  }\n}"
+            }
+          ]
+        },
+
+        {
+          "name": "✏️ Update Expertise Type",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Status 200 ✓', () => pm.response.to.have.status(200));",
+              "pm.test('Updated ✓', () => pm.expect(pm.response.json().data.icon).to.equal('electric_bolt'));"
+            ]}
+          }],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"icon\": \"electric_bolt\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/assist/admin/expertise-types/{{new_expertise_id}}", "host": ["{{base_url}}"], "path": ["api","assist","admin","expertise-types","{{new_expertise_id}}"] },
+            "description": "Updates the icon of the expertise type created above."
+          }
+        },
+
+        {
+          "name": "🗑️ Delete Expertise Type",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Status 200 ✓', () => pm.response.to.have.status(200));",
+              "pm.test('Deleted ✓', () => pm.expect(pm.response.json().message).to.include('deleted'));"
+            ]}
+          }],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/assist/admin/expertise-types/{{new_expertise_id}}", "host": ["{{base_url}}"], "path": ["api","assist","admin","expertise-types","{{new_expertise_id}}"] },
+            "description": "Deletes the battery_jump expertise type created above."
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "👷 Helper Management",
+      "item": [
+
+        {
+          "name": "👷 List All Helpers",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Paginated result ✓', () => pm.expect(j.data.data).to.be.an('array'));",
+              "if (j.data.data.length > 0) {",
+              "    pm.collectionVariables.set('helper_profile_id', j.data.data[0].id);",
+              "    console.log('Total helpers:', j.data.total);",
+              "    console.log('First helper ID saved:', j.data.data[0].id);",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/assist/admin/helpers",
+              "host": ["{{base_url}}"],
+              "path": ["api","assist","admin","helpers"],
+              "query": [
+                { "key": "is_verified",  "value": "true",       "disabled": true },
+                { "key": "is_available", "value": "true",       "disabled": true },
+                { "key": "level",        "value": "standard",   "disabled": true },
+                { "key": "expertise",    "value": "tire_repair", "disabled": true },
+                { "key": "page",         "value": "1",          "disabled": true }
+              ]
+            },
+            "description": "Lists all helpers with pagination (20/page).\n→ {{helper_profile_id}} saved from first result.\n→ Uncomment query params to filter:\n   is_verified, is_available, level, expertise"
+          }
+        },
+
+        {
+          "name": "👷 List – Verified Only",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('All are verified ✓', () => {",
+              "    pm.response.json().data.data.forEach(h => pm.expect(h.is_verified).to.be.true);",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/assist/admin/helpers?is_verified=true",
+              "host": ["{{base_url}}"],
+              "path": ["api","assist","admin","helpers"],
+              "query": [{ "key": "is_verified", "value": "true" }]
+            },
+            "description": "Lists only verified helpers."
+          }
+        },
+
+        {
+          "name": "👷 List – By Expertise",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/assist/admin/helpers?expertise=tire_repair",
+              "host": ["{{base_url}}"],
+              "path": ["api","assist","admin","helpers"],
+              "query": [{ "key": "expertise", "value": "tire_repair" }]
+            },
+            "description": "Lists helpers with tire_repair expertise.\nChange value to: fuel | mechanical | towing | first_aid | ev_support"
+          }
+        },
+
+        {
+          "name": "🔍 Helper Detail",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Has user info ✓', () => pm.expect(j.data.user).to.not.be.null);",
+              "pm.test('Has expertise_types ✓', () => pm.expect(j.data.expertise_types).to.be.an('array'));",
+              "console.log('Helper:', j.data.user.first_name, j.data.user.last_name);",
+              "console.log('Rating:', j.data.rating, '| Assists:', j.data.total_assists);"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/assist/admin/helpers/{{helper_profile_id}}", "host": ["{{base_url}}"], "path": ["api","assist","admin","helpers","{{helper_profile_id}}"] },
+            "description": "Full detail of a helper profile including user info and expertise types."
+          }
+        },
+
+        {
+          "name": "✅ Verify Helper",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('is_verified toggled ✓', () => pm.expect(j.data.is_verified).to.be.a('boolean'));",
+              "console.log('New verification status:', j.data.is_verified);"
+            ]}
+          }],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/assist/admin/helpers/{{helper_profile_id}}/verify", "host": ["{{base_url}}"], "path": ["api","assist","admin","helpers","{{helper_profile_id}}","verify"] },
+            "description": "Toggles helper verification ON/OFF.\n→ Helper must be verified to go online and accept requests.\n→ Call again to revoke."
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "📊 Stats & Monitoring",
+      "item": [
+
+        {
+          "name": "📊 Global Stats",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Has total_requests ✓', () => pm.expect(j.data.total_requests).to.be.a('number'));",
+              "pm.test('Has completion_rate ✓', () => pm.expect(j.data.completion_rate).to.be.a('number'));",
+              "pm.test('Has top_helpers ✓', () => pm.expect(j.data.top_helpers).to.be.an('array'));",
+              "console.log('Total requests:', j.data.total_requests);",
+              "console.log('Completed:', j.data.completed_requests);",
+              "console.log('Completion rate:', j.data.completion_rate + '%');",
+              "console.log('Active helpers:', j.data.active_helpers);",
+              "console.log('Avg response time:', j.data.avg_response_time_minutes, 'min');"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/assist/admin/stats", "host": ["{{base_url}}"], "path": ["api","assist","admin","stats"] },
+            "description": "Returns platform-wide statistics:\n• total / completed requests\n• completion rate %\n• active / verified helpers\n• avg response time (minutes)\n• breakdown by status and expertise\n• top 10 helpers by rating"
+          }
+        },
+
+        {
+          "name": "📋 All Requests",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Paginated ✓', () => pm.expect(j.data.data).to.be.an('array'));",
+              "console.log('Total requests:', j.data.total);"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/assist/admin/requests",
+              "host": ["{{base_url}}"],
+              "path": ["api","assist","admin","requests"],
+              "query": [
+                { "key": "status",            "value": "completed",   "disabled": true },
+                { "key": "expertise_type_id", "value": "",            "disabled": true },
+                { "key": "date_from",         "value": "2026-01-01",  "disabled": true },
+                { "key": "date_to",           "value": "2026-12-31",  "disabled": true },
+                { "key": "page",              "value": "1",           "disabled": true }
+              ]
+            },
+            "description": "Monitor all requests with optional filters.\n→ Uncomment query params:\n   status: pending | accepted | en_route | arrived | completed | cancelled\n   expertise_type_id: UUID\n   date_from / date_to: YYYY-MM-DD"
+          }
+        },
+
+        {
+          "name": "📋 Requests – Pending Only",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/assist/admin/requests?status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["api","assist","admin","requests"],
+              "query": [{ "key": "status", "value": "pending" }]
+            },
+            "description": "Filter requests by status=pending."
+          }
+        },
+
+        {
+          "name": "📋 Requests – Completed Only",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/assist/admin/requests?status=completed",
+              "host": ["{{base_url}}"],
+              "path": ["api","assist","admin","requests"],
+              "query": [{ "key": "status", "value": "completed" }]
+            },
+            "description": "Filter requests by status=completed."
+          }
+        }
+
+      ]
+    }
+
+  ]
+}

@@ -52,6 +52,899 @@
                 }
             }
         },
+        "/api/assist/helper/feed": {
+            "get": {
+                "tags": [
+                    "Assist - Helper Feed"
+                ],
+                "summary": "List pending assistance requests near the helper",
+                "operationId": "ec668ab118171ea1a520d35e4031783a",
+                "responses": {
+                    "200": {
+                        "description": "List of nearby pending requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/AssistanceRequest"
+                                                    },
+                                                    {
+                                                        "properties": {
+                                                            "distance_km": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 2.3
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Profile not verified or available"
+                    },
+                    "404": {
+                        "description": "Helper profile not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/helper/feed/{id}/accept": {
+            "post": {
+                "tags": [
+                    "Assist - Helper Feed"
+                ],
+                "summary": "Accept a pending assistance request",
+                "operationId": "15bd9cc224022b31be5426914819aaed",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Assistance request UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "550e8400-e29b-41d4-a716-446655440010"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Request accepted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Request accepted. Head to the rider's location."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AssistanceRequest"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Request already taken"
+                    },
+                    "403": {
+                        "description": "Not verified or available"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/helper/mission/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Assist - Helper Mission"
+                ],
+                "summary": "Update mission status",
+                "description": "Allowed transitions: accepted → en_route → arrived → completed",
+                "operationId": "995df93bf814a9b1daa282f27743f486",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Assistance request UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "550e8400-e29b-41d4-a716-446655440010"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "description": "New status to set (must follow allowed transitions)",
+                                        "type": "string",
+                                        "enum": [
+                                            "en_route",
+                                            "arrived",
+                                            "completed"
+                                        ],
+                                        "example": "en_route"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Status updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Status updated to en_route."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AssistanceRequest"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Not the assigned helper"
+                    },
+                    "422": {
+                        "description": "Invalid status transition"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/helper/profile": {
+            "get": {
+                "tags": [
+                    "Assist - Helper Profile"
+                ],
+                "summary": "Get authenticated helper's profile",
+                "operationId": "0de36b5a3bb3e8f0b5df7145fb9354d3",
+                "responses": {
+                    "200": {
+                        "description": "Helper profile",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/HelperProfile"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Profile not created yet"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Assist - Helper Profile"
+                ],
+                "summary": "Create or update helper profile",
+                "operationId": "1802a571231858ef81fa61ab855eeea2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "service_radius_km": {
+                                        "description": "Max km radius to accept requests (1-100)",
+                                        "type": "integer",
+                                        "example": 20
+                                    },
+                                    "level": {
+                                        "type": "string",
+                                        "enum": [
+                                            "standard",
+                                            "elite",
+                                            "vanguard"
+                                        ],
+                                        "example": "standard"
+                                    },
+                                    "expertise_ids": {
+                                        "description": "List of expertise type UUIDs to assign",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "uuid",
+                                            "example": "550e8400-e29b-41d4-a716-446655440001"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile saved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Profile updated successfully."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/HelperProfile"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/helper/profile/location": {
+            "patch": {
+                "tags": [
+                    "Assist - Helper Profile"
+                ],
+                "summary": "Update helper GPS location in real time",
+                "operationId": "0088fb07c76cd78c0fecd98e7b013ebd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "latitude",
+                                    "longitude"
+                                ],
+                                "properties": {
+                                    "latitude": {
+                                        "description": "Current latitude (-90 to 90)",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 24.725
+                                    },
+                                    "longitude": {
+                                        "description": "Current longitude (-180 to 180)",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 46.68
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Location updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Location updated."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "latitude": {
+                                                    "type": "number",
+                                                    "example": 24.725
+                                                },
+                                                "longitude": {
+                                                    "type": "number",
+                                                    "example": 46.68
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Profile not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/helper/profile/availability": {
+            "patch": {
+                "tags": [
+                    "Assist - Helper Profile"
+                ],
+                "summary": "Toggle helper availability on/off",
+                "operationId": "0ea323e52ea916316cc0ef1a033784b3",
+                "responses": {
+                    "200": {
+                        "description": "Availability toggled",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "You are now available."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "is_available": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Profile not verified"
+                    },
+                    "404": {
+                        "description": "Profile not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/seeker/request": {
+            "post": {
+                "tags": [
+                    "Assist - Seeker"
+                ],
+                "summary": "Create a new assistance request",
+                "operationId": "68330cabcba561a518412b2dbdeceff1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "expertise_type_id",
+                                    "latitude",
+                                    "longitude",
+                                    "location_label"
+                                ],
+                                "properties": {
+                                    "expertise_type_id": {
+                                        "description": "ID of the required expertise type",
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "550e8400-e29b-41d4-a716-446655440001"
+                                    },
+                                    "latitude": {
+                                        "description": "Rider's current latitude",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 24.7136
+                                    },
+                                    "longitude": {
+                                        "description": "Rider's current longitude",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 46.6753
+                                    },
+                                    "location_label": {
+                                        "description": "Human-readable location name",
+                                        "type": "string",
+                                        "example": "King Fahd Road, Riyadh"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "My rear tire is flat, near the gas station",
+                                        "nullable": true
+                                    },
+                                    "motorcycle_id": {
+                                        "description": "Optional: linked motorcycle UUID",
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": null,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Request created and helpers notified",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Assistance request created. Looking for helpers."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "request": {
+                                                    "$ref": "#/components/schemas/AssistanceRequest"
+                                                },
+                                                "helpers_notified": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/seeker/request/{id}": {
+            "get": {
+                "tags": [
+                    "Assist - Seeker"
+                ],
+                "summary": "Get assistance request details and live status",
+                "operationId": "6360730f7c93fb9cc3c06058c862ca9f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Assistance request UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "550e8400-e29b-41d4-a716-446655440010"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Request details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AssistanceRequest"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Assist - Seeker"
+                ],
+                "summary": "Cancel an assistance request",
+                "operationId": "b0f0863f139d7c69ef5e97f1c054a27b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "550e8400-e29b-41d4-a716-446655440010"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "cancel_reason": {
+                                        "type": "string",
+                                        "example": "I found help from a passing driver",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Request cancelled",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Request cancelled."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Cannot cancel a completed request"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/seeker/request/{id}/rate": {
+            "post": {
+                "tags": [
+                    "Assist - Seeker"
+                ],
+                "summary": "Rate the helper after a completed mission",
+                "operationId": "774da4d6fc5cf97bc899b78cc9ed9717",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "550e8400-e29b-41d4-a716-446655440010"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "stars"
+                                ],
+                                "properties": {
+                                    "stars": {
+                                        "description": "Rating from 1 (poor) to 5 (excellent)",
+                                        "type": "integer",
+                                        "maximum": 5,
+                                        "minimum": 1,
+                                        "example": 5
+                                    },
+                                    "comment": {
+                                        "type": "string",
+                                        "example": "Super fast and professional, saved my day!",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Rating submitted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Rating submitted successfully."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AssistRating"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Request not completed or already rated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/seeker/request/{id}/track": {
+            "get": {
+                "tags": [
+                    "Assist - Seeker Tracking"
+                ],
+                "summary": "Get live helper location and mission timeline",
+                "operationId": "54fa7f4ca63f40e9088d880214ed24f4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Assistance request UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "550e8400-e29b-41d4-a716-446655440010"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Live tracking data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "en_route"
+                                                },
+                                                "status_label": {
+                                                    "properties": {
+                                                        "en": {
+                                                            "type": "string",
+                                                            "example": "On the Way"
+                                                        },
+                                                        "ar": {
+                                                            "type": "string",
+                                                            "example": "في الطريق"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "helper": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Ahmed Al-Rashid"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "+966501234567"
+                                                        },
+                                                        "rating": {
+                                                            "type": "number",
+                                                            "example": 4.8
+                                                        },
+                                                        "latitude": {
+                                                            "type": "number",
+                                                            "example": 24.72
+                                                        },
+                                                        "longitude": {
+                                                            "type": "number",
+                                                            "example": 46.68
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "timeline": {
+                                                    "properties": {
+                                                        "accepted_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "nullable": true
+                                                        },
+                                                        "arrived_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "nullable": true
+                                                        },
+                                                        "completed_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/register": {
             "post": {
                 "tags": [
@@ -38158,6 +39051,315 @@
                 },
                 "type": "object"
             },
+            "AssistNotification": {
+                "title": "AssistNotification",
+                "description": "In-app notification for the Velocity Assist module",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "request_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "new_request",
+                            "accepted",
+                            "en_route",
+                            "arrived",
+                            "completed",
+                            "rated"
+                        ],
+                        "example": "new_request"
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "New assistance request nearby"
+                    },
+                    "body": {
+                        "type": "string",
+                        "example": "Someone needs tire repair 2.3 km away"
+                    },
+                    "is_read": {
+                        "type": "boolean",
+                        "example": false
+                    }
+                },
+                "type": "object"
+            },
+            "AssistanceRequest": {
+                "title": "AssistanceRequest",
+                "description": "A roadside assistance request",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "seeker_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "helper_id": {
+                        "type": "integer",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "motorcycle_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "expertise_type_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "accepted",
+                            "en_route",
+                            "arrived",
+                            "completed",
+                            "cancelled"
+                        ],
+                        "example": "pending"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 24.7136
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 46.6753
+                    },
+                    "location_label": {
+                        "type": "string",
+                        "example": "King Fahd Road, Riyadh"
+                    },
+                    "status_label": {
+                        "properties": {
+                            "en": {
+                                "type": "string",
+                                "example": "Pending"
+                            },
+                            "ar": {
+                                "type": "string",
+                                "example": "قيد الانتظار"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "accepted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "arrived_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "completed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "cancelled_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ExpertiseType": {
+                "title": "ExpertiseType",
+                "description": "Type of expertise a helper can offer",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440001"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "tire_repair"
+                    },
+                    "icon": {
+                        "type": "string",
+                        "example": "tire_repair"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "HelperProfile": {
+                "title": "HelperProfile",
+                "description": "Helper profile for Velocity Assist",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "is_available": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_verified": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "rating": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 4.75
+                    },
+                    "total_assists": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "service_radius_km": {
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "level": {
+                        "type": "string",
+                        "enum": [
+                            "standard",
+                            "elite",
+                            "vanguard"
+                        ],
+                        "example": "standard"
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 24.7136
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 46.6753
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "AssistMotorcycle": {
+                "title": "AssistMotorcycle",
+                "description": "User motorcycle registered for assistance requests",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "brand_id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "model_id": {
+                        "type": "integer",
+                        "example": 7
+                    },
+                    "year_id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "color": {
+                        "type": "string",
+                        "example": "Red"
+                    },
+                    "plate_number": {
+                        "type": "string",
+                        "example": "ABC 1234"
+                    },
+                    "plate_country": {
+                        "type": "string",
+                        "enum": [
+                            "SA",
+                            "AE",
+                            "KW",
+                            "BH",
+                            "QA",
+                            "OM"
+                        ],
+                        "example": "SA"
+                    }
+                },
+                "type": "object"
+            },
+            "AssistRating": {
+                "title": "AssistRating",
+                "description": "Rating given after a completed assistance request",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "request_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "rater_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "rated_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "stars": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1,
+                        "example": 5
+                    },
+                    "comment": {
+                        "type": "string",
+                        "example": "Very fast and professional!",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "City": {
                 "title": "City",
                 "required": [
@@ -39316,6 +40518,26 @@
         }
     },
     "tags": [
+        {
+            "name": "Assist - Helper Feed",
+            "description": "Browse nearby open requests and accept missions"
+        },
+        {
+            "name": "Assist - Helper Mission",
+            "description": "Update mission status (en_route → arrived → completed)"
+        },
+        {
+            "name": "Assist - Helper Profile",
+            "description": "Helper profile management, GPS, and availability toggle"
+        },
+        {
+            "name": "Assist - Seeker",
+            "description": "Endpoints for riders seeking roadside assistance"
+        },
+        {
+            "name": "Assist - Seeker Tracking",
+            "description": "Live tracking of helper location and mission status"
+        },
         {
             "name": "Bike Part Brands",
             "description": "API Endpoints for managing bike part brands"

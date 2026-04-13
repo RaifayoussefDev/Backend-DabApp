@@ -15089,6 +15089,691 @@
                 ]
             }
         },
+        "/api/assist/admin/stats": {
+            "get": {
+                "tags": [
+                    "Assist - Admin Stats"
+                ],
+                "summary": "Get global Velocity Assist statistics",
+                "operationId": "7be540beb46e6b8ff8dd7e1219ce266f",
+                "responses": {
+                    "200": {
+                        "description": "Platform-wide statistics",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_requests": {
+                                                    "type": "integer",
+                                                    "example": 320
+                                                },
+                                                "completed_requests": {
+                                                    "type": "integer",
+                                                    "example": 274
+                                                },
+                                                "completion_rate": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 85.63
+                                                },
+                                                "active_helpers": {
+                                                    "type": "integer",
+                                                    "example": 42
+                                                },
+                                                "verified_helpers": {
+                                                    "type": "integer",
+                                                    "example": 38
+                                                },
+                                                "avg_response_time_minutes": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 6.4
+                                                },
+                                                "requests_by_status": {
+                                                    "properties": {
+                                                        "pending": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "accepted": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "en_route": {
+                                                            "type": "integer",
+                                                            "example": 8
+                                                        },
+                                                        "arrived": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "completed": {
+                                                            "type": "integer",
+                                                            "example": 274
+                                                        },
+                                                        "cancelled": {
+                                                            "type": "integer",
+                                                            "example": 28
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "requests_by_expertise": {
+                                                    "type": "object",
+                                                    "example": {
+                                                        "tire_repair": 90,
+                                                        "fuel": 55,
+                                                        "mechanical": 70
+                                                    }
+                                                },
+                                                "top_helpers": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string",
+                                                                "format": "uuid"
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Ahmed Al-Rashid"
+                                                            },
+                                                            "rating": {
+                                                                "type": "number",
+                                                                "example": 4.95
+                                                            },
+                                                            "total_assists": {
+                                                                "type": "integer",
+                                                                "example": 47
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/admin/requests": {
+            "get": {
+                "tags": [
+                    "Assist - Admin Stats"
+                ],
+                "summary": "Monitor all assistance requests with filters",
+                "operationId": "2afcc414a6e5b9f2f96256ee978d16b6",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "accepted",
+                                "en_route",
+                                "arrived",
+                                "completed",
+                                "cancelled"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "expertise_type_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "description": "Filter requests created from this date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-01-01"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-04-08"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated list of requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 320
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/AssistanceRequest"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/admin/expertise-types": {
+            "get": {
+                "tags": [
+                    "Assist - Admin Expertise"
+                ],
+                "summary": "List all expertise types",
+                "operationId": "66f00926a830ff445b1a9a185f2e4a57",
+                "responses": {
+                    "200": {
+                        "description": "All expertise types",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ExpertiseType"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Assist - Admin Expertise"
+                ],
+                "summary": "Create a new expertise type",
+                "operationId": "92ed8673a089d009e152d865018d5546",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "icon"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Unique slug-like name for the expertise",
+                                        "type": "string",
+                                        "example": "battery_jump"
+                                    },
+                                    "icon": {
+                                        "description": "Material icon name or asset key",
+                                        "type": "string",
+                                        "example": "battery_charging_full"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Expertise type created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Expertise type created."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ExpertiseType"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error or name already exists"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/admin/expertise-types/{id}": {
+            "put": {
+                "tags": [
+                    "Assist - Admin Expertise"
+                ],
+                "summary": "Update an expertise type",
+                "operationId": "9bf1f1e9433ebe144b76f36fd0623579",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ExpertiseType UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "550e8400-e29b-41d4-a716-446655440001"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "battery_jump"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "battery_charging_full"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ExpertiseType"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Assist - Admin Expertise"
+                ],
+                "summary": "Delete an expertise type",
+                "operationId": "64ff8b7ff10f4c54b4633d7b316af31d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "550e8400-e29b-41d4-a716-446655440001"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Expertise type deleted."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/admin/helpers": {
+            "get": {
+                "tags": [
+                    "Assist - Admin Helpers"
+                ],
+                "summary": "List all helper profiles with optional filters",
+                "operationId": "b2af6ff4641211b9669fa60cd1b3f045",
+                "parameters": [
+                    {
+                        "name": "is_verified",
+                        "in": "query",
+                        "description": "Filter by verification status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    },
+                    {
+                        "name": "is_available",
+                        "in": "query",
+                        "description": "Filter by availability",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": false
+                        }
+                    },
+                    {
+                        "name": "level",
+                        "in": "query",
+                        "description": "Filter by helper level",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "standard",
+                                "elite",
+                                "vanguard"
+                            ],
+                            "example": "vanguard"
+                        }
+                    },
+                    {
+                        "name": "expertise",
+                        "in": "query",
+                        "description": "Filter by expertise type name (e.g. tire_repair)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "tire_repair"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated list of helpers",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 45
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/HelperProfile"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/admin/helpers/{id}": {
+            "get": {
+                "tags": [
+                    "Assist - Admin Helpers"
+                ],
+                "summary": "Get a single helper profile detail",
+                "operationId": "a35d91d135af8abf2be8a4a016f41c38",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "HelperProfile UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "550e8400-e29b-41d4-a716-446655440000"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Helper detail",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/HelperProfile"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/admin/helpers/{id}/verify": {
+            "patch": {
+                "tags": [
+                    "Assist - Admin Helpers"
+                ],
+                "summary": "Toggle helper verification status",
+                "operationId": "1c1fc2056c862c558a80e2e2b7864aeb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "HelperProfile UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "550e8400-e29b-41d4-a716-446655440000"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Verification status toggled",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Helper verified successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "is_verified": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/login": {
             "post": {
                 "tags": [
@@ -23585,6 +24270,315 @@
     },
     "components": {
         "schemas": {
+            "AssistNotification": {
+                "title": "AssistNotification",
+                "description": "In-app notification for the Velocity Assist module",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "request_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "new_request",
+                            "accepted",
+                            "en_route",
+                            "arrived",
+                            "completed",
+                            "rated"
+                        ],
+                        "example": "new_request"
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "New assistance request nearby"
+                    },
+                    "body": {
+                        "type": "string",
+                        "example": "Someone needs tire repair 2.3 km away"
+                    },
+                    "is_read": {
+                        "type": "boolean",
+                        "example": false
+                    }
+                },
+                "type": "object"
+            },
+            "AssistanceRequest": {
+                "title": "AssistanceRequest",
+                "description": "A roadside assistance request",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "seeker_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "helper_id": {
+                        "type": "integer",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "motorcycle_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "expertise_type_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "accepted",
+                            "en_route",
+                            "arrived",
+                            "completed",
+                            "cancelled"
+                        ],
+                        "example": "pending"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 24.7136
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 46.6753
+                    },
+                    "location_label": {
+                        "type": "string",
+                        "example": "King Fahd Road, Riyadh"
+                    },
+                    "status_label": {
+                        "properties": {
+                            "en": {
+                                "type": "string",
+                                "example": "Pending"
+                            },
+                            "ar": {
+                                "type": "string",
+                                "example": "قيد الانتظار"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "accepted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "arrived_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "completed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "cancelled_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ExpertiseType": {
+                "title": "ExpertiseType",
+                "description": "Type of expertise a helper can offer",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440001"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "tire_repair"
+                    },
+                    "icon": {
+                        "type": "string",
+                        "example": "tire_repair"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "HelperProfile": {
+                "title": "HelperProfile",
+                "description": "Helper profile for Velocity Assist",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "is_available": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_verified": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "rating": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 4.75
+                    },
+                    "total_assists": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "service_radius_km": {
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "level": {
+                        "type": "string",
+                        "enum": [
+                            "standard",
+                            "elite",
+                            "vanguard"
+                        ],
+                        "example": "standard"
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 24.7136
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 46.6753
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "AssistMotorcycle": {
+                "title": "AssistMotorcycle",
+                "description": "User motorcycle registered for assistance requests",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "brand_id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "model_id": {
+                        "type": "integer",
+                        "example": 7
+                    },
+                    "year_id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "color": {
+                        "type": "string",
+                        "example": "Red"
+                    },
+                    "plate_number": {
+                        "type": "string",
+                        "example": "ABC 1234"
+                    },
+                    "plate_country": {
+                        "type": "string",
+                        "enum": [
+                            "SA",
+                            "AE",
+                            "KW",
+                            "BH",
+                            "QA",
+                            "OM"
+                        ],
+                        "example": "SA"
+                    }
+                },
+                "type": "object"
+            },
+            "AssistRating": {
+                "title": "AssistRating",
+                "description": "Rating given after a completed assistance request",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "request_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "rater_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "rated_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "stars": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1,
+                        "example": 5
+                    },
+                    "comment": {
+                        "type": "string",
+                        "example": "Very fast and professional!",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "City": {
                 "title": "City",
                 "required": [
@@ -24858,6 +25852,18 @@
         {
             "name": "Admin Report Types",
             "description": "API Endpoints for Managing Report Types"
+        },
+        {
+            "name": "Assist - Admin Stats",
+            "description": "Global statistics and request monitoring for admins"
+        },
+        {
+            "name": "Assist - Admin Expertise",
+            "description": "Admin CRUD for expertise types"
+        },
+        {
+            "name": "Assist - Admin Helpers",
+            "description": "Admin management of helper profiles"
         },
         {
             "name": "Pricing Rules Licence Plate Management",

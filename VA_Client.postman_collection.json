@@ -1,0 +1,608 @@
+{
+  "info": {
+    "name": "Velocity Assist – Client",
+    "_postman_id": "va-client-2026",
+    "description": "Full client flow: become a helper → need help → accept → complete → rate",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",          "value": "http://localhost:8000" },
+    { "key": "helper_token",      "value": "" },
+    { "key": "seeker_token",      "value": "" },
+    { "key": "expertise_id",      "value": "" },
+    { "key": "helper_profile_id", "value": "" },
+    { "key": "request_id",        "value": "" },
+    { "key": "country_id",        "value": "" },
+    { "key": "city_id",           "value": "" }
+  ],
+  "item": [
+
+    {
+      "name": "🔑 Auth",
+      "item": [
+
+        {
+          "name": "🔑 Helper – Login",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "if (j.token) {",
+              "    pm.collectionVariables.set('helper_token', j.token);",
+              "    pm.test('Helper token saved ✓', () => pm.expect(j.token).to.be.a('string'));",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept",       "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"helper@test.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api","login"] },
+            "description": "Login as the helper user.\n→ Change email/password to a real user in your DB.\n→ Token saved automatically to {{helper_token}}."
+          }
+        },
+
+        {
+          "name": "🔑 Seeker – Login",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "if (j.token) {",
+              "    pm.collectionVariables.set('seeker_token', j.token);",
+              "    pm.test('Seeker token saved ✓', () => pm.expect(j.token).to.be.a('string'));",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept",       "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seeker@test.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api","login"] },
+            "description": "Login as a different user (the rider who needs help).\n→ Must be a different account than the helper.\n→ Token saved automatically to {{seeker_token}}."
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "🪪 Helper – Profile Setup",
+      "item": [
+
+        {
+          "name": "🌍 List Countries",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Countries is an array', () => pm.expect(j.data || j).to.be.an('array'));",
+              "const list = j.data || j;",
+              "if (list.length > 0) {",
+              "    pm.collectionVariables.set('country_id', list[0].id);",
+              "    console.log('Countries:', list.map(c => c.id + ' – ' + c.name).join(', '));",
+              "    console.log('country_id set to:', list[0].id, '(' + list[0].name + ')');",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/countries-list",
+              "host": ["{{base_url}}"],
+              "path": ["api","countries-list"]
+            },
+            "description": "Returns all available countries (SA, AE, KW…).\n→ {{country_id}} is saved automatically with the first country.\n→ Change it manually to the country you want (e.g. id=2 for UAE)."
+          }
+        },
+
+        {
+          "name": "🏙️ List Cities by Country",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "const list = j.data || j;",
+              "pm.test('Cities is an array', () => pm.expect(list).to.be.an('array'));",
+              "if (list.length > 0) {",
+              "    pm.collectionVariables.set('city_id', list[0].id);",
+              "    console.log('Cities:', list.map(c => c.id + ' – ' + c.name).join(', '));",
+              "    console.log('city_id set to:', list[0].id, '(' + list[0].name + ')');",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/cities?country_id={{country_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api","cities"],
+              "query": [{ "key": "country_id", "value": "{{country_id}}" }]
+            },
+            "description": "Returns cities for the selected {{country_id}}.\n→ Run 'List Countries' first to set {{country_id}}.\n→ {{city_id}} is saved automatically with the first city.\n→ Change it manually to the city you need (e.g. Riyadh, Dubai…)."
+          }
+        },
+
+        {
+          "name": "🪪 Create / Update Profile",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Profile saved ✓', () => pm.expect(j.success).to.be.true);",
+              "if (j.data && j.data.id) {",
+              "    pm.collectionVariables.set('helper_profile_id', j.data.id);",
+              "    console.log('Profile ID:', j.data.id);",
+              "    console.log('Country:', j.data.country_id, '| City:', j.data.city_id);",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_radius_km\": 20,\n  \"level\": \"standard\",\n  \"expertise_ids\": [{{expertise_id}}],\n  \"country_id\": {{country_id}},\n  \"city_id\": {{city_id}}\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/assist/helper/profile", "host": ["{{base_url}}"], "path": ["api","assist","helper","profile"] },
+            "description": "Creates or updates the helper profile.\n⚠️  Run in this order:\n  1. List Countries → sets {{country_id}}\n  2. List Cities → sets {{city_id}}\n  3. Admin – Get Expertise Types → sets {{expertise_id}}\n→ {{helper_profile_id}} is saved automatically."
+          }
+        },
+
+        {
+          "name": "🪪 Get Profile",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('is_verified = false (need admin approval)', () => pm.expect(j.data.is_verified).to.be.false);",
+              "if (j.data) {",
+              "    console.log('Country ID:', j.data.country_id, '| City ID:', j.data.city_id);",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/assist/helper/profile", "host": ["{{base_url}}"], "path": ["api","assist","helper","profile"] },
+            "description": "Returns the helper's profile with expertise types, country, and city.\n→ is_verified will be false until an admin verifies it."
+          }
+        },
+
+        {
+          "name": "📍 Update GPS Location",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Location updated ✓', () => pm.expect(pm.response.json().message).to.include('updated'));"
+            ]}
+          }],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 24.7136,\n  \"longitude\": 46.6753\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/assist/helper/profile/location", "host": ["{{base_url}}"], "path": ["api","assist","helper","profile","location"] },
+            "description": "Sets the helper's real-time GPS position.\n→ Required before going online or appearing in the feed.\n→ Coordinates here are Riyadh, Saudi Arabia."
+          }
+        },
+
+        {
+          "name": "🟢 Go Online (Toggle Availability)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('is_available = true ✓', () => pm.expect(j.data.is_available).to.be.true);"
+            ]}
+          }],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/assist/helper/profile/availability", "host": ["{{base_url}}"], "path": ["api","assist","helper","profile","availability"] },
+            "description": "Toggles helper availability ON.\n⚠️  Only works if the helper is verified by an admin first.\n→ Call again to go offline."
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "🆘 Seeker – Request Help",
+      "item": [
+
+        {
+          "name": "🆘 Send Assistance Request",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 201', () => pm.response.to.have.status(201));",
+              "pm.test('Request created ✓', () => pm.expect(j.success).to.be.true);",
+              "pm.test('helpers_notified is a number', () => pm.expect(j.data.helpers_notified).to.be.a('number'));",
+              "if (j.data && j.data.request && j.data.request.id) {",
+              "    pm.collectionVariables.set('request_id', j.data.request.id);",
+              "    console.log('Request ID:', j.data.request.id);",
+              "    console.log('Helpers notified:', j.data.helpers_notified);",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{seeker_token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expertise_type_id\": {{expertise_id}},\n  \"latitude\": 24.7140,\n  \"longitude\": 46.6750,\n  \"location_label\": \"King Fahd Road, Riyadh – near Exit 7\",\n  \"description\": \"My rear tire is completely flat. Stuck on the side of the road.\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/assist/seeker/request", "host": ["{{base_url}}"], "path": ["api","assist","seeker","request"] },
+            "description": "Creates a roadside assistance request.\n→ {{request_id}} is saved automatically.\n→ Nearby helpers are notified instantly."
+          }
+        },
+
+        {
+          "name": "👁️ View Request Status",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Status label EN present', () => pm.expect(j.data.status_label.en).to.be.a('string'));",
+              "pm.test('Status label AR present', () => pm.expect(j.data.status_label.ar).to.be.a('string'));",
+              "console.log('Current status:', j.data.status, '|', j.data.status_label.en);"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{seeker_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/assist/seeker/request/{{request_id}}", "host": ["{{base_url}}"], "path": ["api","assist","seeker","request","{{request_id}}"] },
+            "description": "Returns full request details with status_label in EN and AR."
+          }
+        },
+
+        {
+          "name": "🗺️ Track Helper Live",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "console.log('Status:', j.data.status);",
+              "console.log('Helper:', j.data.helper ? j.data.helper.name : 'Not assigned yet');"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{seeker_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/assist/seeker/request/{{request_id}}/track", "host": ["{{base_url}}"], "path": ["api","assist","seeker","request","{{request_id}}","track"] },
+            "description": "Live tracking: returns helper GPS, name, phone, and mission timeline."
+          }
+        },
+
+        {
+          "name": "❌ Cancel Request",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Request cancelled ✓', () => pm.expect(pm.response.json().message).to.include('cancelled'));"
+            ]}
+          }],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{seeker_token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancel_reason\": \"Found help from a nearby garage\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/assist/seeker/request/{{request_id}}", "host": ["{{base_url}}"], "path": ["api","assist","seeker","request","{{request_id}}"] },
+            "description": "⚠️  Only run this on a PENDING request.\nDo NOT run on the request you want to complete – create a new one first."
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "📡 Helper – Feed & Mission",
+      "item": [
+
+        {
+          "name": "📡 View Nearby Feed",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Feed is an array', () => pm.expect(j.data).to.be.an('array'));",
+              "if (j.data.length > 0) {",
+              "    console.log('Requests in feed:', j.data.length);",
+              "    console.log('Nearest:', j.data[0].distance_km, 'km –', j.data[0].location_label);",
+              "} else {",
+              "    console.warn('Feed empty – check: verified + available + GPS set + expertise matches');",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/assist/helper/feed", "host": ["{{base_url}}"], "path": ["api","assist","helper","feed"] },
+            "description": "Returns nearby pending requests sorted by distance.\n→ Requires: verified + available + GPS set + matching expertise."
+          }
+        },
+
+        {
+          "name": "✅ Accept Request",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Status = accepted ✓', () => pm.expect(j.data.status).to.equal('accepted'));",
+              "pm.test('accepted_at is set', () => pm.expect(j.data.accepted_at).to.not.be.null);"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/assist/helper/feed/{{request_id}}/accept", "host": ["{{base_url}}"], "path": ["api","assist","helper","feed","{{request_id}}","accept"] },
+            "description": "Helper accepts the seeker's request.\nTransition: pending → accepted\n→ Seeker receives a notification."
+          }
+        },
+
+        {
+          "name": "🚗 Status → en_route",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Status = en_route ✓', () => pm.expect(pm.response.json().data.status).to.equal('en_route'));"
+            ]}
+          }],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"en_route\"\n}" },
+            "url": { "raw": "{{base_url}}/api/assist/helper/mission/{{request_id}}/status", "host": ["{{base_url}}"], "path": ["api","assist","helper","mission","{{request_id}}","status"] },
+            "description": "Transition: accepted → en_route\n→ Seeker is notified the helper is on the way."
+          }
+        },
+
+        {
+          "name": "📍 Status → arrived",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Status = arrived ✓', () => pm.expect(pm.response.json().data.status).to.equal('arrived'));",
+              "pm.test('arrived_at is set', () => pm.expect(pm.response.json().data.arrived_at).to.not.be.null);"
+            ]}
+          }],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"arrived\"\n}" },
+            "url": { "raw": "{{base_url}}/api/assist/helper/mission/{{request_id}}/status", "host": ["{{base_url}}"], "path": ["api","assist","helper","mission","{{request_id}}","status"] },
+            "description": "Transition: en_route → arrived\n→ Seeker is notified the helper has arrived."
+          }
+        },
+
+        {
+          "name": "🏁 Status → completed",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Status = completed ✓', () => pm.expect(pm.response.json().data.status).to.equal('completed'));",
+              "pm.test('completed_at is set', () => pm.expect(pm.response.json().data.completed_at).to.not.be.null);",
+              "console.log('Mission complete! Seeker can now rate the helper.');"
+            ]}
+          }],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"completed\"\n}" },
+            "url": { "raw": "{{base_url}}/api/assist/helper/mission/{{request_id}}/status", "host": ["{{base_url}}"], "path": ["api","assist","helper","mission","{{request_id}}","status"] },
+            "description": "Transition: arrived → completed\n→ Helper's total_assists counter increments.\n→ Seeker can now rate the helper."
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "⭐ Seeker – Rate Helper",
+      "item": [
+
+        {
+          "name": "⭐ Submit Rating",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "const j = pm.response.json();",
+              "pm.test('Status 201', () => pm.response.to.have.status(201));",
+              "pm.test('Rating submitted ✓', () => pm.expect(j.success).to.be.true);",
+              "pm.test('Stars = 5', () => pm.expect(j.data.stars).to.equal(5));",
+              "console.log('Rating saved. Helper average rating updated.');"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{seeker_token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stars\": 5,\n  \"comment\": \"Arrived in 5 minutes, fixed the tire perfectly. Highly recommended!\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/assist/seeker/request/{{request_id}}/rate", "host": ["{{base_url}}"], "path": ["api","assist","seeker","request","{{request_id}}","rate"] },
+            "description": "Rate the helper from 1 to 5 stars after the mission is completed.\n→ Helper's average rating is recalculated automatically.\n→ Only possible once per request."
+          }
+        },
+
+        {
+          "name": "🚫 Rate Again (expect 422)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Status 422 ✓', () => pm.response.to.have.status(422));",
+              "pm.test('Already rated error ✓', () => pm.expect(pm.response.json().message).to.include('already been rated'));"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{seeker_token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"stars\": 1\n}" },
+            "url": { "raw": "{{base_url}}/api/assist/seeker/request/{{request_id}}/rate", "host": ["{{base_url}}"], "path": ["api","assist","seeker","request","{{request_id}}","rate"] },
+            "description": "Verifies that double-rating is blocked with HTTP 422."
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "🔒 Edge Cases",
+      "item": [
+
+        {
+          "name": "🔒 No Token (expect 401)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Status 401 ✓', () => pm.response.to.have.status(401));"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/assist/helper/profile", "host": ["{{base_url}}"], "path": ["api","assist","helper","profile"] },
+            "description": "Request without Authorization header → expect 401."
+          }
+        },
+
+        {
+          "name": "🔒 Invalid Transition (expect 422)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Status 422 ✓', () => pm.response.to.have.status(422));",
+              "pm.test('Transition error message ✓', () => pm.expect(pm.response.json().message).to.include('transition'));"
+            ]}
+          }],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"en_route\"\n}" },
+            "url": { "raw": "{{base_url}}/api/assist/helper/mission/{{request_id}}/status", "host": ["{{base_url}}"], "path": ["api","assist","helper","mission","{{request_id}}","status"] },
+            "description": "Tries en_route on a completed request → expect 422 invalid transition."
+          }
+        },
+
+        {
+          "name": "🔒 Validation Error (expect 422)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Status 422 ✓', () => pm.response.to.have.status(422));",
+              "pm.test('success = false ✓', () => pm.expect(pm.response.json().success).to.be.false);",
+              "pm.test('Field errors present ✓', () => pm.expect(pm.response.json().data).to.be.an('object'));"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{seeker_token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"latitude\": 999,\n  \"longitude\": \"not-a-number\"\n}" },
+            "url": { "raw": "{{base_url}}/api/assist/seeker/request", "host": ["{{base_url}}"], "path": ["api","assist","seeker","request"] },
+            "description": "Invalid body (missing required fields, bad lat/lng) → expect 422 with field-level errors."
+          }
+        }
+
+      ]
+    }
+
+  ]
+}

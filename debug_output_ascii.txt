@@ -1,9 +1,0 @@
-Verified users: 3
-Gender male: 3
-Country ID 1: 115
-Role ID 2: 168
-Brand in Garage (ID 5): 0
-Has Points of Interest: 1
-Last login >= 2024-01-01: 135
-Created between 2023 and 2024: 0
-TOTAL with all filters: 0
