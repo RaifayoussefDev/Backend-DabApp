@@ -35,8 +35,9 @@ class BannerController extends Controller
      */
     public function index()
     {
-        // Pour les USERS: Seulement les banners actifs avec dates valides
-        $banners = Banner::where('is_active', true)
+        // Pour les USERS: Seulement les banners visuels actifs (pas les ads)
+        $banners = Banner::where('has_form', false)
+            ->where('is_active', true)
             ->where(function ($query) {
                 $query->whereNull('start_date')
                     ->orWhere('start_date', '<=', now());
@@ -84,7 +85,7 @@ class BannerController extends Controller
         $perPage = $request->input('per_page', 15);
         $search = $request->input('search');
 
-        $query = Banner::orderBy('order');
+        $query = Banner::where('has_form', false)->orderBy('order');
 
         if ($search) {
             $query->where('title', 'like', "%{$search}%");
@@ -204,7 +205,7 @@ class BannerController extends Controller
      */
     public function show($id)
     {
-        $banner = Banner::find($id);
+        $banner = Banner::where('has_form', false)->find($id);
 
         if (!$banner) {
             return response()->json([
@@ -263,7 +264,7 @@ class BannerController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $banner = Banner::find($id);
+        $banner = Banner::where('has_form', false)->find($id);
 
         if (!$banner) {
             return response()->json([
@@ -325,7 +326,7 @@ class BannerController extends Controller
      */
     public function destroy($id)
     {
-        $banner = Banner::find($id);
+        $banner = Banner::where('has_form', false)->find($id);
 
         if (!$banner) {
             return response()->json([
@@ -362,7 +363,7 @@ class BannerController extends Controller
      */
     public function toggleStatus($id)
     {
-        $banner = Banner::find($id);
+        $banner = Banner::where('has_form', false)->find($id);
 
         if (!$banner) {
             return response()->json([

@@ -8,6 +8,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
 use Tymon\JWTAuth\Exceptions\JWTException;
@@ -33,6 +34,17 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+
+        // ✅ Gérer fichier trop grand (upload)
+        $exceptions->render(function (PostTooLargeException $e, $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'error'   => 'File Too Large',
+                    'message' => 'The uploaded file exceeds the server limit (' . ini_get('post_max_size') . '). Please contact the administrator.',
+                ], 413);
+            }
+        });
 
         // ✅ Gérer Token Expiré (JWT)
         $exceptions->render(function (TokenExpiredException $e, $request) {
