@@ -27,31 +27,49 @@ return new class extends Migration
         DB::table('expertise_types')->truncate();
         DB::table('helper_profiles')->truncate();
 
-        // ── 2. Drop all Foreign Keys first ───────────────────────────────────
-        // These must be dropped before we change the column types they reference.
-        Schema::table('helper_expertises', function (Blueprint $table) {
-            $table->dropForeign(['helper_profile_id']);
-            $table->dropForeign(['expertise_type_id']);
-            $table->dropUnique(['helper_profile_id', 'expertise_type_id']);
-        });
+        // ── 2. Drop all Foreign Keys and Unique Indexes first ────────────────
+        // Use helpers that check information_schema so they are no-ops when the
+        // constraint does not exist (server schema may differ from local).
+        $dropFk = function (string $table, string $fkName): void {
+            $exists = DB::selectOne(
+                "SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
+                 WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME    = ?
+                   AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+                   AND CONSTRAINT_NAME = ?",
+                [$table, $fkName]
+            );
+            if ($exists) {
+                DB::statement("ALTER TABLE `{$table}` DROP FOREIGN KEY `{$fkName}`");
+            }
+        };
 
-        Schema::table('assistance_requests', function (Blueprint $table) {
-            $table->dropForeign(['motorcycle_id']);
-            $table->dropForeign(['expertise_type_id']);
-        });
+        $dropIndex = function (string $table, string $indexName): void {
+            $exists = DB::selectOne(
+                "SELECT INDEX_NAME FROM information_schema.STATISTICS
+                 WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME  = ?
+                   AND INDEX_NAME  = ?",
+                [$table, $indexName]
+            );
+            if ($exists) {
+                DB::statement("ALTER TABLE `{$table}` DROP INDEX `{$indexName}`");
+            }
+        };
 
-        Schema::table('request_photos', function (Blueprint $table) {
-            $table->dropForeign(['request_id']);
-        });
+        $dropFk('helper_expertises', 'helper_expertises_helper_profile_id_foreign');
+        $dropFk('helper_expertises', 'helper_expertises_expertise_type_id_foreign');
+        $dropIndex('helper_expertises', 'helper_expertises_helper_profile_id_expertise_type_id_unique');
 
-        Schema::table('assist_ratings', function (Blueprint $table) {
-            $table->dropForeign(['request_id']);
-            $table->dropUnique(['request_id']);
-        });
+        $dropFk('assistance_requests', 'assistance_requests_motorcycle_id_foreign');
+        $dropFk('assistance_requests', 'assistance_requests_expertise_type_id_foreign');
 
-        Schema::table('assist_notifications', function (Blueprint $table) {
-            $table->dropForeign(['request_id']);
-        });
+        $dropFk('request_photos', 'request_photos_request_id_foreign');
+
+        $dropFk('assist_ratings', 'assist_ratings_request_id_foreign');
+        $dropIndex('assist_ratings', 'assist_ratings_request_id_unique');
+
+        $dropFk('assist_notifications', 'assist_notifications_request_id_foreign');
 
         // ── 3. Drop Primary Keys and Modify Columns ──────────────────────────
         // Use single ALTER TABLE per table to handle both CHAR(36) and AUTO_INCREMENT PKs:
@@ -134,34 +152,61 @@ return new class extends Migration
         DB::table('expertise_types')->truncate();
         DB::table('helper_profiles')->truncate();
 
-        // Drop all current FKs
-        Schema::table('assist_notifications', function (Blueprint $table) { $table->dropForeign(['request_id']); });
-        Schema::table('assist_ratings', function (Blueprint $table) { $table->dropForeign(['request_id']); $table->dropUnique(['request_id']); });
-        Schema::table('request_photos', function (Blueprint $table) { $table->dropForeign(['request_id']); });
-        Schema::table('assistance_requests', function (Blueprint $table) { $table->dropForeign(['motorcycle_id']); $table->dropForeign(['expertise_type_id']); });
-        Schema::table('helper_expertises', function (Blueprint $table) { $table->dropForeign(['helper_profile_id']); $table->dropForeign(['expertise_type_id']); $table->dropUnique(['helper_profile_id', 'expertise_type_id']); });
+        // Drop all current FKs (safe — skips any that don't exist on this server)
+        $dropFk = function (string $table, string $fkName): void {
+            $exists = DB::selectOne(
+                "SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
+                 WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME    = ?
+                   AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+                   AND CONSTRAINT_NAME = ?",
+                [$table, $fkName]
+            );
+            if ($exists) {
+                DB::statement("ALTER TABLE `{$table}` DROP FOREIGN KEY `{$fkName}`");
+            }
+        };
 
-        // Restore types and PKs
-        DB::statement('ALTER TABLE assist_notifications MODIFY COLUMN id CHAR(36) NOT NULL PRIMARY KEY');
+        $dropIndex = function (string $table, string $indexName): void {
+            $exists = DB::selectOne(
+                "SELECT INDEX_NAME FROM information_schema.STATISTICS
+                 WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME  = ?
+                   AND INDEX_NAME  = ?",
+                [$table, $indexName]
+            );
+            if ($exists) {
+                DB::statement("ALTER TABLE `{$table}` DROP INDEX `{$indexName}`");
+            }
+        };
+
+        $dropFk('assist_notifications', 'assist_notifications_request_id_foreign');
+        $dropFk('assist_ratings', 'assist_ratings_request_id_foreign');
+        $dropIndex('assist_ratings', 'assist_ratings_request_id_unique');
+        $dropFk('request_photos', 'request_photos_request_id_foreign');
+        $dropFk('assistance_requests', 'assistance_requests_motorcycle_id_foreign');
+        $dropFk('assistance_requests', 'assistance_requests_expertise_type_id_foreign');
+        $dropFk('helper_expertises', 'helper_expertises_helper_profile_id_foreign');
+        $dropFk('helper_expertises', 'helper_expertises_expertise_type_id_foreign');
+        $dropIndex('helper_expertises', 'helper_expertises_helper_profile_id_expertise_type_id_unique');
+
+        // Restore types and PKs (drop AUTO_INCREMENT first, then swap type + PK)
+        foreach ([
+            'assist_notifications', 'assist_ratings', 'request_photos',
+            'assistance_requests', 'helper_expertises',
+            'assist_motorcycles', 'expertise_types', 'helper_profiles',
+        ] as $tbl) {
+            DB::statement("ALTER TABLE `{$tbl}` MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id)");
+            DB::statement("ALTER TABLE `{$tbl}` MODIFY COLUMN id CHAR(36) NOT NULL");
+        }
+
         DB::statement('ALTER TABLE assist_notifications MODIFY COLUMN request_id CHAR(36) NULL');
-
-        DB::statement('ALTER TABLE assist_ratings MODIFY COLUMN id CHAR(36) NOT NULL PRIMARY KEY');
         DB::statement('ALTER TABLE assist_ratings MODIFY COLUMN request_id CHAR(36) NOT NULL');
-
-        DB::statement('ALTER TABLE request_photos MODIFY COLUMN id CHAR(36) NOT NULL PRIMARY KEY');
         DB::statement('ALTER TABLE request_photos MODIFY COLUMN request_id CHAR(36) NOT NULL');
-
-        DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN id CHAR(36) NOT NULL PRIMARY KEY');
         DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN motorcycle_id CHAR(36) NULL');
         DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN expertise_type_id CHAR(36) NOT NULL');
-
-        DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN id CHAR(36) NOT NULL PRIMARY KEY');
         DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN helper_profile_id CHAR(36) NOT NULL');
         DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN expertise_type_id CHAR(36) NOT NULL');
-
-        DB::statement('ALTER TABLE assist_motorcycles MODIFY COLUMN id CHAR(36) NOT NULL PRIMARY KEY');
-        DB::statement('ALTER TABLE expertise_types MODIFY COLUMN id CHAR(36) NOT NULL PRIMARY KEY');
-        DB::statement('ALTER TABLE helper_profiles MODIFY COLUMN id CHAR(36) NOT NULL PRIMARY KEY');
 
         // Re-add FKs
         Schema::table('assist_notifications', function (Blueprint $table) { $table->foreign('request_id')->references('id')->on('assistance_requests')->nullOnDelete(); });
