@@ -50,12 +50,14 @@ class BannerController extends Controller
             ->get()
             ->map(function ($banner) {
                 return [
-                    'id' => $banner->id,
-                    'title' => $banner->title,
+                    'id'     => $banner->id,
+                    'title'  => $banner->title,
                     'description' => $banner->description,
-                    'image' => $banner->image,
-                    'link' => $banner->link,
-                    'order' => $banner->order
+                    'image'  => $banner->image,
+                    'link'   => $banner->link,
+                    'order'  => $banner->order,
+                    'has_ad' => !is_null($banner->ad_id),
+                    'ad_id'  => $banner->ad_id,
                 ];
             });
 
@@ -96,15 +98,17 @@ class BannerController extends Controller
         // Transform collection but keep pagination structure
         $banners->getCollection()->transform(function ($banner) {
             return [
-                'id' => $banner->id,
-                'title' => $banner->title,
+                'id'         => $banner->id,
+                'title'      => $banner->title,
                 'description' => $banner->description,
-                'image' => $banner->image,
-                'link' => $banner->link,
-                'order' => $banner->order,
-                'is_active' => (bool) $banner->is_active,
+                'image'      => $banner->image,
+                'link'       => $banner->link,
+                'ad_id'      => $banner->ad_id,
+                'has_ad'     => !is_null($banner->ad_id),
+                'order'      => $banner->order,
+                'is_active'  => (bool) $banner->is_active,
                 'start_date' => $banner->start_date?->format('Y-m-d'),
-                'end_date' => $banner->end_date?->format('Y-m-d'),
+                'end_date'   => $banner->end_date?->format('Y-m-d'),
                 'created_at' => $banner->created_at->format('Y-m-d H:i:s')
             ];
         });
@@ -144,14 +148,15 @@ class BannerController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
+            'title'      => 'required|string|max:255',
             'description' => 'nullable|string',
-            'image' => 'required|string',
-            'link' => 'nullable|string|max:255',
-            'order' => 'nullable|integer|min:0',
-            'is_active' => 'nullable|boolean',
+            'image'      => 'required|string',
+            'link'       => 'nullable|string|max:255',
+            'ad_id'      => 'nullable|integer|exists:banners,id',
+            'order'      => 'nullable|integer|min:0',
+            'is_active'  => 'nullable|boolean',
             'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date'
+            'end_date'   => 'nullable|date|after_or_equal:start_date'
         ]);
 
         if ($validator->fails()) {
@@ -163,14 +168,15 @@ class BannerController extends Controller
         }
 
         $banner = Banner::create([
-            'title' => $request->title,
+            'title'       => $request->title,
             'description' => $request->description,
-            'image' => $request->image,
-            'link' => $request->link,
-            'order' => $request->order ?? 0,
-            'is_active' => $request->is_active ?? true,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date
+            'image'       => $request->image,
+            'link'        => $request->link,
+            'ad_id'       => $request->ad_id,
+            'order'       => $request->order ?? 0,
+            'is_active'   => $request->is_active ?? true,
+            'start_date'  => $request->start_date,
+            'end_date'    => $request->end_date
         ]);
 
         return response()->json([
@@ -217,16 +223,18 @@ class BannerController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'id' => $banner->id,
-                'title' => $banner->title,
+                'id'          => $banner->id,
+                'title'       => $banner->title,
                 'description' => $banner->description,
-                'image' => $banner->image,
-                'link' => $banner->link,
-                'order' => $banner->order,
-                'is_active' => $banner->is_active,
-                'start_date' => $banner->start_date?->format('Y-m-d'),
-                'end_date' => $banner->end_date?->format('Y-m-d'),
-                'created_at' => $banner->created_at->format('Y-m-d H:i:s')
+                'image'       => $banner->image,
+                'link'        => $banner->link,
+                'ad_id'       => $banner->ad_id,
+                'has_ad'      => !is_null($banner->ad_id),
+                'order'       => $banner->order,
+                'is_active'   => $banner->is_active,
+                'start_date'  => $banner->start_date?->format('Y-m-d'),
+                'end_date'    => $banner->end_date?->format('Y-m-d'),
+                'created_at'  => $banner->created_at->format('Y-m-d H:i:s')
             ]
         ]);
     }
@@ -274,13 +282,14 @@ class BannerController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'title' => 'sometimes|required|string|max:255',
+            'title'       => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
-            'image' => 'nullable|string',
-            'link' => 'nullable|string|max:255',
-            'order' => 'nullable|integer|min:0',
-            'is_active' => 'nullable|boolean',
-            'start_date' => 'nullable|date',
+            'image'       => 'nullable|string',
+            'link'        => 'nullable|string|max:255',
+            'ad_id'       => 'nullable|integer|exists:banners,id',
+            'order'       => 'nullable|integer|min:0',
+            'is_active'   => 'nullable|boolean',
+            'start_date'  => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date'
         ]);
 

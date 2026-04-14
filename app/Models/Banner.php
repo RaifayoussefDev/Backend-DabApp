@@ -14,6 +14,7 @@ class Banner extends Model
         'description',
         'image',
         'link',
+        'ad_id',
         'order',
         'is_active',
         'start_date',
@@ -35,6 +36,11 @@ class Banner extends Model
         'start_date' => 'date',
         'end_date'   => 'date',
     ];
+
+    public function ad()
+    {
+        return $this->belongsTo(Banner::class, 'ad_id');
+    }
 
     public function adSubmissions()
     {
