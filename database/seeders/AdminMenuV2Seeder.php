@@ -129,7 +129,11 @@ class AdminMenuV2Seeder extends Seeder
                 "label_ar" => "البانرات",
                 "icon" => "Image",
                 "permission" => "banners.manage",
-                "order" => 9
+                "order" => 9,
+                "sub_items" => [
+                    ["key" => "banners-list", "path" => "/banners",     "label_en" => "Banners", "label_ar" => "البانرات",   "permission" => "banners.manage", "order" => 1],
+                    ["key" => "ads",          "path" => "/banners/ads", "label_en" => "Ads",     "label_ar" => "الإعلانات", "icon" => "Megaphone", "permission" => "banners.manage", "order" => 2]
+                ]
             ],
             [
                 "key" => "reports",
@@ -278,6 +282,7 @@ class AdminMenuV2Seeder extends Seeder
                         'name' => $sub['key'],
                         'title' => $sub['label_en'],
                         'translate' => $sub['label_ar'],
+                        'icon' => $sub['icon'] ?? null,
                         'path' => $sub['path'],
                         'order' => $sub['order'],
                         'permission' => $sub['permission'] ?? null,
