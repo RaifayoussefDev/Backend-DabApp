@@ -9,211 +9,264 @@ return new class extends Migration
 {
     /**
      * Convert all Assist module tables from UUID primary keys to auto-increment integers.
-     * Also converts UUID foreign-key columns between Assist tables to unsignedBigInteger.
-     *
-     * Truncates all 8 tables first — run only when no production data exists.
+     * Strategy: drop + recreate (all tables are empty / truncated first).
      */
     public function up(): void
     {
         DB::statement('SET FOREIGN_KEY_CHECKS=0');
 
-        // ── 1. Truncate all Assist tables ────────────────────────────────────
-        DB::table('assist_notifications')->truncate();
-        DB::table('assist_ratings')->truncate();
-        DB::table('request_photos')->truncate();
-        DB::table('assistance_requests')->truncate();
-        DB::table('helper_expertises')->truncate();
-        DB::table('assist_motorcycles')->truncate();
-        DB::table('expertise_types')->truncate();
-        DB::table('helper_profiles')->truncate();
+        // Drop in reverse-dependency order
+        Schema::dropIfExists('assist_notifications');
+        Schema::dropIfExists('assist_ratings');
+        Schema::dropIfExists('request_photos');
+        Schema::dropIfExists('assistance_requests');
+        Schema::dropIfExists('helper_expertises');
+        Schema::dropIfExists('assist_motorcycles');
+        Schema::dropIfExists('expertise_types');
+        Schema::dropIfExists('helper_profiles');
 
-        // ── 2. Drop all Foreign Keys and Unique Indexes first ────────────────
-        // Use helpers that check information_schema so they are no-ops when the
-        // constraint does not exist (server schema may differ from local).
-        $dropFk = function (string $table, string $fkName): void {
-            $exists = DB::selectOne(
-                "SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
-                 WHERE TABLE_SCHEMA = DATABASE()
-                   AND TABLE_NAME    = ?
-                   AND CONSTRAINT_TYPE = 'FOREIGN KEY'
-                   AND CONSTRAINT_NAME = ?",
-                [$table, $fkName]
-            );
-            if ($exists) {
-                DB::statement("ALTER TABLE `{$table}` DROP FOREIGN KEY `{$fkName}`");
-            }
-        };
+        // ── Recreate with BIGINT AUTO_INCREMENT PKs ──────────────────────────
 
-        $dropIndex = function (string $table, string $indexName): void {
-            $exists = DB::selectOne(
-                "SELECT INDEX_NAME FROM information_schema.STATISTICS
-                 WHERE TABLE_SCHEMA = DATABASE()
-                   AND TABLE_NAME  = ?
-                   AND INDEX_NAME  = ?",
-                [$table, $indexName]
-            );
-            if ($exists) {
-                DB::statement("ALTER TABLE `{$table}` DROP INDEX `{$indexName}`");
-            }
-        };
+        Schema::create('helper_profiles', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->unique()->constrained('users')->cascadeOnDelete();
+            $table->boolean('is_available')->default(false);
+            $table->boolean('is_verified')->default(false);
+            $table->decimal('rating', 3, 2)->default(0.00);
+            $table->integer('total_assists')->default(0);
+            $table->integer('service_radius_km')->default(15);
+            $table->string('level')->default('standard');
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
+            $table->softDeletes();
+            $table->timestamps();
 
-        $dropFk('helper_expertises', 'helper_expertises_helper_profile_id_foreign');
-        $dropFk('helper_expertises', 'helper_expertises_expertise_type_id_foreign');
-        $dropIndex('helper_expertises', 'helper_expertises_helper_profile_id_expertise_type_id_unique');
+            $table->index(['is_available', 'latitude', 'longitude']);
+        });
 
-        $dropFk('assistance_requests', 'assistance_requests_motorcycle_id_foreign');
-        $dropFk('assistance_requests', 'assistance_requests_expertise_type_id_foreign');
+        Schema::create('expertise_types', function (Blueprint $table) {
+            $table->id();
+            $table->string('name')->unique();
+            $table->string('icon');
+            $table->timestamps();
+        });
 
-        $dropFk('request_photos', 'request_photos_request_id_foreign');
+        Schema::create('helper_expertises', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('helper_profile_id');
+            $table->unsignedBigInteger('expertise_type_id');
+            $table->timestamps();
 
-        $dropFk('assist_ratings', 'assist_ratings_request_id_foreign');
-        $dropIndex('assist_ratings', 'assist_ratings_request_id_unique');
+            $table->foreign('helper_profile_id')
+                ->references('id')->on('helper_profiles')
+                ->cascadeOnDelete();
 
-        $dropFk('assist_notifications', 'assist_notifications_request_id_foreign');
+            $table->foreign('expertise_type_id')
+                ->references('id')->on('expertise_types')
+                ->cascadeOnDelete();
 
-        // ── 3. Drop Primary Keys and Modify Columns ──────────────────────────
-        // Use single ALTER TABLE per table to handle both CHAR(36) and AUTO_INCREMENT PKs:
-        // step a) strip AUTO_INCREMENT by modifying without it + drop PK + re-add PK
-        // step b) re-apply AUTO_INCREMENT
-        // This works regardless of the current column type on the server.
-
-        // helper_profiles
-        DB::statement('ALTER TABLE helper_profiles MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id), MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
-
-        // expertise_types
-        DB::statement('ALTER TABLE expertise_types MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id), MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
-
-        // helper_expertises
-        DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id), MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
-        DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN helper_profile_id BIGINT UNSIGNED NOT NULL');
-        DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN expertise_type_id BIGINT UNSIGNED NOT NULL');
-
-        // assist_motorcycles
-        DB::statement('ALTER TABLE assist_motorcycles MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id), MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
-
-        // assistance_requests
-        DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id), MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
-        DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN motorcycle_id BIGINT UNSIGNED NULL');
-        DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN expertise_type_id BIGINT UNSIGNED NOT NULL');
-
-        // request_photos
-        DB::statement('ALTER TABLE request_photos MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id), MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
-        DB::statement('ALTER TABLE request_photos MODIFY COLUMN request_id BIGINT UNSIGNED NOT NULL');
-
-        // assist_ratings
-        DB::statement('ALTER TABLE assist_ratings MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id), MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
-        DB::statement('ALTER TABLE assist_ratings MODIFY COLUMN request_id BIGINT UNSIGNED NOT NULL');
-
-        // assist_notifications
-        DB::statement('ALTER TABLE assist_notifications MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id), MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
-        DB::statement('ALTER TABLE assist_notifications MODIFY COLUMN request_id BIGINT UNSIGNED NULL');
-
-        // ── 4. Re-add Foreign Keys ───────────────────────────────────────────
-        Schema::table('helper_expertises', function (Blueprint $table) {
             $table->unique(['helper_profile_id', 'expertise_type_id']);
-            $table->foreign('helper_profile_id')->references('id')->on('helper_profiles')->cascadeOnDelete();
-            $table->foreign('expertise_type_id')->references('id')->on('expertise_types')->cascadeOnDelete();
         });
 
-        Schema::table('assistance_requests', function (Blueprint $table) {
-            $table->foreign('motorcycle_id')->references('id')->on('assist_motorcycles')->nullOnDelete();
-            $table->foreign('expertise_type_id')->references('id')->on('expertise_types');
+        Schema::create('assist_motorcycles', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('brand_id')->constrained('motorcycle_brands');
+            $table->foreignId('model_id')->constrained('motorcycle_models');
+            $table->foreignId('year_id')->constrained('motorcycle_years');
+            $table->string('color');
+            $table->string('plate_number');
+            $table->string('plate_country')->default('SA');
+            $table->timestamps();
         });
 
-        Schema::table('request_photos', function (Blueprint $table) {
-            $table->foreign('request_id')->references('id')->on('assistance_requests')->cascadeOnDelete();
+        Schema::create('assistance_requests', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('seeker_id')->constrained('users');
+            $table->foreignId('helper_id')->nullable()->constrained('users');
+            $table->unsignedBigInteger('motorcycle_id')->nullable();
+            $table->unsignedBigInteger('expertise_type_id');
+            $table->enum('status', ['pending', 'accepted', 'en_route', 'arrived', 'completed', 'cancelled'])
+                  ->default('pending');
+            $table->text('description')->nullable();
+            $table->decimal('latitude', 10, 7);
+            $table->decimal('longitude', 10, 7);
+            $table->string('location_label');
+            $table->timestamp('accepted_at')->nullable();
+            $table->timestamp('arrived_at')->nullable();
+            $table->timestamp('completed_at')->nullable();
+            $table->timestamp('cancelled_at')->nullable();
+            $table->string('cancel_reason')->nullable();
+            $table->softDeletes();
+            $table->timestamps();
+
+            $table->foreign('motorcycle_id')
+                ->references('id')->on('assist_motorcycles')
+                ->nullOnDelete();
+
+            $table->foreign('expertise_type_id')
+                ->references('id')->on('expertise_types');
+
+            $table->index(['status', 'seeker_id', 'helper_id']);
         });
 
-        Schema::table('assist_ratings', function (Blueprint $table) {
-            $table->unique('request_id');
-            $table->foreign('request_id')->references('id')->on('assistance_requests')->cascadeOnDelete();
+        Schema::create('request_photos', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('request_id');
+            $table->string('path');
+            $table->timestamps();
+
+            $table->foreign('request_id')
+                ->references('id')->on('assistance_requests')
+                ->cascadeOnDelete();
         });
 
-        Schema::table('assist_notifications', function (Blueprint $table) {
-            $table->foreign('request_id')->references('id')->on('assistance_requests')->nullOnDelete();
+        Schema::create('assist_ratings', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('request_id')->unique();
+            $table->foreignId('rater_id')->constrained('users');
+            $table->foreignId('rated_id')->constrained('users');
+            $table->tinyInteger('stars');
+            $table->text('comment')->nullable();
+            $table->timestamps();
+
+            $table->foreign('request_id')
+                ->references('id')->on('assistance_requests')
+                ->cascadeOnDelete();
+        });
+
+        Schema::create('assist_notifications', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->unsignedBigInteger('request_id')->nullable();
+            $table->string('type');
+            $table->string('title');
+            $table->text('body');
+            $table->boolean('is_read')->default(false);
+            $table->timestamps();
+
+            $table->foreign('request_id')
+                ->references('id')->on('assistance_requests')
+                ->nullOnDelete();
         });
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
     }
 
     /**
-     * Reverse: restore UUID primary keys (structural only — data is truncated).
+     * Reverse: restore UUID primary keys.
      */
     public function down(): void
     {
         DB::statement('SET FOREIGN_KEY_CHECKS=0');
 
-        DB::table('assist_notifications')->truncate();
-        DB::table('assist_ratings')->truncate();
-        DB::table('request_photos')->truncate();
-        DB::table('assistance_requests')->truncate();
-        DB::table('helper_expertises')->truncate();
-        DB::table('assist_motorcycles')->truncate();
-        DB::table('expertise_types')->truncate();
-        DB::table('helper_profiles')->truncate();
+        Schema::dropIfExists('assist_notifications');
+        Schema::dropIfExists('assist_ratings');
+        Schema::dropIfExists('request_photos');
+        Schema::dropIfExists('assistance_requests');
+        Schema::dropIfExists('helper_expertises');
+        Schema::dropIfExists('assist_motorcycles');
+        Schema::dropIfExists('expertise_types');
+        Schema::dropIfExists('helper_profiles');
 
-        // Drop all current FKs (safe — skips any that don't exist on this server)
-        $dropFk = function (string $table, string $fkName): void {
-            $exists = DB::selectOne(
-                "SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
-                 WHERE TABLE_SCHEMA = DATABASE()
-                   AND TABLE_NAME    = ?
-                   AND CONSTRAINT_TYPE = 'FOREIGN KEY'
-                   AND CONSTRAINT_NAME = ?",
-                [$table, $fkName]
-            );
-            if ($exists) {
-                DB::statement("ALTER TABLE `{$table}` DROP FOREIGN KEY `{$fkName}`");
-            }
-        };
+        Schema::create('helper_profiles', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->foreignId('user_id')->unique()->constrained('users')->cascadeOnDelete();
+            $table->boolean('is_available')->default(false);
+            $table->boolean('is_verified')->default(false);
+            $table->decimal('rating', 3, 2)->default(0.00);
+            $table->integer('total_assists')->default(0);
+            $table->integer('service_radius_km')->default(15);
+            $table->string('level')->default('standard');
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
+            $table->softDeletes();
+            $table->timestamps();
+            $table->index(['is_available', 'latitude', 'longitude']);
+        });
 
-        $dropIndex = function (string $table, string $indexName): void {
-            $exists = DB::selectOne(
-                "SELECT INDEX_NAME FROM information_schema.STATISTICS
-                 WHERE TABLE_SCHEMA = DATABASE()
-                   AND TABLE_NAME  = ?
-                   AND INDEX_NAME  = ?",
-                [$table, $indexName]
-            );
-            if ($exists) {
-                DB::statement("ALTER TABLE `{$table}` DROP INDEX `{$indexName}`");
-            }
-        };
+        Schema::create('expertise_types', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('name')->unique();
+            $table->string('icon');
+            $table->timestamps();
+        });
 
-        $dropFk('assist_notifications', 'assist_notifications_request_id_foreign');
-        $dropFk('assist_ratings', 'assist_ratings_request_id_foreign');
-        $dropIndex('assist_ratings', 'assist_ratings_request_id_unique');
-        $dropFk('request_photos', 'request_photos_request_id_foreign');
-        $dropFk('assistance_requests', 'assistance_requests_motorcycle_id_foreign');
-        $dropFk('assistance_requests', 'assistance_requests_expertise_type_id_foreign');
-        $dropFk('helper_expertises', 'helper_expertises_helper_profile_id_foreign');
-        $dropFk('helper_expertises', 'helper_expertises_expertise_type_id_foreign');
-        $dropIndex('helper_expertises', 'helper_expertises_helper_profile_id_expertise_type_id_unique');
+        Schema::create('helper_expertises', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->uuid('helper_profile_id');
+            $table->uuid('expertise_type_id');
+            $table->timestamps();
+            $table->foreign('helper_profile_id')->references('id')->on('helper_profiles')->cascadeOnDelete();
+            $table->foreign('expertise_type_id')->references('id')->on('expertise_types')->cascadeOnDelete();
+            $table->unique(['helper_profile_id', 'expertise_type_id']);
+        });
 
-        // Restore types and PKs (drop AUTO_INCREMENT first, then swap type + PK)
-        foreach ([
-            'assist_notifications', 'assist_ratings', 'request_photos',
-            'assistance_requests', 'helper_expertises',
-            'assist_motorcycles', 'expertise_types', 'helper_profiles',
-        ] as $tbl) {
-            DB::statement("ALTER TABLE `{$tbl}` MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id)");
-            DB::statement("ALTER TABLE `{$tbl}` MODIFY COLUMN id CHAR(36) NOT NULL");
-        }
+        Schema::create('assist_motorcycles', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('brand_id')->constrained('motorcycle_brands');
+            $table->foreignId('model_id')->constrained('motorcycle_models');
+            $table->foreignId('year_id')->constrained('motorcycle_years');
+            $table->string('color');
+            $table->string('plate_number');
+            $table->string('plate_country')->default('SA');
+            $table->timestamps();
+        });
 
-        DB::statement('ALTER TABLE assist_notifications MODIFY COLUMN request_id CHAR(36) NULL');
-        DB::statement('ALTER TABLE assist_ratings MODIFY COLUMN request_id CHAR(36) NOT NULL');
-        DB::statement('ALTER TABLE request_photos MODIFY COLUMN request_id CHAR(36) NOT NULL');
-        DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN motorcycle_id CHAR(36) NULL');
-        DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN expertise_type_id CHAR(36) NOT NULL');
-        DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN helper_profile_id CHAR(36) NOT NULL');
-        DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN expertise_type_id CHAR(36) NOT NULL');
+        Schema::create('assistance_requests', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->foreignId('seeker_id')->constrained('users');
+            $table->foreignId('helper_id')->nullable()->constrained('users');
+            $table->uuid('motorcycle_id')->nullable();
+            $table->uuid('expertise_type_id');
+            $table->enum('status', ['pending', 'accepted', 'en_route', 'arrived', 'completed', 'cancelled'])->default('pending');
+            $table->text('description')->nullable();
+            $table->decimal('latitude', 10, 7);
+            $table->decimal('longitude', 10, 7);
+            $table->string('location_label');
+            $table->timestamp('accepted_at')->nullable();
+            $table->timestamp('arrived_at')->nullable();
+            $table->timestamp('completed_at')->nullable();
+            $table->timestamp('cancelled_at')->nullable();
+            $table->string('cancel_reason')->nullable();
+            $table->softDeletes();
+            $table->timestamps();
+            $table->foreign('motorcycle_id')->references('id')->on('assist_motorcycles')->nullOnDelete();
+            $table->foreign('expertise_type_id')->references('id')->on('expertise_types');
+            $table->index(['status', 'seeker_id', 'helper_id']);
+        });
 
-        // Re-add FKs
-        Schema::table('assist_notifications', function (Blueprint $table) { $table->foreign('request_id')->references('id')->on('assistance_requests')->nullOnDelete(); });
-        Schema::table('assist_ratings', function (Blueprint $table) { $table->unique('request_id'); $table->foreign('request_id')->references('id')->on('assistance_requests')->cascadeOnDelete(); });
-        Schema::table('request_photos', function (Blueprint $table) { $table->foreign('request_id')->references('id')->on('assistance_requests')->cascadeOnDelete(); });
-        Schema::table('assistance_requests', function (Blueprint $table) { $table->foreign('motorcycle_id')->references('id')->on('assist_motorcycles')->nullOnDelete(); $table->foreign('expertise_type_id')->references('id')->on('expertise_types'); });
-        Schema::table('helper_expertises', function (Blueprint $table) { $table->unique(['helper_profile_id', 'expertise_type_id']); $table->foreign('helper_profile_id')->references('id')->on('helper_profiles')->cascadeOnDelete(); $table->foreign('expertise_type_id')->references('id')->on('expertise_types')->cascadeOnDelete(); });
+        Schema::create('request_photos', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->uuid('request_id');
+            $table->string('path');
+            $table->timestamps();
+            $table->foreign('request_id')->references('id')->on('assistance_requests')->cascadeOnDelete();
+        });
+
+        Schema::create('assist_ratings', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->uuid('request_id')->unique();
+            $table->foreignId('rater_id')->constrained('users');
+            $table->foreignId('rated_id')->constrained('users');
+            $table->tinyInteger('stars');
+            $table->text('comment')->nullable();
+            $table->timestamps();
+            $table->foreign('request_id')->references('id')->on('assistance_requests')->cascadeOnDelete();
+        });
+
+        Schema::create('assist_notifications', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->uuid('request_id')->nullable();
+            $table->string('type');
+            $table->string('title');
+            $table->text('body');
+            $table->boolean('is_read')->default(false);
+            $table->timestamps();
+            $table->foreign('request_id')->references('id')->on('assistance_requests')->nullOnDelete();
+        });
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
     }
