@@ -2,4 +2,3 @@
 !private/
 !public/
 !.gitignore
-!google-service-account.json
