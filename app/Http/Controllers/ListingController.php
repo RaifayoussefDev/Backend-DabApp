@@ -2746,7 +2746,8 @@ class ListingController extends Controller
             } elseif ($listing->category_id == 2 && $listing->sparePart) {
                 $baseData['spare_part'] = [
                     'condition' => $listing->sparePart->condition,
-                    'brand' => $listing->sparePart->bikePartBrand?->name ?? null,
+                    'brand' => $listing->sparePart->bikePartBrand?->name ?? $listing->sparePart->brand_other ?? null,
+                    'brand_other' => $listing->sparePart->brand_other,
                     'category' => $listing->sparePart->bikePartCategory?->name ?? null,
                     'compatible_motorcycles' => $listing->sparePart->motorcycleAssociations->map(function ($association) {
                         return [
