@@ -54,60 +54,40 @@ return new class extends Migration
         });
 
         // ── 3. Drop Primary Keys and Modify Columns ──────────────────────────
-        
+        // Use single ALTER TABLE per table to handle both CHAR(36) and AUTO_INCREMENT PKs:
+        // step a) strip AUTO_INCREMENT by modifying without it + drop PK + re-add PK
+        // step b) re-apply AUTO_INCREMENT
+        // This works regardless of the current column type on the server.
+
         // helper_profiles
-        Schema::table('helper_profiles', function (Blueprint $table) {
-            $table->dropPrimary();
-        });
-        DB::statement('ALTER TABLE helper_profiles MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
+        DB::statement('ALTER TABLE helper_profiles MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id), MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
 
         // expertise_types
-        Schema::table('expertise_types', function (Blueprint $table) {
-            $table->dropPrimary();
-        });
-        DB::statement('ALTER TABLE expertise_types MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
+        DB::statement('ALTER TABLE expertise_types MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id), MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
 
         // helper_expertises
-        Schema::table('helper_expertises', function (Blueprint $table) {
-            $table->dropPrimary();
-        });
-        DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
+        DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id), MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
         DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN helper_profile_id BIGINT UNSIGNED NOT NULL');
         DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN expertise_type_id BIGINT UNSIGNED NOT NULL');
 
         // assist_motorcycles
-        Schema::table('assist_motorcycles', function (Blueprint $table) {
-            $table->dropPrimary();
-        });
-        DB::statement('ALTER TABLE assist_motorcycles MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
+        DB::statement('ALTER TABLE assist_motorcycles MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id), MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
 
         // assistance_requests
-        Schema::table('assistance_requests', function (Blueprint $table) {
-            $table->dropPrimary();
-        });
-        DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
+        DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id), MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
         DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN motorcycle_id BIGINT UNSIGNED NULL');
         DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN expertise_type_id BIGINT UNSIGNED NOT NULL');
 
         // request_photos
-        Schema::table('request_photos', function (Blueprint $table) {
-            $table->dropPrimary();
-        });
-        DB::statement('ALTER TABLE request_photos MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
+        DB::statement('ALTER TABLE request_photos MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id), MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
         DB::statement('ALTER TABLE request_photos MODIFY COLUMN request_id BIGINT UNSIGNED NOT NULL');
 
         // assist_ratings
-        Schema::table('assist_ratings', function (Blueprint $table) {
-            $table->dropPrimary();
-        });
-        DB::statement('ALTER TABLE assist_ratings MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
+        DB::statement('ALTER TABLE assist_ratings MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id), MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
         DB::statement('ALTER TABLE assist_ratings MODIFY COLUMN request_id BIGINT UNSIGNED NOT NULL');
 
         // assist_notifications
-        Schema::table('assist_notifications', function (Blueprint $table) {
-            $table->dropPrimary();
-        });
-        DB::statement('ALTER TABLE assist_notifications MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
+        DB::statement('ALTER TABLE assist_notifications MODIFY COLUMN id BIGINT UNSIGNED NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id), MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
         DB::statement('ALTER TABLE assist_notifications MODIFY COLUMN request_id BIGINT UNSIGNED NULL');
 
         // ── 4. Re-add Foreign Keys ───────────────────────────────────────────
