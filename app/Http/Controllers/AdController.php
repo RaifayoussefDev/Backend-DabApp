@@ -25,14 +25,17 @@ class AdController extends Controller
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="array",
      *                 @OA\Items(
-     *                     @OA\Property(property="id",          type="integer", example=1),
-     *                     @OA\Property(property="title",       type="string",  example="Ramadan Special Offer"),
-     *                     @OA\Property(property="description", type="string",  example="Get 30% off during Ramadan"),
-     *                     @OA\Property(property="type",        type="string",  enum={"photo","video"}, example="video"),
-     *                     @OA\Property(property="image",       type="string",  example="https://cdn.dabapp.com/ads/ramadan-thumb.jpg"),
-     *                     @OA\Property(property="media_url",   type="string",  example="https://cdn.dabapp.com/ads/ramadan.mp4"),
-     *                     @OA\Property(property="button_text", type="string",  example="I am interested"),
-     *                     @OA\Property(property="has_form",    type="boolean", example=true)
+     *                     @OA\Property(property="id",             type="integer", example=1),
+     *                     @OA\Property(property="title",          type="string",  example="Ramadan Special Offer"),
+     *                     @OA\Property(property="title_ar",       type="string",  example="عرض رمضان الخاص",          nullable=true),
+     *                     @OA\Property(property="description",    type="string",  example="Get 30% off during Ramadan", nullable=true),
+     *                     @OA\Property(property="description_ar", type="string",  example="احصل على خصم 30% خلال رمضان", nullable=true),
+     *                     @OA\Property(property="type",           type="string",  enum={"photo","video"}, example="video"),
+     *                     @OA\Property(property="image",          type="string",  example="https://cdn.dabapp.com/ads/ramadan-thumb.jpg", nullable=true),
+     *                     @OA\Property(property="media_url",      type="string",  example="https://cdn.dabapp.com/ads/ramadan.mp4",       nullable=true),
+     *                     @OA\Property(property="button_text",    type="string",  example="I am interested",            nullable=true),
+     *                     @OA\Property(property="button_ar",      type="string",  example="أنا مهتم",                   nullable=true),
+     *                     @OA\Property(property="has_form",       type="boolean", example=true)
      *                 )
      *             )
      *         )
@@ -62,7 +65,23 @@ class AdController extends Controller
      *     tags={"Ads"},
      *     summary="Get a single ad",
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
-     *     @OA\Response(response=200, description="Ad details"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Ad details",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id",             type="integer", example=1),
+     *                 @OA\Property(property="title",          type="string",  example="Ramadan Special Offer"),
+     *                 @OA\Property(property="title_ar",       type="string",  example="عرض رمضان الخاص",   nullable=true),
+     *                 @OA\Property(property="description",    type="string",  nullable=true),
+     *                 @OA\Property(property="description_ar", type="string",  nullable=true),
+     *                 @OA\Property(property="button_text",    type="string",  nullable=true),
+     *                 @OA\Property(property="button_ar",      type="string",  example="أنا مهتم", nullable=true),
+     *                 @OA\Property(property="has_form",       type="boolean", example=true)
+     *             )
+     *         )
+     *     ),
      *     @OA\Response(response=404, description="Ad not found")
      * )
      */
@@ -168,14 +187,17 @@ class AdController extends Controller
     private function formatAd($b): array
     {
         return [
-            'id'          => $b->id,
-            'title'       => $b->title,
-            'description' => $b->description,
-            'type'        => $b->type ?? 'photo',
-            'image'       => $b->image,
-            'media_url'   => $b->media_url,
-            'button_text' => $b->button_text ?? 'Submit',
-            'has_form'    => (bool) $b->has_form,
+            'id'             => $b->id,
+            'title'          => $b->title,
+            'title_ar'       => $b->title_ar,
+            'description'    => $b->description,
+            'description_ar' => $b->description_ar,
+            'type'           => $b->type ?? 'photo',
+            'image'          => $b->image,
+            'media_url'      => $b->media_url,
+            'button_text'    => $b->button_text ?? 'Submit',
+            'button_ar'      => $b->button_ar,
+            'has_form'       => (bool) $b->has_form,
         ];
     }
 }

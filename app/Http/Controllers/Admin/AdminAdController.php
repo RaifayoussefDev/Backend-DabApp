@@ -17,7 +17,7 @@ class AdminAdController extends Controller
      *     summary="List all ads",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="per_page", in="query", @OA\Schema(type="integer", example=15)),
-     *     @OA\Parameter(name="search",   in="query", @OA\Schema(type="string"), description="Search by title"),
+     *     @OA\Parameter(name="search",   in="query", @OA\Schema(type="string"), description="Search by title or title_ar"),
      *     @OA\Response(
      *         response=200,
      *         description="Paginated list of ads",
@@ -26,11 +26,18 @@ class AdminAdController extends Controller
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="data", type="array",
      *                     @OA\Items(
-     *                         @OA\Property(property="id",                type="integer", example=1),
-     *                         @OA\Property(property="title",             type="string",  example="Ramadan Special Offer"),
-     *                         @OA\Property(property="type",              type="string",  enum={"photo","video"}),
-     *                         @OA\Property(property="google_sheet_id",   type="string",  example="15ln515Ecn1lw1ZdHlqe3BdDuXzlxskZLmfdpa7wjXNU"),
-     *                         @OA\Property(property="is_active",         type="boolean", example=true),
+     *                         @OA\Property(property="id",                   type="integer", example=1),
+     *                         @OA\Property(property="title",                type="string",  example="Ramadan Special Offer"),
+     *                         @OA\Property(property="title_ar",             type="string",  example="عرض رمضان الخاص",        nullable=true),
+     *                         @OA\Property(property="description",          type="string",  example="Get 30% off",             nullable=true),
+     *                         @OA\Property(property="description_ar",       type="string",  example="احصل على خصم 30%",        nullable=true),
+     *                         @OA\Property(property="type",                 type="string",  enum={"photo","video"}),
+     *                         @OA\Property(property="image",                type="string",  nullable=true),
+     *                         @OA\Property(property="media_url",            type="string",  nullable=true),
+     *                         @OA\Property(property="button_text",          type="string",  example="I am interested",         nullable=true),
+     *                         @OA\Property(property="button_ar",            type="string",  example="أنا مهتم",                nullable=true),
+     *                         @OA\Property(property="google_sheet_id",      type="string",  nullable=true),
+     *                         @OA\Property(property="is_active",            type="boolean", example=true),
      *                         @OA\Property(property="ad_submissions_count", type="integer", example=42)
      *                     )
      *                 )
@@ -47,7 +54,10 @@ class AdminAdController extends Controller
         $query = Banner::where('has_form', true)->orderBy('order');
 
         if ($search) {
-            $query->where('title', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('title',    'like', "%{$search}%")
+                  ->orWhere('title_ar', 'like', "%{$search}%");
+            });
         }
 
         $ads = $query->withCount('adSubmissions')->paginate($perPage);
@@ -68,11 +78,14 @@ class AdminAdController extends Controller
      *         @OA\JsonContent(
      *             required={"title"},
      *             @OA\Property(property="title",           type="string",  example="Ramadan Special Offer"),
+     *             @OA\Property(property="title_ar",        type="string",  example="عرض رمضان الخاص"),
      *             @OA\Property(property="description",     type="string",  example="Get 30% off during Ramadan"),
+     *             @OA\Property(property="description_ar",  type="string",  example="احصل على خصم 30% خلال رمضان"),
      *             @OA\Property(property="type",            type="string",  enum={"photo","video"}, example="video"),
      *             @OA\Property(property="image",           type="string",  example="https://cdn.dabapp.com/ads/ramadan-thumb.jpg"),
      *             @OA\Property(property="media_url",       type="string",  example="https://cdn.dabapp.com/ads/ramadan.mp4"),
      *             @OA\Property(property="button_text",     type="string",  example="I am interested"),
+     *             @OA\Property(property="button_ar",       type="string",  example="أنا مهتم"),
      *             @OA\Property(property="google_sheet_id", type="string",  example="15ln515Ecn1lw1ZdHlqe3BdDuXzlxskZLmfdpa7wjXNU"),
      *             @OA\Property(property="order",           type="integer", example=1),
      *             @OA\Property(property="is_active",       type="boolean", example=true),
@@ -88,11 +101,14 @@ class AdminAdController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'title'           => 'required|string|max:255',
+            'title_ar'        => 'nullable|string|max:255',
             'description'     => 'nullable|string',
+            'description_ar'  => 'nullable|string',
             'type'            => 'nullable|in:photo,video',
             'image'           => 'nullable|string',
             'media_url'       => 'nullable|string',
             'button_text'     => 'nullable|string|max:100',
+            'button_ar'       => 'nullable|string|max:100',
             'google_sheet_id' => 'nullable|string|max:255',
             'order'           => 'nullable|integer|min:0',
             'is_active'       => 'nullable|boolean',
@@ -110,11 +126,14 @@ class AdminAdController extends Controller
 
         $ad = Banner::create([
             'title'           => $request->title,
+            'title_ar'        => $request->title_ar,
             'description'     => $request->description,
+            'description_ar'  => $request->description_ar,
             'type'            => $request->type ?? 'photo',
             'image'           => $request->image,
             'media_url'       => $request->media_url,
             'button_text'     => $request->button_text,
+            'button_ar'       => $request->button_ar,
             'has_form'        => true,
             'google_sheet_id' => $request->google_sheet_id,
             'link'            => $request->link,
@@ -138,7 +157,23 @@ class AdminAdController extends Controller
      *     summary="Get a single ad",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
-     *     @OA\Response(response=200, description="Ad details with submission count"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Ad details with submission count",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id",                   type="integer", example=1),
+     *                 @OA\Property(property="title",                type="string",  example="Ramadan Special Offer"),
+     *                 @OA\Property(property="title_ar",             type="string",  example="عرض رمضان الخاص",   nullable=true),
+     *                 @OA\Property(property="description",          type="string",  nullable=true),
+     *                 @OA\Property(property="description_ar",       type="string",  nullable=true),
+     *                 @OA\Property(property="button_text",          type="string",  nullable=true),
+     *                 @OA\Property(property="button_ar",            type="string",  nullable=true),
+     *                 @OA\Property(property="ad_submissions_count", type="integer", example=42)
+     *             )
+     *         )
+     *     ),
      *     @OA\Response(response=404, description="Not found")
      * )
      */
@@ -163,7 +198,12 @@ class AdminAdController extends Controller
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             @OA\Property(property="title",           type="string"),
-     *             @OA\Property(property="type",            type="string", enum={"photo","video"}),
+     *             @OA\Property(property="title_ar",        type="string",  example="عرض رمضان الخاص"),
+     *             @OA\Property(property="description",     type="string"),
+     *             @OA\Property(property="description_ar",  type="string",  example="احصل على خصم 30% خلال رمضان"),
+     *             @OA\Property(property="type",            type="string",  enum={"photo","video"}),
+     *             @OA\Property(property="button_text",     type="string"),
+     *             @OA\Property(property="button_ar",       type="string",  example="أنا مهتم"),
      *             @OA\Property(property="google_sheet_id", type="string"),
      *             @OA\Property(property="is_active",       type="boolean")
      *         )
@@ -182,11 +222,14 @@ class AdminAdController extends Controller
 
         $validator = Validator::make($request->all(), [
             'title'           => 'sometimes|required|string|max:255',
+            'title_ar'        => 'nullable|string|max:255',
             'description'     => 'nullable|string',
+            'description_ar'  => 'nullable|string',
             'type'            => 'nullable|in:photo,video',
             'image'           => 'nullable|string',
             'media_url'       => 'nullable|string',
             'button_text'     => 'nullable|string|max:100',
+            'button_ar'       => 'nullable|string|max:100',
             'google_sheet_id' => 'nullable|string|max:255',
             'order'           => 'nullable|integer|min:0',
             'is_active'       => 'nullable|boolean',
@@ -203,8 +246,11 @@ class AdminAdController extends Controller
         }
 
         $ad->update($request->only([
-            'title', 'description', 'type', 'image', 'media_url',
-            'button_text', 'google_sheet_id', 'link',
+            'title', 'title_ar',
+            'description', 'description_ar',
+            'type', 'image', 'media_url',
+            'button_text', 'button_ar',
+            'google_sheet_id', 'link',
             'order', 'is_active', 'start_date', 'end_date',
         ]));
 
@@ -363,11 +409,14 @@ class AdminAdController extends Controller
         return [
             'id'                   => $b->id,
             'title'                => $b->title,
+            'title_ar'             => $b->title_ar,
             'description'          => $b->description,
+            'description_ar'       => $b->description_ar,
             'type'                 => $b->type ?? 'photo',
             'image'                => $b->image,
             'media_url'            => $b->media_url,
             'button_text'          => $b->button_text,
+            'button_ar'            => $b->button_ar,
             'google_sheet_id'      => $b->google_sheet_id,
             'order'                => $b->order,
             'is_active'            => (bool) $b->is_active,

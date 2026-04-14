@@ -22,6 +22,9 @@ class Banner extends Model
         'type',
         'media_url',
         'button_text',
+        'button_ar',
+        'title_ar',
+        'description_ar',
         'has_form',
         'google_sheet_id',
     ];
