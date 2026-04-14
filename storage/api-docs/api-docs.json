@@ -152,6 +152,12 @@
                                         "type": "string",
                                         "example": "0551234567"
                                     },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "ahmed@example.com",
+                                        "nullable": true
+                                    },
                                     "city_id": {
                                         "type": "integer",
                                         "example": 1

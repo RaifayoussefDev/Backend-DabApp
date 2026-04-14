@@ -17,7 +17,7 @@ return new class extends Migration
     {
         DB::statement('SET FOREIGN_KEY_CHECKS=0');
 
-        // ── Truncate all Assist tables ────────────────────────────────────────
+        // ── 1. Truncate all Assist tables ────────────────────────────────────
         DB::table('assist_notifications')->truncate();
         DB::table('assist_ratings')->truncate();
         DB::table('request_photos')->truncate();
@@ -27,85 +27,110 @@ return new class extends Migration
         DB::table('expertise_types')->truncate();
         DB::table('helper_profiles')->truncate();
 
-        // ── 1. helper_profiles ───────────────────────────────────────────────
+        // ── 2. Drop all Foreign Keys first ───────────────────────────────────
+        // These must be dropped before we change the column types they reference.
+        Schema::table('helper_expertises', function (Blueprint $table) {
+            $table->dropForeign(['helper_profile_id']);
+            $table->dropForeign(['expertise_type_id']);
+            $table->dropUnique(['helper_profile_id', 'expertise_type_id']);
+        });
+
+        Schema::table('assistance_requests', function (Blueprint $table) {
+            $table->dropForeign(['motorcycle_id']);
+            $table->dropForeign(['expertise_type_id']);
+        });
+
+        Schema::table('request_photos', function (Blueprint $table) {
+            $table->dropForeign(['request_id']);
+        });
+
+        Schema::table('assist_ratings', function (Blueprint $table) {
+            $table->dropForeign(['request_id']);
+            $table->dropUnique(['request_id']);
+        });
+
+        Schema::table('assist_notifications', function (Blueprint $table) {
+            $table->dropForeign(['request_id']);
+        });
+
+        // ── 3. Drop Primary Keys and Modify Columns ──────────────────────────
+        
+        // helper_profiles
         Schema::table('helper_profiles', function (Blueprint $table) {
             $table->dropPrimary();
         });
         DB::statement('ALTER TABLE helper_profiles MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
 
-        // ── 2. expertise_types ───────────────────────────────────────────────
+        // expertise_types
         Schema::table('expertise_types', function (Blueprint $table) {
             $table->dropPrimary();
         });
         DB::statement('ALTER TABLE expertise_types MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
 
-        // ── 3. helper_expertises ─────────────────────────────────────────────
+        // helper_expertises
         Schema::table('helper_expertises', function (Blueprint $table) {
-            $table->dropForeign(['helper_profile_id']);
-            $table->dropForeign(['expertise_type_id']);
-            $table->dropUnique(['helper_profile_id', 'expertise_type_id']);
             $table->dropPrimary();
         });
         DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
         DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN helper_profile_id BIGINT UNSIGNED NOT NULL');
         DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN expertise_type_id BIGINT UNSIGNED NOT NULL');
-        Schema::table('helper_expertises', function (Blueprint $table) {
-            $table->foreign('helper_profile_id')->references('id')->on('helper_profiles')->cascadeOnDelete();
-            $table->foreign('expertise_type_id')->references('id')->on('expertise_types')->cascadeOnDelete();
-            $table->unique(['helper_profile_id', 'expertise_type_id']);
-        });
 
-        // ── 4. assist_motorcycles ────────────────────────────────────────────
+        // assist_motorcycles
         Schema::table('assist_motorcycles', function (Blueprint $table) {
             $table->dropPrimary();
         });
         DB::statement('ALTER TABLE assist_motorcycles MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
 
-        // ── 5. assistance_requests ───────────────────────────────────────────
+        // assistance_requests
         Schema::table('assistance_requests', function (Blueprint $table) {
-            $table->dropForeign(['motorcycle_id']);
-            $table->dropForeign(['expertise_type_id']);
             $table->dropPrimary();
         });
         DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
         DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN motorcycle_id BIGINT UNSIGNED NULL');
         DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN expertise_type_id BIGINT UNSIGNED NOT NULL');
+
+        // request_photos
+        Schema::table('request_photos', function (Blueprint $table) {
+            $table->dropPrimary();
+        });
+        DB::statement('ALTER TABLE request_photos MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
+        DB::statement('ALTER TABLE request_photos MODIFY COLUMN request_id BIGINT UNSIGNED NOT NULL');
+
+        // assist_ratings
+        Schema::table('assist_ratings', function (Blueprint $table) {
+            $table->dropPrimary();
+        });
+        DB::statement('ALTER TABLE assist_ratings MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
+        DB::statement('ALTER TABLE assist_ratings MODIFY COLUMN request_id BIGINT UNSIGNED NOT NULL');
+
+        // assist_notifications
+        Schema::table('assist_notifications', function (Blueprint $table) {
+            $table->dropPrimary();
+        });
+        DB::statement('ALTER TABLE assist_notifications MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
+        DB::statement('ALTER TABLE assist_notifications MODIFY COLUMN request_id BIGINT UNSIGNED NULL');
+
+        // ── 4. Re-add Foreign Keys ───────────────────────────────────────────
+        Schema::table('helper_expertises', function (Blueprint $table) {
+            $table->unique(['helper_profile_id', 'expertise_type_id']);
+            $table->foreign('helper_profile_id')->references('id')->on('helper_profiles')->cascadeOnDelete();
+            $table->foreign('expertise_type_id')->references('id')->on('expertise_types')->cascadeOnDelete();
+        });
+
         Schema::table('assistance_requests', function (Blueprint $table) {
             $table->foreign('motorcycle_id')->references('id')->on('assist_motorcycles')->nullOnDelete();
             $table->foreign('expertise_type_id')->references('id')->on('expertise_types');
         });
 
-        // ── 6. request_photos ────────────────────────────────────────────────
-        Schema::table('request_photos', function (Blueprint $table) {
-            $table->dropForeign(['request_id']);
-            $table->dropPrimary();
-        });
-        DB::statement('ALTER TABLE request_photos MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
-        DB::statement('ALTER TABLE request_photos MODIFY COLUMN request_id BIGINT UNSIGNED NOT NULL');
         Schema::table('request_photos', function (Blueprint $table) {
             $table->foreign('request_id')->references('id')->on('assistance_requests')->cascadeOnDelete();
         });
 
-        // ── 7. assist_ratings ────────────────────────────────────────────────
-        Schema::table('assist_ratings', function (Blueprint $table) {
-            $table->dropForeign(['request_id']);
-            $table->dropUnique(['request_id']);
-            $table->dropPrimary();
-        });
-        DB::statement('ALTER TABLE assist_ratings MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
-        DB::statement('ALTER TABLE assist_ratings MODIFY COLUMN request_id BIGINT UNSIGNED NOT NULL');
         Schema::table('assist_ratings', function (Blueprint $table) {
             $table->unique('request_id');
             $table->foreign('request_id')->references('id')->on('assistance_requests')->cascadeOnDelete();
         });
 
-        // ── 8. assist_notifications ──────────────────────────────────────────
-        Schema::table('assist_notifications', function (Blueprint $table) {
-            $table->dropForeign(['request_id']);
-            $table->dropPrimary();
-        });
-        DB::statement('ALTER TABLE assist_notifications MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
-        DB::statement('ALTER TABLE assist_notifications MODIFY COLUMN request_id BIGINT UNSIGNED NULL');
         Schema::table('assist_notifications', function (Blueprint $table) {
             $table->foreign('request_id')->references('id')->on('assistance_requests')->nullOnDelete();
         });
@@ -129,74 +154,41 @@ return new class extends Migration
         DB::table('expertise_types')->truncate();
         DB::table('helper_profiles')->truncate();
 
-        // assist_notifications
-        Schema::table('assist_notifications', function (Blueprint $table) {
-            $table->dropForeign(['request_id']);
-        });
-        DB::statement('ALTER TABLE assist_notifications MODIFY COLUMN id CHAR(36) NOT NULL');
+        // Drop all current FKs
+        Schema::table('assist_notifications', function (Blueprint $table) { $table->dropForeign(['request_id']); });
+        Schema::table('assist_ratings', function (Blueprint $table) { $table->dropForeign(['request_id']); $table->dropUnique(['request_id']); });
+        Schema::table('request_photos', function (Blueprint $table) { $table->dropForeign(['request_id']); });
+        Schema::table('assistance_requests', function (Blueprint $table) { $table->dropForeign(['motorcycle_id']); $table->dropForeign(['expertise_type_id']); });
+        Schema::table('helper_expertises', function (Blueprint $table) { $table->dropForeign(['helper_profile_id']); $table->dropForeign(['expertise_type_id']); $table->dropUnique(['helper_profile_id', 'expertise_type_id']); });
+
+        // Restore types and PKs
+        DB::statement('ALTER TABLE assist_notifications MODIFY COLUMN id CHAR(36) NOT NULL PRIMARY KEY');
         DB::statement('ALTER TABLE assist_notifications MODIFY COLUMN request_id CHAR(36) NULL');
-        Schema::table('assist_notifications', function (Blueprint $table) {
-            $table->foreign('request_id')->references('id')->on('assistance_requests')->nullOnDelete();
-        });
 
-        // assist_ratings
-        Schema::table('assist_ratings', function (Blueprint $table) {
-            $table->dropForeign(['request_id']);
-            $table->dropUnique(['request_id']);
-        });
-        DB::statement('ALTER TABLE assist_ratings MODIFY COLUMN id CHAR(36) NOT NULL');
+        DB::statement('ALTER TABLE assist_ratings MODIFY COLUMN id CHAR(36) NOT NULL PRIMARY KEY');
         DB::statement('ALTER TABLE assist_ratings MODIFY COLUMN request_id CHAR(36) NOT NULL');
-        Schema::table('assist_ratings', function (Blueprint $table) {
-            $table->unique('request_id');
-            $table->foreign('request_id')->references('id')->on('assistance_requests')->cascadeOnDelete();
-        });
 
-        // request_photos
-        Schema::table('request_photos', function (Blueprint $table) {
-            $table->dropForeign(['request_id']);
-        });
-        DB::statement('ALTER TABLE request_photos MODIFY COLUMN id CHAR(36) NOT NULL');
+        DB::statement('ALTER TABLE request_photos MODIFY COLUMN id CHAR(36) NOT NULL PRIMARY KEY');
         DB::statement('ALTER TABLE request_photos MODIFY COLUMN request_id CHAR(36) NOT NULL');
-        Schema::table('request_photos', function (Blueprint $table) {
-            $table->foreign('request_id')->references('id')->on('assistance_requests')->cascadeOnDelete();
-        });
 
-        // assistance_requests
-        Schema::table('assistance_requests', function (Blueprint $table) {
-            $table->dropForeign(['motorcycle_id']);
-            $table->dropForeign(['expertise_type_id']);
-        });
-        DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN id CHAR(36) NOT NULL');
+        DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN id CHAR(36) NOT NULL PRIMARY KEY');
         DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN motorcycle_id CHAR(36) NULL');
         DB::statement('ALTER TABLE assistance_requests MODIFY COLUMN expertise_type_id CHAR(36) NOT NULL');
-        Schema::table('assistance_requests', function (Blueprint $table) {
-            $table->foreign('motorcycle_id')->references('id')->on('assist_motorcycles')->nullOnDelete();
-            $table->foreign('expertise_type_id')->references('id')->on('expertise_types');
-        });
 
-        // helper_expertises
-        Schema::table('helper_expertises', function (Blueprint $table) {
-            $table->dropForeign(['helper_profile_id']);
-            $table->dropForeign(['expertise_type_id']);
-            $table->dropUnique(['helper_profile_id', 'expertise_type_id']);
-        });
-        DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN id CHAR(36) NOT NULL');
+        DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN id CHAR(36) NOT NULL PRIMARY KEY');
         DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN helper_profile_id CHAR(36) NOT NULL');
         DB::statement('ALTER TABLE helper_expertises MODIFY COLUMN expertise_type_id CHAR(36) NOT NULL');
-        Schema::table('helper_expertises', function (Blueprint $table) {
-            $table->foreign('helper_profile_id')->references('id')->on('helper_profiles')->cascadeOnDelete();
-            $table->foreign('expertise_type_id')->references('id')->on('expertise_types')->cascadeOnDelete();
-            $table->unique(['helper_profile_id', 'expertise_type_id']);
-        });
 
-        // assist_motorcycles
-        DB::statement('ALTER TABLE assist_motorcycles MODIFY COLUMN id CHAR(36) NOT NULL');
+        DB::statement('ALTER TABLE assist_motorcycles MODIFY COLUMN id CHAR(36) NOT NULL PRIMARY KEY');
+        DB::statement('ALTER TABLE expertise_types MODIFY COLUMN id CHAR(36) NOT NULL PRIMARY KEY');
+        DB::statement('ALTER TABLE helper_profiles MODIFY COLUMN id CHAR(36) NOT NULL PRIMARY KEY');
 
-        // expertise_types
-        DB::statement('ALTER TABLE expertise_types MODIFY COLUMN id CHAR(36) NOT NULL');
-
-        // helper_profiles
-        DB::statement('ALTER TABLE helper_profiles MODIFY COLUMN id CHAR(36) NOT NULL');
+        // Re-add FKs
+        Schema::table('assist_notifications', function (Blueprint $table) { $table->foreign('request_id')->references('id')->on('assistance_requests')->nullOnDelete(); });
+        Schema::table('assist_ratings', function (Blueprint $table) { $table->unique('request_id'); $table->foreign('request_id')->references('id')->on('assistance_requests')->cascadeOnDelete(); });
+        Schema::table('request_photos', function (Blueprint $table) { $table->foreign('request_id')->references('id')->on('assistance_requests')->cascadeOnDelete(); });
+        Schema::table('assistance_requests', function (Blueprint $table) { $table->foreign('motorcycle_id')->references('id')->on('assist_motorcycles')->nullOnDelete(); $table->foreign('expertise_type_id')->references('id')->on('expertise_types'); });
+        Schema::table('helper_expertises', function (Blueprint $table) { $table->unique(['helper_profile_id', 'expertise_type_id']); $table->foreign('helper_profile_id')->references('id')->on('helper_profiles')->cascadeOnDelete(); $table->foreign('expertise_type_id')->references('id')->on('expertise_types')->cascadeOnDelete(); });
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
     }
