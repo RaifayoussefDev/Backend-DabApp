@@ -10094,7 +10094,7 @@
                     {
                         "name": "search",
                         "in": "query",
-                        "description": "Search by title",
+                        "description": "Search by title or title_ar",
                         "schema": {
                             "type": "string"
                         }
@@ -10125,6 +10125,21 @@
                                                                 "type": "string",
                                                                 "example": "Ramadan Special Offer"
                                                             },
+                                                            "title_ar": {
+                                                                "type": "string",
+                                                                "example": "عرض رمضان الخاص",
+                                                                "nullable": true
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Get 30% off",
+                                                                "nullable": true
+                                                            },
+                                                            "description_ar": {
+                                                                "type": "string",
+                                                                "example": "احصل على خصم 30%",
+                                                                "nullable": true
+                                                            },
                                                             "type": {
                                                                 "type": "string",
                                                                 "enum": [
@@ -10132,9 +10147,27 @@
                                                                     "video"
                                                                 ]
                                                             },
+                                                            "image": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "media_url": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "button_text": {
+                                                                "type": "string",
+                                                                "example": "I am interested",
+                                                                "nullable": true
+                                                            },
+                                                            "button_ar": {
+                                                                "type": "string",
+                                                                "example": "أنا مهتم",
+                                                                "nullable": true
+                                                            },
                                                             "google_sheet_id": {
                                                                 "type": "string",
-                                                                "example": "15ln515Ecn1lw1ZdHlqe3BdDuXzlxskZLmfdpa7wjXNU"
+                                                                "nullable": true
                                                             },
                                                             "is_active": {
                                                                 "type": "boolean",
@@ -10183,9 +10216,17 @@
                                         "type": "string",
                                         "example": "Ramadan Special Offer"
                                     },
+                                    "title_ar": {
+                                        "type": "string",
+                                        "example": "عرض رمضان الخاص"
+                                    },
                                     "description": {
                                         "type": "string",
                                         "example": "Get 30% off during Ramadan"
+                                    },
+                                    "description_ar": {
+                                        "type": "string",
+                                        "example": "احصل على خصم 30% خلال رمضان"
                                     },
                                     "type": {
                                         "type": "string",
@@ -10206,6 +10247,10 @@
                                     "button_text": {
                                         "type": "string",
                                         "example": "I am interested"
+                                    },
+                                    "button_ar": {
+                                        "type": "string",
+                                        "example": "أنا مهتم"
                                     },
                                     "google_sheet_id": {
                                         "type": "string",
@@ -10270,7 +10315,58 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Ad details with submission count"
+                        "description": "Ad details with submission count",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Ramadan Special Offer"
+                                                },
+                                                "title_ar": {
+                                                    "type": "string",
+                                                    "example": "عرض رمضان الخاص",
+                                                    "nullable": true
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "description_ar": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "button_text": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "button_ar": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "ad_submissions_count": {
+                                                    "type": "integer",
+                                                    "example": 42
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "404": {
                         "description": "Not found"
@@ -10307,12 +10403,30 @@
                                     "title": {
                                         "type": "string"
                                     },
+                                    "title_ar": {
+                                        "type": "string",
+                                        "example": "عرض رمضان الخاص"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "description_ar": {
+                                        "type": "string",
+                                        "example": "احصل على خصم 30% خلال رمضان"
+                                    },
                                     "type": {
                                         "type": "string",
                                         "enum": [
                                             "photo",
                                             "video"
                                         ]
+                                    },
+                                    "button_text": {
+                                        "type": "string"
+                                    },
+                                    "button_ar": {
+                                        "type": "string",
+                                        "example": "أنا مهتم"
                                     },
                                     "google_sheet_id": {
                                         "type": "string"

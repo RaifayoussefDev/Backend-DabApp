@@ -40,9 +40,20 @@
                                                         "type": "string",
                                                         "example": "Ramadan Special Offer"
                                                     },
+                                                    "title_ar": {
+                                                        "type": "string",
+                                                        "example": "عرض رمضان الخاص",
+                                                        "nullable": true
+                                                    },
                                                     "description": {
                                                         "type": "string",
-                                                        "example": "Get 30% off during Ramadan"
+                                                        "example": "Get 30% off during Ramadan",
+                                                        "nullable": true
+                                                    },
+                                                    "description_ar": {
+                                                        "type": "string",
+                                                        "example": "احصل على خصم 30% خلال رمضان",
+                                                        "nullable": true
                                                     },
                                                     "type": {
                                                         "type": "string",
@@ -54,15 +65,23 @@
                                                     },
                                                     "image": {
                                                         "type": "string",
-                                                        "example": "https://cdn.dabapp.com/ads/ramadan-thumb.jpg"
+                                                        "example": "https://cdn.dabapp.com/ads/ramadan-thumb.jpg",
+                                                        "nullable": true
                                                     },
                                                     "media_url": {
                                                         "type": "string",
-                                                        "example": "https://cdn.dabapp.com/ads/ramadan.mp4"
+                                                        "example": "https://cdn.dabapp.com/ads/ramadan.mp4",
+                                                        "nullable": true
                                                     },
                                                     "button_text": {
                                                         "type": "string",
-                                                        "example": "I am interested"
+                                                        "example": "I am interested",
+                                                        "nullable": true
+                                                    },
+                                                    "button_ar": {
+                                                        "type": "string",
+                                                        "example": "أنا مهتم",
+                                                        "nullable": true
                                                     },
                                                     "has_form": {
                                                         "type": "boolean",
@@ -101,7 +120,59 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Ad details"
+                        "description": "Ad details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Ramadan Special Offer"
+                                                },
+                                                "title_ar": {
+                                                    "type": "string",
+                                                    "example": "عرض رمضان الخاص",
+                                                    "nullable": true
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "description_ar": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "button_text": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "button_ar": {
+                                                    "type": "string",
+                                                    "example": "أنا مهتم",
+                                                    "nullable": true
+                                                },
+                                                "has_form": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "404": {
                         "description": "Ad not found"
