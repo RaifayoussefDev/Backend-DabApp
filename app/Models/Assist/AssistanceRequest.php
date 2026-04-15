@@ -58,7 +58,6 @@ class AssistanceRequest extends Model
         'seeker_id',
         'helper_id',
         'motorcycle_id',
-        'expertise_type_id',
         'status',
         'description',
         'latitude',
@@ -113,9 +112,9 @@ class AssistanceRequest extends Model
         return $this->belongsTo(Motorcycle::class, 'motorcycle_id');
     }
 
-    public function expertiseType()
+    public function expertiseTypes()
     {
-        return $this->belongsTo(ExpertiseType::class, 'expertise_type_id');
+        return $this->belongsToMany(ExpertiseType::class, 'assistance_request_expertise');
     }
 
     public function photos()

@@ -1896,6 +1896,7 @@ Route::prefix('assist')->middleware('auth:api')->group(function () {
 
     // ── Seeker ───────────────────────────────────────────────────────────────
     Route::prefix('seeker')->group(function () {
+        Route::get('garage',                [AssistanceRequestController::class, 'garage']);
         Route::post('request',              [AssistanceRequestController::class, 'store']);
         Route::get('request/{id}',          [AssistanceRequestController::class, 'show']);
         Route::delete('request/{id}',       [AssistanceRequestController::class, 'cancel']);

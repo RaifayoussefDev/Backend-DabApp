@@ -49,7 +49,7 @@ class AssistNotificationService
             'body'  => 'You have a new notification.',
         ];
 
-        $expertiseName = $request->expertiseType?->name ?? 'assistance';
+        $expertiseName = $request->expertiseTypes?->first()?->name ?? 'assistance';
 
         $notification = AssistNotification::create([
             'user_id'    => $user->id,

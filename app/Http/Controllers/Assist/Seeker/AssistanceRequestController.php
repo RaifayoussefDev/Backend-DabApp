@@ -7,6 +7,7 @@ use App\Http\Requests\Assist\CreateAssistanceRequestRequest;
 use App\Http\Requests\Assist\RateHelperRequest;
 use App\Models\Assist\AssistanceRequest;
 use App\Models\Assist\Rating;
+use App\Models\MyGarage;
 use App\Services\Assist\HelperMatchingService;
 use App\Services\Assist\AssistNotificationService;
 use Illuminate\Http\JsonResponse;
@@ -74,21 +75,21 @@ class AssistanceRequestController extends AssistBaseController
         DB::beginTransaction();
         try {
             $assistRequest = AssistanceRequest::create([
-                'seeker_id'         => $user->id,
-                'expertise_type_id' => $request->expertise_type_id,
-                'latitude'          => $request->latitude,
-                'longitude'         => $request->longitude,
-                'location_label'    => $request->location_label,
-                'description'       => $request->description,
-                'motorcycle_id'     => $request->motorcycle_id,
-                'status'            => 'pending',
+                'seeker_id'      => $user->id,
+                'latitude'       => $request->latitude,
+                'longitude'      => $request->longitude,
+                'location_label' => $request->location_label,
+                'description'    => $request->description,
+                'motorcycle_id'  => $request->motorcycle_id,
+                'status'         => 'pending',
             ]);
 
-            // Handle photo uploads
-            if ($request->hasFile('photos')) {
-                foreach ($request->file('photos') as $photo) {
-                    $path = $photo->store('assist/requests/' . $assistRequest->id, 'public');
-                    $assistRequest->photos()->create(['path' => $path]);
+            $assistRequest->expertiseTypes()->sync($request->expertise_type_ids);
+
+            // Handle photo URLs (uploaded separately via upload API)
+            if ($request->filled('photo_urls')) {
+                foreach ($request->photo_urls as $url) {
+                    $assistRequest->photos()->create(['path' => $url]);
                 }
             }
 
@@ -100,7 +101,7 @@ class AssistanceRequestController extends AssistBaseController
             return $this->error('Failed to create assistance request.', 500);
         }
 
-        $assistRequest->load(['expertiseType', 'photos', 'motorcycle']);
+        $assistRequest->load(['expertiseTypes', 'photos', 'motorcycle']);
 
         return $this->success([
             'request'          => $assistRequest,
@@ -134,7 +135,7 @@ class AssistanceRequestController extends AssistBaseController
     public function show(string $id): JsonResponse
     {
         $request = AssistanceRequest::with([
-            'expertiseType', 'photos', 'motorcycle.brand', 'motorcycle.model',
+            'expertiseTypes', 'photos', 'motorcycle.brand', 'motorcycle.model',
             'helper:id,first_name,last_name,phone,profile_picture',
             'rating',
         ])->find($id);
@@ -147,7 +148,23 @@ class AssistanceRequestController extends AssistBaseController
             return $this->error('Forbidden.', 403);
         }
 
-        return $this->success($request);
+        $garage = MyGarage::where('user_id', Auth::id())
+            ->with(['brand', 'model', 'year'])
+            ->get()
+            ->map(fn($m) => [
+                'id'         => $m->id,
+                'title'      => $m->title,
+                'picture'    => $m->picture,
+                'is_default' => $m->is_default,
+                'brand'      => $m->brand?->name,
+                'model'      => $m->model?->name ?? '#' . $m->model_id,
+                'year'       => $m->year?->year ?? $m->year_id,
+            ]);
+
+        return $this->success([
+            'request' => $request,
+            'garage'  => $garage,
+        ]);
     }
 
     /**
@@ -238,6 +255,24 @@ class AssistanceRequestController extends AssistBaseController
      *     @OA\Response(response=422, description="Request not completed or already rated")
      * )
      */
+    public function garage(): JsonResponse
+    {
+        $motorcycles = MyGarage::where('user_id', Auth::id())
+            ->with(['brand', 'model', 'year'])
+            ->get()
+            ->map(fn($m) => [
+                'id'         => $m->id,
+                'title'      => $m->title,
+                'picture'    => $m->picture,
+                'is_default' => $m->is_default,
+                'brand'      => $m->brand?->name,
+                'model'      => $m->model?->name ?? '#' . $m->model_id,
+                'year'       => $m->year?->year ?? $m->year_id,
+            ]);
+
+        return $this->success($motorcycles);
+    }
+
     public function rate(RateHelperRequest $request, string $id): JsonResponse
     {
         $assistRequest = AssistanceRequest::find($id);

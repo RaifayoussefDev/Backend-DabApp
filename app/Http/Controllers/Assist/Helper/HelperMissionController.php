@@ -103,7 +103,7 @@ class HelperMissionController extends AssistBaseController
         // Notify seeker of status change
         $this->notificationService->notify($assistRequest->seeker, $newStatus, $assistRequest);
 
-        $assistRequest->load('expertiseType', 'seeker:id,first_name,last_name,phone');
+        $assistRequest->load('expertiseTypes', 'seeker:id,first_name,last_name,phone');
 
         return $this->success($assistRequest, "Status updated to {$newStatus}.");
     }

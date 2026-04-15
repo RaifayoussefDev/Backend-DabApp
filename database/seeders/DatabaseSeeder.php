@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             TowTypeSeeder::class,
             ServiceProviderSeeder::class,
             ServiceSeeder::class,
+            ExpertiseTypeSeeder::class,
         ]);
     }
 }

@@ -71,11 +71,12 @@ class HelperFeedController extends AssistBaseController
 
         $requests = AssistanceRequest::selectRaw("*, ({$haversine}) AS distance_km", [$lat, $lng, $lat])
             ->where('status', 'pending')
-            ->whereHas('expertiseType', fn($q) => $q->whereIn('id', $expertiseIds))
+            ->whereHas('expertiseTypes', fn($q) => $q->whereIn('expertise_types.id', $expertiseIds))
             ->having('distance_km', '<=', $profile->service_radius_km)
             ->orderBy('distance_km')
-            ->with(['expertiseType', 'seeker:id,first_name,last_name', 'photos'])
-            ->get();
+            ->with(['expertiseTypes', 'seeker:id,first_name,last_name', 'photos', 'motorcycle.brand', 'motorcycle.model', 'motorcycle.year'])
+            ->get()
+            ->each(fn($r) => $r->seeker?->setVisible(['id', 'first_name', 'last_name']));
 
         return $this->success($requests);
     }
@@ -129,7 +130,7 @@ class HelperFeedController extends AssistBaseController
 
         $this->notificationService->notify($assistRequest->seeker, 'accepted', $assistRequest);
 
-        $assistRequest->load('expertiseType', 'seeker:id,first_name,last_name,phone');
+        $assistRequest->load('expertiseTypes', 'seeker:id,first_name,last_name,phone');
 
         return $this->success($assistRequest, "Request accepted. Head to the rider's location.");
     }

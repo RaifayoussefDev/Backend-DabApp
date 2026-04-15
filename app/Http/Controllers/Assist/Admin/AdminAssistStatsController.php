@@ -77,13 +77,11 @@ class AdminAssistStatsController extends AssistBaseController
             ->pluck('count', 'status')
             ->toArray();
 
-        $byExpertise = AssistanceRequest::select('expertise_type_id', DB::raw('COUNT(*) as count'))
-            ->with('expertiseType:id,name')
-            ->groupBy('expertise_type_id')
-            ->get()
-            ->mapWithKeys(fn($row) => [
-                optional($row->expertiseType)->name ?? $row->expertise_type_id => $row->count,
-            ])
+        $byExpertise = DB::table('assistance_request_expertise')
+            ->join('expertise_types', 'expertise_types.id', '=', 'assistance_request_expertise.expertise_type_id')
+            ->select('expertise_types.name', DB::raw('COUNT(*) as count'))
+            ->groupBy('expertise_types.id', 'expertise_types.name')
+            ->pluck('count', 'name')
             ->toArray();
 
         $topHelpers = HelperProfile::with('user:id,first_name,last_name')
@@ -150,7 +148,7 @@ class AdminAssistStatsController extends AssistBaseController
         $query = AssistanceRequest::with([
             'seeker:id,first_name,last_name',
             'helper:id,first_name,last_name',
-            'expertiseType:id,name',
+            'expertiseTypes:id,name',
         ])->orderByDesc('created_at');
 
         if ($request->filled('status')) {

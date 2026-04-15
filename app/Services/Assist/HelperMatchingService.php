@@ -21,7 +21,7 @@ class HelperMatchingService
         $helpers = HelperProfile::available()
             ->nearTo((float) $request->latitude, (float) $request->longitude)
             ->whereHas('expertiseTypes', function ($q) use ($request) {
-                $q->where('expertise_types.id', $request->expertise_type_id);
+                $q->whereIn('expertise_types.id', $request->expertiseTypes->pluck('id'));
             })
             ->with('user')
             ->get()
