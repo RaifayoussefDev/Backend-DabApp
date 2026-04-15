@@ -11,15 +11,16 @@ use Illuminate\Http\JsonResponse;
 /**
  * @OA\Tag(
  *     name="Assist - Admin Expertise",
- *     description="Admin CRUD for expertise types"
+ *     description="Admin CRUD for expertise types (tire_repair, fuel, mechanical…)"
  * )
  */
 class AdminExpertiseController extends AssistBaseController
 {
     /**
      * @OA\Get(
-     *     path="/api/assist/admin/expertise-types",
-     *     summary="List all expertise types",
+     *     path="/api/assist/expertise-types",
+     *     summary="List all available expertise types",
+     *     description="Public (authenticated) endpoint. Used by seekers to pick expertise when creating a request, and by helpers when setting up their profile.",
      *     tags={"Assist - Admin Expertise"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Response(
@@ -29,10 +30,15 @@ class AdminExpertiseController extends AssistBaseController
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Success"),
      *             @OA\Property(property="data", type="array",
-     *                 @OA\Items(ref="#/components/schemas/ExpertiseType")
+     *                 @OA\Items(
+     *                     @OA\Property(property="id",   type="integer", example=1),
+     *                     @OA\Property(property="name", type="string",  example="tire_repair"),
+     *                     @OA\Property(property="icon", type="string",  example="tire_repair")
+     *                 )
      *             )
      *         )
-     *     )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
     public function index(): JsonResponse
@@ -51,19 +57,36 @@ class AdminExpertiseController extends AssistBaseController
      *         @OA\JsonContent(
      *             required={"name","icon"},
      *             @OA\Property(property="name", type="string", example="battery_jump",
-     *                 description="Unique slug-like name for the expertise"),
+     *                 description="Unique slug name (snake_case). Available: tire_repair, fuel, mechanical, towing, first_aid, ev_support, battery_jump"),
      *             @OA\Property(property="icon", type="string", example="battery_charging_full",
-     *                 description="Material icon name or asset key")
+     *                 description="Material Design icon name")
      *         )
      *     ),
      *     @OA\Response(response=201, description="Expertise type created",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expertise type created."),
-     *             @OA\Property(property="data", ref="#/components/schemas/ExpertiseType")
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id",         type="integer", example=7),
+     *                 @OA\Property(property="name",       type="string",  example="battery_jump"),
+     *                 @OA\Property(property="icon",       type="string",  example="battery_charging_full"),
+     *                 @OA\Property(property="created_at", type="string",  format="date-time", example="2026-04-15T10:00:00.000000Z"),
+     *                 @OA\Property(property="updated_at", type="string",  format="date-time", example="2026-04-15T10:00:00.000000Z")
+     *             )
      *         )
      *     ),
-     *     @OA\Response(response=422, description="Validation error or name already exists")
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=422, description="Validation error or name already taken",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Validation failed."),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="name", type="array",
+     *                     @OA\Items(type="string", example="The name has already been taken.")
+     *                 )
+     *             )
+     *         )
+     *     )
      * )
      */
     public function store(CreateExpertiseTypeRequest $request): JsonResponse
@@ -92,10 +115,16 @@ class AdminExpertiseController extends AssistBaseController
      *     @OA\Response(response=200, description="Updated",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", ref="#/components/schemas/ExpertiseType")
+     *             @OA\Property(property="message", type="string", example="Expertise type updated."),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id",   type="integer", example=1),
+     *                 @OA\Property(property="name", type="string",  example="battery_jump"),
+     *                 @OA\Property(property="icon", type="string",  example="battery_charging_full")
+     *             )
      *         )
      *     ),
-     *     @OA\Response(response=404, description="Not found")
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=404, description="Expertise type not found")
      * )
      */
     public function update(UpdateExpertiseTypeRequest $request, string $id): JsonResponse
@@ -118,7 +147,8 @@ class AdminExpertiseController extends AssistBaseController
      *     tags={"Assist - Admin Expertise"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true,
-     *         @OA\Schema(type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440001")
+     *         description="ExpertiseType ID",
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(response=200, description="Deleted",
      *         @OA\JsonContent(
@@ -126,7 +156,8 @@ class AdminExpertiseController extends AssistBaseController
      *             @OA\Property(property="message", type="string", example="Expertise type deleted.")
      *         )
      *     ),
-     *     @OA\Response(response=404, description="Not found")
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=404, description="Expertise type not found")
      * )
      */
     public function destroy(string $id): JsonResponse

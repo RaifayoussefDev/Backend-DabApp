@@ -28,28 +28,83 @@ class AssistanceRequestController extends AssistBaseController
     ) {}
 
     /**
+     * @OA\Get(
+     *     path="/api/assist/seeker/garage",
+     *     summary="Get the authenticated seeker's motorcycle garage",
+     *     description="Returns all motorcycles registered in the user's garage. Use the garage `id` as `motorcycle_id` when creating an assistance request.",
+     *     tags={"Assist - Seeker"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of motorcycles",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Success"),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(type="object",
+     *                     @OA\Property(property="id",         type="integer", example=15),
+     *                     @OA\Property(property="title",      type="string",  nullable=true, example="My daily ride"),
+     *                     @OA\Property(property="picture",    type="string",  nullable=true, example=null),
+     *                     @OA\Property(property="is_default", type="boolean", example=true),
+     *                     @OA\Property(property="brand",      type="string",  example="BMW"),
+     *                     @OA\Property(property="model",      type="string",  example="F 900 R"),
+     *                     @OA\Property(property="year",       type="integer", example=2022)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function garage(): JsonResponse
+    {
+        $motorcycles = MyGarage::where('user_id', Auth::id())
+            ->with(['brand', 'model', 'year'])
+            ->get()
+            ->map(fn($m) => [
+                'id'         => $m->id,
+                'title'      => $m->title,
+                'picture'    => $m->picture,
+                'is_default' => $m->is_default,
+                'brand'      => $m->brand?->name,
+                'model'      => $m->model?->name ?? '#' . $m->model_id,
+                'year'       => $m->year?->year ?? $m->year_id,
+            ]);
+
+        return $this->success($motorcycles);
+    }
+
+    /**
      * @OA\Post(
      *     path="/api/assist/seeker/request",
      *     summary="Create a new assistance request",
+     *     description="Creates a pending request and notifies nearby available helpers who match the required expertise. Photos must be uploaded first via the upload API, then pass the returned URLs here.",
      *     tags={"Assist - Seeker"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"expertise_type_id","latitude","longitude","location_label"},
-     *             @OA\Property(property="expertise_type_id", type="integer",
-     *                 example=1,
-     *                 description="ID of the required expertise type (from GET /api/assist/expertise-types)"),
-     *             @OA\Property(property="latitude", type="number", format="float", example=24.7136,
-     *                 description="Rider's current latitude"),
-     *             @OA\Property(property="longitude", type="number", format="float", example=46.6753,
-     *                 description="Rider's current longitude"),
-     *             @OA\Property(property="location_label", type="string", example="King Fahd Road, Riyadh",
-     *                 description="Human-readable location name"),
-     *             @OA\Property(property="description", type="string", nullable=true,
-     *                 example="My rear tire is flat, near the gas station"),
-     *             @OA\Property(property="motorcycle_id", type="integer", nullable=true,
-     *                 example=null, description="Optional: linked motorcycle ID")
+     *             required={"expertise_type_ids","latitude","longitude","location_label"},
+     *             @OA\Property(property="expertise_type_ids", type="array",
+     *                 description="One or more expertise type IDs (from GET /api/assist/expertise-types)",
+     *                 @OA\Items(type="integer"),
+     *                 example={1, 3}
+     *             ),
+     *             @OA\Property(property="latitude",       type="number", format="float", example=24.7140,
+     *                 description="Rider's current latitude (-90 to 90)"),
+     *             @OA\Property(property="longitude",      type="number", format="float", example=46.6750,
+     *                 description="Rider's current longitude (-180 to 180)"),
+     *             @OA\Property(property="location_label", type="string", example="King Fahd Road, Riyadh – near Exit 7",
+     *                 description="Human-readable location label"),
+     *             @OA\Property(property="description",    type="string", nullable=true,
+     *                 example="My rear tire is completely flat. Stuck on the side of the road."),
+     *             @OA\Property(property="motorcycle_id",  type="integer", nullable=true, example=15,
+     *                 description="Optional: garage motorcycle ID from GET /api/assist/seeker/garage"),
+     *             @OA\Property(property="photo_urls", type="array", nullable=true,
+     *                 description="Optional: up to 5 photo URLs returned by the upload API",
+     *                 @OA\Items(type="string", format="url"),
+     *                 example={"https://cdn.example.com/uploads/photo1.jpg","https://cdn.example.com/uploads/photo2.jpg"}
+     *             )
      *         )
      *     ),
      *     @OA\Response(
@@ -59,13 +114,44 @@ class AssistanceRequestController extends AssistBaseController
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Assistance request created. Looking for helpers."),
      *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="request", ref="#/components/schemas/AssistanceRequest"),
+     *                 @OA\Property(property="request", type="object",
+     *                     @OA\Property(property="id",             type="integer", example=12),
+     *                     @OA\Property(property="status",         type="string",  example="pending"),
+     *                     @OA\Property(property="location_label", type="string",  example="King Fahd Road, Riyadh – near Exit 7"),
+     *                     @OA\Property(property="latitude",       type="number",  format="float", example=24.714),
+     *                     @OA\Property(property="longitude",      type="number",  format="float", example=46.675),
+     *                     @OA\Property(property="description",    type="string",  example="My rear tire is completely flat."),
+     *                     @OA\Property(property="created_at",     type="string",  format="date-time"),
+     *                     @OA\Property(property="expertise_types", type="array",
+     *                         @OA\Items(type="object",
+     *                             @OA\Property(property="id",   type="integer", example=1),
+     *                             @OA\Property(property="name", type="string",  example="tire_repair"),
+     *                             @OA\Property(property="icon", type="string",  example="tire_repair")
+     *                         )
+     *                     ),
+     *                     @OA\Property(property="photos", type="array",
+     *                         @OA\Items(type="object",
+     *                             @OA\Property(property="id",   type="integer", example=1),
+     *                             @OA\Property(property="path", type="string",  example="https://cdn.example.com/uploads/photo1.jpg")
+     *                         )
+     *                     )
+     *                 ),
      *                 @OA\Property(property="helpers_notified", type="integer", example=3)
      *             )
      *         )
      *     ),
-     *     @OA\Response(response=422, description="Validation error"),
-     *     @OA\Response(response=401, description="Unauthenticated")
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=422, description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string",  example="Validation failed."),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="expertise_type_ids", type="array",
+     *                     @OA\Items(type="string", example="The expertise type ids field is required.")
+     *                 )
+     *             )
+     *         )
+     *     )
      * )
      */
     public function store(CreateAssistanceRequestRequest $request): JsonResponse
@@ -112,24 +198,75 @@ class AssistanceRequestController extends AssistBaseController
     /**
      * @OA\Get(
      *     path="/api/assist/seeker/request/{id}",
-     *     summary="Get assistance request details and live status",
+     *     summary="Get assistance request details with seeker's garage",
+     *     description="Returns the full request details alongside the seeker's motorcycle garage, so the client can display or link a motorcycle to the request.",
      *     tags={"Assist - Seeker"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true,
      *         description="Assistance request ID",
-     *         @OA\Schema(type="integer", example=1)
+     *         @OA\Schema(type="integer", example=12)
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Request details",
+     *         description="Request details and garage",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Success"),
-     *             @OA\Property(property="data", ref="#/components/schemas/AssistanceRequest")
+     *             @OA\Property(property="message", type="string",  example="Success"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="request", type="object",
+     *                     @OA\Property(property="id",             type="integer", example=12),
+     *                     @OA\Property(property="status",         type="string",  example="pending"),
+     *                     @OA\Property(property="description",    type="string",  example="My rear tire is completely flat."),
+     *                     @OA\Property(property="location_label", type="string",  example="King Fahd Road, Riyadh – near Exit 7"),
+     *                     @OA\Property(property="latitude",       type="number",  format="float", example=24.714),
+     *                     @OA\Property(property="longitude",      type="number",  format="float", example=46.675),
+     *                     @OA\Property(property="accepted_at",    type="string",  format="date-time", nullable=true),
+     *                     @OA\Property(property="arrived_at",     type="string",  format="date-time", nullable=true),
+     *                     @OA\Property(property="completed_at",   type="string",  format="date-time", nullable=true),
+     *                     @OA\Property(property="cancelled_at",   type="string",  format="date-time", nullable=true),
+     *                     @OA\Property(property="expertise_types", type="array",
+     *                         @OA\Items(type="object",
+     *                             @OA\Property(property="id",   type="integer", example=1),
+     *                             @OA\Property(property="name", type="string",  example="tire_repair"),
+     *                             @OA\Property(property="icon", type="string",  example="tire_repair")
+     *                         )
+     *                     ),
+     *                     @OA\Property(property="photos", type="array",
+     *                         @OA\Items(type="object",
+     *                             @OA\Property(property="id",   type="integer", example=1),
+     *                             @OA\Property(property="path", type="string",  example="https://cdn.example.com/uploads/photo1.jpg")
+     *                         )
+     *                     ),
+     *                     @OA\Property(property="helper", type="object", nullable=true,
+     *                         @OA\Property(property="id",              type="integer", example=2),
+     *                         @OA\Property(property="first_name",      type="string",  example="Ahmed"),
+     *                         @OA\Property(property="last_name",       type="string",  example="Al-Rashid"),
+     *                         @OA\Property(property="phone",           type="string",  example="+966501234567"),
+     *                         @OA\Property(property="profile_picture", type="string",  nullable=true, example=null)
+     *                     ),
+     *                     @OA\Property(property="rating", type="object", nullable=true,
+     *                         @OA\Property(property="stars",   type="integer", example=5),
+     *                         @OA\Property(property="comment", type="string",  example="Super fast and professional!")
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="garage", type="array",
+     *                     description="Seeker's registered motorcycles",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",         type="integer", example=15),
+     *                         @OA\Property(property="title",      type="string",  nullable=true, example="My daily ride"),
+     *                         @OA\Property(property="picture",    type="string",  nullable=true, example=null),
+     *                         @OA\Property(property="is_default", type="boolean", example=true),
+     *                         @OA\Property(property="brand",      type="string",  example="BMW"),
+     *                         @OA\Property(property="model",      type="string",  example="F 900 R"),
+     *                         @OA\Property(property="year",       type="integer", example=2022)
+     *                     )
+     *                 )
+     *             )
      *         )
      *     ),
-     *     @OA\Response(response=403, description="Forbidden"),
-     *     @OA\Response(response=404, description="Not found")
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=403, description="This request does not belong to you"),
+     *     @OA\Response(response=404, description="Request not found")
      * )
      */
     public function show(string $id): JsonResponse
@@ -171,10 +308,12 @@ class AssistanceRequestController extends AssistBaseController
      * @OA\Delete(
      *     path="/api/assist/seeker/request/{id}",
      *     summary="Cancel an assistance request",
+     *     description="Only pending or accepted requests can be cancelled.",
      *     tags={"Assist - Seeker"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true,
-     *         @OA\Schema(type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440010")
+     *         description="Assistance request ID",
+     *         @OA\Schema(type="integer", example=12)
      *     ),
      *     @OA\RequestBody(
      *         @OA\JsonContent(
@@ -185,11 +324,13 @@ class AssistanceRequestController extends AssistBaseController
      *     @OA\Response(response=200, description="Request cancelled",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Request cancelled.")
+     *             @OA\Property(property="message", type="string",  example="Request cancelled.")
      *         )
      *     ),
-     *     @OA\Response(response=403, description="Forbidden"),
-     *     @OA\Response(response=422, description="Cannot cancel a completed request")
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=403, description="This request does not belong to you"),
+     *     @OA\Response(response=404, description="Request not found"),
+     *     @OA\Response(response=422, description="Cannot cancel a completed or already cancelled request")
      * )
      */
     public function cancel(string $id): JsonResponse
@@ -230,16 +371,18 @@ class AssistanceRequestController extends AssistBaseController
      * @OA\Post(
      *     path="/api/assist/seeker/request/{id}/rate",
      *     summary="Rate the helper after a completed mission",
+     *     description="Can only be submitted once, and only when the request status is `completed`.",
      *     tags={"Assist - Seeker"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true,
-     *         @OA\Schema(type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440010")
+     *         description="Assistance request ID",
+     *         @OA\Schema(type="integer", example=12)
      *     ),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
      *             required={"stars"},
-     *             @OA\Property(property="stars", type="integer", minimum=1, maximum=5, example=5,
+     *             @OA\Property(property="stars",   type="integer", minimum=1, maximum=5, example=5,
      *                 description="Rating from 1 (poor) to 5 (excellent)"),
      *             @OA\Property(property="comment", type="string", nullable=true,
      *                 example="Super fast and professional, saved my day!")
@@ -248,31 +391,23 @@ class AssistanceRequestController extends AssistBaseController
      *     @OA\Response(response=201, description="Rating submitted",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Rating submitted successfully."),
-     *             @OA\Property(property="data", ref="#/components/schemas/AssistRating")
+     *             @OA\Property(property="message", type="string",  example="Rating submitted successfully."),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id",         type="integer", example=1),
+     *                 @OA\Property(property="request_id", type="integer", example=12),
+     *                 @OA\Property(property="rater_id",   type="integer", example=65),
+     *                 @OA\Property(property="rated_id",   type="integer", example=2),
+     *                 @OA\Property(property="stars",      type="integer", example=5),
+     *                 @OA\Property(property="comment",    type="string",  example="Super fast and professional!")
+     *             )
      *         )
      *     ),
-     *     @OA\Response(response=422, description="Request not completed or already rated")
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=403, description="This request does not belong to you"),
+     *     @OA\Response(response=404, description="Request not found"),
+     *     @OA\Response(response=422, description="Request not completed yet, or already rated")
      * )
      */
-    public function garage(): JsonResponse
-    {
-        $motorcycles = MyGarage::where('user_id', Auth::id())
-            ->with(['brand', 'model', 'year'])
-            ->get()
-            ->map(fn($m) => [
-                'id'         => $m->id,
-                'title'      => $m->title,
-                'picture'    => $m->picture,
-                'is_default' => $m->is_default,
-                'brand'      => $m->brand?->name,
-                'model'      => $m->model?->name ?? '#' . $m->model_id,
-                'year'       => $m->year?->year ?? $m->year_id,
-            ]);
-
-        return $this->success($motorcycles);
-    }
-
     public function rate(RateHelperRequest $request, string $id): JsonResponse
     {
         $assistRequest = AssistanceRequest::find($id);

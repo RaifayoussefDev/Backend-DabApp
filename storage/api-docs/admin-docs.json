@@ -15757,11 +15757,13 @@
                                                     "type": "object"
                                                 },
                                                 "requests_by_expertise": {
+                                                    "description": "Request count grouped by expertise name",
                                                     "type": "object",
                                                     "example": {
                                                         "tire_repair": 90,
                                                         "fuel": 55,
-                                                        "mechanical": 70
+                                                        "mechanical": 70,
+                                                        "towing": 35
                                                     }
                                                 },
                                                 "top_helpers": {
@@ -15778,6 +15780,7 @@
                                                             },
                                                             "rating": {
                                                                 "type": "number",
+                                                                "format": "float",
                                                                 "example": 4.95
                                                             },
                                                             "total_assists": {
@@ -15796,6 +15799,9 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     }
                 },
                 "security": [
@@ -15816,6 +15822,7 @@
                     {
                         "name": "status",
                         "in": "query",
+                        "description": "Filter by request status",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -15826,12 +15833,14 @@
                                 "arrived",
                                 "completed",
                                 "cancelled"
-                            ]
+                            ],
+                            "example": "pending"
                         }
                     },
                     {
                         "name": "expertise_type_id",
                         "in": "query",
+                        "description": "Filter by expertise type ID (matches requests that include this expertise)",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -15852,16 +15861,18 @@
                     {
                         "name": "date_to",
                         "in": "query",
+                        "description": "Filter requests created up to this date (YYYY-MM-DD)",
                         "required": false,
                         "schema": {
                             "type": "string",
                             "format": "date",
-                            "example": "2026-04-08"
+                            "example": "2026-04-15"
                         }
                     },
                     {
                         "name": "page",
                         "in": "query",
+                        "required": false,
                         "schema": {
                             "type": "integer",
                             "example": 1
@@ -15881,6 +15892,14 @@
                                         },
                                         "data": {
                                             "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                },
                                                 "total": {
                                                     "type": "integer",
                                                     "example": 320
@@ -15888,7 +15907,90 @@
                                                 "data": {
                                                     "type": "array",
                                                     "items": {
-                                                        "$ref": "#/components/schemas/AssistanceRequest"
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 12
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "pending"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "My rear tire is flat."
+                                                            },
+                                                            "location_label": {
+                                                                "type": "string",
+                                                                "example": "King Fahd Road, Riyadh"
+                                                            },
+                                                            "latitude": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 24.714
+                                                            },
+                                                            "longitude": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 46.675
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "expertise_types": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "name": {
+                                                                            "type": "string",
+                                                                            "example": "tire_repair"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "seeker": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 65
+                                                                    },
+                                                                    "first_name": {
+                                                                        "type": "string",
+                                                                        "example": "Raifa"
+                                                                    },
+                                                                    "last_name": {
+                                                                        "type": "string",
+                                                                        "example": "Youssef"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "helper": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 2
+                                                                    },
+                                                                    "first_name": {
+                                                                        "type": "string",
+                                                                        "example": "Ahmed"
+                                                                    },
+                                                                    "last_name": {
+                                                                        "type": "string",
+                                                                        "example": "Al-Rashid"
+                                                                    }
+                                                                },
+                                                                "type": "object",
+                                                                "nullable": true
+                                                            }
+                                                        },
+                                                        "type": "object"
                                                     }
                                                 }
                                             },
@@ -15899,6 +16001,9 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     }
                 },
                 "security": [
@@ -15908,13 +16013,14 @@
                 ]
             }
         },
-        "/api/assist/admin/expertise-types": {
+        "/api/assist/expertise-types": {
             "get": {
                 "tags": [
                     "Assist - Admin Expertise"
                 ],
-                "summary": "List all expertise types",
-                "operationId": "66f00926a830ff445b1a9a185f2e4a57",
+                "summary": "List all available expertise types",
+                "description": "Public (authenticated) endpoint. Used by seekers to pick expertise when creating a request, and by helpers when setting up their profile.",
+                "operationId": "058f3f712b163dc6c214d7c8a09d7a78",
                 "responses": {
                     "200": {
                         "description": "All expertise types",
@@ -15933,7 +16039,21 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/ExpertiseType"
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "tire_repair"
+                                                    },
+                                                    "icon": {
+                                                        "type": "string",
+                                                        "example": "tire_repair"
+                                                    }
+                                                },
+                                                "type": "object"
                                             }
                                         }
                                     },
@@ -15941,6 +16061,9 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     }
                 },
                 "security": [
@@ -15948,7 +16071,9 @@
                         "bearerAuth": []
                     }
                 ]
-            },
+            }
+        },
+        "/api/assist/admin/expertise-types": {
             "post": {
                 "tags": [
                     "Assist - Admin Expertise"
@@ -15966,12 +16091,12 @@
                                 ],
                                 "properties": {
                                     "name": {
-                                        "description": "Unique slug-like name for the expertise",
+                                        "description": "Unique slug name (snake_case). Available: tire_repair, fuel, mechanical, towing, first_aid, ev_support, battery_jump",
                                         "type": "string",
                                         "example": "battery_jump"
                                     },
                                     "icon": {
-                                        "description": "Material icon name or asset key",
+                                        "description": "Material Design icon name",
                                         "type": "string",
                                         "example": "battery_charging_full"
                                     }
@@ -15997,7 +16122,31 @@
                                             "example": "Expertise type created."
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/ExpertiseType"
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 7
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "battery_jump"
+                                                },
+                                                "icon": {
+                                                    "type": "string",
+                                                    "example": "battery_charging_full"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-04-15T10:00:00.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-04-15T10:00:00.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -16005,8 +16154,40 @@
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
                     "422": {
-                        "description": "Validation error or name already exists"
+                        "description": "Validation error or name already taken",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The name has already been taken."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -16065,8 +16246,26 @@
                                             "type": "boolean",
                                             "example": true
                                         },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Expertise type updated."
+                                        },
                                         "data": {
-                                            "$ref": "#/components/schemas/ExpertiseType"
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "battery_jump"
+                                                },
+                                                "icon": {
+                                                    "type": "string",
+                                                    "example": "battery_charging_full"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -16074,8 +16273,11 @@
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
                     "404": {
-                        "description": "Not found"
+                        "description": "Expertise type not found"
                     }
                 },
                 "security": [
@@ -16094,11 +16296,11 @@
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "ExpertiseType ID",
                         "required": true,
                         "schema": {
-                            "type": "string",
-                            "format": "uuid",
-                            "example": "550e8400-e29b-41d4-a716-446655440001"
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
@@ -16123,8 +16325,11 @@
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
                     "404": {
-                        "description": "Not found"
+                        "description": "Expertise type not found"
                     }
                 },
                 "security": [
@@ -26452,7 +26657,7 @@
         },
         {
             "name": "Assist - Admin Expertise",
-            "description": "Admin CRUD for expertise types"
+            "description": "Admin CRUD for expertise types (tire_repair, fuel, mechanical…)"
         },
         {
             "name": "Assist - Admin Helpers",

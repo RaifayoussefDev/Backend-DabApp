@@ -318,10 +318,11 @@
                     "Assist - Helper Feed"
                 ],
                 "summary": "List pending assistance requests near the helper",
+                "description": "Returns pending requests within the helper's service radius that match at least one of their registered expertise types. Helper must be verified and available, and must have a GPS location set.",
                 "operationId": "ec668ab118171ea1a520d35e4031783a",
                 "responses": {
                     "200": {
-                        "description": "List of nearby pending requests",
+                        "description": "List of nearby pending requests sorted by distance",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -337,22 +338,130 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "type": "object",
-                                                "allOf": [
-                                                    {
-                                                        "$ref": "#/components/schemas/AssistanceRequest"
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 12
                                                     },
-                                                    {
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "pending"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "My rear tire is completely flat."
+                                                    },
+                                                    "location_label": {
+                                                        "type": "string",
+                                                        "example": "King Fahd Road, Riyadh – near Exit 7"
+                                                    },
+                                                    "latitude": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 24.714
+                                                    },
+                                                    "longitude": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 46.675
+                                                    },
+                                                    "distance_km": {
+                                                        "description": "Distance in km between helper and seeker",
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 2.34
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "expertise_types": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "tire_repair"
+                                                                },
+                                                                "icon": {
+                                                                    "type": "string",
+                                                                    "example": "tire_repair"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "photos": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "path": {
+                                                                    "type": "string",
+                                                                    "example": "https://cdn.example.com/uploads/photo1.jpg"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "seeker": {
                                                         "properties": {
-                                                            "distance_km": {
-                                                                "type": "number",
-                                                                "format": "float",
-                                                                "example": 2.3
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 65
+                                                            },
+                                                            "first_name": {
+                                                                "type": "string",
+                                                                "example": "Raifa"
+                                                            },
+                                                            "last_name": {
+                                                                "type": "string",
+                                                                "example": "Youssef"
                                                             }
                                                         },
                                                         "type": "object"
+                                                    },
+                                                    "motorcycle": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 15
+                                                            },
+                                                            "color": {
+                                                                "type": "string",
+                                                                "example": "Red"
+                                                            },
+                                                            "brand": {
+                                                                "properties": {
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "BMW"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "model": {
+                                                                "properties": {
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "F 900 R"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object",
+                                                        "nullable": true
                                                     }
-                                                ]
+                                                },
+                                                "type": "object"
                                             }
                                         }
                                     },
@@ -361,11 +470,17 @@
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
                     "403": {
-                        "description": "Profile not verified or available"
+                        "description": "Profile not verified or not set to available"
                     },
                     "404": {
-                        "description": "Helper profile not found"
+                        "description": "Helper profile not found — create one first"
+                    },
+                    "422": {
+                        "description": "GPS location not set — call PATCH /api/assist/helper/profile/location first"
                     }
                 },
                 "security": [
@@ -381,6 +496,7 @@
                     "Assist - Helper Feed"
                 ],
                 "summary": "Accept a pending assistance request",
+                "description": "Atomically claims the request for the authenticated helper. Returns 409 if another helper already accepted it. Helper must be verified and available.",
                 "operationId": "15bd9cc224022b31be5426914819aaed",
                 "parameters": [
                     {
@@ -390,13 +506,13 @@
                         "required": true,
                         "schema": {
                             "type": "integer",
-                            "example": 1
+                            "example": 12
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Request accepted",
+                        "description": "Request accepted successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -410,7 +526,73 @@
                                             "example": "Request accepted. Head to the rider's location."
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/AssistanceRequest"
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "accepted"
+                                                },
+                                                "accepted_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-04-15T10:05:00.000000Z"
+                                                },
+                                                "location_label": {
+                                                    "type": "string",
+                                                    "example": "King Fahd Road, Riyadh – near Exit 7"
+                                                },
+                                                "latitude": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 24.714
+                                                },
+                                                "longitude": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 46.675
+                                                },
+                                                "expertise_types": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "tire_repair"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "seeker": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 65
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string",
+                                                            "example": "Raifa"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string",
+                                                            "example": "Youssef"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "+966501234567"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -418,11 +600,17 @@
                             }
                         }
                     },
-                    "409": {
-                        "description": "Request already taken"
+                    "401": {
+                        "description": "Unauthenticated"
                     },
                     "403": {
-                        "description": "Not verified or available"
+                        "description": "Not verified or not available"
+                    },
+                    "404": {
+                        "description": "Request not found"
+                    },
+                    "409": {
+                        "description": "Request already taken by another helper"
                     }
                 },
                 "security": [
@@ -438,7 +626,7 @@
                     "Assist - Helper Mission"
                 ],
                 "summary": "Update mission status",
-                "description": "Allowed transitions: accepted → en_route → arrived → completed",
+                "description": "Push the mission through its lifecycle. Allowed transitions: `accepted` → `en_route` → `arrived` → `completed`. Each transition notifies the seeker.",
                 "operationId": "995df93bf814a9b1daa282f27743f486",
                 "parameters": [
                     {
@@ -448,7 +636,7 @@
                         "required": true,
                         "schema": {
                             "type": "integer",
-                            "example": 1
+                            "example": 12
                         }
                     }
                 ],
@@ -462,7 +650,7 @@
                                 ],
                                 "properties": {
                                     "status": {
-                                        "description": "New status to set (must follow allowed transitions)",
+                                        "description": "New status. Must follow the allowed transition chain: accepted → en_route → arrived → completed",
                                         "type": "string",
                                         "enum": [
                                             "en_route",
@@ -479,7 +667,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Status updated",
+                        "description": "Status updated successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -493,7 +681,75 @@
                                             "example": "Status updated to en_route."
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/AssistanceRequest"
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "en_route"
+                                                },
+                                                "accepted_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-04-15T10:05:00.000000Z"
+                                                },
+                                                "arrived_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "completed_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "location_label": {
+                                                    "type": "string",
+                                                    "example": "King Fahd Road, Riyadh – near Exit 7"
+                                                },
+                                                "expertise_types": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "tire_repair"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "seeker": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 65
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string",
+                                                            "example": "Raifa"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string",
+                                                            "example": "Youssef"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "+966501234567"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -501,11 +757,34 @@
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
                     "403": {
-                        "description": "Not the assigned helper"
+                        "description": "You are not the assigned helper for this request"
+                    },
+                    "404": {
+                        "description": "Request not found"
                     },
                     "422": {
-                        "description": "Invalid status transition"
+                        "description": "Invalid status transition",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid transition: cannot go from 'pending' to 'en_route'."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -520,7 +799,8 @@
                 "tags": [
                     "Assist - Helper Profile"
                 ],
-                "summary": "Get authenticated helper's profile",
+                "summary": "Get the authenticated helper's profile",
+                "description": "Returns the helper's profile including expertise types, rating, and service radius. Returns 404 if no profile has been created yet — call POST first.",
                 "operationId": "0de36b5a3bb3e8f0b5df7145fb9354d3",
                 "responses": {
                     "200": {
@@ -538,7 +818,79 @@
                                             "example": "Success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/HelperProfile"
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 65
+                                                },
+                                                "is_available": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_verified": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "rating": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 4.8
+                                                },
+                                                "total_assists": {
+                                                    "type": "integer",
+                                                    "example": 23
+                                                },
+                                                "service_radius_km": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                },
+                                                "level": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "standard",
+                                                        "elite",
+                                                        "vanguard"
+                                                    ],
+                                                    "example": "elite"
+                                                },
+                                                "latitude": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 24.725,
+                                                    "nullable": true
+                                                },
+                                                "longitude": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 46.68,
+                                                    "nullable": true
+                                                },
+                                                "expertise_types": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "tire_repair"
+                                                            },
+                                                            "icon": {
+                                                                "type": "string",
+                                                                "example": "tire_repair"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -546,8 +898,11 @@
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
                     "404": {
-                        "description": "Profile not created yet"
+                        "description": "Profile not found — create one first via POST /api/assist/helper/profile"
                     }
                 },
                 "security": [
@@ -561,6 +916,7 @@
                     "Assist - Helper Profile"
                 ],
                 "summary": "Create or update helper profile",
+                "description": "Upserts the helper profile for the authenticated user. Can be called multiple times to update fields. Expertise IDs come from GET /api/assist/expertise-types.",
                 "operationId": "1802a571231858ef81fa61ab855eeea2",
                 "requestBody": {
                     "required": true,
@@ -569,12 +925,14 @@
                             "schema": {
                                 "properties": {
                                     "service_radius_km": {
-                                        "description": "Max km radius to accept requests (1-100)",
+                                        "description": "Max km radius to receive requests",
                                         "type": "integer",
+                                        "maximum": 100,
+                                        "minimum": 1,
                                         "example": 20
                                     },
                                     "level": {
-                                        "description": "standard = basic helper, elite = experienced, vanguard = top-rated expert",
+                                        "description": "standard = basic helper | elite = experienced | vanguard = top-rated expert",
                                         "type": "string",
                                         "enum": [
                                             "standard",
@@ -584,21 +942,22 @@
                                         "example": "standard"
                                     },
                                     "expertise_ids": {
-                                        "description": "List of expertise type IDs to assign",
+                                        "description": "Expertise type IDs from GET /api/assist/expertise-types",
                                         "type": "array",
                                         "items": {
-                                            "type": "integer",
-                                            "example": 1
-                                        }
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            3
+                                        ]
                                     },
                                     "country_id": {
-                                        "description": "ID from /api/countries-list",
                                         "type": "integer",
                                         "example": 1,
                                         "nullable": true
                                     },
                                     "city_id": {
-                                        "description": "ID from /api/cities?country_id=1",
                                         "type": "integer",
                                         "example": 3,
                                         "nullable": true
@@ -625,13 +984,63 @@
                                             "example": "Profile updated successfully."
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/HelperProfile"
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 65
+                                                },
+                                                "is_available": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "is_verified": {
+                                                    "description": "Verification is set by admin only",
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "service_radius_km": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                },
+                                                "level": {
+                                                    "type": "string",
+                                                    "example": "standard"
+                                                },
+                                                "expertise_types": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "tire_repair"
+                                                            },
+                                                            "icon": {
+                                                                "type": "string",
+                                                                "example": "tire_repair"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     },
                     "422": {
                         "description": "Validation error"
@@ -649,7 +1058,8 @@
                 "tags": [
                     "Assist - Helper Profile"
                 ],
-                "summary": "Update helper GPS location in real time",
+                "summary": "Update helper GPS location",
+                "description": "Call this endpoint periodically from the mobile app to keep the helper's GPS position current. Required before appearing in the feed.",
                 "operationId": "0088fb07c76cd78c0fecd98e7b013ebd",
                 "requestBody": {
                     "required": true,
@@ -698,10 +1108,12 @@
                                             "properties": {
                                                 "latitude": {
                                                     "type": "number",
+                                                    "format": "float",
                                                     "example": 24.725
                                                 },
                                                 "longitude": {
                                                     "type": "number",
+                                                    "format": "float",
                                                     "example": 46.68
                                                 }
                                             },
@@ -713,8 +1125,14 @@
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
                     "404": {
-                        "description": "Profile not found"
+                        "description": "Helper profile not found"
+                    },
+                    "422": {
+                        "description": "Validation error — invalid coordinates"
                     }
                 },
                 "security": [
@@ -729,7 +1147,8 @@
                 "tags": [
                     "Assist - Helper Profile"
                 ],
-                "summary": "Toggle helper availability on/off",
+                "summary": "Toggle helper online/offline availability",
+                "description": "Toggles between available and offline. Helper must be verified by an admin before they can go online. When offline, the helper won't appear in seeker searches.",
                 "operationId": "0ea323e52ea916316cc0ef1a033784b3",
                 "responses": {
                     "200": {
@@ -761,11 +1180,92 @@
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
                     "403": {
-                        "description": "Profile not verified"
+                        "description": "Profile not verified by admin yet"
                     },
                     "404": {
-                        "description": "Profile not found"
+                        "description": "Helper profile not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/seeker/garage": {
+            "get": {
+                "tags": [
+                    "Assist - Seeker"
+                ],
+                "summary": "Get the authenticated seeker's motorcycle garage",
+                "description": "Returns all motorcycles registered in the user's garage. Use the garage `id` as `motorcycle_id` when creating an assistance request.",
+                "operationId": "f55209b49986192966fb5a227126910a",
+                "responses": {
+                    "200": {
+                        "description": "List of motorcycles",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 15
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "My daily ride",
+                                                        "nullable": true
+                                                    },
+                                                    "picture": {
+                                                        "type": "string",
+                                                        "example": null,
+                                                        "nullable": true
+                                                    },
+                                                    "is_default": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "brand": {
+                                                        "type": "string",
+                                                        "example": "BMW"
+                                                    },
+                                                    "model": {
+                                                        "type": "string",
+                                                        "example": "F 900 R"
+                                                    },
+                                                    "year": {
+                                                        "type": "integer",
+                                                        "example": 2022
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     }
                 },
                 "security": [
@@ -781,6 +1281,7 @@
                     "Assist - Seeker"
                 ],
                 "summary": "Create a new assistance request",
+                "description": "Creates a pending request and notifies nearby available helpers who match the required expertise. Photos must be uploaded first via the upload API, then pass the returned URLs here.",
                 "operationId": "68330cabcba561a518412b2dbdeceff1",
                 "requestBody": {
                     "required": true,
@@ -788,43 +1289,62 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "expertise_type_id",
+                                    "expertise_type_ids",
                                     "latitude",
                                     "longitude",
                                     "location_label"
                                 ],
                                 "properties": {
-                                    "expertise_type_id": {
-                                        "description": "ID of the required expertise type (from GET /api/assist/expertise-types)",
-                                        "type": "integer",
-                                        "example": 1
+                                    "expertise_type_ids": {
+                                        "description": "One or more expertise type IDs (from GET /api/assist/expertise-types)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            3
+                                        ]
                                     },
                                     "latitude": {
-                                        "description": "Rider's current latitude",
+                                        "description": "Rider's current latitude (-90 to 90)",
                                         "type": "number",
                                         "format": "float",
-                                        "example": 24.7136
+                                        "example": 24.714
                                     },
                                     "longitude": {
-                                        "description": "Rider's current longitude",
+                                        "description": "Rider's current longitude (-180 to 180)",
                                         "type": "number",
                                         "format": "float",
-                                        "example": 46.6753
+                                        "example": 46.675
                                     },
                                     "location_label": {
-                                        "description": "Human-readable location name",
+                                        "description": "Human-readable location label",
                                         "type": "string",
-                                        "example": "King Fahd Road, Riyadh"
+                                        "example": "King Fahd Road, Riyadh – near Exit 7"
                                     },
                                     "description": {
                                         "type": "string",
-                                        "example": "My rear tire is flat, near the gas station",
+                                        "example": "My rear tire is completely flat. Stuck on the side of the road.",
                                         "nullable": true
                                     },
                                     "motorcycle_id": {
-                                        "description": "Optional: linked motorcycle ID",
+                                        "description": "Optional: garage motorcycle ID from GET /api/assist/seeker/garage",
                                         "type": "integer",
-                                        "example": null,
+                                        "example": 15,
+                                        "nullable": true
+                                    },
+                                    "photo_urls": {
+                                        "description": "Optional: up to 5 photo URLs returned by the upload API",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "url"
+                                        },
+                                        "example": [
+                                            "https://cdn.example.com/uploads/photo1.jpg",
+                                            "https://cdn.example.com/uploads/photo2.jpg"
+                                        ],
                                         "nullable": true
                                     }
                                 },
@@ -851,7 +1371,75 @@
                                         "data": {
                                             "properties": {
                                                 "request": {
-                                                    "$ref": "#/components/schemas/AssistanceRequest"
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 12
+                                                        },
+                                                        "status": {
+                                                            "type": "string",
+                                                            "example": "pending"
+                                                        },
+                                                        "location_label": {
+                                                            "type": "string",
+                                                            "example": "King Fahd Road, Riyadh – near Exit 7"
+                                                        },
+                                                        "latitude": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 24.714
+                                                        },
+                                                        "longitude": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 46.675
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "example": "My rear tire is completely flat."
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time"
+                                                        },
+                                                        "expertise_types": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "tire_repair"
+                                                                    },
+                                                                    "icon": {
+                                                                        "type": "string",
+                                                                        "example": "tire_repair"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "photos": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "path": {
+                                                                        "type": "string",
+                                                                        "example": "https://cdn.example.com/uploads/photo1.jpg"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "object"
                                                 },
                                                 "helpers_notified": {
                                                     "type": "integer",
@@ -866,11 +1454,40 @@
                             }
                         }
                     },
-                    "422": {
-                        "description": "Validation error"
-                    },
                     "401": {
                         "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "expertise_type_ids": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The expertise type ids field is required."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -885,7 +1502,8 @@
                 "tags": [
                     "Assist - Seeker"
                 ],
-                "summary": "Get assistance request details and live status",
+                "summary": "Get assistance request details with seeker's garage",
+                "description": "Returns the full request details alongside the seeker's motorcycle garage, so the client can display or link a motorcycle to the request.",
                 "operationId": "6360730f7c93fb9cc3c06058c862ca9f",
                 "parameters": [
                     {
@@ -895,13 +1513,13 @@
                         "required": true,
                         "schema": {
                             "type": "integer",
-                            "example": 1
+                            "example": 12
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Request details",
+                        "description": "Request details and garage",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -915,7 +1533,176 @@
                                             "example": "Success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/AssistanceRequest"
+                                            "properties": {
+                                                "request": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 12
+                                                        },
+                                                        "status": {
+                                                            "type": "string",
+                                                            "example": "pending"
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "example": "My rear tire is completely flat."
+                                                        },
+                                                        "location_label": {
+                                                            "type": "string",
+                                                            "example": "King Fahd Road, Riyadh – near Exit 7"
+                                                        },
+                                                        "latitude": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 24.714
+                                                        },
+                                                        "longitude": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 46.675
+                                                        },
+                                                        "accepted_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "nullable": true
+                                                        },
+                                                        "arrived_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "nullable": true
+                                                        },
+                                                        "completed_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "nullable": true
+                                                        },
+                                                        "cancelled_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "nullable": true
+                                                        },
+                                                        "expertise_types": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "tire_repair"
+                                                                    },
+                                                                    "icon": {
+                                                                        "type": "string",
+                                                                        "example": "tire_repair"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "photos": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "path": {
+                                                                        "type": "string",
+                                                                        "example": "https://cdn.example.com/uploads/photo1.jpg"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "helper": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 2
+                                                                },
+                                                                "first_name": {
+                                                                    "type": "string",
+                                                                    "example": "Ahmed"
+                                                                },
+                                                                "last_name": {
+                                                                    "type": "string",
+                                                                    "example": "Al-Rashid"
+                                                                },
+                                                                "phone": {
+                                                                    "type": "string",
+                                                                    "example": "+966501234567"
+                                                                },
+                                                                "profile_picture": {
+                                                                    "type": "string",
+                                                                    "example": null,
+                                                                    "nullable": true
+                                                                }
+                                                            },
+                                                            "type": "object",
+                                                            "nullable": true
+                                                        },
+                                                        "rating": {
+                                                            "properties": {
+                                                                "stars": {
+                                                                    "type": "integer",
+                                                                    "example": 5
+                                                                },
+                                                                "comment": {
+                                                                    "type": "string",
+                                                                    "example": "Super fast and professional!"
+                                                                }
+                                                            },
+                                                            "type": "object",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "garage": {
+                                                    "description": "Seeker's registered motorcycles",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 15
+                                                            },
+                                                            "title": {
+                                                                "type": "string",
+                                                                "example": "My daily ride",
+                                                                "nullable": true
+                                                            },
+                                                            "picture": {
+                                                                "type": "string",
+                                                                "example": null,
+                                                                "nullable": true
+                                                            },
+                                                            "is_default": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "brand": {
+                                                                "type": "string",
+                                                                "example": "BMW"
+                                                            },
+                                                            "model": {
+                                                                "type": "string",
+                                                                "example": "F 900 R"
+                                                            },
+                                                            "year": {
+                                                                "type": "integer",
+                                                                "example": 2022
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -923,11 +1710,14 @@
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
                     "403": {
-                        "description": "Forbidden"
+                        "description": "This request does not belong to you"
                     },
                     "404": {
-                        "description": "Not found"
+                        "description": "Request not found"
                     }
                 },
                 "security": [
@@ -941,16 +1731,17 @@
                     "Assist - Seeker"
                 ],
                 "summary": "Cancel an assistance request",
+                "description": "Only pending or accepted requests can be cancelled.",
                 "operationId": "b0f0863f139d7c69ef5e97f1c054a27b",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "Assistance request ID",
                         "required": true,
                         "schema": {
-                            "type": "string",
-                            "format": "uuid",
-                            "example": "550e8400-e29b-41d4-a716-446655440010"
+                            "type": "integer",
+                            "example": 12
                         }
                     }
                 ],
@@ -991,11 +1782,17 @@
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
                     "403": {
-                        "description": "Forbidden"
+                        "description": "This request does not belong to you"
+                    },
+                    "404": {
+                        "description": "Request not found"
                     },
                     "422": {
-                        "description": "Cannot cancel a completed request"
+                        "description": "Cannot cancel a completed or already cancelled request"
                     }
                 },
                 "security": [
@@ -1011,16 +1808,17 @@
                     "Assist - Seeker"
                 ],
                 "summary": "Rate the helper after a completed mission",
+                "description": "Can only be submitted once, and only when the request status is `completed`.",
                 "operationId": "774da4d6fc5cf97bc899b78cc9ed9717",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "Assistance request ID",
                         "required": true,
                         "schema": {
-                            "type": "string",
-                            "format": "uuid",
-                            "example": "550e8400-e29b-41d4-a716-446655440010"
+                            "type": "integer",
+                            "example": 12
                         }
                     }
                 ],
@@ -1067,7 +1865,33 @@
                                             "example": "Rating submitted successfully."
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/AssistRating"
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "request_id": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "rater_id": {
+                                                    "type": "integer",
+                                                    "example": 65
+                                                },
+                                                "rated_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "stars": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "comment": {
+                                                    "type": "string",
+                                                    "example": "Super fast and professional!"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -1075,8 +1899,17 @@
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "This request does not belong to you"
+                    },
+                    "404": {
+                        "description": "Request not found"
+                    },
                     "422": {
-                        "description": "Request not completed or already rated"
+                        "description": "Request not completed yet, or already rated"
                     }
                 },
                 "security": [
@@ -1092,6 +1925,7 @@
                     "Assist - Seeker Tracking"
                 ],
                 "summary": "Get live helper location and mission timeline",
+                "description": "Poll this endpoint to track the helper's real-time GPS position and monitor mission progress. Returns null for helper if no helper has accepted the request yet.",
                 "operationId": "54fa7f4ca63f40e9088d880214ed24f4",
                 "parameters": [
                     {
@@ -1101,7 +1935,7 @@
                         "required": true,
                         "schema": {
                             "type": "integer",
-                            "example": 1
+                            "example": 12
                         }
                     }
                 ],
@@ -1124,6 +1958,14 @@
                                             "properties": {
                                                 "status": {
                                                     "type": "string",
+                                                    "enum": [
+                                                        "pending",
+                                                        "accepted",
+                                                        "en_route",
+                                                        "arrived",
+                                                        "completed",
+                                                        "cancelled"
+                                                    ],
                                                     "example": "en_route"
                                                 },
                                                 "status_label": {
@@ -1140,6 +1982,7 @@
                                                     "type": "object"
                                                 },
                                                 "helper": {
+                                                    "description": "null if no helper assigned yet",
                                                     "properties": {
                                                         "id": {
                                                             "type": "integer",
@@ -1155,34 +1998,46 @@
                                                         },
                                                         "rating": {
                                                             "type": "number",
-                                                            "example": 4.8
+                                                            "format": "float",
+                                                            "example": 4.8,
+                                                            "nullable": true
                                                         },
                                                         "latitude": {
+                                                            "description": "Helper's current GPS latitude — updates as helper moves",
                                                             "type": "number",
-                                                            "example": 24.72
+                                                            "format": "float",
+                                                            "example": 24.72,
+                                                            "nullable": true
                                                         },
                                                         "longitude": {
+                                                            "description": "Helper's current GPS longitude — updates as helper moves",
                                                             "type": "number",
-                                                            "example": 46.68
+                                                            "format": "float",
+                                                            "example": 46.68,
+                                                            "nullable": true
                                                         }
                                                     },
-                                                    "type": "object"
+                                                    "type": "object",
+                                                    "nullable": true
                                                 },
                                                 "timeline": {
                                                     "properties": {
                                                         "accepted_at": {
                                                             "type": "string",
                                                             "format": "date-time",
+                                                            "example": "2026-04-15T10:05:00.000000Z",
                                                             "nullable": true
                                                         },
                                                         "arrived_at": {
                                                             "type": "string",
                                                             "format": "date-time",
+                                                            "example": null,
                                                             "nullable": true
                                                         },
                                                         "completed_at": {
                                                             "type": "string",
                                                             "format": "date-time",
+                                                            "example": null,
                                                             "nullable": true
                                                         }
                                                     },
@@ -1197,11 +2052,14 @@
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
                     "403": {
-                        "description": "Forbidden"
+                        "description": "This request does not belong to you"
                     },
                     "404": {
-                        "description": "Not found"
+                        "description": "Request not found"
                     }
                 },
                 "security": [
@@ -41028,11 +41886,11 @@
         },
         {
             "name": "Assist - Helper Mission",
-            "description": "Update mission status (en_route → arrived → completed)"
+            "description": "Update mission status as the helper progresses to the seeker"
         },
         {
             "name": "Assist - Helper Profile",
-            "description": "Helper profile management, GPS, and availability toggle"
+            "description": "Helper profile management, GPS location, and availability toggle"
         },
         {
             "name": "Assist - Seeker",
@@ -41040,7 +41898,7 @@
         },
         {
             "name": "Assist - Seeker Tracking",
-            "description": "Live tracking of helper location and mission status"
+            "description": "Live tracking of helper location and mission timeline"
         },
         {
             "name": "Bike Part Brands",

@@ -30,34 +30,36 @@ class AdminAssistStatsController extends AssistBaseController
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Success"),
      *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="total_requests", type="integer", example=320),
-     *                 @OA\Property(property="completed_requests", type="integer", example=274),
-     *                 @OA\Property(property="completion_rate", type="number", format="float", example=85.63),
-     *                 @OA\Property(property="active_helpers", type="integer", example=42),
-     *                 @OA\Property(property="verified_helpers", type="integer", example=38),
-     *                 @OA\Property(property="avg_response_time_minutes", type="number", format="float", example=6.4),
+     *                 @OA\Property(property="total_requests",            type="integer", example=320),
+     *                 @OA\Property(property="completed_requests",        type="integer", example=274),
+     *                 @OA\Property(property="completion_rate",           type="number",  format="float", example=85.63),
+     *                 @OA\Property(property="active_helpers",            type="integer", example=42),
+     *                 @OA\Property(property="verified_helpers",          type="integer", example=38),
+     *                 @OA\Property(property="avg_response_time_minutes", type="number",  format="float", example=6.4),
      *                 @OA\Property(property="requests_by_status", type="object",
-     *                     @OA\Property(property="pending", type="integer", example=5),
-     *                     @OA\Property(property="accepted", type="integer", example=3),
-     *                     @OA\Property(property="en_route", type="integer", example=8),
-     *                     @OA\Property(property="arrived", type="integer", example=2),
+     *                     @OA\Property(property="pending",   type="integer", example=5),
+     *                     @OA\Property(property="accepted",  type="integer", example=3),
+     *                     @OA\Property(property="en_route",  type="integer", example=8),
+     *                     @OA\Property(property="arrived",   type="integer", example=2),
      *                     @OA\Property(property="completed", type="integer", example=274),
      *                     @OA\Property(property="cancelled", type="integer", example=28)
      *                 ),
      *                 @OA\Property(property="requests_by_expertise", type="object",
-     *                     example={"tire_repair": 90, "fuel": 55, "mechanical": 70}
+     *                     description="Request count grouped by expertise name",
+     *                     example={"tire_repair": 90, "fuel": 55, "mechanical": 70, "towing": 35}
      *                 ),
      *                 @OA\Property(property="top_helpers", type="array",
      *                     @OA\Items(type="object",
-     *                         @OA\Property(property="id", type="integer", example=2),
-     *                         @OA\Property(property="name", type="string", example="Ahmed Al-Rashid"),
-     *                         @OA\Property(property="rating", type="number", example=4.95),
+     *                         @OA\Property(property="id",            type="integer", example=2),
+     *                         @OA\Property(property="name",          type="string",  example="Ahmed Al-Rashid"),
+     *                         @OA\Property(property="rating",        type="number",  format="float", example=4.95),
      *                         @OA\Property(property="total_assists", type="integer", example=47)
      *                     )
      *                 )
      *             )
      *         )
-     *     )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
     public function stats(): JsonResponse
@@ -67,7 +69,6 @@ class AdminAssistStatsController extends AssistBaseController
 
         $completionRate = $total > 0 ? round(($completed / $total) * 100, 2) : 0;
 
-        // Average response time: accepted_at - created_at in minutes
         $avgResponseMinutes = AssistanceRequest::whereNotNull('accepted_at')
             ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, accepted_at)) as avg_minutes')
             ->value('avg_minutes');
@@ -117,9 +118,11 @@ class AdminAssistStatsController extends AssistBaseController
      *     tags={"Assist - Admin Stats"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="status", in="query", required=false,
-     *         @OA\Schema(type="string", enum={"pending","accepted","en_route","arrived","completed","cancelled"})
+     *         description="Filter by request status",
+     *         @OA\Schema(type="string", enum={"pending","accepted","en_route","arrived","completed","cancelled"}, example="pending")
      *     ),
      *     @OA\Parameter(name="expertise_type_id", in="query", required=false,
+     *         description="Filter by expertise type ID (matches requests that include this expertise)",
      *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Parameter(name="date_from", in="query", required=false,
@@ -127,20 +130,50 @@ class AdminAssistStatsController extends AssistBaseController
      *         @OA\Schema(type="string", format="date", example="2026-01-01")
      *     ),
      *     @OA\Parameter(name="date_to", in="query", required=false,
-     *         @OA\Schema(type="string", format="date", example="2026-04-08")
+     *         description="Filter requests created up to this date (YYYY-MM-DD)",
+     *         @OA\Schema(type="string", format="date", example="2026-04-15")
      *     ),
-     *     @OA\Parameter(name="page", in="query", @OA\Schema(type="integer", example=1)),
+     *     @OA\Parameter(name="page", in="query", required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
      *     @OA\Response(response=200, description="Paginated list of requests",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="total", type="integer", example=320),
+     *                 @OA\Property(property="current_page", type="integer", example=1),
+     *                 @OA\Property(property="per_page",     type="integer", example=20),
+     *                 @OA\Property(property="total",        type="integer", example=320),
      *                 @OA\Property(property="data", type="array",
-     *                     @OA\Items(ref="#/components/schemas/AssistanceRequest")
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",             type="integer", example=12),
+     *                         @OA\Property(property="status",         type="string",  example="pending"),
+     *                         @OA\Property(property="description",    type="string",  example="My rear tire is flat."),
+     *                         @OA\Property(property="location_label", type="string",  example="King Fahd Road, Riyadh"),
+     *                         @OA\Property(property="latitude",       type="number",  format="float", example=24.714),
+     *                         @OA\Property(property="longitude",      type="number",  format="float", example=46.675),
+     *                         @OA\Property(property="created_at",     type="string",  format="date-time"),
+     *                         @OA\Property(property="expertise_types", type="array",
+     *                             @OA\Items(type="object",
+     *                                 @OA\Property(property="id",   type="integer", example=1),
+     *                                 @OA\Property(property="name", type="string",  example="tire_repair")
+     *                             )
+     *                         ),
+     *                         @OA\Property(property="seeker", type="object",
+     *                             @OA\Property(property="id",         type="integer", example=65),
+     *                             @OA\Property(property="first_name", type="string",  example="Raifa"),
+     *                             @OA\Property(property="last_name",  type="string",  example="Youssef")
+     *                         ),
+     *                         @OA\Property(property="helper", type="object", nullable=true,
+     *                             @OA\Property(property="id",         type="integer", example=2),
+     *                             @OA\Property(property="first_name", type="string",  example="Ahmed"),
+     *                             @OA\Property(property="last_name",  type="string",  example="Al-Rashid")
+     *                         )
+     *                     )
      *                 )
      *             )
      *         )
-     *     )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
     public function requests(\Illuminate\Http\Request $request): JsonResponse
@@ -156,7 +189,7 @@ class AdminAssistStatsController extends AssistBaseController
         }
 
         if ($request->filled('expertise_type_id')) {
-            $query->where('expertise_type_id', $request->expertise_type_id);
+            $query->whereHas('expertiseTypes', fn($q) => $q->where('expertise_types.id', $request->expertise_type_id));
         }
 
         if ($request->filled('date_from')) {

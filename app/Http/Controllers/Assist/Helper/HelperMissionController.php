@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
 /**
  * @OA\Tag(
  *     name="Assist - Helper Mission",
- *     description="Update mission status (en_route → arrived → completed)"
+ *     description="Update mission status as the helper progresses to the seeker"
  * )
  */
 class HelperMissionController extends AssistBaseController
@@ -26,12 +26,12 @@ class HelperMissionController extends AssistBaseController
      * @OA\Patch(
      *     path="/api/assist/helper/mission/{id}/status",
      *     summary="Update mission status",
-     *     description="Allowed transitions: accepted → en_route → arrived → completed",
+     *     description="Push the mission through its lifecycle. Allowed transitions: `accepted` → `en_route` → `arrived` → `completed`. Each transition notifies the seeker.",
      *     tags={"Assist - Helper Mission"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true,
      *         description="Assistance request ID",
-     *         @OA\Schema(type="integer", example=1)
+     *         @OA\Schema(type="integer", example=12)
      *     ),
      *     @OA\RequestBody(
      *         required=true,
@@ -40,20 +40,47 @@ class HelperMissionController extends AssistBaseController
      *             @OA\Property(property="status", type="string",
      *                 enum={"en_route","arrived","completed"},
      *                 example="en_route",
-     *                 description="New status to set (must follow allowed transitions)")
+     *                 description="New status. Must follow the allowed transition chain: accepted → en_route → arrived → completed"
+     *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Status updated",
+     *         description="Status updated successfully",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Status updated to en_route."),
-     *             @OA\Property(property="data", ref="#/components/schemas/AssistanceRequest")
+     *             @OA\Property(property="message", type="string",  example="Status updated to en_route."),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id",             type="integer", example=12),
+     *                 @OA\Property(property="status",         type="string",  example="en_route"),
+     *                 @OA\Property(property="accepted_at",    type="string",  format="date-time", example="2026-04-15T10:05:00.000000Z"),
+     *                 @OA\Property(property="arrived_at",     type="string",  format="date-time", nullable=true, example=null),
+     *                 @OA\Property(property="completed_at",   type="string",  format="date-time", nullable=true, example=null),
+     *                 @OA\Property(property="location_label", type="string",  example="King Fahd Road, Riyadh – near Exit 7"),
+     *                 @OA\Property(property="expertise_types", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",   type="integer", example=1),
+     *                         @OA\Property(property="name", type="string",  example="tire_repair")
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="seeker", type="object",
+     *                     @OA\Property(property="id",         type="integer", example=65),
+     *                     @OA\Property(property="first_name", type="string",  example="Raifa"),
+     *                     @OA\Property(property="last_name",  type="string",  example="Youssef"),
+     *                     @OA\Property(property="phone",      type="string",  example="+966501234567")
+     *                 )
+     *             )
      *         )
      *     ),
-     *     @OA\Response(response=403, description="Not the assigned helper"),
-     *     @OA\Response(response=422, description="Invalid status transition")
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=403, description="You are not the assigned helper for this request"),
+     *     @OA\Response(response=404, description="Request not found"),
+     *     @OA\Response(response=422, description="Invalid status transition",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string",  example="Invalid transition: cannot go from 'pending' to 'en_route'.")
+     *         )
+     *     )
      * )
      */
     public function updateStatus(UpdateMissionStatusRequest $request, string $id): JsonResponse

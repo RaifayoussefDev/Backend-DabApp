@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 /**
  * @OA\Tag(
  *     name="Assist - Seeker Tracking",
- *     description="Live tracking of helper location and mission status"
+ *     description="Live tracking of helper location and mission timeline"
  * )
  */
 class SeekerTrackingController extends AssistBaseController
@@ -19,42 +19,50 @@ class SeekerTrackingController extends AssistBaseController
      * @OA\Get(
      *     path="/api/assist/seeker/request/{id}/track",
      *     summary="Get live helper location and mission timeline",
+     *     description="Poll this endpoint to track the helper's real-time GPS position and monitor mission progress. Returns null for helper if no helper has accepted the request yet.",
      *     tags={"Assist - Seeker Tracking"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true,
      *         description="Assistance request ID",
-     *         @OA\Schema(type="integer", example=1)
+     *         @OA\Schema(type="integer", example=12)
      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Live tracking data",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Success"),
+     *             @OA\Property(property="message", type="string",  example="Success"),
      *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="status", type="string", example="en_route"),
+     *                 @OA\Property(property="status", type="string",
+     *                     enum={"pending","accepted","en_route","arrived","completed","cancelled"},
+     *                     example="en_route"
+     *                 ),
      *                 @OA\Property(property="status_label", type="object",
      *                     @OA\Property(property="en", type="string", example="On the Way"),
      *                     @OA\Property(property="ar", type="string", example="في الطريق")
      *                 ),
-     *                 @OA\Property(property="helper", type="object",
-     *                     @OA\Property(property="id", type="integer", example=2),
-     *                     @OA\Property(property="name", type="string", example="Ahmed Al-Rashid"),
-     *                     @OA\Property(property="phone", type="string", example="+966501234567"),
-     *                     @OA\Property(property="rating", type="number", example=4.8),
-     *                     @OA\Property(property="latitude", type="number", example=24.7200),
-     *                     @OA\Property(property="longitude", type="number", example=46.6800)
+     *                 @OA\Property(property="helper", type="object", nullable=true,
+     *                     description="null if no helper assigned yet",
+     *                     @OA\Property(property="id",        type="integer", example=2),
+     *                     @OA\Property(property="name",      type="string",  example="Ahmed Al-Rashid"),
+     *                     @OA\Property(property="phone",     type="string",  example="+966501234567"),
+     *                     @OA\Property(property="rating",    type="number",  format="float", nullable=true, example=4.80),
+     *                     @OA\Property(property="latitude",  type="number",  format="float", nullable=true, example=24.7200,
+     *                         description="Helper's current GPS latitude — updates as helper moves"),
+     *                     @OA\Property(property="longitude", type="number",  format="float", nullable=true, example=46.6800,
+     *                         description="Helper's current GPS longitude — updates as helper moves")
      *                 ),
      *                 @OA\Property(property="timeline", type="object",
-     *                     @OA\Property(property="accepted_at", type="string", format="date-time", nullable=true),
-     *                     @OA\Property(property="arrived_at", type="string", format="date-time", nullable=true),
-     *                     @OA\Property(property="completed_at", type="string", format="date-time", nullable=true)
+     *                     @OA\Property(property="accepted_at",  type="string", format="date-time", nullable=true, example="2026-04-15T10:05:00.000000Z"),
+     *                     @OA\Property(property="arrived_at",   type="string", format="date-time", nullable=true, example=null),
+     *                     @OA\Property(property="completed_at", type="string", format="date-time", nullable=true, example=null)
      *                 )
      *             )
      *         )
      *     ),
-     *     @OA\Response(response=403, description="Forbidden"),
-     *     @OA\Response(response=404, description="Not found")
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=403, description="This request does not belong to you"),
+     *     @OA\Response(response=404, description="Request not found")
      * )
      */
     public function track(string $id): JsonResponse
