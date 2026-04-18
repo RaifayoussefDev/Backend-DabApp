@@ -46,6 +46,11 @@ class CountryHelper
 
         // ✅ Check if phone already starts with country code
         if (str_starts_with($cleanPhone, $dialCodeWithoutPlus)) {
+            // Remove trunk prefix 0 typed by user (e.g. +2120xxx → +212xxx)
+            $remaining = substr($cleanPhone, strlen($dialCodeWithoutPlus));
+            if (str_starts_with($remaining, '0')) {
+                $cleanPhone = $dialCodeWithoutPlus . substr($remaining, 1);
+            }
             return '+' . $cleanPhone;
         }
 
@@ -76,6 +81,11 @@ class CountryHelper
 
         // ✅ Check if phone already starts with country code
         if (str_starts_with($cleanPhone, $dialCodeWithoutPlus)) {
+            // Remove trunk prefix 0 typed by user (e.g. +2120xxx → +212xxx)
+            $remaining = substr($cleanPhone, strlen($dialCodeWithoutPlus));
+            if (str_starts_with($remaining, '0')) {
+                $cleanPhone = $dialCodeWithoutPlus . substr($remaining, 1);
+            }
             return '+' . $cleanPhone;
         }
 

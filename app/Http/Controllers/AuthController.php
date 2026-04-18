@@ -140,7 +140,7 @@ class AuthController extends Controller
         // ✅ Récupérer country_id et infos depuis la base de données
         $countryData = CountryHelper::processCountryAndPhoneByName($request->phone, $countryName);
 
-        $formattedPhone = $request->phone; // On garde le téléphone tel quel (envoyé par frontend)
+        $formattedPhone = $countryData['formatted_phone'] ?? $request->phone;
 
         Log::info('Registration attempt', [
             'original_phone' => $request->phone,
@@ -394,23 +394,33 @@ class AuthController extends Controller
             Log::info('Login attempt with email', ['email' => $login]);
         } else {
             // Login is potentially a phone number - try direct match or with/without + prefix
+            $countryName = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Morocco';
 
-            // First, try exact match
-            $user = User::withTrashed()->where('phone', $login)->first();
+            // Normalize phone: remove trunk prefix 0 after country code (e.g. +2120xxx → +212xxx)
+            $normalizedLogin = CountryHelper::formatPhoneByCountryName($login, $countryName);
+
+            // First, try normalized phone (new accounts stored with correct format)
+            $user = User::withTrashed()->where('phone', $normalizedLogin)->first();
+
+            // Fallback: try original phone (old accounts stored with wrong format)
+            if (!$user && $normalizedLogin !== $login) {
+                $user = User::withTrashed()->where('phone', $login)->first();
+            }
 
             if (!$user) {
                 // Try removing/adding + prefix
-                if (str_starts_with($login, '+')) {
-                    $phoneWithoutPlus = substr($login, 1);
+                if (str_starts_with($normalizedLogin, '+')) {
+                    $phoneWithoutPlus = substr($normalizedLogin, 1);
                     $user = User::withTrashed()->where('phone', $phoneWithoutPlus)->first();
                 } else {
-                    $phoneWithPlus = '+' . $login;
+                    $phoneWithPlus = '+' . $normalizedLogin;
                     $user = User::withTrashed()->where('phone', $phoneWithPlus)->first();
                 }
             }
 
             Log::info('Login attempt with phone', [
                 'phone' => $login,
+                'normalized_phone' => $normalizedLogin,
                 'user_found' => $user ? true : false
             ]);
         }
