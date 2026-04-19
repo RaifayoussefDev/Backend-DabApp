@@ -750,18 +750,25 @@ class AuthController extends Controller
             // Login is an email
             return User::where('email', $login)->first();
         } else {
-            // Login is a phone number - try with/without + prefix ONLY
+            // Normalize phone: remove trunk prefix 0 after country code (e.g. +2120xxx → +212xxx)
+            $countryName = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Morocco';
+            $normalizedLogin = \App\Helpers\CountryHelper::formatPhoneByCountryName($login, $countryName);
 
-            // First, try exact match
-            $user = User::where('phone', $login)->first();
+            // Try normalized phone first (new accounts)
+            $user = User::where('phone', $normalizedLogin)->first();
+
+            // Fallback: try original (old accounts stored with wrong format)
+            if (!$user && $normalizedLogin !== $login) {
+                $user = User::where('phone', $login)->first();
+            }
 
             if (!$user) {
                 // Try removing/adding + prefix (for database compatibility)
-                if (str_starts_with($login, '+')) {
-                    $phoneWithoutPlus = substr($login, 1);
+                if (str_starts_with($normalizedLogin, '+')) {
+                    $phoneWithoutPlus = substr($normalizedLogin, 1);
                     $user = User::where('phone', $phoneWithoutPlus)->first();
                 } else {
-                    $phoneWithPlus = '+' . $login;
+                    $phoneWithPlus = '+' . $normalizedLogin;
                     $user = User::where('phone', $phoneWithPlus)->first();
                 }
             }
