@@ -3184,6 +3184,69 @@
                 ]
             }
         },
+        "/api/admin/notify-unregistered": {
+            "post": {
+                "tags": [
+                    "Admin - Notifications"
+                ],
+                "summary": "Send WhatsApp notification to all unregistered users",
+                "description": "Sends a WhatsApp message to all users who have not completed their registration (is_registration_completed = 0). Requires admin authentication.",
+                "operationId": "926fa0b12c391e7ee61a645e0bfeccf7",
+                "responses": {
+                    "200": {
+                        "description": "Notification report",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total": {
+                                            "description": "Total users targeted",
+                                            "type": "integer",
+                                            "example": 45
+                                        },
+                                        "sent": {
+                                            "description": "Messages sent successfully",
+                                            "type": "integer",
+                                            "example": 42
+                                        },
+                                        "failed": {
+                                            "description": "Messages that failed",
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "failed_users": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "phone": {
+                                                        "type": "string",
+                                                        "example": "+212666123456"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Admin token required"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/banners": {
             "get": {
                 "tags": [
@@ -42098,6 +42161,10 @@
         {
             "name": "Authentification",
             "description": "Authentification"
+        },
+        {
+            "name": "Admin - Notifications",
+            "description": "Admin - Notifications"
         },
         {
             "name": "Banners",

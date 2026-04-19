@@ -212,6 +212,9 @@ Route::prefix('admin')->group(function () {
         Route::get('/me', [AuthAdminController::class, 'me']);
         Route::post('/logout', [AuthAdminController::class, 'logout']);
 
+        // Bulk notifications
+        Route::post('/notify-unregistered', [AuthController::class, 'notifyUnregisteredUsers']);
+
         // Profile Management
         Route::put('/user/update', [AuthAdminController::class, 'updateProfile']);
         Route::put('/user/two-factor-toggle', [AuthAdminController::class, 'toggleTwoFactor']);

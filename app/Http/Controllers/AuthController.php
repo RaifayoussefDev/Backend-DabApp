@@ -2588,4 +2588,91 @@ class AuthController extends Controller
             'language' => $user->language
         ]);
     }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/notify-unregistered",
+     *     summary="Send WhatsApp notification to all unregistered users",
+     *     description="Sends a WhatsApp message to all users who have not completed their registration (is_registration_completed = 0). Requires admin authentication.",
+     *     tags={"Admin - Notifications"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Notification report",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="integer", example=45, description="Total users targeted"),
+     *             @OA\Property(property="sent", type="integer", example=42, description="Messages sent successfully"),
+     *             @OA\Property(property="failed", type="integer", example=3, description="Messages that failed"),
+     *             @OA\Property(
+     *                 property="failed_users",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="user_id", type="integer", example=5),
+     *                     @OA\Property(property="phone", type="string", example="+212666123456")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized - Admin token required")
+     * )
+     */
+    public function notifyUnregisteredUsers(Request $request)
+    {
+        $users = User::where('is_registration_completed', false)
+            ->whereNotNull('phone')
+            ->where('phone', '!=', '')
+            ->get();
+
+        $message = "تم حل المشكلة التقنية في رمز التحقق (OTP) 🎉😅\nيمكنك الآن طلب رمز جديد وتسجيل الدخول بسهولة 🚀";
+
+        $sent = 0;
+        $failed = 0;
+        $failedUsers = [];
+
+        foreach ($users as $user) {
+            try {
+                $phoneNumber = $this->formatPhoneNumber($user->phone);
+
+                $payload = [
+                    'phonenumber' => '+' . $phoneNumber,
+                    'text' => $message,
+                ];
+
+                $response = Http::timeout(10)->withHeaders([
+                    'Authorization' => "Bearer {$this->whatsappApiToken}",
+                    'Content-Type' => 'application/json',
+                ])->post($this->whatsappApiUrl, $payload);
+
+                if ($response->successful()) {
+                    $sent++;
+                    Log::info('WhatsApp notification sent to unregistered user', [
+                        'user_id' => $user->id,
+                        'phone' => $user->phone,
+                    ]);
+                } else {
+                    $failed++;
+                    $failedUsers[] = ['user_id' => $user->id, 'phone' => $user->phone];
+                    Log::warning('WhatsApp notification failed for unregistered user', [
+                        'user_id' => $user->id,
+                        'phone' => $user->phone,
+                        'response' => $response->body(),
+                    ]);
+                }
+            } catch (\Exception $e) {
+                $failed++;
+                $failedUsers[] = ['user_id' => $user->id, 'phone' => $user->phone];
+                Log::error('Exception sending WhatsApp to unregistered user', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return response()->json([
+            'total' => $users->count(),
+            'sent' => $sent,
+            'failed' => $failed,
+            'failed_users' => $failedUsers,
+        ]);
+    }
 }
