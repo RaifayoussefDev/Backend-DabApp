@@ -2593,9 +2593,20 @@ class AuthController extends Controller
      * @OA\Post(
      *     path="/api/admin/notify-unregistered",
      *     summary="Send WhatsApp notification to all unregistered users",
-     *     description="Sends a WhatsApp message to all users who have not completed their registration (is_registration_completed = 0). Requires admin authentication.",
+     *     description="Sends a WhatsApp message to all users who have not completed their registration (is_registration_completed = 0). Pass exclude_ids to skip users who already received the message.",
      *     tags={"Admin - Notifications"},
      *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="exclude_ids",
+     *                 type="array",
+     *                 description="User IDs to skip (already received the message)",
+     *                 @OA\Items(type="integer", example=12)
+     *             )
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Notification report",
@@ -2618,9 +2629,12 @@ class AuthController extends Controller
      */
     public function notifyUnregisteredUsers(Request $request)
     {
+        $excludeIds = $request->input('exclude_ids', []);
+
         $users = User::where('is_registration_completed', false)
             ->whereNotNull('phone')
             ->where('phone', '!=', '')
+            ->when(!empty($excludeIds), fn($q) => $q->whereNotIn('id', $excludeIds))
             ->get();
 
         $message = "تم حل المشكلة التقنية في رمز التحقق (OTP) 🎉😅\nيمكنك الآن طلب رمز جديد وتسجيل الدخول بسهولة 🚀";

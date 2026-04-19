@@ -3190,8 +3190,28 @@
                     "Admin - Notifications"
                 ],
                 "summary": "Send WhatsApp notification to all unregistered users",
-                "description": "Sends a WhatsApp message to all users who have not completed their registration (is_registration_completed = 0). Requires admin authentication.",
+                "description": "Sends a WhatsApp message to all users who have not completed their registration (is_registration_completed = 0). Pass exclude_ids to skip users who already received the message.",
                 "operationId": "926fa0b12c391e7ee61a645e0bfeccf7",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "exclude_ids": {
+                                        "description": "User IDs to skip (already received the message)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer",
+                                            "example": 12
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Notification report",
