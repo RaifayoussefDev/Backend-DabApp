@@ -204,22 +204,34 @@ class AuthController extends Controller
                 ], 422);
             }
         } else {
-            // Vérifier si le téléphone existe déjà (pour un utilisateur vérifié)
-            $existingUserByPhone = User::where('phone', $formattedPhone)
-                ->where('verified', true)
-                ->first();
+            // Vérifier si le téléphone existe déjà (peu importe le statut d'inscription)
+            $existingUserByPhone = User::where('phone', $formattedPhone)->first();
 
             if ($existingUserByPhone) {
-                Log::warning('Phone number already exists with verified account', [
-                    'formatted_phone' => $formattedPhone,
-                    'existing_user_id' => $existingUserByPhone->id,
-                ]);
+                if ($existingUserByPhone->is_registration_completed) {
+                    // Phone utilisé par un compte complété → bloquer
+                    Log::warning('Phone number already exists with completed account', [
+                        'formatted_phone' => $formattedPhone,
+                        'existing_user_id' => $existingUserByPhone->id,
+                    ]);
 
-                return response()->json([
-                    'error' => 'Phone number already exists',
-                    'phone' => $formattedPhone,
-                    'message' => 'This phone number is already registered with a verified account'
-                ], 422);
+                    return response()->json([
+                        'error' => 'Phone number already exists',
+                        'phone' => $formattedPhone,
+                        'message' => 'This phone number is already registered with a verified account'
+                    ], 422);
+                } else {
+                    // Phone utilisé par un compte non complété avec un autre email → bloquer aussi
+                    Log::warning('Phone number already used by another unverified account', [
+                        'formatted_phone' => $formattedPhone,
+                        'existing_user_id' => $existingUserByPhone->id,
+                    ]);
+
+                    return response()->json([
+                        'error' => 'Phone number already in use',
+                        'message' => 'This phone number is already associated with another account'
+                    ], 422);
+                }
             }
 
             // Créer un NOUVEAU utilisateur non vérifié
@@ -2604,6 +2616,12 @@ class AuthController extends Controller
      *                 type="array",
      *                 description="User IDs to skip (already received the message)",
      *                 @OA\Items(type="integer", example=12)
+     *             ),
+     *             @OA\Property(
+     *                 property="include_ids",
+     *                 type="array",
+     *                 description="Send ONLY to these user IDs (overrides exclude_ids)",
+     *                 @OA\Items(type="integer", example=2441)
      *             )
      *         )
      *     ),
@@ -2629,12 +2647,16 @@ class AuthController extends Controller
      */
     public function notifyUnregisteredUsers(Request $request)
     {
+        $includeIds = $request->input('include_ids', []);
         $excludeIds = $request->input('exclude_ids', []);
 
-        $users = User::where('is_registration_completed', false)
-            ->whereNotNull('phone')
+        $users = User::whereNotNull('phone')
             ->where('phone', '!=', '')
-            ->when(!empty($excludeIds), fn($q) => $q->whereNotIn('id', $excludeIds))
+            ->when(!empty($includeIds),
+                fn($q) => $q->whereIn('id', $includeIds),
+                fn($q) => $q->where('is_registration_completed', false)
+                             ->when(!empty($excludeIds), fn($q2) => $q2->whereNotIn('id', $excludeIds))
+            )
             ->get();
 
         $message = "تم حل المشكلة التقنية في رمز التحقق (OTP) 🎉😅\nيمكنك الآن طلب رمز جديد وتسجيل الدخول بسهولة 🚀";
