@@ -56,6 +56,7 @@ class AdminExpertiseController extends AssistBaseController
      *         required=true,
      *         @OA\JsonContent(
      *             required={"name","icon"},
+     *             example={"name": "battery_jump", "icon": "battery_charging_full"},
      *             @OA\Property(property="name", type="string", example="battery_jump",
      *                 description="Unique slug name (snake_case). Available: tire_repair, fuel, mechanical, towing, first_aid, ev_support, battery_jump"),
      *             @OA\Property(property="icon", type="string", example="battery_charging_full",
@@ -108,6 +109,7 @@ class AdminExpertiseController extends AssistBaseController
      *     ),
      *     @OA\RequestBody(
      *         @OA\JsonContent(
+     *             example={"name": "battery_jump", "icon": "battery_charging_full"},
      *             @OA\Property(property="name", type="string", example="battery_jump"),
      *             @OA\Property(property="icon", type="string", example="battery_charging_full")
      *         )

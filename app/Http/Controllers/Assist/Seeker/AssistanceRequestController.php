@@ -85,6 +85,18 @@ class AssistanceRequestController extends AssistBaseController
      *         required=true,
      *         @OA\JsonContent(
      *             required={"expertise_type_ids","latitude","longitude","location_label"},
+     *             example={
+     *                 "expertise_type_ids": {1, 3},
+     *                 "latitude": 24.7140,
+     *                 "longitude": 46.6750,
+     *                 "location_label": "King Fahd Road, Riyadh – near Exit 7",
+     *                 "description": "My rear tire is completely flat. Stuck on the side of the road.",
+     *                 "motorcycle_id": 15,
+     *                 "photo_urls": {
+     *                     "https://cdn.example.com/uploads/photo1.jpg",
+     *                     "https://cdn.example.com/uploads/photo2.jpg"
+     *                 }
+     *             },
      *             @OA\Property(property="expertise_type_ids", type="array",
      *                 description="One or more expertise type IDs (from GET /api/assist/expertise-types)",
      *                 @OA\Items(type="integer"),
@@ -317,6 +329,7 @@ class AssistanceRequestController extends AssistBaseController
      *     ),
      *     @OA\RequestBody(
      *         @OA\JsonContent(
+     *             example={"cancel_reason": "I found help from a passing driver"},
      *             @OA\Property(property="cancel_reason", type="string", nullable=true,
      *                 example="I found help from a passing driver")
      *         )
@@ -382,6 +395,7 @@ class AssistanceRequestController extends AssistBaseController
      *         required=true,
      *         @OA\JsonContent(
      *             required={"stars"},
+     *             example={"stars": 5, "comment": "Super fast and professional, saved my day!"},
      *             @OA\Property(property="stars",   type="integer", minimum=1, maximum=5, example=5,
      *                 description="Rating from 1 (poor) to 5 (excellent)"),
      *             @OA\Property(property="comment", type="string", nullable=true,

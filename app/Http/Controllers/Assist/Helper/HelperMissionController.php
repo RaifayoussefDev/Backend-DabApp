@@ -37,6 +37,7 @@ class HelperMissionController extends AssistBaseController
      *         required=true,
      *         @OA\JsonContent(
      *             required={"status"},
+     *             example={"status": "en_route"},
      *             @OA\Property(property="status", type="string",
      *                 enum={"en_route","arrived","completed"},
      *                 example="en_route",

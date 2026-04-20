@@ -78,6 +78,13 @@ class HelperProfileController extends AssistBaseController
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
+     *             example={
+     *                 "service_radius_km": 20,
+     *                 "level": "standard",
+     *                 "expertise_ids": {1, 3},
+     *                 "country_id": 1,
+     *                 "city_id": 3
+     *             },
      *             @OA\Property(property="service_radius_km", type="integer", minimum=1, maximum=100, example=20,
      *                 description="Max km radius to receive requests"),
      *             @OA\Property(property="level", type="string",
@@ -149,6 +156,7 @@ class HelperProfileController extends AssistBaseController
      *         required=true,
      *         @OA\JsonContent(
      *             required={"latitude","longitude"},
+     *             example={"latitude": 24.7250, "longitude": 46.6800},
      *             @OA\Property(property="latitude",  type="number", format="float", example=24.7250,
      *                 description="Current latitude (-90 to 90)"),
      *             @OA\Property(property="longitude", type="number", format="float", example=46.6800,

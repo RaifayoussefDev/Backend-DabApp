@@ -16102,6 +16102,10 @@
                                     }
                                 },
                                 "type": "object"
+                            },
+                            "example": {
+                                "name": "battery_jump",
+                                "icon": "battery_charging_full"
                             }
                         }
                     }
@@ -16231,6 +16235,10 @@
                                     }
                                 },
                                 "type": "object"
+                            },
+                            "example": {
+                                "name": "battery_jump",
+                                "icon": "battery_charging_full"
                             }
                         }
                     }
