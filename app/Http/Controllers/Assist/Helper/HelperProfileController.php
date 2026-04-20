@@ -79,14 +79,21 @@ class HelperProfileController extends AssistBaseController
      *         required=true,
      *         @OA\JsonContent(
      *             example={
-     *                 "service_radius_km": 20,
+     *                 "service_radius_km": 25,
      *                 "level": "standard",
      *                 "expertise_ids": {1, 3},
      *                 "country_id": 1,
-     *                 "city_id": 3
+     *                 "city_id": 3,
+     *                 "terms_accepted": true,
+     *                 "notify_push": true,
+     *                 "notify_whatsapp": false,
+     *                 "notify_email": false,
+     *                 "instagram_url": "https://instagram.com/ahmed_helper",
+     *                 "facebook_url": "https://facebook.com/ahmed.helper",
+     *                 "linkedin_url": "https://linkedin.com/in/ahmed-helper"
      *             },
-     *             @OA\Property(property="service_radius_km", type="integer", minimum=1, maximum=100, example=20,
-     *                 description="Max km radius to receive requests"),
+     *             @OA\Property(property="service_radius_km", type="integer", minimum=1, maximum=100, example=25,
+     *                 description="Max km radius to receive requests (slider 5–100 km)"),
      *             @OA\Property(property="level", type="string",
      *                 enum={"standard","elite","vanguard"}, example="standard",
      *                 description="standard = basic helper | elite = experienced | vanguard = top-rated expert"),
@@ -95,8 +102,25 @@ class HelperProfileController extends AssistBaseController
      *                 @OA\Items(type="integer"),
      *                 example={1, 3}
      *             ),
-     *             @OA\Property(property="country_id", type="integer", nullable=true, example=1),
-     *             @OA\Property(property="city_id",    type="integer", nullable=true, example=3)
+     *             @OA\Property(property="country_id",      type="integer", nullable=true, example=1),
+     *             @OA\Property(property="city_id",         type="integer", nullable=true, example=3),
+     *             @OA\Property(property="terms_accepted",  type="boolean", example=true,
+     *                 description="Must be true on first registration. Stores the acceptance timestamp server-side."),
+     *             @OA\Property(property="notify_push",     type="boolean", example=true,
+     *                 description="Receive push notifications for new requests"),
+     *             @OA\Property(property="notify_whatsapp", type="boolean", example=false,
+     *                 description="Receive WhatsApp notifications for new requests"),
+     *             @OA\Property(property="notify_email",    type="boolean", example=false,
+     *                 description="Receive email notifications for new requests"),
+     *             @OA\Property(property="instagram_url",   type="string", nullable=true, format="url",
+     *                 example="https://instagram.com/ahmed_helper",
+     *                 description="Instagram profile URL to verify expertise"),
+     *             @OA\Property(property="facebook_url",    type="string", nullable=true, format="url",
+     *                 example="https://facebook.com/ahmed.helper",
+     *                 description="Facebook profile URL to verify expertise"),
+     *             @OA\Property(property="linkedin_url",    type="string", nullable=true, format="url",
+     *                 example="https://linkedin.com/in/ahmed-helper",
+     *                 description="LinkedIn profile URL to verify expertise")
      *         )
      *     ),
      *     @OA\Response(
@@ -111,13 +135,23 @@ class HelperProfileController extends AssistBaseController
      *                 @OA\Property(property="is_available",      type="boolean", example=false),
      *                 @OA\Property(property="is_verified",       type="boolean", example=false,
      *                     description="Verification is set by admin only"),
-     *                 @OA\Property(property="service_radius_km", type="integer", example=20),
-     *                 @OA\Property(property="level",             type="string",  example="standard"),
+     *                 @OA\Property(property="service_radius_km",  type="integer", example=25),
+     *                 @OA\Property(property="level",              type="string",  example="standard"),
+     *                 @OA\Property(property="terms_accepted_at",  type="string",  format="date-time", nullable=true,
+     *                     example="2026-04-20T10:00:00.000000Z"),
+     *                 @OA\Property(property="notify_push",        type="boolean", example=true),
+     *                 @OA\Property(property="notify_whatsapp",    type="boolean", example=false),
+     *                 @OA\Property(property="notify_email",       type="boolean", example=false),
+     *                 @OA\Property(property="instagram_url",      type="string",  nullable=true, example="https://instagram.com/ahmed_helper"),
+     *                 @OA\Property(property="facebook_url",       type="string",  nullable=true, example="https://facebook.com/ahmed.helper"),
+     *                 @OA\Property(property="linkedin_url",       type="string",  nullable=true, example="https://linkedin.com/in/ahmed-helper"),
      *                 @OA\Property(property="expertise_types", type="array",
      *                     @OA\Items(type="object",
-     *                         @OA\Property(property="id",   type="integer", example=1),
-     *                         @OA\Property(property="name", type="string",  example="tire_repair"),
-     *                         @OA\Property(property="icon", type="string",  example="tire_repair")
+     *                         @OA\Property(property="id",      type="integer", example=1),
+     *                         @OA\Property(property="name",    type="string",  example="tire_repair"),
+     *                         @OA\Property(property="name_en", type="string",  example="Tire Repair"),
+     *                         @OA\Property(property="name_ar", type="string",  example="إصلاح الإطارات"),
+     *                         @OA\Property(property="icon",    type="string",  example="tire_repair")
      *                     )
      *                 )
      *             )
@@ -134,7 +168,22 @@ class HelperProfileController extends AssistBaseController
             ['is_available' => false, 'is_verified' => false]
         );
 
-        $profile->update($request->only(['service_radius_km', 'level', 'country_id', 'city_id']));
+        // Accept terms & conditions (only store once — cannot be un-accepted)
+        if ($request->boolean('terms_accepted') && !$profile->terms_accepted_at) {
+            $profile->terms_accepted_at = now();
+        }
+
+        $profile->update(
+            array_filter(
+                $request->only([
+                    'service_radius_km', 'level', 'country_id', 'city_id',
+                    'terms_accepted_at',
+                    'notify_push', 'notify_whatsapp', 'notify_email',
+                    'instagram_url', 'facebook_url', 'linkedin_url',
+                ]),
+                fn($v) => !is_null($v)
+            )
+        );
 
         if ($request->has('expertise_ids')) {
             $profile->expertiseTypes()->sync($request->expertise_ids);

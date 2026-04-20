@@ -12,8 +12,10 @@ class CreateExpertiseTypeRequest extends AssistFormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:100', 'unique:expertise_types,name'],
-            'icon' => ['required', 'string', 'max:100'],
+            'name'    => ['required', 'string', 'max:100', 'unique:expertise_types,name'],
+            'name_en' => ['required', 'string', 'max:100'],
+            'name_ar' => ['required', 'string', 'max:100'],
+            'icon'    => ['required', 'string', 'max:100'],
         ];
     }
 }

@@ -18,6 +18,15 @@ class UpdateHelperProfileRequest extends AssistFormRequest
             'expertise_ids.*'   => ['numeric', 'exists:expertise_types,id'],
             'country_id'        => ['nullable', 'numeric', 'exists:countries,id'],
             'city_id'           => ['nullable', 'numeric', 'exists:cities,id'],
+            'terms_accepted'    => ['nullable', 'boolean'],
+            // Notification preferences
+            'notify_push'       => ['nullable', 'boolean'],
+            'notify_whatsapp'   => ['nullable', 'boolean'],
+            'notify_email'      => ['nullable', 'boolean'],
+            // Verification / social links
+            'instagram_url'     => ['nullable', 'url', 'max:500'],
+            'facebook_url'      => ['nullable', 'url', 'max:500'],
+            'linkedin_url'      => ['nullable', 'url', 'max:500'],
         ];
     }
 }

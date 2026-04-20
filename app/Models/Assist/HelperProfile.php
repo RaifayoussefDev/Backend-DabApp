@@ -25,8 +25,19 @@ use App\Models\City;
  *     @OA\Property(property="level", type="string", enum={"standard","elite","vanguard"}, example="standard"),
  *     @OA\Property(property="latitude", type="number", format="float", example=24.7136),
  *     @OA\Property(property="longitude", type="number", format="float", example=46.6753),
- *     @OA\Property(property="country_id", type="integer", nullable=true, example=1),
- *     @OA\Property(property="city_id", type="integer", nullable=true, example=3),
+ *     @OA\Property(property="country_id",        type="integer", nullable=true, example=1),
+ *     @OA\Property(property="city_id",           type="integer", nullable=true, example=3),
+ *     @OA\Property(property="terms_accepted_at", type="string",  format="date-time", nullable=true,
+ *         description="Timestamp when the helper accepted the terms and conditions. Null if not yet accepted."),
+ *     @OA\Property(property="notify_push",       type="boolean", example=true,
+ *         description="Receive push notifications for new requests"),
+ *     @OA\Property(property="notify_whatsapp",   type="boolean", example=false,
+ *         description="Receive WhatsApp notifications for new requests"),
+ *     @OA\Property(property="notify_email",      type="boolean", example=false,
+ *         description="Receive email notifications for new requests"),
+ *     @OA\Property(property="instagram_url",     type="string",  nullable=true, example="https://instagram.com/ahmed_helper"),
+ *     @OA\Property(property="facebook_url",      type="string",  nullable=true, example="https://facebook.com/ahmed.helper"),
+ *     @OA\Property(property="linkedin_url",      type="string",  nullable=true, example="https://linkedin.com/in/ahmed-helper"),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
  *     @OA\Property(property="updated_at", type="string", format="date-time")
  * )
@@ -47,16 +58,27 @@ class HelperProfile extends Model
         'longitude',
         'country_id',
         'city_id',
+        'terms_accepted_at',
+        'notify_push',
+        'notify_whatsapp',
+        'notify_email',
+        'instagram_url',
+        'facebook_url',
+        'linkedin_url',
     ];
 
     protected $casts = [
         'is_available'      => 'boolean',
         'is_verified'       => 'boolean',
+        'notify_push'       => 'boolean',
+        'notify_whatsapp'   => 'boolean',
+        'notify_email'      => 'boolean',
         'rating'            => 'decimal:2',
         'latitude'          => 'decimal:7',
         'longitude'         => 'decimal:7',
         'total_assists'     => 'integer',
         'service_radius_km' => 'integer',
+        'terms_accepted_at' => 'datetime',
     ];
 
     // ── Relations ────────────────────────────────────────────────────────────

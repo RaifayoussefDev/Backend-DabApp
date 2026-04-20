@@ -31,9 +31,11 @@ class AdminExpertiseController extends AssistBaseController
      *             @OA\Property(property="message", type="string", example="Success"),
      *             @OA\Property(property="data", type="array",
      *                 @OA\Items(
-     *                     @OA\Property(property="id",   type="integer", example=1),
-     *                     @OA\Property(property="name", type="string",  example="tire_repair"),
-     *                     @OA\Property(property="icon", type="string",  example="tire_repair")
+     *                     @OA\Property(property="id",      type="integer", example=1),
+     *                     @OA\Property(property="name",    type="string",  example="tire_repair"),
+     *                     @OA\Property(property="name_en", type="string",  example="Tire Repair"),
+     *                     @OA\Property(property="name_ar", type="string",  example="إصلاح الإطارات"),
+     *                     @OA\Property(property="icon",    type="string",  example="tire_repair")
      *                 )
      *             )
      *         )
@@ -55,11 +57,15 @@ class AdminExpertiseController extends AssistBaseController
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name","icon"},
-     *             example={"name": "battery_jump", "icon": "battery_charging_full"},
-     *             @OA\Property(property="name", type="string", example="battery_jump",
-     *                 description="Unique slug name (snake_case). Available: tire_repair, fuel, mechanical, towing, first_aid, ev_support, battery_jump"),
-     *             @OA\Property(property="icon", type="string", example="battery_charging_full",
+     *             required={"name","name_en","name_ar","icon"},
+     *             example={"name": "battery_jump", "name_en": "Battery Jump Start", "name_ar": "تشغيل البطارية", "icon": "battery_charging_full"},
+     *             @OA\Property(property="name",    type="string", example="battery_jump",
+     *                 description="Unique slug (snake_case). Available: tire_repair, fuel, mechanical, towing, first_aid, ev_support, battery_jump"),
+     *             @OA\Property(property="name_en", type="string", example="Battery Jump Start",
+     *                 description="Human-readable English label"),
+     *             @OA\Property(property="name_ar", type="string", example="تشغيل البطارية",
+     *                 description="Human-readable Arabic label"),
+     *             @OA\Property(property="icon",    type="string", example="battery_charging_full",
      *                 description="Material Design icon name")
      *         )
      *     ),
@@ -68,11 +74,13 @@ class AdminExpertiseController extends AssistBaseController
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expertise type created."),
      *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="id",         type="integer", example=7),
-     *                 @OA\Property(property="name",       type="string",  example="battery_jump"),
-     *                 @OA\Property(property="icon",       type="string",  example="battery_charging_full"),
-     *                 @OA\Property(property="created_at", type="string",  format="date-time", example="2026-04-15T10:00:00.000000Z"),
-     *                 @OA\Property(property="updated_at", type="string",  format="date-time", example="2026-04-15T10:00:00.000000Z")
+     *                 @OA\Property(property="id",      type="integer", example=7),
+     *                 @OA\Property(property="name",    type="string",  example="battery_jump"),
+     *                 @OA\Property(property="name_en", type="string",  example="Battery Jump Start"),
+     *                 @OA\Property(property="name_ar", type="string",  example="تشغيل البطارية"),
+     *                 @OA\Property(property="icon",    type="string",  example="battery_charging_full"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-04-20T10:00:00.000000Z"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2026-04-20T10:00:00.000000Z")
      *             )
      *         )
      *     ),
@@ -109,9 +117,11 @@ class AdminExpertiseController extends AssistBaseController
      *     ),
      *     @OA\RequestBody(
      *         @OA\JsonContent(
-     *             example={"name": "battery_jump", "icon": "battery_charging_full"},
-     *             @OA\Property(property="name", type="string", example="battery_jump"),
-     *             @OA\Property(property="icon", type="string", example="battery_charging_full")
+     *             example={"name": "battery_jump", "name_en": "Battery Jump Start", "name_ar": "تشغيل البطارية", "icon": "battery_charging_full"},
+     *             @OA\Property(property="name",    type="string", example="battery_jump"),
+     *             @OA\Property(property="name_en", type="string", example="Battery Jump Start"),
+     *             @OA\Property(property="name_ar", type="string", example="تشغيل البطارية"),
+     *             @OA\Property(property="icon",    type="string", example="battery_charging_full")
      *         )
      *     ),
      *     @OA\Response(response=200, description="Updated",
@@ -119,9 +129,11 @@ class AdminExpertiseController extends AssistBaseController
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Expertise type updated."),
      *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="id",   type="integer", example=1),
-     *                 @OA\Property(property="name", type="string",  example="battery_jump"),
-     *                 @OA\Property(property="icon", type="string",  example="battery_charging_full")
+     *                 @OA\Property(property="id",      type="integer", example=1),
+     *                 @OA\Property(property="name",    type="string",  example="battery_jump"),
+     *                 @OA\Property(property="name_en", type="string",  example="Battery Jump Start"),
+     *                 @OA\Property(property="name_ar", type="string",  example="تشغيل البطارية"),
+     *                 @OA\Property(property="icon",    type="string",  example="battery_charging_full")
      *             )
      *         )
      *     ),

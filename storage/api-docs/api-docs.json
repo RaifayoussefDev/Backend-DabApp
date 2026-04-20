@@ -928,11 +928,11 @@
                             "schema": {
                                 "properties": {
                                     "service_radius_km": {
-                                        "description": "Max km radius to receive requests",
+                                        "description": "Max km radius to receive requests (slider 5–100 km)",
                                         "type": "integer",
                                         "maximum": 100,
                                         "minimum": 1,
-                                        "example": 20
+                                        "example": 25
                                     },
                                     "level": {
                                         "description": "standard = basic helper | elite = experienced | vanguard = top-rated expert",
@@ -964,19 +964,67 @@
                                         "type": "integer",
                                         "example": 3,
                                         "nullable": true
+                                    },
+                                    "terms_accepted": {
+                                        "description": "Must be true on first registration. Stores the acceptance timestamp server-side.",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "notify_push": {
+                                        "description": "Receive push notifications for new requests",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "notify_whatsapp": {
+                                        "description": "Receive WhatsApp notifications for new requests",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "notify_email": {
+                                        "description": "Receive email notifications for new requests",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "instagram_url": {
+                                        "description": "Instagram profile URL to verify expertise",
+                                        "type": "string",
+                                        "format": "url",
+                                        "example": "https://instagram.com/ahmed_helper",
+                                        "nullable": true
+                                    },
+                                    "facebook_url": {
+                                        "description": "Facebook profile URL to verify expertise",
+                                        "type": "string",
+                                        "format": "url",
+                                        "example": "https://facebook.com/ahmed.helper",
+                                        "nullable": true
+                                    },
+                                    "linkedin_url": {
+                                        "description": "LinkedIn profile URL to verify expertise",
+                                        "type": "string",
+                                        "format": "url",
+                                        "example": "https://linkedin.com/in/ahmed-helper",
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
                             },
                             "example": {
-                                "service_radius_km": 20,
+                                "service_radius_km": 25,
                                 "level": "standard",
                                 "expertise_ids": [
                                     1,
                                     3
                                 ],
                                 "country_id": 1,
-                                "city_id": 3
+                                "city_id": 3,
+                                "terms_accepted": true,
+                                "notify_push": true,
+                                "notify_whatsapp": false,
+                                "notify_email": false,
+                                "instagram_url": "https://instagram.com/ahmed_helper",
+                                "facebook_url": "https://facebook.com/ahmed.helper",
+                                "linkedin_url": "https://linkedin.com/in/ahmed-helper"
                             }
                         }
                     }
@@ -1017,11 +1065,44 @@
                                                 },
                                                 "service_radius_km": {
                                                     "type": "integer",
-                                                    "example": 20
+                                                    "example": 25
                                                 },
                                                 "level": {
                                                     "type": "string",
                                                     "example": "standard"
+                                                },
+                                                "terms_accepted_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-04-20T10:00:00.000000Z",
+                                                    "nullable": true
+                                                },
+                                                "notify_push": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "notify_whatsapp": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "notify_email": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "instagram_url": {
+                                                    "type": "string",
+                                                    "example": "https://instagram.com/ahmed_helper",
+                                                    "nullable": true
+                                                },
+                                                "facebook_url": {
+                                                    "type": "string",
+                                                    "example": "https://facebook.com/ahmed.helper",
+                                                    "nullable": true
+                                                },
+                                                "linkedin_url": {
+                                                    "type": "string",
+                                                    "example": "https://linkedin.com/in/ahmed-helper",
+                                                    "nullable": true
                                                 },
                                                 "expertise_types": {
                                                     "type": "array",
@@ -1034,6 +1115,14 @@
                                                             "name": {
                                                                 "type": "string",
                                                                 "example": "tire_repair"
+                                                            },
+                                                            "name_en": {
+                                                                "type": "string",
+                                                                "example": "Tire Repair"
+                                                            },
+                                                            "name_ar": {
+                                                                "type": "string",
+                                                                "example": "إصلاح الإطارات"
                                                             },
                                                             "icon": {
                                                                 "type": "string",
@@ -40680,8 +40769,19 @@
                         "example": 1
                     },
                     "name": {
+                        "description": "Unique slug used internally",
                         "type": "string",
                         "example": "tire_repair"
+                    },
+                    "name_en": {
+                        "description": "Human-readable English label",
+                        "type": "string",
+                        "example": "Tire Repair"
+                    },
+                    "name_ar": {
+                        "description": "Human-readable Arabic label",
+                        "type": "string",
+                        "example": "إصلاح الإطارات"
                     },
                     "icon": {
                         "type": "string",
@@ -40758,6 +40858,42 @@
                     "city_id": {
                         "type": "integer",
                         "example": 3,
+                        "nullable": true
+                    },
+                    "terms_accepted_at": {
+                        "description": "Timestamp when the helper accepted the terms and conditions. Null if not yet accepted.",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "notify_push": {
+                        "description": "Receive push notifications for new requests",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "notify_whatsapp": {
+                        "description": "Receive WhatsApp notifications for new requests",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "notify_email": {
+                        "description": "Receive email notifications for new requests",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "instagram_url": {
+                        "type": "string",
+                        "example": "https://instagram.com/ahmed_helper",
+                        "nullable": true
+                    },
+                    "facebook_url": {
+                        "type": "string",
+                        "example": "https://facebook.com/ahmed.helper",
+                        "nullable": true
+                    },
+                    "linkedin_url": {
+                        "type": "string",
+                        "example": "https://linkedin.com/in/ahmed-helper",
                         "nullable": true
                     },
                     "created_at": {
