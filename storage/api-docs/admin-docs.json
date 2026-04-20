@@ -16404,13 +16404,18 @@
                 "operationId": "b2af6ff4641211b9669fa60cd1b3f045",
                 "parameters": [
                     {
-                        "name": "is_verified",
+                        "name": "status",
                         "in": "query",
-                        "description": "Filter by verification status",
+                        "description": "Filter by approval status",
                         "required": false,
                         "schema": {
-                            "type": "boolean",
-                            "example": true
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "accepted",
+                                "rejected"
+                            ],
+                            "example": "pending"
                         }
                     },
                     {
@@ -16560,13 +16565,13 @@
                 ]
             }
         },
-        "/api/assist/admin/helpers/{id}/verify": {
+        "/api/assist/admin/helpers/{id}/status": {
             "patch": {
                 "tags": [
                     "Assist - Admin Helpers"
                 ],
-                "summary": "Toggle helper verification status",
-                "operationId": "1c1fc2056c862c558a80e2e2b7864aeb",
+                "summary": "Update helper approval status (pending / accepted / rejected)",
+                "operationId": "027b7ca5fbb6b03a43b231a0e441a924",
                 "parameters": [
                     {
                         "name": "id",
@@ -16579,9 +16584,33 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "accepted",
+                                            "rejected"
+                                        ],
+                                        "example": "accepted"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Verification status toggled",
+                        "description": "Status updated",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -16592,13 +16621,13 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Helper verified successfully."
+                                            "example": "Helper accepted successfully."
                                         },
                                         "data": {
                                             "properties": {
-                                                "is_verified": {
-                                                    "type": "boolean",
-                                                    "example": true
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "accepted"
                                                 }
                                             },
                                             "type": "object"
@@ -16611,6 +16640,9 @@
                     },
                     "404": {
                         "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 },
                 "security": [
@@ -25306,7 +25338,17 @@
                         "type": "boolean",
                         "example": true
                     },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "accepted",
+                            "rejected"
+                        ],
+                        "example": "pending"
+                    },
                     "is_verified": {
+                        "description": "True only when status is accepted",
                         "type": "boolean",
                         "example": false
                     },

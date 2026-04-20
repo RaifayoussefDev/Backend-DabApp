@@ -34,7 +34,7 @@ class HelperProfileController extends AssistBaseController
      *                 @OA\Property(property="id",                type="integer", example=1),
      *                 @OA\Property(property="user_id",           type="integer", example=65),
      *                 @OA\Property(property="is_available",      type="boolean", example=true),
-     *                 @OA\Property(property="is_verified",       type="boolean", example=true),
+     *                 @OA\Property(property="status",            type="string",  enum={"pending","accepted","rejected"}, example="accepted"),
      *                 @OA\Property(property="rating",            type="number",  format="float", example=4.80),
      *                 @OA\Property(property="total_assists",     type="integer", example=23),
      *                 @OA\Property(property="service_radius_km", type="integer", example=20),
@@ -133,8 +133,8 @@ class HelperProfileController extends AssistBaseController
      *                 @OA\Property(property="id",                type="integer", example=1),
      *                 @OA\Property(property="user_id",           type="integer", example=65),
      *                 @OA\Property(property="is_available",      type="boolean", example=false),
-     *                 @OA\Property(property="is_verified",       type="boolean", example=false,
-     *                     description="Verification is set by admin only"),
+     *                 @OA\Property(property="status",            type="string",  enum={"pending","accepted","rejected"}, example="pending",
+     *                     description="Approval status set by admin only"),
      *                 @OA\Property(property="service_radius_km",  type="integer", example=25),
      *                 @OA\Property(property="level",              type="string",  example="standard"),
      *                 @OA\Property(property="terms_accepted_at",  type="string",  format="date-time", nullable=true,
@@ -165,7 +165,7 @@ class HelperProfileController extends AssistBaseController
     {
         $profile = HelperProfile::firstOrCreate(
             ['user_id' => Auth::id()],
-            ['is_available' => false, 'is_verified' => false]
+            ['is_available' => false, 'status' => 'pending']
         );
 
         // Accept terms & conditions (only store once — cannot be un-accepted)
@@ -278,7 +278,7 @@ class HelperProfileController extends AssistBaseController
         }
 
         if (!$profile->is_verified) {
-            return $this->error('Your profile must be verified before going online.', 403);
+            return $this->error('Your profile must be accepted by an admin before going online.', 403);
         }
 
         $profile->update(['is_available' => !$profile->is_available]);

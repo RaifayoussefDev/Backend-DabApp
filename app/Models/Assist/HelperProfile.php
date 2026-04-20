@@ -18,7 +18,8 @@ use App\Models\City;
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="user_id", type="integer", example=1),
  *     @OA\Property(property="is_available", type="boolean", example=true),
- *     @OA\Property(property="is_verified", type="boolean", example=false),
+ *     @OA\Property(property="status", type="string", enum={"pending","accepted","rejected"}, example="pending"),
+ *     @OA\Property(property="is_verified", type="boolean", example=false, description="True only when status is accepted"),
  *     @OA\Property(property="rating", type="number", format="float", example=4.75),
  *     @OA\Property(property="total_assists", type="integer", example=12),
  *     @OA\Property(property="service_radius_km", type="integer", example=15),
@@ -49,7 +50,7 @@ class HelperProfile extends Model
     protected $fillable = [
         'user_id',
         'is_available',
-        'is_verified',
+        'status',
         'rating',
         'total_assists',
         'service_radius_km',
@@ -68,8 +69,7 @@ class HelperProfile extends Model
     ];
 
     protected $casts = [
-        'is_available'      => 'boolean',
-        'is_verified'       => 'boolean',
+        'is_available' => 'boolean',
         'notify_push'       => 'boolean',
         'notify_whatsapp'   => 'boolean',
         'notify_email'      => 'boolean',
@@ -80,6 +80,18 @@ class HelperProfile extends Model
         'service_radius_km' => 'integer',
         'terms_accepted_at' => 'datetime',
     ];
+
+    // ── Accessors ────────────────────────────────────────────────────────────
+
+    /**
+     * is_verified is derived from status — true only when admin has accepted the helper.
+     */
+    public function getIsVerifiedAttribute(): bool
+    {
+        return $this->status === 'accepted';
+    }
+
+    protected $appends = ['is_verified'];
 
     // ── Relations ────────────────────────────────────────────────────────────
 
@@ -117,7 +129,7 @@ class HelperProfile extends Model
 
     public function scopeAvailable($query)
     {
-        return $query->where('is_available', true)->where('is_verified', true);
+        return $query->where('is_available', true)->where('status', 'accepted');
     }
 
     /**

@@ -21,9 +21,9 @@ class AdminHelperController extends AssistBaseController
      *     summary="List all helper profiles with optional filters",
      *     tags={"Assist - Admin Helpers"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="is_verified", in="query", required=false,
-     *         description="Filter by verification status",
-     *         @OA\Schema(type="boolean", example=true)
+     *     @OA\Parameter(name="status", in="query", required=false,
+     *         description="Filter by approval status",
+     *         @OA\Schema(type="string", enum={"pending","accepted","rejected"}, example="pending")
      *     ),
      *     @OA\Parameter(name="is_available", in="query", required=false,
      *         description="Filter by availability",
@@ -62,8 +62,8 @@ class AdminHelperController extends AssistBaseController
     {
         $query = HelperProfile::with(['user:id,first_name,last_name,email,phone', 'expertiseTypes']);
 
-        if ($request->filled('is_verified')) {
-            $query->where('is_verified', filter_var($request->is_verified, FILTER_VALIDATE_BOOLEAN));
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
 
         if ($request->filled('is_available')) {
@@ -120,38 +120,55 @@ class AdminHelperController extends AssistBaseController
 
     /**
      * @OA\Patch(
-     *     path="/api/assist/admin/helpers/{id}/verify",
-     *     summary="Toggle helper verification status",
+     *     path="/api/assist/admin/helpers/{id}/status",
+     *     summary="Update helper approval status (pending / accepted / rejected)",
      *     tags={"Assist - Admin Helpers"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true,
      *         description="HelperProfile ID",
      *         @OA\Schema(type="integer", example=2)
      *     ),
-     *     @OA\Response(response=200, description="Verification status toggled",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"status"},
+     *             @OA\Property(property="status", type="string",
+     *                 enum={"pending","accepted","rejected"}, example="accepted")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Status updated",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Helper verified successfully."),
+     *             @OA\Property(property="message", type="string", example="Helper accepted successfully."),
      *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="is_verified", type="boolean", example=true)
+     *                 @OA\Property(property="status", type="string", example="accepted")
      *             )
      *         )
      *     ),
-     *     @OA\Response(response=404, description="Not found")
+     *     @OA\Response(response=404, description="Not found"),
+     *     @OA\Response(response=422, description="Validation error")
      * )
      */
-    public function verify(string $id): JsonResponse
+    public function updateStatus(Request $request, string $id): JsonResponse
     {
+        $request->validate([
+            'status' => 'required|in:pending,accepted,rejected',
+        ]);
+
         $helper = HelperProfile::find($id);
 
         if (!$helper) {
             return $this->error('Helper profile not found.', 404);
         }
 
-        $helper->update(['is_verified' => !$helper->is_verified]);
+        $helper->update(['status' => $request->status]);
 
-        $msg = $helper->is_verified ? 'Helper verified successfully.' : 'Helper verification revoked.';
+        $messages = [
+            'pending'  => 'Helper status set to pending.',
+            'accepted' => 'Helper accepted successfully.',
+            'rejected' => 'Helper rejected successfully.',
+        ];
 
-        return $this->success(['is_verified' => $helper->is_verified], $msg);
+        return $this->success(['status' => $helper->status], $messages[$helper->status]);
     }
 }

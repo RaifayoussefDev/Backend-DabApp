@@ -1922,7 +1922,7 @@ Route::prefix('assist')->middleware('auth:api')->group(function () {
     Route::prefix('admin')->middleware('auth.admin')->group(function () {
         Route::get('helpers',                  [AdminHelperController::class,      'index']);
         Route::get('helpers/{id}',             [AdminHelperController::class,      'show']);
-        Route::patch('helpers/{id}/verify',    [AdminHelperController::class,      'verify']);
+        Route::patch('helpers/{id}/status',    [AdminHelperController::class,      'updateStatus']);
         Route::get('expertise-types',          [AdminExpertiseController::class,   'index']);
         Route::post('expertise-types',         [AdminExpertiseController::class,   'store']);
         Route::put('expertise-types/{id}',     [AdminExpertiseController::class,   'update']);

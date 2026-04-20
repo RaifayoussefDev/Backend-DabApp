@@ -834,9 +834,14 @@
                                                     "type": "boolean",
                                                     "example": true
                                                 },
-                                                "is_verified": {
-                                                    "type": "boolean",
-                                                    "example": true
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "pending",
+                                                        "accepted",
+                                                        "rejected"
+                                                    ],
+                                                    "example": "accepted"
                                                 },
                                                 "rating": {
                                                     "type": "number",
@@ -1058,10 +1063,15 @@
                                                     "type": "boolean",
                                                     "example": false
                                                 },
-                                                "is_verified": {
-                                                    "description": "Verification is set by admin only",
-                                                    "type": "boolean",
-                                                    "example": false
+                                                "status": {
+                                                    "description": "Approval status set by admin only",
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "pending",
+                                                        "accepted",
+                                                        "rejected"
+                                                    ],
+                                                    "example": "pending"
                                                 },
                                                 "service_radius_km": {
                                                     "type": "integer",
@@ -40902,7 +40912,17 @@
                         "type": "boolean",
                         "example": true
                     },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "accepted",
+                            "rejected"
+                        ],
+                        "example": "pending"
+                    },
                     "is_verified": {
+                        "description": "True only when status is accepted",
                         "type": "boolean",
                         "example": false
                     },
