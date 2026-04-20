@@ -1259,7 +1259,32 @@ class AuthController extends Controller
      *     security={{"bearerAuth": {}}},
      *     @OA\Response(
      *         response=200,
-     *         description="User information retrieved successfully"
+     *         description="User information retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="user", type="object", description="Full user object with relations"),
+     *             @OA\Property(property="helper", type="object",
+     *                 description="Helper profile summary. `is_helper: false` if the user has not registered as a helper.",
+     *                 @OA\Property(property="is_helper",         type="boolean", example=true),
+     *                 @OA\Property(property="is_verified",       type="boolean", example=false,
+     *                     description="Set by admin after reviewing the profile"),
+     *                 @OA\Property(property="is_available",      type="boolean", example=false),
+     *                 @OA\Property(property="level",             type="string",  enum={"standard","elite","vanguard"}, example="standard"),
+     *                 @OA\Property(property="rating",            type="number",  format="float", example=4.80),
+     *                 @OA\Property(property="total_assists",     type="integer", example=12),
+     *                 @OA\Property(property="service_radius_km", type="integer", example=25),
+     *                 @OA\Property(property="terms_accepted_at", type="string",  format="date-time", nullable=true,
+     *                     example="2026-04-20T10:00:00.000000Z"),
+     *                 @OA\Property(property="expertise_types", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",      type="integer", example=1),
+     *                         @OA\Property(property="name",    type="string",  example="tire_repair"),
+     *                         @OA\Property(property="name_en", type="string",  example="Tire Repair"),
+     *                         @OA\Property(property="name_ar", type="string",  example="إصلاح الإطارات"),
+     *                         @OA\Property(property="icon",    type="string",  example="tire_repair")
+     *                     )
+     *                 )
+     *             )
+     *         )
      *     )
      * )
      */
@@ -1293,8 +1318,35 @@ class AuthController extends Controller
             }
         }
 
+        // Helper profile summary
+        $helperProfile = \App\Models\Assist\HelperProfile::where('user_id', $user->id)
+            ->with('expertiseTypes')
+            ->first();
+
+        $helperData = null;
+        if ($helperProfile) {
+            $helperData = [
+                'is_helper'         => true,
+                'is_verified'       => $helperProfile->is_verified,
+                'is_available'      => $helperProfile->is_available,
+                'level'             => $helperProfile->level,
+                'rating'            => $helperProfile->rating,
+                'total_assists'     => $helperProfile->total_assists,
+                'service_radius_km' => $helperProfile->service_radius_km,
+                'terms_accepted_at' => $helperProfile->terms_accepted_at,
+                'expertise_types'   => $helperProfile->expertiseTypes->map(fn($e) => [
+                    'id'      => $e->id,
+                    'name'    => $e->name,
+                    'name_en' => $e->name_en,
+                    'name_ar' => $e->name_ar,
+                    'icon'    => $e->icon,
+                ]),
+            ];
+        }
+
         return response()->json([
-            'user' => $userWithData
+            'user'   => $userWithData,
+            'helper' => $helperData ?? ['is_helper' => false],
         ]);
     }
 

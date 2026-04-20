@@ -2584,7 +2584,95 @@
                 "operationId": "9d9bc556f927575aa492a88c28fe5908",
                 "responses": {
                     "200": {
-                        "description": "User information retrieved successfully"
+                        "description": "User information retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "description": "Full user object with relations",
+                                            "type": "object"
+                                        },
+                                        "helper": {
+                                            "description": "Helper profile summary. `is_helper: false` if the user has not registered as a helper.",
+                                            "properties": {
+                                                "is_helper": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_verified": {
+                                                    "description": "Set by admin after reviewing the profile",
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "is_available": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "level": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "standard",
+                                                        "elite",
+                                                        "vanguard"
+                                                    ],
+                                                    "example": "standard"
+                                                },
+                                                "rating": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 4.8
+                                                },
+                                                "total_assists": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "service_radius_km": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "terms_accepted_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-04-20T10:00:00.000000Z",
+                                                    "nullable": true
+                                                },
+                                                "expertise_types": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "tire_repair"
+                                                            },
+                                                            "name_en": {
+                                                                "type": "string",
+                                                                "example": "Tire Repair"
+                                                            },
+                                                            "name_ar": {
+                                                                "type": "string",
+                                                                "example": "إصلاح الإطارات"
+                                                            },
+                                                            "icon": {
+                                                                "type": "string",
+                                                                "example": "tire_repair"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [

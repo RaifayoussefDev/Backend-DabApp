@@ -16048,6 +16048,14 @@
                                                         "type": "string",
                                                         "example": "tire_repair"
                                                     },
+                                                    "name_en": {
+                                                        "type": "string",
+                                                        "example": "Tire Repair"
+                                                    },
+                                                    "name_ar": {
+                                                        "type": "string",
+                                                        "example": "إصلاح الإطارات"
+                                                    },
                                                     "icon": {
                                                         "type": "string",
                                                         "example": "tire_repair"
@@ -16087,13 +16095,25 @@
                             "schema": {
                                 "required": [
                                     "name",
+                                    "name_en",
+                                    "name_ar",
                                     "icon"
                                 ],
                                 "properties": {
                                     "name": {
-                                        "description": "Unique slug name (snake_case). Available: tire_repair, fuel, mechanical, towing, first_aid, ev_support, battery_jump",
+                                        "description": "Unique slug (snake_case). Available: tire_repair, fuel, mechanical, towing, first_aid, ev_support, battery_jump",
                                         "type": "string",
                                         "example": "battery_jump"
+                                    },
+                                    "name_en": {
+                                        "description": "Human-readable English label",
+                                        "type": "string",
+                                        "example": "Battery Jump Start"
+                                    },
+                                    "name_ar": {
+                                        "description": "Human-readable Arabic label",
+                                        "type": "string",
+                                        "example": "تشغيل البطارية"
                                     },
                                     "icon": {
                                         "description": "Material Design icon name",
@@ -16105,6 +16125,8 @@
                             },
                             "example": {
                                 "name": "battery_jump",
+                                "name_en": "Battery Jump Start",
+                                "name_ar": "تشغيل البطارية",
                                 "icon": "battery_charging_full"
                             }
                         }
@@ -16135,6 +16157,14 @@
                                                     "type": "string",
                                                     "example": "battery_jump"
                                                 },
+                                                "name_en": {
+                                                    "type": "string",
+                                                    "example": "Battery Jump Start"
+                                                },
+                                                "name_ar": {
+                                                    "type": "string",
+                                                    "example": "تشغيل البطارية"
+                                                },
                                                 "icon": {
                                                     "type": "string",
                                                     "example": "battery_charging_full"
@@ -16142,12 +16172,12 @@
                                                 "created_at": {
                                                     "type": "string",
                                                     "format": "date-time",
-                                                    "example": "2026-04-15T10:00:00.000000Z"
+                                                    "example": "2026-04-20T10:00:00.000000Z"
                                                 },
                                                 "updated_at": {
                                                     "type": "string",
                                                     "format": "date-time",
-                                                    "example": "2026-04-15T10:00:00.000000Z"
+                                                    "example": "2026-04-20T10:00:00.000000Z"
                                                 }
                                             },
                                             "type": "object"
@@ -16229,6 +16259,14 @@
                                         "type": "string",
                                         "example": "battery_jump"
                                     },
+                                    "name_en": {
+                                        "type": "string",
+                                        "example": "Battery Jump Start"
+                                    },
+                                    "name_ar": {
+                                        "type": "string",
+                                        "example": "تشغيل البطارية"
+                                    },
                                     "icon": {
                                         "type": "string",
                                         "example": "battery_charging_full"
@@ -16238,6 +16276,8 @@
                             },
                             "example": {
                                 "name": "battery_jump",
+                                "name_en": "Battery Jump Start",
+                                "name_ar": "تشغيل البطارية",
                                 "icon": "battery_charging_full"
                             }
                         }
@@ -16267,6 +16307,14 @@
                                                 "name": {
                                                     "type": "string",
                                                     "example": "battery_jump"
+                                                },
+                                                "name_en": {
+                                                    "type": "string",
+                                                    "example": "Battery Jump Start"
+                                                },
+                                                "name_ar": {
+                                                    "type": "string",
+                                                    "example": "تشغيل البطارية"
                                                 },
                                                 "icon": {
                                                     "type": "string",
@@ -25213,8 +25261,19 @@
                         "example": 1
                     },
                     "name": {
+                        "description": "Unique slug used internally",
                         "type": "string",
                         "example": "tire_repair"
+                    },
+                    "name_en": {
+                        "description": "Human-readable English label",
+                        "type": "string",
+                        "example": "Tire Repair"
+                    },
+                    "name_ar": {
+                        "description": "Human-readable Arabic label",
+                        "type": "string",
+                        "example": "إصلاح الإطارات"
                     },
                     "icon": {
                         "type": "string",
@@ -25291,6 +25350,42 @@
                     "city_id": {
                         "type": "integer",
                         "example": 3,
+                        "nullable": true
+                    },
+                    "terms_accepted_at": {
+                        "description": "Timestamp when the helper accepted the terms and conditions. Null if not yet accepted.",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "notify_push": {
+                        "description": "Receive push notifications for new requests",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "notify_whatsapp": {
+                        "description": "Receive WhatsApp notifications for new requests",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "notify_email": {
+                        "description": "Receive email notifications for new requests",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "instagram_url": {
+                        "type": "string",
+                        "example": "https://instagram.com/ahmed_helper",
+                        "nullable": true
+                    },
+                    "facebook_url": {
+                        "type": "string",
+                        "example": "https://facebook.com/ahmed.helper",
+                        "nullable": true
+                    },
+                    "linkedin_url": {
+                        "type": "string",
+                        "example": "https://linkedin.com/in/ahmed-helper",
                         "nullable": true
                     },
                     "created_at": {
