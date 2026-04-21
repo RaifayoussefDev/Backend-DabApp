@@ -1327,6 +1327,7 @@ class AuthController extends Controller
         if ($helperProfile) {
             $helperData = [
                 'is_helper'         => true,
+                'status'            => $helperProfile->status,
                 'is_verified'       => $helperProfile->is_verified,
                 'is_available'      => $helperProfile->is_available,
                 'level'             => $helperProfile->level,
