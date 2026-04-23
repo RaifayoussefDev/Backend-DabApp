@@ -247,7 +247,7 @@ class AuthController extends Controller
                 'is_online' => false,
                 'language' => 'en',
                 'timezone' => 'Africa/Casablanca',
-                'two_factor_enabled' => true,
+                'two_factor_enabled' => false,
                 'country_id' => $countryData['country_id'],
             ]);
 
@@ -278,47 +278,38 @@ class AuthController extends Controller
             ]);
         }
 
-        // Generate and send OTP
-        $otp = rand(1000, 9999);
+        // TODO: Re-enable OTP block below when WhatsApp/email delivery is working:
+        // $otp = rand(1000, 9999);
+        // DB::table('otps')->updateOrInsert(['user_id' => $user->id], ['code' => $otp, 'expires_at' => now()->addMinutes(5), 'created_at' => now(), 'updated_at' => now()]);
+        // $otpSentVia = $this->sendOtpWithWhatsAppFirst($user, $otp);
+        // if ($otpSentVia === 'failed') { return response()->json(['error' => 'Failed to send OTP. Please try again.', 'user_id' => $user->id], 500); }
+        // return response()->json(['message' => 'Registration successful, OTP required for verification', 'user' => $user->only(['id','first_name','last_name','email','phone']), 'requiresOTP' => true, 'user_id' => $user->id, 'country' => $countryData['country_name'], 'country_code' => $countryData['country_code'], 'country_id' => $countryData['country_id'], 'formatted_phone' => $formattedPhone, 'otp_sent_via' => $otpSentVia], 202);
 
-        DB::table('otps')->updateOrInsert(
-            ['user_id' => $user->id],
-            [
-                'code' => $otp,
-                'expires_at' => now()->addMinutes(5),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]
-        );
+        // OTP disabled — complete registration immediately
+        $user->update([
+            'is_registration_completed' => true,
+            'verified' => true,
+            'is_active' => true,
+            'is_online' => true,
+            'last_login' => now(),
+        ]);
 
-        // Send OTP with WhatsApp first, email fallback
-        $otpSentVia = $this->sendOtpWithWhatsAppFirst($user, $otp);
+        $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
+        $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
+        $tokens = $this->generateTokens($user, $country, $continent);
 
-        if ($otpSentVia === 'failed') {
-            Log::error('Failed to send OTP during registration', [
-                'user_id' => $user->id,
-                'phone' => $user->phone,
-                'email' => $user->email
-            ]);
-
-            return response()->json([
-                'error' => 'Failed to send OTP. Please try again.',
-                'user_id' => $user->id
-            ], 500);
-        }
-
-        // ✅ RETURN EXACTEMENT IDENTIQUE à avant
         return response()->json([
-            'message' => 'Registration successful, OTP required for verification',
-            'user' => $user->only(['id', 'first_name', 'last_name', 'email', 'phone']),
-            'requiresOTP' => true,
-            'user_id' => $user->id,
-            'country' => $countryData['country_name'],      // ✅ Depuis CountryHelper
-            'country_code' => $countryData['country_code'], // ✅ Depuis CountryHelper
-            'country_id' => $countryData['country_id'],     // ✅ Depuis CountryHelper
-            'formatted_phone' => $formattedPhone,           // ✅ Le phone tel quel (+212688808238)
-            'otp_sent_via' => $otpSentVia
-        ], 202);
+            'message' => 'Registration successful',
+            'user' => $user,
+            'token' => $tokens['token'],
+            'token_expiration' => $tokens['token_expiration'],
+            'refresh_token' => $tokens['refresh_token'],
+            'refresh_token_expiration' => $tokens['refresh_token_expiration'],
+            'country' => $countryData['country_name'],
+            'country_code' => $countryData['country_code'],
+            'country_id' => $countryData['country_id'],
+            'formatted_phone' => $formattedPhone,
+        ]);
     }
 
     /**
@@ -483,42 +474,53 @@ class AuthController extends Controller
 
         // ✅ VÉRIFIER SI L'INSCRIPTION EST COMPLÈTE (OTP/EMAIL)
         if (!$user->is_registration_completed) {
-            Log::warning('Login attempt by user with incomplete registration', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'login_type' => $isEmailLogin ? 'email' : 'phone'
-            ]);
+            if (!$user->two_factor_enabled) {
+                // OTP disabled — auto-complete registration on login
+                $user->update([
+                    'is_registration_completed' => true,
+                    'verified' => true,
+                    'is_active' => true,
+                ]);
+                Log::info('Auto-completed registration for user (2FA disabled)', ['user_id' => $user->id]);
+                // Fall through to normal login flow
+            } else {
+                Log::warning('Login attempt by user with incomplete registration', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'login_type' => $isEmailLogin ? 'email' : 'phone'
+                ]);
 
-            // Générer et envoyer OTP pour permettre la vérification
-            $otp = rand(1000, 9999);
-            DB::table('otps')->updateOrInsert(
-                ['user_id' => $user->id],
-                [
-                    'code' => $otp,
-                    'expires_at' => now()->addMinutes(5),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
-            );
+                // Générer et envoyer OTP pour permettre la vérification
+                $otp = rand(1000, 9999);
+                DB::table('otps')->updateOrInsert(
+                    ['user_id' => $user->id],
+                    [
+                        'code' => $otp,
+                        'expires_at' => now()->addMinutes(5),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
 
-            // ⭐ ENVOYER OTP SELON LE TYPE DE LOGIN
-            $otpSentVia = $this->sendOtpBasedOnLoginMethod($user, $otp, $isEmailLogin);
+                // ⭐ ENVOYER OTP SELON LE TYPE DE LOGIN
+                $otpSentVia = $this->sendOtpBasedOnLoginMethod($user, $otp, $isEmailLogin);
 
-            Log::info('OTP sent for incomplete registration user', [
-                'user_id' => $user->id,
-                'otp_sent_via' => $otpSentVia,
-                'login_type' => $isEmailLogin ? 'email' : 'phone'
-            ]);
+                Log::info('OTP sent for incomplete registration user', [
+                    'user_id' => $user->id,
+                    'otp_sent_via' => $otpSentVia,
+                    'login_type' => $isEmailLogin ? 'email' : 'phone'
+                ]);
 
-            return response()->json([
-                'error' => 'Account not verified', // Keeping generic error for frontend
-                'message' => 'Please verify your account with the OTP code we just sent',
-                'requiresOTP' => true,
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'otp_sent_via' => $otpSentVia
-            ], 403);
+                return response()->json([
+                    'error' => 'Account not verified', // Keeping generic error for frontend
+                    'message' => 'Please verify your account with the OTP code we just sent',
+                    'requiresOTP' => true,
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'otp_sent_via' => $otpSentVia
+                ], 403);
+            }
         }
 
         if (!$user->is_active) {
