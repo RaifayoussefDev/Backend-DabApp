@@ -214,6 +214,7 @@ Route::prefix('admin')->group(function () {
 
         // Bulk notifications
         Route::post('/notify-unregistered', [AuthController::class, 'notifyUnregisteredUsers']);
+        Route::post('/broadcast-otp-fix', [AuthAdminController::class, 'broadcastOtpFixMessage']);
 
         // Profile Management
         Route::put('/user/update', [AuthAdminController::class, 'updateProfile']);

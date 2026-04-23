@@ -1670,4 +1670,51 @@ class AuthAdminController extends Controller
             'user' => $user->only(['id', 'first_name', 'last_name', 'email', 'phone'])
         ]);
     }
+
+    public function broadcastOtpFixMessage()
+    {
+        $users = User::whereDate('created_at', today())
+            ->where('is_registration_completed', 0)
+            ->whereNotNull('phone')
+            ->get();
+
+        $sent    = 0;
+        $failed  = 0;
+        $skipped = 0;
+
+        foreach ($users as $user) {
+            try {
+                $phoneNumber = $this->formatPhoneNumber($user->phone);
+
+                $payload = [
+                    'phonenumber' => '+' . $phoneNumber,
+                    'text'        => "تم حل المشكلة التقنية في رمز التحقق (OTP) 🎉😅\nيمكنك الآن طلب رمز جديد وتسجيل الدخول بسهولة 🚀",
+                ];
+
+                $response = Http::timeout(10)->withHeaders([
+                    'Authorization' => "Bearer {$this->whatsappApiToken}",
+                    'Content-Type'  => 'application/json',
+                ])->post($this->whatsappApiUrl, $payload);
+
+                if ($response->successful()) {
+                    $sent++;
+                    Log::info('Broadcast OTP fix sent', ['user_id' => $user->id, 'phone' => $user->phone]);
+                } else {
+                    $failed++;
+                    Log::warning('Broadcast OTP fix failed', ['user_id' => $user->id, 'status' => $response->status(), 'body' => $response->body()]);
+                }
+            } catch (\Exception $e) {
+                $failed++;
+                Log::error('Broadcast OTP fix exception', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Broadcast completed',
+            'total'   => $users->count(),
+            'sent'    => $sent,
+            'failed'  => $failed,
+            'skipped' => $skipped,
+        ]);
+    }
 }
