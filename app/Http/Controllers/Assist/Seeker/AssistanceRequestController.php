@@ -278,7 +278,16 @@ class AssistanceRequestController extends AssistBaseController
             return $this->error('Failed to create assistance request.', 500);
         }
 
-        $assistRequest->load(['expertiseTypes', 'photos', 'motorcycle']);
+        $assistRequest->load(['expertiseTypes', 'photos', 'motorcycle.brand', 'motorcycle.model', 'motorcycle.year']);
+
+        if ($m = $assistRequest->motorcycle) {
+            $assistRequest->setRelation('motorcycle', [
+                'id'    => $m->id,
+                'brand' => $m->brand?->name,
+                'model' => $m->model?->name ?? '#' . $m->model_id,
+                'year'  => $m->year?->year ?? $m->year_id,
+            ]);
+        }
 
         return $this->success([
             'request'          => $assistRequest,
@@ -363,7 +372,7 @@ class AssistanceRequestController extends AssistBaseController
     public function show(string $id): JsonResponse
     {
         $request = AssistanceRequest::with([
-            'expertiseTypes', 'photos', 'motorcycle.brand', 'motorcycle.model',
+            'expertiseTypes', 'photos', 'motorcycle.brand', 'motorcycle.model', 'motorcycle.year',
             'helper:id,first_name,last_name,phone,profile_picture',
             'rating',
         ])->find($id);
@@ -388,6 +397,15 @@ class AssistanceRequestController extends AssistBaseController
                 'model'      => $m->model?->name ?? '#' . $m->model_id,
                 'year'       => $m->year?->year ?? $m->year_id,
             ]);
+
+        if ($m = $request->motorcycle) {
+            $request->setRelation('motorcycle', [
+                'id'    => $m->id,
+                'brand' => $m->brand?->name,
+                'model' => $m->model?->name ?? '#' . $m->model_id,
+                'year'  => $m->year?->year ?? $m->year_id,
+            ]);
+        }
 
         return $this->success([
             'request' => $request,
