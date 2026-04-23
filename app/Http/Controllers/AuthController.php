@@ -27,16 +27,11 @@ use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
-    private $whatsappApiUrl = 'https://backend.aisensy.com/campaign/t1/api';
-    private $whatsappApiKey;
-    private $whatsappCampaignName;
-    private $whatsappUserName;
+    private $whatsappApiUrl   = 'https://api.360messenger.com/v2/sendMessage';
+    private $whatsappApiToken = 'lEv2uJJUFIZl9houMUQtkCQzgyWepWEzywf';
 
     public function __construct()
     {
-        $this->whatsappApiKey      = env('AISENSY_API_KEY');
-        $this->whatsappCampaignName = env('AISENSY_CAMPAIGN_NAME');
-        $this->whatsappUserName    = env('AISENSY_USERNAME', 'Fadel Brothers Group L.l.c');
     }
 
     private const ACCESS_TOKEN_DURATION = 60;
@@ -719,27 +714,20 @@ class AuthController extends Controller
             $phoneNumber = $this->formatPhoneNumber($phone);
 
             $payload = [
-                'apiKey'         => $this->whatsappApiKey,
-                'campaignName'   => $this->whatsappCampaignName,
-                'destination'    => $phoneNumber,
-                'userName'       => $this->whatsappUserName,
-                'templateParams' => [(string) $otp],
-                'source'         => 'dabapp-backend',
-                'media'          => [],
-                'buttons'        => [],
-                'carouselCards'  => [],
-                'location'       => [],
+                'phonenumber' => '+' . $phoneNumber,
+                'text'        => "🔐 رمز التحقق الخاص بك من dabapp.co هو: {$otp}\n\n⏳ هذا الرمز صالح لمدة 5 دقائق.\n❌ لا تشاركه مع أي شخص.",
             ];
 
-            Log::info('Attempting WhatsApp OTP send via AiSensy', [
-                'phone' => $phoneNumber,
+            Log::info('Attempting WhatsApp OTP send via 360messenger', [
+                'phone' => '+' . $phoneNumber,
             ]);
 
-            $response = Http::timeout(10)
-                ->withHeaders(['Content-Type' => 'application/json'])
-                ->post($this->whatsappApiUrl, $payload);
+            $response = Http::timeout(10)->withHeaders([
+                'Authorization' => "Bearer {$this->whatsappApiToken}",
+                'Content-Type'  => 'application/json',
+            ])->post($this->whatsappApiUrl, $payload);
 
-            Log::info('AiSensy API Response', [
+            Log::info('360messenger API Response', [
                 'status' => $response->status(),
                 'body'   => $response->body(),
             ]);
