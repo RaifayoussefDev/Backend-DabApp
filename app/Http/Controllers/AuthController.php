@@ -721,7 +721,7 @@ class AuthController extends Controller
             $payload = [
                 'apiKey'         => $this->whatsappApiKey,
                 'campaignName'   => $this->whatsappCampaignName,
-                'destination'    => '+' . $phoneNumber,
+                'destination'    => $phoneNumber,
                 'userName'       => $this->whatsappUserName,
                 'templateParams' => [(string) $otp],
                 'source'         => 'dabapp-backend',
