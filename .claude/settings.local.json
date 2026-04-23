@@ -4,7 +4,8 @@
       "Bash(php artisan *)",
       "Bash(find \"d:\\\\\\\\PC youssef\\\\\\\\DabApp\\\\\\\\Backend\\\\\\\\DabApp-backend\" -type f -name \"*.php\")",
       "Bash(find \"d:\\\\\\\\PC youssef\\\\\\\\DabApp\\\\\\\\Backend\\\\\\\\DabApp-backend\" -path \"*/app/Http/Controllers/*\" -name \"*Auth*\" -o -path \"*/app/Http/Controllers/*\" -name \"*Login*\" -o -path \"*/app/Http/Controllers/*\" -name \"*OTP*\")",
-      "Bash(find \"d:\\\\\\\\PC youssef\\\\\\\\DabApp\\\\\\\\Backend\\\\\\\\DabApp-backend\" -path \"*/app/Services/*\" -name \"*Auth*\" -o -path \"*/app/Services/*\" -name \"*OTP*\")"
+      "Bash(find \"d:\\\\\\\\PC youssef\\\\\\\\DabApp\\\\\\\\Backend\\\\\\\\DabApp-backend\" -path \"*/app/Services/*\" -name \"*Auth*\" -o -path \"*/app/Services/*\" -name \"*OTP*\")",
+      "Bash(curl -s -X POST https://backend.aisensy.com/campaign/t1/api -H 'Content-Type: application/json' -d '{ *)"
     ]
   }
 }
