@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
+use App\Models\MyGarage;
 
 /**
  * @OA\Schema(
@@ -109,7 +110,7 @@ class AssistanceRequest extends Model
 
     public function motorcycle()
     {
-        return $this->belongsTo(Motorcycle::class, 'motorcycle_id');
+        return $this->belongsTo(MyGarage::class, 'motorcycle_id');
     }
 
     public function expertiseTypes()

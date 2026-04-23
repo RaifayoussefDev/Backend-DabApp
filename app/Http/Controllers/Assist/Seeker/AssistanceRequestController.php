@@ -11,6 +11,7 @@ use App\Models\MyGarage;
 use App\Services\Assist\HelperMatchingService;
 use App\Services\Assist\AssistNotificationService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -26,6 +27,84 @@ class AssistanceRequestController extends AssistBaseController
         private readonly HelperMatchingService   $matchingService,
         private readonly AssistNotificationService $notificationService
     ) {}
+
+    /**
+     * @OA\Get(
+     *     path="/api/assist/seeker/requests",
+     *     summary="List the authenticated seeker's assistance requests",
+     *     description="Returns a paginated history of all assistance requests made by the seeker. Supports filtering by status.",
+     *     tags={"Assist - Seeker"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="status", in="query", required=false,
+     *         description="Filter by request status",
+     *         @OA\Schema(type="string", enum={"pending","accepted","en_route","arrived","completed","cancelled"}, example="completed")
+     *     ),
+     *     @OA\Parameter(name="page", in="query", required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Paginated list of seeker requests",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Success"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="current_page", type="integer", example=1),
+     *                 @OA\Property(property="per_page",     type="integer", example=15),
+     *                 @OA\Property(property="total",        type="integer", example=8),
+     *                 @OA\Property(property="data", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",             type="integer", example=12),
+     *                         @OA\Property(property="status",         type="string",  example="completed"),
+     *                         @OA\Property(property="status_label",   type="object",
+     *                             @OA\Property(property="en", type="string", example="Completed"),
+     *                             @OA\Property(property="ar", type="string", example="مكتمل")
+     *                         ),
+     *                         @OA\Property(property="location_label", type="string",  example="King Fahd Road, Riyadh – near Exit 7"),
+     *                         @OA\Property(property="description",    type="string",  nullable=true, example="My rear tire is flat."),
+     *                         @OA\Property(property="created_at",     type="string",  format="date-time"),
+     *                         @OA\Property(property="completed_at",   type="string",  format="date-time", nullable=true),
+     *                         @OA\Property(property="cancelled_at",   type="string",  format="date-time", nullable=true),
+     *                         @OA\Property(property="expertise_types", type="array",
+     *                             @OA\Items(type="object",
+     *                                 @OA\Property(property="id",   type="integer", example=1),
+     *                                 @OA\Property(property="name", type="string",  example="tire_repair"),
+     *                                 @OA\Property(property="icon", type="string",  example="tire_repair")
+     *                             )
+     *                         ),
+     *                         @OA\Property(property="helper", type="object", nullable=true,
+     *                             @OA\Property(property="id",         type="integer", example=2),
+     *                             @OA\Property(property="first_name", type="string",  example="Ahmed"),
+     *                             @OA\Property(property="last_name",  type="string",  example="Al-Rashid")
+     *                         ),
+     *                         @OA\Property(property="rating", type="object", nullable=true,
+     *                             @OA\Property(property="stars",   type="integer", example=5),
+     *                             @OA\Property(property="comment", type="string",  example="Super fast!")
+     *                         )
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $query = AssistanceRequest::with([
+            'expertiseTypes:id,name,icon',
+            'helper:id,first_name,last_name',
+            'rating:id,request_id,stars,comment',
+        ])
+            ->where('seeker_id', Auth::id())
+            ->orderByDesc('created_at');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        return $this->success($query->paginate(15));
+    }
 
     /**
      * @OA\Get(

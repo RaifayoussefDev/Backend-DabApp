@@ -1899,6 +1899,7 @@ Route::prefix('assist')->middleware('auth:api')->group(function () {
 
     // ── Seeker ───────────────────────────────────────────────────────────────
     Route::prefix('seeker')->group(function () {
+        Route::get('requests',              [AssistanceRequestController::class, 'index']);
         Route::get('garage',                [AssistanceRequestController::class, 'garage']);
         Route::post('request',              [AssistanceRequestController::class, 'store']);
         Route::get('request/{id}',          [AssistanceRequestController::class, 'show']);
@@ -1915,19 +1916,22 @@ Route::prefix('assist')->middleware('auth:api')->group(function () {
         Route::patch('profile/availability', [HelperProfileController::class, 'toggleAvailability']);
         Route::get('feed',                   [HelperFeedController::class,    'index']);
         Route::post('feed/{id}/accept',      [HelperFeedController::class,    'accept']);
+        Route::get('missions',               [HelperMissionController::class, 'index']);
         Route::patch('mission/{id}/status',  [HelperMissionController::class, 'updateStatus']);
     });
 
     // ── Admin ────────────────────────────────────────────────────────────────
     Route::prefix('admin')->middleware('auth.admin')->group(function () {
-        Route::get('helpers',                  [AdminHelperController::class,      'index']);
-        Route::get('helpers/{id}',             [AdminHelperController::class,      'show']);
-        Route::patch('helpers/{id}/status',    [AdminHelperController::class,      'updateStatus']);
-        Route::get('expertise-types',          [AdminExpertiseController::class,   'index']);
-        Route::post('expertise-types',         [AdminExpertiseController::class,   'store']);
-        Route::put('expertise-types/{id}',     [AdminExpertiseController::class,   'update']);
-        Route::delete('expertise-types/{id}',  [AdminExpertiseController::class,   'destroy']);
-        Route::get('stats',                    [AdminAssistStatsController::class, 'stats']);
-        Route::get('requests',                 [AdminAssistStatsController::class, 'requests']);
+        Route::get('helpers',                      [AdminHelperController::class,      'index']);
+        Route::get('helpers/{id}',                 [AdminHelperController::class,      'show']);
+        Route::patch('helpers/{id}/status',        [AdminHelperController::class,      'updateStatus']);
+        Route::get('helpers/{id}/requests',        [AdminHelperController::class,      'helperRequests']);
+        Route::delete('helpers/{id}',              [AdminHelperController::class,      'destroy']);
+        Route::get('expertise-types',              [AdminExpertiseController::class,   'index']);
+        Route::post('expertise-types',             [AdminExpertiseController::class,   'store']);
+        Route::put('expertise-types/{id}',         [AdminExpertiseController::class,   'update']);
+        Route::delete('expertise-types/{id}',      [AdminExpertiseController::class,   'destroy']);
+        Route::get('stats',                        [AdminAssistStatsController::class, 'stats']);
+        Route::get('requests',                     [AdminAssistStatsController::class, 'requests']);
     });
 });

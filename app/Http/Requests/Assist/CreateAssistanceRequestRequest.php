@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests\Assist;
 
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
+
 class CreateAssistanceRequestRequest extends AssistFormRequest
 {
     public function authorize(): bool
@@ -18,7 +21,11 @@ class CreateAssistanceRequestRequest extends AssistFormRequest
             'longitude'         => ['required', 'numeric', 'between:-180,180'],
             'location_label'    => ['required', 'string', 'max:255'],
             'description'       => ['nullable', 'string', 'max:1000'],
-            'motorcycle_id'     => ['nullable', 'numeric', 'exists:assist_motorcycles,id'],
+            'motorcycle_id'     => [
+                'nullable',
+                'integer',
+                Rule::exists('my_garage', 'id')->where('user_id', Auth::id()),
+            ],
             'photo_urls'        => ['nullable', 'array', 'max:5'],
             'photo_urls.*'      => ['string', 'url'],
         ];

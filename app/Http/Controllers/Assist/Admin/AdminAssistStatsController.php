@@ -86,7 +86,7 @@ class AdminAssistStatsController extends AssistBaseController
             ->toArray();
 
         $topHelpers = HelperProfile::with('user:id,first_name,last_name')
-            ->where('is_verified', true)
+            ->where('status', 'accepted')
             ->orderByDesc('rating')
             ->orderByDesc('total_assists')
             ->limit(10)
@@ -102,8 +102,8 @@ class AdminAssistStatsController extends AssistBaseController
             'total_requests'            => $total,
             'completed_requests'        => $completed,
             'completion_rate'           => $completionRate,
-            'active_helpers'            => HelperProfile::where('is_available', true)->count(),
-            'verified_helpers'          => HelperProfile::where('is_verified', true)->count(),
+            'active_helpers'            => HelperProfile::where('status', 'accepted')->where('is_available', true)->count(),
+            'verified_helpers'          => HelperProfile::where('status', 'accepted')->count(),
             'avg_response_time_minutes' => round($avgResponseMinutes ?? 0, 1),
             'requests_by_status'        => $byStatus,
             'requests_by_expertise'     => $byExpertise,

@@ -93,8 +93,12 @@ class HelperFeedController extends AssistBaseController
             return $this->error('Helper profile not found.', 404);
         }
 
-        if (!$profile->is_verified || !$profile->is_available) {
-            return $this->error('You must be verified and available to view the feed.', 403);
+        if (!$profile->is_verified) {
+            return $this->error('Your profile is pending admin approval. You cannot view the feed yet.', 403);
+        }
+
+        if (!$profile->is_available) {
+            return $this->error('You are currently offline. Toggle your availability to go online.', 403);
         }
 
         if (!$profile->latitude || !$profile->longitude) {
