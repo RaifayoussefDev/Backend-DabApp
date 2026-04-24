@@ -311,39 +311,51 @@ class AuthController extends Controller
             ], 500);
         }
 
-        // 'skipped' means both channels are disabled in config → log and continue
+        // OTP skipped (both channels disabled) → activate user and return token immediately
         if ($otpSentVia === 'skipped') {
             Log::info('OTP skipped during registration (all channels disabled)', [
                 'user_id' => $user->id,
             ]);
+
+            $user->is_registration_completed = true;
+            $user->is_active = true;
+            $user->is_online = true;
+            $user->last_login = now();
+            $user->save();
+
+            $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
+            $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
+            $tokens = $this->generateTokens($user, $country, $continent);
+
+            $user->refresh();
+
+            return response()->json([
+                'message' => 'Registration successful',
+                'user' => $user,
+                'token' => $tokens['token'],
+                'token_expiration' => $tokens['token_expiration'],
+                'refresh_token' => $tokens['refresh_token'],
+                'refresh_token_expiration' => $tokens['refresh_token_expiration'],
+                'country' => $countryData['country_name'],
+                'country_code' => $countryData['country_code'],
+                'country_id' => $countryData['country_id'],
+                'formatted_phone' => $formattedPhone,
+                'otp_sent_via' => $otpSentVia,
+            ], 200);
         }
 
-        // Activate user and complete registration immediately
-        $user->is_registration_completed = true;
-        $user->is_active = true;
-        $user->is_online = true;
-        $user->last_login = now();
-        $user->save();
-
-        $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
-        $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
-        $tokens = $this->generateTokens($user, $country, $continent);
-
-        $user->refresh();
-
+        // OTP sent → user must verify before getting token
         return response()->json([
-            'message' => 'Registration successful',
-            'user' => $user,
-            'token' => $tokens['token'],
-            'token_expiration' => $tokens['token_expiration'],
-            'refresh_token' => $tokens['refresh_token'],
-            'refresh_token_expiration' => $tokens['refresh_token_expiration'],
+            'message' => 'Registration successful, OTP required for verification',
+            'user' => $user->only(['id', 'first_name', 'last_name', 'email', 'phone']),
+            'requiresOTP' => true,
+            'user_id' => $user->id,
             'country' => $countryData['country_name'],
             'country_code' => $countryData['country_code'],
             'country_id' => $countryData['country_id'],
             'formatted_phone' => $formattedPhone,
             'otp_sent_via' => $otpSentVia,
-        ], 200);
+        ], 202);
     }
 
     /**
