@@ -42,4 +42,9 @@ return [
         ],
     ],
 
+    'otp' => [
+        'whatsapp_enabled' => env('OTP_WHATSAPP_ENABLED', true),
+        'email_enabled'    => env('OTP_EMAIL_ENABLED', true),
+    ],
+
 ];

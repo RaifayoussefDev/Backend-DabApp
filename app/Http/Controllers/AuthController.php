@@ -295,8 +295,8 @@ class AuthController extends Controller
             ]
         );
 
-        // Send OTP with WhatsApp first, email fallback
-        $otpSentVia = $this->sendOtpWithWhatsAppFirst($user, $otp);
+        // Send OTP to both WhatsApp and email based on config
+        $otpSentVia = $this->sendOtpDynamic($user, $otp);
 
         if ($otpSentVia === 'failed') {
             Log::error('Failed to send OTP during registration', [
@@ -311,18 +311,39 @@ class AuthController extends Controller
             ], 500);
         }
 
-        // ✅ RETURN EXACTEMENT IDENTIQUE à avant
+        // 'skipped' means both channels are disabled in config → log and continue
+        if ($otpSentVia === 'skipped') {
+            Log::info('OTP skipped during registration (all channels disabled)', [
+                'user_id' => $user->id,
+            ]);
+        }
+
+        // Activate user and complete registration immediately
+        $user->is_registration_completed = true;
+        $user->is_active = true;
+        $user->is_online = true;
+        $user->last_login = now();
+        $user->save();
+
+        $country = $_SERVER['HTTP_X_FORWARDED_COUNTRY'] ?? 'Unknown';
+        $continent = $_SERVER['HTTP_X_FORWARDED_CONTINENT'] ?? 'Unknown';
+        $tokens = $this->generateTokens($user, $country, $continent);
+
+        $user->refresh();
+
         return response()->json([
-            'message' => 'Registration successful, OTP required for verification',
-            'user' => $user->only(['id', 'first_name', 'last_name', 'email', 'phone']),
-            'requiresOTP' => true,
-            'user_id' => $user->id,
-            'country' => $countryData['country_name'],      // ✅ Depuis CountryHelper
-            'country_code' => $countryData['country_code'], // ✅ Depuis CountryHelper
-            'country_id' => $countryData['country_id'],     // ✅ Depuis CountryHelper
-            'formatted_phone' => $formattedPhone,           // ✅ Le phone tel quel (+212688808238)
-            'otp_sent_via' => $otpSentVia
-        ], 202);
+            'message' => 'Registration successful',
+            'user' => $user,
+            'token' => $tokens['token'],
+            'token_expiration' => $tokens['token_expiration'],
+            'refresh_token' => $tokens['refresh_token'],
+            'refresh_token_expiration' => $tokens['refresh_token_expiration'],
+            'country' => $countryData['country_name'],
+            'country_code' => $countryData['country_code'],
+            'country_id' => $countryData['country_id'],
+            'formatted_phone' => $formattedPhone,
+            'otp_sent_via' => $otpSentVia,
+        ], 200);
     }
 
     /**
@@ -623,6 +644,48 @@ class AuthController extends Controller
 
         return $this->sendOtpWithWhatsAppFirst($user, $otp);
     }
+    private function sendOtpDynamic(User $user, $otp): string
+    {
+        $whatsappEnabled = config('services.otp.whatsapp_enabled', true);
+        $emailEnabled    = config('services.otp.email_enabled', true);
+
+        // Both channels disabled → OTP sending is intentionally skipped
+        if (!$whatsappEnabled && !$emailEnabled) {
+            Log::info('OTP dynamic: all channels disabled, skipping', ['user_id' => $user->id]);
+            return 'skipped';
+        }
+
+        $whatsappOk = false;
+        $emailOk    = false;
+
+        if ($whatsappEnabled && !empty($user->phone)) {
+            $whatsappOk = $this->sendWhatsAppOtp($user->phone, $otp);
+            Log::info('OTP dynamic: WhatsApp attempt', [
+                'user_id' => $user->id,
+                'success' => $whatsappOk,
+            ]);
+        }
+
+        if ($emailEnabled && !empty($user->email)) {
+            try {
+                $user->notify(new SendOtpNotification($otp));
+                $emailOk = true;
+                Log::info('OTP dynamic: Email sent', ['user_id' => $user->id]);
+            } catch (\Exception $e) {
+                Log::error('OTP dynamic: Email failed', [
+                    'user_id' => $user->id,
+                    'error'   => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if ($whatsappOk && $emailOk) return 'both';
+        if ($whatsappOk)             return 'whatsapp';
+        if ($emailOk)                return 'email';
+
+        return 'failed';
+    }
+
     private function sendOtpWithWhatsAppFirst(User $user, $otp)
     {
         // Try WhatsApp first if user has phone number
