@@ -790,7 +790,7 @@ class AuthController extends Controller
 
             $payload = [
                 'phonenumber' => '+' . $phoneNumber,
-                'text'        => "🔐 رمز التحقق الخاص بك على Dabapp.co:\n\n*{$otp}*\n\n⏳ صالح لمدة 5 دقائق فقط.\n🔒 لا تشارك هذا الرمز مع أحد.",
+                'text'        => "🔐 رمز التحقق الخاص بك على dabapp.co:\n\n*{$otp}*\n\n⏳ صالح لمدة 5 دقائق فقط.\n🔒 لا تشارك هذا الرمز مع أحد.",
             ];
 
             Log::info('Attempting WhatsApp OTP send via 360messenger', [
