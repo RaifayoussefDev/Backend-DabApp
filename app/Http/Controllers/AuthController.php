@@ -790,7 +790,7 @@ class AuthController extends Controller
 
             $payload = [
                 'phonenumber' => '+' . $phoneNumber,
-                'text'        => "🔐 رمز التحقق الخاص بك من dabapp.co هو: {$otp}\n\n⏳ هذا الرمز صالح لمدة 5 دقائق.\n❌ لا تشاركه مع أي شخص.",
+                'text'        => "🔐 رمز التحقق الخاص بك على DabApp:\n\n*{$otp}*\n\n⏳ صالح لمدة 5 دقائق فقط.\n🔒 لا تشارك هذا الرمز مع أحد.",
             ];
 
             Log::info('Attempting WhatsApp OTP send via 360messenger', [
@@ -1924,7 +1924,7 @@ class AuthController extends Controller
 
             $payload = [
                 'phonenumber' => '+' . $phoneNumber,
-                'text' => "🔐 رمز إعادة تعيين كلمة المرور الخاص بك من dabapp.co هو: {$resetCode}\n\n⏳ هذا الرمز صالح لمدة 15 دقيقة.\n❌ لا تشاركه مع أي شخص.\n\nإذا لم تطلب هذا الرمز، يرجى تجاهل هذه الرسالة."
+                'text' => "🔑 إعادة تعيين كلمة المرور - DabApp\n\nرمز التحقق الخاص بك:\n\n*{$resetCode}*\n\n⏳ صالح لمدة 15 دقيقة فقط.\n🔒 لا تشارك هذا الرمز مع أحد.\n\nإذا لم تطلب هذا، تجاهل هذه الرسالة."
             ];
 
             Log::info('Attempting WhatsApp password reset send', [
@@ -2578,8 +2578,7 @@ class AuthController extends Controller
         try {
             $phoneNumber = $this->formatPhoneNumber($phone);
 
-            $text = "⚠️ Your OTP for account deletion from dabapp.co is: {$otp}\n\n⏳ Valid for 5 minutes.\n❌ If you didn't request this, ignore this message.\n\n" .
-                "⚠️ رمز التحقق الخاص بك لحذف الحساب من dabapp.co هو: {$otp}\n\n⏳ صالح لمدة 5 دقائق.\n❌ إذا لم تطلب هذا، فتجاهل هذه الرسالة.";
+            $text = "⚠️ تأكيد حذف الحساب - DabApp\n\nرمز التحقق لحذف حسابك:\n\n*{$otp}*\n\n⏳ صالح لمدة 5 دقائق فقط.\n🔒 إذا لم تطلب هذا، تجاهل هذه الرسالة.";
 
             $payload = [
                 'phonenumber' => '+' . $phoneNumber,
@@ -2603,11 +2602,7 @@ class AuthController extends Controller
         try {
             $phoneNumber = $this->formatPhoneNumber($phone);
 
-            $text = "🗑️ Account Deleted / تم حذف الحساب\n\n" .
-                "Hello {$name},\n" .
-                "Your account has been deleted successfully. You have 30 days to reactivate your account by logging in.\n\n" .
-                "مرحباً {$name}،\n" .
-                "تم حذف حسابك بنجاح. لديك 30 يوماً لإعادة تفعيل حسابك عن طريق تسجيل الدخول.";
+            $text = "🗑️ تم حذف حسابك - DabApp\n\nمرحباً {$name}،\nتم حذف حسابك بنجاح.\nلديك 30 يوماً لإعادة تفعيله عن طريق تسجيل الدخول.";
 
             $payload = [
                 'phonenumber' => '+' . $phoneNumber,
@@ -2631,11 +2626,7 @@ class AuthController extends Controller
         try {
             $phoneNumber = $this->formatPhoneNumber($phone);
 
-            $text = "🎉 Account Reactivated / تم تفعيل الحساب\n\n" .
-                "Hello {$name},\n" .
-                "Your account has been successfully reactivated. Welcome back!\n\n" .
-                "مرحباً {$name}،\n" .
-                "تم إعادة تفعيل حسابك بنجاح. أهلاً بعودتك!";
+            $text = "🎉 تم إعادة تفعيل حسابك - DabApp\n\nمرحباً {$name}،\nتم إعادة تفعيل حسابك بنجاح.\nأهلاً بعودتك! 🚀";
 
             $payload = [
                 'phonenumber' => '+' . $phoneNumber,
@@ -2659,11 +2650,7 @@ class AuthController extends Controller
         try {
             $phoneNumber = $this->formatPhoneNumber($phone);
 
-            $text = "✅ Account Verified / تم تفعيل الحساب\n\n" .
-                "Hello {$name},\n" .
-                "Your account has been successfully verified and activated.\n\n" .
-                "مرحباً {$name}،\n" .
-                "تم التحقق من حسابك وتفعيله بنجاح.";
+            $text = "✅ تم تفعيل حسابك - DabApp\n\nمرحباً {$name}،\nتم التحقق من حسابك وتفعيله بنجاح.\nيمكنك الآن الاستمتاع بجميع الميزات. 🎉";
 
             $payload = [
                 'phonenumber' => '+' . $phoneNumber,

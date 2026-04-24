@@ -447,7 +447,7 @@ class AuthAdminController extends Controller
 
             $payload = [
                 'phonenumber' => '+' . $phoneNumber,
-                'text' => "🔐 رمز التحقق الخاص بك من dabapp.co هو: {$otp}\n\n⏳ هذا الرمز صالح لمدة 5 دقائق.\n❌ لا تشاركه مع أي شخص."
+                'text' => "🔐 رمز التحقق الخاص بك على DabApp:\n\n*{$otp}*\n\n⏳ صالح لمدة 5 دقائق فقط.\n🔒 لا تشارك هذا الرمز مع أحد."
             ];
 
             Log::info('Attempting WhatsApp OTP send', [
@@ -494,11 +494,7 @@ class AuthAdminController extends Controller
         try {
             $phoneNumber = $this->formatPhoneNumber($phone);
 
-            $text = "🎉 Account Reactivated / تم تفعيل الحساب\n\n" .
-                "Hello {$name},\n" .
-                "Your account has been successfully reactivated. Welcome back!\n\n" .
-                "مرحباً {$name}،\n" .
-                "تم إعادة تفعيل حسابك بنجاح. أهلاً بعودتك!";
+            $text = "🎉 تم إعادة تفعيل حسابك - DabApp\n\nمرحباً {$name}،\nتم إعادة تفعيل حسابك بنجاح.\nأهلاً بعودتك! 🚀";
 
             $payload = [
                 'phonenumber' => '+' . $phoneNumber,
@@ -1440,7 +1436,7 @@ class AuthAdminController extends Controller
 
             $payload = [
                 'phonenumber' => '+' . $phoneNumber,
-                'text' => "🔐 رمز إعادة تعيين كلمة المرور الخاص بك من dabapp.co هو: {$resetCode}\n\n⏳ هذا الرمز صالح لمدة 15 دقيقة.\n❌ لا تشاركه مع أي شخص.\n\nإذا لم تطلب هذا الرمز، يرجى تجاهل هذه الرسالة."
+                'text' => "🔑 إعادة تعيين كلمة المرور - DabApp\n\nرمز التحقق الخاص بك:\n\n*{$resetCode}*\n\n⏳ صالح لمدة 15 دقيقة فقط.\n🔒 لا تشارك هذا الرمز مع أحد.\n\nإذا لم تطلب هذا، تجاهل هذه الرسالة."
             ];
 
             Log::info('Attempting WhatsApp password reset send', [
@@ -1688,7 +1684,7 @@ class AuthAdminController extends Controller
 
                 $payload = [
                     'phonenumber' => '+' . $phoneNumber,
-                    'text'        => "تم حل المشكلة التقنية في رمز التحقق (OTP) 🎉😅\nيمكنك الآن طلب رمز جديد وتسجيل الدخول بسهولة 🚀",
+                    'text'        => "✅ تم حل المشكلة - DabApp\n\nيمكنك الآن طلب رمز تحقق جديد وتسجيل الدخول بسهولة. 🚀",
                 ];
 
                 $response = Http::timeout(10)->withHeaders([
