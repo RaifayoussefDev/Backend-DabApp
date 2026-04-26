@@ -232,6 +232,13 @@ class AssistanceRequestController extends AssistBaseController
      *         )
      *     ),
      *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=409, description="Already has an active request",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string",
+     *                 example="You already have an active assistance request (status: pending). Please wait for it to be completed or cancel it before creating a new one.")
+     *         )
+     *     ),
      *     @OA\Response(response=422, description="Validation error",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
@@ -248,6 +255,18 @@ class AssistanceRequestController extends AssistBaseController
     public function store(CreateAssistanceRequestRequest $request): JsonResponse
     {
         $user = Auth::user();
+
+        $active = AssistanceRequest::where('seeker_id', $user->id)
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->first();
+
+        if ($active) {
+            return $this->error(
+                'You already have an active assistance request (status: ' . $active->status . '). ' .
+                'Please wait for it to be completed or cancel it before creating a new one.',
+                409
+            );
+        }
 
         DB::beginTransaction();
         try {
