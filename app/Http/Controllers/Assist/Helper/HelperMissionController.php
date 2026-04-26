@@ -172,6 +172,66 @@ class HelperMissionController extends AssistBaseController
      *     )
      * )
      */
+    /**
+     * @OA\Post(
+     *     path="/api/assist/helper/mission/{id}/cancel",
+     *     summary="Cancel an accepted mission",
+     *     description="Allows the helper to cancel a mission they accepted, as long as it has not yet been completed or already cancelled. The request is reset to `pending` so another helper can pick it up. The seeker is notified.",
+     *     tags={"Assist - Helper Mission"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true,
+     *         description="Assistance request ID",
+     *         @OA\Schema(type="integer", example=12)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Mission cancelled successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string",  example="Mission cancelled. The request is back in the feed.")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=403, description="You are not the assigned helper for this request"),
+     *     @OA\Response(response=404, description="Request not found"),
+     *     @OA\Response(response=422, description="Mission cannot be cancelled at this stage")
+     * )
+     */
+    public function cancel(string $id): JsonResponse
+    {
+        $assistRequest = AssistanceRequest::find($id);
+
+        if (!$assistRequest) {
+            return $this->error('Assistance request not found.', 404);
+        }
+
+        if ($assistRequest->helper_id !== Auth::id()) {
+            return $this->error('You are not the assigned helper for this request.', 403);
+        }
+
+        $cancellable = ['accepted', 'en_route', 'arrived'];
+
+        if (!in_array($assistRequest->status, $cancellable)) {
+            return $this->error(
+                "Mission cannot be cancelled at this stage (current status: {$assistRequest->status}).",
+                422
+            );
+        }
+
+        $seeker = $assistRequest->seeker;
+
+        $assistRequest->update([
+            'status'    => 'pending',
+            'helper_id' => null,
+            'accepted_at' => null,
+            'arrived_at'  => null,
+        ]);
+
+        $this->notificationService->notify($seeker, 'helper_cancelled', $assistRequest);
+
+        return $this->success(null, 'Mission cancelled. The request is back in the feed.');
+    }
+
     public function updateStatus(UpdateMissionStatusRequest $request, string $id): JsonResponse
     {
         $assistRequest = AssistanceRequest::find($id);

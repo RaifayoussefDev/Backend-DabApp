@@ -33,6 +33,10 @@ class AssistNotificationService
             'title' => 'Request cancelled',
             'body'  => 'The assistance request has been cancelled by the rider.',
         ],
+        'helper_cancelled' => [
+            'title' => 'Helper cancelled',
+            'body'  => 'Your helper cancelled the mission. We are looking for a new helper.',
+        ],
         'rated' => [
             'title' => 'You received a new rating',
             'body'  => 'Someone rated your assistance. Check your profile.',

@@ -620,14 +620,216 @@
                 ]
             }
         },
-        "/api/assist/helper/mission/{id}/status": {
-            "patch": {
+        "/api/assist/helper/missions": {
+            "get": {
                 "tags": [
                     "Assist - Helper Mission"
                 ],
-                "summary": "Update mission status",
-                "description": "Push the mission through its lifecycle. Allowed transitions: `accepted` → `en_route` → `arrived` → `completed`. Each transition notifies the seeker.",
-                "operationId": "995df93bf814a9b1daa282f27743f486",
+                "summary": "List the authenticated helper's missions",
+                "description": "Returns a paginated history of all missions assigned to the helper. Supports filtering by status.",
+                "operationId": "d7dd1ecd543ffe8fd4a65dc9e5d9d5eb",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by mission status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "accepted",
+                                "en_route",
+                                "arrived",
+                                "completed",
+                                "cancelled"
+                            ],
+                            "example": "completed"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated list of missions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 12
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "completed"
+                                                            },
+                                                            "status_label": {
+                                                                "properties": {
+                                                                    "en": {
+                                                                        "type": "string",
+                                                                        "example": "Completed"
+                                                                    },
+                                                                    "ar": {
+                                                                        "type": "string",
+                                                                        "example": "مكتمل"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "location_label": {
+                                                                "type": "string",
+                                                                "example": "King Fahd Road, Riyadh – near Exit 7"
+                                                            },
+                                                            "latitude": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 24.714
+                                                            },
+                                                            "longitude": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 46.675
+                                                            },
+                                                            "accepted_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
+                                                            },
+                                                            "arrived_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
+                                                            },
+                                                            "completed_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
+                                                            },
+                                                            "cancelled_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
+                                                            },
+                                                            "expertise_types": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "name": {
+                                                                            "type": "string",
+                                                                            "example": "tire_repair"
+                                                                        },
+                                                                        "icon": {
+                                                                            "type": "string",
+                                                                            "example": "tire_repair"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "seeker": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 65
+                                                                    },
+                                                                    "first_name": {
+                                                                        "type": "string",
+                                                                        "example": "Raifa"
+                                                                    },
+                                                                    "last_name": {
+                                                                        "type": "string",
+                                                                        "example": "Youssef"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "rating": {
+                                                                "properties": {
+                                                                    "stars": {
+                                                                        "type": "integer",
+                                                                        "example": 5
+                                                                    },
+                                                                    "comment": {
+                                                                        "type": "string",
+                                                                        "example": "Super fast!"
+                                                                    }
+                                                                },
+                                                                "type": "object",
+                                                                "nullable": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Helper profile not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/helper/mission/{id}/cancel": {
+            "post": {
+                "tags": [
+                    "Assist - Helper Mission"
+                ],
+                "summary": "Cancel an accepted mission",
+                "description": "Allows the helper to cancel a mission they accepted, as long as it has not yet been completed or already cancelled. The request is reset to `pending` so another helper can pick it up. The seeker is notified.",
+                "operationId": "155cb9538921416c394cd4f8944ca46f",
                 "parameters": [
                     {
                         "name": "id",
@@ -640,37 +842,9 @@
                         }
                     }
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "status"
-                                ],
-                                "properties": {
-                                    "status": {
-                                        "description": "New status. Must follow the allowed transition chain: accepted → en_route → arrived → completed",
-                                        "type": "string",
-                                        "enum": [
-                                            "en_route",
-                                            "arrived",
-                                            "completed"
-                                        ],
-                                        "example": "en_route"
-                                    }
-                                },
-                                "type": "object"
-                            },
-                            "example": {
-                                "status": "en_route"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
-                        "description": "Status updated successfully",
+                        "description": "Mission cancelled successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -681,78 +855,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Status updated to en_route."
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 12
-                                                },
-                                                "status": {
-                                                    "type": "string",
-                                                    "example": "en_route"
-                                                },
-                                                "accepted_at": {
-                                                    "type": "string",
-                                                    "format": "date-time",
-                                                    "example": "2026-04-15T10:05:00.000000Z"
-                                                },
-                                                "arrived_at": {
-                                                    "type": "string",
-                                                    "format": "date-time",
-                                                    "example": null,
-                                                    "nullable": true
-                                                },
-                                                "completed_at": {
-                                                    "type": "string",
-                                                    "format": "date-time",
-                                                    "example": null,
-                                                    "nullable": true
-                                                },
-                                                "location_label": {
-                                                    "type": "string",
-                                                    "example": "King Fahd Road, Riyadh – near Exit 7"
-                                                },
-                                                "expertise_types": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 1
-                                                            },
-                                                            "name": {
-                                                                "type": "string",
-                                                                "example": "tire_repair"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                },
-                                                "seeker": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 65
-                                                        },
-                                                        "first_name": {
-                                                            "type": "string",
-                                                            "example": "Raifa"
-                                                        },
-                                                        "last_name": {
-                                                            "type": "string",
-                                                            "example": "Youssef"
-                                                        },
-                                                        "phone": {
-                                                            "type": "string",
-                                                            "example": "+966501234567"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                }
-                                            },
-                                            "type": "object"
+                                            "example": "Mission cancelled. The request is back in the feed."
                                         }
                                     },
                                     "type": "object"
@@ -770,24 +873,7 @@
                         "description": "Request not found"
                     },
                     "422": {
-                        "description": "Invalid status transition",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Invalid transition: cannot go from 'pending' to 'en_route'."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Mission cannot be cancelled at this stage"
                     }
                 },
                 "security": [
@@ -1304,6 +1390,196 @@
                     },
                     "404": {
                         "description": "Helper profile not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/seeker/requests": {
+            "get": {
+                "tags": [
+                    "Assist - Seeker"
+                ],
+                "summary": "List the authenticated seeker's assistance requests",
+                "description": "Returns a paginated history of all assistance requests made by the seeker. Supports filtering by status.",
+                "operationId": "152aeb404fa8e36c2c1c8696056e7484",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by request status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "accepted",
+                                "en_route",
+                                "arrived",
+                                "completed",
+                                "cancelled"
+                            ],
+                            "example": "completed"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated list of seeker requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 8
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 12
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "completed"
+                                                            },
+                                                            "status_label": {
+                                                                "properties": {
+                                                                    "en": {
+                                                                        "type": "string",
+                                                                        "example": "Completed"
+                                                                    },
+                                                                    "ar": {
+                                                                        "type": "string",
+                                                                        "example": "مكتمل"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "location_label": {
+                                                                "type": "string",
+                                                                "example": "King Fahd Road, Riyadh – near Exit 7"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "My rear tire is flat.",
+                                                                "nullable": true
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "completed_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
+                                                            },
+                                                            "cancelled_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
+                                                            },
+                                                            "expertise_types": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "name": {
+                                                                            "type": "string",
+                                                                            "example": "tire_repair"
+                                                                        },
+                                                                        "icon": {
+                                                                            "type": "string",
+                                                                            "example": "tire_repair"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "helper": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 2
+                                                                    },
+                                                                    "first_name": {
+                                                                        "type": "string",
+                                                                        "example": "Ahmed"
+                                                                    },
+                                                                    "last_name": {
+                                                                        "type": "string",
+                                                                        "example": "Al-Rashid"
+                                                                    }
+                                                                },
+                                                                "type": "object",
+                                                                "nullable": true
+                                                            },
+                                                            "rating": {
+                                                                "properties": {
+                                                                    "stars": {
+                                                                        "type": "integer",
+                                                                        "example": 5
+                                                                    },
+                                                                    "comment": {
+                                                                        "type": "string",
+                                                                        "example": "Super fast!"
+                                                                    }
+                                                                },
+                                                                "type": "object",
+                                                                "nullable": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     }
                 },
                 "security": [

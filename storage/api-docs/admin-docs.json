@@ -16563,6 +16563,56 @@
                         "bearerAuth": []
                     }
                 ]
+            },
+            "delete": {
+                "tags": [
+                    "Assist - Admin Helpers"
+                ],
+                "summary": "Delete a helper profile",
+                "description": "Permanently deletes the helper profile. The user account is not affected.",
+                "operationId": "48940aac49ac933a77828de26b5431fb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "HelperProfile ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Helper profile deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Helper profile deleted."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/assist/admin/helpers/{id}/status": {
@@ -16643,6 +16693,191 @@
                     },
                     "422": {
                         "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/admin/helpers/{id}/requests": {
+            "get": {
+                "tags": [
+                    "Assist - Admin Helpers"
+                ],
+                "summary": "List all assistance requests handled by a specific helper",
+                "operationId": "8f3bb08a3a67f7c3052f0f07b5e2c39a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "HelperProfile ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by request status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "accepted",
+                                "en_route",
+                                "arrived",
+                                "completed",
+                                "cancelled"
+                            ],
+                            "example": "completed"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated list of missions for this helper",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 47
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 12
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "completed"
+                                                            },
+                                                            "status_label": {
+                                                                "properties": {
+                                                                    "en": {
+                                                                        "type": "string",
+                                                                        "example": "Completed"
+                                                                    },
+                                                                    "ar": {
+                                                                        "type": "string",
+                                                                        "example": "مكتمل"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "location_label": {
+                                                                "type": "string",
+                                                                "example": "King Fahd Road, Riyadh"
+                                                            },
+                                                            "accepted_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
+                                                            },
+                                                            "completed_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
+                                                            },
+                                                            "cancelled_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
+                                                            },
+                                                            "expertise_types": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "name": {
+                                                                            "type": "string",
+                                                                            "example": "tire_repair"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "seeker": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 65
+                                                                    },
+                                                                    "first_name": {
+                                                                        "type": "string",
+                                                                        "example": "Raifa"
+                                                                    },
+                                                                    "last_name": {
+                                                                        "type": "string",
+                                                                        "example": "Youssef"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "rating": {
+                                                                "properties": {
+                                                                    "stars": {
+                                                                        "type": "integer",
+                                                                        "example": 5
+                                                                    },
+                                                                    "comment": {
+                                                                        "type": "string",
+                                                                        "example": "Excellent service!"
+                                                                    }
+                                                                },
+                                                                "type": "object",
+                                                                "nullable": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Helper profile not found"
                     }
                 },
                 "security": [
