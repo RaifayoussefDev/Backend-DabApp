@@ -1918,6 +1918,7 @@ Route::prefix('assist')->middleware('auth:api')->group(function () {
         Route::get('feed',                   [HelperFeedController::class,    'index']);
         Route::post('feed/{id}/accept',      [HelperFeedController::class,    'accept']);
         Route::get('missions',               [HelperMissionController::class, 'index']);
+        Route::get('mission/active',         [HelperMissionController::class, 'active']);
         Route::patch('mission/{id}/status',  [HelperMissionController::class, 'updateStatus']);
         Route::post('mission/{id}/cancel',   [HelperMissionController::class, 'cancel']);
     });

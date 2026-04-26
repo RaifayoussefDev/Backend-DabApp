@@ -111,6 +111,76 @@ class HelperMissionController extends AssistBaseController
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/assist/helper/mission/active",
+     *     summary="Get the helper's current active mission",
+     *     description="Returns the single mission currently in progress (status: accepted, en_route, or arrived). Returns 404 if the helper has no active mission.",
+     *     tags={"Assist - Helper Mission"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Active mission",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string",  example="Success"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id",             type="integer", example=12),
+     *                 @OA\Property(property="status",         type="string",  example="en_route"),
+     *                 @OA\Property(property="status_label",   type="object",
+     *                     @OA\Property(property="en", type="string", example="En route"),
+     *                     @OA\Property(property="ar", type="string", example="في الطريق")
+     *                 ),
+     *                 @OA\Property(property="location_label", type="string",  example="King Fahd Road, Riyadh – near Exit 7"),
+     *                 @OA\Property(property="latitude",       type="number",  format="float", example=24.714),
+     *                 @OA\Property(property="longitude",      type="number",  format="float", example=46.675),
+     *                 @OA\Property(property="accepted_at",    type="string",  format="date-time"),
+     *                 @OA\Property(property="arrived_at",     type="string",  format="date-time", nullable=true),
+     *                 @OA\Property(property="expertise_types", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",   type="integer", example=1),
+     *                         @OA\Property(property="name", type="string",  example="tire_repair"),
+     *                         @OA\Property(property="icon", type="string",  example="tire_repair")
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="seeker", type="object",
+     *                     @OA\Property(property="id",         type="integer", example=65),
+     *                     @OA\Property(property="first_name", type="string",  example="Raifa"),
+     *                     @OA\Property(property="last_name",  type="string",  example="Youssef"),
+     *                     @OA\Property(property="phone",      type="string",  example="+966501234567")
+     *                 ),
+     *                 @OA\Property(property="photos", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",   type="integer", example=1),
+     *                         @OA\Property(property="path", type="string",  example="https://cdn.example.com/uploads/photo1.jpg")
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=404, description="No active mission found")
+     * )
+     */
+    public function active(): JsonResponse
+    {
+        $mission = AssistanceRequest::with([
+            'expertiseTypes:id,name,icon',
+            'seeker:id,first_name,last_name,phone',
+            'photos',
+        ])
+            ->where('helper_id', Auth::id())
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->latest('accepted_at')
+            ->first();
+
+        if (!$mission) {
+            return $this->error('No active mission found.', 404);
+        }
+
+        return $this->success($mission);
+    }
+
+    /**
      * @OA\Patch(
      *     path="/api/assist/helper/mission/{id}/status",
      *     summary="Update mission status",

@@ -822,6 +822,155 @@
                 ]
             }
         },
+        "/api/assist/helper/mission/active": {
+            "get": {
+                "tags": [
+                    "Assist - Helper Mission"
+                ],
+                "summary": "Get the helper's current active mission",
+                "description": "Returns the single mission currently in progress (status: accepted, en_route, or arrived). Returns 404 if the helper has no active mission.",
+                "operationId": "263f7704381ab7eeb12ae229eee3147d",
+                "responses": {
+                    "200": {
+                        "description": "Active mission",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "en_route"
+                                                },
+                                                "status_label": {
+                                                    "properties": {
+                                                        "en": {
+                                                            "type": "string",
+                                                            "example": "En route"
+                                                        },
+                                                        "ar": {
+                                                            "type": "string",
+                                                            "example": "في الطريق"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "location_label": {
+                                                    "type": "string",
+                                                    "example": "King Fahd Road, Riyadh – near Exit 7"
+                                                },
+                                                "latitude": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 24.714
+                                                },
+                                                "longitude": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 46.675
+                                                },
+                                                "accepted_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "arrived_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "expertise_types": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "tire_repair"
+                                                            },
+                                                            "icon": {
+                                                                "type": "string",
+                                                                "example": "tire_repair"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "seeker": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 65
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string",
+                                                            "example": "Raifa"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string",
+                                                            "example": "Youssef"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "+966501234567"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "photos": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "path": {
+                                                                "type": "string",
+                                                                "example": "https://cdn.example.com/uploads/photo1.jpg"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "No active mission found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/assist/helper/mission/{id}/cancel": {
             "post": {
                 "tags": [
@@ -1863,6 +2012,26 @@
                     },
                     "401": {
                         "description": "Unauthenticated"
+                    },
+                    "409": {
+                        "description": "Already has an active request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "You already have an active assistance request (status: pending). Please wait for it to be completed or cancel it before creating a new one."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "422": {
                         "description": "Validation error",

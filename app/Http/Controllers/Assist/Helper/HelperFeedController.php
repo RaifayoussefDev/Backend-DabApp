@@ -176,6 +176,14 @@ class HelperFeedController extends AssistBaseController
             return $this->error('You must be verified and available to accept requests.', 403);
         }
 
+        $alreadyActive = AssistanceRequest::where('helper_id', Auth::id())
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->exists();
+
+        if ($alreadyActive) {
+            return $this->error('You already have an active mission. Complete or cancel it before accepting a new one.', 409);
+        }
+
         $assistRequest = AssistanceRequest::lockForUpdate()->find($id);
 
         if (!$assistRequest) {
