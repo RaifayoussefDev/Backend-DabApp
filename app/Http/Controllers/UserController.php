@@ -1,4 +1,4 @@
-{"success":false,"message":"User with ID export not found"}<?php
+<?php
 
 namespace App\Http\Controllers;
 
