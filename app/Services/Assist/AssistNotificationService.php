@@ -41,6 +41,10 @@ class AssistNotificationService
             'title' => 'You received a new rating',
             'body'  => 'Someone rated your assistance. Check your profile.',
         ],
+        'seeker_finished' => [
+            'title' => 'Mission confirmed by rider',
+            'body'  => 'The rider confirmed the assistance is complete. Great work!',
+        ],
     ];
 
     /**

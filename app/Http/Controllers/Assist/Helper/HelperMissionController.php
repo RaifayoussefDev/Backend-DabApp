@@ -96,7 +96,7 @@ class HelperMissionController extends AssistBaseController
         }
 
         $query = AssistanceRequest::with([
-            'expertiseTypes:id,name,icon',
+            'expertiseTypes:id,name,name_ar,name_en,icon',
             'seeker:id,first_name,last_name',
             'rating:id,request_id,stars,comment',
         ])
@@ -164,7 +164,7 @@ class HelperMissionController extends AssistBaseController
     public function active(): JsonResponse
     {
         $mission = AssistanceRequest::with([
-            'expertiseTypes:id,name,icon',
+            'expertiseTypes:id,name,name_ar,name_en,icon',
             'seeker:id,first_name,last_name,phone',
             'photos',
         ])

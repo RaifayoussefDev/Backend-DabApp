@@ -92,7 +92,7 @@ class AssistanceRequestController extends AssistBaseController
     public function index(Request $request): JsonResponse
     {
         $query = AssistanceRequest::with([
-            'expertiseTypes:id,name,icon',
+            'expertiseTypes:id,name,name_ar,name_en,icon',
             'helper:id,first_name,last_name',
             'rating:id,request_id,stars,comment',
         ])
@@ -494,6 +494,71 @@ class AssistanceRequestController extends AssistBaseController
         }
 
         return $this->success([], 'Request cancelled.');
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/assist/seeker/request/{id}/finish",
+     *     summary="Seeker confirms the assistance is finished",
+     *     description="Marks the request as completed from the seeker's side. Can only be called when the helper has arrived (status: arrived). Notifies the helper and updates their total_assists counter.",
+     *     tags={"Assist - Seeker"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true,
+     *         description="Assistance request ID",
+     *         @OA\Schema(type="string", example="uuid-here")
+     *     ),
+     *     @OA\Response(response=200, description="Mission marked as completed",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Assistance confirmed as completed."),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id",           type="string",  example="uuid-here"),
+     *                 @OA\Property(property="status",       type="string",  example="completed"),
+     *                 @OA\Property(property="status_label", type="object",
+     *                     @OA\Property(property="en", type="string", example="Completed"),
+     *                     @OA\Property(property="ar", type="string", example="مكتمل")
+     *                 ),
+     *                 @OA\Property(property="completed_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=403, description="This request does not belong to you"),
+     *     @OA\Response(response=404, description="Request not found"),
+     *     @OA\Response(response=422, description="Request must be in arrived status to confirm completion")
+     * )
+     */
+    public function finish(string $id): JsonResponse
+    {
+        $assistRequest = AssistanceRequest::find($id);
+
+        if (!$assistRequest) {
+            return $this->error('Assistance request not found.', 404);
+        }
+
+        if ($assistRequest->seeker_id !== Auth::id()) {
+            return $this->error('Forbidden.', 403);
+        }
+
+        if ($assistRequest->status !== 'arrived') {
+            return $this->error(
+                'The request must be in arrived status to confirm completion (current: ' . $assistRequest->status . ').',
+                422
+            );
+        }
+
+        $assistRequest->update([
+            'status'       => 'completed',
+            'completed_at' => now(),
+        ]);
+
+        // Increment helper total_assists
+        if ($assistRequest->helper_id) {
+            $assistRequest->helper?->helperProfile?->increment('total_assists');
+            $this->notificationService->notify($assistRequest->helper, 'seeker_finished', $assistRequest);
+        }
+
+        return $this->success($assistRequest, 'Assistance confirmed as completed.');
     }
 
     /**

@@ -55,6 +55,8 @@ class AssistanceRequest extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $appends = ['status_label'];
+
     protected $fillable = [
         'seeker_id',
         'helper_id',
