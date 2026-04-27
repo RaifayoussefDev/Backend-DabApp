@@ -1868,6 +1868,7 @@ use App\Http\Controllers\Assist\Admin\AdminExpertiseController;
 use App\Http\Controllers\Assist\Admin\AdminAssistStatsController;
 use App\Http\Controllers\AdController;
 use App\Http\Controllers\Admin\AdminAdController;
+use App\Http\Controllers\AdminBannerStatsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -1891,6 +1892,14 @@ Route::prefix('admin/ads')->middleware('auth.admin')->group(function () {
     Route::delete('/{id}',          [AdminAdController::class, 'destroy']);
     Route::post('/{id}/toggle',     [AdminAdController::class, 'toggle']);
     Route::get('/{id}/submissions', [AdminAdController::class, 'submissions']);
+});
+
+// Admin: banner analytics (views, clicks, stats)
+Route::prefix('admin/banners')->middleware('auth.admin')->group(function () {
+    Route::get('/overview',       [AdminBannerStatsController::class, 'overview']);
+    Route::get('/{id}/stats',     [AdminBannerStatsController::class, 'stats']);
+    Route::get('/{id}/views',     [AdminBannerStatsController::class, 'views']);
+    Route::get('/{id}/clicks',    [AdminBannerStatsController::class, 'clicks']);
 });
 
 Route::prefix('assist')->middleware('auth:api')->group(function () {

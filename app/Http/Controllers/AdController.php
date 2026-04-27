@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\AdSubmission;
 use App\Models\Banner;
+use App\Models\BannerView;
+use App\Models\BannerClick;
 use App\Services\GoogleSheetsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -42,7 +44,7 @@ class AdController extends Controller
      *     )
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
         $ads = Banner::where('is_active', true)
             ->where('has_form', true)
@@ -53,10 +55,20 @@ class AdController extends Controller
                 $q->whereNull('end_date')->orWhere('end_date', '>=', now());
             })
             ->orderBy('order')
-            ->get()
-            ->map(fn ($b) => $this->formatAd($b));
+            ->get();
 
-        return response()->json(['success' => true, 'data' => $ads]);
+        // Auto-track impression for each ad shown in the list
+        $userId = auth('api')->id();
+        $ip     = $request->ip();
+        foreach ($ads as $ad) {
+            BannerView::create([
+                'banner_id'  => $ad->id,
+                'user_id'    => $userId,
+                'ip_address' => $ip,
+            ]);
+        }
+
+        return response()->json(['success' => true, 'data' => $ads->map($this->formatAd(...))]);
     }
 
     /**
@@ -85,13 +97,20 @@ class AdController extends Controller
      *     @OA\Response(response=404, description="Ad not found")
      * )
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $ad = Banner::where('has_form', true)->find($id);
 
         if (!$ad) {
             return response()->json(['success' => false, 'message' => 'Ad not found'], 404);
         }
+
+        // Auto-track view — no frontend change needed
+        BannerView::create([
+            'banner_id'  => $ad->id,
+            'user_id'    => auth('api')->id(),
+            'ip_address' => $request->ip(),
+        ]);
 
         return response()->json(['success' => true, 'data' => $this->formatAd($ad)]);
     }
@@ -147,6 +166,13 @@ class AdController extends Controller
                 'errors'  => $validator->errors(),
             ], 422);
         }
+
+        // Auto-track click — no frontend change needed
+        BannerClick::create([
+            'banner_id'  => $ad->id,
+            'user_id'    => auth('api')->id(),
+            'ip_address' => $request->ip(),
+        ]);
 
         $submission = AdSubmission::create([
             'banner_id'  => $ad->id,
