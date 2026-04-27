@@ -7,7 +7,6 @@ use App\Models\BannerView;
 use App\Models\BannerClick;
 use App\Models\AdSubmission;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class AdminBannerStatsController extends Controller
 {
@@ -41,7 +40,7 @@ class AdminBannerStatsController extends Controller
                 'total_clicks'      => $totalClicks,
                 'total_submissions' => $totalSubmissions,
                 'click_rate'        => $totalViews > 0 ? round(($totalClicks / $totalViews) * 100, 2) . '%' : '0%',
-                'conversion_rate'   => $totalClicks > 0 ? round(($totalSubmissions / $totalClicks) * 100, 2) . '%' : '0%',
+                'conversion_rate'   => $totalViews > 0 ? round(($totalSubmissions / $totalViews) * 100, 2) . '%' : '0%',
             ],
         ]);
     }
@@ -50,7 +49,7 @@ class AdminBannerStatsController extends Controller
      * GET /api/admin/banners/{id}/views
      * List of users who viewed the banner (paginated).
      */
-    public function views(Request $request, $id): JsonResponse
+    public function views($id): JsonResponse
     {
         $banner = Banner::find($id);
         if (!$banner) {
@@ -71,7 +70,7 @@ class AdminBannerStatsController extends Controller
      * GET /api/admin/banners/{id}/clicks
      * List of users who clicked the banner CTA (paginated).
      */
-    public function clicks(Request $request, $id): JsonResponse
+    public function clicks($id): JsonResponse
     {
         $banner = Banner::find($id);
         if (!$banner) {
