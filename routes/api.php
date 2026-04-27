@@ -903,6 +903,10 @@ Route::middleware('auth:api')->group(function () {
             // Two-factor authentication
             Route::post('/{id}/two-factor/enable', [UserController::class, 'enableTwoFactor'])->middleware('permission:users.update');
             Route::post('/{id}/two-factor/disable', [UserController::class, 'disableTwoFactor'])->middleware('permission:users.update');
+            Route::post('/{id}/toggle-2fa', [UserController::class, 'toggleTwoFactor'])->middleware('permission:users.update');
+
+            // Registration status
+            Route::post('/{id}/toggle-registration', [UserController::class, 'toggleRegistration'])->middleware('permission:users.update');
 
             // Relations
             Route::get('/{id}/wishlists', [UserController::class, 'getUserWishlists'])->middleware('permission:users.view');

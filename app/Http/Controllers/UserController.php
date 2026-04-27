@@ -1901,7 +1901,7 @@ class UserController extends Controller
      *             @OA\Property(
      *                 property="action",
      *                 type="string",
-     *                 enum={"activate", "deactivate", "delete", "verify", "unverify", "assign_role", "send_email"},
+     *                 enum={"activate", "deactivate", "delete", "verify", "unverify", "assign_role", "send_email", "enable_2fa", "disable_2fa", "complete_registration"},
      *                 example="activate",
      *                 description="Action to perform"
      *             ),
@@ -1951,7 +1951,7 @@ class UserController extends Controller
             $validated = $request->validate([
                 'user_ids' => 'required|array|min:1',
                 'user_ids.*' => 'integer|exists:users,id',
-                'action' => 'required|string|in:activate,deactivate,delete,verify,unverify,assign_role,send_email',
+                'action' => 'required|string|in:activate,deactivate,delete,verify,unverify,assign_role,send_email,enable_2fa,disable_2fa,complete_registration',
                 'role_id' => 'required_if:action,assign_role|exists:roles,id',
                 'email_subject' => 'required_if:action,send_email|string|max:255',
                 'email_message' => 'required_if:action,send_email|string',
@@ -2023,6 +2023,18 @@ class UserController extends Controller
                             ]);
                         }
                     }
+                    break;
+
+                case 'enable_2fa':
+                    $affectedUsers = User::whereIn('id', $userIds)->update(['two_factor_enabled' => true]);
+                    break;
+
+                case 'disable_2fa':
+                    $affectedUsers = User::whereIn('id', $userIds)->update(['two_factor_enabled' => false]);
+                    break;
+
+                case 'complete_registration':
+                    $affectedUsers = User::whereIn('id', $userIds)->update(['is_registration_completed' => true]);
                     break;
             }
 
@@ -2532,6 +2544,105 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/users/{id}/toggle-2fa",
+     *     operationId="toggleUserTwoFactor",
+     *     tags={"Users Management"},
+     *     summary="Toggle user's two-factor authentication",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *     @OA\Response(response=200, description="2FA status toggled",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="two_factor_enabled", type="boolean", example=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="User not found")
+     * )
+     */
+    public function toggleTwoFactor($id)
+    {
+        try {
+            $user = User::findOrFail($id);
+            $user->two_factor_enabled = !$user->two_factor_enabled;
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $user->id,
+                    'two_factor_enabled' => $user->two_factor_enabled
+                ]
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "User with ID {$id} not found"
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error in UserController@toggleTwoFactor', ['user_id' => $id, 'error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error toggling 2FA status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/users/{id}/toggle-registration",
+     *     operationId="toggleUserRegistration",
+     *     tags={"Users Management"},
+     *     summary="Toggle user's registration completion status (OTP verified)",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *     @OA\Response(response=200, description="Registration status toggled",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="is_registration_completed", type="boolean", example=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="User not found")
+     * )
+     */
+    public function toggleRegistration($id)
+    {
+        try {
+            $user = User::findOrFail($id);
+            $user->is_registration_completed = !$user->is_registration_completed;
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $user->id,
+                    'is_registration_completed' => $user->is_registration_completed
+                ]
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "User with ID {$id} not found"
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error in UserController@toggleRegistration', ['user_id' => $id, 'error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error toggling registration status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     /**
      * @OA\Get(
      *     path="/api/admin/users/authentication-logs",
