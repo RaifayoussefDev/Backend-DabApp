@@ -1,4 +1,4 @@
-<?php
+{"success":false,"message":"User with ID export not found"}<?php
 
 namespace App\Http\Controllers;
 
@@ -139,15 +139,16 @@ class UserController extends Controller
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
 
-        // ⭐ NOUVEAUX FILTRES
-        $isOnline = $request->get('is_online');
-        $twoFactorEnabled = $request->get('two_factor_enabled');
-        $gender = $request->get('gender');
-        $language = $request->get('language');
-        $createdFrom = $request->get('created_from');
-        $createdTo = $request->get('created_to');
-        $lastLoginFrom = $request->get('last_login_from');
-        $lastLoginTo = $request->get('last_login_to');
+        $isOnline             = $request->get('is_online');
+        $twoFactorEnabled     = $request->get('two_factor_enabled');
+        $allowMultiDevice     = $request->get('allow_multi_device');
+        $registrationDone     = $request->get('is_registration_completed');
+        $gender               = $request->get('gender');
+        $language             = $request->get('language');
+        $createdFrom          = $request->get('created_from');
+        $createdTo            = $request->get('created_to');
+        $lastLoginFrom        = $request->get('last_login_from');
+        $lastLoginTo          = $request->get('last_login_to');
 
         $query = User::with(['role', 'country']);
 
@@ -197,7 +198,6 @@ class UserController extends Controller
             }
         }
 
-        // ⭐ NOUVEAU: two_factor_enabled filter
         if ($twoFactorEnabled !== null && $twoFactorEnabled !== '') {
             $twoFactorBool = filter_var($twoFactorEnabled, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
             if ($twoFactorBool !== null) {
@@ -205,7 +205,20 @@ class UserController extends Controller
             }
         }
 
-        // ⭐ NOUVEAU: Gender filter
+        if ($allowMultiDevice !== null && $allowMultiDevice !== '') {
+            $multiDeviceBool = filter_var($allowMultiDevice, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($multiDeviceBool !== null) {
+                $query->where('allow_multi_device', $multiDeviceBool);
+            }
+        }
+
+        if ($registrationDone !== null && $registrationDone !== '') {
+            $registrationBool = filter_var($registrationDone, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($registrationBool !== null) {
+                $query->where('is_registration_completed', $registrationBool);
+            }
+        }
+
         if ($gender) {
             $query->where('gender', $gender);
         }
@@ -231,8 +244,23 @@ class UserController extends Controller
             $query->whereDate('last_login', '<=', $lastLoginTo);
         }
 
-        // Sorting
-        $query->orderBy($sortBy, $sortOrder);
+        // Sorting — whitelist to prevent SQL injection
+        $allowedSortFields = [
+            'id', 'first_name', 'last_name', 'email', 'phone',
+            'created_at', 'last_login', 'role_id', 'country_id',
+            'is_active', 'verified', 'two_factor_enabled',
+            'is_registration_completed', 'allow_multi_device',
+            'is_online', 'gender', 'language',
+        ];
+        $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? $sortOrder : 'desc';
+
+        if ($sortBy === 'full_name') {
+            $query->orderByRaw("CONCAT(first_name, ' ', last_name) {$sortOrder}");
+        } elseif (in_array($sortBy, $allowedSortFields)) {
+            $query->orderBy($sortBy, $sortOrder);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
 
         // Pagination
         $users = $query->paginate($perPage);
@@ -240,25 +268,6 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'data' => $users,
-            // ⭐ DEBUG (à retirer en production)
-            'debug' => [
-                'filters_applied' => [
-                    'search' => $search,
-                    'role_id' => $roleId,
-                    'is_active' => $isActive,
-                    'verified' => $verified,
-                    'is_online' => $isOnline,
-                    'two_factor_enabled' => $twoFactorEnabled,
-                    'gender' => $gender,
-                    'language' => $language,
-                    'country_id' => $countryId,
-                    'created_from' => $createdFrom,
-                    'created_to' => $createdTo,
-                    'last_login_from' => $lastLoginFrom,
-                    'last_login_to' => $lastLoginTo,
-                ],
-                'total_results' => $users->total()
-            ]
         ]);
     }
 
@@ -2082,67 +2091,179 @@ class UserController extends Controller
      *     path="/api/admin/users/export",
      *     operationId="exportUsers",
      *     tags={"Users Management"},
-     *     summary="Export users to CSV",
+     *     summary="Export users to Excel (.xlsx) with optional filters",
+     *     description="Accepts the same filters as GET /api/admin/users (search, role_id, is_active, verified, is_online, two_factor_enabled, allow_multi_device, is_registration_completed, gender, language, country_id, created_from, created_to, last_login_from, last_login_to).",
      *     security={{"bearerAuth":{}}},
-     *     @OA\Response(
-     *         response=200,
-     *         description="CSV file download"
-     *     )
+     *     @OA\Parameter(name="search", in="query", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="role_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="is_active", in="query", @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="verified", in="query", @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="is_online", in="query", @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="two_factor_enabled", in="query", @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="allow_multi_device", in="query", @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="is_registration_completed", in="query", @OA\Schema(type="boolean")),
+     *     @OA\Parameter(name="gender", in="query", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="language", in="query", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="country_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="created_from", in="query", @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="created_to", in="query", @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="last_login_from", in="query", @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="last_login_to", in="query", @OA\Schema(type="string", format="date")),
+     *     @OA\Response(response=200, description="Excel file download (.xlsx)")
      * )
      */
-    public function export()
+    public function export(Request $request)
     {
-        $users = User::with('role')->get();
+        $query = User::with(['role', 'country']);
 
-        $filename = 'users_export_' . date('Y-m-d_H-i-s') . '.csv';
+        // Apply the same filters as index()
+        if ($search = $request->get('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'LIKE', "%{$search}%")
+                    ->orWhere('last_name', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('phone', 'LIKE', "%{$search}%");
+            });
+        }
+
+        if ($roleId = $request->get('role_id')) {
+            $query->where('role_id', $roleId);
+        }
+
+        foreach (['is_active', 'verified', 'is_online', 'two_factor_enabled', 'allow_multi_device', 'is_registration_completed'] as $boolField) {
+            $val = $request->get($boolField);
+            if ($val !== null && $val !== '') {
+                $bool = filter_var($val, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                if ($bool !== null) {
+                    $query->where($boolField, $bool);
+                }
+            }
+        }
+
+        if ($gender = $request->get('gender')) {
+            $query->where('gender', $gender);
+        }
+        if ($language = $request->get('language')) {
+            $query->where('language', $language);
+        }
+        if ($countryId = $request->get('country_id')) {
+            $query->where('country_id', $countryId);
+        }
+        if ($from = $request->get('created_from')) {
+            $query->whereDate('created_at', '>=', $from);
+        }
+        if ($to = $request->get('created_to')) {
+            $query->whereDate('created_at', '<=', $to);
+        }
+        if ($from = $request->get('last_login_from')) {
+            $query->whereDate('last_login', '>=', $from);
+        }
+        if ($to = $request->get('last_login_to')) {
+            $query->whereDate('last_login', '<=', $to);
+        }
+
+        $allowedSortFields = [
+            'id', 'first_name', 'last_name', 'email', 'phone',
+            'created_at', 'last_login', 'role_id', 'country_id',
+            'is_active', 'verified', 'two_factor_enabled',
+            'is_registration_completed', 'allow_multi_device',
+            'is_online', 'gender', 'language',
+        ];
+        $sortBy    = $request->get('sort_by', 'id');
+        $sortOrder = in_array(strtolower($request->get('sort_order', 'asc')), ['asc', 'desc'])
+            ? $request->get('sort_order', 'asc') : 'asc';
+
+        if ($sortBy === 'full_name') {
+            $query->orderByRaw("CONCAT(first_name, ' ', last_name) {$sortOrder}");
+        } elseif (in_array($sortBy, $allowedSortFields)) {
+            $query->orderBy($sortBy, $sortOrder);
+        } else {
+            $query->orderBy('id', 'asc');
+        }
+
+        $users = $query->get();
+
+        // Build Excel with PhpSpreadsheet
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Users');
+
+        // Header row
         $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'A' => 'ID',
+            'B' => 'First Name',
+            'C' => 'Last Name',
+            'D' => 'Email',
+            'E' => 'Phone',
+            'F' => 'Role',
+            'G' => 'Country',
+            'H' => 'Gender',
+            'I' => 'Language',
+            'J' => 'Active',
+            'K' => 'Verified',
+            'L' => '2FA Enabled',
+            'M' => 'Multi-Device',
+            'N' => 'Registration Done',
+            'O' => 'Online',
+            'P' => 'Birthday',
+            'Q' => 'Last Login',
+            'R' => 'Created At',
         ];
 
-        $callback = function () use ($users) {
-            $file = fopen('php://output', 'w');
-
-            fputcsv($file, [
-                'ID',
-                'First Name',
-                'Last Name',
-                'Email',
-                'Phone',
-                'Birthday',
-                'Gender',
-                'Address',
-                'Postal Code',
-                'Role',
-                'Country ID',
-                'Is Active',
-                'Verified',
-                'Created At'
+        foreach ($headers as $col => $label) {
+            $sheet->setCellValue("{$col}1", $label);
+            $sheet->getStyle("{$col}1")->applyFromArray([
+                'font'      => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+                'fill'      => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1F3A5F']],
+                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
             ]);
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
 
-            foreach ($users as $user) {
-                fputcsv($file, [
-                    $user->id,
-                    $user->first_name,
-                    $user->last_name,
-                    $user->email,
-                    $user->phone,
-                    $user->birthday,
-                    $user->gender,
-                    $user->address,
-                    $user->postal_code,
-                    $user->role->name ?? 'N/A',
-                    $user->country_id,
-                    $user->is_active ? 'Yes' : 'No',
-                    $user->verified ? 'Yes' : 'No',
-                    $user->created_at
+        // Data rows
+        $row = 2;
+        foreach ($users as $user) {
+            $sheet->setCellValue("A{$row}", $user->id);
+            $sheet->setCellValue("B{$row}", $user->first_name);
+            $sheet->setCellValue("C{$row}", $user->last_name);
+            $sheet->setCellValue("D{$row}", $user->email);
+            $sheet->setCellValue("E{$row}", $user->phone);
+            $sheet->setCellValue("F{$row}", $user->role->name ?? '');
+            $sheet->setCellValue("G{$row}", $user->country->name ?? '');
+            $sheet->setCellValue("H{$row}", $user->gender ?? '');
+            $sheet->setCellValue("I{$row}", $user->language ?? '');
+            $sheet->setCellValue("J{$row}", $user->is_active ? 'Yes' : 'No');
+            $sheet->setCellValue("K{$row}", $user->verified ? 'Yes' : 'No');
+            $sheet->setCellValue("L{$row}", $user->two_factor_enabled ? 'Yes' : 'No');
+            $sheet->setCellValue("M{$row}", $user->allow_multi_device ? 'Yes' : 'No');
+            $sheet->setCellValue("N{$row}", $user->is_registration_completed ? 'Yes' : 'No');
+            $sheet->setCellValue("O{$row}", $user->is_online ? 'Yes' : 'No');
+            $sheet->setCellValue("P{$row}", $user->birthday ? $user->birthday->format('Y-m-d') : '');
+            $sheet->setCellValue("Q{$row}", $user->last_login ? $user->last_login->format('Y-m-d H:i') : '');
+            $sheet->setCellValue("R{$row}", $user->created_at->format('Y-m-d H:i'));
+
+            // Alternate row background
+            if ($row % 2 === 0) {
+                $sheet->getStyle("A{$row}:R{$row}")->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFF2F6FA']],
                 ]);
             }
+            $row++;
+        }
 
-            fclose($file);
-        };
+        // Freeze header row
+        $sheet->freezePane('A2');
 
-        return response()->stream($callback, 200, $headers);
+        $filename = 'users_export_' . date('Y-m-d_His') . '.xlsx';
+        $writer   = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Cache-Control'       => 'max-age=0',
+        ]);
     }
 
     /**

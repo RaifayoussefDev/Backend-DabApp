@@ -441,9 +441,10 @@ Route::prefix('admin')->group(function () {
 
         // Admin Users
         Route::get('/users/stats', [UserController::class, 'stats']);
+        Route::get('/users/export', [UserController::class, 'export']);
         Route::get('/users/autocomplete', [AdminListingController::class, 'autocomplete']);
         Route::patch('/users/{id}/toggle-multi-device', [UserController::class, 'toggleMultiDevice']);
-        Route::apiResource('users', UserController::class);
+        Route::apiResource('users', UserController::class)->where(['user' => '[0-9]+']);
 
         // Admin Uploads
         Route::post('/upload-video-no-watermark', [App\Http\Controllers\ImageUploadController::class, 'uploadVideoNoWatermark']);
