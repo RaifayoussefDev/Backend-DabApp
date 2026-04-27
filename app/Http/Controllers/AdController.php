@@ -105,11 +105,21 @@ class AdController extends Controller
             return response()->json(['success' => false, 'message' => 'Ad not found'], 404);
         }
 
-        // Auto-track view — no frontend change needed
+        $userId = auth('api')->id();
+        $ip     = $request->ip();
+
+        // Track view (opened the ad)
         BannerView::create([
             'banner_id'  => $ad->id,
-            'user_id'    => auth('api')->id(),
-            'ip_address' => $request->ip(),
+            'user_id'    => $userId,
+            'ip_address' => $ip,
+        ]);
+
+        // Track click (opening an ad = clicking on it)
+        BannerClick::create([
+            'banner_id'  => $ad->id,
+            'user_id'    => $userId,
+            'ip_address' => $ip,
         ]);
 
         return response()->json(['success' => true, 'data' => $this->formatAd($ad)]);

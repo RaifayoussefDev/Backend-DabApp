@@ -836,6 +836,7 @@ Route::get('/test-sale-validated-email', [SoomController::class, 'testSaleValida
 // ============================================
 // ============================================
 Route::get('/banners', [BannerController::class, 'index']);
+Route::get('/banners/{id}/click', [BannerController::class, 'click']);
 
 Route::middleware('auth:api')->group(function () {
     Route::get('admin/dashboard', [DashboardController::class, 'index']);

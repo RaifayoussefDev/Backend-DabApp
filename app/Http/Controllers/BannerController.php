@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Banner;
+use App\Models\BannerClick;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -50,14 +51,16 @@ class BannerController extends Controller
             ->get()
             ->map(function ($banner) {
                 return [
-                    'id'     => $banner->id,
-                    'title'  => $banner->title,
+                    'id'          => $banner->id,
+                    'title'       => $banner->title,
                     'description' => $banner->description,
-                    'image'  => $banner->image,
-                    'link'   => $banner->link,
-                    'order'  => $banner->order,
-                    'has_ad' => !is_null($banner->ad_id),
-                    'ad_id'  => $banner->ad_id,
+                    'image'       => $banner->image,
+                    'link'        => $banner->link
+                        ? url("/api/banners/{$banner->id}/click")
+                        : null,
+                    'order'       => $banner->order,
+                    'has_ad'      => !is_null($banner->ad_id),
+                    'ad_id'       => $banner->ad_id,
                 ];
             });
 
@@ -370,6 +373,28 @@ class BannerController extends Controller
      *     )
      * )
      */
+    /**
+     * GET /api/banners/{id}/click
+     * Tracks the click and redirects to the real link.
+     * Frontend changes nothing — link field already points here.
+     */
+    public function click(Request $request, $id)
+    {
+        $banner = Banner::where('has_form', false)->find($id);
+
+        if (!$banner || !$banner->link) {
+            return response()->json(['success' => false, 'message' => 'Banner not found'], 404);
+        }
+
+        BannerClick::create([
+            'banner_id'  => $banner->id,
+            'user_id'    => auth('api')->id(),
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect($banner->link);
+    }
+
     public function toggleStatus($id)
     {
         $banner = Banner::where('has_form', false)->find($id);
