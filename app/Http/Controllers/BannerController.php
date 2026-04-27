@@ -390,6 +390,7 @@ class BannerController extends Controller
             'banner_id'  => $banner->id,
             'user_id'    => auth('api')->id(),
             'ip_address' => $request->ip(),
+            'clicked_at' => now(),
         ]);
 
         return redirect($banner->link);

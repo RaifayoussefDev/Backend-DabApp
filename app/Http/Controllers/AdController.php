@@ -65,6 +65,7 @@ class AdController extends Controller
                 'banner_id'  => $ad->id,
                 'user_id'    => $userId,
                 'ip_address' => $ip,
+                'viewed_at'  => now(),
             ]);
         }
 
@@ -113,6 +114,7 @@ class AdController extends Controller
             'banner_id'  => $ad->id,
             'user_id'    => $userId,
             'ip_address' => $ip,
+            'viewed_at'  => now(),
         ]);
 
         // Track click (opening an ad = clicking on it)
@@ -120,6 +122,7 @@ class AdController extends Controller
             'banner_id'  => $ad->id,
             'user_id'    => $userId,
             'ip_address' => $ip,
+            'clicked_at' => now(),
         ]);
 
         return response()->json(['success' => true, 'data' => $this->formatAd($ad)]);
@@ -182,6 +185,7 @@ class AdController extends Controller
             'banner_id'  => $ad->id,
             'user_id'    => auth('api')->id(),
             'ip_address' => $request->ip(),
+            'clicked_at' => now(),
         ]);
 
         $submission = AdSubmission::create([
