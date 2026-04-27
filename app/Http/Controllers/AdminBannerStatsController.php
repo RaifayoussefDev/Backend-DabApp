@@ -22,15 +22,19 @@ class AdminBannerStatsController extends Controller
             return response()->json(['success' => false, 'message' => 'Banner not found'], 404);
         }
 
-        $totalViews       = BannerView::where('banner_id', $id)->count();
-        $uniqueViews      = BannerView::where('banner_id', $id)->whereNotNull('user_id')->distinct('user_id')->count('user_id');
-        $totalClicks      = BannerClick::where('banner_id', $id)->count();
-        $totalSubmissions = AdSubmission::where('banner_id', $id)->count();
+        // If this is a visual banner linked to an ad, use the ad's ID for tracking lookup
+        $trackingId = $banner->ad_id ?? $banner->id;
+
+        $totalViews       = BannerView::where('banner_id', $trackingId)->count();
+        $uniqueViews      = BannerView::where('banner_id', $trackingId)->whereNotNull('user_id')->distinct('user_id')->count('user_id');
+        $totalClicks      = BannerClick::where('banner_id', $trackingId)->count();
+        $totalSubmissions = AdSubmission::where('banner_id', $trackingId)->count();
 
         return response()->json([
             'success' => true,
             'data' => [
                 'banner_id'         => (int) $id,
+                'ad_id'             => $trackingId,
                 'banner_title'      => $banner->title,
                 'total_views'       => $totalViews,
                 'unique_views'      => $uniqueViews,
@@ -53,7 +57,9 @@ class AdminBannerStatsController extends Controller
             return response()->json(['success' => false, 'message' => 'Banner not found'], 404);
         }
 
-        $views = BannerView::where('banner_id', $id)
+        $trackingId = $banner->ad_id ?? $banner->id;
+
+        $views = BannerView::where('banner_id', $trackingId)
             ->with('user:id,first_name,last_name,email,phone')
             ->orderByDesc('viewed_at')
             ->paginate(20);
@@ -72,7 +78,9 @@ class AdminBannerStatsController extends Controller
             return response()->json(['success' => false, 'message' => 'Banner not found'], 404);
         }
 
-        $clicks = BannerClick::where('banner_id', $id)
+        $trackingId = $banner->ad_id ?? $banner->id;
+
+        $clicks = BannerClick::where('banner_id', $trackingId)
             ->with('user:id,first_name,last_name,email,phone')
             ->orderByDesc('clicked_at')
             ->paginate(20);
