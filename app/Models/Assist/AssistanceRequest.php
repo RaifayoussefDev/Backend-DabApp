@@ -71,7 +71,10 @@ class AssistanceRequest extends Model
         'completed_at',
         'cancelled_at',
         'cancel_reason',
+        'completion_token',
     ];
+
+    protected $hidden = ['completion_token'];
 
     protected $casts = [
         'latitude'     => 'decimal:7',

@@ -1920,9 +1920,10 @@ Route::prefix('assist')->middleware('auth:api')->group(function () {
         Route::post('request',              [AssistanceRequestController::class, 'store']);
         Route::get('request/{id}',          [AssistanceRequestController::class, 'show']);
         Route::delete('request/{id}',       [AssistanceRequestController::class, 'cancel']);
-        Route::post('request/{id}/finish',  [AssistanceRequestController::class, 'finish']);
-        Route::post('request/{id}/rate',    [AssistanceRequestController::class, 'rate']);
-        Route::get('request/{id}/track',    [SeekerTrackingController::class,    'track']);
+        Route::post('request/{id}/finish',     [AssistanceRequestController::class, 'finish']);
+        Route::post('request/{id}/verify-qr', [AssistanceRequestController::class, 'verifyQr']);
+        Route::post('request/{id}/rate',      [AssistanceRequestController::class, 'rate']);
+        Route::get('request/{id}/track',      [SeekerTrackingController::class,    'track']);
     });
 
     // ── Helper ───────────────────────────────────────────────────────────────

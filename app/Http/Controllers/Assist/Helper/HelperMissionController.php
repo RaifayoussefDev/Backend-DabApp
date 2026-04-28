@@ -210,11 +210,12 @@ class HelperMissionController extends AssistBaseController
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string",  example="Status updated to en_route."),
      *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="id",             type="integer", example=12),
-     *                 @OA\Property(property="status",         type="string",  example="en_route"),
-     *                 @OA\Property(property="accepted_at",    type="string",  format="date-time", example="2026-04-15T10:05:00.000000Z"),
-     *                 @OA\Property(property="arrived_at",     type="string",  format="date-time", nullable=true, example=null),
-     *                 @OA\Property(property="completed_at",   type="string",  format="date-time", nullable=true, example=null),
+     *                 @OA\Property(property="id",               type="integer", example=12),
+     *                 @OA\Property(property="status",           type="string",  example="en_route"),
+     *                 @OA\Property(property="accepted_at",      type="string",  format="date-time", example="2026-04-15T10:05:00.000000Z"),
+     *                 @OA\Property(property="arrived_at",       type="string",  format="date-time", nullable=true, example=null),
+     *                 @OA\Property(property="completed_at",     type="string",  format="date-time", nullable=true, example=null),
+     *                 @OA\Property(property="completion_token", type="string",  nullable=true, example="a3f2b1c4d5e6f7a8b9c0d1e2f3a4b5c6", description="QR token generated when status becomes `arrived`. Show as QR code to the seeker for validation."),
      *                 @OA\Property(property="location_label", type="string",  example="King Fahd Road, Riyadh – near Exit 7"),
      *                 @OA\Property(property="expertise_types", type="array",
      *                     @OA\Items(type="object",
@@ -333,7 +334,7 @@ class HelperMissionController extends AssistBaseController
 
         $timestamps = [
             'en_route'  => ['accepted_at'  => $assistRequest->accepted_at ?? now()],
-            'arrived'   => ['arrived_at'   => now()],
+            'arrived'   => ['arrived_at'   => now(), 'completion_token' => bin2hex(random_bytes(16))],
             'completed' => ['completed_at' => now()],
         ];
 
@@ -351,6 +352,11 @@ class HelperMissionController extends AssistBaseController
 
         $assistRequest->load('expertiseTypes', 'seeker:id,first_name,last_name,phone');
 
-        return $this->success($assistRequest, "Status updated to {$newStatus}.");
+        $responseData = $assistRequest->toArray();
+        if ($newStatus === 'arrived') {
+            $responseData['completion_token'] = $assistRequest->completion_token;
+        }
+
+        return $this->success($responseData, "Status updated to {$newStatus}.");
     }
 }

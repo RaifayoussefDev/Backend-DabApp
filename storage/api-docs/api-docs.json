@@ -2381,6 +2381,97 @@
                 ]
             }
         },
+        "/api/assist/seeker/request/{id}/finish": {
+            "post": {
+                "tags": [
+                    "Assist - Seeker"
+                ],
+                "summary": "Seeker confirms the assistance is finished",
+                "description": "Marks the request as completed from the seeker's side. Can only be called when the helper has arrived (status: arrived). Notifies the helper and updates their total_assists counter.",
+                "operationId": "0b0cc336d72e95c15ad43017f4cf00a9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Assistance request ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "uuid-here"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Mission marked as completed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Assistance confirmed as completed."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "example": "uuid-here"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "completed"
+                                                },
+                                                "status_label": {
+                                                    "properties": {
+                                                        "en": {
+                                                            "type": "string",
+                                                            "example": "Completed"
+                                                        },
+                                                        "ar": {
+                                                            "type": "string",
+                                                            "example": "مكتمل"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "completed_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "This request does not belong to you"
+                    },
+                    "404": {
+                        "description": "Request not found"
+                    },
+                    "422": {
+                        "description": "Request must be in arrived status to confirm completion"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/assist/seeker/request/{id}/rate": {
             "post": {
                 "tags": [
@@ -2493,6 +2584,137 @@
                     },
                     "422": {
                         "description": "Request not completed yet, or already rated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/seeker/request/{id}/verify-qr": {
+            "post": {
+                "tags": [
+                    "Assist - Seeker"
+                ],
+                "summary": "Validate the helper's QR code to confirm mission completion",
+                "description": "The seeker scans the QR code displayed by the helper (generated when the helper marked status as `arrived`). Submitting the correct token marks the request as `completed` and notifies the helper.",
+                "operationId": "13cf1f91035ce75b1b99460553ae3083",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Assistance request ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "description": "The completion token extracted from the helper's QR code",
+                                        "type": "string",
+                                        "example": "a3f2b1c4d5e6f7a8b9c0d1e2f3a4b5c6"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "token": "a3f2b1c4d5e6f7a8b9c0d1e2f3a4b5c6"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mission completed via QR validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Mission confirmed via QR code."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "completed"
+                                                },
+                                                "status_label": {
+                                                    "properties": {
+                                                        "en": {
+                                                            "type": "string",
+                                                            "example": "Completed"
+                                                        },
+                                                        "ar": {
+                                                            "type": "string",
+                                                            "example": "مكتمل"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "completed_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "This request does not belong to you"
+                    },
+                    "404": {
+                        "description": "Request not found"
+                    },
+                    "422": {
+                        "description": "Invalid token or request not in arrived status",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid QR code token."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -4230,35 +4452,6 @@
                 "responses": {
                     "200": {
                         "description": "Banner deleted successfully"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/admin/banners/{id}/toggle": {
-            "post": {
-                "tags": [
-                    "Banners Management"
-                ],
-                "summary": "Toggle banner active status",
-                "operationId": "4ecfcad139ab1485d829f6e33bc07909",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Banner status toggled"
                     }
                 },
                 "security": [

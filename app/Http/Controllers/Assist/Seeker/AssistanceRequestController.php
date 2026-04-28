@@ -643,4 +643,88 @@ class AssistanceRequestController extends AssistBaseController
 
         return $this->success($rating, 'Rating submitted successfully.', 201);
     }
+
+    /**
+     * @OA\Post(
+     *     path="/api/assist/seeker/request/{id}/verify-qr",
+     *     summary="Validate the helper's QR code to confirm mission completion",
+     *     description="The seeker scans the QR code displayed by the helper (generated when the helper marked status as `arrived`). Submitting the correct token marks the request as `completed` and notifies the helper.",
+     *     tags={"Assist - Seeker"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true,
+     *         description="Assistance request ID",
+     *         @OA\Schema(type="integer", example=12)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"token"},
+     *             example={"token": "a3f2b1c4d5e6f7a8b9c0d1e2f3a4b5c6"},
+     *             @OA\Property(property="token", type="string", example="a3f2b1c4d5e6f7a8b9c0d1e2f3a4b5c6",
+     *                 description="The completion token extracted from the helper's QR code")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Mission completed via QR validation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string",  example="Mission confirmed via QR code."),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id",           type="integer", example=12),
+     *                 @OA\Property(property="status",       type="string",  example="completed"),
+     *                 @OA\Property(property="status_label", type="object",
+     *                     @OA\Property(property="en", type="string", example="Completed"),
+     *                     @OA\Property(property="ar", type="string", example="مكتمل")
+     *                 ),
+     *                 @OA\Property(property="completed_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=403, description="This request does not belong to you"),
+     *     @OA\Response(response=404, description="Request not found"),
+     *     @OA\Response(response=422, description="Invalid token or request not in arrived status",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string",  example="Invalid QR code token.")
+     *         )
+     *     )
+     * )
+     */
+    public function verifyQr(string $id): JsonResponse
+    {
+        $assistRequest = AssistanceRequest::find($id);
+
+        if (!$assistRequest) {
+            return $this->error('Assistance request not found.', 404);
+        }
+
+        if ($assistRequest->seeker_id !== Auth::id()) {
+            return $this->error('Forbidden.', 403);
+        }
+
+        if ($assistRequest->status !== 'arrived') {
+            return $this->error(
+                'QR validation is only available when the helper has arrived (current status: ' . $assistRequest->status . ').',
+                422
+            );
+        }
+
+        $token = request('token');
+
+        if (!$token || !hash_equals((string) $assistRequest->completion_token, (string) $token)) {
+            return $this->error('Invalid QR code token.', 422);
+        }
+
+        $assistRequest->update([
+            'status'       => 'completed',
+            'completed_at' => now(),
+        ]);
+
+        if ($assistRequest->helper_id) {
+            $assistRequest->helper?->helperProfile?->increment('total_assists');
+            $this->notificationService->notify($assistRequest->helper, 'seeker_finished', $assistRequest);
+        }
+
+        return $this->success($assistRequest, 'Mission confirmed via QR code.');
+    }
 }
