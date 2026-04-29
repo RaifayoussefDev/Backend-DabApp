@@ -1032,6 +1032,148 @@
                 ]
             }
         },
+        "/api/assist/helper/mission/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Assist - Helper Mission"
+                ],
+                "summary": "Update mission status",
+                "description": "Push the mission through its lifecycle. Allowed transitions: accepted to en_route to arrived to completed. Each transition notifies the seeker.",
+                "operationId": "995df93bf814a9b1daa282f27743f486",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Assistance request ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "description": "New status. Must follow the allowed transition chain: accepted to en_route to arrived to completed",
+                                        "type": "string",
+                                        "enum": [
+                                            "en_route",
+                                            "arrived",
+                                            "completed"
+                                        ],
+                                        "example": "en_route"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "status": "en_route"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Status updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Status updated to en_route."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "en_route"
+                                                },
+                                                "accepted_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-04-15T10:05:00.000000Z"
+                                                },
+                                                "arrived_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "completed_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "completion_token": {
+                                                    "description": "QR token returned only when status becomes arrived. Show as QR code to the seeker.",
+                                                    "type": "string",
+                                                    "example": "a3f2b1c4d5e6f7a8b9c0d1e2f3a4b5c6",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "You are not the assigned helper for this request"
+                    },
+                    "404": {
+                        "description": "Request not found"
+                    },
+                    "422": {
+                        "description": "Invalid status transition",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid transition: cannot go from pending to en_route."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/assist/helper/profile": {
             "get": {
                 "tags": [

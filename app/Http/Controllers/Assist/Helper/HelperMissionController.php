@@ -181,69 +181,6 @@ class HelperMissionController extends AssistBaseController
     }
 
     /**
-     * @OA\Patch(
-     *     path="/api/assist/helper/mission/{id}/status",
-     *     summary="Update mission status",
-     *     description="Push the mission through its lifecycle. Allowed transitions: `accepted` → `en_route` → `arrived` → `completed`. Each transition notifies the seeker.",
-     *     tags={"Assist - Helper Mission"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true,
-     *         description="Assistance request ID",
-     *         @OA\Schema(type="integer", example=12)
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"status"},
-     *             example={"status": "en_route"},
-     *             @OA\Property(property="status", type="string",
-     *                 enum={"en_route","arrived","completed"},
-     *                 example="en_route",
-     *                 description="New status. Must follow the allowed transition chain: accepted → en_route → arrived → completed"
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Status updated successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string",  example="Status updated to en_route."),
-     *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="id",               type="integer", example=12),
-     *                 @OA\Property(property="status",           type="string",  example="en_route"),
-     *                 @OA\Property(property="accepted_at",      type="string",  format="date-time", example="2026-04-15T10:05:00.000000Z"),
-     *                 @OA\Property(property="arrived_at",       type="string",  format="date-time", nullable=true, example=null),
-     *                 @OA\Property(property="completed_at",     type="string",  format="date-time", nullable=true, example=null),
-     *                 @OA\Property(property="completion_token", type="string",  nullable=true, example="a3f2b1c4d5e6f7a8b9c0d1e2f3a4b5c6", description="QR token generated when status becomes `arrived`. Show as QR code to the seeker for validation."),
-     *                 @OA\Property(property="location_label", type="string",  example="King Fahd Road, Riyadh – near Exit 7"),
-     *                 @OA\Property(property="expertise_types", type="array",
-     *                     @OA\Items(type="object",
-     *                         @OA\Property(property="id",   type="integer", example=1),
-     *                         @OA\Property(property="name", type="string",  example="tire_repair")
-     *                     )
-     *                 ),
-     *                 @OA\Property(property="seeker", type="object",
-     *                     @OA\Property(property="id",         type="integer", example=65),
-     *                     @OA\Property(property="first_name", type="string",  example="Raifa"),
-     *                     @OA\Property(property="last_name",  type="string",  example="Youssef"),
-     *                     @OA\Property(property="phone",      type="string",  example="+966501234567")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=403, description="You are not the assigned helper for this request"),
-     *     @OA\Response(response=404, description="Request not found"),
-     *     @OA\Response(response=422, description="Invalid status transition",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string",  example="Invalid transition: cannot go from 'pending' to 'en_route'.")
-     *         )
-     *     )
-     * )
-     */
-    /**
      * @OA\Post(
      *     path="/api/assist/helper/mission/{id}/cancel",
      *     summary="Cancel an accepted mission",
@@ -303,6 +240,58 @@ class HelperMissionController extends AssistBaseController
         return $this->success(null, 'Mission cancelled. The request is back in the feed.');
     }
 
+    /**
+     * @OA\Patch(
+     *     path="/api/assist/helper/mission/{id}/status",
+     *     summary="Update mission status",
+     *     description="Push the mission through its lifecycle. Allowed transitions: accepted to en_route to arrived to completed. Each transition notifies the seeker.",
+     *     tags={"Assist - Helper Mission"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true,
+     *         description="Assistance request ID",
+     *         @OA\Schema(type="integer", example=12)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"status"},
+     *             example={"status": "en_route"},
+     *             @OA\Property(property="status", type="string",
+     *                 enum={"en_route","arrived","completed"},
+     *                 example="en_route",
+     *                 description="New status. Must follow the allowed transition chain: accepted to en_route to arrived to completed"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Status updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Status updated to en_route."),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id",               type="integer", example=12),
+     *                 @OA\Property(property="status",           type="string",  example="en_route"),
+     *                 @OA\Property(property="accepted_at",      type="string",  format="date-time", example="2026-04-15T10:05:00.000000Z"),
+     *                 @OA\Property(property="arrived_at",       type="string",  format="date-time", nullable=true, example=null),
+     *                 @OA\Property(property="completed_at",     type="string",  format="date-time", nullable=true, example=null),
+     *                 @OA\Property(property="completion_token", type="string",  nullable=true, example="a3f2b1c4d5e6f7a8b9c0d1e2f3a4b5c6",
+     *                     description="QR token returned only when status becomes arrived. Show as QR code to the seeker."
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=403, description="You are not the assigned helper for this request"),
+     *     @OA\Response(response=404, description="Request not found"),
+     *     @OA\Response(response=422, description="Invalid status transition",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Invalid transition: cannot go from pending to en_route.")
+     *         )
+     *     )
+     * )
+     */
     public function updateStatus(UpdateMissionStatusRequest $request, string $id): JsonResponse
     {
         $assistRequest = AssistanceRequest::find($id);
