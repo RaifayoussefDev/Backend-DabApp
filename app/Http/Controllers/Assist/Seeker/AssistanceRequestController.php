@@ -95,6 +95,7 @@ class AssistanceRequestController extends AssistBaseController
             'expertiseTypes:id,name,name_ar,name_en,icon',
             'helper:id,first_name,last_name',
             'rating:id,request_id,stars,comment',
+            'photos',
         ])
             ->where('seeker_id', Auth::id())
             ->orderByDesc('created_at');

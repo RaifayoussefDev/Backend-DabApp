@@ -971,6 +971,179 @@
                 ]
             }
         },
+        "/api/assist/helper/mission/{id}": {
+            "get": {
+                "tags": [
+                    "Assist - Helper Mission"
+                ],
+                "summary": "Get details of a specific mission",
+                "description": "Returns the full details of a mission assigned to the helper, including seeker info, location, photos, and description. Use this before cancelling to review the request.",
+                "operationId": "43f1c2d2b3190e33f56f1249276e3d40",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Assistance request ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Mission details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "accepted"
+                                                },
+                                                "status_label": {
+                                                    "properties": {
+                                                        "en": {
+                                                            "type": "string",
+                                                            "example": "Accepted"
+                                                        },
+                                                        "ar": {
+                                                            "type": "string",
+                                                            "example": "مقبول"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "My rear tire is completely flat."
+                                                },
+                                                "location_label": {
+                                                    "type": "string",
+                                                    "example": "King Fahd Road, Riyadh – near Exit 7"
+                                                },
+                                                "latitude": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 24.714
+                                                },
+                                                "longitude": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 46.675
+                                                },
+                                                "accepted_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "arrived_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "completed_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "expertise_types": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "tire_repair"
+                                                            },
+                                                            "icon": {
+                                                                "type": "string",
+                                                                "example": "tire_repair"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "seeker": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 65
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string",
+                                                            "example": "Raifa"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string",
+                                                            "example": "Youssef"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "+966501234567"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "photos": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "path": {
+                                                                "type": "string",
+                                                                "example": "https://cdn.example.com/uploads/photo1.jpg"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "This mission does not belong to you"
+                    },
+                    "404": {
+                        "description": "Mission not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/assist/helper/mission/{id}/cancel": {
             "post": {
                 "tags": [

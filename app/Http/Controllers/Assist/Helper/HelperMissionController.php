@@ -181,6 +181,108 @@ class HelperMissionController extends AssistBaseController
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/assist/helper/mission/{id}",
+     *     summary="Get details of a specific mission",
+     *     description="Returns the full details of a mission assigned to the helper: seeker info, location, photos, motorcycle, rating, and timestamps. Same payload shape as the seeker's request detail endpoint.",
+     *     tags={"Assist - Helper Mission"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true,
+     *         description="Assistance request ID",
+     *         @OA\Schema(type="integer", example=12)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Mission details",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string",  example="Success"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id",             type="integer", example=12),
+     *                 @OA\Property(property="status",         type="string",  example="accepted"),
+     *                 @OA\Property(property="status_label",   type="object",
+     *                     @OA\Property(property="en", type="string", example="Accepted"),
+     *                     @OA\Property(property="ar", type="string", example="مقبول")
+     *                 ),
+     *                 @OA\Property(property="description",    type="string",  example="My rear tire is completely flat."),
+     *                 @OA\Property(property="location_label", type="string",  example="King Fahd Road, Riyadh – near Exit 7"),
+     *                 @OA\Property(property="latitude",       type="number",  format="float", example=24.714),
+     *                 @OA\Property(property="longitude",      type="number",  format="float", example=46.675),
+     *                 @OA\Property(property="accepted_at",    type="string",  format="date-time"),
+     *                 @OA\Property(property="arrived_at",     type="string",  format="date-time", nullable=true),
+     *                 @OA\Property(property="completed_at",   type="string",  format="date-time", nullable=true),
+     *                 @OA\Property(property="cancelled_at",   type="string",  format="date-time", nullable=true),
+     *                 @OA\Property(property="expertise_types", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",   type="integer", example=1),
+     *                         @OA\Property(property="name", type="string",  example="tire_repair"),
+     *                         @OA\Property(property="icon", type="string",  example="tire_repair")
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="seeker", type="object",
+     *                     @OA\Property(property="id",              type="integer", example=65),
+     *                     @OA\Property(property="first_name",      type="string",  example="Raifa"),
+     *                     @OA\Property(property="last_name",       type="string",  example="Youssef"),
+     *                     @OA\Property(property="phone",           type="string",  example="+966501234567"),
+     *                     @OA\Property(property="profile_picture", type="string",  nullable=true, example=null)
+     *                 ),
+     *                 @OA\Property(property="motorcycle", type="object", nullable=true,
+     *                     @OA\Property(property="id",    type="integer", example=15),
+     *                     @OA\Property(property="brand", type="string",  example="BMW"),
+     *                     @OA\Property(property="model", type="string",  example="F 900 R"),
+     *                     @OA\Property(property="year",  type="integer", example=2022)
+     *                 ),
+     *                 @OA\Property(property="photos", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",   type="integer", example=1),
+     *                         @OA\Property(property="path", type="string",  example="https://cdn.example.com/uploads/photo1.jpg")
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="rating", type="object", nullable=true,
+     *                     @OA\Property(property="stars",   type="integer", example=5),
+     *                     @OA\Property(property="comment", type="string",  example="Super fast!")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=403, description="This mission does not belong to you"),
+     *     @OA\Response(response=404, description="Mission not found")
+     * )
+     */
+    public function show(string $id): JsonResponse
+    {
+        $mission = AssistanceRequest::with([
+            'expertiseTypes:id,name,name_ar,name_en,icon',
+            'seeker:id,first_name,last_name,phone,profile_picture',
+            'motorcycle.brand',
+            'motorcycle.model',
+            'motorcycle.year',
+            'photos',
+            'rating:id,request_id,stars,comment',
+        ])->find($id);
+
+        if (!$mission) {
+            return $this->error('Mission not found.', 404);
+        }
+
+        if ($mission->helper_id !== Auth::id()) {
+            return $this->error('This mission does not belong to you.', 403);
+        }
+
+        if ($m = $mission->motorcycle) {
+            $mission->setRelation('motorcycle', [
+                'id'    => $m->id,
+                'brand' => $m->brand?->name,
+                'model' => $m->model?->name ?? '#' . $m->model_id,
+                'year'  => $m->year?->year ?? $m->year_id,
+            ]);
+        }
+
+        return $this->success($mission);
+    }
+
+    /**
      * @OA\Post(
      *     path="/api/assist/helper/mission/{id}/cancel",
      *     summary="Cancel an accepted mission",
