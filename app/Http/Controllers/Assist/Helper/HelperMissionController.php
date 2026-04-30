@@ -99,6 +99,10 @@ class HelperMissionController extends AssistBaseController
             'expertiseTypes:id,name,name_ar,name_en,icon',
             'seeker:id,first_name,last_name',
             'rating:id,request_id,stars,comment',
+            'photos',
+            'motorcycle.brand',
+            'motorcycle.model',
+            'motorcycle.year',
         ])
             ->where('helper_id', Auth::id())
             ->orderByDesc('created_at');
@@ -107,7 +111,20 @@ class HelperMissionController extends AssistBaseController
             $query->where('status', $request->status);
         }
 
-        return $this->success($query->paginate(15));
+        $paginated = $query->paginate(15);
+        $paginated->through(function ($m) {
+            if ($mc = $m->motorcycle) {
+                $m->setRelation('motorcycle', [
+                    'id'    => $mc->id,
+                    'brand' => $mc->brand?->name,
+                    'model' => $mc->model?->name ?? "#{$mc->model_id}",
+                    'year'  => $mc->year?->year ?? $mc->year_id,
+                ]);
+            }
+            return $m;
+        });
+
+        return $this->success($paginated);
     }
 
     /**
@@ -167,6 +184,9 @@ class HelperMissionController extends AssistBaseController
             'expertiseTypes:id,name,name_ar,name_en,icon',
             'seeker:id,first_name,last_name,phone',
             'photos',
+            'motorcycle.brand',
+            'motorcycle.model',
+            'motorcycle.year',
         ])
             ->where('helper_id', Auth::id())
             ->whereNotIn('status', ['completed', 'cancelled'])
@@ -175,6 +195,15 @@ class HelperMissionController extends AssistBaseController
 
         if (!$mission) {
             return $this->error('No active mission found.', 404);
+        }
+
+        if ($m = $mission->motorcycle) {
+            $mission->setRelation('motorcycle', [
+                'id'    => $m->id,
+                'brand' => $m->brand?->name,
+                'model' => $m->model?->name ?? "#{$m->model_id}",
+                'year'  => $m->year?->year ?? $m->year_id,
+            ]);
         }
 
         return $this->success($mission);

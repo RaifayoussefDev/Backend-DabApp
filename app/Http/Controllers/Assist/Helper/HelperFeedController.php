@@ -113,12 +113,23 @@ class HelperFeedController extends AssistBaseController
 
         $requests = AssistanceRequest::selectRaw("*, ({$haversine}) AS distance_km", [$lat, $lng, $lat])
             ->where('status', 'pending')
+            ->where('seeker_id', '!=', Auth::id())
             ->whereHas('expertiseTypes', fn($q) => $q->whereIn('expertise_types.id', $expertiseIds))
             ->having('distance_km', '<=', $profile->service_radius_km)
             ->orderBy('distance_km')
             ->with(['expertiseTypes', 'seeker:id,first_name,last_name', 'photos', 'motorcycle.brand', 'motorcycle.model', 'motorcycle.year'])
             ->get()
-            ->each(fn($r) => $r->seeker?->setVisible(['id', 'first_name', 'last_name']));
+            ->each(function ($r) {
+                $r->seeker?->setVisible(['id', 'first_name', 'last_name']);
+                if ($m = $r->motorcycle) {
+                    $r->setRelation('motorcycle', [
+                        'id'    => $m->id,
+                        'brand' => $m->brand?->name,
+                        'model' => $m->model?->name ?? '#' . $m->model_id,
+                        'year'  => $m->year?->year ?? $m->year_id,
+                    ]);
+                }
+            });
 
         return $this->success($requests);
     }

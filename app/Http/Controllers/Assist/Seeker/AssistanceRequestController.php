@@ -96,6 +96,9 @@ class AssistanceRequestController extends AssistBaseController
             'helper:id,first_name,last_name',
             'rating:id,request_id,stars,comment',
             'photos',
+            'motorcycle.brand',
+            'motorcycle.model',
+            'motorcycle.year',
         ])
             ->where('seeker_id', Auth::id())
             ->orderByDesc('created_at');
@@ -104,7 +107,20 @@ class AssistanceRequestController extends AssistBaseController
             $query->where('status', $request->status);
         }
 
-        return $this->success($query->paginate(15));
+        $paginated = $query->paginate(15);
+        $paginated->through(function ($r) {
+            if ($m = $r->motorcycle) {
+                $r->setRelation('motorcycle', [
+                    'id'    => $m->id,
+                    'brand' => $m->brand?->name,
+                    'model' => $m->model?->name ?? '#' . $m->model_id,
+                    'year'  => $m->year?->year ?? $m->year_id,
+                ]);
+            }
+            return $r;
+        });
+
+        return $this->success($paginated);
     }
 
     /**
