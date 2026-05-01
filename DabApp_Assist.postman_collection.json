@@ -1,0 +1,413 @@
+{
+  "info": {
+    "name": "DabApp - Assist (Seeker & Helper)",
+    "_postman_id": "dabapp-assist-v1",
+    "description": "Full scenario: Seeker creates request → Helper accepts → en_route → arrived → Seeker confirms or scans QR → Rate",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",       "value": "http://localhost:8000/api" },
+    { "key": "seeker_token",   "value": "" },
+    { "key": "helper_token",   "value": "" },
+    { "key": "request_id",     "value": "" },
+    { "key": "mission_id",     "value": "" },
+    { "key": "qr_token",       "value": "" }
+  ],
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Login as Seeker",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.data && json.data.token) {",
+                  "    pm.collectionVariables.set('seeker_token', json.data.token);",
+                  "    pm.test('Seeker token saved', () => pm.expect(json.data.token).to.be.a('string'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seeker@example.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Login as Helper",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.data && json.data.token) {",
+                  "    pm.collectionVariables.set('helper_token', json.data.token);",
+                  "    pm.test('Helper token saved', () => pm.expect(json.data.token).to.be.a('string'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"helper@example.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Shared",
+      "item": [
+        {
+          "name": "Get Expertise Types",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{seeker_token}}" }],
+            "url": { "raw": "{{base_url}}/assist/expertise-types", "host": ["{{base_url}}"], "path": ["assist", "expertise-types"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏍️ Seeker",
+      "item": [
+        {
+          "name": "1 - Get My Garage",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{seeker_token}}" }],
+            "url": { "raw": "{{base_url}}/assist/seeker/garage", "host": ["{{base_url}}"], "path": ["assist", "seeker", "garage"] }
+          }
+        },
+        {
+          "name": "2 - Create Assistance Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.data && json.data.request && json.data.request.id) {",
+                  "    pm.collectionVariables.set('request_id', json.data.request.id);",
+                  "    pm.test('Request ID saved: ' + json.data.request.id, () => true);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{seeker_token}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expertise_type_ids\": [1],\n  \"latitude\": 33.5731,\n  \"longitude\": -7.5898,\n  \"location_label\": \"Casablanca, Boulevard Mohammed V, près de la Place des Nations Unies\",\n  \"description\": \"Pneu arrière crevé, coincé sur le bord de la route.\",\n  \"motorcycle_id\": null,\n  \"photo_urls\": []\n}"
+            },
+            "url": { "raw": "{{base_url}}/assist/seeker/request", "host": ["{{base_url}}"], "path": ["assist", "seeker", "request"] }
+          }
+        },
+        {
+          "name": "3 - List My Requests",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{seeker_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/assist/seeker/requests",
+              "host": ["{{base_url}}"],
+              "path": ["assist", "seeker", "requests"],
+              "query": [{ "key": "status", "value": "pending", "disabled": true }]
+            }
+          }
+        },
+        {
+          "name": "4 - Get Request Detail + Garage",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{seeker_token}}" }],
+            "url": { "raw": "{{base_url}}/assist/seeker/request/{{request_id}}", "host": ["{{base_url}}"], "path": ["assist", "seeker", "request", "{{request_id}}"] }
+          }
+        },
+        {
+          "name": "5 - Track Helper Location",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{seeker_token}}" }],
+            "url": { "raw": "{{base_url}}/assist/seeker/request/{{request_id}}/track", "host": ["{{base_url}}"], "path": ["assist", "seeker", "request", "{{request_id}}", "track"] }
+          }
+        },
+        {
+          "name": "6a - Finish (confirm arrival manually)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{seeker_token}}" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{base_url}}/assist/seeker/request/{{request_id}}/finish", "host": ["{{base_url}}"], "path": ["assist", "seeker", "request", "{{request_id}}", "finish"] }
+          }
+        },
+        {
+          "name": "6b - Verify QR Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{seeker_token}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{qr_token}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/assist/seeker/request/{{request_id}}/verify-qr", "host": ["{{base_url}}"], "path": ["assist", "seeker", "request", "{{request_id}}", "verify-qr"] }
+          }
+        },
+        {
+          "name": "7 - Rate Helper",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{seeker_token}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stars\": 5,\n  \"comment\": \"Très rapide et professionnel !\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/assist/seeker/request/{{request_id}}/rate", "host": ["{{base_url}}"], "path": ["assist", "seeker", "request", "{{request_id}}", "rate"] }
+          }
+        },
+        {
+          "name": "❌ Cancel Request",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{seeker_token}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancel_reason\": \"J'ai trouvé de l'aide ailleurs\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/assist/seeker/request/{{request_id}}", "host": ["{{base_url}}"], "path": ["assist", "seeker", "request", "{{request_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛠️ Helper",
+      "item": [
+        {
+          "name": "Profile",
+          "item": [
+            {
+              "name": "Get Profile",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{helper_token}}" }],
+                "url": { "raw": "{{base_url}}/assist/helper/profile", "host": ["{{base_url}}"], "path": ["assist", "helper", "profile"] }
+              }
+            },
+            {
+              "name": "Create / Update Profile",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+                  { "key": "Content-Type",   "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"expertise_type_ids\": [1, 2],\n  \"bio\": \"Mécanicien avec 5 ans d'expérience.\",\n  \"service_radius_km\": 20\n}"
+                },
+                "url": { "raw": "{{base_url}}/assist/helper/profile", "host": ["{{base_url}}"], "path": ["assist", "helper", "profile"] }
+              }
+            },
+            {
+              "name": "Update GPS Location",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+                  { "key": "Content-Type",   "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"latitude\": 33.5731,\n  \"longitude\": -7.5898\n}"
+                },
+                "url": { "raw": "{{base_url}}/assist/helper/profile/location", "host": ["{{base_url}}"], "path": ["assist", "helper", "profile", "location"] }
+              }
+            },
+            {
+              "name": "Toggle Availability (online/offline)",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Authorization", "value": "Bearer {{helper_token}}" }],
+                "body": { "mode": "raw", "raw": "{}" },
+                "url": { "raw": "{{base_url}}/assist/helper/profile/availability", "host": ["{{base_url}}"], "path": ["assist", "helper", "profile", "availability"] }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Feed",
+          "item": [
+            {
+              "name": "Browse Feed (nearby requests)",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{helper_token}}" }],
+                "url": { "raw": "{{base_url}}/assist/helper/feed", "host": ["{{base_url}}"], "path": ["assist", "helper", "feed"] }
+              }
+            },
+            {
+              "name": "Accept Request",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var json = pm.response.json();",
+                      "if (json.data && json.data.id) {",
+                      "    pm.collectionVariables.set('mission_id', json.data.id);",
+                      "    pm.test('Mission ID saved: ' + json.data.id, () => true);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{helper_token}}" }],
+                "body": { "mode": "raw", "raw": "{}" },
+                "url": { "raw": "{{base_url}}/assist/helper/feed/{{request_id}}/accept", "host": ["{{base_url}}"], "path": ["assist", "helper", "feed", "{{request_id}}", "accept"] }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Missions",
+          "item": [
+            {
+              "name": "List My Missions",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{helper_token}}" }],
+                "url": {
+                  "raw": "{{base_url}}/assist/helper/missions",
+                  "host": ["{{base_url}}"],
+                  "path": ["assist", "helper", "missions"],
+                  "query": [{ "key": "status", "value": "completed", "disabled": true }]
+                }
+              }
+            },
+            {
+              "name": "Get Active Mission",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{helper_token}}" }],
+                "url": { "raw": "{{base_url}}/assist/helper/mission/active", "host": ["{{base_url}}"], "path": ["assist", "helper", "mission", "active"] }
+              }
+            },
+            {
+              "name": "Get Mission Detail",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{helper_token}}" }],
+                "url": { "raw": "{{base_url}}/assist/helper/mission/{{mission_id}}", "host": ["{{base_url}}"], "path": ["assist", "helper", "mission", "{{mission_id}}"] }
+              }
+            },
+            {
+              "name": "Update Status → en_route",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+                  { "key": "Content-Type",   "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"en_route\"\n}"
+                },
+                "url": { "raw": "{{base_url}}/assist/helper/mission/{{mission_id}}/status", "host": ["{{base_url}}"], "path": ["assist", "helper", "mission", "{{mission_id}}", "status"] }
+              }
+            },
+            {
+              "name": "Update Status → arrived (gets QR token)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var json = pm.response.json();",
+                      "if (json.data && json.data.completion_token) {",
+                      "    pm.collectionVariables.set('qr_token', json.data.completion_token);",
+                      "    pm.test('QR token saved', () => pm.expect(json.data.completion_token).to.be.a('string'));",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+                  { "key": "Content-Type",   "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"arrived\"\n}"
+                },
+                "url": { "raw": "{{base_url}}/assist/helper/mission/{{mission_id}}/status", "host": ["{{base_url}}"], "path": ["assist", "helper", "mission", "{{mission_id}}", "status"] }
+              }
+            },
+            {
+              "name": "Update Status → completed",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+                  { "key": "Content-Type",   "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"completed\"\n}"
+                },
+                "url": { "raw": "{{base_url}}/assist/helper/mission/{{mission_id}}/status", "host": ["{{base_url}}"], "path": ["assist", "helper", "mission", "{{mission_id}}", "status"] }
+              }
+            },
+            {
+              "name": "❌ Cancel Mission",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{helper_token}}" }],
+                "body": { "mode": "raw", "raw": "{}" },
+                "url": { "raw": "{{base_url}}/assist/helper/mission/{{mission_id}}/cancel", "host": ["{{base_url}}"], "path": ["assist", "helper", "mission", "{{mission_id}}", "cancel"] }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
