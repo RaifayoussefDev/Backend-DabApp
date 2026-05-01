@@ -199,6 +199,7 @@ class HelperMissionController extends AssistBaseController
 
         $mission->seeker?->setVisible(['id', 'first_name', 'last_name', 'phone', 'profile_picture']);
         $mission->expertiseTypes->each->makeHidden('pivot');
+        $mission->makeVisible('completion_token');
 
         if ($m = $mission->motorcycle) {
             $mission->setRelation('motorcycle', collect([
@@ -306,6 +307,7 @@ class HelperMissionController extends AssistBaseController
 
         $mission->seeker?->setVisible(['id', 'first_name', 'last_name', 'phone', 'profile_picture']);
         $mission->expertiseTypes->each->makeHidden('pivot');
+        $mission->makeVisible('completion_token');
 
         if ($m = $mission->motorcycle) {
             $mission->setRelation('motorcycle', collect([
