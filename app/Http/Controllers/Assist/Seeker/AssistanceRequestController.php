@@ -115,7 +115,7 @@ class AssistanceRequestController extends AssistBaseController
                     'brand' => $m->brand?->name,
                     'model' => $m->model?->name ?? '#' . $m->model_id,
                     'year'  => $m->year?->year ?? $m->year_id,
-                ]);
+                ]));
             }
             return $r;
         });
@@ -317,12 +317,12 @@ class AssistanceRequestController extends AssistBaseController
         $assistRequest->load(['expertiseTypes', 'photos', 'motorcycle.brand', 'motorcycle.model', 'motorcycle.year']);
 
         if ($m = $assistRequest->motorcycle) {
-            $assistRequest->setRelation('motorcycle', [
+            $assistRequest->setRelation('motorcycle', collect([
                 'id'    => $m->id,
                 'brand' => $m->brand?->name,
                 'model' => $m->model?->name ?? '#' . $m->model_id,
                 'year'  => $m->year?->year ?? $m->year_id,
-            ]);
+            ]));
         }
 
         return $this->success([
@@ -435,12 +435,12 @@ class AssistanceRequestController extends AssistBaseController
             ]);
 
         if ($m = $request->motorcycle) {
-            $request->setRelation('motorcycle', [
+            $request->setRelation('motorcycle', collect([
                 'id'    => $m->id,
                 'brand' => $m->brand?->name,
                 'model' => $m->model?->name ?? '#' . $m->model_id,
                 'year'  => $m->year?->year ?? $m->year_id,
-            ]);
+            ]));
         }
 
         return $this->success([
