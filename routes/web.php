@@ -52,7 +52,7 @@ Route::post('/demo-support/logout', function (\Illuminate\Http\Request $request)
     return redirect()->route('demo-support');
 })->name('demo-support.logout');
     Route::get('/paytabs/pay', [PaymentController::class, 'createPayment'])->name('paytabs.pay');
-    Route::get('/paytabs/success', [PaymentController::class, 'paymentSuccess'])->name('paytabs.success');
+    Route::get('/paytabs/success', [PaymentController::class, 'paymentSuccess'])->name('web.paytabs.success');
     Route::get('/paytabs/failure', [PaymentController::class, 'paymentFailure'])->name('paytabs.failure');
 
 

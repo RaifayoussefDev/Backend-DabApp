@@ -337,27 +337,27 @@ Route::prefix('admin')->group(function () {
         // Motorcycle Brands
         Route::get('/motorcycle-brands/stats/overview', [AdminMotorcycleBrandController::class, 'stats']);
         Route::patch('/motorcycle-brands/{id}/toggle-display', [AdminMotorcycleBrandController::class, 'toggleDisplay']);
-        Route::apiResource('motorcycle-brands', AdminMotorcycleBrandController::class);
+        Route::apiResource('motorcycle-brands', AdminMotorcycleBrandController::class)->names('admin.motorcycle-brands');
 
         // Motorcycle Years
         Route::get('/motorcycle-years/stats/overview', [AdminMotorcycleYearController::class, 'stats']);
-        Route::apiResource('motorcycle-years', AdminMotorcycleYearController::class);
+        Route::apiResource('motorcycle-years', AdminMotorcycleYearController::class)->names('admin.motorcycle-years');
 
         // Motorcycle Types
         Route::get('/motorcycle-types/stats/overview', [AdminMotorcycleTypeController::class, 'stats']);
-        Route::apiResource('motorcycle-types', AdminMotorcycleTypeController::class);
+        Route::apiResource('motorcycle-types', AdminMotorcycleTypeController::class)->names('admin.motorcycle-types');
 
         // Motorcycle Models
         Route::get('/motorcycle-models/stats/overview', [AdminMotorcycleModelController::class, 'stats']);
-        Route::apiResource('motorcycle-models', AdminMotorcycleModelController::class);
+        Route::apiResource('motorcycle-models', AdminMotorcycleModelController::class)->names('admin.motorcycle-models');
 
         // Bike Part Brands
         Route::get('/bike-part-brands/stats/overview', [AdminBikePartBrandController::class, 'stats']);
-        Route::apiResource('bike-part-brands', AdminBikePartBrandController::class);
+        Route::apiResource('bike-part-brands', AdminBikePartBrandController::class)->names('admin.bike-part-brands');
 
         // Bike Part Categories
         Route::get('/bike-part-categories/stats/overview', [AdminBikePartCategoryController::class, 'stats']);
-        Route::apiResource('bike-part-categories', AdminBikePartCategoryController::class);
+        Route::apiResource('bike-part-categories', AdminBikePartCategoryController::class)->names('admin.bike-part-categories');
 
         // ============================================
         // ADMIN ROUTE MANAGEMENT
@@ -666,8 +666,8 @@ Route::prefix('paytabs')->name('paytabs.')->group(function () {
     Route::match(['GET', 'POST'], '/error', [PayTabsController::class, 'paymentError'])->name('error');
     Route::match(['GET', 'POST'], '/pending', [PayTabsController::class, 'paymentPending'])->name('pending');
     Route::match(['GET', 'POST'], '/cancel', [PayTabsController::class, 'paymentCancel'])->name('cancel');
-    Route::post('verify-and-publish', [PayTabsController::class, 'verifyAndPublish']);
-    Route::post('/test-callback', [PayTabsController::class, 'testCallback']);
+    Route::post('verify-and-publish', [PayTabsController::class, 'verifyAndPublish'])->name('verify-and-publish');
+    Route::post('/test-callback', [PayTabsController::class, 'testCallback'])->name('test-callback');
 });
 
 Route::prefix('payment')->name('payment.')->group(function () {
@@ -1005,9 +1005,9 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/subscriptions/subscribe', [ServiceSubscriptionController::class, 'subscribe']);
     Route::post('/subscriptions/cancel', [ServiceSubscriptionController::class, 'cancel']);
 
-    // PayTabs Subs Callbacks
-    Route::any('/subscriptions/callback', [ServiceSubscriptionController::class, 'handleCallback'])->name('api.subscriptions.callback');
-    Route::any('/subscriptions/return', [ServiceSubscriptionController::class, 'handleReturn'])->name('api.subscriptions.return');
+    // PayTabs Subs Callbacks (auth-context duplicate — kept for legacy, public versions below)
+    Route::any('/subscriptions/callback', [ServiceSubscriptionController::class, 'handleCallback'])->name('api.subscriptions.callback.auth');
+    Route::any('/subscriptions/return', [ServiceSubscriptionController::class, 'handleReturn'])->name('api.subscriptions.return.auth');
 
     // Transaction History
     Route::get('/subscription/transactions', [App\Http\Controllers\Services\SubscriptionTransactionController::class, 'index']);
