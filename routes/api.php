@@ -1933,6 +1933,7 @@ Route::prefix('assist')->middleware('auth:api')->group(function () {
         Route::patch('profile/location',     [HelperProfileController::class, 'updateLocation']);
         Route::patch('profile/availability', [HelperProfileController::class, 'toggleAvailability']);
         Route::get('feed',                   [HelperFeedController::class,    'index']);
+        Route::get('feed/{id}',              [HelperFeedController::class,    'show']);
         Route::post('feed/{id}/accept',      [HelperFeedController::class,    'accept']);
         Route::get('missions',               [HelperMissionController::class, 'index']);
         Route::get('mission/active',         [HelperMissionController::class, 'active']);

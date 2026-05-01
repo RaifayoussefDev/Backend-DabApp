@@ -122,16 +122,128 @@ class HelperFeedController extends AssistBaseController
             ->each(function ($r) {
                 $r->seeker?->setVisible(['id', 'first_name', 'last_name']);
                 if ($m = $r->motorcycle) {
-                    $r->setRelation('motorcycle', [
+                    $r->setRelation('motorcycle', collect([
                         'id'    => $m->id,
                         'brand' => $m->brand?->name,
                         'model' => $m->model?->name ?? '#' . $m->model_id,
                         'year'  => $m->year?->year ?? $m->year_id,
-                    ]);
+                    ]));
                 }
             });
 
         return $this->success($requests);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/assist/helper/feed/{id}",
+     *     summary="Get details of a single pending request",
+     *     description="Returns full details of a pending assistance request before the helper decides to accept it. Returns 404 if the request is no longer pending.",
+     *     tags={"Assist - Helper Feed"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true,
+     *         description="Assistance request ID",
+     *         @OA\Schema(type="integer", example=12)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Request details",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string",  example="Success"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id",             type="integer", example=12),
+     *                 @OA\Property(property="status",         type="string",  example="pending"),
+     *                 @OA\Property(property="description",    type="string",  example="My rear tire is completely flat."),
+     *                 @OA\Property(property="location_label", type="string",  example="Bd Mohammed V, Casablanca"),
+     *                 @OA\Property(property="latitude",       type="number",  format="float", example=33.5731),
+     *                 @OA\Property(property="longitude",      type="number",  format="float", example=-7.5898),
+     *                 @OA\Property(property="distance_km",    type="number",  format="float", example=2.34),
+     *                 @OA\Property(property="created_at",     type="string",  format="date-time"),
+     *                 @OA\Property(property="expertise_types", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",   type="integer", example=1),
+     *                         @OA\Property(property="name", type="string",  example="tire_repair"),
+     *                         @OA\Property(property="icon", type="string",  example="tire_repair")
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="photos", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",   type="integer", example=1),
+     *                         @OA\Property(property="path", type="string",  example="https://cdn.example.com/photo1.jpg")
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="seeker", type="object",
+     *                     @OA\Property(property="id",         type="integer", example=65),
+     *                     @OA\Property(property="first_name", type="string",  example="Raifa"),
+     *                     @OA\Property(property="last_name",  type="string",  example="Youssef")
+     *                 ),
+     *                 @OA\Property(property="motorcycle", type="object", nullable=true,
+     *                     @OA\Property(property="id",    type="integer", example=15),
+     *                     @OA\Property(property="brand", type="string",  example="BMW"),
+     *                     @OA\Property(property="model", type="string",  example="F 900 R"),
+     *                     @OA\Property(property="year",  type="integer", example=2022)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=403, description="Profile not verified or offline"),
+     *     @OA\Response(response=404, description="Request not found or no longer available")
+     * )
+     */
+    public function show(string $id): JsonResponse
+    {
+        $profile = HelperProfile::with('expertiseTypes')
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if (!$profile) {
+            return $this->error('Helper profile not found.', 404);
+        }
+
+        if (!$profile->is_verified) {
+            return $this->error('Your profile is pending admin approval.', 403);
+        }
+
+        if (!$profile->is_available) {
+            return $this->error('You are currently offline.', 403);
+        }
+
+        $request = AssistanceRequest::where('id', $id)
+            ->where('status', 'pending')
+            ->where('seeker_id', '!=', Auth::id())
+            ->with(['expertiseTypes', 'seeker:id,first_name,last_name', 'photos', 'motorcycle.brand', 'motorcycle.model', 'motorcycle.year'])
+            ->first();
+
+        if (!$request) {
+            return $this->error('Request not found or no longer available.', 404);
+        }
+
+        $request->seeker?->setVisible(['id', 'first_name', 'last_name']);
+
+        if ($m = $request->motorcycle) {
+            $request->setRelation('motorcycle', collect([
+                'id'    => $m->id,
+                'brand' => $m->brand?->name,
+                'model' => $m->model?->name ?? '#' . $m->model_id,
+                'year'  => $m->year?->year ?? $m->year_id,
+            ]));
+        }
+
+        if ($profile->latitude && $profile->longitude) {
+            $lat = (float) $profile->latitude;
+            $lng = (float) $profile->longitude;
+            $haversine = HelperProfile::haversineExpression();
+
+            $distance = AssistanceRequest::selectRaw("({$haversine}) AS distance_km", [$lat, $lng, $lat])
+                ->where('id', $id)
+                ->value('distance_km');
+
+            $request->distance_km = round((float) $distance, 2);
+        }
+
+        return $this->success($request);
     }
 
     /**

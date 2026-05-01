@@ -490,6 +490,179 @@
                 ]
             }
         },
+        "/api/assist/helper/feed/{id}": {
+            "get": {
+                "tags": [
+                    "Assist - Helper Feed"
+                ],
+                "summary": "Get details of a single pending request",
+                "description": "Returns full details of a pending assistance request before the helper decides to accept it. Returns 404 if the request is no longer pending.",
+                "operationId": "9f1b9b3014c33ab4ad9382a42d8c2d31",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Assistance request ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Request details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "pending"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "My rear tire is completely flat."
+                                                },
+                                                "location_label": {
+                                                    "type": "string",
+                                                    "example": "Bd Mohammed V, Casablanca"
+                                                },
+                                                "latitude": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 33.5731
+                                                },
+                                                "longitude": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": -7.5898
+                                                },
+                                                "distance_km": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 2.34
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "expertise_types": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "tire_repair"
+                                                            },
+                                                            "icon": {
+                                                                "type": "string",
+                                                                "example": "tire_repair"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "photos": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "path": {
+                                                                "type": "string",
+                                                                "example": "https://cdn.example.com/photo1.jpg"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "seeker": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 65
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string",
+                                                            "example": "Raifa"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string",
+                                                            "example": "Youssef"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "motorcycle": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        },
+                                                        "brand": {
+                                                            "type": "string",
+                                                            "example": "BMW"
+                                                        },
+                                                        "model": {
+                                                            "type": "string",
+                                                            "example": "F 900 R"
+                                                        },
+                                                        "year": {
+                                                            "type": "integer",
+                                                            "example": 2022
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Profile not verified or offline"
+                    },
+                    "404": {
+                        "description": "Request not found or no longer available"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/assist/helper/feed/{id}/accept": {
             "post": {
                 "tags": [
@@ -977,7 +1150,7 @@
                     "Assist - Helper Mission"
                 ],
                 "summary": "Get details of a specific mission",
-                "description": "Returns the full details of a mission assigned to the helper, including seeker info, location, photos, and description. Use this before cancelling to review the request.",
+                "description": "Returns the full details of a mission assigned to the helper: seeker info, location, photos, motorcycle, rating, and timestamps. Same payload shape as the seeker's request detail endpoint.",
                 "operationId": "43f1c2d2b3190e33f56f1249276e3d40",
                 "parameters": [
                     {
@@ -1061,6 +1234,11 @@
                                                     "format": "date-time",
                                                     "nullable": true
                                                 },
+                                                "cancelled_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
                                                 "expertise_types": {
                                                     "type": "array",
                                                     "items": {
@@ -1098,9 +1276,36 @@
                                                         "phone": {
                                                             "type": "string",
                                                             "example": "+966501234567"
+                                                        },
+                                                        "profile_picture": {
+                                                            "type": "string",
+                                                            "example": null,
+                                                            "nullable": true
                                                         }
                                                     },
                                                     "type": "object"
+                                                },
+                                                "motorcycle": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        },
+                                                        "brand": {
+                                                            "type": "string",
+                                                            "example": "BMW"
+                                                        },
+                                                        "model": {
+                                                            "type": "string",
+                                                            "example": "F 900 R"
+                                                        },
+                                                        "year": {
+                                                            "type": "integer",
+                                                            "example": 2022
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
                                                 },
                                                 "photos": {
                                                     "type": "array",
@@ -1117,6 +1322,20 @@
                                                         },
                                                         "type": "object"
                                                     }
+                                                },
+                                                "rating": {
+                                                    "properties": {
+                                                        "stars": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "comment": {
+                                                            "type": "string",
+                                                            "example": "Super fast!"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
                                                 }
                                             },
                                             "type": "object"
