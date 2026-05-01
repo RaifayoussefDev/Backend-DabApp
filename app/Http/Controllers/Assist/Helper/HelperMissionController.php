@@ -114,12 +114,12 @@ class HelperMissionController extends AssistBaseController
         $paginated = $query->paginate(15);
         $paginated->through(function ($m) {
             if ($mc = $m->motorcycle) {
-                $m->setRelation('motorcycle', [
+                $m->setRelation('motorcycle', collect([
                     'id'    => $mc->id,
                     'brand' => $mc->brand?->name,
                     'model' => $mc->model?->name ?? "#{$mc->model_id}",
                     'year'  => $mc->year?->year ?? $mc->year_id,
-                ]);
+                ]));
             }
             return $m;
         });
@@ -201,14 +201,14 @@ class HelperMissionController extends AssistBaseController
         $mission->expertiseTypes->each->makeHidden('pivot');
 
         if ($m = $mission->motorcycle) {
-            $mission->setRelation('motorcycle', [
+            $mission->setRelation('motorcycle', collect([
                 'id'      => $m->id,
                 'title'   => $m->title,
                 'picture' => $m->picture,
                 'brand'   => $m->brand?->name,
                 'model'   => $m->model?->name ?? "#{$m->model_id}",
                 'year'    => $m->year?->year ?? $m->year_id,
-            ]);
+            ]));
         }
 
         return $this->success($mission);
@@ -308,14 +308,14 @@ class HelperMissionController extends AssistBaseController
         $mission->expertiseTypes->each->makeHidden('pivot');
 
         if ($m = $mission->motorcycle) {
-            $mission->setRelation('motorcycle', [
+            $mission->setRelation('motorcycle', collect([
                 'id'      => $m->id,
                 'title'   => $m->title,
                 'picture' => $m->picture,
                 'brand'   => $m->brand?->name,
                 'model'   => $m->model?->name ?? "#{$m->model_id}",
                 'year'    => $m->year?->year ?? $m->year_id,
-            ]);
+            ]));
         }
 
         return $this->success($mission);

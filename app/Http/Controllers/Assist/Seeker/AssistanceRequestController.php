@@ -110,7 +110,7 @@ class AssistanceRequestController extends AssistBaseController
         $paginated = $query->paginate(15);
         $paginated->through(function ($r) {
             if ($m = $r->motorcycle) {
-                $r->setRelation('motorcycle', [
+                $r->setRelation('motorcycle', collect([
                     'id'    => $m->id,
                     'brand' => $m->brand?->name,
                     'model' => $m->model?->name ?? '#' . $m->model_id,
