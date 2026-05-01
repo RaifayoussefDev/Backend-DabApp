@@ -304,12 +304,17 @@ class HelperMissionController extends AssistBaseController
             return $this->error('This mission does not belong to you.', 403);
         }
 
+        $mission->seeker?->setVisible(['id', 'first_name', 'last_name', 'phone', 'profile_picture']);
+        $mission->expertiseTypes->each->makeHidden('pivot');
+
         if ($m = $mission->motorcycle) {
             $mission->setRelation('motorcycle', [
-                'id'    => $m->id,
-                'brand' => $m->brand?->name,
-                'model' => $m->model?->name ?? '#' . $m->model_id,
-                'year'  => $m->year?->year ?? $m->year_id,
+                'id'      => $m->id,
+                'title'   => $m->title,
+                'picture' => $m->picture,
+                'brand'   => $m->brand?->name,
+                'model'   => $m->model?->name ?? "#{$m->model_id}",
+                'year'    => $m->year?->year ?? $m->year_id,
             ]);
         }
 
