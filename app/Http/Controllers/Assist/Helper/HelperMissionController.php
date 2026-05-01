@@ -480,7 +480,28 @@ class HelperMissionController extends AssistBaseController
         // Notify seeker of status change
         $this->notificationService->notify($assistRequest->seeker, $newStatus, $assistRequest);
 
-        $assistRequest->load('expertiseTypes', 'seeker:id,first_name,last_name,phone');
+        $assistRequest->load([
+            'expertiseTypes',
+            'seeker:id,first_name,last_name,phone',
+            'photos',
+            'motorcycle.brand',
+            'motorcycle.model',
+            'motorcycle.year',
+        ]);
+
+        $assistRequest->seeker?->setVisible(['id', 'first_name', 'last_name', 'phone']);
+        $assistRequest->expertiseTypes->each->makeHidden('pivot');
+
+        if ($m = $assistRequest->motorcycle) {
+            $assistRequest->setRelation('motorcycle', collect([
+                'id'      => $m->id,
+                'title'   => $m->title,
+                'picture' => $m->picture,
+                'brand'   => $m->brand?->name,
+                'model'   => $m->model?->name ?? "#{$m->model_id}",
+                'year'    => $m->year?->year ?? $m->year_id,
+            ]));
+        }
 
         $responseData = $assistRequest->toArray();
         if ($newStatus === 'arrived') {
