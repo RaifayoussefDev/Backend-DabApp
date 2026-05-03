@@ -27,8 +27,7 @@ use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
-    private $whatsappApiUrl   = 'https://api.360messenger.com/v2/sendMessage';
-    private $whatsappApiToken = 'lEv2uJJUFIZl9houMUQtkCQzgyWepWEzywf';
+    private $aisensyApiUrl = 'https://backend.aisensy.com/campaign/t1/api/v2';
 
     public function __construct()
     {
@@ -251,7 +250,7 @@ class AuthController extends Controller
                 'is_online' => false,
                 'language' => 'en',
                 'timezone' => 'Africa/Casablanca',
-                'two_factor_enabled' => true,
+                'two_factor_enabled' => false,
                 'country_id' => $countryData['country_id'],
             ]);
 
@@ -781,33 +780,63 @@ class AuthController extends Controller
     }
 
     /**
-     * Send OTP via WhatsApp
+     * Send OTP via WhatsApp (AiSensy)
      */
     private function sendWhatsAppOtp($phone, $otp)
     {
         try {
-            $phoneNumber = $this->formatPhoneNumber($phone);
+            $rawPhone = trim($phone);
+            $hasPlus  = str_starts_with($rawPhone, '+');
+            $destination = ($hasPlus ? '+' : '') . preg_replace('/\D/', '', $rawPhone);
 
             $payload = [
-                'phonenumber' => '+' . $phoneNumber,
-                'text'        => "🔐 رمز التحقق الخاص بك على dabapp.co:\n\n*{$otp}*\n\n⏳ صالح لمدة 5 دقائق فقط.\n🔒 لا تشارك هذا الرمز مع أحد.",
+                'apiKey'              => env('AISENSY_API_KEY'),
+                'campaignName'        => env('AISENSY_CAMPAIGN_NAME', 'DabApp'),
+                'destination'         => $destination,
+                'userName'            => env('AISENSY_USERNAME', 'Fadel Brothers Group L.L.C'),
+                'templateParams'      => [(string) $otp],
+                'source'              => 'new-landing-page form',
+                'media'               => (object)[],
+                'buttons'             => [
+                    [
+                        'type'       => 'button',
+                        'sub_type'   => 'url',
+                        'index'      => 0,
+                        'parameters' => [
+                            ['type' => 'text', 'text' => (string) $otp],
+                        ],
+                    ],
+                ],
+                'carouselCards'       => [],
+                'location'            => (object)[],
+                'attributes'          => (object)[],
+                'paramsFallbackValue' => ['FirstName' => 'user'],
             ];
 
-            Log::info('Attempting WhatsApp OTP send via 360messenger', [
-                'phone' => '+' . $phoneNumber,
+            Log::info('Attempting WhatsApp OTP send via AiSensy', ['phone' => $destination]);
+
+            $ch = curl_init($this->aisensyApiUrl);
+            curl_setopt_array($ch, [
+                CURLOPT_POST           => true,
+                CURLOPT_POSTFIELDS     => json_encode($payload),
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+                CURLOPT_TIMEOUT        => 20,
             ]);
 
-            $response = Http::timeout(10)->withHeaders([
-                'Authorization' => "Bearer {$this->whatsappApiToken}",
-                'Content-Type'  => 'application/json',
-            ])->post($this->whatsappApiUrl, $payload);
+            $raw      = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlErr  = curl_error($ch);
+            curl_close($ch);
 
-            Log::info('360messenger API Response', [
-                'status' => $response->status(),
-                'body'   => $response->body(),
-            ]);
+            if ($curlErr) {
+                Log::error('AiSensy cURL error', ['error' => $curlErr]);
+                return false;
+            }
 
-            return $response->successful();
+            Log::info('AiSensy OTP response', ['status' => $httpCode, 'body' => json_decode($raw, true)]);
+
+            return $httpCode >= 200 && $httpCode < 300;
         } catch (\Exception $e) {
             Log::error('WhatsApp OTP send failed', [
                 'phone' => $phone,

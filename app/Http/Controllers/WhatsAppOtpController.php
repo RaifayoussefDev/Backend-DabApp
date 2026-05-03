@@ -3,98 +3,124 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class WhatsAppOtpController extends Controller
 {
-    private $apiUrl = 'https://api.360messenger.com/v2/sendMessage';
-    private $apiToken = 'dYXcSz0yjWT1jP0vsAb6TNQ6p3epz4xZeYY';
+    private $aisensyApiUrl = 'https://backend.aisensy.com/campaign/t1/api/v2';
 
-    public function sendOtp(Request $request)
+    /**
+     * Send OTP via AiSensy WhatsApp
+     * POST /api/test-aisensy
+     * Body: { "phone": "+212688808238", "otp": "123456" }
+     */
+    public function testAisensy(Request $request)
     {
         $request->validate([
             'phone' => 'required|string',
+            'otp'   => 'nullable|string',
         ]);
 
-        $otp = rand(100000, 999999);
-        session(['otp' => $otp]);
+        $otp    = $request->input('otp', (string) rand(100000, 999999));
+        $rawPhone = trim($request->phone);
+        $hasPlus  = str_starts_with($rawPhone, '+');
+        $phone    = ($hasPlus ? '+' : '') . preg_replace('/\D/', '', $rawPhone);
 
-        // Format phone number - ensure it includes country code
-        $phoneNumber = $this->formatPhoneNumber($request->phone);
+        $success = $this->sendAisensyOtp($phone, $otp);
 
-        // 360messenger API correct format (tested with Postman)
-        $payload = [
-            'phonenumber' => '+' . $phoneNumber, // Add + prefix as required
-            'text' => "Your OTP code is: {$otp}"
-        ];
-
-        Log::info('Sending WhatsApp OTP', [
-            'phone' => $phoneNumber,
-            'payload' => $payload
-        ]);
-
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer {$this->apiToken}",
-            'Content-Type' => 'application/json',
-        ])->post($this->apiUrl, $payload);
-
-        // Log the response for debugging
-        Log::info('WhatsApp API Response', [
-            'status' => $response->status(),
-            'body' => $response->body()
-        ]);
-
-        if ($response->successful()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'OTP sent successfully'
-            ]);
-        } else {
-            return response()->json([
-                'success' => false,
-                'error' => $response->json(),
-                'status_code' => $response->status()
-            ], 422); // Return 422 instead of the original error status
-        }
+        return response()->json([
+            'success'  => $success,
+            'otp_sent' => $otp,
+            'phone'    => $phone,
+        ], $success ? 200 : 422);
     }
 
-    private function formatPhoneNumber($phone)
+    /**
+     * Core method: send OTP via AiSensy — matches the working curl format exactly
+     */
+    public function sendAisensyOtp(string $phone, string $otp): bool
     {
-        // Remove any non-numeric characters
-        $phone = preg_replace('/[^0-9]/', '', $phone);
+        $payload = [
+            'apiKey'              => env('AISENSY_API_KEY'),
+            'campaignName'        => env('AISENSY_CAMPAIGN_NAME', 'DabApp'),
+            'destination'         => $phone,
+            'userName'            => env('AISENSY_USERNAME', 'Fadel Brothers Group L.L.C'),
+            'templateParams'      => [$otp],
+            'source'              => 'new-landing-page form',
+            'media'               => (object)[],
+            'buttons'             => [
+                [
+                    'type'       => 'button',
+                    'sub_type'   => 'url',
+                    'index'      => 0,
+                    'parameters' => [
+                        ['type' => 'text', 'text' => $otp],
+                    ],
+                ],
+            ],
+            'carouselCards'       => [],
+            'location'            => (object)[],
+            'attributes'          => (object)[],
+            'paramsFallbackValue' => ['FirstName' => 'user'],
+        ];
 
-        // If phone doesn't start with country code, add Morocco's (+212)
-        if (!str_starts_with($phone, '212') && !str_starts_with($phone, '+212')) {
-            // Remove leading zero if present
-            if (str_starts_with($phone, '0')) {
-                $phone = substr($phone, 1);
-            }
-            $phone = '212' . $phone;
+        Log::info('AiSensy OTP send', ['phone' => $phone]);
+
+        $ch = curl_init($this->aisensyApiUrl);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => json_encode($payload),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+            CURLOPT_TIMEOUT        => 20,
+        ]);
+
+        $raw      = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlErr  = curl_error($ch);
+        curl_close($ch);
+
+        if ($curlErr) {
+            Log::error('AiSensy cURL error', ['error' => $curlErr]);
+            return false;
         }
 
-        return $phone;
+        $decoded = json_decode($raw, true);
+        Log::info('AiSensy response', ['status' => $httpCode, 'body' => $decoded]);
+
+        return $httpCode >= 200 && $httpCode < 300;
+    }
+
+    public function sendOtp(Request $request)
+    {
+        $request->validate(['phone' => 'required|string']);
+
+        $otp      = (string) rand(100000, 999999);
+        $rawPhone = trim($request->phone);
+        $hasPlus  = str_starts_with($rawPhone, '+');
+        $phone    = ($hasPlus ? '+' : '') . preg_replace('/\D/', '', $rawPhone);
+
+        session(['otp' => $otp]);
+
+        $success = $this->sendAisensyOtp($phone, $otp);
+
+        return response()->json([
+            'success' => $success,
+            'message' => $success ? 'OTP sent successfully' : 'Failed to send OTP',
+        ], $success ? 200 : 422);
     }
 
     public function verifyOtp(Request $request)
     {
-        $request->validate([
-            'otp' => 'required|string|size:6',
-        ]);
+        $request->validate(['otp' => 'required|string|size:6']);
 
         $sessionOtp = session('otp');
 
         if ($sessionOtp && $request->otp == $sessionOtp) {
-            session()->forget('otp'); // Clear OTP after successful verification
-            return response()->json([
-                'success' => true,
-                'message' => 'OTP verified successfully'
-            ]);
+            session()->forget('otp');
+            return response()->json(['success' => true, 'message' => 'OTP verified successfully']);
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Invalid OTP code'
-        ], 422);
+        return response()->json(['success' => false, 'message' => 'Invalid OTP code'], 422);
     }
 }

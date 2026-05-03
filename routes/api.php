@@ -170,6 +170,7 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/refresh', [AuthController::class, 'refresh']);
 Route::post('/send-otp', [WhatsAppOtpController::class, 'sendOtp']);
+Route::post('/test-aisensy', [WhatsAppOtpController::class, 'testAisensy']);
 Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 Route::post('/resend-otp-email', [AuthController::class, 'resendOtpEmail']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
