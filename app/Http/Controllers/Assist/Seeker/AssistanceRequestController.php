@@ -299,20 +299,21 @@ class AssistanceRequestController extends AssistBaseController
 
             $assistRequest->expertiseTypes()->sync($request->expertise_type_ids);
 
-            // Handle photo URLs (uploaded separately via upload API)
             if ($request->filled('photo_urls')) {
                 foreach ($request->photo_urls as $url) {
                     $assistRequest->photos()->create(['path' => $url]);
                 }
             }
 
-            $helpers = $this->matchingService->findNearby($assistRequest);
-
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
             return $this->error('Failed to create assistance request.', 500);
         }
+
+        // Notify helpers AFTER commit — so a notification failure never rolls back the request
+        $assistRequest->load('expertiseTypes');
+        $helpers = $this->matchingService->findNearby($assistRequest);
 
         $assistRequest->load(['expertiseTypes', 'photos', 'motorcycle.brand', 'motorcycle.model', 'motorcycle.year']);
 

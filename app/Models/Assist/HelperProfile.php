@@ -136,7 +136,7 @@ class HelperProfile extends Model
      * Filter helpers within $radius km from ($lat, $lng) using Haversine.
      * Uses parameterized bindings to prevent SQL injection.
      */
-    public function scopeNearTo($query, float $lat, float $lng, int $radius = 15)
+    public function scopeNearTo($query, float $lat, float $lng, int $radius = 100)
     {
         $haversine = self::haversineExpression();
 
