@@ -8,14 +8,15 @@ use App\Models\NotificationTemplate;
 use App\Models\User;
 use App\Models\Assist\AssistanceRequest;
 use App\Models\Assist\AssistNotification;
+use App\Services\FirebaseService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Kreait\Firebase\Factory;
-use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification as FcmNotification;
 
 class AssistNotificationService
 {
+    public function __construct(
+        private readonly FirebaseService $firebase
+    ) {}
     /** Notification types sent TO helpers (check HelperProfile preferences) */
     private const HELPER_TYPES = ['new_request', 'cancelled', 'rated', 'seeker_finished'];
 
@@ -155,32 +156,18 @@ class AssistNotificationService
             return;
         }
 
-        $credentialsFile = config('firebase.credentials.file');
-        if (!$credentialsFile || !file_exists($credentialsFile)) {
-            Log::warning('Firebase credentials not configured — FCM push skipped.');
-            return;
-        }
-
-        try {
-            $messaging = (new Factory)->withServiceAccount($credentialsFile)->createMessaging();
-        } catch (\Exception $e) {
-            Log::error("Firebase init failed: {$e->getMessage()}");
-            return;
-        }
-
         foreach ($tokens as $tokenModel) {
             try {
-                $message = CloudMessage::withTarget('token', $tokenModel->fcm_token)
-                    ->withNotification(FcmNotification::create($title, $body));
-
-                $messaging->send($message);
+                $this->firebase->sendToToken(
+                    $tokenModel->fcm_token,
+                    $title,
+                    $body,
+                    ['type' => 'assist']
+                );
                 $tokenModel->updateLastUsed();
-            } catch (\Kreait\Firebase\Exception\Messaging\NotFound $e) {
-                // Invalid / unregistered token — disable it
-                $tokenModel->deactivate();
             } catch (\Exception $e) {
                 $tokenModel->incrementFailedAttempts();
-                Log::error("FCM push failed (user {$user->id}, token {$tokenModel->id}): {$e->getMessage()}");
+                Log::error("Assist FCM push failed (user {$user->id}, token {$tokenModel->getAttribute('id')}): {$e->getMessage()}");
             }
         }
     }
