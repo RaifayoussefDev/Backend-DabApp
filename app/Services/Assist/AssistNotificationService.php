@@ -79,7 +79,7 @@ class AssistNotificationService
             'is_read'    => false,
         ]);
 
-        $this->dispatch($user, $type, $title, $body, $lang, $request);
+        $this->dispatch($user, $type, $title, $body, $lang, $request, $notification->getAttribute('id'));
 
         return $notification;
     }
@@ -110,7 +110,7 @@ class AssistNotificationService
         return [$tpl['title'], \sprintf($tpl['body'], $expertise)];
     }
 
-    private function dispatch(User $user, string $type, string $title, string $body, string $lang, AssistanceRequest $request): void
+    private function dispatch(User $user, string $type, string $title, string $body, string $lang, AssistanceRequest $request, int $notificationId): void
     {
         // Global user preferences (respects quiet hours, push_enabled, email_enabled)
         $pref      = $user->notificationPreference;
@@ -141,7 +141,7 @@ class AssistNotificationService
         }
 
         if ($sendPush) {
-            $this->sendFcmPush($user, $title, $body, $type, $request->id);
+            $this->sendFcmPush($user, $title, $body, $type, $request->id, $notificationId);
         }
 
         if ($sendEmail && $user->email) {
@@ -149,20 +149,20 @@ class AssistNotificationService
         }
     }
 
-    private function sendFcmPush(User $user, string $title, string $body, string $type, int $requestId): void
+    private function sendFcmPush(User $user, string $title, string $body, string $type, int $requestId, int $notificationId): void
     {
         $tokens = $user->notificationTokens()->active()->get();
         if ($tokens->isEmpty()) {
             return;
         }
 
-        $role = \in_array($type, self::HELPER_TYPES) ? 'helper' : 'seeker';
-
         $data = [
-            'module'     => 'assist',
-            'type'       => $type,
-            'role'       => $role,
-            'request_id' => (string) $requestId,
+            'notification_id' => (string) $notificationId,
+            'type'            => "assist_{$type}",
+            'entity_type'     => 'assistance_request',
+            'entity_id'       => (string) $requestId,
+            'action_url'      => '',
+            'timestamp'       => now()->toIso8601String(),
         ];
 
         foreach ($tokens as $tokenModel) {
