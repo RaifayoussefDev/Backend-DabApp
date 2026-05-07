@@ -156,7 +156,8 @@ class AssistNotificationService
             return;
         }
 
-        $role = \in_array($type, self::HELPER_TYPES) ? 'helper' : 'seeker';
+        $role       = \in_array($type, self::HELPER_TYPES) ? 'helper' : 'seeker';
+        $actionUrl  = $this->resolveActionUrl($type, $requestId);
 
         $data = [
             'notification_id' => (string) $notificationId,
@@ -164,7 +165,7 @@ class AssistNotificationService
             'entity_type'     => 'assistance_request',
             'entity_id'       => (string) $requestId,
             'role'            => $role,
-            'action_url'      => '',
+            'action_url'      => $actionUrl,
             'timestamp'       => now()->toIso8601String(),
         ];
 
@@ -182,6 +183,15 @@ class AssistNotificationService
                 Log::error("Assist FCM push failed (user {$user->id}, token {$tokenModel->getAttribute('id')}): {$e->getMessage()}");
             }
         }
+    }
+
+    private function resolveActionUrl(string $type, int $requestId): string
+    {
+        return match($type) {
+            'new_request'                          => 'assist/helper/feed',
+            'cancelled', 'rated', 'seeker_finished'=> "assist/helper/mission/{$requestId}",
+            default                                => "assist/seeker/request/{$requestId}",
+        };
     }
 
     private function getExpertiseName(AssistanceRequest $request, string $lang): string
