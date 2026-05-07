@@ -156,11 +156,14 @@ class AssistNotificationService
             return;
         }
 
+        $role = \in_array($type, self::HELPER_TYPES) ? 'helper' : 'seeker';
+
         $data = [
             'notification_id' => (string) $notificationId,
             'type'            => "assist_{$type}",
             'entity_type'     => 'assistance_request',
             'entity_id'       => (string) $requestId,
+            'role'            => $role,
             'action_url'      => '',
             'timestamp'       => now()->toIso8601String(),
         ];
