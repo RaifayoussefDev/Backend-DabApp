@@ -1914,6 +1914,12 @@ Route::prefix('assist')->middleware('auth:api')->group(function () {
     // ── Public (any authenticated user) ─────────────────────────────────────
     Route::get('expertise-types', [AdminExpertiseController::class, 'index']);
 
+    // ── Notifications (seeker + helper) ──────────────────────────────────────
+    Route::get('notifications',                  [\App\Http\Controllers\Assist\AssistNotificationController::class, 'index']);
+    Route::get('notifications/unread-count',     [\App\Http\Controllers\Assist\AssistNotificationController::class, 'unreadCount']);
+    Route::patch('notifications/read-all',       [\App\Http\Controllers\Assist\AssistNotificationController::class, 'markAllRead']);
+    Route::patch('notifications/{id}/read',      [\App\Http\Controllers\Assist\AssistNotificationController::class, 'markRead']);
+
     // ── Seeker ───────────────────────────────────────────────────────────────
     Route::prefix('seeker')->group(function () {
         Route::get('requests',              [AssistanceRequestController::class, 'index']);
