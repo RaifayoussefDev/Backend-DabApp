@@ -141,7 +141,7 @@ class AssistNotificationService
         }
 
         if ($sendPush) {
-            $this->sendFcmPush($user, $title, $body);
+            $this->sendFcmPush($user, $title, $body, $type, $request->id);
         }
 
         if ($sendEmail && $user->email) {
@@ -149,12 +149,21 @@ class AssistNotificationService
         }
     }
 
-    private function sendFcmPush(User $user, string $title, string $body): void
+    private function sendFcmPush(User $user, string $title, string $body, string $type, int $requestId): void
     {
         $tokens = $user->notificationTokens()->active()->get();
         if ($tokens->isEmpty()) {
             return;
         }
+
+        $role = \in_array($type, self::HELPER_TYPES) ? 'helper' : 'seeker';
+
+        $data = [
+            'module'     => 'assist',
+            'type'       => $type,
+            'role'       => $role,
+            'request_id' => (string) $requestId,
+        ];
 
         foreach ($tokens as $tokenModel) {
             try {
@@ -162,7 +171,7 @@ class AssistNotificationService
                     $tokenModel->fcm_token,
                     $title,
                     $body,
-                    ['type' => 'assist']
+                    $data
                 );
                 $tokenModel->updateLastUsed();
             } catch (\Exception $e) {
