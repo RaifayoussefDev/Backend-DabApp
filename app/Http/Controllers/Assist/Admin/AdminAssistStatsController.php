@@ -7,6 +7,7 @@ use App\Models\Assist\AssistanceRequest;
 use App\Models\Assist\HelperProfile;
 use App\Models\Assist\Rating;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -176,7 +177,142 @@ class AdminAssistStatsController extends AssistBaseController
      *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
-    public function requests(\Illuminate\Http\Request $request): JsonResponse
+    /**
+     * @OA\Get(
+     *     path="/api/assist/admin/requests/{id}",
+     *     summary="Get full details of a single assistance request",
+     *     tags={"Assist - Admin Stats"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true,
+     *         description="AssistanceRequest ID",
+     *         @OA\Schema(type="integer", example=12)
+     *     ),
+     *     @OA\Response(response=200, description="Request detail",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id",             type="integer", example=12),
+     *                 @OA\Property(property="status",         type="string",  example="completed"),
+     *                 @OA\Property(property="status_label",   type="object",
+     *                     @OA\Property(property="en", type="string", example="Completed"),
+     *                     @OA\Property(property="ar", type="string", example="مكتمل")
+     *                 ),
+     *                 @OA\Property(property="description",    type="string",  nullable=true),
+     *                 @OA\Property(property="location_label", type="string",  example="King Fahd Road, Riyadh"),
+     *                 @OA\Property(property="latitude",       type="number",  format="float", example=24.714),
+     *                 @OA\Property(property="longitude",      type="number",  format="float", example=46.675),
+     *                 @OA\Property(property="cancel_reason",  type="string",  nullable=true),
+     *                 @OA\Property(property="accepted_at",    type="string",  format="date-time", nullable=true),
+     *                 @OA\Property(property="arrived_at",     type="string",  format="date-time", nullable=true),
+     *                 @OA\Property(property="completed_at",   type="string",  format="date-time", nullable=true),
+     *                 @OA\Property(property="cancelled_at",   type="string",  format="date-time", nullable=true),
+     *                 @OA\Property(property="created_at",     type="string",  format="date-time"),
+     *                 @OA\Property(property="expertise_types", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",      type="integer", example=1),
+     *                         @OA\Property(property="name",    type="string",  example="tire_repair"),
+     *                         @OA\Property(property="name_en", type="string",  example="Tire Repair"),
+     *                         @OA\Property(property="name_ar", type="string",  example="إصلاح الإطارات")
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="seeker", type="object",
+     *                     @OA\Property(property="id",              type="integer", example=65),
+     *                     @OA\Property(property="first_name",      type="string",  example="Raifa"),
+     *                     @OA\Property(property="last_name",       type="string",  example="Youssef"),
+     *                     @OA\Property(property="email",           type="string",  example="raifa@example.com"),
+     *                     @OA\Property(property="phone",           type="string",  example="+966500000000"),
+     *                     @OA\Property(property="profile_picture", type="string",  nullable=true)
+     *                 ),
+     *                 @OA\Property(property="helper", type="object", nullable=true,
+     *                     @OA\Property(property="id",              type="integer", example=2),
+     *                     @OA\Property(property="first_name",      type="string",  example="Ahmed"),
+     *                     @OA\Property(property="last_name",       type="string",  example="Al-Rashid"),
+     *                     @OA\Property(property="email",           type="string",  example="ahmed@example.com"),
+     *                     @OA\Property(property="phone",           type="string",  example="+966500000001"),
+     *                     @OA\Property(property="profile_picture", type="string",  nullable=true)
+     *                 ),
+     *                 @OA\Property(property="rating", type="object", nullable=true,
+     *                     @OA\Property(property="stars",   type="integer", example=5),
+     *                     @OA\Property(property="comment", type="string",  nullable=true, example="Excellent!")
+     *                 ),
+     *                 @OA\Property(property="photos", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",  type="integer", example=3),
+     *                         @OA\Property(property="url", type="string",  example="https://cdn.example.com/photo.jpg")
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Not found")
+     * )
+     */
+    public function show(string $id): JsonResponse
+    {
+        $request = AssistanceRequest::with([
+            'seeker:id,first_name,last_name,email,phone,profile_picture',
+            'helper:id,first_name,last_name,email,phone,profile_picture',
+            'expertiseTypes:id,name,name_en,name_ar',
+            'rating:id,request_id,stars,comment',
+            'photos:id,request_id,url',
+        ])->find($id);
+
+        if (!$request) {
+            return $this->error('Assistance request not found.', 404);
+        }
+
+        return $this->success($request);
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/assist/admin/requests/{id}/cancel",
+     *     summary="Force-cancel an assistance request",
+     *     description="Admin can cancel any active request. Sends a notification to the seeker and helper.",
+     *     tags={"Assist - Admin Stats"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true,
+     *         description="AssistanceRequest ID",
+     *         @OA\Schema(type="integer", example=12)
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="cancel_reason", type="string", nullable=true,
+     *                 example="Request cancelled by admin due to policy violation.")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Request cancelled",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Request cancelled by admin.")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Not found"),
+     *     @OA\Response(response=422, description="Request is already completed or cancelled")
+     * )
+     */
+    public function cancel(Request $request, string $id): JsonResponse
+    {
+        $assistRequest = AssistanceRequest::find($id);
+
+        if (!$assistRequest) {
+            return $this->error('Assistance request not found.', 404);
+        }
+
+        if (\in_array($assistRequest->getAttribute('status'), ['completed', 'cancelled'])) {
+            return $this->error('Request is already ' . $assistRequest->getAttribute('status') . '.', 422);
+        }
+
+        $assistRequest->update([
+            'status'        => 'cancelled',
+            'cancelled_at'  => now(),
+            'cancel_reason' => $request->input('cancel_reason', 'Cancelled by admin.'),
+        ]);
+
+        return $this->success(null, 'Request cancelled by admin.');
+    }
+
+    public function requests(Request $request): JsonResponse
     {
         $query = AssistanceRequest::with([
             'seeker:id,first_name,last_name',

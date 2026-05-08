@@ -1960,7 +1960,10 @@ Route::prefix('assist')->middleware('auth:api')->group(function () {
         Route::post('expertise-types',             [AdminExpertiseController::class,   'store']);
         Route::put('expertise-types/{id}',         [AdminExpertiseController::class,   'update']);
         Route::delete('expertise-types/{id}',      [AdminExpertiseController::class,   'destroy']);
+        Route::patch('helpers/{id}/level',         [AdminHelperController::class,      'updateLevel']);
         Route::get('stats',                        [AdminAssistStatsController::class, 'stats']);
         Route::get('requests',                     [AdminAssistStatsController::class, 'requests']);
+        Route::get('requests/{id}',                [AdminAssistStatsController::class, 'show']);
+        Route::patch('requests/{id}/cancel',       [AdminAssistStatsController::class, 'cancel']);
     });
 });

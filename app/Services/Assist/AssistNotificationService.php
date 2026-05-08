@@ -20,6 +20,9 @@ class AssistNotificationService
     /** Notification types sent TO helpers (check HelperProfile preferences) */
     private const HELPER_TYPES = ['new_request', 'cancelled', 'rated', 'seeker_finished'];
 
+    /** Profile-level notification types (no AssistanceRequest attached) */
+    private const PROFILE_TYPES = ['helper_approved', 'helper_rejected'];
+
     private const TEMPLATES = [
         'new_request' => [
             'en' => ['title' => 'New assistance request nearby',        'body' => 'A rider needs help with %s near you.'],
@@ -57,7 +60,69 @@ class AssistNotificationService
             'en' => ['title' => 'Mission confirmed by rider',           'body' => 'The rider confirmed the assistance is complete. Great work!'],
             'ar' => ['title' => 'أكد المتسابق إتمام المهمة',             'body' => 'أكد المتسابق إتمام المساعدة. عمل رائع!'],
         ],
+        'helper_approved' => [
+            'en' => ['title' => 'Application approved!',                'body' => 'Your helper application has been approved. You can now receive assistance requests.'],
+            'ar' => ['title' => 'تم قبول طلبك!',                        'body' => 'تم قبول طلب المساعد الخاص بك. يمكنك الآن استقبال طلبات المساعدة.'],
+        ],
+        'helper_rejected' => [
+            'en' => ['title' => 'Application not approved',             'body' => 'Your helper application was not approved. Contact support for more details.'],
+            'ar' => ['title' => 'لم يتم قبول طلبك',                     'body' => 'لم يتم قبول طلب المساعد الخاص بك. تواصل مع الدعم للمزيد من التفاصيل.'],
+        ],
     ];
+
+    /**
+     * Send a profile-level notification (no AssistanceRequest) — e.g. helper approved/rejected.
+     */
+    public function notifyHelperProfile(User $user, string $type): AssistNotification
+    {
+        $lang  = ((string) ($user->getAttribute('language'))) === 'ar' ? 'ar' : 'en';
+        $tplGroup = self::TEMPLATES[$type] ?? null;
+        $tpl      = $tplGroup[$lang] ?? $tplGroup['en'] ?? [
+            'title' => 'DabApp Assist',
+            'body'  => 'You have a new notification.',
+        ];
+
+        $notification = AssistNotification::create([
+            'user_id'    => $user->id,
+            'request_id' => null,
+            'type'       => $type,
+            'title'      => $tpl['title'],
+            'body'       => $tpl['body'],
+            'is_read'    => false,
+        ]);
+
+        $pref     = $user->notificationPreference;
+        $sendPush = $pref ? $pref->canSendPush() : true;
+
+        if ($sendPush) {
+            $tokens = $user->notificationTokens()->active()->get();
+            foreach ($tokens as $tokenModel) {
+                try {
+                    $this->firebase->sendToToken(
+                        $tokenModel->fcm_token,
+                        $tpl['title'],
+                        $tpl['body'],
+                        [
+                            'notification_id' => (string) $notification->getAttribute('id'),
+                            'type'            => "assist_{$type}",
+                            'entity_type'     => 'helper_profile',
+                            'role'            => 'helper',
+                            'action_url'      => \in_array($type, self::PROFILE_TYPES)
+                                ? 'assist/helper/profile'
+                                : 'assist/helper/feed',
+                            'timestamp'       => now()->toIso8601String(),
+                        ]
+                    );
+                    $tokenModel->updateLastUsed();
+                } catch (\Exception $e) {
+                    $tokenModel->incrementFailedAttempts();
+                    Log::error("Assist FCM profile push failed (user {$user->id}): {$e->getMessage()}");
+                }
+            }
+        }
+
+        return $notification;
+    }
 
     /**
      * Persist an in-app notification, send FCM push, and queue an email.

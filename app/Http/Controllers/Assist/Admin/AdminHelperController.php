@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Assist\Admin;
 use App\Http\Controllers\Assist\AssistBaseController;
 use App\Models\Assist\AssistanceRequest;
 use App\Models\Assist\HelperProfile;
+use App\Services\Assist\AssistNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -150,18 +151,19 @@ class AdminHelperController extends AssistBaseController
      *     @OA\Response(response=422, description="Validation error")
      * )
      */
-    public function updateStatus(Request $request, string $id): JsonResponse
+    public function updateStatus(Request $request, string $id, AssistNotificationService $notifier): JsonResponse
     {
         $request->validate([
             'status' => 'required|in:pending,accepted,rejected',
         ]);
 
-        $helper = HelperProfile::find($id);
+        $helper = HelperProfile::with('user')->find($id);
 
         if (!$helper) {
             return $this->error('Helper profile not found.', 404);
         }
 
+        $previousStatus = $helper->getAttribute('status');
         $helper->update(['status' => $request->status]);
 
         $messages = [
@@ -170,7 +172,68 @@ class AdminHelperController extends AssistBaseController
             'rejected' => 'Helper rejected successfully.',
         ];
 
-        return $this->success(['status' => $helper->status], $messages[$helper->status]);
+        // Notify the helper when their application is accepted or rejected
+        if ($helper->user && \in_array($request->status, ['accepted', 'rejected']) && $previousStatus !== $request->status) {
+            $notificationType = $request->status === 'accepted' ? 'helper_approved' : 'helper_rejected';
+            try {
+                $notifier->notifyHelperProfile($helper->user, $notificationType);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("Admin helper status notification failed: {$e->getMessage()}");
+            }
+        }
+
+        return $this->success(['status' => $helper->getAttribute('status')], $messages[$helper->getAttribute('status')]);
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/assist/admin/helpers/{id}/level",
+     *     summary="Manually set a helper's level",
+     *     tags={"Assist - Admin Helpers"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true,
+     *         description="HelperProfile ID",
+     *         @OA\Schema(type="integer", example=2)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"level"},
+     *             @OA\Property(property="level", type="string",
+     *                 enum={"standard","elite","vanguard"}, example="elite")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Level updated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Helper level updated to elite."),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="level", type="string", example="elite")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Not found"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
+     */
+    public function updateLevel(Request $request, string $id): JsonResponse
+    {
+        $request->validate([
+            'level' => 'required|in:standard,elite,vanguard',
+        ]);
+
+        $helper = HelperProfile::find($id);
+
+        if (!$helper) {
+            return $this->error('Helper profile not found.', 404);
+        }
+
+        $helper->update(['level' => $request->level]);
+
+        return $this->success(
+            ['level' => $request->level],
+            "Helper level updated to {$request->level}."
+        );
     }
 
     /**
