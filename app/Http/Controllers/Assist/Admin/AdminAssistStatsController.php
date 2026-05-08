@@ -254,7 +254,7 @@ class AdminAssistStatsController extends AssistBaseController
             'helper:id,first_name,last_name,email,phone,profile_picture',
             'expertiseTypes:id,name,name_en,name_ar',
             'rating:id,request_id,stars,comment',
-            'photos:id,request_id,url',
+            'photos:id,request_id,path',
         ])->find($id);
 
         if (!$request) {
