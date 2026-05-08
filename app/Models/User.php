@@ -348,6 +348,14 @@ class User extends Authenticatable implements JWTSubject
     // ==========================================
 
     /**
+     * @return bool
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role_id === 1;
+    }
+
+    /**
      * Check if the user has a specific permission.
      *
      * @param string $permissionName
