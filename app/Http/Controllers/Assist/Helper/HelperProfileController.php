@@ -163,10 +163,20 @@ class HelperProfileController extends AssistBaseController
      */
     public function upsert(UpdateHelperProfileRequest $request): JsonResponse
     {
-        $profile = HelperProfile::firstOrCreate(
-            ['user_id' => Auth::id()],
-            ['is_available' => false, 'status' => 'pending']
-        );
+        $profile = HelperProfile::withTrashed()->where('user_id', Auth::id())->first();
+
+        if ($profile) {
+            if ($profile->trashed()) {
+                $profile->restore();
+                $profile->update(['is_available' => false, 'status' => 'pending', 'terms_accepted_at' => null]);
+            }
+        } else {
+            $profile = HelperProfile::create([
+                'user_id'      => Auth::id(),
+                'is_available' => false,
+                'status'       => 'pending',
+            ]);
+        }
 
         // Accept terms & conditions (only store once — cannot be un-accepted)
         if ($request->boolean('terms_accepted') && !$profile->terms_accepted_at) {
