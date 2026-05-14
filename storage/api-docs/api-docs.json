@@ -3839,6 +3839,20 @@
                                                             "total_assists": {
                                                                 "type": "integer",
                                                                 "example": 23
+                                                            },
+                                                            "latitude": {
+                                                                "description": "Helper's current GPS latitude — use with longitude to estimate ETA",
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 33.5731,
+                                                                "nullable": true
+                                                            },
+                                                            "longitude": {
+                                                                "description": "Helper's current GPS longitude",
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": -7.5898,
+                                                                "nullable": true
                                                             }
                                                         },
                                                         "type": "object"
