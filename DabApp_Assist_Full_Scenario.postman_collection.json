@@ -1,0 +1,751 @@
+{
+  "info": {
+    "name": "DabApp Assist — Full Scenario A to Z",
+    "description": "Complete scenario: Register → Helper Profile → Admin Approve → Seeker Request → Helper Propose → Seeker Accept → Mission → QR Code Scan",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",          "value": "http://localhost:8000",  "type": "string" },
+    { "key": "seeker_token",      "value": "",                       "type": "string" },
+    { "key": "helper_token",      "value": "",                       "type": "string" },
+    { "key": "admin_token",       "value": "",                       "type": "string" },
+    { "key": "seeker_id",         "value": "",                       "type": "string" },
+    { "key": "helper_id",         "value": "",                       "type": "string" },
+    { "key": "request_id",        "value": "",                       "type": "string" },
+    { "key": "proposal_id",       "value": "",                       "type": "string" },
+    { "key": "completion_token",  "value": "",                       "type": "string" },
+    { "key": "helper_profile_id", "value": "",                       "type": "string" }
+  ],
+  "item": [
+
+    {
+      "name": "01 — SEEKER Authentication",
+      "item": [
+        {
+          "name": "01.1 Register Seeker",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.user_id) {",
+                "  pm.collectionVariables.set('seeker_id', res.user_id);",
+                "  console.log('Seeker user_id saved:', res.user_id);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Raifa\",\n  \"last_name\": \"Seeker\",\n  \"email\": \"seeker@dabapp.com\",\n  \"phone\": \"+212600000001\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/register", "host": ["{{base_url}}"], "path": ["api", "register"] }
+          }
+        },
+        {
+          "name": "01.2 Verify OTP Seeker",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{seeker_id}}\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/verify-otp", "host": ["{{base_url}}"], "path": ["api", "verify-otp"] }
+          }
+        },
+        {
+          "name": "01.3 Login Seeker",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.token) {",
+                "  pm.collectionVariables.set('seeker_token', res.token);",
+                "  console.log('Seeker token saved');",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seeker@dabapp.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "02 — HELPER Authentication",
+      "item": [
+        {
+          "name": "02.1 Register Helper",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.user_id) {",
+                "  pm.collectionVariables.set('helper_id', res.user_id);",
+                "  console.log('Helper user_id saved:', res.user_id);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Ahmed\",\n  \"last_name\": \"Helper\",\n  \"email\": \"helper@dabapp.com\",\n  \"phone\": \"+212600000002\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/register", "host": ["{{base_url}}"], "path": ["api", "register"] }
+          }
+        },
+        {
+          "name": "02.2 Verify OTP Helper",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{helper_id}}\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/verify-otp", "host": ["{{base_url}}"], "path": ["api", "verify-otp"] }
+          }
+        },
+        {
+          "name": "02.3 Login Helper",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.token) {",
+                "  pm.collectionVariables.set('helper_token', res.token);",
+                "  console.log('Helper token saved');",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"helper@dabapp.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "03 — ADMIN Authentication",
+      "item": [
+        {
+          "name": "03.1 Admin Login",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.token) {",
+                "  pm.collectionVariables.set('admin_token', res.token);",
+                "  console.log('Admin token saved');",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@dabapp.com\",\n  \"password\": \"adminpassword\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/admin/login", "host": ["{{base_url}}"], "path": ["api", "admin", "login"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "04 — ADMIN Sets Price Config",
+      "item": [
+        {
+          "name": "04.1 Get Current Price Config",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/assist/admin/price-config", "host": ["{{base_url}}"], "path": ["api", "assist", "admin", "price-config"] }
+          }
+        },
+        {
+          "name": "04.2 Set Price Config (0 to 150 step 50)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price_min\": 0,\n  \"price_max\": 150,\n  \"price_step\": 50\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/assist/admin/price-config", "host": ["{{base_url}}"], "path": ["api", "assist", "admin", "price-config"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "05 — HELPER Setup Profile",
+      "item": [
+        {
+          "name": "05.1 Create Helper Profile",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data && res.data.id) {",
+                "  pm.collectionVariables.set('helper_profile_id', res.data.id);",
+                "  console.log('Helper profile id saved:', res.data.id);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_radius_km\": 15,\n  \"expertise_ids\": [1, 2],\n  \"country_id\": 1,\n  \"city_id\": 1,\n  \"terms_accepted\": true,\n  \"notify_push\": true,\n  \"notify_email\": false\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/assist/helper/profile", "host": ["{{base_url}}"], "path": ["api", "assist", "helper", "profile"] }
+          }
+        },
+        {
+          "name": "05.2 Get Helper Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{helper_token}}" }],
+            "url": { "raw": "{{base_url}}/api/assist/helper/profile", "host": ["{{base_url}}"], "path": ["api", "assist", "helper", "profile"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "06 — ADMIN Approves Helper",
+      "item": [
+        {
+          "name": "06.1 List Helpers (find our helper)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/assist/admin/helpers", "host": ["{{base_url}}"], "path": ["api", "assist", "admin", "helpers"] }
+          }
+        },
+        {
+          "name": "06.2 Approve Helper",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"accepted\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/assist/admin/helpers/{{helper_profile_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assist", "admin", "helpers", "{{helper_profile_id}}", "status"]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "07 — HELPER Goes Online",
+      "item": [
+        {
+          "name": "07.1 Toggle Availability (Online)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{helper_token}}" }],
+            "url": { "raw": "{{base_url}}/api/assist/helper/profile/availability", "host": ["{{base_url}}"], "path": ["api", "assist", "helper", "profile", "availability"] }
+          }
+        },
+        {
+          "name": "07.2 Update GPS Location",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 33.5731,\n  \"longitude\": -7.5898\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/assist/helper/profile/location", "host": ["{{base_url}}"], "path": ["api", "assist", "helper", "profile", "location"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "08 — SEEKER Creates Request",
+      "item": [
+        {
+          "name": "08.1 Get Price Config (show to seeker)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{seeker_token}}" }],
+            "url": { "raw": "{{base_url}}/api/assist/price-config", "host": ["{{base_url}}"], "path": ["api", "assist", "price-config"] }
+          }
+        },
+        {
+          "name": "08.2 Get Expertise Types",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{seeker_token}}" }],
+            "url": { "raw": "{{base_url}}/api/assist/expertise-types", "host": ["{{base_url}}"], "path": ["api", "assist", "expertise-types"] }
+          }
+        },
+        {
+          "name": "08.3 Get My Garage",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{seeker_token}}" }],
+            "url": { "raw": "{{base_url}}/api/assist/seeker/garage", "host": ["{{base_url}}"], "path": ["api", "assist", "seeker", "garage"] }
+          }
+        },
+        {
+          "name": "08.4 Create Assistance Request",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data && res.data.request && res.data.request.id) {",
+                "  pm.collectionVariables.set('request_id', res.data.request.id);",
+                "  console.log('Request ID saved:', res.data.request.id);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{seeker_token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expertise_type_ids\": [1],\n  \"latitude\": 33.5800,\n  \"longitude\": -7.6000,\n  \"location_label\": \"Bd Mohammed V, Casablanca\",\n  \"description\": \"My rear tire is completely flat. Stuck on the side of the road.\",\n  \"motorcycle_id\": null\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/assist/seeker/request", "host": ["{{base_url}}"], "path": ["api", "assist", "seeker", "request"] }
+          }
+        },
+        {
+          "name": "08.5 View My Request",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{seeker_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/assist/seeker/request/{{request_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assist", "seeker", "request", "{{request_id}}"]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "09 — HELPER Browses Feed & Proposes",
+      "item": [
+        {
+          "name": "09.1 Get Price Config (for price picker)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{helper_token}}" }],
+            "url": { "raw": "{{base_url}}/api/assist/price-config", "host": ["{{base_url}}"], "path": ["api", "assist", "price-config"] }
+          }
+        },
+        {
+          "name": "09.2 Browse Feed (see request + price_config)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{helper_token}}" }],
+            "url": { "raw": "{{base_url}}/api/assist/helper/feed", "host": ["{{base_url}}"], "path": ["api", "assist", "helper", "feed"] }
+          }
+        },
+        {
+          "name": "09.3 View Request Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{helper_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/assist/helper/feed/{{request_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assist", "helper", "feed", "{{request_id}}"]
+            }
+          }
+        },
+        {
+          "name": "09.4 Submit Price Proposal (100 MAD)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data && res.data.id) {",
+                "  pm.collectionVariables.set('proposal_id', res.data.id);",
+                "  console.log('Proposal ID saved:', res.data.id);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proposed_price\": 100\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/assist/helper/feed/{{request_id}}/propose",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assist", "helper", "feed", "{{request_id}}", "propose"]
+            }
+          }
+        },
+        {
+          "name": "09.5 [ERROR TEST] Propose Invalid Price (77 MAD)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proposed_price\": 77\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/assist/helper/feed/{{request_id}}/propose",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assist", "helper", "feed", "{{request_id}}", "propose"]
+            }
+          }
+        },
+        {
+          "name": "09.6 [ERROR TEST] Propose Again (duplicate)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proposed_price\": 50\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/assist/helper/feed/{{request_id}}/propose",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assist", "helper", "feed", "{{request_id}}", "propose"]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "10 — SEEKER Reviews & Accepts Proposal",
+      "item": [
+        {
+          "name": "10.1 View All Proposals",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{seeker_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/assist/seeker/request/{{request_id}}/proposals",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assist", "seeker", "request", "{{request_id}}", "proposals"]
+            }
+          }
+        },
+        {
+          "name": "10.2 Accept Proposal",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{seeker_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/assist/seeker/request/{{request_id}}/proposals/{{proposal_id}}/accept",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assist", "seeker", "request", "{{request_id}}", "proposals", "{{proposal_id}}", "accept"]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "11 — HELPER Executes Mission",
+      "item": [
+        {
+          "name": "11.1 Get Active Mission",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{helper_token}}" }],
+            "url": { "raw": "{{base_url}}/api/assist/helper/mission/active", "host": ["{{base_url}}"], "path": ["api", "assist", "helper", "mission", "active"] }
+          }
+        },
+        {
+          "name": "11.2 Update Status → en_route",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"en_route\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/assist/helper/mission/{{request_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assist", "helper", "mission", "{{request_id}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "11.3 Update Status → arrived (QR token generated)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data && res.data.completion_token) {",
+                "  pm.collectionVariables.set('completion_token', res.data.completion_token);",
+                "  console.log('Completion token saved:', res.data.completion_token);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{helper_token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"arrived\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/assist/helper/mission/{{request_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assist", "helper", "mission", "{{request_id}}", "status"]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "12 — SEEKER Scans QR & Completes",
+      "item": [
+        {
+          "name": "12.1 Track Helper Location",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{seeker_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/assist/seeker/request/{{request_id}}/track",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assist", "seeker", "request", "{{request_id}}", "track"]
+            }
+          }
+        },
+        {
+          "name": "12.2 Scan QR Code → Mission Completed",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{seeker_token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{completion_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/assist/seeker/request/{{request_id}}/verify-qr",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assist", "seeker", "request", "{{request_id}}", "verify-qr"]
+            }
+          }
+        },
+        {
+          "name": "12.3 [ERROR TEST] Wrong QR Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{seeker_token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"wrongtoken000000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/assist/seeker/request/{{request_id}}/verify-qr",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assist", "seeker", "request", "{{request_id}}", "verify-qr"]
+            }
+          }
+        },
+        {
+          "name": "12.4 Rate the Helper",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{seeker_token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stars\": 5,\n  \"comment\": \"Super fast, saved my day!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/assist/seeker/request/{{request_id}}/rate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assist", "seeker", "request", "{{request_id}}", "rate"]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "13 — ADMIN Full Monitoring",
+      "item": [
+        {
+          "name": "13.1 Platform Statistics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/assist/admin/stats", "host": ["{{base_url}}"], "path": ["api", "assist", "admin", "stats"] }
+          }
+        },
+        {
+          "name": "13.2 List All Requests",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/assist/admin/requests?status=completed",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assist", "admin", "requests"],
+              "query": [{ "key": "status", "value": "completed" }]
+            }
+          }
+        },
+        {
+          "name": "13.3 Request Full Detail (A to Z — proposals + durations)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/assist/admin/requests/{{request_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assist", "admin", "requests", "{{request_id}}"]
+            }
+          }
+        },
+        {
+          "name": "13.4 List All Helpers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/assist/admin/helpers", "host": ["{{base_url}}"], "path": ["api", "assist", "admin", "helpers"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "14 — NOTIFICATIONS",
+      "item": [
+        {
+          "name": "14.1 Seeker — List Notifications",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{seeker_token}}" }],
+            "url": { "raw": "{{base_url}}/api/assist/notifications", "host": ["{{base_url}}"], "path": ["api", "assist", "notifications"] }
+          }
+        },
+        {
+          "name": "14.2 Seeker — Unread Count",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{seeker_token}}" }],
+            "url": { "raw": "{{base_url}}/api/assist/notifications/unread-count", "host": ["{{base_url}}"], "path": ["api", "assist", "notifications", "unread-count"] }
+          }
+        },
+        {
+          "name": "14.3 Seeker — Mark All Read",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{seeker_token}}" }],
+            "url": { "raw": "{{base_url}}/api/assist/notifications/read-all", "host": ["{{base_url}}"], "path": ["api", "assist", "notifications", "read-all"] }
+          }
+        },
+        {
+          "name": "14.4 Helper — List Notifications",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{helper_token}}" }],
+            "url": { "raw": "{{base_url}}/api/assist/notifications", "host": ["{{base_url}}"], "path": ["api", "assist", "notifications"] }
+          }
+        }
+      ]
+    }
+
+  ]
+}
