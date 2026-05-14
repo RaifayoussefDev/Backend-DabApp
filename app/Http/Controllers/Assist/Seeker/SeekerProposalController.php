@@ -53,7 +53,11 @@ class SeekerProposalController extends AssistBaseController
      *                         @OA\Property(property="profile_picture", type="string",  nullable=true, example="https://cdn.example.com/avatar.jpg"),
      *                         @OA\Property(property="rating",          type="number",  format="float", example=4.8,
      *                             description="Helper's average rating (0-5)"),
-     *                         @OA\Property(property="total_assists",   type="integer", example=23)
+     *                         @OA\Property(property="total_assists",   type="integer", example=23),
+     *                         @OA\Property(property="latitude",        type="number",  format="float", nullable=true, example=33.5731,
+     *                             description="Helper's current GPS latitude — use with longitude to estimate ETA"),
+     *                         @OA\Property(property="longitude",       type="number",  format="float", nullable=true, example=-7.5898,
+     *                             description="Helper's current GPS longitude")
      *                     )
      *                 )
      *             )
@@ -82,7 +86,7 @@ class SeekerProposalController extends AssistBaseController
             ->get()
             ->map(function ($proposal) {
                 $helperProfile = HelperProfile::where('user_id', $proposal->helper_id)
-                    ->select('rating', 'total_assists')
+                    ->select('rating', 'total_assists', 'latitude', 'longitude')
                     ->first();
 
                 return [
@@ -97,6 +101,8 @@ class SeekerProposalController extends AssistBaseController
                         'profile_picture' => $proposal->helper->profile_picture,
                         'rating'          => $helperProfile?->rating ?? 0,
                         'total_assists'   => $helperProfile?->total_assists ?? 0,
+                        'latitude'        => $helperProfile?->latitude,
+                        'longitude'       => $helperProfile?->longitude,
                     ],
                 ];
             });

@@ -13,7 +13,9 @@
       "Bash(Find \"d:\\\\PC youssef\\\\DabApp\\\\Backend\\\\DabApp-backend\\\\config\" -type f -name \"*.php\")",
       "Bash(Find \"d:\\\\PC youssef\\\\DabApp\\\\Backend\\\\DabApp-backend\\\\app\\\\Http\\\\Controllers\" -type f -name \"*Menu*\")",
       "Bash(Find \"d:\\\\PC youssef\\\\DabApp\\\\Backend\\\\DabApp-backend\" -type f -name \"*.json\")",
-      "Bash(Find \"d:\\\\PC youssef\\\\DabApp\\\\Backend\\\\DabApp-backend\" -type f -name \"*Assist*\")"
+      "Bash(Find \"d:\\\\PC youssef\\\\DabApp\\\\Backend\\\\DabApp-backend\" -type f -name \"*Assist*\")",
+      "Bash(Get-Content \"c:\\\\Works\\\\Projets\\\\DabApp\\\\Backend-DabApp\\\\routes\\\\api.php\")",
+      "Bash(Select-String \"SeekerProposal\")"
     ]
   }
 }

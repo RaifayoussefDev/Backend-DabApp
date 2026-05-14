@@ -19,12 +19,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('assistance_requests', function (Blueprint $table) {
-            // 1. Drop old FK and make expertise_type_id nullable
-            $table->dropForeign(['expertise_type_id']);
-            $table->unsignedBigInteger('expertise_type_id')->nullable()->change();
+            // Drop FKs only if they exist (they may have been removed in a prior run)
+            $fks = collect(Schema::getForeignKeys('assistance_requests'))
+                ->pluck('name');
 
-            // 2. Drop FK from assist_motorcycles (column stays, FK goes away)
-            $table->dropForeign(['motorcycle_id']);
+            if (Schema::hasColumn('assistance_requests', 'expertise_type_id')) {
+                if ($fks->contains('assistance_requests_expertise_type_id_foreign')) {
+                    $table->dropForeign(['expertise_type_id']);
+                }
+                $table->unsignedBigInteger('expertise_type_id')->nullable()->change();
+            }
+
+            if ($fks->contains('assistance_requests_motorcycle_id_foreign')) {
+                $table->dropForeign(['motorcycle_id']);
+            }
         });
     }
 
