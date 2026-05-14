@@ -15811,77 +15811,29 @@
                 ]
             }
         },
-        "/api/assist/admin/requests": {
+        "/api/assist/admin/requests/{id}": {
             "get": {
                 "tags": [
                     "Assist - Admin Stats"
                 ],
-                "summary": "Monitor all assistance requests with filters",
-                "operationId": "2afcc414a6e5b9f2f96256ee978d16b6",
+                "summary": "Get full details of a single assistance request",
+                "description": "Full admin view: seeker, helper, expertise, photos, rating, all proposals with helper profiles, and computed durations (time to accept, en-route duration, total mission time).",
+                "operationId": "3860ee330c41e7792c6a5f8893813185",
                 "parameters": [
                     {
-                        "name": "status",
-                        "in": "query",
-                        "description": "Filter by request status",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "pending",
-                                "accepted",
-                                "en_route",
-                                "arrived",
-                                "completed",
-                                "cancelled"
-                            ],
-                            "example": "pending"
-                        }
-                    },
-                    {
-                        "name": "expertise_type_id",
-                        "in": "query",
-                        "description": "Filter by expertise type ID (matches requests that include this expertise)",
-                        "required": false,
+                        "name": "id",
+                        "in": "path",
+                        "description": "AssistanceRequest ID",
+                        "required": true,
                         "schema": {
                             "type": "integer",
-                            "example": 1
-                        }
-                    },
-                    {
-                        "name": "date_from",
-                        "in": "query",
-                        "description": "Filter requests created from this date (YYYY-MM-DD)",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "format": "date",
-                            "example": "2026-01-01"
-                        }
-                    },
-                    {
-                        "name": "date_to",
-                        "in": "query",
-                        "description": "Filter requests created up to this date (YYYY-MM-DD)",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "format": "date",
-                            "example": "2026-04-15"
-                        }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
+                            "example": 12
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Paginated list of requests",
+                        "description": "Request detail",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -15892,84 +15844,146 @@
                                         },
                                         "data": {
                                             "properties": {
-                                                "current_page": {
+                                                "id": {
                                                     "type": "integer",
-                                                    "example": 1
+                                                    "example": 12
                                                 },
-                                                "per_page": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "completed"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "location_label": {
+                                                    "type": "string",
+                                                    "example": "King Fahd Road, Riyadh"
+                                                },
+                                                "latitude": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 24.714
+                                                },
+                                                "longitude": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 46.675
+                                                },
+                                                "accepted_price": {
                                                     "type": "integer",
-                                                    "example": 20
+                                                    "example": 100,
+                                                    "nullable": true
                                                 },
-                                                "total": {
-                                                    "type": "integer",
-                                                    "example": 320
+                                                "cancel_reason": {
+                                                    "type": "string",
+                                                    "nullable": true
                                                 },
-                                                "data": {
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "accepted_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "arrived_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "completed_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "cancelled_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "durations": {
+                                                    "description": "Computed durations in minutes",
+                                                    "properties": {
+                                                        "time_to_accept_minutes": {
+                                                            "description": "From request creation to seeker accepting a proposal",
+                                                            "type": "number",
+                                                            "example": 4.5,
+                                                            "nullable": true
+                                                        },
+                                                        "en_route_minutes": {
+                                                            "description": "From accepted to helper arrived",
+                                                            "type": "number",
+                                                            "example": 12.3,
+                                                            "nullable": true
+                                                        },
+                                                        "on_site_minutes": {
+                                                            "description": "From helper arrived to mission completed",
+                                                            "type": "number",
+                                                            "example": 20.1,
+                                                            "nullable": true
+                                                        },
+                                                        "total_mission_minutes": {
+                                                            "description": "From request creation to mission completed",
+                                                            "type": "number",
+                                                            "example": 36.9,
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "proposals_summary": {
+                                                    "properties": {
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "accepted": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "rejected": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "proposals": {
                                                     "type": "array",
                                                     "items": {
                                                         "properties": {
                                                             "id": {
                                                                 "type": "integer",
-                                                                "example": 12
+                                                                "example": 7
+                                                            },
+                                                            "proposed_price": {
+                                                                "type": "integer",
+                                                                "example": 100
                                                             },
                                                             "status": {
                                                                 "type": "string",
-                                                                "example": "pending"
+                                                                "example": "accepted"
                                                             },
-                                                            "description": {
+                                                            "rejection_type": {
                                                                 "type": "string",
-                                                                "example": "My rear tire is flat."
+                                                                "example": null,
+                                                                "nullable": true
                                                             },
-                                                            "location_label": {
+                                                            "accepted_at": {
                                                                 "type": "string",
-                                                                "example": "King Fahd Road, Riyadh"
+                                                                "format": "date-time",
+                                                                "nullable": true
                                                             },
-                                                            "latitude": {
-                                                                "type": "number",
-                                                                "format": "float",
-                                                                "example": 24.714
-                                                            },
-                                                            "longitude": {
-                                                                "type": "number",
-                                                                "format": "float",
-                                                                "example": 46.675
+                                                            "rejected_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
                                                             },
                                                             "created_at": {
                                                                 "type": "string",
                                                                 "format": "date-time"
-                                                            },
-                                                            "expertise_types": {
-                                                                "type": "array",
-                                                                "items": {
-                                                                    "properties": {
-                                                                        "id": {
-                                                                            "type": "integer",
-                                                                            "example": 1
-                                                                        },
-                                                                        "name": {
-                                                                            "type": "string",
-                                                                            "example": "tire_repair"
-                                                                        }
-                                                                    },
-                                                                    "type": "object"
-                                                                }
-                                                            },
-                                                            "seeker": {
-                                                                "properties": {
-                                                                    "id": {
-                                                                        "type": "integer",
-                                                                        "example": 65
-                                                                    },
-                                                                    "first_name": {
-                                                                        "type": "string",
-                                                                        "example": "Raifa"
-                                                                    },
-                                                                    "last_name": {
-                                                                        "type": "string",
-                                                                        "example": "Youssef"
-                                                                    }
-                                                                },
-                                                                "type": "object"
                                                             },
                                                             "helper": {
                                                                 "properties": {
@@ -15984,10 +15998,139 @@
                                                                     "last_name": {
                                                                         "type": "string",
                                                                         "example": "Al-Rashid"
+                                                                    },
+                                                                    "email": {
+                                                                        "type": "string",
+                                                                        "example": "ahmed@example.com"
+                                                                    },
+                                                                    "profile_picture": {
+                                                                        "type": "string",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "rating": {
+                                                                        "type": "number",
+                                                                        "example": 4.8
+                                                                    },
+                                                                    "total_assists": {
+                                                                        "type": "integer",
+                                                                        "example": 23
                                                                     }
                                                                 },
-                                                                "type": "object",
-                                                                "nullable": true
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "seeker": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 65
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string",
+                                                            "example": "Raifa"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string",
+                                                            "example": "Youssef"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "raifa@example.com"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "+966500000000"
+                                                        },
+                                                        "profile_picture": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "helper": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string",
+                                                            "example": "Ahmed"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string",
+                                                            "example": "Al-Rashid"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "ahmed@example.com"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "+966500000001"
+                                                        },
+                                                        "profile_picture": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "rating": {
+                                                    "properties": {
+                                                        "stars": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "comment": {
+                                                            "type": "string",
+                                                            "example": "Excellent!",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "photos": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 3
+                                                            },
+                                                            "path": {
+                                                                "type": "string",
+                                                                "example": "https://cdn.example.com/photo.jpg"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "expertise_types": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "tire_repair"
+                                                            },
+                                                            "name_en": {
+                                                                "type": "string",
+                                                                "example": "Tire Repair"
+                                                            },
+                                                            "name_ar": {
+                                                                "type": "string",
+                                                                "example": "إصلاح الإطارات"
                                                             }
                                                         },
                                                         "type": "object"
@@ -16002,8 +16145,79 @@
                             }
                         }
                     },
-                    "401": {
-                        "description": "Unauthenticated"
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/admin/requests/{id}/cancel": {
+            "patch": {
+                "tags": [
+                    "Assist - Admin Stats"
+                ],
+                "summary": "Force-cancel an assistance request",
+                "description": "Admin can cancel any active request. Sends a notification to the seeker and helper.",
+                "operationId": "dade3bd1150052ad2b0b9dd7b19c8950",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "AssistanceRequest ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "cancel_reason": {
+                                        "type": "string",
+                                        "example": "Request cancelled by admin due to policy violation.",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Request cancelled",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Request cancelled by admin."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Request is already completed or cancelled"
                     }
                 },
                 "security": [
@@ -16702,6 +16916,93 @@
                 ]
             }
         },
+        "/api/assist/admin/helpers/{id}/level": {
+            "patch": {
+                "tags": [
+                    "Assist - Admin Helpers"
+                ],
+                "summary": "Manually set a helper's level",
+                "operationId": "61a65661b21dfebe38abc3ff85c5a5f7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "HelperProfile ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "level"
+                                ],
+                                "properties": {
+                                    "level": {
+                                        "type": "string",
+                                        "enum": [
+                                            "standard",
+                                            "elite",
+                                            "vanguard"
+                                        ],
+                                        "example": "elite"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Level updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Helper level updated to elite."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "level": {
+                                                    "type": "string",
+                                                    "example": "elite"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/assist/admin/helpers/{id}/requests": {
             "get": {
                 "tags": [
@@ -16878,6 +17179,183 @@
                     },
                     "404": {
                         "description": "Helper profile not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/admin/price-config": {
+            "get": {
+                "tags": [
+                    "Assist - Admin Price Config"
+                ],
+                "summary": "Get the current assist price configuration",
+                "description": "Returns the global min price, max price, step value, and the list of valid proposal prices.",
+                "operationId": "1f34c0844e82b3e03e4f32c7203b9a26",
+                "responses": {
+                    "200": {
+                        "description": "Current price configuration",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "price_min": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "price_max": {
+                                                    "type": "integer",
+                                                    "example": 150
+                                                },
+                                                "price_step": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "valid_prices": {
+                                                    "description": "All valid proposal prices (multiples of step between min and max)",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer"
+                                                    },
+                                                    "example": [
+                                                        0,
+                                                        50,
+                                                        100,
+                                                        150
+                                                    ]
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Assist - Admin Price Config"
+                ],
+                "summary": "Update the assist price configuration",
+                "description": "Update min price, max price, and/or step. All proposed prices must be multiples of step and within [min, max]. The step must divide evenly into (max - min).",
+                "operationId": "d165d5ed54c76bceb390824f171b9898",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "price_min": {
+                                        "description": "Minimum allowed proposal price (0 = free / bénévolat)",
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "example": 0
+                                    },
+                                    "price_max": {
+                                        "description": "Maximum allowed proposal price",
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "example": 200
+                                    },
+                                    "price_step": {
+                                        "description": "Increment step. Proposals must be 0, step, 2×step, … up to max",
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "example": 50
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "price_min": 0,
+                                "price_max": 200,
+                                "price_step": 50
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Configuration updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Price configuration updated."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "price_min": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "price_max": {
+                                                    "type": "integer",
+                                                    "example": 200
+                                                },
+                                                "price_step": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "valid_prices": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer"
+                                                    },
+                                                    "example": [
+                                                        0,
+                                                        50,
+                                                        100,
+                                                        150,
+                                                        200
+                                                    ]
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 },
                 "security": [
@@ -27246,6 +27724,10 @@
         {
             "name": "Assist - Admin Helpers",
             "description": "Admin management of helper profiles"
+        },
+        {
+            "name": "Assist - Admin Price Config",
+            "description": "Manage the global price range and step for assist proposals"
         },
         {
             "name": "Pricing Rules Licence Plate Management",

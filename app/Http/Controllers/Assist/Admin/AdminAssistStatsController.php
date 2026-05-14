@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Assist\Admin;
 
 use App\Http\Controllers\Assist\AssistBaseController;
 use App\Models\Assist\AssistanceRequest;
+use App\Models\Assist\AssistProposal;
 use App\Models\Assist\HelperProfile;
-use App\Models\Assist\Rating;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -181,6 +181,7 @@ class AdminAssistStatsController extends AssistBaseController
      * @OA\Get(
      *     path="/api/assist/admin/requests/{id}",
      *     summary="Get full details of a single assistance request",
+     *     description="Full admin view: seeker, helper, expertise, photos, rating, all proposals with helper profiles, and computed durations (time to accept, en-route duration, total mission time).",
      *     tags={"Assist - Admin Stats"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true,
@@ -193,26 +194,51 @@ class AdminAssistStatsController extends AssistBaseController
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="id",             type="integer", example=12),
      *                 @OA\Property(property="status",         type="string",  example="completed"),
-     *                 @OA\Property(property="status_label",   type="object",
-     *                     @OA\Property(property="en", type="string", example="Completed"),
-     *                     @OA\Property(property="ar", type="string", example="مكتمل")
-     *                 ),
      *                 @OA\Property(property="description",    type="string",  nullable=true),
      *                 @OA\Property(property="location_label", type="string",  example="King Fahd Road, Riyadh"),
      *                 @OA\Property(property="latitude",       type="number",  format="float", example=24.714),
      *                 @OA\Property(property="longitude",      type="number",  format="float", example=46.675),
+     *                 @OA\Property(property="accepted_price", type="integer", nullable=true, example=100),
      *                 @OA\Property(property="cancel_reason",  type="string",  nullable=true),
+     *                 @OA\Property(property="created_at",     type="string",  format="date-time"),
      *                 @OA\Property(property="accepted_at",    type="string",  format="date-time", nullable=true),
      *                 @OA\Property(property="arrived_at",     type="string",  format="date-time", nullable=true),
      *                 @OA\Property(property="completed_at",   type="string",  format="date-time", nullable=true),
      *                 @OA\Property(property="cancelled_at",   type="string",  format="date-time", nullable=true),
-     *                 @OA\Property(property="created_at",     type="string",  format="date-time"),
-     *                 @OA\Property(property="expertise_types", type="array",
+     *                 @OA\Property(property="durations", type="object",
+     *                     description="Computed durations in minutes",
+     *                     @OA\Property(property="time_to_accept_minutes",  type="number", nullable=true, example=4.5,
+     *                         description="From request creation to seeker accepting a proposal"),
+     *                     @OA\Property(property="en_route_minutes",        type="number", nullable=true, example=12.3,
+     *                         description="From accepted to helper arrived"),
+     *                     @OA\Property(property="on_site_minutes",         type="number", nullable=true, example=20.1,
+     *                         description="From helper arrived to mission completed"),
+     *                     @OA\Property(property="total_mission_minutes",   type="number", nullable=true, example=36.9,
+     *                         description="From request creation to mission completed")
+     *                 ),
+     *                 @OA\Property(property="proposals_summary", type="object",
+     *                     @OA\Property(property="total",    type="integer", example=3),
+     *                     @OA\Property(property="accepted", type="integer", example=1),
+     *                     @OA\Property(property="rejected", type="integer", example=2)
+     *                 ),
+     *                 @OA\Property(property="proposals", type="array",
      *                     @OA\Items(type="object",
-     *                         @OA\Property(property="id",      type="integer", example=1),
-     *                         @OA\Property(property="name",    type="string",  example="tire_repair"),
-     *                         @OA\Property(property="name_en", type="string",  example="Tire Repair"),
-     *                         @OA\Property(property="name_ar", type="string",  example="إصلاح الإطارات")
+     *                         @OA\Property(property="id",             type="integer", example=7),
+     *                         @OA\Property(property="proposed_price", type="integer", example=100),
+     *                         @OA\Property(property="status",         type="string",  example="accepted"),
+     *                         @OA\Property(property="rejection_type", type="string",  nullable=true, example=null),
+     *                         @OA\Property(property="accepted_at",    type="string",  format="date-time", nullable=true),
+     *                         @OA\Property(property="rejected_at",    type="string",  format="date-time", nullable=true),
+     *                         @OA\Property(property="created_at",     type="string",  format="date-time"),
+     *                         @OA\Property(property="helper", type="object",
+     *                             @OA\Property(property="id",              type="integer", example=2),
+     *                             @OA\Property(property="first_name",      type="string",  example="Ahmed"),
+     *                             @OA\Property(property="last_name",       type="string",  example="Al-Rashid"),
+     *                             @OA\Property(property="email",           type="string",  example="ahmed@example.com"),
+     *                             @OA\Property(property="profile_picture", type="string",  nullable=true),
+     *                             @OA\Property(property="rating",          type="number",  example=4.8),
+     *                             @OA\Property(property="total_assists",   type="integer", example=23)
+     *                         )
      *                     )
      *                 ),
      *                 @OA\Property(property="seeker", type="object",
@@ -237,8 +263,16 @@ class AdminAssistStatsController extends AssistBaseController
      *                 ),
      *                 @OA\Property(property="photos", type="array",
      *                     @OA\Items(type="object",
-     *                         @OA\Property(property="id",  type="integer", example=3),
-     *                         @OA\Property(property="url", type="string",  example="https://cdn.example.com/photo.jpg")
+     *                         @OA\Property(property="id",   type="integer", example=3),
+     *                         @OA\Property(property="path", type="string",  example="https://cdn.example.com/photo.jpg")
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="expertise_types", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",      type="integer", example=1),
+     *                         @OA\Property(property="name",    type="string",  example="tire_repair"),
+     *                         @OA\Property(property="name_en", type="string",  example="Tire Repair"),
+     *                         @OA\Property(property="name_ar", type="string",  example="إصلاح الإطارات")
      *                     )
      *                 )
      *             )
@@ -249,7 +283,7 @@ class AdminAssistStatsController extends AssistBaseController
      */
     public function show(string $id): JsonResponse
     {
-        $request = AssistanceRequest::with([
+        $assistRequest = AssistanceRequest::with([
             'seeker:id,first_name,last_name,email,phone,profile_picture',
             'helper:id,first_name,last_name,email,phone,profile_picture',
             'expertiseTypes:id,name,name_en,name_ar',
@@ -257,11 +291,68 @@ class AdminAssistStatsController extends AssistBaseController
             'photos:id,request_id,path',
         ])->find($id);
 
-        if (!$request) {
+        if (!$assistRequest) {
             return $this->error('Assistance request not found.', 404);
         }
 
-        return $this->success($request);
+        // Computed durations
+        $durations = [
+            'time_to_accept_minutes' => $assistRequest->accepted_at
+                ? round($assistRequest->created_at->diffInSeconds($assistRequest->accepted_at) / 60, 1)
+                : null,
+            'en_route_minutes' => ($assistRequest->accepted_at && $assistRequest->arrived_at)
+                ? round($assistRequest->accepted_at->diffInSeconds($assistRequest->arrived_at) / 60, 1)
+                : null,
+            'on_site_minutes' => ($assistRequest->arrived_at && $assistRequest->completed_at)
+                ? round($assistRequest->arrived_at->diffInSeconds($assistRequest->completed_at) / 60, 1)
+                : null,
+            'total_mission_minutes' => $assistRequest->completed_at
+                ? round($assistRequest->created_at->diffInSeconds($assistRequest->completed_at) / 60, 1)
+                : null,
+        ];
+
+        // All proposals with helper profile stats
+        $proposals = AssistProposal::where('request_id', $id)
+            ->with('helper:id,first_name,last_name,email,profile_picture')
+            ->orderBy('created_at')
+            ->get()
+            ->map(function ($proposal) {
+                $hp = HelperProfile::where('user_id', $proposal->helper_id)
+                    ->select('rating', 'total_assists')
+                    ->first();
+
+                return [
+                    'id'             => $proposal->id,
+                    'proposed_price' => $proposal->proposed_price,
+                    'status'         => $proposal->status,
+                    'rejection_type' => $proposal->rejection_type,
+                    'accepted_at'    => $proposal->accepted_at,
+                    'rejected_at'    => $proposal->rejected_at,
+                    'created_at'     => $proposal->created_at,
+                    'helper'         => [
+                        'id'              => $proposal->helper->id,
+                        'first_name'      => $proposal->helper->first_name,
+                        'last_name'       => $proposal->helper->last_name,
+                        'email'           => $proposal->helper->email,
+                        'profile_picture' => $proposal->helper->profile_picture,
+                        'rating'          => $hp?->rating ?? 0,
+                        'total_assists'   => $hp?->total_assists ?? 0,
+                    ],
+                ];
+            });
+
+        $proposalCounts = $proposals->groupBy('status');
+
+        return $this->success(array_merge($assistRequest->toArray(), [
+            'durations'         => $durations,
+            'proposals_summary' => [
+                'total'    => $proposals->count(),
+                'accepted' => ($proposalCounts->get('accepted') ?? collect())->count(),
+                'rejected' => ($proposalCounts->get('rejected') ?? collect())->count(),
+                'pending'  => ($proposalCounts->get('pending')  ?? collect())->count(),
+            ],
+            'proposals' => $proposals,
+        ]));
     }
 
     /**

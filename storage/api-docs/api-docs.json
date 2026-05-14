@@ -590,6 +590,75 @@
                 ]
             }
         },
+        "/api/assist/price-config": {
+            "get": {
+                "tags": [
+                    "Assist - Price Config"
+                ],
+                "summary": "Get the current assist price range",
+                "description": "Returns the global minimum price, maximum price, step increment, and the full list of valid proposal prices. Both Helper and Seeker can call this endpoint. Use it to display the price range on the request screen and to build the helper's price picker.",
+                "operationId": "92320b9f32749cb43174cf4b0f8a519f",
+                "responses": {
+                    "200": {
+                        "description": "Current price configuration",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "price_min": {
+                                                    "description": "Minimum allowed proposal price (0 = free / volunteer)",
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "price_max": {
+                                                    "description": "Maximum allowed proposal price",
+                                                    "type": "integer",
+                                                    "example": 150
+                                                },
+                                                "price_step": {
+                                                    "description": "Increment between valid prices",
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "valid_prices": {
+                                                    "description": "Exact list of prices the helper can propose. Use these values directly as buttons in the UI.",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer"
+                                                    },
+                                                    "example": [
+                                                        0,
+                                                        50,
+                                                        100,
+                                                        150
+                                                    ]
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/assist/helper/feed": {
             "get": {
                 "tags": [
@@ -600,7 +669,7 @@
                 "operationId": "ec668ab118171ea1a520d35e4031783a",
                 "responses": {
                     "200": {
-                        "description": "List of nearby pending requests sorted by distance",
+                        "description": "Price config + list of nearby pending requests sorted by distance",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -614,133 +683,175 @@
                                             "example": "Success"
                                         },
                                         "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 12
-                                                    },
-                                                    "status": {
-                                                        "type": "string",
-                                                        "example": "pending"
-                                                    },
-                                                    "description": {
-                                                        "type": "string",
-                                                        "example": "My rear tire is completely flat."
-                                                    },
-                                                    "location_label": {
-                                                        "type": "string",
-                                                        "example": "King Fahd Road, Riyadh – near Exit 7"
-                                                    },
-                                                    "latitude": {
-                                                        "type": "number",
-                                                        "format": "float",
-                                                        "example": 24.714
-                                                    },
-                                                    "longitude": {
-                                                        "type": "number",
-                                                        "format": "float",
-                                                        "example": 46.675
-                                                    },
-                                                    "distance_km": {
-                                                        "description": "Distance in km between helper and seeker",
-                                                        "type": "number",
-                                                        "format": "float",
-                                                        "example": 2.34
-                                                    },
-                                                    "created_at": {
-                                                        "type": "string",
-                                                        "format": "date-time"
-                                                    },
-                                                    "expertise_types": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "properties": {
-                                                                "id": {
-                                                                    "type": "integer",
-                                                                    "example": 1
-                                                                },
-                                                                "name": {
-                                                                    "type": "string",
-                                                                    "example": "tire_repair"
-                                                                },
-                                                                "icon": {
-                                                                    "type": "string",
-                                                                    "example": "tire_repair"
-                                                                }
+                                            "properties": {
+                                                "price_config": {
+                                                    "description": "Global pricing constraints for proposals",
+                                                    "properties": {
+                                                        "price_min": {
+                                                            "type": "integer",
+                                                            "example": 0
+                                                        },
+                                                        "price_max": {
+                                                            "type": "integer",
+                                                            "example": 150
+                                                        },
+                                                        "price_step": {
+                                                            "type": "integer",
+                                                            "example": 50
+                                                        },
+                                                        "valid_prices": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "integer"
                                                             },
-                                                            "type": "object"
+                                                            "example": [
+                                                                0,
+                                                                50,
+                                                                100,
+                                                                150
+                                                            ]
                                                         }
                                                     },
-                                                    "photos": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "properties": {
-                                                                "id": {
-                                                                    "type": "integer",
-                                                                    "example": 1
-                                                                },
-                                                                "path": {
-                                                                    "type": "string",
-                                                                    "example": "https://cdn.example.com/uploads/photo1.jpg"
-                                                                }
-                                                            },
-                                                            "type": "object"
-                                                        }
-                                                    },
-                                                    "seeker": {
+                                                    "type": "object"
+                                                },
+                                                "requests": {
+                                                    "type": "array",
+                                                    "items": {
                                                         "properties": {
                                                             "id": {
                                                                 "type": "integer",
-                                                                "example": 65
+                                                                "example": 12
                                                             },
-                                                            "first_name": {
+                                                            "status": {
                                                                 "type": "string",
-                                                                "example": "Raifa"
+                                                                "example": "pending"
                                                             },
-                                                            "last_name": {
+                                                            "description": {
                                                                 "type": "string",
-                                                                "example": "Youssef"
+                                                                "example": "My rear tire is completely flat."
+                                                            },
+                                                            "location_label": {
+                                                                "type": "string",
+                                                                "example": "King Fahd Road, Riyadh – near Exit 7"
+                                                            },
+                                                            "latitude": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 24.714
+                                                            },
+                                                            "longitude": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 46.675
+                                                            },
+                                                            "distance_km": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 2.34
+                                                            },
+                                                            "my_proposal": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 7
+                                                                    },
+                                                                    "proposed_price": {
+                                                                        "type": "integer",
+                                                                        "example": 100
+                                                                    },
+                                                                    "status": {
+                                                                        "type": "string",
+                                                                        "example": "pending"
+                                                                    }
+                                                                },
+                                                                "type": "object",
+                                                                "nullable": true
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "expertise_types": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "name": {
+                                                                            "type": "string",
+                                                                            "example": "tire_repair"
+                                                                        },
+                                                                        "icon": {
+                                                                            "type": "string",
+                                                                            "example": "tire_repair"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "photos": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "path": {
+                                                                            "type": "string",
+                                                                            "example": "https://cdn.example.com/uploads/photo1.jpg"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "seeker": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 65
+                                                                    },
+                                                                    "first_name": {
+                                                                        "type": "string",
+                                                                        "example": "Raifa"
+                                                                    },
+                                                                    "last_name": {
+                                                                        "type": "string",
+                                                                        "example": "Youssef"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "motorcycle": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 15
+                                                                    },
+                                                                    "brand": {
+                                                                        "type": "string",
+                                                                        "example": "BMW"
+                                                                    },
+                                                                    "model": {
+                                                                        "type": "string",
+                                                                        "example": "F 900 R"
+                                                                    },
+                                                                    "year": {
+                                                                        "type": "integer",
+                                                                        "example": 2022
+                                                                    }
+                                                                },
+                                                                "type": "object",
+                                                                "nullable": true
                                                             }
                                                         },
                                                         "type": "object"
-                                                    },
-                                                    "motorcycle": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 15
-                                                            },
-                                                            "color": {
-                                                                "type": "string",
-                                                                "example": "Red"
-                                                            },
-                                                            "brand": {
-                                                                "properties": {
-                                                                    "name": {
-                                                                        "type": "string",
-                                                                        "example": "BMW"
-                                                                    }
-                                                                },
-                                                                "type": "object"
-                                                            },
-                                                            "model": {
-                                                                "properties": {
-                                                                    "name": {
-                                                                        "type": "string",
-                                                                        "example": "F 900 R"
-                                                                    }
-                                                                },
-                                                                "type": "object"
-                                                            }
-                                                        },
-                                                        "type": "object",
-                                                        "nullable": true
                                                     }
-                                                },
-                                                "type": "object"
-                                            }
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -2360,6 +2471,118 @@
                 ]
             }
         },
+        "/api/assist/helper/feed/{id}/propose": {
+            "post": {
+                "tags": [
+                    "Assist - Helper Proposal"
+                ],
+                "summary": "Submit a price proposal for a pending request",
+                "description": "The helper submits their proposed price for a pending assistance request. The price must be a multiple of the configured step and fall within [price_min, price_max]. The seeker is notified immediately. A helper can only submit one proposal per request.",
+                "operationId": "881dec517f4aebe39e5410a9de8a3d58",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Assistance request ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "proposed_price"
+                                ],
+                                "properties": {
+                                    "proposed_price": {
+                                        "description": "Proposed price. Must be a multiple of price_step and within [price_min, price_max]. Example valid values when step=50, max=150: 0, 50, 100, 150",
+                                        "type": "integer",
+                                        "example": 100
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "proposed_price": 100
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Proposal submitted — seeker notified",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Proposal submitted. Waiting for the seeker to accept."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 7
+                                                },
+                                                "request_id": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "proposed_price": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "pending"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid price — not a valid step multiple or out of range"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Profile not verified or not available"
+                    },
+                    "404": {
+                        "description": "Request not found or no longer pending"
+                    },
+                    "409": {
+                        "description": "Already proposed on this request or has an active mission"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/assist/seeker/requests": {
             "get": {
                 "tags": [
@@ -3527,6 +3750,290 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/seeker/request/{id}/proposals": {
+            "get": {
+                "tags": [
+                    "Assist - Seeker Proposals"
+                ],
+                "summary": "List all proposals received for a request",
+                "description": "Returns all helper proposals for this request (pending, accepted, rejected). Each entry includes the helper's profile picture, full name, rating, and proposed price.",
+                "operationId": "ef1bb8a6e1b7400e53737bff1070aaa3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Assistance request ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of proposals",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 7
+                                                    },
+                                                    "proposed_price": {
+                                                        "type": "integer",
+                                                        "example": 100
+                                                    },
+                                                    "status": {
+                                                        "description": "pending | accepted | rejected",
+                                                        "type": "string",
+                                                        "example": "pending"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "helper": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "first_name": {
+                                                                "type": "string",
+                                                                "example": "Ahmed"
+                                                            },
+                                                            "last_name": {
+                                                                "type": "string",
+                                                                "example": "Al-Rashid"
+                                                            },
+                                                            "profile_picture": {
+                                                                "type": "string",
+                                                                "example": "https://cdn.example.com/avatar.jpg",
+                                                                "nullable": true
+                                                            },
+                                                            "rating": {
+                                                                "description": "Helper's average rating (0-5)",
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 4.8
+                                                            },
+                                                            "total_assists": {
+                                                                "type": "integer",
+                                                                "example": 23
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "This request does not belong to you"
+                    },
+                    "404": {
+                        "description": "Request not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/seeker/request/{id}/proposals/{proposalId}/accept": {
+            "post": {
+                "tags": [
+                    "Assist - Seeker Proposals"
+                ],
+                "summary": "Accept a helper's proposal",
+                "description": "Accepts one proposal and automatically rejects all others for this request. The request moves to `accepted` status and the chosen helper is assigned. All affected helpers receive a notification.",
+                "operationId": "f088934bf28ae803195045591ae0d890",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    },
+                    {
+                        "name": "proposalId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 7
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Proposal accepted — helper assigned, others auto-rejected",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Proposal accepted. Your helper is on the way."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "request_id": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "accepted"
+                                                },
+                                                "accepted_price": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "helper": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string",
+                                                            "example": "Ahmed"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string",
+                                                            "example": "Al-Rashid"
+                                                        },
+                                                        "profile_picture": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "+966501234567"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "rejected_count": {
+                                                    "description": "Number of other proposals that were auto-rejected",
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Request or proposal not found"
+                    },
+                    "409": {
+                        "description": "Request is no longer in pending status"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/assist/seeker/request/{id}/proposals/{proposalId}": {
+            "delete": {
+                "tags": [
+                    "Assist - Seeker Proposals"
+                ],
+                "summary": "Manually reject a helper's proposal",
+                "description": "Rejects a single pending proposal. The helper is notified. Other proposals remain unaffected.",
+                "operationId": "e188f634c556b403af46f65d77cfd73b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    },
+                    {
+                        "name": "proposalId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 7
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Proposal rejected",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Proposal rejected."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Request or proposal not found"
                     }
                 },
                 "security": [
@@ -43709,6 +44216,10 @@
             "description": "In-app notifications for the Assist module (seekers and helpers)"
         },
         {
+            "name": "Assist - Price Config",
+            "description": "Public price range config — available to both Helper and Seeker"
+        },
+        {
             "name": "Assist - Helper Feed",
             "description": "Browse nearby open requests and accept missions"
         },
@@ -43721,8 +44232,16 @@
             "description": "Helper profile management, GPS location, and availability toggle"
         },
         {
+            "name": "Assist - Helper Proposal",
+            "description": "Submit a price proposal for a pending assistance request"
+        },
+        {
             "name": "Assist - Seeker",
             "description": "Endpoints for riders seeking roadside assistance"
+        },
+        {
+            "name": "Assist - Seeker Proposals",
+            "description": "List, accept, or reject helper proposals for a pending request"
         },
         {
             "name": "Assist - Seeker Tracking",

@@ -18,7 +18,7 @@ class AssistNotificationService
         private readonly FirebaseService $firebase
     ) {}
     /** Notification types sent TO helpers (check HelperProfile preferences) */
-    private const HELPER_TYPES = ['new_request', 'cancelled', 'rated', 'seeker_finished'];
+    private const HELPER_TYPES = ['new_request', 'cancelled', 'rated', 'seeker_finished', 'proposal_accepted', 'proposal_rejected'];
 
     /** Profile-level notification types (no AssistanceRequest attached) */
     private const PROFILE_TYPES = ['helper_approved', 'helper_rejected'];
@@ -67,6 +67,18 @@ class AssistNotificationService
         'helper_rejected' => [
             'en' => ['title' => 'Application not approved',             'body' => 'Your helper application was not approved. Contact support for more details.'],
             'ar' => ['title' => 'لم يتم قبول طلبك',                     'body' => 'لم يتم قبول طلب المساعد الخاص بك. تواصل مع الدعم للمزيد من التفاصيل.'],
+        ],
+        'proposal_received' => [
+            'en' => ['title' => 'New proposal received',                'body' => 'A helper submitted a price proposal for your request. Check the offers now.'],
+            'ar' => ['title' => 'تلقيت عرضاً جديداً',                   'body' => 'قدّم مساعد عرض سعر لطلبك. تحقق من العروض الآن.'],
+        ],
+        'proposal_accepted' => [
+            'en' => ['title' => 'Your proposal was accepted!',          'body' => 'The rider accepted your proposal. Head to their location now.'],
+            'ar' => ['title' => 'تم قبول عرضك!',                        'body' => 'قبل المتسابق عرضك. توجه إلى موقعه الآن.'],
+        ],
+        'proposal_rejected' => [
+            'en' => ['title' => 'Proposal not selected',                'body' => 'The rider chose another helper. Keep an eye on the feed for new requests.'],
+            'ar' => ['title' => 'لم يتم اختيار عرضك',                   'body' => 'اختار المتسابق مساعداً آخر. راقب قائمة الطلبات للعثور على فرص جديدة.'],
         ],
     ];
 
@@ -253,9 +265,12 @@ class AssistNotificationService
     private function resolveActionUrl(string $type, int $requestId): string
     {
         return match($type) {
-            'new_request'                          => 'assist/helper/feed',
-            'cancelled', 'rated', 'seeker_finished'=> "assist/helper/mission/{$requestId}",
-            default                                => "assist/seeker/request/{$requestId}",
+            'new_request'                               => 'assist/helper/feed',
+            'cancelled', 'rated', 'seeker_finished'     => "assist/helper/mission/{$requestId}",
+            'proposal_accepted'                         => "assist/helper/mission/{$requestId}",
+            'proposal_rejected'                         => 'assist/helper/feed',
+            'proposal_received'                         => "assist/seeker/request/{$requestId}/proposals",
+            default                                     => "assist/seeker/request/{$requestId}",
         };
     }
 

@@ -72,6 +72,7 @@ class AssistanceRequest extends Model
         'cancelled_at',
         'cancel_reason',
         'completion_token',
+        'accepted_price',
     ];
 
     protected $hidden = ['completion_token'];
@@ -136,5 +137,10 @@ class AssistanceRequest extends Model
     public function notifications()
     {
         return $this->hasMany(AssistNotification::class, 'request_id');
+    }
+
+    public function proposals()
+    {
+        return $this->hasMany(AssistProposal::class, 'request_id');
     }
 }

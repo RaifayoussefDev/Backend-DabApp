@@ -1913,6 +1913,7 @@ Route::prefix('assist')->middleware('auth:api')->group(function () {
 
     // ── Public (any authenticated user) ─────────────────────────────────────
     Route::get('expertise-types', [AdminExpertiseController::class, 'index']);
+    Route::get('price-config',    [\App\Http\Controllers\Assist\AssistPriceConfigController::class, 'show']);
 
     // ── Notifications (seeker + helper) ──────────────────────────────────────
     Route::get('notifications',                  [\App\Http\Controllers\Assist\AssistNotificationController::class, 'index']);
@@ -1931,6 +1932,10 @@ Route::prefix('assist')->middleware('auth:api')->group(function () {
         Route::post('request/{id}/verify-qr', [AssistanceRequestController::class, 'verifyQr']);
         Route::post('request/{id}/rate',      [AssistanceRequestController::class, 'rate']);
         Route::get('request/{id}/track',      [SeekerTrackingController::class,    'track']);
+        // Proposals
+        Route::get('request/{id}/proposals',                             [\App\Http\Controllers\Assist\Seeker\SeekerProposalController::class, 'index']);
+        Route::post('request/{id}/proposals/{proposalId}/accept',        [\App\Http\Controllers\Assist\Seeker\SeekerProposalController::class, 'accept']);
+        Route::delete('request/{id}/proposals/{proposalId}',             [\App\Http\Controllers\Assist\Seeker\SeekerProposalController::class, 'reject']);
     });
 
     // ── Helper ───────────────────────────────────────────────────────────────
@@ -1942,6 +1947,7 @@ Route::prefix('assist')->middleware('auth:api')->group(function () {
         Route::get('feed',                   [HelperFeedController::class,    'index']);
         Route::get('feed/{id}',              [HelperFeedController::class,    'show']);
         Route::post('feed/{id}/accept',      [HelperFeedController::class,    'accept']);
+        Route::post('feed/{id}/propose',     [\App\Http\Controllers\Assist\Helper\HelperProposalController::class, 'store']);
         Route::get('missions',               [HelperMissionController::class, 'index']);
         Route::get('mission/active',         [HelperMissionController::class, 'active']);
         Route::get('mission/{id}',           [HelperMissionController::class, 'show']);
@@ -1965,5 +1971,8 @@ Route::prefix('assist')->middleware('auth:api')->group(function () {
         Route::get('requests',                     [AdminAssistStatsController::class, 'requests']);
         Route::get('requests/{id}',                [AdminAssistStatsController::class, 'show']);
         Route::patch('requests/{id}/cancel',       [AdminAssistStatsController::class, 'cancel']);
+        // Price config
+        Route::get('price-config',                 [\App\Http\Controllers\Assist\Admin\AdminPriceConfigController::class, 'show']);
+        Route::patch('price-config',               [\App\Http\Controllers\Assist\Admin\AdminPriceConfigController::class, 'update']);
     });
 });
