@@ -32,56 +32,54 @@ class HelperFeedController extends AssistBaseController
      *     security={{"bearerAuth":{}}},
      *     @OA\Response(
      *         response=200,
-     *         description="Price config + list of nearby pending requests sorted by distance",
+     *         description="Array of nearby pending requests — each item includes request fields, price config, and the helper's own proposal (if any)",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string",  example="Success"),
-     *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="price_min",    type="integer", example=0),
-     *                 @OA\Property(property="price_max",    type="integer", example=150),
-     *                 @OA\Property(property="price_step",   type="integer", example=50),
-     *                 @OA\Property(property="valid_prices", type="array",
-     *                     @OA\Items(type="integer"), example={0,50,100,150}
-     *                 ),
-     *                 @OA\Property(property="requests", type="array",
-     *                     @OA\Items(type="object",
-     *                         @OA\Property(property="id",             type="integer", example=12),
-     *                         @OA\Property(property="status",         type="string",  example="pending"),
-     *                         @OA\Property(property="description",    type="string",  example="My rear tire is completely flat."),
-     *                         @OA\Property(property="location_label", type="string",  example="King Fahd Road, Riyadh – near Exit 7"),
-     *                         @OA\Property(property="latitude",       type="number",  format="float", example=24.714),
-     *                         @OA\Property(property="longitude",      type="number",  format="float", example=46.675),
-     *                         @OA\Property(property="distance_km",    type="number",  format="float", example=2.34),
-     *                         @OA\Property(property="my_proposal",    type="object",  nullable=true,
-     *                             @OA\Property(property="id",             type="integer", example=7),
-     *                             @OA\Property(property="proposed_price", type="integer", example=100),
-     *                             @OA\Property(property="status",         type="string",  example="pending")
-     *                         ),
-     *                         @OA\Property(property="created_at",     type="string",  format="date-time"),
-     *                         @OA\Property(property="expertise_types", type="array",
-     *                             @OA\Items(type="object",
-     *                                 @OA\Property(property="id",   type="integer", example=1),
-     *                                 @OA\Property(property="name", type="string",  example="tire_repair"),
-     *                                 @OA\Property(property="icon", type="string",  example="tire_repair")
-     *                             )
-     *                         ),
-     *                         @OA\Property(property="photos", type="array",
-     *                             @OA\Items(type="object",
-     *                                 @OA\Property(property="id",   type="integer", example=1),
-     *                                 @OA\Property(property="path", type="string",  example="https://cdn.example.com/uploads/photo1.jpg")
-     *                             )
-     *                         ),
-     *                         @OA\Property(property="seeker", type="object",
-     *                             @OA\Property(property="id",         type="integer", example=65),
-     *                             @OA\Property(property="first_name", type="string",  example="Raifa"),
-     *                             @OA\Property(property="last_name",  type="string",  example="Youssef")
-     *                         ),
-     *                         @OA\Property(property="motorcycle", type="object", nullable=true,
-     *                             @OA\Property(property="id",    type="integer", example=15),
-     *                             @OA\Property(property="brand", type="string",  example="BMW"),
-     *                             @OA\Property(property="model", type="string",  example="F 900 R"),
-     *                             @OA\Property(property="year",  type="integer", example=2022)
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(type="object",
+     *                     @OA\Property(property="id",             type="integer", example=12),
+     *                     @OA\Property(property="status",         type="string",  example="pending"),
+     *                     @OA\Property(property="description",    type="string",  example="My rear tire is completely flat."),
+     *                     @OA\Property(property="location_label", type="string",  example="King Fahd Road, Riyadh – near Exit 7"),
+     *                     @OA\Property(property="latitude",       type="number",  format="float", example=24.714),
+     *                     @OA\Property(property="longitude",      type="number",  format="float", example=46.675),
+     *                     @OA\Property(property="distance_km",    type="number",  format="float", example=2.34),
+     *                     @OA\Property(property="price_min",      type="integer", example=0),
+     *                     @OA\Property(property="price_max",      type="integer", example=150),
+     *                     @OA\Property(property="price_step",     type="integer", example=50),
+     *                     @OA\Property(property="valid_prices",   type="array",
+     *                         @OA\Items(type="integer"), example={0,50,100,150}
+     *                     ),
+     *                     @OA\Property(property="my_proposal", type="object", nullable=true,
+     *                         @OA\Property(property="id",             type="integer", example=7),
+     *                         @OA\Property(property="proposed_price", type="integer", example=100),
+     *                         @OA\Property(property="status",         type="string",  example="pending")
+     *                     ),
+     *                     @OA\Property(property="created_at",     type="string",  format="date-time"),
+     *                     @OA\Property(property="expertise_types", type="array",
+     *                         @OA\Items(type="object",
+     *                             @OA\Property(property="id",   type="integer", example=1),
+     *                             @OA\Property(property="name", type="string",  example="tire_repair"),
+     *                             @OA\Property(property="icon", type="string",  example="tire_repair")
      *                         )
+     *                     ),
+     *                     @OA\Property(property="photos", type="array",
+     *                         @OA\Items(type="object",
+     *                             @OA\Property(property="id",   type="integer", example=1),
+     *                             @OA\Property(property="path", type="string",  example="https://cdn.example.com/uploads/photo1.jpg")
+     *                         )
+     *                     ),
+     *                     @OA\Property(property="seeker", type="object",
+     *                         @OA\Property(property="id",         type="integer", example=65),
+     *                         @OA\Property(property="first_name", type="string",  example="John"),
+     *                         @OA\Property(property="last_name",  type="string",  example="Doe")
+     *                     ),
+     *                     @OA\Property(property="motorcycle", type="object", nullable=true,
+     *                         @OA\Property(property="id",    type="integer", example=15),
+     *                         @OA\Property(property="brand", type="string",  example="BMW"),
+     *                         @OA\Property(property="model", type="string",  example="F 900 R"),
+     *                         @OA\Property(property="year",  type="integer", example=2022)
      *                     )
      *                 )
      *             )
@@ -217,8 +215,8 @@ class HelperFeedController extends AssistBaseController
      *                 ),
      *                 @OA\Property(property="seeker", type="object",
      *                     @OA\Property(property="id",         type="integer", example=65),
-     *                     @OA\Property(property="first_name", type="string",  example="Raifa"),
-     *                     @OA\Property(property="last_name",  type="string",  example="Youssef")
+     *                     @OA\Property(property="first_name", type="string",  example="John"),
+     *                     @OA\Property(property="last_name",  type="string",  example="Doe")
      *                 ),
      *                 @OA\Property(property="motorcycle", type="object", nullable=true,
      *                     @OA\Property(property="id",    type="integer", example=15),
@@ -334,8 +332,8 @@ class HelperFeedController extends AssistBaseController
      *                 ),
      *                 @OA\Property(property="seeker", type="object",
      *                     @OA\Property(property="id",         type="integer", example=65),
-     *                     @OA\Property(property="first_name", type="string",  example="Raifa"),
-     *                     @OA\Property(property="last_name",  type="string",  example="Youssef"),
+     *                     @OA\Property(property="first_name", type="string",  example="John"),
+     *                     @OA\Property(property="last_name",  type="string",  example="Doe"),
      *                     @OA\Property(property="phone",      type="string",  example="+966501234567")
      *                 )
      *             )
