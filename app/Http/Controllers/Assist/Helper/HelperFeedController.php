@@ -153,14 +153,16 @@ class HelperFeedController extends AssistBaseController
             });
 
         $config = AssistPriceConfig::current();
-
-        return $this->success([
+        $priceFields = [
             'price_min'    => $config->price_min,
             'price_max'    => $config->price_max,
             'price_step'   => $config->price_step,
             'valid_prices' => $config->validPrices(),
-            'requests'     => $requests,
-        ]);
+        ];
+
+        return $this->success(
+            $requests->map(fn(AssistanceRequest $r) => [...$r->toArray(), ...$priceFields])->values()
+        );
     }
 
     /**
