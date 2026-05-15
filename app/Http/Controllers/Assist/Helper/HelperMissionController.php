@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Assist\Helper;
 use App\Http\Controllers\Assist\AssistBaseController;
 use App\Http\Requests\Assist\UpdateMissionStatusRequest;
 use App\Models\Assist\AssistanceRequest;
+use App\Models\Assist\AssistProposal;
 use App\Models\Assist\HelperProfile;
 use App\Services\Assist\AssistNotificationService;
 use Illuminate\Http\JsonResponse;
@@ -372,11 +373,35 @@ class HelperMissionController extends AssistBaseController
         $seeker = $assistRequest->seeker;
 
         $assistRequest->update([
-            'status'    => 'pending',
-            'helper_id' => null,
-            'accepted_at' => null,
-            'arrived_at'  => null,
+            'status'         => 'pending',
+            'helper_id'      => null,
+            'accepted_price' => null,
+            'accepted_at'    => null,
+            'arrived_at'     => null,
         ]);
+
+        // Restore all auto-rejected proposals back to pending so seeker can accept another one
+        $restoredProposals = AssistProposal::where('request_id', $assistRequest->id)
+            ->where('rejection_type', 'auto')
+            ->where('status', 'rejected')
+            ->with('helper')
+            ->get();
+
+        AssistProposal::where('request_id', $assistRequest->id)
+            ->where('rejection_type', 'auto')
+            ->where('status', 'rejected')
+            ->update([
+                'status'         => 'pending',
+                'rejection_type' => null,
+                'rejected_at'    => null,
+            ]);
+
+        // Notify each restored helper that their proposal is active again
+        foreach ($restoredProposals as $restoredProposal) {
+            if ($restoredHelper = $restoredProposal->helper) {
+                $this->notificationService->notify($restoredHelper, 'proposal_restored', $assistRequest);
+            }
+        }
 
         $this->notificationService->notify($seeker, 'helper_cancelled', $assistRequest);
 

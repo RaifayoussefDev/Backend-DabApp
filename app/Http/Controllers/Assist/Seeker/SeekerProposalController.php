@@ -282,9 +282,9 @@ class SeekerProposalController extends AssistBaseController
             'rejected_at'    => now(),
         ]);
 
-        // Notify rejected helper
+        // Notify helper: manual rejection — they can re-propose
         if ($helper = $proposal->helper) {
-            $this->notificationService->notify($helper, 'proposal_rejected', $assistRequest);
+            $this->notificationService->notify($helper, 'proposal_rejected_manual', $assistRequest);
         }
 
         return $this->success(null, 'Proposal rejected.');

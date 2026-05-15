@@ -93,6 +93,7 @@ class HelperProposalController extends AssistBaseController
 
         $alreadyProposed = AssistProposal::where('request_id', $id)
             ->where('helper_id', Auth::id())
+            ->whereIn('status', ['pending', 'accepted'])
             ->exists();
 
         if ($alreadyProposed) {

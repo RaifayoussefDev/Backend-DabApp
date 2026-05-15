@@ -18,7 +18,7 @@ class AssistNotificationService
         private readonly FirebaseService $firebase
     ) {}
     /** Notification types sent TO helpers (check HelperProfile preferences) */
-    private const HELPER_TYPES = ['new_request', 'cancelled', 'rated', 'seeker_finished', 'proposal_accepted', 'proposal_rejected'];
+    private const HELPER_TYPES = ['new_request', 'cancelled', 'rated', 'seeker_finished', 'proposal_accepted', 'proposal_rejected', 'proposal_rejected_manual', 'proposal_restored'];
 
     /** Profile-level notification types (no AssistanceRequest attached) */
     private const PROFILE_TYPES = ['helper_approved', 'helper_rejected'];
@@ -79,6 +79,14 @@ class AssistNotificationService
         'proposal_rejected' => [
             'en' => ['title' => 'Proposal not selected',                'body' => 'The rider chose another helper. Keep an eye on the feed for new requests.'],
             'ar' => ['title' => 'لم يتم اختيار عرضك',                   'body' => 'اختار المتسابق مساعداً آخر. راقب قائمة الطلبات للعثور على فرص جديدة.'],
+        ],
+        'proposal_rejected_manual' => [
+            'en' => ['title' => 'Proposal declined',                    'body' => 'The rider declined your proposal. You can submit a new offer for this request.'],
+            'ar' => ['title' => 'تم رفض عرضك',                          'body' => 'رفض المتسابق عرضك. يمكنك تقديم عرض جديد لهذا الطلب.'],
+        ],
+        'proposal_restored' => [
+            'en' => ['title' => 'Your proposal is back in play!',        'body' => 'The assigned helper cancelled. Your proposal is now active again — the rider may still accept it.'],
+            'ar' => ['title' => 'عرضك نشط مجدداً!',                     'body' => 'ألغى المساعد المعيّن المهمة. عرضك نشط مجدداً وقد يقبله المتسابق.'],
         ],
     ];
 
@@ -269,6 +277,8 @@ class AssistNotificationService
             'cancelled', 'rated', 'seeker_finished'     => "assist/helper/mission/{$requestId}",
             'proposal_accepted'                         => "assist/helper/mission/{$requestId}",
             'proposal_rejected'                         => 'assist/helper/feed',
+            'proposal_rejected_manual'                  => "assist/helper/feed/{$requestId}",
+            'proposal_restored'                         => "assist/helper/feed/{$requestId}",
             'proposal_received'                         => "assist/seeker/request/{$requestId}/proposals",
             default                                     => "assist/seeker/request/{$requestId}",
         };
