@@ -669,7 +669,7 @@
                 "operationId": "ec668ab118171ea1a520d35e4031783a",
                 "responses": {
                     "200": {
-                        "description": "Price config + list of nearby pending requests sorted by distance",
+                        "description": "Array of nearby pending requests — each item includes request fields, price config, and the helper's own proposal (if any)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -683,169 +683,164 @@
                                             "example": "Success"
                                         },
                                         "data": {
-                                            "properties": {
-                                                "price_min": {
-                                                    "type": "integer",
-                                                    "example": 0
-                                                },
-                                                "price_max": {
-                                                    "type": "integer",
-                                                    "example": 150
-                                                },
-                                                "price_step": {
-                                                    "type": "integer",
-                                                    "example": 50
-                                                },
-                                                "valid_prices": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "integer"
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 12
                                                     },
-                                                    "example": [
-                                                        0,
-                                                        50,
-                                                        100,
-                                                        150
-                                                    ]
-                                                },
-                                                "requests": {
-                                                    "type": "array",
-                                                    "items": {
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "pending"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "My rear tire is completely flat."
+                                                    },
+                                                    "location_label": {
+                                                        "type": "string",
+                                                        "example": "King Fahd Road, Riyadh – near Exit 7"
+                                                    },
+                                                    "latitude": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 24.714
+                                                    },
+                                                    "longitude": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 46.675
+                                                    },
+                                                    "distance_km": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 2.34
+                                                    },
+                                                    "price_min": {
+                                                        "type": "integer",
+                                                        "example": 0
+                                                    },
+                                                    "price_max": {
+                                                        "type": "integer",
+                                                        "example": 150
+                                                    },
+                                                    "price_step": {
+                                                        "type": "integer",
+                                                        "example": 50
+                                                    },
+                                                    "valid_prices": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "integer"
+                                                        },
+                                                        "example": [
+                                                            0,
+                                                            50,
+                                                            100,
+                                                            150
+                                                        ]
+                                                    },
+                                                    "my_proposal": {
                                                         "properties": {
                                                             "id": {
                                                                 "type": "integer",
-                                                                "example": 12
+                                                                "example": 7
+                                                            },
+                                                            "proposed_price": {
+                                                                "type": "integer",
+                                                                "example": 100
                                                             },
                                                             "status": {
                                                                 "type": "string",
                                                                 "example": "pending"
-                                                            },
-                                                            "description": {
-                                                                "type": "string",
-                                                                "example": "My rear tire is completely flat."
-                                                            },
-                                                            "location_label": {
-                                                                "type": "string",
-                                                                "example": "King Fahd Road, Riyadh – near Exit 7"
-                                                            },
-                                                            "latitude": {
-                                                                "type": "number",
-                                                                "format": "float",
-                                                                "example": 24.714
-                                                            },
-                                                            "longitude": {
-                                                                "type": "number",
-                                                                "format": "float",
-                                                                "example": 46.675
-                                                            },
-                                                            "distance_km": {
-                                                                "type": "number",
-                                                                "format": "float",
-                                                                "example": 2.34
-                                                            },
-                                                            "my_proposal": {
-                                                                "properties": {
-                                                                    "id": {
-                                                                        "type": "integer",
-                                                                        "example": 7
-                                                                    },
-                                                                    "proposed_price": {
-                                                                        "type": "integer",
-                                                                        "example": 100
-                                                                    },
-                                                                    "status": {
-                                                                        "type": "string",
-                                                                        "example": "pending"
-                                                                    }
+                                                            }
+                                                        },
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "expertise_types": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
                                                                 },
-                                                                "type": "object",
-                                                                "nullable": true
-                                                            },
-                                                            "created_at": {
-                                                                "type": "string",
-                                                                "format": "date-time"
-                                                            },
-                                                            "expertise_types": {
-                                                                "type": "array",
-                                                                "items": {
-                                                                    "properties": {
-                                                                        "id": {
-                                                                            "type": "integer",
-                                                                            "example": 1
-                                                                        },
-                                                                        "name": {
-                                                                            "type": "string",
-                                                                            "example": "tire_repair"
-                                                                        },
-                                                                        "icon": {
-                                                                            "type": "string",
-                                                                            "example": "tire_repair"
-                                                                        }
-                                                                    },
-                                                                    "type": "object"
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "tire_repair"
+                                                                },
+                                                                "icon": {
+                                                                    "type": "string",
+                                                                    "example": "tire_repair"
                                                                 }
                                                             },
-                                                            "photos": {
-                                                                "type": "array",
-                                                                "items": {
-                                                                    "properties": {
-                                                                        "id": {
-                                                                            "type": "integer",
-                                                                            "example": 1
-                                                                        },
-                                                                        "path": {
-                                                                            "type": "string",
-                                                                            "example": "https://cdn.example.com/uploads/photo1.jpg"
-                                                                        }
-                                                                    },
-                                                                    "type": "object"
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "photos": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "path": {
+                                                                    "type": "string",
+                                                                    "example": "https://cdn.example.com/uploads/photo1.jpg"
                                                                 }
                                                             },
-                                                            "seeker": {
-                                                                "properties": {
-                                                                    "id": {
-                                                                        "type": "integer",
-                                                                        "example": 65
-                                                                    },
-                                                                    "first_name": {
-                                                                        "type": "string",
-                                                                        "example": "Raifa"
-                                                                    },
-                                                                    "last_name": {
-                                                                        "type": "string",
-                                                                        "example": "Youssef"
-                                                                    }
-                                                                },
-                                                                "type": "object"
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "seeker": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 65
                                                             },
-                                                            "motorcycle": {
-                                                                "properties": {
-                                                                    "id": {
-                                                                        "type": "integer",
-                                                                        "example": 15
-                                                                    },
-                                                                    "brand": {
-                                                                        "type": "string",
-                                                                        "example": "BMW"
-                                                                    },
-                                                                    "model": {
-                                                                        "type": "string",
-                                                                        "example": "F 900 R"
-                                                                    },
-                                                                    "year": {
-                                                                        "type": "integer",
-                                                                        "example": 2022
-                                                                    }
-                                                                },
-                                                                "type": "object",
-                                                                "nullable": true
+                                                            "first_name": {
+                                                                "type": "string",
+                                                                "example": "John"
+                                                            },
+                                                            "last_name": {
+                                                                "type": "string",
+                                                                "example": "Doe"
                                                             }
                                                         },
                                                         "type": "object"
+                                                    },
+                                                    "motorcycle": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 15
+                                                            },
+                                                            "brand": {
+                                                                "type": "string",
+                                                                "example": "BMW"
+                                                            },
+                                                            "model": {
+                                                                "type": "string",
+                                                                "example": "F 900 R"
+                                                            },
+                                                            "year": {
+                                                                "type": "integer",
+                                                                "example": 2022
+                                                            }
+                                                        },
+                                                        "type": "object",
+                                                        "nullable": true
                                                     }
-                                                }
-                                            },
-                                            "type": "object"
+                                                },
+                                                "type": "object"
+                                            }
                                         }
                                     },
                                     "type": "object"
@@ -1031,11 +1026,11 @@
                                                         },
                                                         "first_name": {
                                                             "type": "string",
-                                                            "example": "Raifa"
+                                                            "example": "John"
                                                         },
                                                         "last_name": {
                                                             "type": "string",
-                                                            "example": "Youssef"
+                                                            "example": "Doe"
                                                         }
                                                     },
                                                     "type": "object"
@@ -1176,11 +1171,11 @@
                                                         },
                                                         "first_name": {
                                                             "type": "string",
-                                                            "example": "Raifa"
+                                                            "example": "John"
                                                         },
                                                         "last_name": {
                                                             "type": "string",
-                                                            "example": "Youssef"
+                                                            "example": "Doe"
                                                         },
                                                         "phone": {
                                                             "type": "string",
