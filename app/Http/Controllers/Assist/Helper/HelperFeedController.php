@@ -37,13 +37,11 @@ class HelperFeedController extends AssistBaseController
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string",  example="Success"),
      *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="price_config", type="object",
-     *                     description="Global pricing constraints for proposals",
-     *                     @OA\Property(property="price_min",    type="integer", example=0),
-     *                     @OA\Property(property="price_max",    type="integer", example=150),
-     *                     @OA\Property(property="price_step",   type="integer", example=50),
-     *                     @OA\Property(property="valid_prices", type="array",
-     *                         @OA\Items(type="integer"), example={0,50,100,150})
+     *                 @OA\Property(property="price_min",    type="integer", example=0),
+     *                 @OA\Property(property="price_max",    type="integer", example=150),
+     *                 @OA\Property(property="price_step",   type="integer", example=50),
+     *                 @OA\Property(property="valid_prices", type="array",
+     *                     @OA\Items(type="integer"), example={0,50,100,150}
      *                 ),
      *                 @OA\Property(property="requests", type="array",
      *                     @OA\Items(type="object",
@@ -157,13 +155,11 @@ class HelperFeedController extends AssistBaseController
         $config = AssistPriceConfig::current();
 
         return $this->success([
-            'price_config' => [
-                'price_min'    => $config->price_min,
-                'price_max'    => $config->price_max,
-                'price_step'   => $config->price_step,
-                'valid_prices' => $config->validPrices(),
-            ],
-            'requests' => $requests,
+            'price_min'    => $config->price_min,
+            'price_max'    => $config->price_max,
+            'price_step'   => $config->price_step,
+            'valid_prices' => $config->validPrices(),
+            'requests'     => $requests,
         ]);
     }
 
@@ -180,7 +176,7 @@ class HelperFeedController extends AssistBaseController
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Request details",
+     *         description="Request details with pricing constraints and helper's proposal",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string",  example="Success"),
@@ -193,6 +189,17 @@ class HelperFeedController extends AssistBaseController
      *                 @OA\Property(property="longitude",      type="number",  format="float", example=-7.5898),
      *                 @OA\Property(property="distance_km",    type="number",  format="float", example=2.34),
      *                 @OA\Property(property="created_at",     type="string",  format="date-time"),
+     *                 @OA\Property(property="price_min",      type="integer", example=0),
+     *                 @OA\Property(property="price_max",      type="integer", example=150),
+     *                 @OA\Property(property="price_step",     type="integer", example=50),
+     *                 @OA\Property(property="valid_prices",   type="array",
+     *                     @OA\Items(type="integer"), example={0,50,100,150}
+     *                 ),
+     *                 @OA\Property(property="my_proposal", type="object", nullable=true,
+     *                     @OA\Property(property="id",             type="integer", example=7),
+     *                     @OA\Property(property="proposed_price", type="integer", example=100),
+     *                     @OA\Property(property="status",         type="string",  example="pending")
+     *                 ),
      *                 @OA\Property(property="expertise_types", type="array",
      *                     @OA\Items(type="object",
      *                         @OA\Property(property="id",   type="integer", example=1),
@@ -284,14 +291,12 @@ class HelperFeedController extends AssistBaseController
             ->first();
 
         return $this->success([
-            'price_config' => [
-                'price_min'    => $config->price_min,
-                'price_max'    => $config->price_max,
-                'price_step'   => $config->price_step,
-                'valid_prices' => $config->validPrices(),
-            ],
-            'request'     => $request,
-            'my_proposal' => $myProposal,
+            ...$request->toArray(),
+            'price_min'    => $config->price_min,
+            'price_max'    => $config->price_max,
+            'price_step'   => $config->price_step,
+            'valid_prices' => $config->validPrices(),
+            'my_proposal'  => $myProposal,
         ]);
     }
 

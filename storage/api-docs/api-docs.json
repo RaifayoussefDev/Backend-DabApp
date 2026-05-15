@@ -684,35 +684,29 @@
                                         },
                                         "data": {
                                             "properties": {
-                                                "price_config": {
-                                                    "description": "Global pricing constraints for proposals",
-                                                    "properties": {
-                                                        "price_min": {
-                                                            "type": "integer",
-                                                            "example": 0
-                                                        },
-                                                        "price_max": {
-                                                            "type": "integer",
-                                                            "example": 150
-                                                        },
-                                                        "price_step": {
-                                                            "type": "integer",
-                                                            "example": 50
-                                                        },
-                                                        "valid_prices": {
-                                                            "type": "array",
-                                                            "items": {
-                                                                "type": "integer"
-                                                            },
-                                                            "example": [
-                                                                0,
-                                                                50,
-                                                                100,
-                                                                150
-                                                            ]
-                                                        }
+                                                "price_min": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "price_max": {
+                                                    "type": "integer",
+                                                    "example": 150
+                                                },
+                                                "price_step": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "valid_prices": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer"
                                                     },
-                                                    "type": "object"
+                                                    "example": [
+                                                        0,
+                                                        50,
+                                                        100,
+                                                        150
+                                                    ]
                                                 },
                                                 "requests": {
                                                     "type": "array",
@@ -901,7 +895,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Request details",
+                        "description": "Request details with pricing constraints and helper's proposal",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -950,6 +944,48 @@
                                                 "created_at": {
                                                     "type": "string",
                                                     "format": "date-time"
+                                                },
+                                                "price_min": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "price_max": {
+                                                    "type": "integer",
+                                                    "example": 150
+                                                },
+                                                "price_step": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "valid_prices": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer"
+                                                    },
+                                                    "example": [
+                                                        0,
+                                                        50,
+                                                        100,
+                                                        150
+                                                    ]
+                                                },
+                                                "my_proposal": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 7
+                                                        },
+                                                        "proposed_price": {
+                                                            "type": "integer",
+                                                            "example": 100
+                                                        },
+                                                        "status": {
+                                                            "type": "string",
+                                                            "example": "pending"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
                                                 },
                                                 "expertise_types": {
                                                     "type": "array",
