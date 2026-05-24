@@ -14,10 +14,14 @@ class InstructorLocation extends Model
         'location_name',
         'location_name_ar',
         'city_id',
+        'latitude',
+        'longitude',
         'is_available'
     ];
 
     protected $casts = [
+        'latitude'     => 'decimal:7',
+        'longitude'    => 'decimal:7',
         'is_available' => 'boolean'
     ];
 

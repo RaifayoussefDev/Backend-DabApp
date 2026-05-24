@@ -75,12 +75,7 @@ class ServiceCategoryController extends Controller
      */
     public function index(Request $request)
     {
-        $query = ServiceCategory::query();
-
-        // Filtrer par statut actif
-        if ($request->has('is_active')) {
-            $query->where('is_active', $request->is_active);
-        }
+        $query = ServiceCategory::active();
 
         // Inclure le nombre de services
         if ($request->boolean('with_services_count')) {
@@ -151,7 +146,7 @@ class ServiceCategoryController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $query = ServiceCategory::where('id', $id);
+        $query = ServiceCategory::active()->where('id', $id);
 
         // Inclure les services si demandé
         if ($request->boolean('with_services')) {
@@ -209,7 +204,7 @@ class ServiceCategoryController extends Controller
      */
     public function showBySlug($slug)
     {
-        $category = ServiceCategory::where('slug', $slug)
+        $category = ServiceCategory::active()->where('slug', $slug)
             ->with(['services' => function($q) {
                 $q->where('is_available', true)
                   ->with('provider:id,business_name,business_name_ar,logo,rating_average,city_id')

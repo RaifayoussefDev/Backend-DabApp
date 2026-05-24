@@ -198,6 +198,31 @@ class AdminServiceCategoryController extends Controller
      *     @OA\Response(response=200, description="Category deleted")
      * )
      */
+    /**
+     * @OA\Patch(
+     *     path="/api/admin/service-categories/{id}/toggle",
+     *     summary="Toggle active status (Admin)",
+     *     operationId="adminToggleServiceCategory",
+     *     tags={"Admin Service Categories"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Status toggled")
+     * )
+     */
+    public function toggle($id)
+    {
+        $category = ServiceCategory::findOrFail($id);
+        $category->update(['is_active' => !$category->is_active]);
+
+        $status = $category->is_active ? 'activated' : 'deactivated';
+
+        return response()->json([
+            'success' => true,
+            'data' => ['id' => $category->id, 'is_active' => $category->is_active],
+            'message' => "Service category {$status} successfully"
+        ]);
+    }
+
     public function destroy($id)
     {
         $category = ServiceCategory::findOrFail($id);

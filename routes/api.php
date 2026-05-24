@@ -478,6 +478,7 @@ Route::prefix('admin')->group(function () {
         Route::post('subscriptions/{id}/cancel', [AdminSubscriptionController::class, 'cancel']);
 
         // Admin Service Categories
+        Route::patch('service-categories/{id}/toggle', [AdminServiceCategoryController::class, 'toggle']);
         Route::apiResource('service-categories', AdminServiceCategoryController::class);
 
         // Admin Services

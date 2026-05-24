@@ -254,8 +254,19 @@ class RidingInstructorController extends Controller
         ->limit(5)
         ->get();
 
+        $otherServices = Service::where('provider_id', $instructor->provider_id)
+            ->where('is_available', true)
+            ->whereDoesntHave('category', function($q) {
+                $q->where('slug', 'riding-instructor');
+            })
+            ->with('category:id,name,name_ar,icon')
+            ->select('id', 'name', 'name_ar', 'price', 'photo', 'category_id')
+            ->limit(4)
+            ->get();
+
         $instructorData = $instructor->toArray();
         $instructorData['recent_reviews'] = $recentReviews;
+        $instructorData['other_services'] = $otherServices;
 
         return response()->json([
             'success' => true,
