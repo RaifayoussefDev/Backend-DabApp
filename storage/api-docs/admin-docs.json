@@ -20502,13 +20502,15 @@
                         "bearerAuth": []
                     }
                 ]
-            },
-            "delete": {
+            }
+        },
+        "/api/admin/service-categories/{id}/toggle": {
+            "patch": {
                 "tags": [
                     "Admin Service Categories"
                 ],
-                "summary": "Delete service category (Admin)",
-                "operationId": "adminDeleteServiceCategory",
+                "summary": "Toggle active status (Admin)",
+                "operationId": "adminToggleServiceCategory",
                 "parameters": [
                     {
                         "name": "id",
@@ -20521,7 +20523,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Category deleted"
+                        "description": "Status toggled"
                     }
                 },
                 "security": [
