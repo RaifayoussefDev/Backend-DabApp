@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             ServiceProviderSeeder::class,
             ServiceSeeder::class,
             ExpertiseTypeSeeder::class,
+            RidingInstructorSeeder::class,
         ]);
     }
 }
