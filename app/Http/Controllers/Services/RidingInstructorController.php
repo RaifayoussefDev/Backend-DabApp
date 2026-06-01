@@ -377,8 +377,7 @@ class RidingInstructorController extends Controller
      *             @OA\Property(property="duration_hours", type="integer", example=2, description="Durée en heures (1-4)"),
      *             @OA\Property(property="location_id", type="integer", example=1, description="ID du lieu de cours"),
      *             @OA\Property(property="session_type", type="string", enum={"beginner", "intermediate", "advanced", "custom"}, example="beginner"),
-     *             @OA\Property(property="notes", type="string", example="First time riding, need basic training"),
-     *             @OA\Property(property="promo_code", type="string", example="FIRST10")
+     *             @OA\Property(property="notes", type="string", example="First time riding, need basic training")
      *         )
      *     ),
      *     @OA\Response(
@@ -414,7 +413,6 @@ class RidingInstructorController extends Controller
             'location_id' => 'required|exists:instructor_locations,id',
             'session_type' => 'nullable|in:beginner,intermediate,advanced,custom',
             'notes' => 'nullable|string|max:1000',
-            'promo_code' => 'nullable|string|exists:service_promo_codes,code'
         ]);
 
         DB::beginTransaction();
@@ -476,17 +474,9 @@ class RidingInstructorController extends Controller
                 ], 400);
             }
 
-            // Calculer le prix (prix par heure)
+            // Calculer le prix indicatif (prix par heure × durée)
             $pricePerHour = $instructorService->price;
             $totalPrice = $pricePerHour * $durationHours;
-
-            // Appliquer code promo
-            $discountAmount = 0;
-            if ($request->promo_code) {
-                $promoResult = $this->applyPromoCode($totalPrice, $request->promo_code);
-                $totalPrice = $promoResult['final_price'];
-                $discountAmount = $promoResult['discount_amount'];
-            }
 
             // Créer la réservation
             $booking = ServiceBooking::create([
@@ -499,14 +489,11 @@ class RidingInstructorController extends Controller
                 'status' => 'pending',
                 'price' => $totalPrice,
                 'payment_status' => 'pending',
-                'pickup_location' => $location->location_name, // Lieu du cours
+                'pickup_location' => $location->location_name,
                 'notes' => ($validated['notes'] ?? '') . " | Session: " . ($validated['session_type'] ?? 'standard') . " | Duration: {$durationHours}h"
             ]);
 
             DB::commit();
-
-            // TODO: Notifier l'instructeur
-            // TODO: Créer transaction de paiement
 
             return response()->json([
                 'success' => true,
@@ -517,8 +504,6 @@ class RidingInstructorController extends Controller
                     'duration_hours' => $durationHours,
                     'price_per_hour' => $pricePerHour,
                     'total_price' => $totalPrice,
-                    'discount_amount' => $discountAmount,
-                    'payment_required' => true
                 ],
                 'message' => 'Instructor session booked successfully'
             ], 201);
@@ -772,40 +757,4 @@ class RidingInstructorController extends Controller
         }
     }
 
-    /**
-     * Appliquer code promo
-     */
-    private function applyPromoCode($price, $code)
-    {
-        $promo = \App\Models\ServicePromoCode::where('code', $code)
-            ->where('is_active', true)
-            ->where('valid_from', '<=', now())
-            ->where('valid_until', '>=', now())
-            ->first();
-
-        if (!$promo) {
-            return ['final_price' => $price, 'discount_amount' => 0];
-        }
-
-        if ($promo->min_booking_price && $price < $promo->min_booking_price) {
-            return ['final_price' => $price, 'discount_amount' => 0];
-        }
-
-        $discountAmount = 0;
-        if ($promo->discount_type === 'percentage') {
-            $discountAmount = ($price * $promo->discount_value) / 100;
-            if ($promo->max_discount && $discountAmount > $promo->max_discount) {
-                $discountAmount = $promo->max_discount;
-            }
-        } else {
-            $discountAmount = $promo->discount_value;
-        }
-
-        $finalPrice = max(0, $price - $discountAmount);
-
-        return [
-            'final_price' => round($finalPrice, 2),
-            'discount_amount' => round($discountAmount, 2)
-        ];
-    }
 }
