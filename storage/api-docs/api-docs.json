@@ -34009,10 +34009,6 @@
                                     "notes": {
                                         "type": "string",
                                         "example": "First time riding, need basic training"
-                                    },
-                                    "promo_code": {
-                                        "type": "string",
-                                        "example": "FIRST10"
                                     }
                                 },
                                 "type": "object"
