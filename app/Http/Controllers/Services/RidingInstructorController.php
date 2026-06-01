@@ -260,7 +260,7 @@ class RidingInstructorController extends Controller
                 $q->where('slug', 'riding-instructor');
             })
             ->with('category:id,name,name_ar,icon')
-            ->select('id', 'name', 'name_ar', 'price', 'photo', 'category_id')
+            ->select('id', 'name', 'name_ar', 'price', 'image', 'category_id')
             ->limit(4)
             ->get();
 
