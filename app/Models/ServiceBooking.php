@@ -36,6 +36,7 @@ class ServiceBooking extends Model
         'cancellation_reason',
         'cancellation_reason_ar',
         'cancelled_by',
+        'instructor_location_id',
         'cancelled_at',
         'confirmed_at',
         'completed_at'
@@ -73,6 +74,11 @@ class ServiceBooking extends Model
     public function payment()
     {
         return $this->belongsTo(Payment::class);
+    }
+
+    public function instructorLocation()
+    {
+        return $this->belongsTo(InstructorLocation::class, 'instructor_location_id');
     }
 
     public function cancelledBy()

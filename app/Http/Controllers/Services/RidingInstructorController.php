@@ -592,9 +592,24 @@ class RidingInstructorController extends Controller
         }
 
         $validated = $request->validate([
-            'from_date' => 'required|date',
-            'to_date' => 'required|date|after_or_equal:from_date'
+            'from_date'   => 'required|date',
+            'to_date'     => 'required|date|after_or_equal:from_date',
+            'location_id' => 'nullable|integer|exists:instructor_locations,id',
         ]);
+
+        // Validate location belongs to this instructor
+        if (!empty($validated['location_id'])) {
+            $locationBelongs = $instructor->locations()
+                ->where('id', $validated['location_id'])
+                ->exists();
+
+            if (!$locationBelongs) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Location does not belong to this instructor'
+                ], 422);
+            }
+        }
 
         // Récupérer les réservations existantes
         $bookedSlots = ServiceBooking::whereHas('service', function($q) use ($instructor) {
@@ -605,6 +620,9 @@ class RidingInstructorController extends Controller
         })
         ->whereBetween('booking_date', [$validated['from_date'], $validated['to_date']])
         ->whereIn('status', ['pending', 'confirmed', 'in_progress'])
+        ->when(!empty($validated['location_id']), function($q) use ($validated) {
+            $q->where('instructor_location_id', $validated['location_id']);
+        })
         ->select('booking_date', 'start_time', 'end_time')
         ->get();
 
@@ -648,19 +666,34 @@ class RidingInstructorController extends Controller
             $currentDate->addDay();
         }
 
+        $location = null;
+        if (!empty($validated['location_id'])) {
+            $loc = $instructor->locations()->find($validated['location_id']);
+            $location = [
+                'id'          => $loc->id,
+                'name'        => $loc->location_name,
+                'name_ar'     => $loc->location_name_ar,
+                'city_id'     => $loc->city_id,
+                'latitude'    => $loc->latitude,
+                'longitude'   => $loc->longitude,
+                'is_available'=> $loc->is_available,
+            ];
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
                 'instructor' => [
-                    'id' => $instructor->id,
-                    'name' => $instructor->instructor_name,
-                    'name_ar' => $instructor->instructor_name_ar
+                    'id'     => $instructor->id,
+                    'name'   => $instructor->instructor_name,
+                    'name_ar'=> $instructor->instructor_name_ar
                 ],
-                'available_slots' => $availableSlots,
-                'booked_slots' => $bookedSlots,
+                'location'       => $location,
+                'available_slots'=> $availableSlots,
+                'booked_slots'   => $bookedSlots,
                 'period' => [
                     'from' => $validated['from_date'],
-                    'to' => $validated['to_date']
+                    'to'   => $validated['to_date']
                 ]
             ],
             'message' => 'Availability retrieved successfully'
