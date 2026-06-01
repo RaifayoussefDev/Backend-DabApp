@@ -228,7 +228,7 @@ class RidingInstructorController extends Controller
     {
         $instructor = RidingInstructor::with([
             'provider.city',
-            'provider.user:id,full_name,phone',
+            'provider.user:id,first_name,last_name,phone',
             'locations.city'
         ])->find($id);
 
@@ -249,7 +249,7 @@ class RidingInstructorController extends Controller
             });
         })
         ->where('is_approved', true)
-        ->with('user:id,full_name,avatar')
+        ->with('user:id,first_name,last_name,avatar')
         ->latest()
         ->limit(5)
         ->get();
