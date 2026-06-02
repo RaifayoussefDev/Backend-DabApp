@@ -1836,13 +1836,13 @@ Route::middleware('auth:api')->prefix('stats')->group(function () {
 
         $totalRevenue = (clone $bookings)
             ->where('status', 'completed')
-            ->sum('total_price');
+            ->sum('price');
 
         $monthRevenue = (clone $bookings)
             ->where('status', 'completed')
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
-            ->sum('total_price');
+            ->sum('price');
 
         return response()->json([
             'success' => true,
