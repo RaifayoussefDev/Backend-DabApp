@@ -442,9 +442,11 @@ class RidingInstructorController extends Controller
             $freeSlots = array_filter($slots, function ($slot) use ($bookedSlots, $dateStr) {
                 [$slotStart, $slotEnd] = explode('-', $slot);
                 return !$bookedSlots->contains(function ($b) use ($dateStr, $slotStart, $slotEnd) {
+                    $bStart = substr($b->start_time, 0, 5);
+                    $bEnd   = substr($b->end_time,   0, 5);
                     return $b->booking_date->format('Y-m-d') === $dateStr
-                        && (($b->start_time >= $slotStart && $b->start_time < $slotEnd)
-                         || ($b->end_time   >  $slotStart && $b->end_time  <= $slotEnd));
+                        && (($bStart >= $slotStart && $bStart < $slotEnd)
+                         || ($bEnd   >  $slotStart && $bEnd  <= $slotEnd));
                 });
             });
 
@@ -914,8 +916,8 @@ class RidingInstructorController extends Controller
     private function generateSlots(string $start, string $end, int $durationMinutes = 120): array
     {
         $slots   = [];
-        $current = Carbon::createFromFormat('H:i', $start);
-        $endTime = Carbon::createFromFormat('H:i', $end);
+        $current = Carbon::createFromFormat('H:i', substr($start, 0, 5));
+        $endTime = Carbon::createFromFormat('H:i', substr($end,   0, 5));
 
         while ($current->copy()->addMinutes($durationMinutes)->lte($endTime)) {
             $slotEnd = $current->copy()->addMinutes($durationMinutes);
