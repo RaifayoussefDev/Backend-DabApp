@@ -1,0 +1,999 @@
+{
+  "info": {
+    "name": "DabApp Services — Full Scenario (Subscription → Payment → Services)",
+    "description": "Complete flow: Login → Subscribe → Pay → Use all 5 services. Each folder = one service with ordered steps.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",              "value": "http://localhost:8000", "type": "string" },
+    { "key": "token",                 "value": "",                      "type": "string" },
+    { "key": "user_id",               "value": "",                      "type": "string" },
+    { "key": "plan_id",               "value": "1",                     "type": "string" },
+    { "key": "subscription_id",       "value": "",                      "type": "string" },
+    { "key": "service_id",            "value": "",                      "type": "string" },
+    { "key": "booking_id",            "value": "",                      "type": "string" },
+    { "key": "instructor_id",         "value": "1",                     "type": "string" },
+    { "key": "instructor_location_id","value": "1",                     "type": "string" },
+    { "key": "session_booking_id",    "value": "",                      "type": "string" },
+    { "key": "tow_booking_id",        "value": "",                      "type": "string" }
+  ],
+  "item": [
+
+    {
+      "name": "00 — Authentication",
+      "item": [
+        {
+          "name": "00.1 Login with Phone",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.token) {",
+                "  pm.collectionVariables.set('token', res.token);",
+                "  console.log('✅ Token saved');",
+                "}",
+                "if (res.user && res.user.id) {",
+                "  pm.collectionVariables.set('user_id', res.user.id);",
+                "  console.log('✅ User ID saved:', res.user.id);",
+                "}",
+                "pm.test('Login successful', () => pm.response.to.have.status(200));",
+                "pm.test('Token received', () => pm.expect(res.token).to.be.a('string'));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"+212600000001\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"] }
+          }
+        },
+        {
+          "name": "00.2 Login with Email",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.token) {",
+                "  pm.collectionVariables.set('token', res.token);",
+                "  console.log('✅ Token saved');",
+                "}",
+                "if (res.user && res.user.id) {",
+                "  pm.collectionVariables.set('user_id', res.user.id);",
+                "}",
+                "pm.test('Login successful', () => pm.response.to.have.status(200));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"user@dabapp.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"] }
+          }
+        },
+        {
+          "name": "00.3 [ERROR] Login Wrong Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"+212600000001\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "01 — Subscription & Payment",
+      "item": [
+        {
+          "name": "01.1 List Subscription Plans",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data && res.data.length > 0) {",
+                "  pm.collectionVariables.set('plan_id', res.data[0].id);",
+                "  console.log('✅ First plan ID saved:', res.data[0].id);",
+                "}",
+                "pm.test('Plans retrieved', () => pm.response.to.have.status(200));",
+                "pm.test('Has plans', () => pm.expect(res.data).to.be.an('array').and.not.empty);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/subscription-plans?billing_cycle=monthly",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subscription-plans"],
+              "query": [{ "key": "billing_cycle", "value": "monthly" }]
+            }
+          }
+        },
+        {
+          "name": "01.2 Get Plan Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/subscription-plans/{{plan_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subscription-plans", "{{plan_id}}"]
+            }
+          }
+        },
+        {
+          "name": "01.3 Subscribe to Business Plan",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data && res.data.subscription_id) {",
+                "  pm.collectionVariables.set('subscription_id', res.data.subscription_id);",
+                "  console.log('✅ Subscription ID saved:', res.data.subscription_id);",
+                "}",
+                "pm.test('Subscription initiated', () => pm.response.to.have.status(200));",
+                "if (res.data && res.data.payment_url) {",
+                "  console.log('💳 Payment URL:', res.data.payment_url);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_id\": {{plan_id}},\n  \"billing_cycle\": \"monthly\",\n  \"business_name\": \"Elite Moto Services\",\n  \"business_name_ar\": \"خدمات موتو إيليت\",\n  \"description\": \"Professional motorcycle services in Riyadh\",\n  \"description_ar\": \"خدمات دراجات نارية احترافية في الرياض\",\n  \"phone\": \"+966501234567\",\n  \"email\": \"contact@elitemoto.com\",\n  \"address\": \"King Fahd Road, Riyadh\",\n  \"address_ar\": \"طريق الملك فهد، الرياض\",\n  \"city_id\": 1,\n  \"country_id\": 1,\n  \"latitude\": 24.7136,\n  \"longitude\": 46.6753,\n  \"service_category_ids\": [1, 2],\n  \"price_per_hour\": 150,\n  \"price_per_mission\": 200,\n  \"working_hours\": [\n    { \"day_of_week\": 0, \"is_open\": false },\n    { \"day_of_week\": 1, \"is_open\": true, \"open_time\": \"08:00\", \"close_time\": \"18:00\" },\n    { \"day_of_week\": 2, \"is_open\": true, \"open_time\": \"08:00\", \"close_time\": \"18:00\" },\n    { \"day_of_week\": 3, \"is_open\": true, \"open_time\": \"08:00\", \"close_time\": \"18:00\" },\n    { \"day_of_week\": 4, \"is_open\": true, \"open_time\": \"08:00\", \"close_time\": \"18:00\" },\n    { \"day_of_week\": 5, \"is_open\": true, \"open_time\": \"08:00\", \"close_time\": \"14:00\" },\n    { \"day_of_week\": 6, \"is_open\": false }\n  ]\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/subscriptions/subscribe", "host": ["{{base_url}}"], "path": ["api", "subscriptions", "subscribe"] }
+          }
+        },
+        {
+          "name": "01.4 My Subscription Status",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "pm.test('Subscription retrieved', () => pm.response.to.have.status(200));",
+                "if (res.data && res.data.subscription) {",
+                "  console.log('📋 Status:', res.data.subscription.status);",
+                "  console.log('📅 Renews:', res.data.subscription.next_billing_date);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/my-subscription", "host": ["{{base_url}}"], "path": ["api", "my-subscription"] }
+          }
+        },
+        {
+          "name": "01.5 Cancel Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Service no longer needed at this time\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/subscriptions/cancel", "host": ["{{base_url}}"], "path": ["api", "subscriptions", "cancel"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "02 — 🏍️ Bike Transport (category_id=1)",
+      "item": [
+        {
+          "name": "Step 1 — List Bike Transport Services",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data && res.data.data && res.data.data.length > 0) {",
+                "  pm.collectionVariables.set('service_id', res.data.data[0].id);",
+                "  console.log('✅ Service ID saved:', res.data.data[0].id);",
+                "}",
+                "pm.test('Services retrieved', () => pm.response.to.have.status(200));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/services?category_id=1&is_available=1&sort_by=rating&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services"],
+              "query": [
+                { "key": "category_id",   "value": "1" },
+                { "key": "is_available",  "value": "1" },
+                { "key": "sort_by",       "value": "rating" },
+                { "key": "per_page",      "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Step 2 — View Service Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/services/{{service_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services", "{{service_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Step 3 — Book Bike Transport",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data && res.data.booking && res.data.booking.id) {",
+                "  pm.collectionVariables.set('booking_id', res.data.booking.id);",
+                "  console.log('✅ Booking ID saved:', res.data.booking.id);",
+                "  console.log('💰 Total price:', res.data.amount);",
+                "}",
+                "pm.test('Booking created', () => pm.response.to.have.status(201));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_id\": {{service_id}},\n  \"booking_date\": \"2026-07-15\",\n  \"start_time\": \"09:00\",\n  \"end_time\": \"17:00\",\n  \"pickup_location\": \"King Fahd Road, Riyadh\",\n  \"pickup_latitude\": 24.7136,\n  \"pickup_longitude\": 46.6753,\n  \"dropoff_location\": \"Jeddah Corniche, Jeddah\",\n  \"dropoff_latitude\": 21.4858,\n  \"dropoff_longitude\": 39.1925,\n  \"notes\": \"Honda CBR1000RR — please handle with extra care, fairings are freshly painted\",\n  \"promo_code\": \"\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/bookings", "host": ["{{base_url}}"], "path": ["api", "bookings"] }
+          }
+        },
+        {
+          "name": "Step 4 — View My Bookings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/bookings?status=pending&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings"],
+              "query": [
+                { "key": "status",   "value": "pending" },
+                { "key": "per_page", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Step 5 — View Booking Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/bookings/{{booking_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings", "{{booking_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Step 6 — Cancel Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancellation_reason\": \"Dates changed, need to reschedule to next week\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bookings/{{booking_id}}/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings", "{{booking_id}}", "cancel"]
+            }
+          }
+        },
+        {
+          "name": "Step 7 — Rate the Service (after completion)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Excellent transport service! Bike arrived in perfect condition, driver was very professional and communicated throughout the trip.\",\n  \"comment_ar\": \"خدمة نقل ممتازة! وصلت الدراجة بحالة مثالية، كان السائق محترفاً جداً وتواصل طوال الرحلة.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bookings/{{booking_id}}/review",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings", "{{booking_id}}", "review"]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "03 — 🚛 Tow Service (category_id=2)",
+      "item": [
+        {
+          "name": "Step 1 — Get Tow Types",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "pm.test('Tow types retrieved', () => pm.response.to.have.status(200));",
+                "if (res.data && res.data.length > 0) {",
+                "  console.log('🚛 Available types:', res.data.map(t => t.name).join(', '));",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/tow-types?is_active=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tow-types"],
+              "query": [{ "key": "is_active", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Step 2 — Find Nearby Providers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/tow-service/available-providers?latitude=24.7136&longitude=46.6753&radius=30",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tow-service", "available-providers"],
+              "query": [
+                { "key": "latitude",  "value": "24.7136" },
+                { "key": "longitude", "value": "46.6753" },
+                { "key": "radius",    "value": "30" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Step 3 — Calculate Tow Price",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "pm.test('Price calculated', () => pm.response.to.have.status(200));",
+                "if (res.data) {",
+                "  console.log('📏 Distance:', res.data.distance_km, 'km');",
+                "  console.log('💰 Total price:', res.data.total_price, res.data.currency);",
+                "  console.log('⏱️ ETA:', res.data.estimated_duration_minutes, 'min');",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tow_type_id\": 1,\n  \"pickup_latitude\": 24.7136,\n  \"pickup_longitude\": 46.6753,\n  \"dropoff_latitude\": 24.6877,\n  \"dropoff_longitude\": 46.7219,\n  \"promo_code\": \"\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/tow-service/calculate-price", "host": ["{{base_url}}"], "path": ["api", "tow-service", "calculate-price"] }
+          }
+        },
+        {
+          "name": "Step 4 — Request Tow Service",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data && res.data.booking && res.data.booking.id) {",
+                "  pm.collectionVariables.set('tow_booking_id', res.data.booking.id);",
+                "  console.log('✅ Tow booking ID saved:', res.data.booking.id);",
+                "  console.log('💰 Price:', res.data.total_price, 'SAR');",
+                "}",
+                "pm.test('Tow request created', () => pm.response.to.have.status(201));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tow_type_id\": 1,\n  \"pickup_location\": \"Al-Naseem District, Riyadh\",\n  \"pickup_latitude\": 24.7136,\n  \"pickup_longitude\": 46.6753,\n  \"dropoff_location\": \"Al-Malaz District, Riyadh\",\n  \"dropoff_latitude\": 24.6877,\n  \"dropoff_longitude\": 46.7219,\n  \"notes\": \"Kawasaki Ninja 650 — engine seized, cannot be pushed. Keys will be left under the seat cover.\",\n  \"phone\": \"+966501234567\",\n  \"promo_code\": \"\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/tow-service/request", "host": ["{{base_url}}"], "path": ["api", "tow-service", "request"] }
+          }
+        },
+        {
+          "name": "Step 5 — View Tow Bookings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/bookings?status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings"],
+              "query": [{ "key": "status", "value": "pending" }]
+            }
+          }
+        },
+        {
+          "name": "Step 6 — Rate Tow Service (after completion)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Fast response, arrived within 20 minutes. Handled the motorcycle carefully. Would use again.\",\n  \"comment_ar\": \"استجابة سريعة، وصل خلال 20 دقيقة. تعامل مع الدراجة بعناية. سأستخدمه مرة أخرى.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bookings/{{tow_booking_id}}/review",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings", "{{tow_booking_id}}", "review"]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "04 — 🏫 Riding Instructor (category_id=3)",
+      "item": [
+        {
+          "name": "Step 1 — List Instructors",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "pm.test('Instructors retrieved', () => pm.response.to.have.status(200));",
+                "if (res.data && res.data.data && res.data.data.length > 0) {",
+                "  const first = res.data.data[0];",
+                "  pm.collectionVariables.set('instructor_id', first.id);",
+                "  if (first.locations && first.locations.length > 0) {",
+                "    pm.collectionVariables.set('instructor_location_id', first.locations[0].id);",
+                "  }",
+                "  console.log('✅ Instructor ID saved:', first.id);",
+                "  console.log('⭐ Rating:', first.rating_average);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/riding-instructors?is_available=1&sort_by=rating&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "riding-instructors"],
+              "query": [
+                { "key": "is_available", "value": "1" },
+                { "key": "sort_by",      "value": "rating" },
+                { "key": "per_page",     "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Step 2 — View Instructor Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/riding-instructors/{{instructor_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "riding-instructors", "{{instructor_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Step 3 — Get Training Locations",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "pm.test('Locations retrieved', () => pm.response.to.have.status(200));",
+                "if (res.data && res.data.length > 0) {",
+                "  pm.collectionVariables.set('instructor_location_id', res.data[0].id);",
+                "  console.log('📍 Location:', res.data[0].location_name, '| GPS:', res.data[0].latitude, res.data[0].longitude);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/instructor-locations?instructor_id={{instructor_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "instructor-locations"],
+              "query": [{ "key": "instructor_id", "value": "{{instructor_id}}" }]
+            }
+          }
+        },
+        {
+          "name": "Step 4 — Check Availability",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "pm.test('Availability retrieved', () => pm.response.to.have.status(200));",
+                "if (res.data) {",
+                "  console.log('📅 Schedule source:', res.data.schedule_source);",
+                "  if (res.data.available_slots && res.data.available_slots.length > 0) {",
+                "    const first = res.data.available_slots[0];",
+                "    console.log('✅ First available day:', first.date, '|', first.time_slots[0]);",
+                "  }",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/riding-instructors/{{instructor_id}}/availability?from_date=2026-07-01&to_date=2026-07-07&location_id={{instructor_location_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "riding-instructors", "{{instructor_id}}", "availability"],
+              "query": [
+                { "key": "from_date",    "value": "2026-07-01" },
+                { "key": "to_date",      "value": "2026-07-07" },
+                { "key": "location_id",  "value": "{{instructor_location_id}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Step 5 — Book a Session",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data && res.data.booking && res.data.booking.id) {",
+                "  pm.collectionVariables.set('session_booking_id', res.data.booking.id);",
+                "  console.log('✅ Session booking ID saved:', res.data.booking.id);",
+                "  console.log('⏰ Session:', res.data.booking.start_time, '→', res.data.booking.end_time);",
+                "  console.log('💰 Price:', res.data.total_price, 'SAR');",
+                "  console.log('🎯 Session type:', res.data.booking.session_type);",
+                "}",
+                "pm.test('Session booked', () => pm.response.to.have.status(201));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"booking_date\": \"2026-07-01\",\n  \"start_time\": \"08:00\",\n  \"duration_hours\": 2,\n  \"location_id\": {{instructor_location_id}},\n  \"session_type\": \"beginner\",\n  \"notes\": \"Complete beginner, never ridden before. Would like to start with basic controls and safety.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/riding-instructors/{{instructor_id}}/book-session",
+              "host": ["{{base_url}}"],
+              "path": ["api", "riding-instructors", "{{instructor_id}}", "book-session"]
+            }
+          }
+        },
+        {
+          "name": "Step 6 — View Session Booking",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/bookings/{{session_booking_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings", "{{session_booking_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Step 7 — Cancel Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancellation_reason\": \"Need to reschedule due to work commitments\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bookings/{{session_booking_id}}/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings", "{{session_booking_id}}", "cancel"]
+            }
+          }
+        },
+        {
+          "name": "Step 8 — Rate the Session (after completion)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Khalid is an outstanding instructor! Patient, clear in his explanations, and made me feel safe from day one. Went from zero experience to confidently controlling the bike in 2 hours.\",\n  \"comment_ar\": \"خالد مدرب متميز! صبور وواضح في شرحه وجعلني أشعر بالأمان من اليوم الأول. انتقلت من صفر خبرة إلى التحكم بالدراجة بثقة في ساعتين.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bookings/{{session_booking_id}}/review",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings", "{{session_booking_id}}", "review"]
+            }
+          }
+        },
+        {
+          "name": "[ERROR] Book Conflicting Slot",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"booking_date\": \"2026-07-01\",\n  \"start_time\": \"08:00\",\n  \"duration_hours\": 2,\n  \"location_id\": {{instructor_location_id}},\n  \"session_type\": \"intermediate\",\n  \"notes\": \"This should return 400 — slot already booked\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/riding-instructors/{{instructor_id}}/book-session",
+              "host": ["{{base_url}}"],
+              "path": ["api", "riding-instructors", "{{instructor_id}}", "book-session"]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "05 — 🚿 Bike Wash (category_id=4)",
+      "item": [
+        {
+          "name": "Step 1 — List Bike Wash Services",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "pm.test('Services retrieved', () => pm.response.to.have.status(200));",
+                "if (res.data && res.data.data && res.data.data.length > 0) {",
+                "  pm.collectionVariables.set('service_id', res.data.data[0].id);",
+                "  console.log('✅ Bike wash service ID saved:', res.data.data[0].id);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/services?category_id=4&is_available=1&sort_by=price&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services"],
+              "query": [
+                { "key": "category_id",  "value": "4" },
+                { "key": "is_available", "value": "1" },
+                { "key": "sort_by",      "value": "price" },
+                { "key": "per_page",     "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Step 2 — View Service Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/services/{{service_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services", "{{service_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Step 3 — Book Bike Wash",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data && res.data.booking && res.data.booking.id) {",
+                "  pm.collectionVariables.set('booking_id', res.data.booking.id);",
+                "  console.log('✅ Booking ID saved:', res.data.booking.id);",
+                "}",
+                "pm.test('Booking created', () => pm.response.to.have.status(201));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_id\": {{service_id}},\n  \"booking_date\": \"2026-07-10\",\n  \"start_time\": \"10:00\",\n  \"end_time\": \"11:00\",\n  \"pickup_location\": \"Al-Malaz District, Riyadh\",\n  \"pickup_latitude\": 24.6877,\n  \"pickup_longitude\": 46.7219,\n  \"notes\": \"Yamaha YZF-R1 in matte black — avoid high-pressure wash on the matte finish, use foam cannon only\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/bookings", "host": ["{{base_url}}"], "path": ["api", "bookings"] }
+          }
+        },
+        {
+          "name": "Step 4 — View Booking",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/bookings/{{booking_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings", "{{booking_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Step 5 — Cancel Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancellation_reason\": \"It rained today, will rebook when weather is better\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bookings/{{booking_id}}/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings", "{{booking_id}}", "cancel"]
+            }
+          }
+        },
+        {
+          "name": "Step 6 — Rate Bike Wash (after completion)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Great wash, very thorough on the engine and wheels. Respected my request about the matte finish. Only minor issue: 15 minutes late.\",\n  \"comment_ar\": \"غسيل ممتاز وشامل على المحرك والعجلات. احترم طلبي بشأن الطلاء الخشن. المشكلة الوحيدة: تأخر 15 دقيقة.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bookings/{{booking_id}}/review",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings", "{{booking_id}}", "review"]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "06 — 🔧 Maintenance Workshop (category_id=5)",
+      "item": [
+        {
+          "name": "Step 1 — List Workshop Services",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "pm.test('Services retrieved', () => pm.response.to.have.status(200));",
+                "if (res.data && res.data.data && res.data.data.length > 0) {",
+                "  pm.collectionVariables.set('service_id', res.data.data[0].id);",
+                "  console.log('✅ Workshop service ID saved:', res.data.data[0].id);",
+                "  console.log('🔧 Service:', res.data.data[0].name, '| Price:', res.data.data[0].price);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/services?category_id=5&is_available=1&sort_by=rating&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services"],
+              "query": [
+                { "key": "category_id",  "value": "5" },
+                { "key": "is_available", "value": "1" },
+                { "key": "sort_by",      "value": "rating" },
+                { "key": "per_page",     "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Step 2 — View Workshop Service Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/services/{{service_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services", "{{service_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Step 3 — Book Maintenance",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data && res.data.booking && res.data.booking.id) {",
+                "  pm.collectionVariables.set('booking_id', res.data.booking.id);",
+                "  console.log('✅ Booking ID saved:', res.data.booking.id);",
+                "  console.log('💰 Price:', res.data.amount, 'SAR');",
+                "}",
+                "pm.test('Maintenance booked', () => pm.response.to.have.status(201));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_id\": {{service_id}},\n  \"booking_date\": \"2026-07-20\",\n  \"start_time\": \"09:00\",\n  \"pickup_location\": \"Al-Suwaidi District, Riyadh\",\n  \"pickup_latitude\": 24.6408,\n  \"pickup_longitude\": 46.7728,\n  \"notes\": \"Ducati Panigale V4 — engine overheating at high RPM, needs full inspection. Last oil change was 8,000 km ago. Suspect chain tensioner issue too.\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/bookings", "host": ["{{base_url}}"], "path": ["api", "bookings"] }
+          }
+        },
+        {
+          "name": "Step 4 — View My Bookings (All Status)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/bookings?per_page=20&upcoming=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings"],
+              "query": [
+                { "key": "per_page", "value": "20" },
+                { "key": "upcoming", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Step 5 — View Booking Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/bookings/{{booking_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings", "{{booking_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Step 6 — Cancel Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancellation_reason\": \"Found a specialized Ducati workshop closer to my location\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bookings/{{booking_id}}/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings", "{{booking_id}}", "cancel"]
+            }
+          }
+        },
+        {
+          "name": "Step 7 — Rate the Workshop (after completion)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Best workshop in Riyadh for sports bikes. Diagnosed the overheating issue in 30 minutes — turned out to be a blocked radiator and worn chain. Fixed same day. Price was fair and they kept me updated throughout.\",\n  \"comment_ar\": \"أفضل ورشة في الرياض للدراجات الرياضية. شخصوا مشكلة الإفراط في التسخين في 30 دقيقة — تبين أنها مشعاع مسدود وسلسلة متآكلة. أصلحوها في نفس اليوم. السعر معقول واطلعوني على كل شيء.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bookings/{{booking_id}}/review",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings", "{{booking_id}}", "review"]
+            }
+          }
+        }
+      ]
+    }
+
+  ]
+}

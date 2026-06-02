@@ -26,6 +26,8 @@ class ServiceProvider extends Model
         'country_id',
         'latitude',
         'longitude',
+        'price_per_hour',
+        'price_per_mission',
         'is_verified',
         'is_active',
         'rating_average',
@@ -40,6 +42,8 @@ class ServiceProvider extends Model
         'rating_average' => 'decimal:2',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
+        'price_per_hour' => 'decimal:2',
+        'price_per_mission' => 'decimal:2',
         'reviews_count' => 'integer',
         'services_count' => 'integer',
         'completed_orders' => 'integer'
@@ -84,6 +88,11 @@ class ServiceProvider extends Model
     public function workingHours()
     {
         return $this->hasMany(ProviderWorkingHour::class, 'provider_id');
+    }
+
+    public function serviceCategories()
+    {
+        return $this->belongsToMany(ServiceCategory::class, 'provider_service_categories', 'provider_id', 'service_category_id');
     }
 
     public function transportRoutes()

@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\ServiceProviderImage;
+use App\Models\ProviderWorkingHour;
 use App\Services\PayTabsConfigService;
 
 /**
@@ -308,25 +309,38 @@ class ServiceSubscriptionController extends Controller
     public function subscribe(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'plan_id' => 'required|exists:subscription_plans,id',
-            'billing_cycle' => 'required|in:monthly,yearly',
-            // Optional provider details
-            'business_name' => 'nullable|string|max:255',
-            'business_name_ar' => 'nullable|string|max:255',
-            'city_id' => 'nullable|exists:cities,id',
-            'country_id' => 'nullable|exists:countries,id',
-            'address' => 'nullable|string|max:500',
-            'description' => 'nullable|string',
-            'description_ar' => 'nullable|string',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'address_ar' => 'nullable|string|max:500',
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
-            'logo' => 'nullable|string',
-            'cover_image' => 'nullable|string',
-            'images' => 'nullable|array',
-            'images.*' => 'string',
+            'plan_id'            => 'required|exists:subscription_plans,id',
+            'billing_cycle'      => 'required|in:monthly,yearly',
+            // Required business info
+            'business_name'      => 'required|string|max:255',
+            'business_name_ar'   => 'required|string|max:255',
+            'phone'              => 'required|string|max:20',
+            // Required service categories (at least one)
+            'service_category_ids'   => 'required|array|min:1',
+            'service_category_ids.*' => 'integer|exists:service_categories,id',
+            // Required working hours (array of 7 days)
+            'working_hours'          => 'required|array|min:1',
+            'working_hours.*.day_of_week' => 'required|integer|between:0,6',
+            'working_hours.*.is_open'     => 'required|boolean',
+            'working_hours.*.open_time'   => 'nullable|date_format:H:i',
+            'working_hours.*.close_time'  => 'nullable|date_format:H:i',
+            // Required pricing
+            'price_per_hour'     => 'required|numeric|min:0',
+            'price_per_mission'  => 'required|numeric|min:0',
+            // Optional
+            'description'        => 'nullable|string',
+            'description_ar'     => 'nullable|string',
+            'email'              => 'nullable|email|max:255',
+            'address'            => 'nullable|string|max:500',
+            'address_ar'         => 'nullable|string|max:500',
+            'city_id'            => 'nullable|exists:cities,id',
+            'country_id'         => 'nullable|exists:countries,id',
+            'latitude'           => 'nullable|numeric|between:-90,90',
+            'longitude'          => 'nullable|numeric|between:-180,180',
+            'logo'               => 'nullable|string',
+            'cover_image'        => 'nullable|string',
+            'images'             => 'nullable|array',
+            'images.*'           => 'string',
         ]);
 
         if ($validator->fails()) {
@@ -342,40 +356,41 @@ class ServiceSubscriptionController extends Controller
         $provider = ServiceProvider::where('user_id', $user->id)->first();
 
         if (!$provider) {
-            // Auto-create provider profile
             try {
                 $provider = ServiceProvider::create([
-                    'user_id' => $user->id,
-                    'business_name' => $request->business_name ?? $user->name ?? $user->first_name . ' ' . $user->last_name,
-                    'business_name_ar' => $request->business_name_ar ?? $user->name ?? $user->first_name . ' ' . $user->last_name,
-                    'description' => $request->description,
-                    'description_ar' => $request->description_ar,
-                    'logo' => $request->logo,
-                    'cover_image' => $request->cover_image,
-                    'email' => $request->email ?? $user->email,
-                    'phone' => $request->phone ?? $user->phone,
-                    'address' => $request->address,
-                    'address_ar' => $request->address_ar,
-                    'latitude' => $request->latitude,
-                    'longitude' => $request->longitude,
-                    'is_active' => false, // Inactive until payment is confirmed
-                    'is_verified' => false, // Always false initially
-                    'rating_average' => 0,
-                    'reviews_count' => 0,
-                    'services_count' => 0,
+                    'user_id'          => $user->id,
+                    'business_name'    => $request->business_name,
+                    'business_name_ar' => $request->business_name_ar,
+                    'description'      => $request->description,
+                    'description_ar'   => $request->description_ar,
+                    'logo'             => $request->logo,
+                    'cover_image'      => $request->cover_image,
+                    'email'            => $request->email ?? $user->email,
+                    'phone'            => $request->phone,
+                    'address'          => $request->address,
+                    'address_ar'       => $request->address_ar,
+                    'latitude'         => $request->latitude,
+                    'longitude'        => $request->longitude,
+                    'price_per_hour'   => $request->price_per_hour,
+                    'price_per_mission'=> $request->price_per_mission,
+                    'is_active'        => false,
+                    'is_verified'      => false,
+                    'rating_average'   => 0,
+                    'reviews_count'    => 0,
+                    'services_count'   => 0,
                     'completed_orders' => 0,
-                    'city_id' => $request->city_id ?? $user->city_id ?? null,
-                    'country_id' => $request->country_id ?? $user->country_id ?? null,
+                    'city_id'          => $request->city_id ?? $user->city_id ?? null,
+                    'country_id'       => $request->country_id ?? $user->country_id ?? null,
                 ]);
 
-                // Handle Gallery Images (URLs)
+                // Gallery images
                 if ($request->has('images') && is_array($request->images)) {
                     foreach ($request->images as $index => $imageUrl) {
                         ServiceProviderImage::create([
-                            'provider_id' => $provider->id,
-                            'image_url' => $imageUrl,
+                            'provider_id'    => $provider->id,
+                            'image_url'      => $imageUrl,
                             'order_position' => $index,
-                            'is_featured' => $index === 0 // First image as featured by default
+                            'is_featured'    => $index === 0,
                         ]);
                     }
                 }
@@ -385,6 +400,27 @@ class ServiceSubscriptionController extends Controller
                     'message' => 'Failed to create provider profile: ' . $e->getMessage(),
                 ], 500);
             }
+        } else {
+            // Update pricing on existing provider
+            $provider->update([
+                'price_per_hour'    => $request->price_per_hour,
+                'price_per_mission' => $request->price_per_mission,
+            ]);
+        }
+
+        // Sync service categories
+        $provider->serviceCategories()->sync($request->service_category_ids);
+
+        // Save working hours (replace existing)
+        $provider->workingHours()->delete();
+        foreach ($request->working_hours as $hour) {
+            ProviderWorkingHour::create([
+                'provider_id' => $provider->id,
+                'day_of_week' => $hour['day_of_week'],
+                'is_open'     => $hour['is_open'],
+                'open_time'   => $hour['is_open'] ? ($hour['open_time'] ?? null) : null,
+                'close_time'  => $hour['is_open'] ? ($hour['close_time'] ?? null) : null,
+            ]);
         }
 
         if ($provider->hasActiveSubscription()) {
