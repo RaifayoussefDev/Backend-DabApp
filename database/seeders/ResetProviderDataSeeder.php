@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Wipes all provider + subscription + booking data for a clean test start.
@@ -34,55 +35,26 @@ class ResetProviderDataSeeder extends Seeder
         DB::statement('SET FOREIGN_KEY_CHECKS=0');
 
         try {
-            // 1. Chat sessions (linked to bookings)
-            DB::table('chat_sessions')->truncate();
-            $this->command->line('✅ chat_sessions cleared');
+            $this->truncateIfExists('chat_sessions');
+            $this->truncateIfExists('service_reviews');
+            $this->truncateIfExists('service_bookings');
+            $this->truncateIfExists('transport_route_stops');
+            $this->truncateIfExists('transport_routes');
+            $this->truncateIfExists('instructor_locations');
+            $this->truncateIfExists('riding_instructors');
+            $this->truncateIfExists('provider_service_categories');
+            $this->truncateIfExists('provider_working_hours');
+            $this->truncateIfExists('service_provider_images');
+            $this->truncateIfExists('subscription_transactions');
+            $this->truncateIfExists('service_subscriptions');
+            $this->truncateIfExists('services');
+            $this->truncateIfExists('service_providers');
 
-            // 2. Reviews (linked to bookings + providers)
-            DB::table('service_reviews')->truncate();
-            $this->command->line('✅ service_reviews cleared');
-
-            // 3. Bookings
-            DB::table('service_bookings')->truncate();
-            $this->command->line('✅ service_bookings cleared');
-
-            // 4. Transport route stops → routes
-            DB::table('transport_route_stops')->truncate();
-            DB::table('transport_routes')->truncate();
-            $this->command->line('✅ transport_routes cleared');
-
-            // 5. Instructor locations → instructors
-            DB::table('instructor_locations')->truncate();
-            DB::table('riding_instructors')->truncate();
-            $this->command->line('✅ riding_instructors cleared');
-
-            // 6. Provider pivot + working hours + images
-            DB::table('provider_service_categories')->truncate();
-            DB::table('provider_working_hours')->truncate();
-            DB::table('service_provider_images')->truncate();
-            $this->command->line('✅ provider metadata cleared');
-
-            // 7. Subscription transactions
-            DB::table('subscription_transactions')->truncate();
-            $this->command->line('✅ subscription_transactions cleared');
-
-            // 8. Subscriptions
-            DB::table('service_subscriptions')->truncate();
-            $this->command->line('✅ service_subscriptions cleared');
-
-            // 9. Subscription-related payments only
+            // Subscription-related payments only (cart_id starts with sub_)
             $deleted = DB::table('payments')
                 ->where('cart_id', 'like', 'sub_%')
                 ->delete();
-            $this->command->line("✅ payments (subscription) deleted: {$deleted}");
-
-            // 10. Services
-            DB::table('services')->truncate();
-            $this->command->line('✅ services cleared');
-
-            // 11. Providers (last — everything else references this)
-            DB::table('service_providers')->truncate();
-            $this->command->line('✅ service_providers cleared');
+            $this->command->line("✅ payments (subscription only) deleted: {$deleted}");
 
         } finally {
             DB::statement('SET FOREIGN_KEY_CHECKS=1');
@@ -95,6 +67,16 @@ class ResetProviderDataSeeder extends Seeder
 
         $this->command->info('');
         $this->command->info('✅ Reset complete. Ready to test from scratch.');
+    }
+
+    private function truncateIfExists(string $table): void
+    {
+        if (Schema::hasTable($table)) {
+            DB::table($table)->truncate();
+            $this->command->line("✅ {$table} cleared");
+        } else {
+            $this->command->line("⚠️  {$table} skipped (table not found)");
+        }
     }
 
     private function printCounts(): void
