@@ -50,11 +50,6 @@ class ResetProviderDataSeeder extends Seeder
             $this->truncateIfExists('services');
             $this->truncateIfExists('service_providers');
 
-            // Subscription-related payments only (cart_id starts with sub_)
-            $deleted = DB::table('payments')
-                ->where('cart_id', 'like', 'sub_%')
-                ->delete();
-            $this->command->line("✅ payments (subscription only) deleted: {$deleted}");
 
         } finally {
             DB::statement('SET FOREIGN_KEY_CHECKS=1');
@@ -91,7 +86,6 @@ class ResetProviderDataSeeder extends Seeder
             'transport_routes',
             'provider_working_hours',
             'subscription_transactions',
-            'payments',
         ];
 
         foreach ($tables as $table) {
