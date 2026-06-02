@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 // ============================================
@@ -1755,6 +1756,8 @@ Route::prefix('instructor-locations')->group(function () {
 // Provider instructor management
 Route::middleware('auth:api')->prefix('provider')->group(function () {
     Route::post('/riding-instructors', [RidingInstructorController::class, 'store']);
+    Route::get('/riding-instructors/{id}/schedule',  [RidingInstructorController::class, 'getSchedule']);
+    Route::post('/riding-instructors/{id}/schedule', [RidingInstructorController::class, 'updateSchedule']);
 });
 
 /*

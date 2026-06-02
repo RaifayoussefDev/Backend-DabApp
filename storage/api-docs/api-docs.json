@@ -33607,14 +33607,13 @@
                 "tags": [
                     "Riding Instructors"
                 ],
-                "summary": "Liste des instructeurs",
-                "description": "Récupère tous les instructeurs de conduite disponibles avec filtres",
+                "summary": "List riding instructors",
+                "description": "Returns paginated list of available instructors with optional filters.",
                 "operationId": "getRidingInstructors",
                 "parameters": [
                     {
                         "name": "city_id",
                         "in": "query",
-                        "description": "Filtrer par ville",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -33624,7 +33623,6 @@
                     {
                         "name": "min_experience_years",
                         "in": "query",
-                        "description": "Années d'expérience minimum",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -33634,7 +33632,6 @@
                     {
                         "name": "min_rating",
                         "in": "query",
-                        "description": "Note minimale (1-5)",
                         "required": false,
                         "schema": {
                             "type": "number",
@@ -33645,7 +33642,6 @@
                     {
                         "name": "is_available",
                         "in": "query",
-                        "description": "Disponibilité",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -33658,7 +33654,6 @@
                     {
                         "name": "search",
                         "in": "query",
-                        "description": "Rechercher par nom",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -33668,10 +33663,10 @@
                     {
                         "name": "sort_by",
                         "in": "query",
-                        "description": "Trier par (rating, experience, sessions)",
                         "required": false,
                         "schema": {
                             "type": "string",
+                            "default": "rating",
                             "enum": [
                                 "rating",
                                 "experience",
@@ -33682,7 +33677,6 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Nombre par page",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -33692,7 +33686,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Instructeurs récupérés avec succès",
+                        "description": "Instructors retrieved",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -33716,32 +33710,31 @@
                                                             },
                                                             "instructor_name": {
                                                                 "type": "string",
-                                                                "example": "Ahmed Al-Rashid"
+                                                                "example": "Khalid Al-Mansouri"
                                                             },
                                                             "instructor_name_ar": {
                                                                 "type": "string",
-                                                                "example": "أحمد الراشد"
+                                                                "example": "خالد المنصوري"
                                                             },
                                                             "bio": {
-                                                                "type": "string",
-                                                                "example": "Professional motorcycle instructor with 10+ years experience"
+                                                                "type": "string"
                                                             },
                                                             "photo": {
                                                                 "type": "string",
-                                                                "example": "https://example.com/ahmed.jpg"
+                                                                "nullable": true
                                                             },
                                                             "experience_years": {
                                                                 "type": "integer",
-                                                                "example": 10
+                                                                "example": 12
                                                             },
                                                             "rating_average": {
                                                                 "type": "number",
                                                                 "format": "float",
-                                                                "example": 4.8
+                                                                "example": 4.9
                                                             },
                                                             "total_sessions": {
                                                                 "type": "integer",
-                                                                "example": 256
+                                                                "example": 340
                                                             },
                                                             "is_available": {
                                                                 "type": "boolean",
@@ -33750,8 +33743,7 @@
                                                             "certifications": {
                                                                 "type": "array",
                                                                 "items": {
-                                                                    "type": "string",
-                                                                    "example": "Advanced Riding Techniques"
+                                                                    "type": "string"
                                                                 }
                                                             },
                                                             "provider": {
@@ -33769,8 +33761,27 @@
                                                                 "type": "array",
                                                                 "items": {
                                                                     "properties": {
+                                                                        "id": {
+                                                                            "type": "integer"
+                                                                        },
                                                                         "location_name": {
                                                                             "type": "string"
+                                                                        },
+                                                                        "location_name_ar": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "latitude": {
+                                                                            "type": "number",
+                                                                            "format": "float",
+                                                                            "nullable": true
+                                                                        },
+                                                                        "longitude": {
+                                                                            "type": "number",
+                                                                            "format": "float",
+                                                                            "nullable": true
+                                                                        },
+                                                                        "is_available": {
+                                                                            "type": "boolean"
                                                                         },
                                                                         "city": {
                                                                             "type": "object"
@@ -33782,6 +33793,12 @@
                                                         },
                                                         "type": "object"
                                                     }
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
                                                 }
                                             },
                                             "type": "object"
@@ -33792,12 +33809,7 @@
                             }
                         }
                     }
-                },
-                "security": [
-                    {
-                        "bearer": []
-                    }
-                ]
+                }
             }
         },
         "/api/riding-instructors/{id}": {
@@ -33805,14 +33817,13 @@
                 "tags": [
                     "Riding Instructors"
                 ],
-                "summary": "Détails d'un instructeur",
-                "description": "Récupère les détails complets d'un instructeur avec avis et disponibilités",
+                "summary": "Instructor detail",
+                "description": "Full instructor profile with locations, certifications, recent reviews, and other provider services.",
                 "operationId": "getRidingInstructor",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "ID de l'instructeur",
                         "required": true,
                         "schema": {
                             "type": "integer",
@@ -33822,7 +33833,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Instructeur trouvé",
+                        "description": "Instructor found",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -33832,10 +33843,120 @@
                                             "example": true
                                         },
                                         "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "instructor_name": {
+                                                    "type": "string",
+                                                    "example": "Khalid Al-Mansouri"
+                                                },
+                                                "instructor_name_ar": {
+                                                    "type": "string",
+                                                    "example": "خالد المنصوري"
+                                                },
+                                                "bio": {
+                                                    "type": "string"
+                                                },
+                                                "bio_ar": {
+                                                    "type": "string"
+                                                },
+                                                "photo": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "experience_years": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "rating_average": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 4.9
+                                                },
+                                                "total_sessions": {
+                                                    "type": "integer",
+                                                    "example": 340
+                                                },
+                                                "certifications": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "provider": {
+                                                    "properties": {
+                                                        "business_name": {
+                                                            "type": "string"
+                                                        },
+                                                        "city": {
+                                                            "type": "object"
+                                                        },
+                                                        "user": {
+                                                            "properties": {
+                                                                "first_name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "last_name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "phone": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "locations": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "location_name": {
+                                                                "type": "string"
+                                                            },
+                                                            "location_name_ar": {
+                                                                "type": "string"
+                                                            },
+                                                            "latitude": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "nullable": true
+                                                            },
+                                                            "longitude": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "nullable": true
+                                                            },
+                                                            "is_available": {
+                                                                "type": "boolean"
+                                                            },
+                                                            "city": {
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "recent_reviews": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "other_services": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
                                             "type": "object"
-                                        },
-                                        "message": {
-                                            "type": "string"
                                         }
                                     },
                                     "type": "object"
@@ -33844,14 +33965,9 @@
                         }
                     },
                     "404": {
-                        "description": "Instructeur non trouvé"
+                        "description": "Instructor not found"
                     }
-                },
-                "security": [
-                    {
-                        "bearer": []
-                    }
-                ]
+                }
             }
         },
         "/api/instructor-locations": {
@@ -33859,14 +33975,13 @@
                 "tags": [
                     "Riding Instructors"
                 ],
-                "summary": "Lieux de cours disponibles",
-                "description": "Récupère tous les lieux où les cours de conduite sont dispensés",
+                "summary": "List instructor locations",
+                "description": "All available training locations with GPS coordinates, city, and instructor info.",
                 "operationId": "getInstructorLocations",
                 "parameters": [
                     {
                         "name": "city_id",
                         "in": "query",
-                        "description": "Filtrer par ville",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -33876,7 +33991,6 @@
                     {
                         "name": "instructor_id",
                         "in": "query",
-                        "description": "Filtrer par instructeur",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -33886,7 +34000,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lieux récupérés",
+                        "description": "Locations retrieved",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -33894,6 +34008,10 @@
                                         "success": {
                                             "type": "boolean",
                                             "example": true
+                                        },
+                                        "count": {
+                                            "type": "integer",
+                                            "example": 6
                                         },
                                         "data": {
                                             "type": "array",
@@ -33903,24 +34021,46 @@
                                                         "type": "integer"
                                                     },
                                                     "location_name": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "example": "Al-Naseem Training Circuit"
                                                     },
                                                     "location_name_ar": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "example": "حلبة النسيم للتدريب"
+                                                    },
+                                                    "latitude": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 24.725,
+                                                        "nullable": true
+                                                    },
+                                                    "longitude": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 46.69,
+                                                        "nullable": true
                                                     },
                                                     "is_available": {
-                                                        "type": "boolean"
+                                                        "type": "boolean",
+                                                        "example": true
                                                     },
                                                     "city": {
                                                         "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
                                                             "name": {
-                                                                "type": "string"
+                                                                "type": "string",
+                                                                "example": "Riyadh"
                                                             }
                                                         },
                                                         "type": "object"
                                                     },
                                                     "instructor": {
                                                         "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
                                                             "instructor_name": {
                                                                 "type": "string"
                                                             }
@@ -33937,12 +34077,198 @@
                             }
                         }
                     }
-                },
-                "security": [
+                }
+            }
+        },
+        "/api/riding-instructors/{id}/availability": {
+            "get": {
+                "tags": [
+                    "Riding Instructors"
+                ],
+                "summary": "Instructor availability slots",
+                "description": "Returns available and booked time slots for a given date range. Slots are generated from the instructor's configured schedule (ServiceSchedule). If no schedule is configured, default slots (08:00–19:00) are used. Optionally filter by location.",
+                "operationId": "getInstructorAvailability",
+                "parameters": [
                     {
-                        "bearer": []
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-06-10"
+                        }
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-06-16"
+                        }
+                    },
+                    {
+                        "name": "location_id",
+                        "in": "query",
+                        "description": "Filter by specific instructor location. Returns location coordinates when provided.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
                     }
-                ]
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Availability retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "instructor": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Khalid Al-Mansouri"
+                                                        },
+                                                        "name_ar": {
+                                                            "type": "string",
+                                                            "example": "خالد المنصوري"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "location": {
+                                                    "description": "Populated only when location_id is provided",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "name_ar": {
+                                                            "type": "string"
+                                                        },
+                                                        "latitude": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "nullable": true
+                                                        },
+                                                        "longitude": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "nullable": true
+                                                        },
+                                                        "is_available": {
+                                                            "type": "boolean"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "available_slots": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "date": {
+                                                                "type": "string",
+                                                                "format": "date",
+                                                                "example": "2026-06-10"
+                                                            },
+                                                            "day_name": {
+                                                                "type": "string",
+                                                                "example": "Wednesday"
+                                                            },
+                                                            "time_slots": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string",
+                                                                    "example": "08:00-10:00"
+                                                                }
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "booked_slots": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "date": {
+                                                                "type": "string",
+                                                                "format": "date"
+                                                            },
+                                                            "start_time": {
+                                                                "type": "string",
+                                                                "example": "10:00"
+                                                            },
+                                                            "end_time": {
+                                                                "type": "string",
+                                                                "example": "12:00"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "schedule_source": {
+                                                    "description": "'configured' = slots from provider schedule, 'default' = hardcoded fallback",
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "configured",
+                                                        "default"
+                                                    ]
+                                                },
+                                                "period": {
+                                                    "properties": {
+                                                        "from": {
+                                                            "type": "string",
+                                                            "format": "date"
+                                                        },
+                                                        "to": {
+                                                            "type": "string",
+                                                            "format": "date"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Instructor not found"
+                    },
+                    "422": {
+                        "description": "location_id does not belong to this instructor"
+                    }
+                }
             }
         },
         "/api/riding-instructors/{id}/book-session": {
@@ -33950,14 +34276,13 @@
                 "tags": [
                     "Riding Instructors"
                 ],
-                "summary": "Réserver une session",
-                "description": "Réserve une session de cours avec un instructeur",
+                "summary": "Book a riding session",
+                "description": "Creates a session booking with the instructor. Price = service price × duration_hours. Checks for time-slot conflicts before confirming. Sends booking to pending status awaiting provider confirmation.",
                 "operationId": "bookInstructorSession",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "ID de l'instructeur",
                         "required": true,
                         "schema": {
                             "type": "integer",
@@ -33979,20 +34304,23 @@
                                     "booking_date": {
                                         "type": "string",
                                         "format": "date",
-                                        "example": "2025-02-15"
+                                        "example": "2026-06-15"
                                     },
                                     "start_time": {
+                                        "description": "24h format HH:MM. Must match an available slot from the availability endpoint.",
                                         "type": "string",
                                         "format": "time",
                                         "example": "09:00"
                                     },
                                     "duration_hours": {
-                                        "description": "Durée en heures (1-4)",
+                                        "description": "Session length in hours (default 1).",
                                         "type": "integer",
+                                        "maximum": 4,
+                                        "minimum": 1,
                                         "example": 2
                                     },
                                     "location_id": {
-                                        "description": "ID du lieu de cours",
+                                        "description": "ID from GET /api/instructor-locations or the locations array in instructor detail.",
                                         "type": "integer",
                                         "example": 1
                                     },
@@ -34008,7 +34336,7 @@
                                     },
                                     "notes": {
                                         "type": "string",
-                                        "example": "First time riding, need basic training"
+                                        "example": "First time on a motorcycle"
                                     }
                                 },
                                 "type": "object"
@@ -34018,7 +34346,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Session réservée",
+                        "description": "Session booked — awaiting provider confirmation",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -34026,120 +34354,95 @@
                                         "success": {
                                             "type": "boolean",
                                             "example": true
-                                        },
-                                        "data": {
-                                            "type": "object"
                                         },
                                         "message": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Instructeur non disponible ou créneau occupé"
-                    }
-                },
-                "security": [
-                    {
-                        "bearer": []
-                    }
-                ]
-            }
-        },
-        "/api/riding-instructors/{id}/availability": {
-            "get": {
-                "tags": [
-                    "Riding Instructors"
-                ],
-                "summary": "Disponibilités d'un instructeur",
-                "description": "Récupère les créneaux disponibles d'un instructeur pour une période donnée",
-                "operationId": "getInstructorAvailability",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID de l'instructeur",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
-                        }
-                    },
-                    {
-                        "name": "from_date",
-                        "in": "query",
-                        "description": "Date de début",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "date",
-                            "example": "2025-02-01"
-                        }
-                    },
-                    {
-                        "name": "to_date",
-                        "in": "query",
-                        "description": "Date de fin",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "date",
-                            "example": "2025-02-07"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Disponibilités récupérées",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
+                                            "type": "string",
+                                            "example": "Instructor session booked successfully"
                                         },
                                         "data": {
                                             "properties": {
-                                                "available_slots": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "date": {
-                                                                "type": "string",
-                                                                "format": "date"
-                                                            },
-                                                            "time_slots": {
-                                                                "type": "array",
-                                                                "items": {
-                                                                    "type": "string",
-                                                                    "example": "09:00-11:00"
-                                                                }
-                                                            }
+                                                "booking": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 42
                                                         },
-                                                        "type": "object"
-                                                    }
+                                                        "booking_date": {
+                                                            "type": "string",
+                                                            "format": "date"
+                                                        },
+                                                        "start_time": {
+                                                            "type": "string",
+                                                            "example": "09:00"
+                                                        },
+                                                        "end_time": {
+                                                            "type": "string",
+                                                            "example": "11:00"
+                                                        },
+                                                        "session_type": {
+                                                            "type": "string",
+                                                            "example": "beginner"
+                                                        },
+                                                        "instructor_location_id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "status": {
+                                                            "type": "string",
+                                                            "example": "pending"
+                                                        },
+                                                        "price": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 300
+                                                        },
+                                                        "payment_status": {
+                                                            "type": "string",
+                                                            "example": "pending"
+                                                        }
+                                                    },
+                                                    "type": "object"
                                                 },
-                                                "booked_slots": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "date": {
-                                                                "type": "string"
-                                                            },
-                                                            "start_time": {
-                                                                "type": "string"
-                                                            },
-                                                            "end_time": {
-                                                                "type": "string"
-                                                            }
+                                                "instructor": {
+                                                    "type": "object"
+                                                },
+                                                "location": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
                                                         },
-                                                        "type": "object"
-                                                    }
+                                                        "location_name": {
+                                                            "type": "string"
+                                                        },
+                                                        "location_name_ar": {
+                                                            "type": "string"
+                                                        },
+                                                        "latitude": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "nullable": true
+                                                        },
+                                                        "longitude": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "duration_hours": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "price_per_hour": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 150
+                                                },
+                                                "total_price": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 300
                                                 }
                                             },
                                             "type": "object"
@@ -34149,11 +34452,20 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Instructor unavailable, invalid location, or slot already booked"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Instructor not found or no active service"
                     }
                 },
                 "security": [
                     {
-                        "bearer": []
+                        "bearerAuth": []
                     }
                 ]
             }
@@ -34163,8 +34475,8 @@
                 "tags": [
                     "Riding Instructors"
                 ],
-                "summary": "Ajouter un instructeur (Provider)",
-                "description": "Permet au fournisseur d'ajouter un instructeur à son équipe",
+                "summary": "Add instructor to your team (Provider)",
+                "description": "Creates a new riding instructor linked to the authenticated provider.",
                 "operationId": "createInstructor",
                 "requestBody": {
                     "required": true,
@@ -34178,11 +34490,11 @@
                                 "properties": {
                                     "instructor_name": {
                                         "type": "string",
-                                        "example": "Ahmed Al-Rashid"
+                                        "example": "Khalid Al-Mansouri"
                                     },
                                     "instructor_name_ar": {
                                         "type": "string",
-                                        "example": "أحمد الراشد"
+                                        "example": "خالد المنصوري"
                                     },
                                     "bio": {
                                         "type": "string"
@@ -34197,8 +34509,7 @@
                                     "certifications": {
                                         "type": "array",
                                         "items": {
-                                            "type": "string",
-                                            "example": "Advanced Riding Techniques"
+                                            "type": "string"
                                         }
                                     },
                                     "photo": {
@@ -34213,15 +34524,258 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Instructeur ajouté"
+                        "description": "Instructor created"
                     },
                     "403": {
-                        "description": "Vous n'êtes pas fournisseur"
+                        "description": "Not a service provider"
                     }
                 },
                 "security": [
                     {
-                        "bearer": []
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/provider/riding-instructors/{id}/schedule": {
+            "get": {
+                "tags": [
+                    "Riding Instructors"
+                ],
+                "summary": "Get instructor schedule (Provider)",
+                "description": "Returns the weekly schedule (open hours per day) configured for this instructor's service. Days not listed are closed.",
+                "operationId": "getInstructorSchedule",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Schedule retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "service_id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "schedule": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "day_of_week": {
+                                                                "description": "0=Sunday … 6=Saturday",
+                                                                "type": "integer",
+                                                                "example": 0
+                                                            },
+                                                            "day_name": {
+                                                                "type": "string",
+                                                                "example": "Sunday"
+                                                            },
+                                                            "day_name_ar": {
+                                                                "type": "string",
+                                                                "example": "الأحد"
+                                                            },
+                                                            "start_time": {
+                                                                "type": "string",
+                                                                "example": "08:00"
+                                                            },
+                                                            "end_time": {
+                                                                "type": "string",
+                                                                "example": "18:00"
+                                                            },
+                                                            "is_available": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Instructor does not belong to your provider account"
+                    },
+                    "404": {
+                        "description": "Instructor or riding-instructor service not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Riding Instructors"
+                ],
+                "summary": "Set instructor schedule (Provider)",
+                "description": "Upserts the weekly working hours for this instructor's service. Send all days you want to configure. Days omitted are left unchanged. Set is_available=false to close a day without deleting the record.",
+                "operationId": "updateInstructorSchedule",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "schedule"
+                                ],
+                                "properties": {
+                                    "schedule": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "day_of_week",
+                                                "start_time",
+                                                "end_time"
+                                            ],
+                                            "properties": {
+                                                "day_of_week": {
+                                                    "description": "0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday",
+                                                    "type": "integer",
+                                                    "maximum": 6,
+                                                    "minimum": 0,
+                                                    "example": 0
+                                                },
+                                                "start_time": {
+                                                    "description": "24h format HH:MM",
+                                                    "type": "string",
+                                                    "example": "08:00"
+                                                },
+                                                "end_time": {
+                                                    "type": "string",
+                                                    "example": "18:00"
+                                                },
+                                                "is_available": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "example": [
+                                            {
+                                                "day_of_week": 0,
+                                                "start_time": "08:00",
+                                                "end_time": "18:00",
+                                                "is_available": true
+                                            },
+                                            {
+                                                "day_of_week": 1,
+                                                "start_time": "08:00",
+                                                "end_time": "18:00",
+                                                "is_available": true
+                                            },
+                                            {
+                                                "day_of_week": 5,
+                                                "start_time": "08:00",
+                                                "end_time": "12:00",
+                                                "is_available": true
+                                            },
+                                            {
+                                                "day_of_week": 6,
+                                                "start_time": "08:00",
+                                                "end_time": "12:00",
+                                                "is_available": false
+                                            }
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Schedule saved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Schedule updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "service_id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "updated_days": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                },
+                                                "schedule": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Instructor does not belong to your provider account"
+                    },
+                    "404": {
+                        "description": "Instructor or riding-instructor service not found"
+                    },
+                    "422": {
+                        "description": "Validation error — invalid day, time format, or end_time before start_time"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
                     }
                 ]
             }
@@ -44425,7 +44979,7 @@
         },
         {
             "name": "Riding Instructors",
-            "description": "API endpoints pour les instructeurs de conduite moto"
+            "description": "Browse instructors, check availability, book sessions, and manage provider schedules"
         },
         {
             "name": "Service Bookings",

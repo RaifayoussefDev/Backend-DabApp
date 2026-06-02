@@ -3,126 +3,91 @@
 namespace App\Http\Controllers\Services;
 
 use App\Http\Controllers\Controller;
-use App\Models\RidingInstructor;
 use App\Models\InstructorLocation;
-use App\Models\ServiceBooking;
+use App\Models\RidingInstructor;
 use App\Models\Service;
+use App\Models\ServiceBooking;
+use App\Models\ServiceSchedule;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Tymon\JWTAuth\Facades\JWTAuth;
+
 
 /**
  * @OA\Tag(
  *     name="Riding Instructors",
- *     description="API endpoints pour les instructeurs de conduite moto"
+ *     description="Browse instructors, check availability, book sessions, and manage provider schedules"
  * )
  */
 class RidingInstructorController extends Controller
 {
+    // Default slots used when no ServiceSchedule is configured for the instructor's service
+    private const DEFAULT_SLOTS = [
+        ['08:00', '10:00'],
+        ['10:00', '12:00'],
+        ['13:00', '15:00'],
+        ['15:00', '17:00'],
+        ['17:00', '19:00'],
+    ];
+
+    // ---------------------------------------------------------------
+    // Public — list & detail
+    // ---------------------------------------------------------------
+
     /**
      * @OA\Get(
      *     path="/api/riding-instructors",
-     *     summary="Liste des instructeurs",
-     *     description="Récupère tous les instructeurs de conduite disponibles avec filtres",
+     *     summary="List riding instructors",
+     *     description="Returns paginated list of available instructors with optional filters.",
      *     operationId="getRidingInstructors",
      *     tags={"Riding Instructors"},
-     *     security={{"bearer":{}}},
-     *     @OA\Parameter(
-     *         name="city_id",
-     *         in="query",
-     *         description="Filtrer par ville",
-     *         required=false,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *     @OA\Parameter(
-     *         name="min_experience_years",
-     *         in="query",
-     *         description="Années d'expérience minimum",
-     *         required=false,
-     *         @OA\Schema(type="integer", example=5)
-     *     ),
-     *     @OA\Parameter(
-     *         name="min_rating",
-     *         in="query",
-     *         description="Note minimale (1-5)",
-     *         required=false,
-     *         @OA\Schema(type="number", format="float", example=4.0)
-     *     ),
-     *     @OA\Parameter(
-     *         name="is_available",
-     *         in="query",
-     *         description="Disponibilité",
-     *         required=false,
-     *         @OA\Schema(type="integer", enum={0, 1})
-     *     ),
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Rechercher par nom",
-     *         required=false,
-     *         @OA\Schema(type="string", example="Ahmed")
-     *     ),
-     *     @OA\Parameter(
-     *         name="sort_by",
-     *         in="query",
-     *         description="Trier par (rating, experience, sessions)",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"rating", "experience", "sessions"})
-     *     ),
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Nombre par page",
-     *         required=false,
-     *         @OA\Schema(type="integer", example=20)
-     *     ),
+     *     @OA\Parameter(name="city_id",              in="query", required=false, @OA\Schema(type="integer", example=1)),
+     *     @OA\Parameter(name="min_experience_years", in="query", required=false, @OA\Schema(type="integer", example=5)),
+     *     @OA\Parameter(name="min_rating",           in="query", required=false, @OA\Schema(type="number",  format="float", example=4.0)),
+     *     @OA\Parameter(name="is_available",         in="query", required=false, @OA\Schema(type="integer", enum={0,1})),
+     *     @OA\Parameter(name="search",               in="query", required=false, @OA\Schema(type="string",  example="Ahmed")),
+     *     @OA\Parameter(name="sort_by",              in="query", required=false,
+     *         @OA\Schema(type="string", enum={"rating","experience","sessions"}, default="rating")),
+     *     @OA\Parameter(name="per_page",             in="query", required=false, @OA\Schema(type="integer", example=20)),
      *     @OA\Response(
      *         response=200,
-     *         description="Instructeurs récupérés avec succès",
+     *         description="Instructors retrieved",
      *         @OA\JsonContent(
-     *             type="object",
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
+     *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="current_page", type="integer"),
-     *                 @OA\Property(
-     *                     property="data",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="instructor_name", type="string", example="Ahmed Al-Rashid"),
-     *                         @OA\Property(property="instructor_name_ar", type="string", example="أحمد الراشد"),
-     *                         @OA\Property(property="bio", type="string", example="Professional motorcycle instructor with 10+ years experience"),
-     *                         @OA\Property(property="photo", type="string", example="https://example.com/ahmed.jpg"),
-     *                         @OA\Property(property="experience_years", type="integer", example=10),
-     *                         @OA\Property(property="rating_average", type="number", format="float", example=4.8),
-     *                         @OA\Property(property="total_sessions", type="integer", example=256),
-     *                         @OA\Property(property="is_available", type="boolean", example=true),
-     *                         @OA\Property(
-     *                             property="certifications",
-     *                             type="array",
-     *                             @OA\Items(type="string", example="Advanced Riding Techniques")
-     *                         ),
-     *                         @OA\Property(
-     *                             property="provider",
-     *                             type="object",
+     *                 @OA\Property(property="data", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",               type="integer", example=1),
+     *                         @OA\Property(property="instructor_name",  type="string",  example="Khalid Al-Mansouri"),
+     *                         @OA\Property(property="instructor_name_ar", type="string", example="خالد المنصوري"),
+     *                         @OA\Property(property="bio",              type="string"),
+     *                         @OA\Property(property="photo",            type="string",  nullable=true),
+     *                         @OA\Property(property="experience_years", type="integer", example=12),
+     *                         @OA\Property(property="rating_average",   type="number",  format="float", example=4.9),
+     *                         @OA\Property(property="total_sessions",   type="integer", example=340),
+     *                         @OA\Property(property="is_available",     type="boolean", example=true),
+     *                         @OA\Property(property="certifications",   type="array", @OA\Items(type="string")),
+     *                         @OA\Property(property="provider", type="object",
      *                             @OA\Property(property="business_name", type="string"),
      *                             @OA\Property(property="city", type="object")
      *                         ),
-     *                         @OA\Property(
-     *                             property="locations",
-     *                             type="array",
-     *                             @OA\Items(
-     *                                 type="object",
-     *                                 @OA\Property(property="location_name", type="string"),
-     *                                 @OA\Property(property="city", type="object")
+     *                         @OA\Property(property="locations", type="array",
+     *                             @OA\Items(type="object",
+     *                                 @OA\Property(property="id",             type="integer"),
+     *                                 @OA\Property(property="location_name",  type="string"),
+     *                                 @OA\Property(property="location_name_ar", type="string"),
+     *                                 @OA\Property(property="latitude",       type="number", format="float", nullable=true),
+     *                                 @OA\Property(property="longitude",      type="number", format="float", nullable=true),
+     *                                 @OA\Property(property="is_available",   type="boolean"),
+     *                                 @OA\Property(property="city",           type="object")
      *                             )
      *                         )
      *                     )
-     *                 )
+     *                 ),
+     *                 @OA\Property(property="total", type="integer"),
+     *                 @OA\Property(property="per_page", type="integer")
      *             )
      *         )
      *     )
@@ -130,196 +95,175 @@ class RidingInstructorController extends Controller
      */
     public function index(Request $request)
     {
-        $query = RidingInstructor::with([
-            'provider.city',
-            'locations.city'
-        ])
-        ->where('is_available', true);
+        $query = RidingInstructor::with(['provider.city', 'locations.city'])
+            ->where('is_available', true);
 
-        // Filtre: Ville (via provider ou locations)
-        if ($request->has('city_id')) {
-            $query->where(function($q) use ($request) {
-                $q->whereHas('provider', function($pq) use ($request) {
-                    $pq->where('city_id', $request->city_id);
-                })
-                ->orWhereHas('locations', function($lq) use ($request) {
-                    $lq->where('city_id', $request->city_id);
-                });
+        if ($request->filled('city_id')) {
+            $query->where(function ($q) use ($request) {
+                $q->whereHas('provider', fn ($pq) => $pq->where('city_id', $request->city_id))
+                  ->orWhereHas('locations', fn ($lq) => $lq->where('city_id', $request->city_id));
             });
         }
 
-        // Filtre: Expérience minimum
-        if ($request->has('min_experience_years')) {
+        if ($request->filled('min_experience_years')) {
             $query->where('experience_years', '>=', $request->min_experience_years);
         }
 
-        // Filtre: Note minimale
-        if ($request->has('min_rating')) {
+        if ($request->filled('min_rating')) {
             $query->where('rating_average', '>=', $request->min_rating);
         }
 
-        // Filtre: Disponibilité
-        if ($request->has('is_available')) {
+        if ($request->filled('is_available')) {
             $query->where('is_available', $request->is_available);
         }
 
-        // Recherche par nom
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('instructor_name', 'LIKE', "%{$search}%")
-                  ->orWhere('instructor_name_ar', 'LIKE', "%{$search}%");
-            });
+            $query->where(fn ($q) => $q
+                ->where('instructor_name', 'LIKE', "%{$search}%")
+                ->orWhere('instructor_name_ar', 'LIKE', "%{$search}%")
+            );
         }
 
-        // Tri
-        $sortBy = $request->get('sort_by', 'rating');
-        switch ($sortBy) {
-            case 'experience':
-                $query->orderByDesc('experience_years');
-                break;
-            case 'sessions':
-                $query->orderByDesc('total_sessions');
-                break;
-            default: // rating
-                $query->orderByDesc('rating_average');
-                break;
-        }
+        match ($request->get('sort_by', 'rating')) {
+            'experience' => $query->orderByDesc('experience_years'),
+            'sessions'   => $query->orderByDesc('total_sessions'),
+            default      => $query->orderByDesc('rating_average'),
+        };
 
-        $perPage = $request->get('per_page', 20);
-        $instructors = $query->paginate($perPage);
+        $instructors = $query->paginate($request->get('per_page', 20));
 
         return response()->json([
             'success' => true,
-            'data' => $instructors,
-            'message' => 'Riding instructors retrieved successfully'
-        ], 200);
+            'data'    => $instructors,
+            'message' => 'Riding instructors retrieved successfully',
+        ]);
     }
 
     /**
      * @OA\Get(
      *     path="/api/riding-instructors/{id}",
-     *     summary="Détails d'un instructeur",
-     *     description="Récupère les détails complets d'un instructeur avec avis et disponibilités",
+     *     summary="Instructor detail",
+     *     description="Full instructor profile with locations, certifications, recent reviews, and other provider services.",
      *     operationId="getRidingInstructor",
      *     tags={"Riding Instructors"},
-     *     security={{"bearer":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="ID de l'instructeur",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
      *     @OA\Response(
      *         response=200,
-     *         description="Instructeur trouvé",
+     *         description="Instructor found",
      *         @OA\JsonContent(
-     *             type="object",
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string")
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id",               type="integer", example=1),
+     *                 @OA\Property(property="instructor_name",  type="string",  example="Khalid Al-Mansouri"),
+     *                 @OA\Property(property="instructor_name_ar", type="string", example="خالد المنصوري"),
+     *                 @OA\Property(property="bio",              type="string"),
+     *                 @OA\Property(property="bio_ar",           type="string"),
+     *                 @OA\Property(property="photo",            type="string",  nullable=true),
+     *                 @OA\Property(property="experience_years", type="integer", example=12),
+     *                 @OA\Property(property="rating_average",   type="number",  format="float", example=4.9),
+     *                 @OA\Property(property="total_sessions",   type="integer", example=340),
+     *                 @OA\Property(property="certifications",   type="array",   @OA\Items(type="string")),
+     *                 @OA\Property(property="provider", type="object",
+     *                     @OA\Property(property="business_name", type="string"),
+     *                     @OA\Property(property="city",          type="object"),
+     *                     @OA\Property(property="user", type="object",
+     *                         @OA\Property(property="first_name", type="string"),
+     *                         @OA\Property(property="last_name",  type="string"),
+     *                         @OA\Property(property="phone",      type="string")
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="locations", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",             type="integer"),
+     *                         @OA\Property(property="location_name",  type="string"),
+     *                         @OA\Property(property="location_name_ar", type="string"),
+     *                         @OA\Property(property="latitude",       type="number", format="float", nullable=true),
+     *                         @OA\Property(property="longitude",      type="number", format="float", nullable=true),
+     *                         @OA\Property(property="is_available",   type="boolean"),
+     *                         @OA\Property(property="city",           type="object")
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="recent_reviews",  type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="other_services",  type="array", @OA\Items(type="object"))
+     *             )
      *         )
      *     ),
-     *     @OA\Response(response=404, description="Instructeur non trouvé")
+     *     @OA\Response(response=404, description="Instructor not found")
      * )
      */
-    public function show($id)
+    public function show(string $id)
     {
         $instructor = RidingInstructor::with([
             'provider.city',
             'provider.user:id,first_name,last_name,phone',
-            'locations.city'
+            'locations.city',
         ])->find($id);
 
         if (!$instructor) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Riding instructor not found'
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'Riding instructor not found'], 404);
         }
 
-        // Récupérer quelques avis récents
-        $recentReviews = \App\Models\ServiceReview::whereHas('booking', function($q) use ($instructor) {
-            $q->whereHas('service', function($sq) use ($instructor) {
+        $recentReviews = \App\Models\ServiceReview::whereHas('booking', function ($q) use ($instructor) {
+            $q->whereHas('service', function ($sq) use ($instructor) {
                 $sq->where('provider_id', $instructor->provider_id)
-                   ->whereHas('category', function($cq) {
-                       $cq->where('slug', 'riding-instructor');
-                   });
+                   ->whereHas('category', fn ($cq) => $cq->where('slug', 'riding-instructor'));
             });
         })
         ->where('is_approved', true)
         ->with('user:id,first_name,last_name,avatar')
-        ->latest()
-        ->limit(5)
-        ->get();
+        ->latest()->limit(5)->get();
 
         $otherServices = Service::where('provider_id', $instructor->provider_id)
             ->where('is_available', true)
-            ->whereDoesntHave('category', function($q) {
-                $q->where('slug', 'riding-instructor');
-            })
+            ->whereDoesntHave('category', fn ($q) => $q->where('slug', 'riding-instructor'))
             ->with('category:id,name,name_ar,icon')
             ->select('id', 'name', 'name_ar', 'price', 'image', 'category_id')
-            ->limit(4)
-            ->get();
-
-        $instructorData = $instructor->toArray();
-        $instructorData['recent_reviews'] = $recentReviews;
-        $instructorData['other_services'] = $otherServices;
+            ->limit(4)->get();
 
         return response()->json([
             'success' => true,
-            'data' => $instructorData,
-            'message' => 'Instructor found'
-        ], 200);
+            'data'    => array_merge($instructor->toArray(), [
+                'recent_reviews' => $recentReviews,
+                'other_services' => $otherServices,
+            ]),
+            'message' => 'Instructor found',
+        ]);
     }
+
+    // ---------------------------------------------------------------
+    // Public — locations
+    // ---------------------------------------------------------------
 
     /**
      * @OA\Get(
      *     path="/api/instructor-locations",
-     *     summary="Lieux de cours disponibles",
-     *     description="Récupère tous les lieux où les cours de conduite sont dispensés",
+     *     summary="List instructor locations",
+     *     description="All available training locations with GPS coordinates, city, and instructor info.",
      *     operationId="getInstructorLocations",
      *     tags={"Riding Instructors"},
-     *     security={{"bearer":{}}},
-     *     @OA\Parameter(
-     *         name="city_id",
-     *         in="query",
-     *         description="Filtrer par ville",
-     *         required=false,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *     @OA\Parameter(
-     *         name="instructor_id",
-     *         in="query",
-     *         description="Filtrer par instructeur",
-     *         required=false,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
+     *     @OA\Parameter(name="city_id",       in="query", required=false, @OA\Schema(type="integer", example=1)),
+     *     @OA\Parameter(name="instructor_id", in="query", required=false, @OA\Schema(type="integer", example=1)),
      *     @OA\Response(
      *         response=200,
-     *         description="Lieux récupérés",
+     *         description="Locations retrieved",
      *         @OA\JsonContent(
-     *             type="object",
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="array",
-     *                 @OA\Items(
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer"),
-     *                     @OA\Property(property="location_name", type="string"),
-     *                     @OA\Property(property="location_name_ar", type="string"),
-     *                     @OA\Property(property="is_available", type="boolean"),
-     *                     @OA\Property(
-     *                         property="city",
-     *                         type="object",
-     *                         @OA\Property(property="name", type="string")
+     *             @OA\Property(property="count",   type="integer", example=6),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(type="object",
+     *                     @OA\Property(property="id",             type="integer"),
+     *                     @OA\Property(property="location_name",  type="string",  example="Al-Naseem Training Circuit"),
+     *                     @OA\Property(property="location_name_ar", type="string", example="حلبة النسيم للتدريب"),
+     *                     @OA\Property(property="latitude",       type="number",  format="float", nullable=true, example=24.7250),
+     *                     @OA\Property(property="longitude",      type="number",  format="float", nullable=true, example=46.6900),
+     *                     @OA\Property(property="is_available",   type="boolean", example=true),
+     *                     @OA\Property(property="city",           type="object",
+     *                         @OA\Property(property="id",   type="integer"),
+     *                         @OA\Property(property="name", type="string", example="Riyadh")
      *                     ),
-     *                     @OA\Property(
-     *                         property="instructor",
-     *                         type="object",
+     *                     @OA\Property(property="instructor", type="object",
+     *                         @OA\Property(property="id",              type="integer"),
      *                         @OA\Property(property="instructor_name", type="string")
      *                     )
      *                 )
@@ -330,16 +274,13 @@ class RidingInstructorController extends Controller
      */
     public function locations(Request $request)
     {
-        $query = InstructorLocation::with(['city', 'instructor'])
-            ->where('is_available', true);
+        $query = InstructorLocation::with(['city', 'instructor'])->where('is_available', true);
 
-        // Filtre: Ville
-        if ($request->has('city_id')) {
+        if ($request->filled('city_id')) {
             $query->where('city_id', $request->city_id);
         }
 
-        // Filtre: Instructeur
-        if ($request->has('instructor_id')) {
+        if ($request->filled('instructor_id')) {
             $query->where('instructor_id', $request->instructor_id);
         }
 
@@ -347,248 +288,82 @@ class RidingInstructorController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $locations,
-            'count' => $locations->count(),
-            'message' => 'Instructor locations retrieved successfully'
-        ], 200);
-    }
-
-    /**
-     * @OA\Post(
-     *     path="/api/riding-instructors/{id}/book-session",
-     *     summary="Réserver une session",
-     *     description="Réserve une session de cours avec un instructeur",
-     *     operationId="bookInstructorSession",
-     *     tags={"Riding Instructors"},
-     *     security={{"bearer":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="ID de l'instructeur",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"booking_date", "start_time", "location_id"},
-     *             @OA\Property(property="booking_date", type="string", format="date", example="2025-02-15"),
-     *             @OA\Property(property="start_time", type="string", format="time", example="09:00"),
-     *             @OA\Property(property="duration_hours", type="integer", example=2, description="Durée en heures (1-4)"),
-     *             @OA\Property(property="location_id", type="integer", example=1, description="ID du lieu de cours"),
-     *             @OA\Property(property="session_type", type="string", enum={"beginner", "intermediate", "advanced", "custom"}, example="beginner"),
-     *             @OA\Property(property="notes", type="string", example="First time riding, need basic training")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Session réservée",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string")
-     *         )
-     *     ),
-     *     @OA\Response(response=400, description="Instructeur non disponible ou créneau occupé")
-     * )
-     */
-    public function bookSession(Request $request, $id)
-    {
-        $user = JWTAuth::parseToken()->authenticate();
-
-        $instructor = RidingInstructor::with('provider')->find($id);
-
-        if (!$instructor) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Riding instructor not found'
-            ], 404);
-        }
-
-        $validated = $request->validate([
-            'booking_date' => 'required|date|after:today',
-            'start_time' => 'required|date_format:H:i',
-            'duration_hours' => 'nullable|integer|min:1|max:4',
-            'location_id' => 'required|exists:instructor_locations,id',
-            'session_type' => 'nullable|in:beginner,intermediate,advanced,custom',
-            'notes' => 'nullable|string|max:1000',
+            'data'    => $locations,
+            'count'   => $locations->count(),
+            'message' => 'Instructor locations retrieved successfully',
         ]);
-
-        DB::beginTransaction();
-        try {
-            // Vérifier disponibilité de l'instructeur
-            if (!$instructor->is_available) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Instructor is not currently available'
-                ], 400);
-            }
-
-            // Vérifier que le lieu appartient à cet instructeur
-            $location = InstructorLocation::find($validated['location_id']);
-            if ($location->instructor_id !== $instructor->id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid location for this instructor'
-                ], 400);
-            }
-
-            // Vérifier qu'il n'y a pas déjà une réservation à ce créneau
-            $durationHours = $validated['duration_hours'] ?? 1;
-            $endTime = date('H:i', strtotime($validated['start_time'] . " +{$durationHours} hours"));
-
-            $conflictExists = ServiceBooking::whereHas('service', function($q) use ($instructor) {
-                $q->where('provider_id', $instructor->provider_id)
-                  ->whereHas('category', function($cq) {
-                      $cq->where('slug', 'riding-instructor');
-                  });
-            })
-            ->where('booking_date', $validated['booking_date'])
-            ->where(function($q) use ($validated, $endTime) {
-                $q->whereBetween('start_time', [$validated['start_time'], $endTime])
-                  ->orWhereBetween('end_time', [$validated['start_time'], $endTime]);
-            })
-            ->whereIn('status', ['pending', 'confirmed', 'in_progress'])
-            ->exists();
-
-            if ($conflictExists) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This time slot is already booked'
-                ], 400);
-            }
-
-            // Trouver le service d'instructeur
-            $instructorService = Service::whereHas('category', function($q) {
-                $q->where('slug', 'riding-instructor');
-            })
-            ->where('provider_id', $instructor->provider_id)
-            ->where('is_available', true)
-            ->first();
-
-            if (!$instructorService) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Instructor service not available'
-                ], 400);
-            }
-
-            // Calculer le prix indicatif (prix par heure × durée)
-            $pricePerHour = $instructorService->price;
-            $totalPrice = $pricePerHour * $durationHours;
-
-            // Créer la réservation
-            $booking = ServiceBooking::create([
-                'service_id' => $instructorService->id,
-                'user_id' => $user->id,
-                'provider_id' => $instructor->provider_id,
-                'booking_date' => $validated['booking_date'],
-                'start_time' => $validated['start_time'],
-                'end_time' => $endTime,
-                'status' => 'pending',
-                'price' => $totalPrice,
-                'payment_status' => 'pending',
-                'pickup_location' => $location->location_name,
-                'notes' => ($validated['notes'] ?? '') . " | Session: " . ($validated['session_type'] ?? 'standard') . " | Duration: {$durationHours}h"
-            ]);
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'booking' => $booking->load(['service', 'provider']),
-                    'instructor' => $instructor,
-                    'location' => $location,
-                    'duration_hours' => $durationHours,
-                    'price_per_hour' => $pricePerHour,
-                    'total_price' => $totalPrice,
-                ],
-                'message' => 'Instructor session booked successfully'
-            ], 201);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to book session',
-                'error' => $e->getMessage()
-            ], 500);
-        }
     }
+
+    // ---------------------------------------------------------------
+    // Public — availability
+    // ---------------------------------------------------------------
 
     /**
      * @OA\Get(
      *     path="/api/riding-instructors/{id}/availability",
-     *     summary="Disponibilités d'un instructeur",
-     *     description="Récupère les créneaux disponibles d'un instructeur pour une période donnée",
+     *     summary="Instructor availability slots",
+     *     description="Returns available and booked time slots for a given date range. Slots are generated from the instructor's configured schedule (ServiceSchedule). If no schedule is configured, default slots (08:00–19:00) are used. Optionally filter by location.",
      *     operationId="getInstructorAvailability",
      *     tags={"Riding Instructors"},
-     *     security={{"bearer":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="ID de l'instructeur",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *     @OA\Parameter(
-     *         name="from_date",
-     *         in="query",
-     *         description="Date de début",
-     *         required=true,
-     *         @OA\Schema(type="string", format="date", example="2025-02-01")
-     *     ),
-     *     @OA\Parameter(
-     *         name="to_date",
-     *         in="query",
-     *         description="Date de fin",
-     *         required=true,
-     *         @OA\Schema(type="string", format="date", example="2025-02-07")
-     *     ),
+     *     @OA\Parameter(name="id",          in="path",  required=true,  @OA\Schema(type="integer", example=1)),
+     *     @OA\Parameter(name="from_date",   in="query", required=true,  @OA\Schema(type="string", format="date", example="2026-06-10")),
+     *     @OA\Parameter(name="to_date",     in="query", required=true,  @OA\Schema(type="string", format="date", example="2026-06-16")),
+     *     @OA\Parameter(name="location_id", in="query", required=false, @OA\Schema(type="integer", example=1),
+     *         description="Filter by specific instructor location. Returns location coordinates when provided."),
      *     @OA\Response(
      *         response=200,
-     *         description="Disponibilités récupérées",
+     *         description="Availability retrieved",
      *         @OA\JsonContent(
-     *             type="object",
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="available_slots",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="date", type="string", format="date"),
-     *                         @OA\Property(property="time_slots", type="array", @OA\Items(type="string", example="09:00-11:00"))
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="instructor", type="object",
+     *                     @OA\Property(property="id",       type="integer", example=1),
+     *                     @OA\Property(property="name",     type="string",  example="Khalid Al-Mansouri"),
+     *                     @OA\Property(property="name_ar",  type="string",  example="خالد المنصوري")
+     *                 ),
+     *                 @OA\Property(property="location", type="object", nullable=true,
+     *                     description="Populated only when location_id is provided",
+     *                     @OA\Property(property="id",             type="integer"),
+     *                     @OA\Property(property="name",           type="string"),
+     *                     @OA\Property(property="name_ar",        type="string"),
+     *                     @OA\Property(property="latitude",       type="number", format="float", nullable=true),
+     *                     @OA\Property(property="longitude",      type="number", format="float", nullable=true),
+     *                     @OA\Property(property="is_available",   type="boolean")
+     *                 ),
+     *                 @OA\Property(property="available_slots", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="date",       type="string", format="date", example="2026-06-10"),
+     *                         @OA\Property(property="day_name",   type="string", example="Wednesday"),
+     *                         @OA\Property(property="time_slots", type="array", @OA\Items(type="string", example="08:00-10:00"))
      *                     )
      *                 ),
-     *                 @OA\Property(
-     *                     property="booked_slots",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="date", type="string"),
-     *                         @OA\Property(property="start_time", type="string"),
-     *                         @OA\Property(property="end_time", type="string")
+     *                 @OA\Property(property="booked_slots", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="date",       type="string", format="date"),
+     *                         @OA\Property(property="start_time", type="string", example="10:00"),
+     *                         @OA\Property(property="end_time",   type="string", example="12:00")
      *                     )
+     *                 ),
+     *                 @OA\Property(property="schedule_source", type="string",
+     *                     enum={"configured","default"},
+     *                     description="'configured' = slots from provider schedule, 'default' = hardcoded fallback"),
+     *                 @OA\Property(property="period", type="object",
+     *                     @OA\Property(property="from", type="string", format="date"),
+     *                     @OA\Property(property="to",   type="string", format="date")
      *                 )
      *             )
      *         )
-     *     )
+     *     ),
+     *     @OA\Response(response=404, description="Instructor not found"),
+     *     @OA\Response(response=422, description="location_id does not belong to this instructor")
      * )
      */
-    public function availability(Request $request, $id)
+    public function availability(Request $request, string $id)
     {
         $instructor = RidingInstructor::find($id);
 
         if (!$instructor) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Riding instructor not found'
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'Riding instructor not found'], 404);
         }
 
         $validated = $request->validate([
@@ -597,136 +372,313 @@ class RidingInstructorController extends Controller
             'location_id' => 'nullable|integer|exists:instructor_locations,id',
         ]);
 
-        // Validate location belongs to this instructor
         if (!empty($validated['location_id'])) {
-            $locationBelongs = $instructor->locations()
-                ->where('id', $validated['location_id'])
-                ->exists();
-
-            if (!$locationBelongs) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Location does not belong to this instructor'
-                ], 422);
+            $belongs = $instructor->locations()->where('id', $validated['location_id'])->exists();
+            if (!$belongs) {
+                return response()->json(['success' => false, 'message' => 'Location does not belong to this instructor'], 422);
             }
         }
 
-        // Récupérer les réservations existantes
-        $bookedSlots = ServiceBooking::whereHas('service', function($q) use ($instructor) {
-            $q->where('provider_id', $instructor->provider_id)
-              ->whereHas('category', function($cq) {
-                  $cq->where('slug', 'riding-instructor');
-              });
+        // Load instructor service to get its configured schedule
+        $instructorService = Service::where('provider_id', $instructor->provider_id)
+            ->whereHas('category', fn ($q) => $q->where('slug', 'riding-instructor'))
+            ->where('is_available', true)
+            ->first();
+
+        // Build schedule map keyed by day_of_week (0=Sun … 6=Sat)
+        $scheduleMap = [];
+        $scheduleSource = 'default';
+
+        if ($instructorService) {
+            $schedules = ServiceSchedule::where('service_id', $instructorService->id)
+                ->where('is_available', true)
+                ->get();
+
+            if ($schedules->isNotEmpty()) {
+                $scheduleSource = 'configured';
+                foreach ($schedules as $s) {
+                    $scheduleMap[$s->day_of_week] = [$s->start_time, $s->end_time];
+                }
+            }
+        }
+
+        // Booked slots in date range
+        $bookedSlots = ServiceBooking::when($instructorService, function ($q) use ($instructorService) {
+            $q->where('service_id', $instructorService->id);
+        }, function ($q) use ($instructor) {
+            $q->whereHas('service', fn ($sq) => $sq
+                ->where('provider_id', $instructor->provider_id)
+                ->whereHas('category', fn ($cq) => $cq->where('slug', 'riding-instructor'))
+            );
         })
         ->whereBetween('booking_date', [$validated['from_date'], $validated['to_date']])
         ->whereIn('status', ['pending', 'confirmed', 'in_progress'])
-        ->when(!empty($validated['location_id']), function($q) use ($validated) {
-            $q->where('instructor_location_id', $validated['location_id']);
-        })
+        ->when(!empty($validated['location_id']), fn ($q) => $q->where('instructor_location_id', $validated['location_id']))
         ->select('booking_date', 'start_time', 'end_time')
         ->get();
 
-        // Générer les créneaux disponibles (exemple: 8h-18h, sessions de 2h)
+        // Generate available slots per day
         $availableSlots = [];
-        $currentDate = \Carbon\Carbon::parse($validated['from_date']);
-        $endDate = \Carbon\Carbon::parse($validated['to_date']);
+        $current = Carbon::parse($validated['from_date']);
+        $end     = Carbon::parse($validated['to_date']);
 
-        while ($currentDate <= $endDate) {
-            $dateStr = $currentDate->format('Y-m-d');
-            $slots = [];
+        while ($current <= $end) {
+            $dateStr    = $current->format('Y-m-d');
+            $dayOfWeek  = (int) $current->dayOfWeek;
 
-            // Créneaux: 08:00-10:00, 10:00-12:00, 13:00-15:00, 15:00-17:00, 17:00-19:00
-            $timeSlots = [
-                ['08:00', '10:00'],
-                ['10:00', '12:00'],
-                ['13:00', '15:00'],
-                ['15:00', '17:00'],
-                ['17:00', '19:00']
-            ];
-
-            foreach ($timeSlots as $slot) {
-                $isBooked = $bookedSlots->contains(function($booking) use ($dateStr, $slot) {
-                    return $booking->booking_date->format('Y-m-d') === $dateStr &&
-                           (($booking->start_time >= $slot[0] && $booking->start_time < $slot[1]) ||
-                            ($booking->end_time > $slot[0] && $booking->end_time <= $slot[1]));
-                });
-
-                if (!$isBooked) {
-                    $slots[] = $slot[0] . '-' . $slot[1];
-                }
+            // Determine time slots for this day
+            if ($scheduleSource === 'configured' && isset($scheduleMap[$dayOfWeek])) {
+                [$dayStart, $dayEnd] = $scheduleMap[$dayOfWeek];
+                $slots = $this->generateSlots($dayStart, $dayEnd, 120);
+            } elseif ($scheduleSource === 'default') {
+                $slots = array_map(fn ($s) => $s[0] . '-' . $s[1], self::DEFAULT_SLOTS);
+            } else {
+                // Day not in configured schedule → closed
+                $current->addDay();
+                continue;
             }
 
-            if (!empty($slots)) {
+            // Remove booked slots
+            $freeSlots = array_filter($slots, function ($slot) use ($bookedSlots, $dateStr) {
+                [$slotStart, $slotEnd] = explode('-', $slot);
+                return !$bookedSlots->contains(function ($b) use ($dateStr, $slotStart, $slotEnd) {
+                    return $b->booking_date->format('Y-m-d') === $dateStr
+                        && (($b->start_time >= $slotStart && $b->start_time < $slotEnd)
+                         || ($b->end_time   >  $slotStart && $b->end_time  <= $slotEnd));
+                });
+            });
+
+            if (!empty($freeSlots)) {
                 $availableSlots[] = [
-                    'date' => $dateStr,
-                    'time_slots' => $slots
+                    'date'       => $dateStr,
+                    'day_name'   => $current->format('l'),
+                    'time_slots' => array_values($freeSlots),
                 ];
             }
 
-            $currentDate->addDay();
+            $current->addDay();
         }
 
-        $location = null;
+        $locationData = null;
         if (!empty($validated['location_id'])) {
             $loc = $instructor->locations()->find($validated['location_id']);
-            $location = [
-                'id'          => $loc->id,
-                'name'        => $loc->location_name,
-                'name_ar'     => $loc->location_name_ar,
-                'city_id'     => $loc->city_id,
-                'latitude'    => $loc->latitude,
-                'longitude'   => $loc->longitude,
-                'is_available'=> $loc->is_available,
+            $locationData = [
+                'id'           => $loc->id,
+                'name'         => $loc->location_name,
+                'name_ar'      => $loc->location_name_ar,
+                'city_id'      => $loc->city_id,
+                'latitude'     => $loc->latitude,
+                'longitude'    => $loc->longitude,
+                'is_available' => $loc->is_available,
             ];
         }
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'instructor' => [
-                    'id'     => $instructor->id,
-                    'name'   => $instructor->instructor_name,
-                    'name_ar'=> $instructor->instructor_name_ar
+            'data'    => [
+                'instructor'      => [
+                    'id'      => $instructor->id,
+                    'name'    => $instructor->instructor_name,
+                    'name_ar' => $instructor->instructor_name_ar,
                 ],
-                'location'       => $location,
-                'available_slots'=> $availableSlots,
-                'booked_slots'   => $bookedSlots,
-                'period' => [
-                    'from' => $validated['from_date'],
-                    'to'   => $validated['to_date']
-                ]
+                'location'        => $locationData,
+                'available_slots' => $availableSlots,
+                'booked_slots'    => $bookedSlots,
+                'schedule_source' => $scheduleSource,
+                'period'          => ['from' => $validated['from_date'], 'to' => $validated['to_date']],
             ],
-            'message' => 'Availability retrieved successfully'
-        ], 200);
+            'message' => 'Availability retrieved successfully',
+        ]);
     }
+
+    // ---------------------------------------------------------------
+    // Authenticated — book session
+    // ---------------------------------------------------------------
+
+    /**
+     * @OA\Post(
+     *     path="/api/riding-instructors/{id}/book-session",
+     *     summary="Book a riding session",
+     *     description="Creates a session booking with the instructor. Price = service price × duration_hours. Checks for time-slot conflicts before confirming. Sends booking to pending status awaiting provider confirmation.",
+     *     operationId="bookInstructorSession",
+     *     tags={"Riding Instructors"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"booking_date","start_time","location_id"},
+     *             @OA\Property(property="booking_date",   type="string", format="date",                   example="2026-06-15"),
+     *             @OA\Property(property="start_time",     type="string", format="time",                   example="09:00",
+     *                 description="24h format HH:MM. Must match an available slot from the availability endpoint."),
+     *             @OA\Property(property="duration_hours", type="integer", minimum=1, maximum=4,            example=2,
+     *                 description="Session length in hours (default 1)."),
+     *             @OA\Property(property="location_id",    type="integer",                                 example=1,
+     *                 description="ID from GET /api/instructor-locations or the locations array in instructor detail."),
+     *             @OA\Property(property="session_type",   type="string",
+     *                 enum={"beginner","intermediate","advanced","custom"},                                 example="beginner"),
+     *             @OA\Property(property="notes",          type="string",                                  example="First time on a motorcycle")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Session booked — awaiting provider confirmation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string",  example="Instructor session booked successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="booking", type="object",
+     *                     @OA\Property(property="id",                    type="integer", example=42),
+     *                     @OA\Property(property="booking_date",          type="string",  format="date"),
+     *                     @OA\Property(property="start_time",            type="string",  example="09:00"),
+     *                     @OA\Property(property="end_time",              type="string",  example="11:00"),
+     *                     @OA\Property(property="session_type",          type="string",  example="beginner"),
+     *                     @OA\Property(property="instructor_location_id",type="integer", example=1),
+     *                     @OA\Property(property="status",                type="string",  example="pending"),
+     *                     @OA\Property(property="price",                 type="number",  format="float", example=300.00),
+     *                     @OA\Property(property="payment_status",        type="string",  example="pending")
+     *                 ),
+     *                 @OA\Property(property="instructor", type="object"),
+     *                 @OA\Property(property="location",   type="object",
+     *                     @OA\Property(property="id",             type="integer"),
+     *                     @OA\Property(property="location_name",  type="string"),
+     *                     @OA\Property(property="location_name_ar", type="string"),
+     *                     @OA\Property(property="latitude",       type="number", format="float", nullable=true),
+     *                     @OA\Property(property="longitude",      type="number", format="float", nullable=true)
+     *                 ),
+     *                 @OA\Property(property="duration_hours",  type="integer", example=2),
+     *                 @OA\Property(property="price_per_hour",  type="number",  format="float", example=150.00),
+     *                 @OA\Property(property="total_price",     type="number",  format="float", example=300.00)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Instructor unavailable, invalid location, or slot already booked"),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=404, description="Instructor not found or no active service")
+     * )
+     */
+    public function bookSession(Request $request, string $id)
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+
+        $instructor = RidingInstructor::with('provider')->find($id);
+
+        if (!$instructor) {
+            return response()->json(['success' => false, 'message' => 'Riding instructor not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'booking_date'   => 'required|date|after:today',
+            'start_time'     => 'required|date_format:H:i',
+            'duration_hours' => 'nullable|integer|min:1|max:4',
+            'location_id'    => 'required|exists:instructor_locations,id',
+            'session_type'   => 'nullable|in:beginner,intermediate,advanced,custom',
+            'notes'          => 'nullable|string|max:1000',
+        ]);
+
+        if (!$instructor->is_available) {
+            return response()->json(['success' => false, 'message' => 'Instructor is not currently available'], 400);
+        }
+
+        $location = InstructorLocation::find($validated['location_id']);
+
+        if ($location->instructor_id !== $instructor->id) {
+            return response()->json(['success' => false, 'message' => 'Invalid location for this instructor'], 400);
+        }
+
+        $durationHours = $validated['duration_hours'] ?? 1;
+        $endTime = date('H:i', strtotime($validated['start_time'] . " +{$durationHours} hours"));
+
+        $instructorService = Service::where('provider_id', $instructor->provider_id)
+            ->whereHas('category', fn ($q) => $q->where('slug', 'riding-instructor'))
+            ->where('is_available', true)
+            ->first();
+
+        if (!$instructorService) {
+            return response()->json(['success' => false, 'message' => 'Instructor service not available'], 404);
+        }
+
+        $conflictExists = ServiceBooking::where('service_id', $instructorService->id)
+            ->where('instructor_location_id', $location->id)
+            ->where('booking_date', $validated['booking_date'])
+            ->where(function ($q) use ($validated, $endTime) {
+                $q->whereBetween('start_time', [$validated['start_time'], $endTime])
+                  ->orWhereBetween('end_time',  [$validated['start_time'], $endTime]);
+            })
+            ->whereIn('status', ['pending', 'confirmed', 'in_progress'])
+            ->exists();
+
+        if ($conflictExists) {
+            return response()->json(['success' => false, 'message' => 'This time slot is already booked'], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            $totalPrice = $instructorService->price * $durationHours;
+
+            $booking = ServiceBooking::create([
+                'service_id'             => $instructorService->id,
+                'user_id'                => $user->id,
+                'provider_id'            => $instructor->provider_id,
+                'instructor_location_id' => $location->id,
+                'session_type'           => $validated['session_type'] ?? null,
+                'booking_date'           => $validated['booking_date'],
+                'start_time'             => $validated['start_time'],
+                'end_time'               => $endTime,
+                'status'                 => 'pending',
+                'price'                  => $totalPrice,
+                'payment_status'         => 'pending',
+                'pickup_location'        => $location->location_name,
+                'notes'                  => $validated['notes'] ?? null,
+            ]);
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Failed to book session', 'error' => $e->getMessage()], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'booking'       => $booking->load(['service', 'provider']),
+                'instructor'    => $instructor,
+                'location'      => $location,
+                'duration_hours'=> $durationHours,
+                'price_per_hour'=> $instructorService->price,
+                'total_price'   => $totalPrice,
+            ],
+            'message' => 'Instructor session booked successfully',
+        ], 201);
+    }
+
+    // ---------------------------------------------------------------
+    // Provider — add instructor
+    // ---------------------------------------------------------------
 
     /**
      * @OA\Post(
      *     path="/api/provider/riding-instructors",
-     *     summary="Ajouter un instructeur (Provider)",
-     *     description="Permet au fournisseur d'ajouter un instructeur à son équipe",
+     *     summary="Add instructor to your team (Provider)",
+     *     description="Creates a new riding instructor linked to the authenticated provider.",
      *     operationId="createInstructor",
      *     tags={"Riding Instructors"},
-     *     security={{"bearer":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"instructor_name", "experience_years"},
-     *             @OA\Property(property="instructor_name", type="string", example="Ahmed Al-Rashid"),
-     *             @OA\Property(property="instructor_name_ar", type="string", example="أحمد الراشد"),
-     *             @OA\Property(property="bio", type="string"),
-     *             @OA\Property(property="bio_ar", type="string"),
-     *             @OA\Property(property="experience_years", type="integer", example=10),
-     *             @OA\Property(
-     *                 property="certifications",
-     *                 type="array",
-     *                 @OA\Items(type="string", example="Advanced Riding Techniques")
-     *             ),
-     *             @OA\Property(property="photo", type="string", format="binary")
+     *             required={"instructor_name","experience_years"},
+     *             @OA\Property(property="instructor_name",    type="string",  example="Khalid Al-Mansouri"),
+     *             @OA\Property(property="instructor_name_ar", type="string",  example="خالد المنصوري"),
+     *             @OA\Property(property="bio",                type="string"),
+     *             @OA\Property(property="bio_ar",             type="string"),
+     *             @OA\Property(property="experience_years",   type="integer", example=10),
+     *             @OA\Property(property="certifications",     type="array",   @OA\Items(type="string")),
+     *             @OA\Property(property="photo",              type="string",  format="binary")
      *         )
      *     ),
-     *     @OA\Response(response=201, description="Instructeur ajouté"),
-     *     @OA\Response(response=403, description="Vous n'êtes pas fournisseur")
+     *     @OA\Response(response=201, description="Instructor created"),
+     *     @OA\Response(response=403, description="Not a service provider")
      * )
      */
     public function store(Request $request)
@@ -734,60 +686,243 @@ class RidingInstructorController extends Controller
         $user = JWTAuth::parseToken()->authenticate();
 
         if (!$user->serviceProvider) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You are not a service provider'
-            ], 403);
+            return response()->json(['success' => false, 'message' => 'You are not a service provider'], 403);
         }
 
         $validated = $request->validate([
-            'instructor_name' => 'required|string|max:255',
+            'instructor_name'    => 'required|string|max:255',
             'instructor_name_ar' => 'nullable|string|max:255',
-            'bio' => 'nullable|string|max:2000',
-            'bio_ar' => 'nullable|string|max:2000',
-            'experience_years' => 'required|integer|min:0|max:50',
-            'certifications' => 'nullable|array',
-            'certifications.*' => 'string|max:255',
-            'photo' => 'nullable|image|max:2048'
+            'bio'                => 'nullable|string|max:2000',
+            'bio_ar'             => 'nullable|string|max:2000',
+            'experience_years'   => 'required|integer|min:0|max:50',
+            'certifications'     => 'nullable|array',
+            'certifications.*'   => 'string|max:255',
+            'photo'              => 'nullable|image|max:2048',
         ]);
 
         DB::beginTransaction();
         try {
-            // Upload photo
             if ($request->hasFile('photo')) {
                 $validated['photo'] = $request->file('photo')->store('instructors', 'public');
             }
 
             $instructor = RidingInstructor::create([
-                'provider_id' => $user->serviceProvider->id,
-                'instructor_name' => $validated['instructor_name'],
+                'provider_id'        => $user->serviceProvider->id,
+                'instructor_name'    => $validated['instructor_name'],
                 'instructor_name_ar' => $validated['instructor_name_ar'] ?? null,
-                'bio' => $validated['bio'] ?? null,
-                'bio_ar' => $validated['bio_ar'] ?? null,
-                'photo' => $validated['photo'] ?? null,
-                'certifications' => json_encode($validated['certifications'] ?? []),
-                'experience_years' => $validated['experience_years'],
-                'rating_average' => 0,
-                'total_sessions' => 0,
-                'is_available' => true
+                'bio'                => $validated['bio'] ?? null,
+                'bio_ar'             => $validated['bio_ar'] ?? null,
+                'photo'              => $validated['photo'] ?? null,
+                'certifications'     => json_encode($validated['certifications'] ?? []),
+                'experience_years'   => $validated['experience_years'],
+                'rating_average'     => 0,
+                'total_sessions'     => 0,
+                'is_available'       => true,
             ]);
 
             DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'data' => $instructor,
-                'message' => 'Riding instructor added successfully'
-            ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to add instructor',
-                'error' => $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Failed to add instructor', 'error' => $e->getMessage()], 500);
         }
+
+        return response()->json(['success' => true, 'data' => $instructor, 'message' => 'Riding instructor added successfully'], 201);
     }
 
+    // ---------------------------------------------------------------
+    // Provider — schedule management
+    // ---------------------------------------------------------------
+
+    /**
+     * @OA\Get(
+     *     path="/api/provider/riding-instructors/{id}/schedule",
+     *     summary="Get instructor schedule (Provider)",
+     *     description="Returns the weekly schedule (open hours per day) configured for this instructor's service. Days not listed are closed.",
+     *     operationId="getInstructorSchedule",
+     *     tags={"Riding Instructors"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Schedule retrieved",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="service_id", type="integer", example=5),
+     *                 @OA\Property(property="schedule", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",           type="integer"),
+     *                         @OA\Property(property="day_of_week",  type="integer", example=0,
+     *                             description="0=Sunday … 6=Saturday"),
+     *                         @OA\Property(property="day_name",     type="string",  example="Sunday"),
+     *                         @OA\Property(property="day_name_ar",  type="string",  example="الأحد"),
+     *                         @OA\Property(property="start_time",   type="string",  example="08:00"),
+     *                         @OA\Property(property="end_time",     type="string",  example="18:00"),
+     *                         @OA\Property(property="is_available", type="boolean", example=true)
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Instructor does not belong to your provider account"),
+     *     @OA\Response(response=404, description="Instructor or riding-instructor service not found")
+     * )
+     */
+    public function getSchedule(Request $request, string $id)
+    {
+        $user       = JWTAuth::parseToken()->authenticate();
+        $instructor = RidingInstructor::find($id);
+
+        if (!$instructor) {
+            return response()->json(['success' => false, 'message' => 'Instructor not found'], 404);
+        }
+
+        if (!$user->serviceProvider || $instructor->provider_id !== $user->serviceProvider->id) {
+            return response()->json(['success' => false, 'message' => 'This instructor does not belong to your account'], 403);
+        }
+
+        $service = Service::where('provider_id', $instructor->provider_id)
+            ->whereHas('category', fn ($q) => $q->where('slug', 'riding-instructor'))
+            ->first();
+
+        if (!$service) {
+            return response()->json(['success' => false, 'message' => 'No riding-instructor service found for this provider'], 404);
+        }
+
+        $schedule = ServiceSchedule::where('service_id', $service->id)->orderBy('day_of_week')->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'service_id' => $service->id,
+                'schedule'   => $schedule,
+            ],
+            'message' => 'Schedule retrieved successfully',
+        ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/provider/riding-instructors/{id}/schedule",
+     *     summary="Set instructor schedule (Provider)",
+     *     description="Upserts the weekly working hours for this instructor's service. Send all days you want to configure. Days omitted are left unchanged. Set is_available=false to close a day without deleting the record.",
+     *     operationId="updateInstructorSchedule",
+     *     tags={"Riding Instructors"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"schedule"},
+     *             @OA\Property(property="schedule", type="array",
+     *                 @OA\Items(type="object",
+     *                     required={"day_of_week","start_time","end_time"},
+     *                     @OA\Property(property="day_of_week",  type="integer", minimum=0, maximum=6, example=0,
+     *                         description="0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday"),
+     *                     @OA\Property(property="start_time",   type="string",  example="08:00",
+     *                         description="24h format HH:MM"),
+     *                     @OA\Property(property="end_time",     type="string",  example="18:00"),
+     *                     @OA\Property(property="is_available", type="boolean", example=true)
+     *                 ),
+     *                 example={
+     *                     {"day_of_week": 0, "start_time": "08:00", "end_time": "18:00", "is_available": true},
+     *                     {"day_of_week": 1, "start_time": "08:00", "end_time": "18:00", "is_available": true},
+     *                     {"day_of_week": 5, "start_time": "08:00", "end_time": "12:00", "is_available": true},
+     *                     {"day_of_week": 6, "start_time": "08:00", "end_time": "12:00", "is_available": false}
+     *                 }
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Schedule saved",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success",  type="boolean", example=true),
+     *             @OA\Property(property="message",  type="string",  example="Schedule updated successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="service_id",     type="integer", example=5),
+     *                 @OA\Property(property="updated_days",   type="integer", example=4),
+     *                 @OA\Property(property="schedule",       type="array", @OA\Items(type="object"))
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Instructor does not belong to your provider account"),
+     *     @OA\Response(response=404, description="Instructor or riding-instructor service not found"),
+     *     @OA\Response(response=422, description="Validation error — invalid day, time format, or end_time before start_time")
+     * )
+     */
+    public function updateSchedule(Request $request, string $id)
+    {
+        $user       = JWTAuth::parseToken()->authenticate();
+        $instructor = RidingInstructor::find($id);
+
+        if (!$instructor) {
+            return response()->json(['success' => false, 'message' => 'Instructor not found'], 404);
+        }
+
+        if (!$user->serviceProvider || $instructor->provider_id !== $user->serviceProvider->id) {
+            return response()->json(['success' => false, 'message' => 'This instructor does not belong to your account'], 403);
+        }
+
+        $validated = $request->validate([
+            'schedule'                => 'required|array|min:1',
+            'schedule.*.day_of_week'  => 'required|integer|between:0,6',
+            'schedule.*.start_time'   => 'required|date_format:H:i',
+            'schedule.*.end_time'     => 'required|date_format:H:i|after:schedule.*.start_time',
+            'schedule.*.is_available' => 'nullable|boolean',
+        ]);
+
+        $service = Service::where('provider_id', $instructor->provider_id)
+            ->whereHas('category', fn ($q) => $q->where('slug', 'riding-instructor'))
+            ->first();
+
+        if (!$service) {
+            return response()->json(['success' => false, 'message' => 'No riding-instructor service found for this provider'], 404);
+        }
+
+        foreach ($validated['schedule'] as $day) {
+            ServiceSchedule::updateOrCreate(
+                ['service_id' => $service->id, 'day_of_week' => $day['day_of_week']],
+                [
+                    'start_time'   => $day['start_time'],
+                    'end_time'     => $day['end_time'],
+                    'is_available' => $day['is_available'] ?? true,
+                ]
+            );
+        }
+
+        $schedule = ServiceSchedule::where('service_id', $service->id)->orderBy('day_of_week')->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'service_id'   => $service->id,
+                'updated_days' => count($validated['schedule']),
+                'schedule'     => $schedule,
+            ],
+            'message' => 'Schedule updated successfully',
+        ]);
+    }
+
+    // ---------------------------------------------------------------
+    // Private helpers
+    // ---------------------------------------------------------------
+
+    /**
+     * Generate HH:MM-HH:MM slot strings between two times with a fixed duration in minutes.
+     */
+    private function generateSlots(string $start, string $end, int $durationMinutes = 120): array
+    {
+        $slots   = [];
+        $current = Carbon::createFromFormat('H:i', $start);
+        $endTime = Carbon::createFromFormat('H:i', $end);
+
+        while ($current->copy()->addMinutes($durationMinutes)->lte($endTime)) {
+            $slotEnd = $current->copy()->addMinutes($durationMinutes);
+            $slots[] = $current->format('H:i') . '-' . $slotEnd->format('H:i');
+            $current->addMinutes($durationMinutes);
+        }
+
+        return $slots;
+    }
 }

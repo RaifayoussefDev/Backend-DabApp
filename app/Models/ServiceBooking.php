@@ -37,6 +37,7 @@ class ServiceBooking extends Model
         'cancellation_reason_ar',
         'cancelled_by',
         'instructor_location_id',
+        'session_type',
         'cancelled_at',
         'confirmed_at',
         'completed_at'
