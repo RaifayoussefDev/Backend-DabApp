@@ -189,7 +189,7 @@ class ServiceProviderController extends Controller
     public function show($id)
     {
         $provider = ServiceProvider::with([
-            'user:id,full_name,email,phone',
+            'user:id,first_name,last_name,email,phone',
             'city',
             'country',
             'services' => function($q) {
@@ -201,7 +201,7 @@ class ServiceProviderController extends Controller
                 $q->where('is_approved', true)
                   ->latest()
                   ->limit(10)
-                  ->with('user:id,full_name,avatar');
+                  ->with('user:id,first_name,last_name,avatar');
             }
         ])->find($id);
 

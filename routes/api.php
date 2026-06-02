@@ -1806,14 +1806,62 @@ Route::middleware('auth:api')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth:api')->prefix('stats')->group(function () {
-    // User statistics
-    Route::get('/my-bookings', function () {
-        // Return user booking statistics
+
+    Route::get('/my-bookings', function (\Illuminate\Http\Request $request) {
+        $user = $request->user();
+        $bookings = \App\Models\ServiceBooking::where('user_id', $user->id);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total'      => (clone $bookings)->count(),
+                'pending'    => (clone $bookings)->where('status', 'pending')->count(),
+                'confirmed'  => (clone $bookings)->where('status', 'confirmed')->count(),
+                'completed'  => (clone $bookings)->where('status', 'completed')->count(),
+                'cancelled'  => (clone $bookings)->where('status', 'cancelled')->count(),
+                'this_month' => (clone $bookings)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+            ],
+        ]);
     });
 
-    // Provider statistics
-    Route::get('/provider/dashboard', function () {
-        // Return provider dashboard statistics
+    Route::get('/provider/dashboard', function (\Illuminate\Http\Request $request) {
+        $user     = $request->user();
+        $provider = \App\Models\ServiceProvider::where('user_id', $user->id)->first();
+
+        if (!$provider) {
+            return response()->json(['success' => false, 'message' => 'Provider not found'], 404);
+        }
+
+        $bookings = \App\Models\ServiceBooking::where('provider_id', $provider->id);
+
+        $totalRevenue = (clone $bookings)
+            ->where('status', 'completed')
+            ->sum('total_price');
+
+        $monthRevenue = (clone $bookings)
+            ->where('status', 'completed')
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->sum('total_price');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total_bookings'    => (clone $bookings)->count(),
+                'pending'           => (clone $bookings)->where('status', 'pending')->count(),
+                'confirmed'         => (clone $bookings)->where('status', 'confirmed')->count(),
+                'completed_orders'  => (clone $bookings)->where('status', 'completed')->count(),
+                'cancelled'         => (clone $bookings)->where('status', 'cancelled')->count(),
+                'bookings_this_month' => (clone $bookings)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+                'total_revenue'     => round($totalRevenue, 2),
+                'revenue_this_month'=> round($monthRevenue, 2),
+                'rating_average'    => $provider->rating_average,
+                'reviews_count'     => $provider->reviews_count,
+                'services_count'    => $provider->services()->count(),
+                'is_active'         => $provider->is_active,
+                'subscription_status' => $provider->subscription_status,
+            ],
+        ]);
     });
 });
 

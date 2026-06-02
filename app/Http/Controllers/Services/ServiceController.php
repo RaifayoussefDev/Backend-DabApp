@@ -277,7 +277,7 @@ class ServiceController extends Controller
                 $q->where('is_approved', true)
                     ->latest()
                     ->limit(10)
-                    ->with('user:id,full_name,avatar');
+                    ->with('user:id,first_name,last_name,avatar');
             }
         ])
             ->withCount('reviews')

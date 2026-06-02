@@ -812,9 +812,12 @@
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "const r = pm.response.json();",
             "pm.test('200 OK', () => pm.response.to.have.status(200));",
-            "if (r.data && r.data.length > 0) {",
-            "  pm.collectionVariables.set('instructor_location_id', String(r.data[0].id));",
-            "  console.log('📍 Location:', r.data[0].location_name);",
+            "const list = Array.isArray(r.data) ? r.data : (r.data && r.data.data ? r.data.data : []);",
+            "if (list.length > 0) {",
+            "  pm.collectionVariables.set('instructor_location_id', String(list[0].id));",
+            "  console.log('✅ Location ID saved:', list[0].id, '|', list[0].location_name);",
+            "} else {",
+            "  console.log('⚠️ No locations found — run the terminal command to add one');",
             "}"
           ]}}],
           "request": {
@@ -1248,6 +1251,29 @@
       "name": "17 — Instructor Schedule (Provider)",
       "item": [
         {
+          "name": "Create Instructor Profile",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const r = pm.response.json();",
+            "pm.test('201 Created', () => pm.response.to.have.status(201));",
+            "if (r.data && r.data.id) {",
+            "  pm.collectionVariables.set('instructor_id', String(r.data.id));",
+            "  console.log('✅ Instructor ID saved:', r.data.id);",
+            "}"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"instructor_name\": \"Khalid Al-Rashidi\",\n  \"instructor_name_ar\": \"خالد الرشيدي\",\n  \"bio\": \"Certified motorcycle instructor with 10 years of experience. Specializes in beginners and track riding.\",\n  \"bio_ar\": \"مدرب دراجات نارية معتمد بخبرة 10 سنوات. متخصص في المبتدئين وسباقات المضمار.\",\n  \"experience_years\": 10,\n  \"certifications\": [\"FIM Level 2\", \"Saudi Motorsport Federation\"]\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/provider/riding-instructors", "host": ["{{base_url}}"], "path": ["api","provider","riding-instructors"] }
+          }
+        },
+        {
           "name": "Get Instructor Schedule",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "pm.test('200 OK', () => pm.response.to.have.status(200));",
@@ -1273,7 +1299,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"schedule\": [\n    { \"day_of_week\": 1, \"slots\": [\"08:00\", \"10:00\", \"14:00\", \"16:00\"] },\n    { \"day_of_week\": 2, \"slots\": [\"08:00\", \"10:00\", \"14:00\", \"16:00\"] },\n    { \"day_of_week\": 3, \"slots\": [\"08:00\", \"10:00\", \"14:00\", \"16:00\"] },\n    { \"day_of_week\": 4, \"slots\": [\"08:00\", \"10:00\", \"14:00\", \"16:00\"] },\n    { \"day_of_week\": 5, \"slots\": [\"08:00\", \"10:00\"] }\n  ]\n}"
+              "raw": "{\n  \"schedule\": [\n    { \"day_of_week\": 1, \"start_time\": \"08:00\", \"end_time\": \"18:00\", \"is_available\": true },\n    { \"day_of_week\": 2, \"start_time\": \"08:00\", \"end_time\": \"18:00\", \"is_available\": true },\n    { \"day_of_week\": 3, \"start_time\": \"08:00\", \"end_time\": \"18:00\", \"is_available\": true },\n    { \"day_of_week\": 4, \"start_time\": \"08:00\", \"end_time\": \"18:00\", \"is_available\": true },\n    { \"day_of_week\": 5, \"start_time\": \"08:00\", \"end_time\": \"14:00\", \"is_available\": true }\n  ]\n}"
             },
             "url": { "raw": "{{base_url}}/api/provider/riding-instructors/{{instructor_id}}/schedule", "host": ["{{base_url}}"], "path": ["api","provider","riding-instructors","{{instructor_id}}","schedule"] }
           }

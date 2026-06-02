@@ -116,7 +116,7 @@ class ChatSessionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $session->load(['booking.service', 'user:id,full_name', 'provider']),
+                'data' => $session->load(['booking.service', 'user:id,first_name,last_name', 'provider']),
                 'message' => 'Chat session started successfully'
             ], 201);
 
@@ -328,7 +328,7 @@ class ChatSessionController extends Controller
     {
         $user = JWTAuth::parseToken()->authenticate();
 
-        $session = ChatSession::with(['booking.service', 'user:id,full_name,avatar', 'provider'])->find($sessionId);
+        $session = ChatSession::with(['booking.service', 'user:id,first_name,last_name,avatar', 'provider'])->find($sessionId);
 
         if (!$session) {
             return response()->json([
@@ -489,7 +489,7 @@ class ChatSessionController extends Controller
 
         $query = ChatSession::with([
             'booking.service',
-            'user:id,full_name,avatar',
+            'user:id,first_name,last_name,avatar',
             'provider'
         ])
         ->where(function($q) use ($user) {

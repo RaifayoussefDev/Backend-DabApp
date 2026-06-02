@@ -204,7 +204,7 @@ class TransportRouteController extends Controller
     {
         $route = TransportRoute::with([
             'provider.city',
-            'provider.user:id,full_name,phone',
+            'provider.user:id,first_name,last_name,phone',
             'stops' => function($q) {
                 $q->orderBy('stop_order');
             }
