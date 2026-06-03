@@ -356,22 +356,12 @@ class ServiceProviderController extends Controller
             'country_id' => 'nullable|exists:countries,id',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
-            'logo' => 'nullable|image|max:2048',
-            'cover_image' => 'nullable|image|max:2048'
+            'logo'         => 'nullable|string|url',
+            'cover_image'  => 'nullable|string|url',
         ]);
 
         DB::beginTransaction();
         try {
-            // Upload logo si fourni
-            if ($request->hasFile('logo')) {
-                $validated['logo'] = $request->file('logo')->store('providers/logos', 'public');
-            }
-
-            // Upload cover image si fourni
-            if ($request->hasFile('cover_image')) {
-                $validated['cover_image'] = $request->file('cover_image')->store('providers/covers', 'public');
-            }
-
             $provider = ServiceProvider::create([
                 ...$validated,
                 'user_id' => $user->id,
