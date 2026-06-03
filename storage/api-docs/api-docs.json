@@ -38044,7 +38044,7 @@
                 "description": "Create a new subscription and initiate PayTabs payment. **Two usage modes:**\\n\\n**Mode A — Full onboarding (new provider):** Send all business fields. Provider profile is created automatically.\\n\\n**Mode B — Existing provider (after POST /become-provider):** Send only `plan_id` + `billing_cycle`. Business fields are ignored if a provider profile already exists.\\n\\nOn success, redirect the user to `payment_url` to complete payment on PayTabs. Subscription becomes `active` and provider `is_active` becomes `true` after successful payment.",
                 "operationId": "subscribeToAPlan",
                 "requestBody": {
-                    "description": "plan_id and billing_cycle are always required. Business fields (business_name, phone, service_category_ids, working_hours, price_per_hour, price_per_mission) are required only when the user has no existing provider profile.",
+                    "description": "plan_id and billing_cycle are always required. Business fields (business_name, phone, working_hours, price_per_hour, price_per_mission) are required only when the user has no existing provider profile.",
                     "required": true,
                     "content": {
                         "application/json": {
@@ -38093,17 +38093,6 @@
                                         "type": "number",
                                         "format": "float",
                                         "example": 200
-                                    },
-                                    "service_category_ids": {
-                                        "description": "Optional. 1=Transport, 2=Tow, 3=Instructor, 4=Wash, 5=Workshop. Can be set later via profile update.",
-                                        "type": "array",
-                                        "items": {
-                                            "type": "integer"
-                                        },
-                                        "example": [
-                                            1,
-                                            2
-                                        ]
                                     },
                                     "working_hours": {
                                         "description": "Required for new providers only. Send all 7 days (day_of_week 0=Sunday … 6=Saturday).",
@@ -38194,8 +38183,8 @@
                     }
                 },
                 "responses": {
-                    "201": {
-                        "description": "Subscription created successfully",
+                    "200": {
+                        "description": "Payment initiated — redirect user to payment_url",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -38206,10 +38195,14 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Successfully subscribed to Business Plan"
+                                            "example": "Payment initiated"
                                         },
                                         "data": {
                                             "properties": {
+                                                "payment_url": {
+                                                    "type": "string",
+                                                    "example": "https://secure.paytabs.com/payment/wr/..."
+                                                },
                                                 "subscription_id": {
                                                     "type": "integer",
                                                     "example": 1
@@ -38217,20 +38210,6 @@
                                                 "transaction_id": {
                                                     "type": "integer",
                                                     "example": 1
-                                                },
-                                                "invoice_number": {
-                                                    "type": "string",
-                                                    "example": "INV-SUB-20260130-A1B2C3"
-                                                },
-                                                "amount": {
-                                                    "type": "number",
-                                                    "format": "float",
-                                                    "example": 29
-                                                },
-                                                "next_billing_date": {
-                                                    "type": "string",
-                                                    "format": "date",
-                                                    "example": "2026-02-30"
                                                 }
                                             },
                                             "type": "object"
@@ -38240,13 +38219,11 @@
                                 },
                                 "example": {
                                     "success": true,
-                                    "message": "Successfully subscribed to Business Plan",
+                                    "message": "Payment initiated",
                                     "data": {
+                                        "payment_url": "https://secure.paytabs.com/payment/wr/...",
                                         "subscription_id": 1,
-                                        "transaction_id": 1,
-                                        "invoice_number": "INV-SUB-20260130-A1B2C3",
-                                        "amount": 29,
-                                        "next_billing_date": "2026-02-30"
+                                        "transaction_id": 1
                                     }
                                 }
                             }
