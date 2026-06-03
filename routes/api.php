@@ -1567,6 +1567,7 @@ Route::middleware('auth:api')->group(function () {
 
 // Provider-only routes
 Route::middleware(['auth:api'])->prefix('provider')->group(function () {
+    Route::get('/status', [ServiceProviderController::class, 'providerStatus']);
     Route::get('/my-profile', [ServiceProviderController::class, 'myProfile']);
     Route::put('/profile', [ServiceProviderController::class, 'updateProfile']);
     Route::post('/profile', [ServiceProviderController::class, 'updateProfile']); // For multipart/form-data

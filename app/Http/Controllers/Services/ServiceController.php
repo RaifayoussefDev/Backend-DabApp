@@ -343,9 +343,32 @@ class ServiceController extends Controller
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Service créé avec succès"
+     *         description="Service created successfully"
      *     ),
-     *     @OA\Response(response=403, description="Vous n'êtes pas fournisseur")
+     *     @OA\Response(
+     *         response=403,
+     *         description="Not a provider, account inactive, no active subscription, or service limit reached",
+     *         @OA\JsonContent(
+     *             oneOf={
+     *                 @OA\Schema(
+     *                     @OA\Property(property="success", type="boolean", example=false),
+     *                     @OA\Property(property="message", type="string", example="You are not a service provider")
+     *                 ),
+     *                 @OA\Schema(
+     *                     @OA\Property(property="success", type="boolean", example=false),
+     *                     @OA\Property(property="message", type="string", example="You have reached the maximum number of services allowed by your subscription plan. Please upgrade your plan to add more services."),
+     *                     @OA\Property(property="error_code", type="string", example="SERVICE_LIMIT_REACHED"),
+     *                     @OA\Property(
+     *                         property="data",
+     *                         type="object",
+     *                         @OA\Property(property="max_services", type="integer", example=5),
+     *                         @OA\Property(property="current_services_count", type="integer", example=5),
+     *                         @OA\Property(property="upgrade_url", type="string", example="/subscription-plans")
+     *                     )
+     *                 )
+     *             }
+     *         )
+     *     )
      * )
      */
     public function store(Request $request)
@@ -356,6 +379,20 @@ class ServiceController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'You are not a service provider'
+            ], 403);
+        }
+
+        if (!$user->serviceProvider->canAddService()) {
+            $plan = $user->serviceProvider->currentPlan();
+            return response()->json([
+                'success' => false,
+                'message' => 'You have reached the maximum number of services allowed by your subscription plan. Please upgrade your plan to add more services.',
+                'error_code' => 'SERVICE_LIMIT_REACHED',
+                'data' => [
+                    'max_services' => $plan?->max_services,
+                    'current_services_count' => $user->serviceProvider->services()->count(),
+                    'upgrade_url' => '/subscription-plans',
+                ]
             ], 403);
         }
 
@@ -713,13 +750,35 @@ class ServiceController extends Controller
     /**
      * @OA\Get(
      *     path="/api/my-services",
-     *     summary="Mes services (Provider)",
-     *     description="Liste tous les services du fournisseur connecté",
+     *     summary="My services (Provider)",
+     *     description="List all services for the authenticated provider, with subscription quota info so the client knows whether to show 'Add Service' or 'Upgrade Plan'.",
      *     operationId="getMyServices",
      *     tags={"Services"},
      *     security={{"bearer":{}}},
-     *     @OA\Response(response=200, description="Liste récupérée"),
-     *     @OA\Response(response=403, description="Vous n'êtes pas fournisseur")
+     *     @OA\Response(
+     *         response=200,
+     *         description="Services retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="count", type="integer", example=3),
+     *             @OA\Property(
+     *                 property="subscription",
+     *                 type="object",
+     *                 description="Quota info — use this to show/hide the Add Service button",
+     *                 @OA\Property(property="has_active_subscription", type="boolean", example=true),
+     *                 @OA\Property(property="plan_name", type="string", nullable=true, example="Business Plan"),
+     *                 @OA\Property(property="can_add_service", type="boolean", example=true, description="true = show Add Service button"),
+     *                 @OA\Property(property="services_used", type="integer", example=3),
+     *                 @OA\Property(property="max_services", type="integer", nullable=true, example=15, description="null means unlimited"),
+     *                 @OA\Property(property="remaining_quota", type="integer", nullable=true, example=12, description="null means unlimited"),
+     *                 @OA\Property(property="limit_reached", type="boolean", example=false, description="true = show Upgrade Plan message"),
+     *                 @OA\Property(property="upgrade_required", type="boolean", example=false)
+     *             ),
+     *             @OA\Property(property="message", type="string", example="Services retrieved successfully")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Not a service provider")
      * )
      */
     public function myServices()
@@ -733,16 +792,35 @@ class ServiceController extends Controller
             ], 403);
         }
 
-        $services = Service::where('provider_id', $user->serviceProvider->id)
+        $provider = $user->serviceProvider;
+
+        $services = Service::where('provider_id', $provider->id)
             ->with(['category', 'pricingRules.originCity', 'pricingRules.destinationCity', 'schedules'])
             ->withCount(['bookings', 'reviews'])
             ->withAvg('reviews', 'rating')
             ->get();
 
+        $activeSubscription = $provider->activeSubscription;
+        $plan = $activeSubscription?->plan;
+        $servicesUsed = $services->count();
+        $maxServices = $plan?->max_services;
+        $canAddService = $provider->canAddService();
+        $remainingQuota = $provider->remaining_services_quota;
+
         return response()->json([
             'success' => true,
             'data' => $services,
-            'count' => $services->count(),
+            'count' => $servicesUsed,
+            'subscription' => [
+                'has_active_subscription' => $provider->hasActiveSubscription(),
+                'plan_name' => $plan?->name,
+                'can_add_service' => $canAddService,
+                'services_used' => $servicesUsed,
+                'max_services' => $maxServices,
+                'remaining_quota' => $remainingQuota,
+                'limit_reached' => !$canAddService && $provider->hasActiveSubscription(),
+                'upgrade_required' => !$canAddService && $provider->hasActiveSubscription(),
+            ],
             'message' => 'Services retrieved successfully'
         ], 200);
     }

@@ -313,9 +313,23 @@ class ServiceProviderController extends Controller
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Compte fournisseur créé avec succès"
+     *         description="Provider profile created. Account is INACTIVE until subscription is paid.",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=3),
+     *                 @OA\Property(property="business_name", type="string", example="Elite Moto Services"),
+     *                 @OA\Property(property="is_active", type="boolean", example=false, description="Always false until subscription payment succeeds"),
+     *                 @OA\Property(property="is_verified", type="boolean", example=false)
+     *             ),
+     *             @OA\Property(property="message", type="string", example="Provider profile created successfully. Please select a subscription plan to activate your account."),
+     *             @OA\Property(property="next_step", type="string", example="subscribe", description="Always 'subscribe' after this call"),
+     *             @OA\Property(property="redirect_to", type="string", example="/subscription-plans")
+     *         )
      *     ),
-     *     @OA\Response(response=400, description="L'utilisateur est déjà fournisseur")
+     *     @OA\Response(response=400, description="User already has a provider profile")
      * )
      */
     public function becomeProvider(Request $request)
@@ -363,7 +377,7 @@ class ServiceProviderController extends Controller
                 ...$validated,
                 'user_id' => $user->id,
                 'is_verified' => false,
-                'is_active' => true,
+                'is_active' => false,
                 'rating_average' => 0,
                 'reviews_count' => 0,
                 'services_count' => 0,
@@ -372,12 +386,12 @@ class ServiceProviderController extends Controller
 
             DB::commit();
 
-            // TODO: Envoyer notification aux admins pour vérification
-
             return response()->json([
                 'success' => true,
                 'data' => $provider->load(['city', 'country']),
-                'message' => 'Provider account created successfully. Pending admin verification.'
+                'message' => 'Provider profile created successfully. Please select a subscription plan to activate your account.',
+                'next_step' => 'subscribe',
+                'redirect_to' => '/subscription-plans'
             ], 201);
 
         } catch (\Exception $e) {
@@ -511,6 +525,88 @@ class ServiceProviderController extends Controller
             'success' => true,
             'data' => $provider,
             'message' => 'Profile retrieved successfully'
+        ], 200);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/provider/status",
+     *     summary="Get provider registration status",
+     *     description="Returns the current user's provider status: whether they have a profile, an active subscription, and what action to take next. Use this to decide whether to show 'Become a Provider' or 'Provider Profile' in the UI.",
+     *     operationId="getProviderStatus",
+     *     tags={"Service Providers"},
+     *     security={{"bearer":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Status retrieved",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="is_provider", type="boolean", example=true),
+     *                 @OA\Property(property="has_active_subscription", type="boolean", example=true),
+     *                 @OA\Property(property="is_active", type="boolean", example=true),
+     *                 @OA\Property(property="is_verified", type="boolean", example=false),
+     *                 @OA\Property(property="provider_id", type="integer", nullable=true, example=3),
+     *                 @OA\Property(property="subscription_status", type="string", nullable=true, example="active"),
+     *                 @OA\Property(property="plan_name", type="string", nullable=true, example="Business Plan"),
+     *                 @OA\Property(
+     *                     property="next_action",
+     *                     type="string",
+     *                     enum={"none","complete_profile","subscribe","active"},
+     *                     example="active"
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function providerStatus()
+    {
+        $user = auth()->user();
+        $provider = $user->serviceProvider;
+
+        if (!$provider) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'is_provider' => false,
+                    'has_active_subscription' => false,
+                    'is_active' => false,
+                    'is_verified' => false,
+                    'provider_id' => null,
+                    'subscription_status' => null,
+                    'plan_name' => null,
+                    'next_action' => 'complete_profile',
+                ],
+                'message' => 'User is not yet a provider'
+            ], 200);
+        }
+
+        $hasActiveSub = $provider->hasActiveSubscription();
+        $activeSubscription = $provider->activeSubscription;
+        $plan = $activeSubscription?->plan;
+
+        $nextAction = match(true) {
+            !$hasActiveSub => 'subscribe',
+            !$provider->is_active => 'subscribe',
+            default => 'active',
+        };
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'is_provider' => true,
+                'has_active_subscription' => $hasActiveSub,
+                'is_active' => $provider->is_active,
+                'is_verified' => $provider->is_verified,
+                'provider_id' => $provider->id,
+                'subscription_status' => $activeSubscription?->status,
+                'plan_name' => $plan?->name,
+                'next_action' => $nextAction,
+            ],
+            'message' => 'Provider status retrieved successfully'
         ], 200);
     }
 }

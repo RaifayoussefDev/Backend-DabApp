@@ -5,7 +5,7 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base_url",               "value": "http://localhost:8000", "type": "string" },
+    { "key": "base_url",               "value": "https://be.dabapp.co", "type": "string" },
     { "key": "token",                  "value": "",                      "type": "string" },
     { "key": "user_id",                "value": "",                      "type": "string" },
     { "key": "plan_id",                "value": "1",                     "type": "string" },
@@ -116,7 +116,50 @@
       "name": "02 — Subscribe & Onboarding",
       "item": [
         {
-          "name": "Subscribe (Plan + Business + Categories + Hours + Pricing)",
+          "name": "Check Provider Status",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const r = pm.response.json();",
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "if (r.data) {",
+            "  console.log('👤 is_provider:', r.data.is_provider);",
+            "  console.log('💳 has_subscription:', r.data.has_active_subscription);",
+            "  console.log('🎯 next_action:', r.data.next_action);",
+            "  if (r.data.provider_id) { pm.collectionVariables.set('provider_id', String(r.data.provider_id)); }",
+            "}"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/provider/status", "host": ["{{base_url}}"], "path": ["api","provider","status"] }
+          }
+        },
+        {
+          "name": "Become a Provider (Step 1 — Profile Only)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const r = pm.response.json();",
+            "pm.test('201 Created', () => pm.response.to.have.status(201));",
+            "if (r.data && r.data.id) {",
+            "  pm.collectionVariables.set('provider_id', String(r.data.id));",
+            "  console.log('✅ Provider profile created. ID:', r.data.id);",
+            "  console.log('📋 is_active:', r.data.is_active, '(false until subscription paid)');",
+            "  console.log('➡️  next_step:', r.next_step, '|', r.redirect_to);",
+            "}"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"business_name\": \"Elite Moto Services\",\n  \"business_name_ar\": \"خدمات موتو إيليت\",\n  \"description\": \"Professional motorcycle services in Riyadh\",\n  \"description_ar\": \"خدمات دراجات نارية احترافية في الرياض\",\n  \"phone\": \"+966501234567\",\n  \"email\": \"contact@elitemoto.com\",\n  \"address\": \"King Fahd Road, Riyadh\",\n  \"address_ar\": \"طريق الملك فهد، الرياض\",\n  \"city_id\": 1,\n  \"country_id\": 1,\n  \"latitude\": 24.7136,\n  \"longitude\": 46.6753\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/become-provider", "host": ["{{base_url}}"], "path": ["api","become-provider"] }
+          }
+        },
+        {
+          "name": "Subscribe (Step 2 — Plan only, profile already exists)",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "const r = pm.response.json();",
             "pm.test('200 OK', () => pm.response.to.have.status(200));",
@@ -124,7 +167,31 @@
             "  pm.collectionVariables.set('subscription_id', String(r.data.subscription_id));",
             "  console.log('✅ Subscription ID:', r.data.subscription_id);",
             "}",
-            "if (r.data && r.data.payment_url) { console.log('💳 Payment URL:', r.data.payment_url); }"
+            "if (r.data && r.data.payment_url) { console.log('💳 Redirect user to:', r.data.payment_url); }"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_id\": {{plan_id}},\n  \"billing_cycle\": \"monthly\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/subscriptions/subscribe", "host": ["{{base_url}}"], "path": ["api","subscriptions","subscribe"] }
+          }
+        },
+        {
+          "name": "Subscribe (Full Onboarding — new provider, all-in-one)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const r = pm.response.json();",
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "if (r.data && r.data.subscription_id) {",
+            "  pm.collectionVariables.set('subscription_id', String(r.data.subscription_id));",
+            "  console.log('✅ Subscription ID:', r.data.subscription_id);",
+            "}",
+            "if (r.data && r.data.payment_url) { console.log('💳 Redirect user to:', r.data.payment_url); }"
           ]}}],
           "request": {
             "method": "POST",
@@ -289,7 +356,13 @@
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "const r = pm.response.json();",
             "pm.test('200 OK', () => pm.response.to.have.status(200));",
-            "if (r.data && r.data.length > 0) { pm.collectionVariables.set('service_id', String(r.data[0].id)); }"
+            "if (r.data && r.data.length > 0) { pm.collectionVariables.set('service_id', String(r.data[0].id)); }",
+            "if (r.subscription) {",
+            "  console.log('📦 Plan:', r.subscription.plan_name);",
+            "  console.log('➕ can_add_service:', r.subscription.can_add_service);",
+            "  console.log('📊 used:', r.subscription.services_used, '/', r.subscription.max_services === null ? '∞' : r.subscription.max_services);",
+            "  if (r.subscription.limit_reached) { console.log('⚠️ LIMIT REACHED — show Upgrade Plan button'); }",
+            "}"
           ]}}],
           "request": {
             "method": "GET",
@@ -312,7 +385,32 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"category_id\": 1,\n  \"name\": \"Bike Transport Riyadh\",\n  \"name_ar\": \"نقل دراجات الرياض\",\n  \"description\": \"Safe and professional motorcycle transport across Riyadh\",\n  \"description_ar\": \"نقل دراجات نارية آمن واحترافي في الرياض\",\n  \"price\": 150,\n  \"price_type\": \"per_mission\",\n  \"currency\": \"SAR\",\n  \"is_available\": true,\n  \"requires_booking\": true\n}"
+              "raw": "{\n  \"category_id\": 1,\n  \"name\": \"Bike Transport Riyadh\",\n  \"name_ar\": \"نقل دراجات الرياض\",\n  \"description\": \"Safe and professional motorcycle transport across Riyadh\",\n  \"description_ar\": \"نقل دراجات نارية آمن واحترافي في الرياض\",\n  \"price\": 150,\n  \"price_type\": \"fixed\",\n  \"currency\": \"SAR\",\n  \"is_available\": true,\n  \"requires_booking\": true\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/my-services", "host": ["{{base_url}}"], "path": ["api","my-services"] }
+          }
+        },
+        {
+          "name": "[ERROR] Create Service — Limit Reached (403)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+            "const r = pm.response.json();",
+            "pm.test('SERVICE_LIMIT_REACHED error code', () => pm.expect(r.error_code).to.eql('SERVICE_LIMIT_REACHED'));",
+            "if (r.data) {",
+            "  console.log('🚫 Max services:', r.data.max_services);",
+            "  console.log('📊 Current count:', r.data.current_services_count);",
+            "  console.log('⬆️  Upgrade at:', r.data.upgrade_url);",
+            "}"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_id\": 1,\n  \"name\": \"Service Over Limit\",\n  \"name_ar\": \"خدمة تجاوز الحد\",\n  \"price\": 100,\n  \"price_type\": \"fixed\",\n  \"currency\": \"SAR\",\n  \"is_available\": true,\n  \"requires_booking\": true\n}"
             },
             "url": { "raw": "{{base_url}}/api/my-services", "host": ["{{base_url}}"], "path": ["api","my-services"] }
           }

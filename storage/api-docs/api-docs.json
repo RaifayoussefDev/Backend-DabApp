@@ -35782,15 +35782,87 @@
                 "tags": [
                     "Services"
                 ],
-                "summary": "Mes services (Provider)",
-                "description": "Liste tous les services du fournisseur connecté",
+                "summary": "My services (Provider)",
+                "description": "List all services for the authenticated provider, with subscription quota info so the client knows whether to show 'Add Service' or 'Upgrade Plan'.",
                 "operationId": "getMyServices",
                 "responses": {
                     "200": {
-                        "description": "Liste récupérée"
+                        "description": "Services retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "count": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "subscription": {
+                                            "description": "Quota info — use this to show/hide the Add Service button",
+                                            "properties": {
+                                                "has_active_subscription": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "plan_name": {
+                                                    "type": "string",
+                                                    "example": "Business Plan",
+                                                    "nullable": true
+                                                },
+                                                "can_add_service": {
+                                                    "description": "true = show Add Service button",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "services_used": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "max_services": {
+                                                    "description": "null means unlimited",
+                                                    "type": "integer",
+                                                    "example": 15,
+                                                    "nullable": true
+                                                },
+                                                "remaining_quota": {
+                                                    "description": "null means unlimited",
+                                                    "type": "integer",
+                                                    "example": 12,
+                                                    "nullable": true
+                                                },
+                                                "limit_reached": {
+                                                    "description": "true = show Upgrade Plan message",
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "upgrade_required": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Services retrieved successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "Vous n'êtes pas fournisseur"
+                        "description": "Not a service provider"
                     }
                 },
                 "security": [
@@ -35884,10 +35956,65 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Service créé avec succès"
+                        "description": "Service created successfully"
                     },
                     "403": {
-                        "description": "Vous n'êtes pas fournisseur"
+                        "description": "Not a provider, account inactive, no active subscription, or service limit reached",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "properties": {
+                                                "success": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "You are not a service provider"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "properties": {
+                                                "success": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "You have reached the maximum number of services allowed by your subscription plan. Please upgrade your plan to add more services."
+                                                },
+                                                "error_code": {
+                                                    "type": "string",
+                                                    "example": "SERVICE_LIMIT_REACHED"
+                                                },
+                                                "data": {
+                                                    "properties": {
+                                                        "max_services": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "current_services_count": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "upgrade_url": {
+                                                            "type": "string",
+                                                            "example": "/subscription-plans"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -36776,10 +36903,58 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Compte fournisseur créé avec succès"
+                        "description": "Provider profile created. Account is INACTIVE until subscription is paid.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "business_name": {
+                                                    "type": "string",
+                                                    "example": "Elite Moto Services"
+                                                },
+                                                "is_active": {
+                                                    "description": "Always false until subscription payment succeeds",
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "is_verified": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Provider profile created successfully. Please select a subscription plan to activate your account."
+                                        },
+                                        "next_step": {
+                                            "description": "Always 'subscribe' after this call",
+                                            "type": "string",
+                                            "example": "subscribe"
+                                        },
+                                        "redirect_to": {
+                                            "type": "string",
+                                            "example": "/subscription-plans"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "400": {
-                        "description": "L'utilisateur est déjà fournisseur"
+                        "description": "User already has a provider profile"
                     }
                 },
                 "security": [
@@ -36856,6 +37031,85 @@
                 "security": [
                     {
                         "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/provider/status": {
+            "get": {
+                "tags": [
+                    "Service Providers"
+                ],
+                "summary": "Get provider registration status",
+                "description": "Returns the current user's provider status: whether they have a profile, an active subscription, and what action to take next. Use this to decide whether to show 'Become a Provider' or 'Provider Profile' in the UI.",
+                "operationId": "getProviderStatus",
+                "responses": {
+                    "200": {
+                        "description": "Status retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "is_provider": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "has_active_subscription": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_verified": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "provider_id": {
+                                                    "type": "integer",
+                                                    "example": 3,
+                                                    "nullable": true
+                                                },
+                                                "subscription_status": {
+                                                    "type": "string",
+                                                    "example": "active",
+                                                    "nullable": true
+                                                },
+                                                "plan_name": {
+                                                    "type": "string",
+                                                    "example": "Business Plan",
+                                                    "nullable": true
+                                                },
+                                                "next_action": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "none",
+                                                        "complete_profile",
+                                                        "subscribe",
+                                                        "active"
+                                                    ],
+                                                    "example": "active"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
                     }
                 ]
             }
@@ -37787,10 +38041,10 @@
                     "Service Subscriptions"
                 ],
                 "summary": "Subscribe to a plan",
-                "description": "Create a new subscription. If the user is not yet a service provider, a provider profile will be automatically created.",
+                "description": "Create a new subscription and initiate PayTabs payment. **Two usage modes:**\\n\\n**Mode A — Full onboarding (new provider):** Send all business fields. Provider profile is created automatically.\\n\\n**Mode B — Existing provider (after POST /become-provider):** Send only `plan_id` + `billing_cycle`. Business fields are ignored if a provider profile already exists.\\n\\nOn success, redirect the user to `payment_url` to complete payment on PayTabs. Subscription becomes `active` and provider `is_active` becomes `true` after successful payment.",
                 "operationId": "subscribeToAPlan",
                 "requestBody": {
-                    "description": "Subscription details with optional provider profile and images",
+                    "description": "plan_id and billing_cycle are always required. Business fields (business_name, phone, service_category_ids, working_hours, price_per_hour, price_per_mission) are required only when the user has no existing provider profile.",
                     "required": true,
                     "content": {
                         "application/json": {
@@ -37813,23 +38067,68 @@
                                         ],
                                         "example": "monthly"
                                     },
-                                    "payment_method_id": {
-                                        "type": "integer",
-                                        "example": 1,
-                                        "nullable": true
-                                    },
-                                    "bank_card_id": {
-                                        "type": "integer",
-                                        "example": 5,
-                                        "nullable": true
-                                    },
                                     "business_name": {
+                                        "description": "Required for new providers only",
                                         "type": "string",
                                         "example": "My Car Service"
                                     },
                                     "business_name_ar": {
+                                        "description": "Required for new providers only",
                                         "type": "string",
                                         "example": "خدمة سيارتي"
+                                    },
+                                    "phone": {
+                                        "description": "Required for new providers only",
+                                        "type": "string",
+                                        "example": "+966500000000"
+                                    },
+                                    "price_per_hour": {
+                                        "description": "Required for new providers only",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 150
+                                    },
+                                    "price_per_mission": {
+                                        "description": "Required for new providers only",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 200
+                                    },
+                                    "service_category_ids": {
+                                        "description": "Required for new providers only. 1=Transport, 2=Tow, 3=Instructor, 4=Wash, 5=Workshop",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2
+                                        ]
+                                    },
+                                    "working_hours": {
+                                        "description": "Required for new providers only. Send all 7 days (day_of_week 0=Sunday … 6=Saturday).",
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "day_of_week": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "is_open": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "open_time": {
+                                                    "type": "string",
+                                                    "example": "08:00"
+                                                },
+                                                "close_time": {
+                                                    "type": "string",
+                                                    "example": "18:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
                                     },
                                     "description": {
                                         "type": "string",
@@ -37838,10 +38137,6 @@
                                     "description_ar": {
                                         "type": "string",
                                         "example": "أفضل خدمة سيارات"
-                                    },
-                                    "phone": {
-                                        "type": "string",
-                                        "example": "+966500000000"
                                     },
                                     "email": {
                                         "type": "string",
@@ -37875,17 +38170,17 @@
                                         "example": 46.6753
                                     },
                                     "logo": {
-                                        "description": "Provider Logo URL",
+                                        "description": "Provider logo URL",
                                         "type": "string",
                                         "example": "https://example.com/logo.png"
                                     },
                                     "cover_image": {
-                                        "description": "Cover Image URL",
+                                        "description": "Cover image URL",
                                         "type": "string",
                                         "example": "https://example.com/cover.png"
                                     },
                                     "images": {
-                                        "description": "Gallery Image URLs",
+                                        "description": "Gallery image URLs",
                                         "type": "array",
                                         "items": {
                                             "type": "string",

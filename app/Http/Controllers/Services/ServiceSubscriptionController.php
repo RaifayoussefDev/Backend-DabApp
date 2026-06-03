@@ -204,24 +204,43 @@ class ServiceSubscriptionController extends Controller
      * @OA\Post(
      *     path="/api/subscriptions/subscribe",
      *     summary="Subscribe to a plan",
-     *     description="Create a new subscription. If the user is not yet a service provider, a provider profile will be automatically created.",
+     *     description="Create a new subscription and initiate PayTabs payment. **Two usage modes:**\n\n**Mode A — Full onboarding (new provider):** Send all business fields. Provider profile is created automatically.\n\n**Mode B — Existing provider (after POST /become-provider):** Send only `plan_id` + `billing_cycle`. Business fields are ignored if a provider profile already exists.\n\nOn success, redirect the user to `payment_url` to complete payment on PayTabs. Subscription becomes `active` and provider `is_active` becomes `true` after successful payment.",
      *     operationId="subscribeToAPlan",
      *     tags={"Service Subscriptions"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         description="Subscription details with optional provider profile and images",
+     *         description="plan_id and billing_cycle are always required. Business fields (business_name, phone, service_category_ids, working_hours, price_per_hour, price_per_mission) are required only when the user has no existing provider profile.",
      *         @OA\JsonContent(
      *             required={"plan_id", "billing_cycle"},
      *             @OA\Property(property="plan_id", type="integer", example=2, description="ID of the subscription plan"),
      *             @OA\Property(property="billing_cycle", type="string", enum={"monthly", "yearly"}, example="monthly"),
-     *             @OA\Property(property="payment_method_id", type="integer", nullable=true, example=1),
-     *             @OA\Property(property="bank_card_id", type="integer", nullable=true, example=5),
-     *             @OA\Property(property="business_name", type="string", example="My Car Service"),
-     *             @OA\Property(property="business_name_ar", type="string", example="خدمة سيارتي"),
+     *             @OA\Property(property="business_name", type="string", example="My Car Service", description="Required for new providers only"),
+     *             @OA\Property(property="business_name_ar", type="string", example="خدمة سيارتي", description="Required for new providers only"),
+     *             @OA\Property(property="phone", type="string", example="+966500000000", description="Required for new providers only"),
+     *             @OA\Property(property="price_per_hour", type="number", format="float", example=150, description="Required for new providers only"),
+     *             @OA\Property(property="price_per_mission", type="number", format="float", example=200, description="Required for new providers only"),
+     *             @OA\Property(
+     *                 property="service_category_ids",
+     *                 type="array",
+     *                 @OA\Items(type="integer"),
+     *                 example={1, 2},
+     *                 description="Required for new providers only. 1=Transport, 2=Tow, 3=Instructor, 4=Wash, 5=Workshop"
+     *             ),
+     *             @OA\Property(
+     *                 property="working_hours",
+     *                 type="array",
+     *                 description="Required for new providers only. Send all 7 days (day_of_week 0=Sunday … 6=Saturday).",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="day_of_week", type="integer", example=1),
+     *                     @OA\Property(property="is_open", type="boolean", example=true),
+     *                     @OA\Property(property="open_time", type="string", example="08:00"),
+     *                     @OA\Property(property="close_time", type="string", example="18:00")
+     *                 )
+     *             ),
      *             @OA\Property(property="description", type="string", example="Best car service"),
      *             @OA\Property(property="description_ar", type="string", example="أفضل خدمة سيارات"),
-     *             @OA\Property(property="phone", type="string", example="+966500000000"),
      *             @OA\Property(property="email", type="string", format="email", example="contact@carservice.com"),
      *             @OA\Property(property="address", type="string", example="123 Main St"),
      *             @OA\Property(property="address_ar", type="string", example="123 شارع الرئيسي"),
@@ -229,13 +248,13 @@ class ServiceSubscriptionController extends Controller
      *             @OA\Property(property="country_id", type="integer", example=1),
      *             @OA\Property(property="latitude", type="number", format="float", example=24.7136),
      *             @OA\Property(property="longitude", type="number", format="float", example=46.6753),
-     *             @OA\Property(property="logo", type="string", example="https://example.com/logo.png", description="Provider Logo URL"),
-     *             @OA\Property(property="cover_image", type="string", example="https://example.com/cover.png", description="Cover Image URL"),
+     *             @OA\Property(property="logo", type="string", example="https://example.com/logo.png", description="Provider logo URL"),
+     *             @OA\Property(property="cover_image", type="string", example="https://example.com/cover.png", description="Cover image URL"),
      *             @OA\Property(
      *                 property="images",
      *                 type="array",
      *                 @OA\Items(type="string", example="https://example.com/image1.png"),
-     *                 description="Gallery Image URLs"
+     *                 description="Gallery image URLs"
      *             )
      *         )
      *     ),
@@ -308,25 +327,32 @@ class ServiceSubscriptionController extends Controller
      */
     public function subscribe(Request $request)
     {
+        $user = $request->user();
+        $existingProvider = ServiceProvider::where('user_id', $user->id)->first();
+
+        // Business fields are only required when no provider profile exists yet
+        $providerExists = (bool) $existingProvider;
+        $businessRequired = $providerExists ? 'nullable' : 'required';
+
         $validator = Validator::make($request->all(), [
             'plan_id'            => 'required|exists:subscription_plans,id',
             'billing_cycle'      => 'required|in:monthly,yearly',
-            // Required business info
-            'business_name'      => 'required|string|max:255',
-            'business_name_ar'   => 'required|string|max:255',
-            'phone'              => 'required|string|max:20',
-            // Required service categories (at least one)
-            'service_category_ids'   => 'required|array|min:1',
+            // Business info — required only for new providers
+            'business_name'      => $businessRequired . '|string|max:255',
+            'business_name_ar'   => $businessRequired . '|string|max:255',
+            'phone'              => $businessRequired . '|string|max:20',
+            // Service categories — required only for new providers
+            'service_category_ids'   => $businessRequired . '|array|min:1',
             'service_category_ids.*' => 'integer|exists:service_categories,id',
-            // Required working hours (array of 7 days)
-            'working_hours'          => 'required|array|min:1',
-            'working_hours.*.day_of_week' => 'required|integer|between:0,6',
-            'working_hours.*.is_open'     => 'required|boolean',
+            // Working hours — required only for new providers
+            'working_hours'          => $businessRequired . '|array|min:1',
+            'working_hours.*.day_of_week' => 'required_with:working_hours|integer|between:0,6',
+            'working_hours.*.is_open'     => 'required_with:working_hours|boolean',
             'working_hours.*.open_time'   => 'nullable|date_format:H:i',
             'working_hours.*.close_time'  => 'nullable|date_format:H:i',
-            // Required pricing
-            'price_per_hour'     => 'required|numeric|min:0',
-            'price_per_mission'  => 'required|numeric|min:0',
+            // Pricing — required only for new providers
+            'price_per_hour'     => $businessRequired . '|numeric|min:0',
+            'price_per_mission'  => $businessRequired . '|numeric|min:0',
             // Optional
             'description'        => 'nullable|string',
             'description_ar'     => 'nullable|string',
@@ -350,10 +376,8 @@ class ServiceSubscriptionController extends Controller
             ], 422);
         }
 
-        $user = $request->user();
-
-        // Check if user is already a provider, if not create one
-        $provider = ServiceProvider::where('user_id', $user->id)->first();
+        // Reuse the provider record already fetched above
+        $provider = $existingProvider;
 
         if (!$provider) {
             try {
@@ -401,26 +425,34 @@ class ServiceSubscriptionController extends Controller
                 ], 500);
             }
         } else {
-            // Update pricing on existing provider
-            $provider->update([
+            // Only update pricing fields that were actually sent
+            $pricingUpdate = array_filter([
                 'price_per_hour'    => $request->price_per_hour,
                 'price_per_mission' => $request->price_per_mission,
-            ]);
+            ], fn($v) => $v !== null);
+
+            if (!empty($pricingUpdate)) {
+                $provider->update($pricingUpdate);
+            }
         }
 
-        // Sync service categories
-        $provider->serviceCategories()->sync($request->service_category_ids);
+        // Sync service categories only when provided (avoids wiping existing ones)
+        if ($request->has('service_category_ids') && is_array($request->service_category_ids)) {
+            $provider->serviceCategories()->sync($request->service_category_ids);
+        }
 
-        // Save working hours (replace existing)
-        $provider->workingHours()->delete();
-        foreach ($request->working_hours as $hour) {
-            ProviderWorkingHour::create([
-                'provider_id' => $provider->id,
-                'day_of_week' => $hour['day_of_week'],
-                'is_open'     => $hour['is_open'],
-                'open_time'   => $hour['is_open'] ? ($hour['open_time'] ?? null) : null,
-                'close_time'  => $hour['is_open'] ? ($hour['close_time'] ?? null) : null,
-            ]);
+        // Replace working hours only when provided (avoids wiping existing schedule)
+        if ($request->has('working_hours') && is_array($request->working_hours)) {
+            $provider->workingHours()->delete();
+            foreach ($request->working_hours as $hour) {
+                ProviderWorkingHour::create([
+                    'provider_id' => $provider->id,
+                    'day_of_week' => $hour['day_of_week'],
+                    'is_open'     => $hour['is_open'],
+                    'open_time'   => $hour['is_open'] ? ($hour['open_time'] ?? null) : null,
+                    'close_time'  => $hour['is_open'] ? ($hour['close_time'] ?? null) : null,
+                ]);
+            }
         }
 
         if ($provider->hasActiveSubscription()) {
