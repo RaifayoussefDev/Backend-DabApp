@@ -38095,7 +38095,7 @@
                                         "example": 200
                                     },
                                     "service_category_ids": {
-                                        "description": "Required for new providers only. 1=Transport, 2=Tow, 3=Instructor, 4=Wash, 5=Workshop",
+                                        "description": "Optional. 1=Transport, 2=Tow, 3=Instructor, 4=Wash, 5=Workshop. Can be set later via profile update.",
                                         "type": "array",
                                         "items": {
                                             "type": "integer"

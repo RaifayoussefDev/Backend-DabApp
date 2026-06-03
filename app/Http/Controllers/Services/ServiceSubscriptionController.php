@@ -210,7 +210,7 @@ class ServiceSubscriptionController extends Controller
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         description="plan_id and billing_cycle are always required. Business fields (business_name, phone, service_category_ids, working_hours, price_per_hour, price_per_mission) are required only when the user has no existing provider profile.",
+     *         description="plan_id and billing_cycle are always required. Business fields (business_name, phone, working_hours, price_per_hour, price_per_mission) are required only when the user has no existing provider profile.",
      *         @OA\JsonContent(
      *             required={"plan_id", "billing_cycle"},
      *             @OA\Property(property="plan_id", type="integer", example=2, description="ID of the subscription plan"),
@@ -220,13 +220,6 @@ class ServiceSubscriptionController extends Controller
      *             @OA\Property(property="phone", type="string", example="+966500000000", description="Required for new providers only"),
      *             @OA\Property(property="price_per_hour", type="number", format="float", example=150, description="Required for new providers only"),
      *             @OA\Property(property="price_per_mission", type="number", format="float", example=200, description="Required for new providers only"),
-     *             @OA\Property(
-     *                 property="service_category_ids",
-     *                 type="array",
-     *                 @OA\Items(type="integer"),
-     *                 example={1, 2},
-     *                 description="Required for new providers only. 1=Transport, 2=Tow, 3=Instructor, 4=Wash, 5=Workshop"
-     *             ),
      *             @OA\Property(
      *                 property="working_hours",
      *                 type="array",
@@ -259,29 +252,25 @@ class ServiceSubscriptionController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=201,
-     *         description="Subscription created successfully",
+     *         response=200,
+     *         description="Payment initiated — redirect user to payment_url",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Successfully subscribed to Business Plan"),
+     *             @OA\Property(property="message", type="string", example="Payment initiated"),
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
+     *                 @OA\Property(property="payment_url", type="string", example="https://secure.paytabs.com/payment/wr/..."),
      *                 @OA\Property(property="subscription_id", type="integer", example=1),
-     *                 @OA\Property(property="transaction_id", type="integer", example=1),
-     *                 @OA\Property(property="invoice_number", type="string", example="INV-SUB-20260130-A1B2C3"),
-     *                 @OA\Property(property="amount", type="number", format="float", example=29.00),
-     *                 @OA\Property(property="next_billing_date", type="string", format="date", example="2026-02-30")
+     *                 @OA\Property(property="transaction_id", type="integer", example=1)
      *             ),
      *             example={
      *                 "success": true,
-     *                 "message": "Successfully subscribed to Business Plan",
+     *                 "message": "Payment initiated",
      *                 "data": {
+     *                     "payment_url": "https://secure.paytabs.com/payment/wr/...",
      *                     "subscription_id": 1,
-     *                     "transaction_id": 1,
-     *                     "invoice_number": "INV-SUB-20260130-A1B2C3",
-     *                     "amount": 29.00,
-     *                     "next_billing_date": "2026-02-30"
+     *                     "transaction_id": 1
      *                 }
      *             }
      *         )
@@ -341,9 +330,6 @@ class ServiceSubscriptionController extends Controller
             'business_name'      => $businessRequired . '|string|max:255',
             'business_name_ar'   => $businessRequired . '|string|max:255',
             'phone'              => $businessRequired . '|string|max:20',
-            // Service categories — required only for new providers
-            'service_category_ids'   => $businessRequired . '|array|min:1',
-            'service_category_ids.*' => 'integer|exists:service_categories,id',
             // Working hours — required only for new providers
             'working_hours'          => $businessRequired . '|array|min:1',
             'working_hours.*.day_of_week' => 'required_with:working_hours|integer|between:0,6',
@@ -434,11 +420,6 @@ class ServiceSubscriptionController extends Controller
             if (!empty($pricingUpdate)) {
                 $provider->update($pricingUpdate);
             }
-        }
-
-        // Sync service categories only when provided (avoids wiping existing ones)
-        if ($request->has('service_category_ids') && is_array($request->service_category_ids)) {
-            $provider->serviceCategories()->sync($request->service_category_ids);
         }
 
         // Replace working hours only when provided (avoids wiping existing schedule)
