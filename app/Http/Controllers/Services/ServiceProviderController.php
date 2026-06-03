@@ -7,7 +7,6 @@ use App\Models\ServiceProvider;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @OA\Tag(
@@ -438,41 +437,26 @@ class ServiceProviderController extends Controller
         }
 
         $validated = $request->validate([
-            'business_name' => 'nullable|string|max:255',
+            'business_name'    => 'nullable|string|max:255',
             'business_name_ar' => 'nullable|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'description_ar' => 'nullable|string|max:1000',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'address' => 'nullable|string|max:500',
-            'address_ar' => 'nullable|string|max:500',
-            'city_id' => 'nullable|exists:cities,id',
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
-            'logo' => 'nullable|image|max:2048',
-            'cover_image' => 'nullable|image|max:2048'
+            'description'      => 'nullable|string|max:1000',
+            'description_ar'   => 'nullable|string|max:1000',
+            'phone'            => 'nullable|string|max:20',
+            'email'            => 'nullable|email|max:255',
+            'address'          => 'nullable|string|max:500',
+            'address_ar'       => 'nullable|string|max:500',
+            'city_id'          => 'nullable|exists:cities,id',
+            'country_id'       => 'nullable|exists:countries,id',
+            'latitude'         => 'nullable|numeric|between:-90,90',
+            'longitude'        => 'nullable|numeric|between:-180,180',
+            'price_per_hour'   => 'nullable|numeric|min:0',
+            'price_per_mission'=> 'nullable|numeric|min:0',
+            'logo'             => 'nullable|string|url',
+            'cover_image'      => 'nullable|string|url',
         ]);
 
         try {
             $provider = $user->serviceProvider;
-
-            // Upload nouveau logo
-            if ($request->hasFile('logo')) {
-                // Supprimer ancien logo
-                if ($provider->logo) {
-                    Storage::disk('public')->delete($provider->logo);
-                }
-                $validated['logo'] = $request->file('logo')->store('providers/logos', 'public');
-            }
-
-            // Upload nouvelle cover image
-            if ($request->hasFile('cover_image')) {
-                if ($provider->cover_image) {
-                    Storage::disk('public')->delete($provider->cover_image);
-                }
-                $validated['cover_image'] = $request->file('cover_image')->store('providers/covers', 'public');
-            }
-
             $provider->update($validated);
 
             return response()->json([
