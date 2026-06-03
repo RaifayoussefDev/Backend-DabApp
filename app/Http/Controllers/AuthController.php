@@ -1452,9 +1452,42 @@ class AuthController extends Controller
             ];
         }
 
+        // Provider & subscription summary
+        $provider     = \App\Models\ServiceProvider::where('user_id', $user->id)->first();
+        $subscription = $provider?->activeSubscription;
+        $plan         = $subscription?->plan;
+
+        if (!$provider) {
+            $providerData = [
+                'is_provider'             => false,
+                'is_active'               => false,
+                'is_verified'             => false,
+                'provider_id'             => null,
+                'has_active_subscription' => false,
+                'subscription_status'     => null,
+                'plan_name'               => null,
+                'next_action'             => 'complete_profile',
+            ];
+        } else {
+            $hasActiveSub = $provider->hasActiveSubscription();
+            $nextAction   = (!$hasActiveSub || !$provider->is_active) ? 'subscribe' : 'active';
+
+            $providerData = [
+                'is_provider'             => true,
+                'is_active'               => (bool) $provider->is_active,
+                'is_verified'             => (bool) $provider->is_verified,
+                'provider_id'             => $provider->id,
+                'has_active_subscription' => $hasActiveSub,
+                'subscription_status'     => $subscription?->status,
+                'plan_name'               => $plan?->name,
+                'next_action'             => $nextAction,
+            ];
+        }
+
         return response()->json([
-            'user'   => $userWithData,
-            'helper' => $helperData ?? ['is_helper' => false],
+            'user'     => $userWithData,
+            'helper'   => $helperData ?? ['is_helper' => false],
+            'provider' => $providerData,
         ]);
     }
 
