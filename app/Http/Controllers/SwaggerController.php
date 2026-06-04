@@ -11,6 +11,19 @@ namespace App\Http\Controllers;
  *         email="contact@dabapp.com"
  *     )
  * )
+ *
+ * @OA\SecurityScheme(
+ *     securityScheme="bearerAuth",
+ *     type="http",
+ *     scheme="bearer",
+ *     bearerFormat="JWT",
+ *     description="Enter your JWT token. Example: eyJ0eXAiOiJKV1Qi..."
+ * )
+ *
+ * @OA\Server(
+ *     url=L5_SWAGGER_CONST_HOST,
+ *     description="API Server"
+ * )
  */
 class SwaggerController extends Controller
 {
