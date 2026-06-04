@@ -395,7 +395,7 @@ class ServiceProviderController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/api/my-provider-profile",
+     *     path="/api/provider/profile",
      *     summary="Mettre à jour profil fournisseur",
      *     description="Permet au fournisseur de mettre à jour son profil",
      *     operationId="updateProviderProfile",
@@ -466,7 +466,7 @@ class ServiceProviderController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/my-provider-profile",
+     *     path="/api/provider/my-profile",
      *     summary="Mon profil fournisseur",
      *     description="Récupère le profil fournisseur de l'utilisateur connecté",
      *     operationId="getMyProviderProfile",

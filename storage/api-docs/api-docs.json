@@ -36964,28 +36964,7 @@
                 ]
             }
         },
-        "/api/my-provider-profile": {
-            "get": {
-                "tags": [
-                    "Service Providers"
-                ],
-                "summary": "Mon profil fournisseur",
-                "description": "Récupère le profil fournisseur de l'utilisateur connecté",
-                "operationId": "getMyProviderProfile",
-                "responses": {
-                    "200": {
-                        "description": "Profil récupéré"
-                    },
-                    "404": {
-                        "description": "Vous n'êtes pas fournisseur"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            },
+        "/api/provider/profile": {
             "put": {
                 "tags": [
                     "Service Providers"
@@ -37025,6 +37004,29 @@
                         "description": "Profil mis à jour"
                     },
                     "403": {
+                        "description": "Vous n'êtes pas fournisseur"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/provider/my-profile": {
+            "get": {
+                "tags": [
+                    "Service Providers"
+                ],
+                "summary": "Mon profil fournisseur",
+                "description": "Récupère le profil fournisseur de l'utilisateur connecté",
+                "operationId": "getMyProviderProfile",
+                "responses": {
+                    "200": {
+                        "description": "Profil récupéré"
+                    },
+                    "404": {
                         "description": "Vous n'êtes pas fournisseur"
                     }
                 },
