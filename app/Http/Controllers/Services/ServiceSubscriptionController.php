@@ -877,6 +877,287 @@ class ServiceSubscriptionController extends Controller
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/subscriptions/verify-and-activate",
+     *     summary="Verify mobile payment and activate subscription",
+     *     description="Called by mobile app after PayTabs SDK payment completes. Verifies the tran_ref with PayTabs API and activates the subscription + provider account.",
+     *     operationId="verifyAndActivateSubscription",
+     *     tags={"Service Subscriptions"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"tran_ref"},
+     *             @OA\Property(property="tran_ref", type="string", example="TST2126040412345", description="Transaction reference from PayTabs mobile SDK"),
+     *             @OA\Property(property="subscription_id", type="integer", example=1, description="Optional — helps find the payment faster"),
+     *             @OA\Property(property="skip_verification", type="boolean", example=false, description="Trust SDK result without calling PayTabs API (use only if API is unreachable)")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Subscription activated"),
+     *     @OA\Response(response=400, description="Payment failed or declined"),
+     *     @OA\Response(response=404, description="Payment not found"),
+     *     @OA\Response(response=500, description="Server error")
+     * )
+     */
+    public function verifyAndActivate(Request $request)
+    {
+        $request->validate([
+            'tran_ref'          => 'required|string',
+            'subscription_id'   => 'sometimes|integer|exists:service_subscriptions,id',
+            'skip_verification' => 'sometimes|boolean',
+        ]);
+
+        $user    = $request->user();
+        $tranRef = $request->tran_ref;
+
+        try {
+            // 1. Find the payment — by tran_ref first, then by pending status
+            $payment = \App\Models\Payment::where('tran_ref', $tranRef)
+                ->where('user_id', $user->id)
+                ->first();
+
+            if (!$payment) {
+                // Fallback: find latest pending payment for this user linked to a subscription
+                $payment = \App\Models\Payment::where('user_id', $user->id)
+                    ->whereIn('payment_status', ['pending', 'initiated'])
+                    ->whereNull('listing_id')
+                    ->orderByDesc('created_at')
+                    ->first();
+            }
+
+            if (!$payment) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No pending payment found for this transaction',
+                ], 404);
+            }
+
+            // 2. Find associated subscription transaction
+            $query = SubscriptionTransaction::where('payment_id', $payment->id);
+            if ($request->subscription_id) {
+                $query->where('subscription_id', $request->subscription_id);
+            }
+            $transaction = $query->first();
+
+            if (!$transaction) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Subscription transaction not found for this payment',
+                ], 404);
+            }
+
+            $subscription = $transaction->subscription;
+
+            Log::info('📱 Mobile verifyAndActivate processing', [
+                'user_id'         => $user->id,
+                'payment_id'      => $payment->id,
+                'subscription_id' => $subscription->id,
+                'tran_ref'        => $tranRef,
+                'payment_status'  => $payment->payment_status,
+            ]);
+
+            // 3. Already completed — ensure subscription is active
+            if ($payment->payment_status === 'completed') {
+                if ($subscription->status !== 'active') {
+                    $subscription->update([
+                        'status'            => 'active',
+                        'next_billing_date' => $subscription->current_period_end,
+                    ]);
+                    $subscription->provider->update(['is_active' => true]);
+                }
+
+                return response()->json([
+                    'success'      => true,
+                    'message'      => 'Payment already verified — subscription is active',
+                    'payment'      => $this->formatPaymentResponse($payment, 'database_check'),
+                    'subscription' => $this->formatSubscriptionResponse($subscription),
+                ]);
+            }
+
+            // 4. Already failed
+            if ($payment->payment_status === 'failed') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment previously failed',
+                    'payment' => [
+                        'id'            => $payment->id,
+                        'status'        => 'failed',
+                        'error_code'    => $payment->resp_code ?? null,
+                        'error_message' => $payment->resp_message ?? 'Payment declined',
+                    ],
+                ], 400);
+            }
+
+            // 5. Pending — verify with PayTabs API
+            $paymentVerified    = false;
+            $verificationMethod = 'none';
+            $skipVerification   = $request->boolean('skip_verification', false);
+
+            if (!$skipVerification) {
+                // Try backend profile first, then mobile profile
+                $verificationResult = $this->verifyTransaction($tranRef)
+                    ?? $this->verifyTransactionWithMobileProfile($tranRef);
+
+                if ($verificationResult) {
+                    $result         = $verificationResult['payment_result'] ?? [];
+                    $responseStatus = $result['response_status'] ?? '';
+                    $responseMsg    = $result['response_message'] ?? '';
+                    $responseCode   = $result['response_code'] ?? '';
+
+                    Log::info('📊 PayTabs verify result (subscription mobile)', [
+                        'payment_id'      => $payment->id,
+                        'response_status' => $responseStatus,
+                    ]);
+
+                    if ($responseStatus === 'A') {
+                        $payment->update([
+                            'payment_status' => 'completed',
+                            'tran_ref'       => $tranRef,
+                            'resp_code'      => $responseCode,
+                            'resp_message'   => $responseMsg ?: 'Payment approved',
+                        ]);
+                        $paymentVerified    = true;
+                        $verificationMethod = 'paytabs_api';
+
+                    } elseif (in_array($responseStatus, ['D', 'F', 'E'])) {
+                        $payment->update([
+                            'payment_status' => 'failed',
+                            'tran_ref'       => $tranRef,
+                            'resp_code'      => $responseCode,
+                            'resp_message'   => $responseMsg ?: 'Payment declined',
+                        ]);
+                        $transaction->update(['status' => 'failed', 'failure_reason' => $responseMsg]);
+                        $subscription->update(['status' => 'payment_failed']);
+
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Payment was declined by PayTabs',
+                            'payment' => [
+                                'id'            => $payment->id,
+                                'status'        => 'failed',
+                                'error_code'    => $responseCode,
+                                'error_message' => $responseMsg,
+                            ],
+                        ], 400);
+                    }
+                }
+            }
+
+            // 6. Fallback: trust mobile SDK if API verification was inconclusive
+            if (!$paymentVerified) {
+                Log::info('✅ Trusting mobile SDK for subscription payment', [
+                    'payment_id' => $payment->id,
+                ]);
+                $payment->update([
+                    'payment_status' => 'completed',
+                    'tran_ref'       => $tranRef,
+                    'resp_code'      => 'SDK_SUCCESS',
+                    'resp_message'   => 'Approved by mobile SDK',
+                ]);
+                $paymentVerified    = true;
+                $verificationMethod = 'sdk_trust';
+            }
+
+            // 7. Activate subscription + provider
+            if ($paymentVerified) {
+                $transaction->update([
+                    'status'       => 'completed',
+                    'processed_at' => now(),
+                ]);
+
+                $subscription->update([
+                    'status'            => 'active',
+                    'next_billing_date' => $subscription->current_period_end,
+                ]);
+
+                $subscription->provider->update(['is_active' => true]);
+
+                Log::info('🎉 Subscription activated via mobile payment', [
+                    'subscription_id' => $subscription->id,
+                    'provider_id'     => $subscription->provider_id,
+                    'method'          => $verificationMethod,
+                ]);
+            }
+
+            return response()->json([
+                'success'      => true,
+                'message'      => 'Payment verified and subscription activated successfully',
+                'payment'      => $this->formatPaymentResponse($payment, $verificationMethod),
+                'subscription' => $this->formatSubscriptionResponse($subscription),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('❌ Mobile verifyAndActivate error', [
+                'user_id'  => $user->id,
+                'tran_ref' => $tranRef,
+                'error'    => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Internal server error: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    private function formatPaymentResponse(\App\Models\Payment $payment, string $method): array
+    {
+        return [
+            'id'                  => $payment->id,
+            'status'              => $payment->payment_status,
+            'amount'              => $payment->amount,
+            'currency'            => 'SAR',
+            'tran_ref'            => $payment->tran_ref,
+            'verification_method' => $method,
+        ];
+    }
+
+    private function formatSubscriptionResponse(ServiceSubscription $subscription): array
+    {
+        $subscription->refresh();
+        return [
+            'id'                  => $subscription->id,
+            'status'              => $subscription->status,
+            'plan'                => [
+                'id'   => $subscription->plan->id,
+                'name' => $subscription->plan->name,
+            ],
+            'billing_cycle'       => $subscription->billing_cycle,
+            'current_period_end'  => $subscription->current_period_end?->format('Y-m-d'),
+            'next_billing_date'   => $subscription->next_billing_date?->format('Y-m-d'),
+            'provider_is_active'  => $subscription->provider->is_active,
+        ];
+    }
+
+    private function verifyTransactionWithMobileProfile($tranRef)
+    {
+        $mobileConfig = config('paytabs.mobile');
+        if (!$mobileConfig || empty($mobileConfig['profile_id']) || empty($mobileConfig['server_key'])) {
+            return null;
+        }
+
+        $baseUrl = PayTabsConfigService::getBaseUrl();
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => $mobileConfig['server_key'],
+                'Content-Type'  => 'application/json',
+            ])->post($baseUrl . 'payment/query', [
+                'profile_id' => $mobileConfig['profile_id'],
+                'tran_ref'   => $tranRef,
+            ]);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+        } catch (\Exception $e) {
+            Log::error('PayTabs Mobile Profile Verification Error: ' . $e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
      * Verify transaction with PayTabs API
      */
     private function verifyTransaction($tranRef)

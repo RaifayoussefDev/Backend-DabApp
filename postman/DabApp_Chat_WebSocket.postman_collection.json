@@ -1,0 +1,695 @@
+{
+  "info": {
+    "name": "DabApp — Chat & WebSocket",
+    "description": "Test complet du système de chat temps réel entre utilisateurs et providers.\nInclut: Auth JWT, Sessions de chat, Messages, WebSocket auth (Reverb).",
+    "_postman_id": "dabapp-chat-websocket-v1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",      "value": "http://localhost:8000",     "type": "string" },
+    { "key": "jwt_token",     "value": "",                          "type": "string" },
+    { "key": "jwt_token_provider", "value": "",                     "type": "string" },
+    { "key": "booking_id",    "value": "1",                         "type": "string" },
+    { "key": "session_id",    "value": "",                          "type": "string" },
+    { "key": "reverb_app_key","value": "qke74mgsd7wtvip1nrv3",      "type": "string" },
+    { "key": "reverb_host",   "value": "localhost",                 "type": "string" },
+    { "key": "reverb_port",   "value": "8080",                      "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "1 — Auth",
+      "item": [
+        {
+          "name": "Login (User)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.token) {",
+                  "    pm.collectionVariables.set('jwt_token', res.token);",
+                  "    pm.test('Token saved', () => pm.expect(res.token).to.be.a('string'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api","login"] },
+            "description": "Connexion utilisateur — le token JWT est automatiquement sauvegardé dans {{jwt_token}}"
+          }
+        },
+        {
+          "name": "Login (Provider user)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.token) {",
+                  "    pm.collectionVariables.set('jwt_token_provider', res.token);",
+                  "    pm.test('Provider token saved', () => pm.expect(res.token).to.be.a('string'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"provider@example.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api","login"] },
+            "description": "Connexion du compte provider — token sauvegardé dans {{jwt_token_provider}}"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.token) pm.collectionVariables.set('jwt_token', res.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/refresh", "host": ["{{base_url}}"], "path": ["api","refresh"] }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/logout", "host": ["{{base_url}}"], "path": ["api","logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 — Chat Sessions",
+      "item": [
+        {
+          "name": "Démarrer une session de chat",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data && res.data.id) {",
+                  "    pm.collectionVariables.set('session_id', res.data.id);",
+                  "    pm.test('Session ID saved: ' + res.data.id, () => pm.expect(res.data.id).to.be.a('number'));",
+                  "}",
+                  "pm.test('Status 201 or 200', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/bookings/{{booking_id}}/start-chat",
+              "host": ["{{base_url}}"],
+              "path": ["api","bookings","{{booking_id}}","start-chat"]
+            },
+            "description": "Démarre une session de chat pour une réservation confirmée ou en cours.\nLe session_id est automatiquement sauvegardé pour les requêtes suivantes.\n\nPré-requis: La réservation {{booking_id}} doit avoir status='confirmed' ou 'in_progress'"
+          }
+        },
+        {
+          "name": "Mes sessions de chat",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const res = pm.response.json();",
+                  "pm.test('Has data array', () => pm.expect(res.data).to.exist);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/my-chat-sessions?status=active",
+              "host": ["{{base_url}}"],
+              "path": ["api","my-chat-sessions"],
+              "query": [
+                { "key": "status", "value": "active", "description": "active | pending | completed | expired" }
+              ]
+            },
+            "description": "Liste toutes les sessions de chat de l'utilisateur connecté avec le dernier message et le count non lus"
+          }
+        },
+        {
+          "name": "Mes sessions (Provider)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token_provider}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/my-chat-sessions",
+              "host": ["{{base_url}}"],
+              "path": ["api","my-chat-sessions"]
+            },
+            "description": "Même endpoint — le provider voit ses sessions depuis son compte"
+          }
+        },
+        {
+          "name": "Terminer une session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const res = pm.response.json();",
+                  "pm.test('Status = completed', () => pm.expect(res.data.session_status).to.equal('completed'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/chat-sessions/{{session_id}}/end",
+              "host": ["{{base_url}}"],
+              "path": ["api","chat-sessions","{{session_id}}","end"]
+            },
+            "description": "Termine la session active — calcule la durée automatiquement"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 — Messages",
+      "item": [
+        {
+          "name": "Envoyer un message texte (User)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const res = pm.response.json();",
+                  "pm.test('Message créé', () => {",
+                  "    pm.expect(res.data.message_type).to.equal('text');",
+                  "    pm.expect(res.data.sender_type).to.equal('user');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Bonjour, mon moteur fait un bruit bizarre depuis ce matin\",\n  \"message_type\": \"text\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/chat-sessions/{{session_id}}/send-message",
+              "host": ["{{base_url}}"],
+              "path": ["api","chat-sessions","{{session_id}}","send-message"]
+            },
+            "description": "Envoie un message texte depuis le user.\nLe WebSocket broadcast (MessageSent) est déclenché automatiquement côté serveur."
+          }
+        },
+        {
+          "name": "Envoyer une réponse texte (Provider)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const res = pm.response.json();",
+                  "pm.test('Sender = provider', () => pm.expect(res.data.sender_type).to.equal('provider'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token_provider}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Bonjour ! Pouvez-vous me décrire le bruit ? Depuis combien de temps ?\",\n  \"message_type\": \"text\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/chat-sessions/{{session_id}}/send-message",
+              "host": ["{{base_url}}"],
+              "path": ["api","chat-sessions","{{session_id}}","send-message"]
+            },
+            "description": "Réponse du provider — même endpoint, le sender_type est déterminé automatiquement selon le JWT"
+          }
+        },
+        {
+          "name": "Envoyer une image",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "attachment",
+                  "type": "file",
+                  "description": "Sélectionner une image JPG/PNG (max 10MB)"
+                },
+                {
+                  "key": "message",
+                  "value": "Voici une photo du problème",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/chat-sessions/{{session_id}}/send-message",
+              "host": ["{{base_url}}"],
+              "path": ["api","chat-sessions","{{session_id}}","send-message"]
+            },
+            "description": "Upload d'une image — le message_type est détecté automatiquement (image/*).\nUtiliser form-data (pas JSON) pour les uploads."
+          }
+        },
+        {
+          "name": "Envoyer un fichier PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "attachment",
+                  "type": "file",
+                  "description": "Sélectionner un PDF ou document (max 10MB)"
+                },
+                {
+                  "key": "message",
+                  "value": "Voici la fiche technique",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/chat-sessions/{{session_id}}/send-message",
+              "host": ["{{base_url}}"],
+              "path": ["api","chat-sessions","{{session_id}}","send-message"]
+            }
+          }
+        },
+        {
+          "name": "Lire les messages (pagination)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const res = pm.response.json();",
+                  "pm.test('Messages present', () => pm.expect(res.data.messages).to.exist);",
+                  "pm.test('Unread count present', () => pm.expect(res.data.unread_count).to.be.a('number'));",
+                  "console.log('Unread:', res.data.unread_count, '| Total:', res.data.messages.total);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/chat-sessions/{{session_id}}/messages?per_page=50",
+              "host": ["{{base_url}}"],
+              "path": ["api","chat-sessions","{{session_id}}","messages"],
+              "query": [
+                { "key": "per_page",  "value": "50" },
+                { "key": "before_id", "value": "", "disabled": true, "description": "Pagination infinie — charger avant cet ID" }
+              ]
+            },
+            "description": "Récupère les messages avec pagination.\nLes messages de l'autre partie sont automatiquement marqués comme lus.\nbefore_id permet le scroll infini vers le haut (charger les messages plus anciens)."
+          }
+        },
+        {
+          "name": "Lire les messages (Provider)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token_provider}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/chat-sessions/{{session_id}}/messages?per_page=50",
+              "host": ["{{base_url}}"],
+              "path": ["api","chat-sessions","{{session_id}}","messages"],
+              "query": [
+                { "key": "per_page", "value": "50" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Marquer comme lu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const res = pm.response.json();",
+                  "pm.test('Messages marqués', () => pm.expect(res.messages_marked).to.be.a('number'));",
+                  "console.log(res.messages_marked + ' message(s) marqué(s) comme lu(s)');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/chat-sessions/{{session_id}}/mark-read",
+              "host": ["{{base_url}}"],
+              "path": ["api","chat-sessions","{{session_id}}","mark-read"]
+            },
+            "description": "Marque tous les messages reçus (de l'autre partie) comme lus"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 — WebSocket Auth (Reverb)",
+      "item": [
+        {
+          "name": "Auth canal privé chat.{session_id}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const res = pm.response.json();",
+                  "pm.test('Auth token présent', () => pm.expect(res.auth).to.be.a('string'));",
+                  "console.log('Canal autorisé — auth:', res.auth);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"socket_id\": \"{{socket_id}}\",\n  \"channel_name\": \"private-chat.{{session_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/broadcasting/auth",
+              "host": ["{{base_url}}"],
+              "path": ["broadcasting","auth"]
+            },
+            "description": "Authentifie le mobile pour s'abonner au canal privé.\nLe socket_id est fourni par le SDK Reverb/Pusher côté mobile.\n\nRéponse attendue: { \"auth\": \"app_key:signature\" }"
+          }
+        },
+        {
+          "name": "Auth canal privé chat.user.{user_id}",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"socket_id\": \"{{socket_id}}\",\n  \"channel_name\": \"private-chat.user.{{user_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/broadcasting/auth",
+              "host": ["{{base_url}}"],
+              "path": ["broadcasting","auth"]
+            },
+            "description": "Canal de notification de démarrage de session pour le user"
+          }
+        },
+        {
+          "name": "Auth canal privé chat.provider.{provider_id} (Provider)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token_provider}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"socket_id\": \"{{socket_id}}\",\n  \"channel_name\": \"private-chat.provider.{{provider_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/broadcasting/auth",
+              "host": ["{{base_url}}"],
+              "path": ["broadcasting","auth"]
+            },
+            "description": "Canal de notification de démarrage de session pour le provider"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 — Admin Chat",
+      "item": [
+        {
+          "name": "Liste toutes les sessions (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token_admin}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/chat-sessions",
+              "host": ["{{base_url}}"],
+              "path": ["api","admin","chat-sessions"]
+            }
+          }
+        },
+        {
+          "name": "Détail d'une session (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token_admin}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/chat-sessions/{{session_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api","admin","chat-sessions","{{session_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6 — Cas d'erreur",
+      "item": [
+        {
+          "name": "Session introuvable (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('success = false', () => pm.expect(pm.response.json().success).to.be.false);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/chat-sessions/99999/messages",
+              "host": ["{{base_url}}"],
+              "path": ["api","chat-sessions","99999","messages"]
+            }
+          }
+        },
+        {
+          "name": "Message sans texte ni fichier (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 422', () => pm.response.to.have.status(422));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/chat-sessions/{{session_id}}/send-message",
+              "host": ["{{base_url}}"],
+              "path": ["api","chat-sessions","{{session_id}}","send-message"]
+            }
+          }
+        },
+        {
+          "name": "Accès non autorisé (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 403 ou 401', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/my-chat-sessions",
+              "host": ["{{base_url}}"],
+              "path": ["api","my-chat-sessions"]
+            },
+            "description": "Requête sans Authorization header — doit retourner 401"
+          }
+        },
+        {
+          "name": "Terminer une session déjà terminée (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Message explicite', () => {",
+                  "    pm.expect(pm.response.json().message).to.include('already ended');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/chat-sessions/{{session_id}}/end",
+              "host": ["{{base_url}}"],
+              "path": ["api","chat-sessions","{{session_id}}","end"]
+            },
+            "description": "Appeler end sur une session déjà completed — doit retourner 400"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1908,6 +1908,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/my-subscription', [ServiceSubscriptionController::class, 'mySubscription']);
     Route::post('/subscriptions/subscribe', [ServiceSubscriptionController::class, 'subscribe']);
     Route::post('/subscriptions/cancel', [ServiceSubscriptionController::class, 'cancel']);
+    Route::post('/subscriptions/verify-and-activate', [ServiceSubscriptionController::class, 'verifyAndActivate']);
     Route::get('/subscription/transactions', [SubscriptionTransactionController::class, 'index']);
 });
 

@@ -8,6 +8,7 @@ use App\Observers\EventObserver;
 use App\Observers\EventParticipantObserver;
 use App\Services\FirebaseService;
 use App\Services\NotificationService;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -33,5 +34,8 @@ class AppServiceProvider extends ServiceProvider
     {
         Event::observe(EventObserver::class);
         EventParticipant::observe(EventParticipantObserver::class);
+
+        // Use JWT guard for WebSocket private-channel authentication
+        Broadcast::routes(['middleware' => ['auth:api']]);
     }
 }

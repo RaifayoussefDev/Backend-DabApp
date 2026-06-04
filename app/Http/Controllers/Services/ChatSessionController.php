@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Services;
 
+use App\Events\Chat\ChatSessionStarted;
+use App\Events\Chat\MessageSent;
 use App\Http\Controllers\Controller;
 use App\Models\ChatSession;
 use App\Models\ChatMessage;
@@ -112,7 +114,7 @@ class ChatSessionController extends Controller
 
             DB::commit();
 
-            // TODO: Créer une notification temps réel
+            broadcast(new ChatSessionStarted($session))->toOthers();
 
             return response()->json([
                 'success' => true,
@@ -247,8 +249,7 @@ class ChatSessionController extends Controller
 
             DB::commit();
 
-            // TODO: Envoyer notification push au destinataire
-            // TODO: Broadcast via WebSocket pour chat temps réel
+            broadcast(new MessageSent($message, $session->id))->toOthers();
 
             return response()->json([
                 'success' => true,
