@@ -38425,6 +38425,65 @@
                 ]
             }
         },
+        "/api/subscriptions/verify-and-activate": {
+            "post": {
+                "tags": [
+                    "Service Subscriptions"
+                ],
+                "summary": "Verify mobile payment and activate subscription",
+                "description": "Called by mobile app after PayTabs SDK payment completes. Verifies the tran_ref with PayTabs API and activates the subscription + provider account.",
+                "operationId": "verifyAndActivateSubscription",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tran_ref"
+                                ],
+                                "properties": {
+                                    "tran_ref": {
+                                        "description": "Transaction reference from PayTabs mobile SDK",
+                                        "type": "string",
+                                        "example": "TST2126040412345"
+                                    },
+                                    "subscription_id": {
+                                        "description": "Optional — helps find the payment faster",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "skip_verification": {
+                                        "description": "Trust SDK result without calling PayTabs API (use only if API is unreachable)",
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Subscription activated"
+                    },
+                    "400": {
+                        "description": "Payment failed or declined"
+                    },
+                    "404": {
+                        "description": "Payment not found"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/subscription-plans": {
             "get": {
                 "tags": [
