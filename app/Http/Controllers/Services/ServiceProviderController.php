@@ -23,7 +23,7 @@ class ServiceProviderController extends Controller
      *     description="Récupère tous les fournisseurs de services avec filtres et pagination",
      *     operationId="getServiceProviders",
      *     tags={"Service Providers"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="is_verified",
      *         in="query",
@@ -164,7 +164,7 @@ class ServiceProviderController extends Controller
      *     description="Récupère les détails complets d'un fournisseur avec ses services, avis et horaires",
      *     operationId="getServiceProvider",
      *     tags={"Service Providers"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -225,7 +225,7 @@ class ServiceProviderController extends Controller
      *     description="Recherche les fournisseurs dans un rayon donné autour d'une position GPS",
      *     operationId="getNearbyProviders",
      *     tags={"Service Providers"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="latitude",
      *         in="query",
@@ -290,7 +290,7 @@ class ServiceProviderController extends Controller
      *     description="Permet à un utilisateur de s'inscrire comme fournisseur de services",
      *     operationId="becomeProvider",
      *     tags={"Service Providers"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
@@ -400,7 +400,7 @@ class ServiceProviderController extends Controller
      *     description="Permet au fournisseur de mettre à jour son profil",
      *     operationId="updateProviderProfile",
      *     tags={"Service Providers"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
@@ -471,7 +471,7 @@ class ServiceProviderController extends Controller
      *     description="Récupère le profil fournisseur de l'utilisateur connecté",
      *     operationId="getMyProviderProfile",
      *     tags={"Service Providers"},
-     *     security={{"sanctum":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Response(response=200, description="Profil récupéré"),
      *     @OA\Response(response=404, description="Vous n'êtes pas fournisseur")
      * )
