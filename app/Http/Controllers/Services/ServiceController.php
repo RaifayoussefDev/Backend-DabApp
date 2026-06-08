@@ -574,6 +574,11 @@ class ServiceController extends Controller
         ]);
 
         try {
+            // Don't overwrite image with null if not explicitly provided
+            if (!$request->filled('image')) {
+                unset($validated['image']);
+            }
+
             $service->update($validated);
 
             // Sync Pricing Rules
