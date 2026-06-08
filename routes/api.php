@@ -1573,6 +1573,11 @@ Route::middleware(['auth:api'])->prefix('provider')->group(function () {
     Route::post('/profile', [ServiceProviderController::class, 'updateProfile']); // For multipart/form-data
     Route::post('/images', [ServiceProviderController::class, 'addImage']);
     Route::delete('/images/{imageId}', [ServiceProviderController::class, 'removeImage']);
+
+    // Provider bookings history & management
+    Route::get('/bookings', [ServiceBookingController::class, 'providerBookings']);
+    Route::get('/bookings/{id}', [ServiceBookingController::class, 'providerBookingShow']);
+    Route::post('/bookings/{id}/update-status', [ServiceBookingController::class, 'updateBookingStatus']);
 });
 
 /*

@@ -418,6 +418,199 @@ class ServiceBookingController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/provider/bookings",
+     *     summary="Liste des réservations reçues (Provider)",
+     *     description="Récupère toutes les réservations reçues par le provider connecté",
+     *     operationId="getProviderBookings",
+     *     tags={"Service Bookings"},
+     *     security={{"bearer":{}}},
+     *     @OA\Parameter(name="status", in="query", description="pending|confirmed|in_progress|completed|cancelled|rejected", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="service_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="from_date", in="query", @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="to_date", in="query", @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="per_page", in="query", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Bookings retrieved"),
+     *     @OA\Response(response=403, description="Not a provider")
+     * )
+     */
+    public function providerBookings(Request $request)
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+
+        if (!$user->serviceProvider) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not a service provider'
+            ], 403);
+        }
+
+        $query = ServiceBooking::with([
+            'service.category',
+            'user:id,first_name,last_name,email,phone,avatar',
+            'payment'
+        ])->where('provider_id', $user->serviceProvider->id);
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('service_id')) {
+            $query->where('service_id', $request->service_id);
+        }
+
+        if ($request->has('from_date')) {
+            $query->where('booking_date', '>=', $request->from_date);
+        }
+
+        if ($request->has('to_date')) {
+            $query->where('booking_date', '<=', $request->to_date);
+        }
+
+        $perPage = $request->get('per_page', 20);
+        $bookings = $query->orderByDesc('booking_date')->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $bookings,
+            'message' => 'Provider bookings retrieved successfully'
+        ], 200);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/provider/bookings/{id}",
+     *     summary="Détails d'une réservation (Provider)",
+     *     operationId="getProviderBooking",
+     *     tags={"Service Bookings"},
+     *     security={{"bearer":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Booking found"),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=404, description="Not found")
+     * )
+     */
+    public function providerBookingShow($id)
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+
+        if (!$user->serviceProvider) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not a service provider'
+            ], 403);
+        }
+
+        $booking = ServiceBooking::with([
+            'service.category',
+            'user:id,first_name,last_name,email,phone,avatar',
+            'payment',
+            'review',
+            'chatSession'
+        ])->where('provider_id', $user->serviceProvider->id)->find($id);
+
+        if (!$booking) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Booking not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $booking,
+            'message' => 'Booking found'
+        ], 200);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/provider/bookings/{id}/update-status",
+     *     summary="Mettre à jour le statut d'une réservation (Provider)",
+     *     description="Le provider peut confirmer, rejeter, démarrer ou compléter une réservation",
+     *     operationId="updateBookingStatus",
+     *     tags={"Service Bookings"},
+     *     security={{"bearer":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"status"},
+     *             @OA\Property(property="status", type="string", enum={"confirmed","rejected","in_progress","completed"}, example="confirmed"),
+     *             @OA\Property(property="rejection_reason", type="string", example="Not available on this date")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Status updated"),
+     *     @OA\Response(response=400, description="Invalid status transition"),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=404, description="Not found")
+     * )
+     */
+    public function updateBookingStatus(Request $request, $id)
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+
+        if (!$user->serviceProvider) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not a service provider'
+            ], 403);
+        }
+
+        $booking = ServiceBooking::where('provider_id', $user->serviceProvider->id)->find($id);
+
+        if (!$booking) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Booking not found'
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'status'           => 'required|in:confirmed,rejected,in_progress,completed',
+            'rejection_reason' => 'required_if:status,rejected|nullable|string|max:500',
+        ]);
+
+        // Transitions autorisées
+        $allowedTransitions = [
+            'pending'     => ['confirmed', 'rejected'],
+            'confirmed'   => ['in_progress', 'rejected'],
+            'in_progress' => ['completed'],
+        ];
+
+        $currentStatus = $booking->status;
+
+        if (!isset($allowedTransitions[$currentStatus]) ||
+            !in_array($validated['status'], $allowedTransitions[$currentStatus])) {
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot change status from '{$currentStatus}' to '{$validated['status']}'"
+            ], 400);
+        }
+
+        $updateData = ['status' => $validated['status']];
+
+        if ($validated['status'] === 'rejected') {
+            $updateData['cancellation_reason'] = $validated['rejection_reason'] ?? null;
+            $updateData['cancelled_by'] = $user->id;
+            $updateData['cancelled_at'] = now();
+        }
+
+        if ($validated['status'] === 'completed') {
+            $updateData['payment_status'] = 'completed';
+            $user->serviceProvider->increment('completed_orders');
+        }
+
+        $booking->update($updateData);
+
+        return response()->json([
+            'success' => true,
+            'data'    => $booking->fresh(['service', 'user', 'payment']),
+            'message' => "Booking status updated to '{$validated['status']}' successfully"
+        ], 200);
+    }
+
+    /**
      * Calcul de distance (Haversine formula)
      */
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)

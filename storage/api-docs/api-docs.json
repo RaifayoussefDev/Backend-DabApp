@@ -35097,6 +35097,172 @@
                 ]
             }
         },
+        "/api/provider/bookings": {
+            "get": {
+                "tags": [
+                    "Service Bookings"
+                ],
+                "summary": "Liste des réservations reçues (Provider)",
+                "description": "Récupère toutes les réservations reçues par le provider connecté",
+                "operationId": "getProviderBookings",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "pending|confirmed|in_progress|completed|cancelled|rejected",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "service_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bookings retrieved"
+                    },
+                    "403": {
+                        "description": "Not a provider"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/provider/bookings/{id}": {
+            "get": {
+                "tags": [
+                    "Service Bookings"
+                ],
+                "summary": "Détails d'une réservation (Provider)",
+                "operationId": "getProviderBooking",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Booking found"
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/provider/bookings/{id}/update-status": {
+            "post": {
+                "tags": [
+                    "Service Bookings"
+                ],
+                "summary": "Mettre à jour le statut d'une réservation (Provider)",
+                "description": "Le provider peut confirmer, rejeter, démarrer ou compléter une réservation",
+                "operationId": "updateBookingStatus",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "confirmed",
+                                            "rejected",
+                                            "in_progress",
+                                            "completed"
+                                        ],
+                                        "example": "confirmed"
+                                    },
+                                    "rejection_reason": {
+                                        "type": "string",
+                                        "example": "Not available on this date"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Status updated"
+                    },
+                    "400": {
+                        "description": "Invalid status transition"
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
         "/api/service-categories": {
             "get": {
                 "tags": [
@@ -35946,7 +36112,8 @@
                                     },
                                     "image": {
                                         "type": "string",
-                                        "format": "binary"
+                                        "format": "url",
+                                        "example": "https://be.dabapp.co/storage/services/image.jpg"
                                     }
                                 },
                                 "type": "object"
@@ -37037,81 +37204,93 @@
                 ]
             }
         },
-        "/api/provider/status": {
-            "get": {
+        "/api/provider/images": {
+            "post": {
                 "tags": [
                     "Service Providers"
                 ],
-                "summary": "Get provider registration status",
-                "description": "Returns the current user's provider status: whether they have a profile, an active subscription, and what action to take next. Use this to decide whether to show 'Become a Provider' or 'Provider Profile' in the UI.",
-                "operationId": "getProviderStatus",
-                "responses": {
-                    "200": {
-                        "description": "Status retrieved",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "is_provider": {
-                                                    "type": "boolean",
-                                                    "example": true
-                                                },
-                                                "has_active_subscription": {
-                                                    "type": "boolean",
-                                                    "example": true
-                                                },
-                                                "is_active": {
-                                                    "type": "boolean",
-                                                    "example": true
-                                                },
-                                                "is_verified": {
-                                                    "type": "boolean",
-                                                    "example": false
-                                                },
-                                                "provider_id": {
-                                                    "type": "integer",
-                                                    "example": 3,
-                                                    "nullable": true
-                                                },
-                                                "subscription_status": {
-                                                    "type": "string",
-                                                    "example": "active",
-                                                    "nullable": true
-                                                },
-                                                "plan_name": {
-                                                    "type": "string",
-                                                    "example": "Business Plan",
-                                                    "nullable": true
-                                                },
-                                                "next_action": {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "none",
-                                                        "complete_profile",
-                                                        "subscribe",
-                                                        "active"
-                                                    ],
-                                                    "example": "active"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
+                "summary": "Ajouter une image à la galerie du provider",
+                "operationId": "addProviderImage",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "image_url"
+                                ],
+                                "properties": {
+                                    "image_url": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "example": "https://example.com/image.jpg"
                                     },
-                                    "type": "object"
-                                }
+                                    "caption": {
+                                        "type": "string"
+                                    },
+                                    "caption_ar": {
+                                        "type": "string"
+                                    },
+                                    "order_position": {
+                                        "type": "integer",
+                                        "example": 0
+                                    },
+                                    "is_featured": {
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
                             }
                         }
                     }
                 },
+                "responses": {
+                    "201": {
+                        "description": "Image ajoutée"
+                    },
+                    "403": {
+                        "description": "Vous n'êtes pas fournisseur"
+                    }
+                },
                 "security": [
                     {
-                        "bearer": []
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/provider/images/{imageId}": {
+            "delete": {
+                "tags": [
+                    "Service Providers"
+                ],
+                "summary": "Supprimer une image de la galerie du provider",
+                "operationId": "removeProviderImage",
+                "parameters": [
+                    {
+                        "name": "imageId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Image supprimée"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    },
+                    "404": {
+                        "description": "Image non trouvée"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
                     }
                 ]
             }
