@@ -175,12 +175,12 @@ class ServiceProvider extends Model
 
     public function getLogoUrlAttribute()
     {
-        return $this->logo ? asset('storage/' . $this->logo) : asset('images/default-provider-logo.png');
+        return $this->logo ?: asset('images/default-provider-logo.png');
     }
 
     public function getCoverImageUrlAttribute()
     {
-        return $this->cover_image ? asset('storage/' . $this->cover_image) : asset('images/default-cover.jpg');
+        return $this->cover_image ?: asset('images/default-cover.jpg');
     }
 
     // ==================== SUBSCRIPTION HELPER METHODS ====================

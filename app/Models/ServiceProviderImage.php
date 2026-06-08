@@ -48,6 +48,6 @@ class ServiceProviderImage extends Model
 
     public function getFullImageUrlAttribute()
     {
-        return $this->image_url ? asset('storage/' . $this->image_url) : null;
+        return $this->image_url ?: null;
     }
 }

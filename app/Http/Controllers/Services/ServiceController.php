@@ -4,10 +4,8 @@ namespace App\Http\Controllers\Services;
 
 use App\Http\Controllers\Controller;
 use App\Models\Service;
-use App\Models\ServiceProvider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 /**
@@ -338,7 +336,7 @@ class ServiceController extends Controller
      *             @OA\Property(property="is_available", type="boolean", example=true),
      *             @OA\Property(property="requires_booking", type="boolean", example=true),
      *             @OA\Property(property="max_capacity", type="integer", example=5),
-     *             @OA\Property(property="image", type="string", format="binary")
+     *             @OA\Property(property="image", type="string", format="url", example="https://be.dabapp.co/storage/services/image.jpg")
      *         )
      *     ),
      *     @OA\Response(
@@ -409,7 +407,7 @@ class ServiceController extends Controller
             'is_available' => 'nullable|boolean',
             'requires_booking' => 'nullable|boolean',
             'max_capacity' => 'nullable|integer|min:1',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|string|url',
             'has_online_consultation' => 'nullable|boolean',
             'consultation_price_per_session' => 'nullable|required_if:has_online_consultation,true|numeric|min:0',
             'consultation_email' => 'nullable|required_if:has_online_consultation,true|email|max:255',
@@ -429,11 +427,6 @@ class ServiceController extends Controller
 
         DB::beginTransaction();
         try {
-            // Upload image si fourni
-            if ($request->hasFile('image')) {
-                $validated['image'] = $request->file('image')->store('services', 'public');
-            }
-
             $service = Service::create([
                 ...$validated,
                 'provider_id' => $user->serviceProvider->id,
@@ -561,7 +554,7 @@ class ServiceController extends Controller
             'is_available' => 'nullable|boolean',
             'requires_booking' => 'nullable|boolean',
             'max_capacity' => 'nullable|integer|min:1',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|string|url',
             'has_online_consultation' => 'nullable|boolean',
             'consultation_price_per_session' => 'nullable|required_if:has_online_consultation,true|numeric|min:0',
             'consultation_email' => 'nullable|required_if:has_online_consultation,true|email|max:255',
@@ -581,15 +574,6 @@ class ServiceController extends Controller
         ]);
 
         try {
-            // Upload nouvelle image si fournie
-            if ($request->hasFile('image')) {
-                // Supprimer ancienne image
-                if ($service->image) {
-                    Storage::disk('public')->delete($service->image);
-                }
-                $validated['image'] = $request->file('image')->store('services', 'public');
-            }
-
             $service->update($validated);
 
             // Sync Pricing Rules
@@ -723,11 +707,6 @@ class ServiceController extends Controller
         }
 
         try {
-            // Supprimer l'image
-            if ($service->image) {
-                Storage::disk('public')->delete($service->image);
-            }
-
             $service->delete();
 
             // Décrémenter le compteur

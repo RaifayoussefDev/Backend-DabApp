@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Services;
 
 use App\Http\Controllers\Controller;
 use App\Models\ServiceProvider;
+use App\Models\ServiceProviderImage;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -536,6 +537,102 @@ class ServiceProviderController extends Controller
      *     )
      * )
      */
+    /**
+     * @OA\Post(
+     *     path="/api/provider/images",
+     *     summary="Ajouter une image à la galerie du provider",
+     *     operationId="addProviderImage",
+     *     tags={"Service Providers"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"image_url"},
+     *             @OA\Property(property="image_url", type="string", format="url", example="https://example.com/image.jpg"),
+     *             @OA\Property(property="caption", type="string"),
+     *             @OA\Property(property="caption_ar", type="string"),
+     *             @OA\Property(property="order_position", type="integer", example=0),
+     *             @OA\Property(property="is_featured", type="boolean", example=false)
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Image ajoutée"),
+     *     @OA\Response(response=403, description="Vous n'êtes pas fournisseur")
+     * )
+     */
+    public function addImage(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user->serviceProvider) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not a service provider'
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'image_url'      => 'required|string|url',
+            'caption'        => 'nullable|string|max:500',
+            'caption_ar'     => 'nullable|string|max:500',
+            'order_position' => 'nullable|integer|min:0',
+            'is_featured'    => 'nullable|boolean',
+        ]);
+
+        $image = $user->serviceProvider->images()->create($validated);
+
+        return response()->json([
+            'success' => true,
+            'data' => $image,
+            'message' => 'Image added successfully'
+        ], 201);
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/provider/images/{imageId}",
+     *     summary="Supprimer une image de la galerie du provider",
+     *     operationId="removeProviderImage",
+     *     tags={"Service Providers"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="imageId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response=200, description="Image supprimée"),
+     *     @OA\Response(response=403, description="Accès refusé"),
+     *     @OA\Response(response=404, description="Image non trouvée")
+     * )
+     */
+    public function removeImage($imageId)
+    {
+        $user = auth()->user();
+
+        if (!$user->serviceProvider) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not a service provider'
+            ], 403);
+        }
+
+        $image = $user->serviceProvider->images()->find($imageId);
+
+        if (!$image) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Image not found'
+            ], 404);
+        }
+
+        $image->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Image removed successfully'
+        ], 200);
+    }
+
     public function providerStatus()
     {
         $user = auth()->user();

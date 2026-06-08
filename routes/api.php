@@ -1571,6 +1571,8 @@ Route::middleware(['auth:api'])->prefix('provider')->group(function () {
     Route::get('/my-profile', [ServiceProviderController::class, 'myProfile']);
     Route::put('/profile', [ServiceProviderController::class, 'updateProfile']);
     Route::post('/profile', [ServiceProviderController::class, 'updateProfile']); // For multipart/form-data
+    Route::post('/images', [ServiceProviderController::class, 'addImage']);
+    Route::delete('/images/{imageId}', [ServiceProviderController::class, 'removeImage']);
 });
 
 /*
@@ -1590,6 +1592,8 @@ Route::prefix('services')->group(function () {
 // Provider services management (Authenticated providers only)
 Route::middleware(['auth:api'])->prefix('provider')->group(function () {
     Route::get('/my-services', [ServiceController::class, 'myServices']);
+
+    Route::get('/services', [ServiceController::class, 'myServices']);
 
     // Routes requiring active subscription
     Route::middleware(['provider.subscription'])->group(function () {

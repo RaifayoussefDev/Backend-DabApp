@@ -168,7 +168,7 @@ class Service extends Model
 
     public function getImageUrlAttribute()
     {
-        return $this->image ? asset('storage/' . $this->image) : asset('images/default-service.png');
+        return $this->image ?: asset('images/default-service.png');
     }
 
     public function getFormattedPriceAttribute()
