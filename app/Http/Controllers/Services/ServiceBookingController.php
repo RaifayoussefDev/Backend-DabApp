@@ -14,7 +14,7 @@ use Carbon\Carbon;
 /**
  * @OA\Tag(
  *     name="Service Bookings",
- *     description="API endpoints pour gérer les réservations de services"
+ *     description="API endpoints for managing service bookings"
  * )
  */
 class ServiceBookingController extends Controller
@@ -22,15 +22,15 @@ class ServiceBookingController extends Controller
     /**
      * @OA\Get(
      *     path="/api/bookings",
-     *     summary="Mes réservations (User)",
-     *     description="Récupère toutes les réservations de l'utilisateur connecté avec filtres",
+     *     summary="My bookings (User)",
+     *     description="Retrieve all bookings for the authenticated user with optional filters",
      *     operationId="getMyBookings",
      *     tags={"Service Bookings"},
      *     security={{"bearer":{}}},
      *     @OA\Parameter(
      *         name="status",
      *         in="query",
-     *         description="Filtrer par statut",
+     *         description="Filter by status",
      *         required=false,
      *         @OA\Schema(
      *             type="string",
@@ -40,34 +40,34 @@ class ServiceBookingController extends Controller
      *     @OA\Parameter(
      *         name="service_id",
      *         in="query",
-     *         description="Filtrer par service",
+     *         description="Filter by service ID",
      *         required=false,
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Parameter(
      *         name="from_date",
      *         in="query",
-     *         description="Date de début (Y-m-d)",
+     *         description="Start date (Y-m-d)",
      *         required=false,
      *         @OA\Schema(type="string", format="date", example="2025-01-01")
      *     ),
      *     @OA\Parameter(
      *         name="to_date",
      *         in="query",
-     *         description="Date de fin (Y-m-d)",
+     *         description="End date (Y-m-d)",
      *         required=false,
      *         @OA\Schema(type="string", format="date", example="2025-12-31")
      *     ),
      *     @OA\Parameter(
      *         name="upcoming",
      *         in="query",
-     *         description="Réservations à venir uniquement (1=oui)",
+     *         description="Upcoming bookings only (1=yes)",
      *         required=false,
      *         @OA\Schema(type="integer", enum={0, 1})
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Liste récupérée avec succès",
+     *         description="Bookings retrieved successfully",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=true),
@@ -96,7 +96,7 @@ class ServiceBookingController extends Controller
             $query->where('service_id', $request->service_id);
         }
 
-        // Filtre: Période
+        // Filter: Date range
         if ($request->has('from_date')) {
             $query->where('booking_date', '>=', $request->from_date);
         }
@@ -104,7 +104,7 @@ class ServiceBookingController extends Controller
             $query->where('booking_date', '<=', $request->to_date);
         }
 
-        // Réservations à venir uniquement
+        // Upcoming bookings only
         if ($request->boolean('upcoming')) {
             $query->upcoming();
         }
@@ -122,8 +122,8 @@ class ServiceBookingController extends Controller
     /**
      * @OA\Post(
      *     path="/api/bookings",
-     *     summary="Créer une réservation",
-     *     description="Permet à l'utilisateur de créer une nouvelle réservation de service",
+     *     summary="Create a booking",
+     *     description="Allows the authenticated user to create a new service booking",
      *     operationId="createBooking",
      *     tags={"Service Bookings"},
      *     security={{"bearer":{}}},
@@ -147,7 +147,7 @@ class ServiceBookingController extends Controller
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Réservation créée avec succès",
+     *         description="Booking created successfully",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=true),
@@ -161,7 +161,7 @@ class ServiceBookingController extends Controller
      *             @OA\Property(property="message", type="string")
      *         )
      *     ),
-     *     @OA\Response(response=400, description="Service non disponible ou données invalides")
+     *     @OA\Response(response=400, description="Service unavailable or invalid data")
      * )
      */
     public function store(Request $request)
@@ -187,7 +187,7 @@ class ServiceBookingController extends Controller
         try {
             $service = Service::with('provider')->findOrFail($validated['service_id']);
 
-            // Vérifier disponibilité
+            // Check availability
             if (!$service->is_available) {
                 return response()->json([
                     'success' => false,
@@ -195,7 +195,7 @@ class ServiceBookingController extends Controller
                 ], 400);
             }
 
-            // Vérifier que le provider est actif
+            // Check provider is active
             if (!$service->provider->is_active) {
                 return response()->json([
                     'success' => false,
@@ -242,7 +242,7 @@ class ServiceBookingController extends Controller
             DB::commit();
 
             // TODO: Envoyer notification au provider
-            // TODO: Créer transaction de paiement
+            // TODO: Create payment transaction
 
             return response()->json([
                 'success' => true,
@@ -270,24 +270,24 @@ class ServiceBookingController extends Controller
     /**
      * @OA\Get(
      *     path="/api/bookings/{id}",
-     *     summary="Détails d'une réservation",
-     *     description="Récupère les détails complets d'une réservation",
+     *     summary="Booking details (User)",
+     *     description="Retrieve full details of a specific booking",
      *     operationId="getBooking",
      *     tags={"Service Bookings"},
      *     security={{"bearer":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
-     *         description="ID de la réservation",
+     *         description="Booking ID",
      *         required=true,
      *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Réservation trouvée"
+     *         description="Booking found"
      *     ),
-     *     @OA\Response(response=403, description="Non autorisé"),
-     *     @OA\Response(response=404, description="Réservation non trouvée")
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=404, description="Booking not found")
      * )
      */
     public function show($id)
@@ -310,7 +310,7 @@ class ServiceBookingController extends Controller
             ], 404);
         }
 
-        // Vérifier autorisation (user ou provider)
+        // Check authorization (user or provider)
         if ($booking->user_id !== $user->id &&
             $booking->provider->user_id !== $user->id) {
             return response()->json([
@@ -329,15 +329,15 @@ class ServiceBookingController extends Controller
     /**
      * @OA\Post(
      *     path="/api/bookings/{id}/cancel",
-     *     summary="Annuler une réservation",
-     *     description="Permet à l'utilisateur d'annuler sa réservation (minimum 24h avant)",
+     *     summary="Cancel a booking (User)",
+     *     description="Allows the user to cancel their booking (at least 24h before the booking date)",
      *     operationId="cancelBooking",
      *     tags={"Service Bookings"},
      *     security={{"bearer":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
-     *         description="ID de la réservation",
+     *         description="Booking ID",
      *         required=true,
      *         @OA\Schema(type="integer", example=1)
      *     ),
@@ -348,8 +348,8 @@ class ServiceBookingController extends Controller
      *             @OA\Property(property="cancellation_reason", type="string", example="Changed my mind")
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Réservation annulée"),
-     *     @OA\Response(response=400, description="Annulation impossible")
+     *     @OA\Response(response=200, description="Booking cancelled successfully"),
+     *     @OA\Response(response=400, description="Cancellation not allowed")
      * )
      */
     public function cancel(Request $request, $id)
@@ -420,8 +420,8 @@ class ServiceBookingController extends Controller
     /**
      * @OA\Get(
      *     path="/api/provider/bookings",
-     *     summary="Liste des réservations reçues (Provider)",
-     *     description="Récupère toutes les réservations reçues par le provider connecté",
+     *     summary="Received bookings list (Provider)",
+     *     description="Retrieve all bookings received by the authenticated provider",
      *     operationId="getProviderBookings",
      *     tags={"Service Bookings"},
      *     security={{"bearer":{}}},
@@ -480,7 +480,7 @@ class ServiceBookingController extends Controller
     /**
      * @OA\Get(
      *     path="/api/provider/bookings/{id}",
-     *     summary="Détails d'une réservation (Provider)",
+     *     summary="Booking details (Provider)",
      *     operationId="getProviderBooking",
      *     tags={"Service Bookings"},
      *     security={{"bearer":{}}},
@@ -526,8 +526,8 @@ class ServiceBookingController extends Controller
     /**
      * @OA\Post(
      *     path="/api/provider/bookings/{id}/update-status",
-     *     summary="Mettre à jour le statut d'une réservation (Provider)",
-     *     description="Le provider peut confirmer, rejeter, démarrer ou compléter une réservation",
+     *     summary="Update booking status (Provider)",
+     *     description="The provider can confirm, reject, start or complete a booking",
      *     operationId="updateBookingStatus",
      *     tags={"Service Bookings"},
      *     security={{"bearer":{}}},
@@ -571,7 +571,7 @@ class ServiceBookingController extends Controller
             'rejection_reason' => 'required_if:status,rejected|nullable|string|max:500',
         ]);
 
-        // Transitions autorisées
+        // Allowed transitions
         $allowedTransitions = [
             'pending'     => ['confirmed', 'rejected'],
             'confirmed'   => ['in_progress', 'rejected'],
@@ -611,7 +611,7 @@ class ServiceBookingController extends Controller
     }
 
     /**
-     * Calcul de distance (Haversine formula)
+     * Distance calculation (Haversine formula)
      */
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)
     {
@@ -631,7 +631,7 @@ class ServiceBookingController extends Controller
     }
 
     /**
-     * Appliquer code promo
+     * Apply promo code
      */
     private function applyPromoCode($price, $code, $service)
     {
@@ -645,17 +645,17 @@ class ServiceBookingController extends Controller
             return ['final_price' => $price, 'discount_amount' => 0];
         }
 
-        // Vérifier catégorie
+        // Check category
         if ($promo->service_category_id && $promo->service_category_id !== $service->category_id) {
             return ['final_price' => $price, 'discount_amount' => 0];
         }
 
-        // Vérifier prix minimum
+        // Check minimum price
         if ($promo->min_booking_price && $price < $promo->min_booking_price) {
             return ['final_price' => $price, 'discount_amount' => 0];
         }
 
-        // Calculer réduction
+        // Calculate discount
         $discountAmount = 0;
         if ($promo->discount_type === 'percentage') {
             $discountAmount = ($price * $promo->discount_value) / 100;

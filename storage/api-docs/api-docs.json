@@ -34785,14 +34785,14 @@
                 "tags": [
                     "Service Bookings"
                 ],
-                "summary": "Mes réservations (User)",
-                "description": "Récupère toutes les réservations de l'utilisateur connecté avec filtres",
+                "summary": "My bookings (User)",
+                "description": "Retrieve all bookings for the authenticated user with optional filters",
                 "operationId": "getMyBookings",
                 "parameters": [
                     {
                         "name": "status",
                         "in": "query",
-                        "description": "Filtrer par statut",
+                        "description": "Filter by status",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -34809,7 +34809,7 @@
                     {
                         "name": "service_id",
                         "in": "query",
-                        "description": "Filtrer par service",
+                        "description": "Filter by service ID",
                         "required": false,
                         "schema": {
                             "type": "integer"
@@ -34818,7 +34818,7 @@
                     {
                         "name": "from_date",
                         "in": "query",
-                        "description": "Date de début (Y-m-d)",
+                        "description": "Start date (Y-m-d)",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -34829,7 +34829,7 @@
                     {
                         "name": "to_date",
                         "in": "query",
-                        "description": "Date de fin (Y-m-d)",
+                        "description": "End date (Y-m-d)",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -34840,7 +34840,7 @@
                     {
                         "name": "upcoming",
                         "in": "query",
-                        "description": "Réservations à venir uniquement (1=oui)",
+                        "description": "Upcoming bookings only (1=yes)",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -34853,7 +34853,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Liste récupérée avec succès",
+                        "description": "Bookings retrieved successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -34882,8 +34882,8 @@
                 "tags": [
                     "Service Bookings"
                 ],
-                "summary": "Créer une réservation",
-                "description": "Permet à l'utilisateur de créer une nouvelle réservation de service",
+                "summary": "Create a booking",
+                "description": "Allows the authenticated user to create a new service booking",
                 "operationId": "createBooking",
                 "requestBody": {
                     "required": true,
@@ -34959,7 +34959,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Réservation créée avec succès",
+                        "description": "Booking created successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -34995,7 +34995,7 @@
                         }
                     },
                     "400": {
-                        "description": "Service non disponible ou données invalides"
+                        "description": "Service unavailable or invalid data"
                     }
                 },
                 "security": [
@@ -35010,14 +35010,14 @@
                 "tags": [
                     "Service Bookings"
                 ],
-                "summary": "Détails d'une réservation",
-                "description": "Récupère les détails complets d'une réservation",
+                "summary": "Booking details (User)",
+                "description": "Retrieve full details of a specific booking",
                 "operationId": "getBooking",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "ID de la réservation",
+                        "description": "Booking ID",
                         "required": true,
                         "schema": {
                             "type": "integer",
@@ -35027,13 +35027,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Réservation trouvée"
+                        "description": "Booking found"
                     },
                     "403": {
-                        "description": "Non autorisé"
+                        "description": "Unauthorized"
                     },
                     "404": {
-                        "description": "Réservation non trouvée"
+                        "description": "Booking not found"
                     }
                 },
                 "security": [
@@ -35048,14 +35048,14 @@
                 "tags": [
                     "Service Bookings"
                 ],
-                "summary": "Annuler une réservation",
-                "description": "Permet à l'utilisateur d'annuler sa réservation (minimum 24h avant)",
+                "summary": "Cancel a booking (User)",
+                "description": "Allows the user to cancel their booking (at least 24h before the booking date)",
                 "operationId": "cancelBooking",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "ID de la réservation",
+                        "description": "Booking ID",
                         "required": true,
                         "schema": {
                             "type": "integer",
@@ -35084,10 +35084,10 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Réservation annulée"
+                        "description": "Booking cancelled successfully"
                     },
                     "400": {
-                        "description": "Annulation impossible"
+                        "description": "Cancellation not allowed"
                     }
                 },
                 "security": [
@@ -35102,8 +35102,8 @@
                 "tags": [
                     "Service Bookings"
                 ],
-                "summary": "Liste des réservations reçues (Provider)",
-                "description": "Récupère toutes les réservations reçues par le provider connecté",
+                "summary": "Received bookings list (Provider)",
+                "description": "Retrieve all bookings received by the authenticated provider",
                 "operationId": "getProviderBookings",
                 "parameters": [
                     {
@@ -35165,7 +35165,7 @@
                 "tags": [
                     "Service Bookings"
                 ],
-                "summary": "Détails d'une réservation (Provider)",
+                "summary": "Booking details (Provider)",
                 "operationId": "getProviderBooking",
                 "parameters": [
                     {
@@ -35200,8 +35200,8 @@
                 "tags": [
                     "Service Bookings"
                 ],
-                "summary": "Mettre à jour le statut d'une réservation (Provider)",
-                "description": "Le provider peut confirmer, rejeter, démarrer ou compléter une réservation",
+                "summary": "Update booking status (Provider)",
+                "description": "The provider can confirm, reject, start or complete a booking",
                 "operationId": "updateBookingStatus",
                 "parameters": [
                     {
@@ -45495,7 +45495,7 @@
         },
         {
             "name": "Service Bookings",
-            "description": "API endpoints pour gérer les réservations de services"
+            "description": "API endpoints for managing service bookings"
         },
         {
             "name": "Service Categories",
