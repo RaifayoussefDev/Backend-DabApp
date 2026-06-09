@@ -472,14 +472,16 @@ class ServiceController extends Controller
             if ($category && $category->slug === 'riding-instructor') {
                 $alreadyExists = RidingInstructor::where('provider_id', $user->serviceProvider->id)->exists();
                 if (!$alreadyExists) {
+                    $instructorName = $user->serviceProvider->business_name ?? ($user->first_name . ' ' . $user->last_name);
                     RidingInstructor::create([
-                        'provider_id'      => $user->serviceProvider->id,
-                        'instructor_name'  => $user->serviceProvider->business_name ?? $user->first_name . ' ' . $user->last_name,
-                        'experience_years' => 0,
-                        'certifications'   => json_encode([]),
-                        'rating_average'   => 0,
-                        'total_sessions'   => 0,
-                        'is_available'     => true,
+                        'provider_id'        => $user->serviceProvider->id,
+                        'instructor_name'    => $instructorName,
+                        'instructor_name_ar' => $user->serviceProvider->business_name_ar ?? $instructorName,
+                        'experience_years'   => 0,
+                        'certifications'     => json_encode([]),
+                        'rating_average'     => 0,
+                        'total_sessions'     => 0,
+                        'is_available'       => true,
                     ]);
                 }
             }
