@@ -25,7 +25,7 @@ class ServiceController extends Controller
      *     description="Récupère tous les services disponibles avec filtres avancés",
      *     operationId="getServices",
      *     tags={"Services"},
-     *     security={{"bearer":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="category_id",
      *         in="query",
@@ -235,7 +235,7 @@ class ServiceController extends Controller
      *     description="Récupère les détails complets d'un service avec avis, horaires et documents requis",
      *     operationId="getService",
      *     tags={"Services"},
-     *     security={{"bearer":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -321,7 +321,7 @@ class ServiceController extends Controller
      *     description="Permet au fournisseur d'ajouter un nouveau service à son catalogue",
      *     operationId="createService",
      *     tags={"Services"},
-     *     security={{"bearer":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
@@ -512,7 +512,7 @@ class ServiceController extends Controller
      *     description="Permet au fournisseur de modifier un de ses services",
      *     operationId="updateService",
      *     tags={"Services"},
-     *     security={{"bearer":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -678,7 +678,7 @@ class ServiceController extends Controller
      *     description="Permet au fournisseur de supprimer un de ses services",
      *     operationId="deleteService",
      *     tags={"Services"},
-     *     security={{"bearer":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
@@ -757,7 +757,7 @@ class ServiceController extends Controller
      *     description="List all services for the authenticated provider, with subscription quota info so the client knows whether to show 'Add Service' or 'Upgrade Plan'.",
      *     operationId="getMyServices",
      *     tags={"Services"},
-     *     security={{"bearer":{}}},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Response(
      *         response=200,
      *         description="Services retrieved successfully",
