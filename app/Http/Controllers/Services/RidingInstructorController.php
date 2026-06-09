@@ -715,7 +715,7 @@ class RidingInstructorController extends Controller
                 'bio'                => $validated['bio'] ?? null,
                 'bio_ar'             => $validated['bio_ar'] ?? null,
                 'photo'              => $validated['photo'] ?? null,
-                'certifications'     => json_encode($validated['certifications'] ?? []),
+                'certifications'     => $validated['certifications'] ?? [],
                 'experience_years'   => $validated['experience_years'],
                 'rating_average'     => 0,
                 'total_sessions'     => 0,

@@ -478,7 +478,7 @@ class ServiceController extends Controller
                         'instructor_name'    => $instructorName,
                         'instructor_name_ar' => $user->serviceProvider->business_name_ar ?? $instructorName,
                         'experience_years'   => 0,
-                        'certifications'     => json_encode([]),
+                        'certifications'     => [],
                         'rating_average'     => 0,
                         'total_sessions'     => 0,
                         'is_available'       => true,
