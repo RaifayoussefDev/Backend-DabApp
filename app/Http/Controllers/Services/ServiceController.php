@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Services;
 
 use App\Http\Controllers\Controller;
+use App\Models\RidingInstructor;
 use App\Models\Service;
+use App\Models\ServiceCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -461,6 +463,23 @@ class ServiceController extends Controller
                         'start_time' => $schedule['start_time'] ?? '00:00',
                         'end_time' => $schedule['end_time'] ?? '23:59',
                         'is_available' => $schedule['is_available'] ?? true
+                    ]);
+                }
+            }
+
+            // Auto-create RidingInstructor record when category is riding-instructor
+            $category = ServiceCategory::find($validated['category_id']);
+            if ($category && $category->slug === 'riding-instructor') {
+                $alreadyExists = RidingInstructor::where('provider_id', $user->serviceProvider->id)->exists();
+                if (!$alreadyExists) {
+                    RidingInstructor::create([
+                        'provider_id'      => $user->serviceProvider->id,
+                        'instructor_name'  => $user->serviceProvider->business_name ?? $user->first_name . ' ' . $user->last_name,
+                        'experience_years' => 0,
+                        'certifications'   => json_encode([]),
+                        'rating_average'   => 0,
+                        'total_sessions'   => 0,
+                        'is_available'     => true,
                     ]);
                 }
             }
