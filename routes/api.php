@@ -106,11 +106,23 @@ use App\Http\Controllers\Services\ServiceController;
 use App\Http\Controllers\Services\ServiceBookingController;
 use App\Http\Controllers\Services\ServiceReviewController;
 use App\Http\Controllers\Services\ServiceFavoriteController;
+use App\Http\Controllers\Trainer\TrainerController;
+use App\Http\Controllers\Trainer\TrainerBookingController;
+use App\Http\Controllers\Trainer\TrainerScheduleController;
+use App\Http\Controllers\Trainer\TrainerReviewController;
+use App\Http\Controllers\Trainer\TrainerCommentController;
+use App\Http\Controllers\Trainer\TrainerLikeController;
+use App\Http\Controllers\Trainer\TrainerFavoriteController;
+use App\Http\Controllers\Trainer\AdminTrainerController;
+use App\Http\Controllers\Trainer\AdminCommissionController;
+use App\Http\Controllers\Trainer\AdminPayoutController;
+use App\Http\Controllers\Trainer\AdminTrainerStatsController;
+use App\Http\Controllers\Trainer\AdminTrainerBookingController;
+use App\Http\Controllers\Trainer\AdminTrainerPaymentController;
 use App\Http\Controllers\Services\TowServiceController;
 use App\Http\Controllers\Services\TransportRouteController;
 use App\Http\Controllers\Services\ServiceSubscriptionController;
 use App\Http\Controllers\Services\SubscriptionTransactionController;
-use App\Http\Controllers\Services\RidingInstructorController;
 use App\Http\Controllers\Services\ChatSessionController;
 use App\Http\Controllers\Services\SubscriptionPlanController;
 use App\Http\Controllers\Services\AdminSubscriptionPlanController;
@@ -1743,31 +1755,101 @@ Route::middleware('auth:api')->prefix('provider')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| 🏍️ Riding Instructors Routes
+| 🏍️ Trainer Routes
 |--------------------------------------------------------------------------
-| Routes for motorcycle riding instructors
 */
-Route::prefix('riding-instructors')->group(function () {
-    // Public routes
-    Route::get('/', [RidingInstructorController::class, 'index']);
-    Route::get('/{id}', [RidingInstructorController::class, 'show']);
-    Route::get('/{id}/availability', [RidingInstructorController::class, 'availability']);
 
-    // Authenticated routes
-    Route::middleware('auth:api')->group(function () {
-        Route::post('/{id}/book-session', [RidingInstructorController::class, 'bookSession']);
-    });
+// Public — Browse trainers
+Route::prefix('trainers')->group(function () {
+    Route::get('/',                  [TrainerController::class, 'index']);
+    Route::get('/{id}',              [TrainerController::class, 'show']);
+    Route::get('/{id}/availability', [TrainerBookingController::class, 'availability']);
+    Route::get('/{id}/reviews',      [TrainerReviewController::class, 'index']);
+    Route::get('/{id}/comments',     [TrainerCommentController::class, 'index']);
 });
 
-Route::prefix('instructor-locations')->group(function () {
-    Route::get('/', [RidingInstructorController::class, 'locations']);
+Route::get('/trainer-locations', [TrainerController::class, 'locations']);
+
+// PayTabs webhook — no auth (server-to-server)
+Route::post('/trainer/payments/callback', [TrainerBookingController::class, 'paymentCallback']);
+
+// Authenticated — Client actions
+Route::middleware('auth:api')->group(function () {
+    // Booking
+    Route::post('/trainers/{id}/book',          [TrainerBookingController::class, 'book']);
+    Route::get('/trainer/bookings',             [TrainerBookingController::class, 'myBookings']);
+    Route::post('/trainer/bookings/{id}/cancel',[TrainerBookingController::class, 'cancel']);
+    Route::post('/trainer/bookings/{bookingId}/review', [TrainerReviewController::class, 'store']);
+
+    // Social
+    Route::post('/trainers/{id}/like',          [TrainerLikeController::class, 'toggle']);
+    Route::post('/trainers/{id}/favorite',      [TrainerFavoriteController::class, 'toggle']);
+    Route::post('/trainers/{id}/comments',      [TrainerCommentController::class, 'store']);
+    Route::delete('/trainer/comments/{commentId}', [TrainerCommentController::class, 'destroy']);
+    Route::get('/user/trainer-favorites',       [TrainerFavoriteController::class, 'myFavorites']);
+
+    // Provider (trainer managing own profile)
+    Route::post('/trainer/register',            [TrainerController::class, 'register']);
+    Route::post('/trainer/profile',             [TrainerController::class, 'updateProfile']);
+    Route::get('/trainer/me',                   [TrainerController::class, 'myProfile']);
+    Route::post('/trainer/locations',           [TrainerController::class, 'addLocation']);
+    Route::delete('/trainer/locations/{locationId}', [TrainerController::class, 'deleteLocation']);
+    Route::get('/trainer/schedule',             [TrainerScheduleController::class, 'index']);
+    Route::post('/trainer/schedule',            [TrainerScheduleController::class, 'upsert']);
+    Route::get('/trainer/sessions',             [TrainerBookingController::class, 'mySessions']);
+    Route::post('/trainer/sessions/{id}/start',    [TrainerBookingController::class, 'startSession']);
+    Route::post('/trainer/sessions/{id}/complete', [TrainerBookingController::class, 'completeSession']);
 });
 
-// Provider instructor management
-Route::middleware('auth:api')->prefix('provider')->group(function () {
-    Route::post('/riding-instructors', [RidingInstructorController::class, 'store']);
-    Route::get('/riding-instructors/{id}/schedule',  [RidingInstructorController::class, 'getSchedule']);
-    Route::post('/riding-instructors/{id}/schedule', [RidingInstructorController::class, 'updateSchedule']);
+// Admin — Trainer management (full panel)
+Route::middleware('auth:api')->prefix('admin')->group(function () {
+
+    // ── Dashboard & Stats ────────────────────────────────────────────
+    Route::get('/trainer-stats/dashboard',           [AdminTrainerStatsController::class, 'dashboard']);
+    Route::get('/trainer-stats/revenue',             [AdminTrainerStatsController::class, 'revenue']);
+
+    // ── Trainer CRUD & Status ────────────────────────────────────────
+    Route::get('/trainers',                          [AdminTrainerController::class, 'index']);
+    Route::get('/trainers/{id}',                     [AdminTrainerController::class, 'show']);
+    Route::post('/trainers/{id}/approve',            [AdminTrainerController::class, 'approve']);
+    Route::post('/trainers/{id}/reject',             [AdminTrainerController::class, 'reject']);
+    Route::post('/trainers/{id}/suspend',            [AdminTrainerController::class, 'suspend']);
+    Route::post('/trainers/{id}/reactivate',         [AdminTrainerController::class, 'reactivate']);
+    Route::delete('/trainers/{id}',                  [AdminTrainerController::class, 'destroy']);
+
+    // ── Reviews moderation ───────────────────────────────────────────
+    Route::get('/trainer-reviews',                   [AdminTrainerController::class, 'reviews']);
+    Route::post('/trainer-reviews/{id}/approve',     [AdminTrainerController::class, 'approveReview']);
+    Route::delete('/trainer-reviews/{id}',           [AdminTrainerController::class, 'deleteReview']);
+
+    // ── Comments moderation ──────────────────────────────────────────
+    Route::get('/trainer-comments',                  [AdminTrainerController::class, 'comments']);
+    Route::post('/trainer-comments/{id}/approve',    [AdminTrainerController::class, 'approveComment']);
+    Route::delete('/trainer-comments/{id}',          [AdminTrainerController::class, 'deleteComment']);
+
+    // ── Bookings ─────────────────────────────────────────────────────
+    Route::get('/trainer-bookings',                  [AdminTrainerBookingController::class, 'index']);
+    Route::get('/trainer-bookings/{id}',             [AdminTrainerBookingController::class, 'show']);
+    Route::post('/trainer-bookings/{id}/cancel',     [AdminTrainerBookingController::class, 'cancel']);
+    Route::post('/trainer-bookings/{id}/confirm',    [AdminTrainerBookingController::class, 'confirm']);
+
+    // ── Payments & Splits ────────────────────────────────────────────
+    Route::get('/trainer-payments',                  [AdminTrainerPaymentController::class, 'index']);
+    Route::get('/trainer-payments/{id}',             [AdminTrainerPaymentController::class, 'show']);
+
+    // ── Commission ───────────────────────────────────────────────────
+    Route::get('/commission',                        [AdminCommissionController::class, 'index']);
+    Route::post('/commission/global',                [AdminCommissionController::class, 'setGlobal']);
+    Route::get('/commission/history',                [AdminCommissionController::class, 'history']);
+    Route::post('/commission/trainer/{trainerId}',   [AdminCommissionController::class, 'setTrainerRate']);
+    Route::delete('/commission/trainer/{trainerId}', [AdminCommissionController::class, 'removeTrainerRate']);
+
+    // ── Payouts ──────────────────────────────────────────────────────
+    Route::get('/payouts',                           [AdminPayoutController::class, 'index']);
+    Route::get('/payouts/{id}',                      [AdminPayoutController::class, 'show']);
+    Route::post('/payouts/{id}/approve',             [AdminPayoutController::class, 'approve']);
+    Route::post('/payouts/{id}/mark-paid',           [AdminPayoutController::class, 'markPaid']);
+    Route::post('/payouts/{id}/reject',              [AdminPayoutController::class, 'reject']);
 });
 
 /*

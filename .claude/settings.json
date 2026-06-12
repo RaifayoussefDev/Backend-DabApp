@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm \"d:/PC youssef/DabApp/Backend/DabApp-backend/app/Http/Controllers/Services/RidingInstructorController.php\")",
+      "Bash(rm \"d:/PC youssef/DabApp/Backend/DabApp-backend/app/Models/RidingInstructor.php\")",
+      "Bash(rm \"d:/PC youssef/DabApp/Backend/DabApp-backend/app/Models/InstructorLocation.php\")",
+      "Bash(rm \"d:/PC youssef/DabApp/Backend/DabApp-backend/database/seeders/RidingInstructorSeeder.php\")",
+      "Bash(php -l database/migrations/2026_06_12_182527_create_trainers_table.php)",
+      "Bash(php -l database/migrations/2026_06_12_182532_create_trainer_bookings_table.php)",
+      "Bash(php -l database/migrations/2026_06_12_182540_create_payment_splits_table.php)",
+      "Bash(php -l database/migrations/2026_06_12_182553_create_commission_settings_table.php)",
+      "Bash(php -l database/migrations/2026_06_12_182555_create_commission_history_table.php)",
+      "Bash(php -l app/Http/Controllers/Trainer/TrainerController.php)",
+      "Bash(php -l app/Http/Controllers/Trainer/TrainerBookingController.php)",
+      "Bash(php -l app/Http/Controllers/Trainer/TrainerScheduleController.php)",
+      "Bash(php -l app/Http/Controllers/Trainer/TrainerReviewController.php)",
+      "Bash(php -l app/Http/Controllers/Trainer/TrainerCommentController.php)",
+      "Bash(php -l app/Http/Controllers/Trainer/TrainerLikeController.php)",
+      "Bash(php -l app/Http/Controllers/Trainer/TrainerFavoriteController.php)",
+      "Bash(php -l app/Http/Controllers/Trainer/AdminTrainerController.php)",
+      "Bash(php -l app/Http/Controllers/Trainer/AdminCommissionController.php)",
+      "Bash(php -l app/Http/Controllers/Trainer/AdminPayoutController.php)",
+      "Bash(php -l routes/api.php)"
+    ]
+  }
+}
