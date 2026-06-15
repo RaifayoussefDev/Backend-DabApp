@@ -426,11 +426,16 @@ class TrainerController extends Controller
             $validated['cover'] = $request->file('cover')->store('trainers/covers', 'public');
         }
 
-        $trainer->update(array_filter($validated, fn ($v) => $v !== null));
+        $updateData = array_filter($validated, fn ($v) => $v !== null);
+        // Allow explicitly clearing cert files when the flag is sent
+        if ($request->boolean('certification_files_empty')) {
+            $updateData['certification_files'] = [];
+        }
+        $trainer->update($updateData);
 
         return response()->json([
             'success' => true,
-            'data'    => $trainer->fresh()->append('photo_url'),
+            'data'    => $trainer->fresh(),
             'message' => 'Profile updated successfully',
         ]);
     }

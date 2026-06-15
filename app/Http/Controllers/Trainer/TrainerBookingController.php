@@ -911,6 +911,23 @@ class TrainerBookingController extends Controller
         }
     }
 
+    // ---------------------------------------------------------------
+    // BROWSER RETURN — after PayTabs payment page
+    // ---------------------------------------------------------------
+    public function paymentReturn(Request $request)
+    {
+        $cartId    = $request->get('cart_id', '');
+        $bookingId = str_replace('TRAINER_', '', $cartId);
+        $tranRef   = $request->get('tran_ref', '');
+        $frontend  = rtrim(config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:4200')), '/');
+
+        if ($bookingId && $tranRef) {
+            return redirect($frontend . '/trainers/booking-confirmation?booking_id=' . $bookingId . '&status=success');
+        }
+
+        return redirect($frontend . '/trainers/booking-confirmation?status=failed');
+    }
+
     private function initiatePayTabsPayment(TrainerPayment $payment, TrainerBooking $booking, $user, Trainer $trainer, TrainerLocation $location): string
     {
         $config = PayTabsConfigService::getConfig();

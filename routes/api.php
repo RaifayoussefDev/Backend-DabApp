@@ -1772,6 +1772,8 @@ Route::get('/trainer-locations', [TrainerController::class, 'locations']);
 
 // PayTabs webhook — no auth (server-to-server)
 Route::post('/trainer/payments/callback', [TrainerBookingController::class, 'paymentCallback']);
+// PayTabs browser return — redirects user back to frontend after payment
+Route::get('/trainer/payments/return',   [TrainerBookingController::class, 'paymentReturn']);
 
 // Authenticated — Client actions
 Route::middleware('auth:api')->group(function () {

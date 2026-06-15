@@ -39,7 +39,7 @@ class Trainer extends Model
         'is_available'     => 'boolean',
     ];
 
-    protected $appends = ['photo_url', 'cover_url', 'localized_name', 'localized_bio'];
+    protected $appends = ['photo_url', 'cover_url', 'localized_name', 'localized_bio', 'certification_files_urls'];
 
     // ---------------------------------------------------------------
     // Relations
