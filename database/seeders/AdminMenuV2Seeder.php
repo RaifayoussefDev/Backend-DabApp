@@ -243,13 +243,29 @@ class AdminMenuV2Seeder extends Seeder
                 ]
             ],
             [
+                "key" => "trainers",
+                "path" => "/trainers",
+                "label_en" => "Trainers",
+                "label_ar" => "المدربون",
+                "icon" => "GraduationCap",
+                "permission" => "trainers.view",
+                "order" => 18,
+                "sub_items" => [
+                    ["key" => "trainers-all",      "path" => "/trainers",          "label_en" => "All Trainers", "label_ar" => "كل المدربين",   "permission" => "trainers.view",   "order" => 1],
+                    ["key" => "trainers-pending",  "path" => "/trainers/pending",  "label_en" => "Pending",      "label_ar" => "قيد المراجعة",  "permission" => "trainers.manage", "order" => 2],
+                    ["key" => "trainers-bookings", "path" => "/trainers/bookings", "label_en" => "Bookings",     "label_ar" => "الحجوزات",      "permission" => "trainers.view",   "order" => 3],
+                    ["key" => "trainers-payouts",  "path" => "/trainers/payouts",  "label_en" => "Payouts",      "label_ar" => "المدفوعات",     "permission" => "trainers.manage", "order" => 4],
+                    ["key" => "trainers-reviews",  "path" => "/trainers/reviews",  "label_en" => "Reviews",      "label_ar" => "التقييمات",     "permission" => "trainers.view",   "order" => 5]
+                ]
+            ],
+            [
                 "key" => "settings",
                 "path" => "/settings",
                 "label_en" => "Settings",
                 "label_ar" => "الإعدادات",
                 "icon" => "Settings",
                 "permission" => "settings.view",
-                "order" => 18,
+                "order" => 19,
                 "sub_items" => [
                     ["key" => "settings-general", "path" => "/settings", "label_en" => "General", "label_ar" => "عام", "permission" => "settings.view", "order" => 1],
                     ["key" => "settings-app-version", "path" => "/settings/app-version", "label_en" => "App Version", "label_ar" => "إصدار التطبيق", "permission" => "settings.view", "order" => 2],
@@ -270,7 +286,7 @@ class AdminMenuV2Seeder extends Seeder
                 'order' => $menu['order'],
                 'permission' => $menu['permission'] ?? null,
                 'type' => isset($menu['sub_items']) ? 'collapse' : 'item',
-                'roles' => ($menu['key'] === 'dashboard') ? ['admin', 'Manager', 'dashboard'] : (in_array($menu['key'], ['users', 'listings', 'events', 'guides', 'services', 'promo-codes', 'subscriptions', 'reports', 'pois', 'routes', 'banners', 'motorcycle', 'spare-parts']) ? ['admin', 'Manager'] : ['admin']),
+                'roles' => ($menu['key'] === 'dashboard') ? ['admin', 'Manager', 'dashboard'] : (in_array($menu['key'], ['users', 'listings', 'events', 'guides', 'services', 'promo-codes', 'subscriptions', 'reports', 'pois', 'routes', 'banners', 'motorcycle', 'spare-parts', 'trainers']) ? ['admin', 'Manager'] : ['admin']),
                 'is_main_parent' => true,
                 'is_active' => true,
             ]);
@@ -287,7 +303,7 @@ class AdminMenuV2Seeder extends Seeder
                         'order' => $sub['order'],
                         'permission' => $sub['permission'] ?? null,
                         'type' => 'item',
-                        'roles' => ($parent->name === 'dashboard') ? ['admin', 'Manager', 'dashboard'] : (in_array($parent->name, ['users', 'listings', 'events', 'guides', 'services', 'promo-codes', 'subscriptions', 'reports', 'pois', 'routes', 'banners', 'motorcycle', 'spare-parts']) ? ['admin', 'Manager'] : ['admin']),
+                        'roles' => ($parent->name === 'dashboard') ? ['admin', 'Manager', 'dashboard'] : (in_array($parent->name, ['users', 'listings', 'events', 'guides', 'services', 'promo-codes', 'subscriptions', 'reports', 'pois', 'routes', 'banners', 'motorcycle', 'spare-parts', 'trainers']) ? ['admin', 'Manager'] : ['admin']),
                         'is_main_parent' => false,
                         'is_active' => true,
                     ]);
