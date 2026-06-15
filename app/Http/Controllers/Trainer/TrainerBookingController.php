@@ -10,6 +10,7 @@ use App\Models\TrainerPayment;
 use App\Models\PaymentSplit;
 use App\Models\TrainerPayout;
 use App\Models\TrainerSchedule;
+use App\Services\NotificationService;
 use App\Services\PayTabsConfigService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -26,6 +27,13 @@ use Tymon\JWTAuth\Facades\JWTAuth;
  */
 class TrainerBookingController extends Controller
 {
+    protected NotificationService $notifications;
+
+    public function __construct(NotificationService $notifications)
+    {
+        $this->notifications = $notifications;
+    }
+
     private const DEFAULT_SLOTS = [
         ['08:00', '10:00'],
         ['10:00', '12:00'],
@@ -327,8 +335,11 @@ class TrainerBookingController extends Controller
                 'notes'          => $validated['notes'] ?? null,
             ]);
 
-            // 3. Initiate PayTabs payment
-            $paymentUrl = $this->initiatePayTabsPayment($payment, $booking, $user, $trainer, $location);
+            // 3. Initiate PayTabs payment (skip in local/testing environment)
+            $paymentUrl = null;
+            if (!config('app.skip_paytabs', false)) {
+                $paymentUrl = $this->initiatePayTabsPayment($payment, $booking, $user, $trainer, $location);
+            }
 
             DB::commit();
         } catch (\Exception $e) {
@@ -599,7 +610,9 @@ class TrainerBookingController extends Controller
             'cancelled_at' => now(),
         ]);
 
-        // TODO: Trigger refund via PayTabs if payment_status = paid
+        if ($booking->payment_status === 'paid' && $booking->payment && $booking->payment->tran_ref) {
+            $this->processTrainerRefund($booking->payment, $booking->id);
+        }
 
         return response()->json(['success' => true, 'message' => 'Booking cancelled successfully']);
     }
@@ -638,7 +651,7 @@ class TrainerBookingController extends Controller
             return response()->json(['success' => false, 'message' => 'No trainer profile found'], 403);
         }
 
-        $query = TrainerBooking::with(['user:id,first_name,last_name,avatar,phone', 'location.city'])
+        $query = TrainerBooking::with(['user:id,first_name,last_name,profile_picture,phone', 'location.city'])
             ->where('trainer_id', $trainer->id);
 
         if ($request->filled('status')) {
@@ -675,6 +688,123 @@ class TrainerBookingController extends Controller
      *     @OA\Response(response=403, description="Not your session")
      * )
      */
+
+    // ---------------------------------------------------------------
+    // TRAINER — Accept booking
+    // ---------------------------------------------------------------
+
+    /**
+     * @OA\Post(
+     *     path="/api/trainer/sessions/{id}/accept",
+     *     summary="Trainer accepts a pending booking",
+     *     description="Trainer confirms a pending booking. Status changes from 'pending' to 'confirmed'. Client is notified.",
+     *     operationId="trainerAcceptBooking",
+     *     tags={"Trainer Sessions"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Booking accepted"),
+     *     @OA\Response(response=400, description="Booking is not pending"),
+     *     @OA\Response(response=403, description="Not your booking"),
+     *     @OA\Response(response=404, description="Booking not found")
+     * )
+     */
+    public function acceptBooking(int $id)
+    {
+        $user    = JWTAuth::parseToken()->authenticate();
+        $trainer = Trainer::where('user_id', $user->id)->first();
+        $booking = TrainerBooking::with(['user', 'location.city'])->find($id);
+
+        if (!$booking) {
+            return response()->json(['success' => false, 'message' => 'Booking not found'], 404);
+        }
+
+        if (!$trainer || $booking->trainer_id !== $trainer->id) {
+            return response()->json(['success' => false, 'message' => 'Not your booking'], 403);
+        }
+
+        if ($booking->status !== 'pending') {
+            return response()->json(['success' => false, 'message' => 'Only pending bookings can be accepted'], 400);
+        }
+
+        $booking->update(['status' => 'confirmed']);
+
+        try {
+            $this->notifications->notifyTrainerBookingConfirmedByAdmin($booking->user, $booking);
+        } catch (\Exception $e) {
+            Log::error('Accept booking notification failed', ['booking_id' => $id, 'error' => $e->getMessage()]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Booking accepted. Client has been notified.',
+            'data'    => ['booking_id' => $booking->id, 'status' => $booking->status],
+        ]);
+    }
+
+    // ---------------------------------------------------------------
+    // TRAINER — Reject booking
+    // ---------------------------------------------------------------
+
+    /**
+     * @OA\Post(
+     *     path="/api/trainer/sessions/{id}/reject",
+     *     summary="Trainer rejects a pending booking",
+     *     description="Trainer rejects a pending booking. Status changes to 'cancelled'. If the booking was paid, a PayTabs refund is triggered automatically. Client is notified with the reason.",
+     *     operationId="trainerRejectBooking",
+     *     tags={"Trainer Sessions"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="reason", type="string", example="Unavailable due to personal reasons.")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Booking rejected"),
+     *     @OA\Response(response=400, description="Booking is not pending"),
+     *     @OA\Response(response=403, description="Not your booking"),
+     *     @OA\Response(response=404, description="Booking not found")
+     * )
+     */
+    public function rejectBooking(Request $request, int $id)
+    {
+        $user    = JWTAuth::parseToken()->authenticate();
+        $trainer = Trainer::where('user_id', $user->id)->first();
+        $booking = TrainerBooking::with(['user', 'payment', 'location.city'])->find($id);
+
+        if (!$booking) {
+            return response()->json(['success' => false, 'message' => 'Booking not found'], 404);
+        }
+
+        if (!$trainer || $booking->trainer_id !== $trainer->id) {
+            return response()->json(['success' => false, 'message' => 'Not your booking'], 403);
+        }
+
+        if ($booking->status !== 'pending') {
+            return response()->json(['success' => false, 'message' => 'Only pending bookings can be rejected'], 400);
+        }
+
+        $reason = $request->input('reason', 'Trainer is unavailable for the requested time slot.');
+
+        $booking->update(['status' => 'cancelled']);
+
+        // Auto-refund if payment was already made
+        if ($booking->payment_status === 'paid' && $booking->payment && $booking->payment->tran_ref) {
+            $this->processTrainerRefund($booking->payment, $booking->id);
+        }
+
+        try {
+            $this->notifications->notifyTrainerBookingCancelledByAdmin($booking->user, $booking, $reason);
+        } catch (\Exception $e) {
+            Log::error('Reject booking notification failed', ['booking_id' => $id, 'error' => $e->getMessage()]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Booking rejected. Client has been notified.',
+            'data'    => ['booking_id' => $booking->id, 'status' => $booking->status],
+        ]);
+    }
+
     public function startSession(int $id)
     {
         $user    = JWTAuth::parseToken()->authenticate();
@@ -737,7 +867,11 @@ class TrainerBookingController extends Controller
 
         $booking->update(['status' => 'completed', 'completed_at' => now()]);
 
-        // TODO: Send push notification + email to client requesting a review
+        try {
+            $this->notifications->notifyTrainerSessionCompleted($booking->user, $booking, $trainer);
+        } catch (\Exception $e) {
+            Log::error('TrainerBookingController@completeSession notify failed: ' . $e->getMessage());
+        }
 
         return response()->json(['success' => true, 'message' => 'Session marked as completed']);
     }
@@ -745,6 +879,37 @@ class TrainerBookingController extends Controller
     // ---------------------------------------------------------------
     // Private helpers
     // ---------------------------------------------------------------
+
+    private function processTrainerRefund(TrainerPayment $payment, int $bookingId): void
+    {
+        try {
+            $config = PayTabsConfigService::getConfig();
+
+            $response = Http::withHeaders([
+                'authorization' => $config['server_key'],
+                'content-type'  => 'application/json',
+            ])->post(PayTabsConfigService::getBaseUrl() . '/payment/request', [
+                'profile_id'       => $config['profile_id'],
+                'tran_type'        => 'refund',
+                'tran_class'       => 'ecom',
+                'cart_id'          => $payment->cart_id,
+                'cart_currency'    => $payment->currency ?? $config['currency'] ?? 'SAR',
+                'cart_amount'      => (float) $payment->amount,
+                'cart_description' => 'Refund — trainer booking #' . $bookingId,
+                'tran_ref'         => $payment->tran_ref,
+            ]);
+
+            if ($response->successful()) {
+                $payment->update(['payment_status' => 'refunded']);
+                TrainerBooking::where('id', $bookingId)->update(['payment_status' => 'refunded']);
+                Log::info("Trainer booking #{$bookingId} refunded via PayTabs. tran_ref: {$payment->tran_ref}");
+            } else {
+                Log::error("PayTabs refund failed for trainer booking #{$bookingId}: " . $response->body());
+            }
+        } catch (\Exception $e) {
+            Log::error("PayTabs refund exception for trainer booking #{$bookingId}: " . $e->getMessage());
+        }
+    }
 
     private function initiatePayTabsPayment(TrainerPayment $payment, TrainerBooking $booking, $user, Trainer $trainer, TrainerLocation $location): string
     {

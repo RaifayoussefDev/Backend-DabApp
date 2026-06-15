@@ -8,9 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Drop FK-dependent table first
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('instructor_locations');
         Schema::dropIfExists('riding_instructors');
+        Schema::enableForeignKeyConstraints();
     }
 
     public function down(): void

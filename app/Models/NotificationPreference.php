@@ -198,11 +198,23 @@ class NotificationPreference extends Model
     {
         // Map specific types to preference columns
         $map = [
-            'admin_broadcast' => 'admin_custom',
-            'report_received' => 'system_updates',
-            'report_status_updated' => 'system_updates',
-            'new_report' => 'system_updates', // For admins
-            'dealer_removed' => 'dealer_approved', // Map Removal to same pref
+            'admin_broadcast'                    => 'admin_custom',
+            'report_received'                    => 'system_updates',
+            'report_status_updated'              => 'system_updates',
+            'new_report'                         => 'system_updates',
+            'dealer_removed'                     => 'dealer_approved',
+            // Trainer module — map all trainer types to system_updates
+            'trainer_approved'                   => 'system_updates',
+            'trainer_rejected'                   => 'system_updates',
+            'trainer_suspended'                  => 'system_updates',
+            'trainer_reactivated'                => 'system_updates',
+            'trainer_review_approved'            => 'system_updates',
+            'trainer_session_completed'          => 'system_updates',
+            'trainer_booking_cancelled_by_admin' => 'system_updates',
+            'trainer_booking_confirmed_by_admin' => 'system_updates',
+            'trainer_payout_approved'            => 'system_updates',
+            'trainer_payout_rejected'            => 'system_updates',
+            'trainer_payout_paid'                => 'system_updates',
         ];
 
         $column = $map[$type] ?? $type;

@@ -1791,12 +1791,16 @@ Route::middleware('auth:api')->group(function () {
     // Provider (trainer managing own profile)
     Route::post('/trainer/register',            [TrainerController::class, 'register']);
     Route::post('/trainer/profile',             [TrainerController::class, 'updateProfile']);
+    Route::post('/trainer/upload-certificates', [ImageUploadController::class, 'uploadTrainerCertificates']);
+    Route::delete('/trainer/upload-certificates/{filename}', [ImageUploadController::class, 'deleteTrainerCertificate']);
     Route::get('/trainer/me',                   [TrainerController::class, 'myProfile']);
     Route::post('/trainer/locations',           [TrainerController::class, 'addLocation']);
     Route::delete('/trainer/locations/{locationId}', [TrainerController::class, 'deleteLocation']);
     Route::get('/trainer/schedule',             [TrainerScheduleController::class, 'index']);
     Route::post('/trainer/schedule',            [TrainerScheduleController::class, 'upsert']);
     Route::get('/trainer/sessions',             [TrainerBookingController::class, 'mySessions']);
+    Route::post('/trainer/sessions/{id}/accept',   [TrainerBookingController::class, 'acceptBooking']);
+    Route::post('/trainer/sessions/{id}/reject',   [TrainerBookingController::class, 'rejectBooking']);
     Route::post('/trainer/sessions/{id}/start',    [TrainerBookingController::class, 'startSession']);
     Route::post('/trainer/sessions/{id}/complete', [TrainerBookingController::class, 'completeSession']);
 });
@@ -1809,6 +1813,7 @@ Route::middleware('auth:api')->prefix('admin')->group(function () {
     Route::get('/trainer-stats/revenue',             [AdminTrainerStatsController::class, 'revenue']);
 
     // ── Trainer CRUD & Status ────────────────────────────────────────
+    Route::get('/trainers/export',                   [AdminTrainerController::class, 'export']);
     Route::get('/trainers',                          [AdminTrainerController::class, 'index']);
     Route::get('/trainers/{id}',                     [AdminTrainerController::class, 'show']);
     Route::post('/trainers/{id}/approve',            [AdminTrainerController::class, 'approve']);
@@ -1828,6 +1833,7 @@ Route::middleware('auth:api')->prefix('admin')->group(function () {
     Route::delete('/trainer-comments/{id}',          [AdminTrainerController::class, 'deleteComment']);
 
     // ── Bookings ─────────────────────────────────────────────────────
+    Route::get('/trainer-bookings/export',           [AdminTrainerBookingController::class, 'export']);
     Route::get('/trainer-bookings',                  [AdminTrainerBookingController::class, 'index']);
     Route::get('/trainer-bookings/{id}',             [AdminTrainerBookingController::class, 'show']);
     Route::post('/trainer-bookings/{id}/cancel',     [AdminTrainerBookingController::class, 'cancel']);
@@ -1845,6 +1851,7 @@ Route::middleware('auth:api')->prefix('admin')->group(function () {
     Route::delete('/commission/trainer/{trainerId}', [AdminCommissionController::class, 'removeTrainerRate']);
 
     // ── Payouts ──────────────────────────────────────────────────────
+    Route::get('/payouts/export',                    [AdminPayoutController::class, 'export']);
     Route::get('/payouts',                           [AdminPayoutController::class, 'index']);
     Route::get('/payouts/{id}',                      [AdminPayoutController::class, 'show']);
     Route::post('/payouts/{id}/approve',             [AdminPayoutController::class, 'approve']);

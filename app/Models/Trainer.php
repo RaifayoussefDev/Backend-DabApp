@@ -16,8 +16,10 @@ class Trainer extends Model
         'bio',
         'bio_ar',
         'photo',
+        'cover',
         'specialty',
         'certifications',
+        'certification_files',
         'experience_years',
         'price_per_hour',
         'rating_average',
@@ -28,14 +30,16 @@ class Trainer extends Model
     ];
 
     protected $casts = [
-        'certifications'   => 'array',
-        'experience_years' => 'integer',
+        'certification_files'   => 'array',
+        'experience_years'      => 'integer',
         'price_per_hour'   => 'decimal:2',
         'rating_average'   => 'decimal:2',
         'total_sessions'   => 'integer',
         'likes_count'      => 'integer',
         'is_available'     => 'boolean',
     ];
+
+    protected $appends = ['photo_url', 'cover_url', 'localized_name', 'localized_bio'];
 
     // ---------------------------------------------------------------
     // Relations
@@ -91,6 +95,16 @@ class Trainer extends Model
         return $this->hasOne(CommissionSetting::class, 'entity_id')
             ->where('entity_type', 'trainer')
             ->where('is_active', true);
+    }
+
+    public function payouts()
+    {
+        return $this->hasMany(TrainerPayout::class);
+    }
+
+    public function paymentSplits()
+    {
+        return $this->hasMany(PaymentSplit::class);
     }
 
     // ---------------------------------------------------------------
@@ -166,6 +180,13 @@ class Trainer extends Model
             : asset('images/default-trainer.png');
     }
 
+    public function getCoverUrlAttribute(): ?string
+    {
+        return $this->cover
+            ? asset('storage/' . $this->cover)
+            : null;
+    }
+
     public function getLocalizedNameAttribute(): string
     {
         return app()->getLocale() === 'ar' ? ($this->name_ar ?? $this->name) : $this->name;
@@ -188,5 +209,14 @@ class Trainer extends Model
         $userId = auth()->id();
         if (!$userId) return false;
         return $this->favorites()->where('user_id', $userId)->exists();
+    }
+
+    /** Public URLs of uploaded certification documents (PDF / images). */
+    public function getCertificationFilesUrlsAttribute(): array
+    {
+        return collect($this->certification_files ?? [])
+            ->map(fn ($path) => asset('storage/' . $path))
+            ->values()
+            ->all();
     }
 }

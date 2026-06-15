@@ -67,6 +67,8 @@ return [
 
     'timezone' => 'Asia/Riyadh',
 
+    'skip_paytabs' => env('SKIP_PAYTABS', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration

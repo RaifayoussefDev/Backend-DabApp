@@ -8,7 +8,10 @@ use App\Models\TrainerBooking;
 use App\Models\TrainerComment;
 use App\Models\TrainerPayout;
 use App\Models\TrainerReview;
+use App\Services\NotificationService;
+use App\Traits\ExportsToExcel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 /**
@@ -19,6 +22,15 @@ use Tymon\JWTAuth\Facades\JWTAuth;
  */
 class AdminTrainerController extends Controller
 {
+    use ExportsToExcel;
+
+    protected NotificationService $notifications;
+
+    public function __construct(NotificationService $notifications)
+    {
+        $this->notifications = $notifications;
+    }
+
     /**
      * @OA\Get(
      *     path="/api/admin/trainers",
@@ -71,9 +83,13 @@ class AdminTrainerController extends Controller
     {
         $query = Trainer::with('user:id,first_name,last_name,email,phone');
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
+        if ($request->filled('status'))    { $query->where('status', $request->status); }
+        if ($request->filled('specialty')) { $query->where('specialty', $request->specialty); }
+        if ($request->filled('min_rating')){ $query->where('rating_average', '>=', $request->min_rating); }
+        if ($request->filled('min_price')) { $query->where('price_per_hour', '>=', $request->min_price); }
+        if ($request->filled('max_price')) { $query->where('price_per_hour', '<=', $request->max_price); }
+        if ($request->filled('created_from')) { $query->whereDate('created_at', '>=', $request->created_from); }
+        if ($request->filled('created_to'))   { $query->whereDate('created_at', '<=', $request->created_to); }
 
         if ($request->filled('search')) {
             $s = $request->search;
@@ -94,6 +110,50 @@ class AdminTrainerController extends Controller
             'success' => true,
             'data'    => ['data' => $trainers, 'stats' => $stats],
             'message' => 'Trainers retrieved successfully',
+        ]);
+    }
+
+    public function export(Request $request)
+    {
+        $query = Trainer::with('user:id,first_name,last_name,email,phone');
+
+        if ($request->filled('status'))       { $query->where('status', $request->status); }
+        if ($request->filled('specialty'))    { $query->where('specialty', $request->specialty); }
+        if ($request->filled('min_rating'))   { $query->where('rating_average', '>=', $request->min_rating); }
+        if ($request->filled('min_price'))    { $query->where('price_per_hour', '>=', $request->min_price); }
+        if ($request->filled('max_price'))    { $query->where('price_per_hour', '<=', $request->max_price); }
+        if ($request->filled('created_from')) { $query->whereDate('created_at', '>=', $request->created_from); }
+        if ($request->filled('created_to'))   { $query->whereDate('created_at', '<=', $request->created_to); }
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(fn ($q) => $q->where('name', 'LIKE', "%{$s}%")->orWhere('name_ar', 'LIKE', "%{$s}%"));
+        }
+
+        $items   = $query->latest()->get();
+        $cols    = ['ID', 'Name', 'Name AR', 'Specialty', 'Experience (yrs)', 'Price/hr', 'Rating', 'Sessions', 'Status', 'Available', 'Email', 'Phone', 'Created At'];
+        $filename = 'trainers-' . now()->format('Y-m-d');
+
+        $rowMapper = fn ($t) => [
+            $t->id, $t->name, $t->name_ar, $t->specialty,
+            $t->experience_years, $t->price_per_hour, $t->rating_average,
+            $t->total_sessions, $t->status,
+            $t->is_available ? 'Yes' : 'No',
+            $t->user?->email, $t->user?->phone,
+            $t->created_at?->format('Y-m-d H:i'),
+        ];
+
+        if ($request->get('format') === 'excel') {
+            return $this->excelResponse($filename, $cols, $items->map($rowMapper));
+        }
+
+        return response()->stream(function () use ($items, $cols, $rowMapper) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $cols);
+            foreach ($items as $t) { fputcsv($file, $rowMapper($t)); }
+            fclose($file);
+        }, 200, [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}.csv\"",
         ]);
     }
 
@@ -130,7 +190,11 @@ class AdminTrainerController extends Controller
 
         $trainer->update(['status' => 'approved', 'is_available' => true]);
 
-        // TODO: Send push notification + email to trainer user
+        try {
+            $this->notifications->notifyTrainerApproved($trainer->user, $trainer);
+        } catch (\Exception $e) {
+            Log::error('AdminTrainerController@approve notify failed: ' . $e->getMessage());
+        }
 
         return response()->json(['success' => true, 'message' => 'Trainer approved successfully']);
     }
@@ -170,7 +234,11 @@ class AdminTrainerController extends Controller
 
         $trainer->update(['status' => 'rejected', 'is_available' => false]);
 
-        // TODO: Send push notification + email with reason to trainer user
+        try {
+            $this->notifications->notifyTrainerRejected($trainer->user, $trainer, $request->reason);
+        } catch (\Exception $e) {
+            Log::error('AdminTrainerController@reject notify failed: ' . $e->getMessage());
+        }
 
         return response()->json(['success' => true, 'message' => 'Trainer rejected']);
     }
@@ -210,7 +278,11 @@ class AdminTrainerController extends Controller
 
         $trainer->update(['status' => 'suspended', 'is_available' => false]);
 
-        // TODO: Send push notification + email with reason to trainer user
+        try {
+            $this->notifications->notifyTrainerSuspended($trainer->user, $trainer, $request->reason);
+        } catch (\Exception $e) {
+            Log::error('AdminTrainerController@suspend notify failed: ' . $e->getMessage());
+        }
 
         return response()->json(['success' => true, 'message' => 'Trainer suspended']);
     }
@@ -283,7 +355,11 @@ class AdminTrainerController extends Controller
         $review->update(['is_approved' => true]);
         $review->trainer->recalculateRating();
 
-        // TODO: Send push notification to trainer
+        try {
+            $this->notifications->notifyTrainerReviewApproved($review->trainer->user, $review->trainer);
+        } catch (\Exception $e) {
+            Log::error('AdminTrainerController@approveReview notify failed: ' . $e->getMessage());
+        }
 
         return response()->json([
             'success'        => true,
@@ -476,7 +552,11 @@ class AdminTrainerController extends Controller
 
         $trainer->update(['status' => 'approved', 'is_available' => true]);
 
-        // TODO: Send push notification + email to trainer
+        try {
+            $this->notifications->notifyTrainerReactivated($trainer->user, $trainer);
+        } catch (\Exception $e) {
+            Log::error('AdminTrainerController@reactivate notify failed: ' . $e->getMessage());
+        }
 
         return response()->json(['success' => true, 'message' => 'Trainer reactivated']);
     }

@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Trainer;
 
 use App\Http\Controllers\Controller;
 use App\Models\TrainerPayout;
+use App\Services\NotificationService;
+use App\Traits\ExportsToExcel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -16,6 +19,15 @@ use Tymon\JWTAuth\Facades\JWTAuth;
  */
 class AdminPayoutController extends Controller
 {
+    use ExportsToExcel;
+
+    protected NotificationService $notifications;
+
+    public function __construct(NotificationService $notifications)
+    {
+        $this->notifications = $notifications;
+    }
+
     /**
      * @OA\Get(
      *     path="/api/admin/payouts",
@@ -79,9 +91,11 @@ class AdminPayoutController extends Controller
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('trainer_id')) {
-            $query->where('trainer_id', $request->trainer_id);
-        }
+        if ($request->filled('trainer_id')) { $query->where('trainer_id', $request->trainer_id); }
+        if ($request->filled('date_from'))  { $query->whereDate('created_at', '>=', $request->date_from); }
+        if ($request->filled('date_to'))    { $query->whereDate('created_at', '<=', $request->date_to); }
+        if ($request->filled('amount_min')) { $query->where('amount', '>=', $request->amount_min); }
+        if ($request->filled('amount_max')) { $query->where('amount', '<=', $request->amount_max); }
 
         $payouts = $query->latest()->paginate($request->get('per_page', 20));
 
@@ -100,6 +114,46 @@ class AdminPayoutController extends Controller
             'success' => true,
             'data'    => ['data' => $payouts, 'summary' => $summary],
             'message' => 'Payouts retrieved successfully',
+        ]);
+    }
+
+    public function export(Request $request)
+    {
+        $query = TrainerPayout::with(['trainer:id,name']);
+
+        if ($request->filled('status'))     { $query->where('status', $request->status); }
+        if ($request->filled('trainer_id')) { $query->where('trainer_id', $request->trainer_id); }
+        if ($request->filled('date_from'))  { $query->whereDate('created_at', '>=', $request->date_from); }
+        if ($request->filled('date_to'))    { $query->whereDate('created_at', '<=', $request->date_to); }
+        if ($request->filled('amount_min')) { $query->where('amount', '>=', $request->amount_min); }
+        if ($request->filled('amount_max')) { $query->where('amount', '<=', $request->amount_max); }
+
+        $items    = $query->latest()->get();
+        $cols     = ['ID', 'Trainer', 'Amount', 'Currency', 'Status', 'Transfer Ref', 'Bank', 'IBAN', 'Approved At', 'Paid At', 'Created At'];
+        $filename = 'trainer-payouts-' . now()->format('Y-m-d');
+
+        $rowMapper = fn ($p) => [
+            $p->id, $p->trainer?->name,
+            $p->amount, $p->currency ?? 'AED',
+            $p->status, $p->transfer_ref,
+            $p->bank_name, $p->iban,
+            $p->approved_at?->format('Y-m-d H:i'),
+            $p->paid_at?->format('Y-m-d H:i'),
+            $p->created_at?->format('Y-m-d H:i'),
+        ];
+
+        if ($request->get('format') === 'excel') {
+            return $this->excelResponse($filename, $cols, $items->map($rowMapper));
+        }
+
+        return response()->stream(function () use ($items, $cols, $rowMapper) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $cols);
+            foreach ($items as $p) { fputcsv($file, $rowMapper($p)); }
+            fclose($file);
+        }, 200, [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}.csv\"",
         ]);
     }
 
@@ -157,7 +211,11 @@ class AdminPayoutController extends Controller
             'notes'       => $request->notes     ?? $payout->notes,
         ]);
 
-        // TODO: Send push notification + email to trainer
+        try {
+            $this->notifications->notifyTrainerPayoutApproved($payout->trainer->user, $payout);
+        } catch (\Exception $e) {
+            Log::error('AdminPayoutController@approve notify failed: ' . $e->getMessage());
+        }
 
         return response()->json(['success' => true, 'message' => 'Payout approved']);
     }
@@ -305,7 +363,11 @@ class AdminPayoutController extends Controller
             'notes'  => '[REJECTED] ' . $request->reason,
         ]);
 
-        // TODO: Send push notification + email to trainer
+        try {
+            $this->notifications->notifyTrainerPayoutRejected($payout->trainer->user, $payout, $request->reason);
+        } catch (\Exception $e) {
+            Log::error('AdminPayoutController@reject notify failed: ' . $e->getMessage());
+        }
 
         return response()->json(['success' => true, 'message' => 'Payout rejected']);
     }
@@ -345,7 +407,11 @@ class AdminPayoutController extends Controller
         // Mark the payment split as settled
         $payout->split()->update(['status' => 'settled', 'settled_at' => now()]);
 
-        // TODO: Send push notification + email to trainer
+        try {
+            $this->notifications->notifyTrainerPayoutPaid($payout->trainer->user, $payout->fresh());
+        } catch (\Exception $e) {
+            Log::error('AdminPayoutController@markPaid notify failed: ' . $e->getMessage());
+        }
 
         return response()->json([
             'success'            => true,

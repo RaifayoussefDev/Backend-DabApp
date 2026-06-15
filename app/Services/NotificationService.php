@@ -918,4 +918,104 @@ class NotificationService
         // Enqueue the notification to all active users to avoid API timeouts
         \App\Jobs\NotifyPublishedGuideJob::dispatch($guide);
     }
+
+    // ==================== TRAINER ====================
+
+    public function notifyTrainerApproved(User $user, $trainer): array
+    {
+        return $this->sendToUser($user, 'trainer_approved', [
+            'trainer_id'   => $trainer->id,
+            'trainer_name' => $trainer->name,
+        ], ['entity' => $trainer, 'priority' => 'high']);
+    }
+
+    public function notifyTrainerRejected(User $user, $trainer, ?string $reason = null): array
+    {
+        return $this->sendToUser($user, 'trainer_rejected', [
+            'trainer_id'   => $trainer->id,
+            'trainer_name' => $trainer->name,
+            'reason'       => $reason ?? '',
+        ], ['entity' => $trainer, 'priority' => 'high']);
+    }
+
+    public function notifyTrainerSuspended(User $user, $trainer, ?string $reason = null): array
+    {
+        return $this->sendToUser($user, 'trainer_suspended', [
+            'trainer_id'   => $trainer->id,
+            'trainer_name' => $trainer->name,
+            'reason'       => $reason ?? '',
+        ], ['entity' => $trainer, 'priority' => 'high']);
+    }
+
+    public function notifyTrainerReactivated(User $user, $trainer): array
+    {
+        return $this->sendToUser($user, 'trainer_reactivated', [
+            'trainer_id'   => $trainer->id,
+            'trainer_name' => $trainer->name,
+        ], ['entity' => $trainer, 'priority' => 'high']);
+    }
+
+    public function notifyTrainerReviewApproved(User $user, $trainer): array
+    {
+        return $this->sendToUser($user, 'trainer_review_approved', [
+            'trainer_id'   => $trainer->id,
+            'trainer_name' => $trainer->name,
+        ], ['entity' => $trainer, 'priority' => 'normal']);
+    }
+
+    public function notifyTrainerSessionCompleted(User $client, $booking, $trainer): array
+    {
+        return $this->sendToUser($client, 'trainer_session_completed', [
+            'booking_id'   => $booking->id,
+            'trainer_id'   => $trainer->id,
+            'trainer_name' => $trainer->name,
+            'session_date' => $booking->booking_date->format('Y-m-d'),
+        ], ['entity' => $booking, 'priority' => 'normal']);
+    }
+
+    public function notifyTrainerBookingCancelledByAdmin(User $user, $booking, string $reason): array
+    {
+        return $this->sendToUser($user, 'trainer_booking_cancelled_by_admin', [
+            'booking_id'   => $booking->id,
+            'session_date' => $booking->booking_date->format('Y-m-d'),
+            'reason'       => $reason,
+        ], ['entity' => $booking, 'priority' => 'high']);
+    }
+
+    public function notifyTrainerBookingConfirmedByAdmin(User $user, $booking): array
+    {
+        return $this->sendToUser($user, 'trainer_booking_confirmed_by_admin', [
+            'booking_id'   => $booking->id,
+            'session_date' => $booking->booking_date->format('Y-m-d'),
+        ], ['entity' => $booking, 'priority' => 'high']);
+    }
+
+    public function notifyTrainerPayoutApproved(User $user, $payout): array
+    {
+        return $this->sendToUser($user, 'trainer_payout_approved', [
+            'payout_id' => $payout->id,
+            'amount'    => $payout->amount,
+            'currency'  => $payout->currency ?? 'SAR',
+        ], ['entity' => $payout, 'priority' => 'high']);
+    }
+
+    public function notifyTrainerPayoutRejected(User $user, $payout, string $reason): array
+    {
+        return $this->sendToUser($user, 'trainer_payout_rejected', [
+            'payout_id' => $payout->id,
+            'amount'    => $payout->amount,
+            'currency'  => $payout->currency ?? 'SAR',
+            'reason'    => $reason,
+        ], ['entity' => $payout, 'priority' => 'high']);
+    }
+
+    public function notifyTrainerPayoutPaid(User $user, $payout): array
+    {
+        return $this->sendToUser($user, 'trainer_payout_paid', [
+            'payout_id'    => $payout->id,
+            'amount'       => $payout->amount,
+            'currency'     => $payout->currency ?? 'SAR',
+            'transfer_ref' => $payout->transfer_ref,
+        ], ['entity' => $payout, 'priority' => 'high']);
+    }
 }

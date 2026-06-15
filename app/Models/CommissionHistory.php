@@ -9,6 +9,8 @@ class CommissionHistory extends Model
 {
     use HasFactory;
 
+    protected $table = 'commission_history';
+
     protected $fillable = [
         'commission_setting_id',
         'changed_by',

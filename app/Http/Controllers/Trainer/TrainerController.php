@@ -297,37 +297,44 @@ class TrainerController extends Controller
         }
 
         $validated = $request->validate([
-            'name'             => 'required|string|max:255',
-            'name_ar'          => 'nullable|string|max:255',
-            'bio'              => 'nullable|string|max:3000',
-            'bio_ar'           => 'nullable|string|max:3000',
-            'specialty'        => 'required|in:coaching,competition,off-road,street,custom',
-            'experience_years' => 'required|integer|min:0|max:50',
-            'price_per_hour'   => 'required|numeric|min:0',
-            'certifications'   => 'nullable|array',
-            'certifications.*' => 'string|max:255',
-            'photo'            => 'nullable|image|max:2048',
+            'name'                  => 'required|string|max:255',
+            'name_ar'               => 'nullable|string|max:255',
+            'bio'                   => 'nullable|string|max:3000',
+            'bio_ar'                => 'nullable|string|max:3000',
+            'specialty'             => 'required|in:coaching,competition,off-road,street,custom',
+            'experience_years'      => 'required|integer|min:0|max:50',
+            'price_per_hour'        => 'required|numeric|min:0',
+            'certifications'        => 'nullable|string|max:3000',
+            'photo'                 => 'nullable|image|max:2048',
+            'cover'                 => 'nullable|image|max:5120',
+            // Certification file paths already uploaded via POST /api/trainer/upload-certificates
+            'certification_files'   => 'nullable|array|max:10',
+            'certification_files.*' => 'string|max:500',
         ]);
 
         DB::beginTransaction();
         try {
             if ($request->hasFile('photo')) {
-                $validated['photo'] = $request->file('photo')->store('trainers', 'public');
+                $validated['photo'] = $request->file('photo')->store('trainers/photos', 'public');
+            }
+            if ($request->hasFile('cover')) {
+                $validated['cover'] = $request->file('cover')->store('trainers/covers', 'public');
             }
 
             $trainer = Trainer::create([
-                'user_id'          => $user->id,
-                'name'             => $validated['name'],
-                'name_ar'          => $validated['name_ar'] ?? null,
-                'bio'              => $validated['bio'] ?? null,
-                'bio_ar'           => $validated['bio_ar'] ?? null,
-                'specialty'        => $validated['specialty'],
-                'experience_years' => $validated['experience_years'],
-                'price_per_hour'   => $validated['price_per_hour'],
-                'certifications'   => $validated['certifications'] ?? [],
-                'photo'            => $validated['photo'] ?? null,
-                'status'           => 'pending',
-                'is_available'     => false,
+                'user_id'             => $user->id,
+                'name'                => $validated['name'],
+                'name_ar'             => $validated['name_ar'] ?? null,
+                'bio'                 => $validated['bio'] ?? null,
+                'bio_ar'              => $validated['bio_ar'] ?? null,
+                'specialty'           => $validated['specialty'],
+                'experience_years'    => $validated['experience_years'],
+                'price_per_hour'      => $validated['price_per_hour'],
+                'certifications'      => $validated['certifications'] ?? null,
+                'certification_files' => $validated['certification_files'] ?? [],
+                'photo'               => $validated['photo'] ?? null,
+                'status'              => 'pending',
+                'is_available'        => false,
             ]);
 
             DB::commit();
@@ -393,27 +400,33 @@ class TrainerController extends Controller
         }
 
         $validated = $request->validate([
-            'name'             => 'nullable|string|max:255',
-            'name_ar'          => 'nullable|string|max:255',
-            'bio'              => 'nullable|string|max:3000',
-            'bio_ar'           => 'nullable|string|max:3000',
-            'specialty'        => 'nullable|in:coaching,competition,off-road,street,custom',
-            'experience_years' => 'nullable|integer|min:0|max:50',
-            'price_per_hour'   => 'nullable|numeric|min:0',
-            'certifications'   => 'nullable|array',
-            'certifications.*' => 'string|max:255',
-            'is_available'     => 'nullable|boolean',
-            'photo'            => 'nullable|image|max:2048',
+            'name'                  => 'nullable|string|max:255',
+            'name_ar'               => 'nullable|string|max:255',
+            'bio'                   => 'nullable|string|max:3000',
+            'bio_ar'                => 'nullable|string|max:3000',
+            'specialty'             => 'nullable|in:coaching,competition,off-road,street,custom',
+            'experience_years'      => 'nullable|integer|min:0|max:50',
+            'price_per_hour'        => 'nullable|numeric|min:0',
+            'certifications'        => 'nullable|string|max:3000',
+            'is_available'          => 'nullable|boolean',
+            'photo'                 => 'nullable|image|max:2048',
+            'cover'                 => 'nullable|image|max:5120',
+            // Paths returned by POST /api/trainer/upload-certificates
+            'certification_files'   => 'nullable|array|max:10',
+            'certification_files.*' => 'string|max:500',
         ]);
 
         if ($request->hasFile('photo')) {
-            if ($trainer->photo) {
-                Storage::disk('public')->delete($trainer->photo);
-            }
-            $validated['photo'] = $request->file('photo')->store('trainers', 'public');
+            if ($trainer->photo) Storage::disk('public')->delete($trainer->photo);
+            $validated['photo'] = $request->file('photo')->store('trainers/photos', 'public');
         }
 
-        $trainer->update(array_filter($validated, fn ($v) => !is_null($v)));
+        if ($request->hasFile('cover')) {
+            if ($trainer->cover) Storage::disk('public')->delete($trainer->cover);
+            $validated['cover'] = $request->file('cover')->store('trainers/covers', 'public');
+        }
+
+        $trainer->update(array_filter($validated, fn ($v) => $v !== null));
 
         return response()->json([
             'success' => true,

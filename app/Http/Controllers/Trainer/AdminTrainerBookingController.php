@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Trainer;
 
 use App\Http\Controllers\Controller;
 use App\Models\TrainerBooking;
+use App\Services\NotificationService;
+use App\Traits\ExportsToExcel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @OA\Tag(
@@ -14,6 +17,15 @@ use Illuminate\Http\Request;
  */
 class AdminTrainerBookingController extends Controller
 {
+    use ExportsToExcel;
+
+    protected NotificationService $notifications;
+
+    public function __construct(NotificationService $notifications)
+    {
+        $this->notifications = $notifications;
+    }
+
     /**
      * @OA\Get(
      *     path="/api/admin/trainer-bookings",
@@ -115,6 +127,54 @@ class AdminTrainerBookingController extends Controller
                 ],
             ],
             'message' => 'Bookings retrieved successfully',
+        ]);
+    }
+
+    public function export(Request $request)
+    {
+        $query = TrainerBooking::with([
+            'trainer:id,name',
+            'user:id,first_name,last_name,email',
+            'location:id,location_name',
+        ]);
+
+        if ($request->filled('status'))         { $query->where('status', $request->status); }
+        if ($request->filled('trainer_id'))     { $query->where('trainer_id', $request->trainer_id); }
+        if ($request->filled('session_type'))   { $query->where('session_type', $request->session_type); }
+        if ($request->filled('payment_status')) { $query->where('payment_status', $request->payment_status); }
+        if ($request->filled('date_from'))      { $query->whereDate('booking_date', '>=', $request->date_from); }
+        if ($request->filled('date_to'))        { $query->whereDate('booking_date', '<=', $request->date_to); }
+
+        $items    = $query->latest()->get();
+        $cols     = ['ID', 'Client', 'Client Email', 'Trainer', 'Date', 'Start', 'End', 'Duration (hrs)', 'Session Type', 'Price', 'Status', 'Payment Status', 'Location', 'Created At'];
+        $filename = 'trainer-bookings-' . now()->format('Y-m-d');
+
+        $rowMapper = fn ($b) => [
+            $b->id,
+            trim(($b->user?->first_name ?? '') . ' ' . ($b->user?->last_name ?? '')),
+            $b->user?->email,
+            $b->trainer?->name,
+            $b->booking_date?->format('Y-m-d'),
+            $b->start_time, $b->end_time,
+            $b->duration_hours,
+            $b->session_type, $b->price,
+            $b->status, $b->payment_status,
+            $b->location?->location_name,
+            $b->created_at?->format('Y-m-d H:i'),
+        ];
+
+        if ($request->get('format') === 'excel') {
+            return $this->excelResponse($filename, $cols, $items->map($rowMapper));
+        }
+
+        return response()->stream(function () use ($items, $cols, $rowMapper) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $cols);
+            foreach ($items as $b) { fputcsv($file, $rowMapper($b)); }
+            fclose($file);
+        }, 200, [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}.csv\"",
         ]);
     }
 
@@ -252,7 +312,12 @@ class AdminTrainerBookingController extends Controller
             'notes'        => '[ADMIN CANCEL] ' . $request->reason,
         ]);
 
-        // TODO: Send push notification + email to trainer and client
+        try {
+            $this->notifications->notifyTrainerBookingCancelledByAdmin($booking->user, $booking, $request->reason);
+            $this->notifications->notifyTrainerBookingCancelledByAdmin($booking->trainer->user, $booking, $request->reason);
+        } catch (\Exception $e) {
+            Log::error('AdminTrainerBookingController@cancel notify failed: ' . $e->getMessage());
+        }
 
         return response()->json([
             'success' => true,
@@ -296,7 +361,12 @@ class AdminTrainerBookingController extends Controller
 
         $booking->update(['status' => 'confirmed', 'confirmed_at' => now()]);
 
-        // TODO: Send push notification + email to trainer and client
+        try {
+            $this->notifications->notifyTrainerBookingConfirmedByAdmin($booking->user, $booking);
+            $this->notifications->notifyTrainerBookingConfirmedByAdmin($booking->trainer->user, $booking);
+        } catch (\Exception $e) {
+            Log::error('AdminTrainerBookingController@confirm notify failed: ' . $e->getMessage());
+        }
 
         return response()->json([
             'success' => true,

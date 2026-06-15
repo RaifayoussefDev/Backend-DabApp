@@ -738,6 +738,122 @@ class ImageUploadController extends Controller
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/trainer/upload-certificates",
+     *     summary="Upload trainer certificate documents",
+     *     description="Upload up to 10 certificate files (PDF, JPG, PNG) for trainer verification by admin. Images are resized, PDFs are stored as-is. Returns stored file paths to use in registration or profile update.",
+     *     operationId="uploadTrainerCertificates",
+     *     tags={"Trainer"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"files[]"},
+     *                 @OA\Property(
+     *                     property="files[]",
+     *                     type="array",
+     *                     @OA\Items(type="string", format="binary"),
+     *                     description="Certificate files — PDF, JPG, JPEG, PNG. Max 5 MB each, up to 10 files."
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Files uploaded successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="3 file(s) uploaded successfully"),
+     *             @OA\Property(property="paths", type="array", @OA\Items(type="string", example="trainers/certifications/abc123.pdf"), description="Stored paths — pass these in certification_files[] when registering"),
+     *             @OA\Property(property="urls",  type="array", @OA\Items(type="string", example="https://domain.com/storage/trainers/certifications/abc123.pdf"), description="Public URLs for preview")
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="No files provided"),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=422, description="Validation error — invalid file type or size")
+     * )
+     */
+    public function uploadTrainerCertificates(Request $request)
+    {
+        try {
+            $request->validate([
+                'files'   => 'required|array|min:1|max:10',
+                'files.*' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            ]);
+
+            if (!$request->hasFile('files')) {
+                return response()->json(['success' => false, 'error' => 'No files found in request. Use key "files[]".'], 400);
+            }
+
+            $paths = [];
+            $urls  = [];
+
+            foreach ($request->file('files') as $file) {
+                $ext      = strtolower($file->getClientOriginalExtension());
+                $filename = Str::random(24) . '.' . $ext;
+                $folder   = 'trainers/certifications';
+
+                if ($ext === 'pdf') {
+                    // Store PDF directly without processing
+                    Storage::disk('public')->putFileAs($folder, $file, $filename);
+                    $path = "{$folder}/{$filename}";
+                } else {
+                    // Resize image (no watermark — official document)
+                    $processed = $this->processImage($file);
+                    $path      = $this->saveImage($processed, "{$folder}/{$filename}");
+                }
+
+                $paths[] = $path;
+                $urls[]  = asset('storage/' . $path);
+
+                Log::info('Trainer certificate uploaded', ['path' => $path]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => count($paths) . ' file(s) uploaded successfully',
+                'paths'   => $paths,
+                'urls'    => $urls,
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['success' => false, 'error' => 'Validation failed', 'details' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Trainer certificate upload failed: ' . $e->getMessage());
+            return response()->json(['success' => false, 'error' => 'Upload failed', 'message' => config('app.debug') ? $e->getMessage() : 'Internal server error'], 500);
+        }
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/trainer/upload-certificates/{filename}",
+     *     summary="Delete a trainer certificate file",
+     *     description="Delete a previously uploaded trainer certificate file.",
+     *     operationId="deleteTrainerCertificate",
+     *     tags={"Trainer"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="filename", in="path", required=true, @OA\Schema(type="string", example="abc123.pdf")),
+     *     @OA\Response(response=200, description="File deleted"),
+     *     @OA\Response(response=404, description="File not found")
+     * )
+     */
+    public function deleteTrainerCertificate(string $filename)
+    {
+        $path = 'trainers/certifications/' . $filename;
+
+        if (!Storage::disk('public')->exists($path)) {
+            return response()->json(['success' => false, 'error' => 'File not found'], 404);
+        }
+
+        Storage::disk('public')->delete($path);
+        Log::info('Trainer certificate deleted', ['filename' => $filename]);
+
+        return response()->json(['success' => true, 'message' => 'File deleted successfully']);
+    }
+
+    /**
      * @OA\Delete(
      *     path="/api/delete-image/{filename}",
      *     summary="Delete an uploaded image",

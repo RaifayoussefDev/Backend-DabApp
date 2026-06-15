@@ -1484,10 +1484,20 @@ class AuthController extends Controller
             ];
         }
 
+        // Trainer profile summary
+        $trainerProfile = \App\Models\Trainer::where('user_id', $user->id)->first();
+        $trainerData = $trainerProfile ? [
+            'is_trainer' => true,
+            'trainer_id' => $trainerProfile->id,
+            'status'     => $trainerProfile->status,
+            'is_available' => (bool) $trainerProfile->is_available,
+        ] : ['is_trainer' => false];
+
         return response()->json([
             'user'     => $userWithData,
             'helper'   => $helperData ?? ['is_helper' => false],
             'provider' => $providerData,
+            'trainer'  => $trainerData,
         ]);
     }
 
