@@ -243,19 +243,19 @@ class AdminMenuV2Seeder extends Seeder
                 ]
             ],
             [
-                "key" => "trainers",
-                "path" => "/trainers",
+                "key" => "trainer",
+                "path" => "/trainer",
                 "label_en" => "Trainers",
                 "label_ar" => "المدربون",
                 "icon" => "GraduationCap",
                 "permission" => "trainers.view",
                 "order" => 18,
                 "sub_items" => [
-                    ["key" => "trainers-all",      "path" => "/trainers",          "label_en" => "All Trainers", "label_ar" => "كل المدربين",   "permission" => "trainers.view",   "order" => 1],
-                    ["key" => "trainers-pending",  "path" => "/trainers/pending",  "label_en" => "Pending",      "label_ar" => "قيد المراجعة",  "permission" => "trainers.manage", "order" => 2],
-                    ["key" => "trainers-bookings", "path" => "/trainers/bookings", "label_en" => "Bookings",     "label_ar" => "الحجوزات",      "permission" => "trainers.view",   "order" => 3],
-                    ["key" => "trainers-payouts",  "path" => "/trainers/payouts",  "label_en" => "Payouts",      "label_ar" => "المدفوعات",     "permission" => "trainers.manage", "order" => 4],
-                    ["key" => "trainers-reviews",  "path" => "/trainers/reviews",  "label_en" => "Reviews",      "label_ar" => "التقييمات",     "permission" => "trainers.view",   "order" => 5]
+                    ["key" => "trainer-dashboard",  "path" => "/trainer",             "label_en" => "Dashboard",    "label_ar" => "لوحة المدربين", "permission" => "trainers.view",   "order" => 1],
+                    ["key" => "trainer-list",       "path" => "/trainer/trainers",    "label_en" => "All Trainers", "label_ar" => "كل المدربين",   "permission" => "trainers.view",   "order" => 2],
+                    ["key" => "trainer-bookings",   "path" => "/trainer/bookings",    "label_en" => "Bookings",     "label_ar" => "الحجوزات",      "permission" => "trainers.view",   "order" => 3],
+                    ["key" => "trainer-payouts",    "path" => "/trainer/payouts",     "label_en" => "Payouts",      "label_ar" => "المدفوعات",     "permission" => "trainers.manage", "order" => 4],
+                    ["key" => "trainer-commission", "path" => "/trainer/commission",  "label_en" => "Commission",   "label_ar" => "العمولة",       "permission" => "trainers.manage", "order" => 5]
                 ]
             ],
             [
