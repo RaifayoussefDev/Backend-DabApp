@@ -1,18 +1,18 @@
 {
   "info": {
-    "_postman_id": "dabapp-trainer-2026-06-12",
-    "name": "DabApp_Trainer_Full_Flow_2026-06-12",
-    "description": "Complete trainer module flow — DabApp Backend.\n\nAdmin: yucefr@gmail.com / Raifa98@@\nClient: raifadev@gmail.com / Raifa98@@\n\nRun order:\n1. Auth (login admin, trainer, client)\n2. Upload Certificates → get paths\n3. Register trainer with those paths\n4. Manage locations & schedule\n5. Client books a session\n6. Trainer starts / completes session\n7. Admin approves, moderates, manages payouts",
+    "_postman_id": "dabapp-trainer-2026-06-15",
+    "name": "DabApp_Trainer_Full_Flow_2026-06-15",
+    "description": "Complete trainer module flow — DabApp Backend.\nUpdated: 2026-06-15 — profile photo upload, cert upload, export endpoints, multipart payout proof.\n\nAdmin: yucefr@gmail.com / Raifa98@@\nClient: raifadev@gmail.com / Raifa98@@\n\nRun order:\n1. Auth (login admin, trainer, client)\n2. Upload Certificates → get paths\n3. Register trainer with those paths + upload profile photo\n4. Manage locations & schedule\n5. Client books a session\n6. Trainer accepts → starts → completes session\n7. Admin approves, moderates, manages payouts\n8. Admin exports data (CSV / Excel)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base_url",         "value": "http://localhost:8000/api", "type": "string" },
-    { "key": "admin_email",      "value": "yucefr@gmail.com",          "type": "string" },
-    { "key": "admin_password",   "value": "Raifa98@@",                 "type": "string" },
+    { "key": "base_url",         "value": "https://be.dabapp.co/api", "type": "string" },
+    { "key": "admin_email",      "value": "admin@gmail.com",          "type": "string" },
+    { "key": "admin_password",   "value": "admin@@",                 "type": "string" },
     { "key": "trainer_email",    "value": "trainer@example.com",       "type": "string" },
-    { "key": "trainer_password", "value": "Raifa98@@",                 "type": "string" },
-    { "key": "client_email",     "value": "raifadev@gmail.com",        "type": "string" },
-    { "key": "client_password",  "value": "Raifa98@@",                 "type": "string" },
+    { "key": "trainer_password", "value": "user@@",                 "type": "string" },
+    { "key": "client_email",     "value": "user@gmail.com",        "type": "string" },
+    { "key": "client_password",  "value": "user@@",                 "type": "string" },
     { "key": "admin_token",      "value": "", "type": "string" },
     { "key": "trainer_token",    "value": "", "type": "string" },
     { "key": "client_token",     "value": "", "type": "string" },
@@ -269,24 +269,71 @@
           }
         },
         {
-          "name": "Update Trainer Profile",
+          "name": "Update Trainer Profile (with photo)",
           "request": {
             "method": "POST",
             "header": [
               { "key": "Authorization", "value": "Bearer {{trainer_token}}" },
-              { "key": "Accept",        "value": "application/json" },
-              { "key": "Content-Type",  "value": "application/json" }
+              { "key": "Accept",        "value": "application/json" }
             ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Ahmed Al-Rashidi\",\n  \"name_ar\": \"أحمد الراشدي\",\n  \"bio\": \"Professional motorcycle trainer specializing in beginner to advanced coaching and competition prep.\",\n  \"bio_ar\": \"مدرب دراجات نارية متخصص من المبتدئين للمتقدمين وتحضير المسابقات.\",\n  \"specialty\": \"coaching\",\n  \"certifications\": \"MSF Certified Instructor, UAE Driving License Category B, Advanced Coaching Certificate 2023, Competition Safety Course\",\n  \"certification_files\": [\n    \"trainers/certifications/certificate1.pdf\"\n  ],\n  \"experience_years\": 9,\n  \"price_per_hour\": 175.00,\n  \"is_available\": true\n}",
-              "options": { "raw": { "language": "json" } }
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": [],
+                  "description": "Profile / cover photo (JPG, PNG, max 2MB). Leave empty to keep the current photo."
+                },
+                { "key": "name",               "value": "Ahmed Al-Rashidi",               "type": "text" },
+                { "key": "name_ar",             "value": "أحمد الراشدي",                  "type": "text" },
+                { "key": "bio",                 "value": "Professional motorcycle trainer specializing in beginner to advanced coaching and competition prep.", "type": "text" },
+                { "key": "bio_ar",              "value": "مدرب دراجات نارية متخصص من المبتدئين للمتقدمين وتحضير المسابقات.", "type": "text" },
+                { "key": "specialty",           "value": "coaching",                       "type": "text",
+                  "description": "coaching | competition | off-road | street | custom" },
+                { "key": "certifications",      "value": "MSF Certified Instructor, UAE Driving License Category B, Advanced Coaching Certificate 2023", "type": "text",
+                  "description": "Plain text — list of degrees and credentials" },
+                { "key": "certification_files[]", "value": "trainers/certifications/certificate1.pdf", "type": "text",
+                  "description": "Repeat this key for each file path returned by the Upload Certificates endpoint" },
+                { "key": "experience_years",    "value": "9",                              "type": "text" },
+                { "key": "price_per_hour",      "value": "175.00",                         "type": "text" },
+                { "key": "is_available",        "value": "1",                              "type": "text",
+                  "description": "1 = available, 0 = unavailable" }
+              ]
             },
             "url": {
               "raw": "{{base_url}}/trainer/profile",
               "host": ["{{base_url}}"],
               "path": ["trainer", "profile"]
-            }
+            },
+            "description": "⚠️ Must use multipart/form-data (not JSON) because of the photo file field.\n\nAll text fields are optional — only send what you want to update.\ncertification_files[] accepts multiple values — add one row per file path."
+          }
+        },
+        {
+          "name": "Upload Profile Photo only",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{trainer_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": [],
+                  "description": "JPG / PNG, max 2 MB"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/trainer/profile",
+              "host": ["{{base_url}}"],
+              "path": ["trainer", "profile"]
+            },
+            "description": "Send only the photo field — all other fields are optional so nothing else gets overwritten."
           }
         }
       ]
@@ -887,11 +934,62 @@
               "host": ["{{base_url}}"],
               "path": ["admin", "trainers"],
               "query": [
-                { "key": "status",   "value": "pending",  "disabled": true },
-                { "key": "per_page", "value": "15",       "disabled": true },
-                { "key": "search",   "value": "",         "disabled": true }
+                { "key": "status",       "value": "pending",    "disabled": true,
+                  "description": "pending | approved | rejected | suspended" },
+                { "key": "specialty",    "value": "coaching",   "disabled": true,
+                  "description": "coaching | competition | off-road | street | custom" },
+                { "key": "min_rating",   "value": "4",          "disabled": true },
+                { "key": "min_price",    "value": "50",         "disabled": true },
+                { "key": "max_price",    "value": "500",        "disabled": true },
+                { "key": "created_from", "value": "2026-01-01", "disabled": true },
+                { "key": "created_to",   "value": "2026-06-30", "disabled": true },
+                { "key": "search",       "value": "",           "disabled": true },
+                { "key": "per_page",     "value": "20",         "disabled": true }
               ]
             }
+          }
+        },
+        {
+          "name": "Export Trainers — CSV",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Accept",        "value": "text/csv" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/trainers/export?format=csv",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "trainers", "export"],
+              "query": [
+                { "key": "format",       "value": "csv" },
+                { "key": "status",       "value": "approved",   "disabled": true },
+                { "key": "specialty",    "value": "coaching",   "disabled": true },
+                { "key": "created_from", "value": "2026-01-01", "disabled": true },
+                { "key": "created_to",   "value": "2026-06-30", "disabled": true }
+              ]
+            },
+            "description": "Returns a CSV file download of the trainer list. Apply the same filters as the list endpoint. Save response to a .csv file."
+          }
+        },
+        {
+          "name": "Export Trainers — Excel",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Accept",        "value": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/trainers/export?format=excel",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "trainers", "export"],
+              "query": [
+                { "key": "format",   "value": "excel" },
+                { "key": "status",   "value": "approved", "disabled": true }
+              ]
+            },
+            "description": "Returns an Excel (.xlsx) file download. Save response to a .xlsx file."
           }
         },
         {
@@ -1221,6 +1319,52 @@
             },
             "description": "Admin cancels booking. Notifies both client and trainer."
           }
+        },
+        {
+          "name": "Export Bookings — CSV",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Accept",        "value": "text/csv" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/trainer-bookings/export?format=csv",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "trainer-bookings", "export"],
+              "query": [
+                { "key": "format",          "value": "csv" },
+                { "key": "status",          "value": "completed",   "disabled": true },
+                { "key": "trainer_id",      "value": "1",           "disabled": true },
+                { "key": "session_type",    "value": "individual",  "disabled": true },
+                { "key": "payment_status",  "value": "paid",        "disabled": true },
+                { "key": "date_from",       "value": "2026-06-01",  "disabled": true },
+                { "key": "date_to",         "value": "2026-06-30",  "disabled": true }
+              ]
+            },
+            "description": "Exports filtered booking list to CSV. Save response body as a .csv file."
+          }
+        },
+        {
+          "name": "Export Bookings — Excel",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Accept",        "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/trainer-bookings/export?format=excel",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "trainer-bookings", "export"],
+              "query": [
+                { "key": "format",     "value": "excel" },
+                { "key": "date_from",  "value": "2026-06-01", "disabled": true },
+                { "key": "date_to",    "value": "2026-06-30", "disabled": true }
+              ]
+            },
+            "description": "Exports filtered booking list to Excel (.xlsx). Save response body as a .xlsx file."
+          }
         }
       ]
     },
@@ -1437,25 +1581,36 @@
           }
         },
         {
-          "name": "Mark Payout as Paid",
+          "name": "Mark Payout as Paid (+ proof upload)",
           "request": {
             "method": "POST",
             "header": [
               { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Accept",        "value": "application/json" },
-              { "key": "Content-Type",  "value": "application/json" }
+              { "key": "Accept",        "value": "application/json" }
             ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"transfer_ref\": \"BANK-TXN-2026-001\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "transfer_ref",
+                  "value": "IB20260615001234",
+                  "type": "text",
+                  "description": "Bank transfer reference number (required)"
+                },
+                {
+                  "key": "transfer_proof",
+                  "type": "file",
+                  "src": [],
+                  "description": "Screenshot or receipt of the transfer (JPG/PNG/PDF, max 5MB — optional but recommended)"
+                }
+              ]
             },
             "url": {
               "raw": "{{base_url}}/admin/payouts/{{payout_id}}/mark-paid",
               "host": ["{{base_url}}"],
               "path": ["admin", "payouts", "{{payout_id}}", "mark-paid"]
             },
-            "description": "Marks payout as transferred. Sends payment confirmation notification to trainer."
+            "description": "⚠️ Must use multipart/form-data (not JSON) because of the proof file field.\n\ntransfer_ref is required. transfer_proof (file) is optional but should be uploaded as evidence.\nMarks payout as paid, settles the payment split, notifies the trainer."
           }
         },
         {
@@ -1477,6 +1632,29 @@
               "host": ["{{base_url}}"],
               "path": ["admin", "payouts", "{{payout_id}}", "reject"]
             }
+          }
+        },
+        {
+          "name": "Export Payouts — CSV",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Accept",        "value": "text/csv" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/payouts/export?format=csv",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "payouts", "export"],
+              "query": [
+                { "key": "format",      "value": "csv" },
+                { "key": "status",      "value": "paid",   "disabled": true },
+                { "key": "trainer_id",  "value": "1",      "disabled": true },
+                { "key": "date_from",   "value": "2026-06-01", "disabled": true },
+                { "key": "date_to",     "value": "2026-06-30", "disabled": true }
+              ]
+            },
+            "description": "Exports payout list to CSV. Filter by status (pending/approved/paid/failed), trainer, or date range."
           }
         }
       ]
@@ -1512,8 +1690,12 @@
               "host": ["{{base_url}}"],
               "path": ["admin", "trainer-stats", "revenue"],
               "query": [
-                { "key": "period",    "value": "monthly",    "disabled": true },
-                { "key": "date_from", "value": "2026-01-01", "disabled": true },
+                { "key": "year",      "value": "2026",       "disabled": false,
+                  "description": "Filter by year (combine with month for monthly view)" },
+                { "key": "month",     "value": "6",          "disabled": true,
+                  "description": "1–12 — leave disabled for full year view" },
+                { "key": "date_from", "value": "2026-06-01", "disabled": true,
+                  "description": "Custom range — overrides year/month if set" },
                 { "key": "date_to",   "value": "2026-06-30", "disabled": true }
               ]
             }
