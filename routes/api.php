@@ -1781,6 +1781,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/trainers/{id}/book',          [TrainerBookingController::class, 'book']);
     Route::get('/trainer/bookings',             [TrainerBookingController::class, 'myBookings']);
     Route::post('/trainer/bookings/{id}/cancel',[TrainerBookingController::class, 'cancel']);
+    Route::post('/trainer/bookings/{id}/pay',   [TrainerBookingController::class, 'initiatePayment']);
     Route::post('/trainer/bookings/{bookingId}/review', [TrainerReviewController::class, 'store']);
 
     // Social

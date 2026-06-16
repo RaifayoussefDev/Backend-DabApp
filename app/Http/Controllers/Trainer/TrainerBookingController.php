@@ -311,14 +311,14 @@ class TrainerBookingController extends Controller
 
         DB::beginTransaction();
         try {
-            // 1. Create payment record
+            // 1. Create payment record (no payment yet — trainer must accept first)
             $payment = TrainerPayment::create([
                 'user_id'        => $user->id,
                 'amount'         => $totalPrice,
                 'payment_status' => 'pending',
             ]);
 
-            // 2. Create booking linked to payment
+            // 2. Create booking — status stays 'pending' until trainer accepts
             $booking = TrainerBooking::create([
                 'trainer_id'     => $trainer->id,
                 'user_id'        => $user->id,
@@ -335,25 +335,19 @@ class TrainerBookingController extends Controller
                 'notes'          => $validated['notes'] ?? null,
             ]);
 
-            // 3. Initiate PayTabs payment (skip in local/testing environment)
-            $paymentUrl = null;
-            if (!config('app.skip_paytabs', false)) {
-                $paymentUrl = $this->initiatePayTabsPayment($payment, $booking, $user, $trainer, $location);
-            }
-
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('TrainerBooking: payment initiation failed', ['error' => $e->getMessage()]);
+            Log::error('TrainerBooking: booking creation failed', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Failed to create booking', 'error' => $e->getMessage()], 500);
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Booking created. Please complete payment.',
+            'message' => 'Booking request sent. Waiting for trainer acceptance.',
             'data'    => [
                 'booking_id'     => $booking->id,
-                'payment_url'    => $paymentUrl,
+                'status'         => 'pending',
                 'total_price'    => $totalPrice,
                 'duration_hours' => $durationHours,
                 'price_per_hour' => $trainer->price_per_hour,
@@ -535,6 +529,48 @@ class TrainerBookingController extends Controller
      *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
+    // ---------------------------------------------------------------
+    // CLIENT — Initiate payment for an accepted booking
+    // ---------------------------------------------------------------
+    public function initiatePayment(int $id)
+    {
+        $user    = JWTAuth::parseToken()->authenticate();
+        $booking = TrainerBooking::with(['trainer', 'payment', 'location.city'])->find($id);
+
+        if (!$booking) {
+            return response()->json(['success' => false, 'message' => 'Booking not found'], 404);
+        }
+
+        if ($booking->user_id !== $user->id) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        if ($booking->status !== 'accepted') {
+            return response()->json(['success' => false, 'message' => 'Booking must be accepted by trainer before payment'], 400);
+        }
+
+        if ($booking->payment_status === 'paid') {
+            return response()->json(['success' => false, 'message' => 'Booking is already paid'], 400);
+        }
+
+        $paymentUrl = null;
+        if (!config('app.skip_paytabs', false)) {
+            $paymentUrl = $this->initiatePayTabsPayment(
+                $booking->payment,
+                $booking,
+                $user,
+                $booking->trainer,
+                $booking->location
+            );
+        }
+
+        return response()->json([
+            'success'     => true,
+            'message'     => 'Payment initiated.',
+            'data'        => ['payment_url' => $paymentUrl],
+        ]);
+    }
+
     public function myBookings(Request $request)
     {
         $user = JWTAuth::parseToken()->authenticate();
@@ -726,7 +762,24 @@ class TrainerBookingController extends Controller
             return response()->json(['success' => false, 'message' => 'Only pending bookings can be accepted'], 400);
         }
 
-        $booking->update(['status' => 'confirmed']);
+        $booking->update(['status' => 'accepted']);
+
+        // Initiate PayTabs payment so client can pay
+        $paymentUrl = null;
+        try {
+            $location = $booking->location()->with('city')->first();
+            if (!config('app.skip_paytabs', false)) {
+                $paymentUrl = $this->initiatePayTabsPayment(
+                    $booking->payment,
+                    $booking,
+                    $booking->user,
+                    $booking->trainer,
+                    $location
+                );
+            }
+        } catch (\Exception $e) {
+            Log::error('Accept booking: payment initiation failed', ['booking_id' => $id, 'error' => $e->getMessage()]);
+        }
 
         try {
             $this->notifications->notifyTrainerBookingConfirmedByAdmin($booking->user, $booking);
@@ -735,9 +788,13 @@ class TrainerBookingController extends Controller
         }
 
         return response()->json([
-            'success' => true,
-            'message' => 'Booking accepted. Client has been notified.',
-            'data'    => ['booking_id' => $booking->id, 'status' => $booking->status],
+            'success'     => true,
+            'message'     => 'Booking accepted. Client has been notified to complete payment.',
+            'data'        => [
+                'booking_id'  => $booking->id,
+                'status'      => $booking->status,
+                'payment_url' => $paymentUrl,
+            ],
         ]);
     }
 

@@ -83,7 +83,7 @@ class TrainerBooking extends Model
     public function scopeUpcoming($query)
     {
         return $query->where('booking_date', '>=', now()->toDateString())
-                     ->whereIn('status', ['pending', 'confirmed']);
+                     ->whereIn('status', ['pending', 'accepted', 'confirmed']);
     }
 
     public function scopeCompleted($query)
@@ -100,7 +100,7 @@ class TrainerBooking extends Model
         return static::where('trainer_id', $this->trainer_id)
             ->where('location_id', $this->location_id)
             ->where('booking_date', $date)
-            ->whereIn('status', ['pending', 'confirmed', 'in_progress'])
+            ->whereIn('status', ['pending', 'accepted', 'confirmed', 'in_progress'])
             ->where(fn ($q) => $q
                 ->whereBetween('start_time', [$start, $end])
                 ->orWhereBetween('end_time', [$start, $end])
