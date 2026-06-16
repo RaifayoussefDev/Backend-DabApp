@@ -409,8 +409,12 @@ class TrainerController extends Controller
             'price_per_hour'        => 'nullable|numeric|min:0',
             'certifications'        => 'nullable|string|max:3000',
             'is_available'          => 'nullable|boolean',
+            // File upload (direct)
             'photo'                 => 'nullable|image|max:2048',
             'cover'                 => 'nullable|image|max:5120',
+            // Path returned by POST /api/trainer/upload-photo or /upload-cover
+            'photo_path'            => 'nullable|string|max:500',
+            'cover_path'            => 'nullable|string|max:500',
             // Paths returned by POST /api/trainer/upload-certificates
             'certification_files'   => 'nullable|array|max:10',
             'certification_files.*' => 'string|max:500',
@@ -419,12 +423,20 @@ class TrainerController extends Controller
         if ($request->hasFile('photo')) {
             if ($trainer->photo) Storage::disk('public')->delete($trainer->photo);
             $validated['photo'] = $request->file('photo')->store('trainers/photos', 'public');
+        } elseif (!empty($validated['photo_path'])) {
+            if ($trainer->photo) Storage::disk('public')->delete($trainer->photo);
+            $validated['photo'] = $validated['photo_path'];
         }
+        unset($validated['photo_path']);
 
         if ($request->hasFile('cover')) {
             if ($trainer->cover) Storage::disk('public')->delete($trainer->cover);
             $validated['cover'] = $request->file('cover')->store('trainers/covers', 'public');
+        } elseif (!empty($validated['cover_path'])) {
+            if ($trainer->cover) Storage::disk('public')->delete($trainer->cover);
+            $validated['cover'] = $validated['cover_path'];
         }
+        unset($validated['cover_path']);
 
         $updateData = array_filter($validated, fn ($v) => $v !== null);
         // Allow explicitly clearing cert files when the flag is sent

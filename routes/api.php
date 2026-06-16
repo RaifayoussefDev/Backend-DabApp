@@ -1795,6 +1795,10 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/trainer/profile',             [TrainerController::class, 'updateProfile']);
     Route::post('/trainer/upload-certificates', [ImageUploadController::class, 'uploadTrainerCertificates']);
     Route::delete('/trainer/upload-certificates/{filename}', [ImageUploadController::class, 'deleteTrainerCertificate']);
+    Route::post('/trainer/upload-photo', [ImageUploadController::class, 'uploadTrainerPhoto']);
+    Route::delete('/trainer/upload-photo/{filename}', [ImageUploadController::class, 'deleteTrainerPhoto']);
+    Route::post('/trainer/upload-cover', [ImageUploadController::class, 'uploadTrainerCover']);
+    Route::delete('/trainer/upload-cover/{filename}', [ImageUploadController::class, 'deleteTrainerCover']);
     Route::get('/trainer/me',                   [TrainerController::class, 'myProfile']);
     Route::post('/trainer/locations',           [TrainerController::class, 'addLocation']);
     Route::delete('/trainer/locations/{locationId}', [TrainerController::class, 'deleteLocation']);
