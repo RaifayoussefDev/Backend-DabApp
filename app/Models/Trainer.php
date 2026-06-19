@@ -39,7 +39,7 @@ class Trainer extends Model
         'is_available'     => 'boolean',
     ];
 
-    protected $appends = ['photo_url', 'cover_url', 'localized_name', 'localized_bio', 'certification_files_urls'];
+    protected $appends = ['photo_url', 'cover_url', 'localized_name', 'localized_bio', 'certification_files_urls', 'specialties_list'];
 
     // ---------------------------------------------------------------
     // Relations
@@ -107,6 +107,16 @@ class Trainer extends Model
         return $this->hasMany(PaymentSplit::class);
     }
 
+    public function gallery()
+    {
+        return $this->hasMany(TrainerGallery::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function specialties()
+    {
+        return $this->belongsToMany(Specialty::class, 'trainer_specialty');
+    }
+
     // ---------------------------------------------------------------
     // Scopes
     // ---------------------------------------------------------------
@@ -128,7 +138,12 @@ class Trainer extends Model
 
     public function scopeBySpecialty($query, string $specialty)
     {
-        return $query->where('specialty', $specialty);
+        // Support both old enum string and new specialty_id integer
+        if (is_numeric($specialty)) {
+            return $query->whereHas('specialties', fn ($q) => $q->where('specialties.id', (int) $specialty));
+        }
+        // Slug or legacy enum value
+        return $query->whereHas('specialties', fn ($q) => $q->where('slug', $specialty)->orWhere('specialties.id', $specialty));
     }
 
     // ---------------------------------------------------------------
@@ -218,5 +233,20 @@ class Trainer extends Model
             ->map(fn ($path) => asset('storage/' . $path))
             ->values()
             ->all();
+    }
+
+    /** Specialties as a simple array for API responses. */
+    public function getSpecialtiesListAttribute(): array
+    {
+        if ($this->relationLoaded('specialties')) {
+            return $this->specialties->map(fn ($s) => [
+                'id'         => $s->id,
+                'libelle_en' => $s->libelle_en,
+                'libelle_ar' => $s->libelle_ar,
+                'slug'       => $s->slug,
+                'icon_url'   => $s->icon_url,
+            ])->values()->all();
+        }
+        return [];
     }
 }

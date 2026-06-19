@@ -292,17 +292,19 @@ class TrainerBookingController extends Controller
         }
 
         $durationHours = $validated['duration_hours'] ?? 1;
-        $endTime       = date('H:i', strtotime($validated['start_time'] . " +{$durationHours} hours"));
+        $startTime     = $validated['start_time'];
+        $endTime       = date('H:i', strtotime($startTime . " +{$durationHours} hours"));
         $totalPrice    = $trainer->price_per_hour * $durationHours;
 
-        // Check slot conflict
+        // Strict bidirectional overlap check — slot is busy if any existing booking overlaps
         $conflict = TrainerBooking::where('trainer_id', $trainer->id)
-            ->where('location_id', $location->id)
             ->where('booking_date', $validated['booking_date'])
-            ->whereIn('status', ['pending', 'confirmed', 'in_progress'])
+            ->whereIn('status', ['confirmed', 'in_progress'])
             ->where(fn ($q) => $q
-                ->whereBetween('start_time', [$validated['start_time'], $endTime])
-                ->orWhereBetween('end_time', [$validated['start_time'], $endTime])
+                ->where(fn ($inner) => $inner
+                    ->where('start_time', '<', $endTime)
+                    ->where('end_time',   '>', $startTime)
+                )
             )->exists();
 
         if ($conflict) {
@@ -311,29 +313,42 @@ class TrainerBookingController extends Controller
 
         DB::beginTransaction();
         try {
-            // 1. Create payment record (no payment yet — trainer must accept first)
+            // 1. Create payment record
             $payment = TrainerPayment::create([
                 'user_id'        => $user->id,
                 'amount'         => $totalPrice,
                 'payment_status' => 'pending',
             ]);
 
-            // 2. Create booking — status stays 'pending' until trainer accepts
+            // 2. Auto-confirm booking immediately — no manual trainer accept needed
             $booking = TrainerBooking::create([
                 'trainer_id'     => $trainer->id,
                 'user_id'        => $user->id,
                 'location_id'    => $location->id,
                 'booking_date'   => $validated['booking_date'],
-                'start_time'     => $validated['start_time'],
+                'start_time'     => $startTime,
                 'end_time'       => $endTime,
                 'duration_hours' => $durationHours,
                 'session_type'   => $validated['session_type'] ?? 'beginner',
-                'status'         => 'pending',
+                'status'         => 'confirmed',
                 'price'          => $totalPrice,
                 'payment_id'     => $payment->id,
                 'payment_status' => 'pending',
                 'notes'          => $validated['notes'] ?? null,
+                'confirmed_at'   => now(),
             ]);
+
+            // 3. Immediately initiate PayTabs payment — return URL to client
+            $paymentUrl = null;
+            if (!config('app.skip_paytabs', false)) {
+                $paymentUrl = $this->initiatePayTabsPayment(
+                    $payment,
+                    $booking,
+                    $user,
+                    $trainer,
+                    $location
+                );
+            }
 
             DB::commit();
         } catch (\Exception $e) {
@@ -344,10 +359,11 @@ class TrainerBookingController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Booking request sent. Waiting for trainer acceptance.',
+            'message' => 'Booking confirmed. Please complete payment to secure your slot.',
             'data'    => [
                 'booking_id'     => $booking->id,
-                'status'         => 'pending',
+                'status'         => 'confirmed',
+                'payment_url'    => $paymentUrl,
                 'total_price'    => $totalPrice,
                 'duration_hours' => $durationHours,
                 'price_per_hour' => $trainer->price_per_hour,
@@ -545,8 +561,8 @@ class TrainerBookingController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        if ($booking->status !== 'accepted') {
-            return response()->json(['success' => false, 'message' => 'Booking must be accepted by trainer before payment'], 400);
+        if (!in_array($booking->status, ['confirmed', 'accepted'])) {
+            return response()->json(['success' => false, 'message' => 'Booking must be confirmed before payment'], 400);
         }
 
         if ($booking->payment_status === 'paid') {
@@ -744,58 +760,16 @@ class TrainerBookingController extends Controller
      *     @OA\Response(response=404, description="Booking not found")
      * )
      */
+    /**
+     * @deprecated Bookings are now auto-confirmed at creation. This endpoint is kept for backward compatibility.
+     */
     public function acceptBooking(int $id)
     {
-        $user    = JWTAuth::parseToken()->authenticate();
-        $trainer = Trainer::where('user_id', $user->id)->first();
-        $booking = TrainerBooking::with(['user', 'location.city'])->find($id);
-
-        if (!$booking) {
-            return response()->json(['success' => false, 'message' => 'Booking not found'], 404);
-        }
-
-        if (!$trainer || $booking->trainer_id !== $trainer->id) {
-            return response()->json(['success' => false, 'message' => 'Not your booking'], 403);
-        }
-
-        if ($booking->status !== 'pending') {
-            return response()->json(['success' => false, 'message' => 'Only pending bookings can be accepted'], 400);
-        }
-
-        $booking->update(['status' => 'accepted']);
-
-        // Initiate PayTabs payment so client can pay
-        $paymentUrl = null;
-        try {
-            $location = $booking->location()->with('city')->first();
-            if (!config('app.skip_paytabs', false)) {
-                $paymentUrl = $this->initiatePayTabsPayment(
-                    $booking->payment,
-                    $booking,
-                    $booking->user,
-                    $booking->trainer,
-                    $location
-                );
-            }
-        } catch (\Exception $e) {
-            Log::error('Accept booking: payment initiation failed', ['booking_id' => $id, 'error' => $e->getMessage()]);
-        }
-
-        try {
-            $this->notifications->notifyTrainerBookingConfirmedByAdmin($booking->user, $booking);
-        } catch (\Exception $e) {
-            Log::error('Accept booking notification failed', ['booking_id' => $id, 'error' => $e->getMessage()]);
-        }
-
         return response()->json([
-            'success'     => true,
-            'message'     => 'Booking accepted. Client has been notified to complete payment.',
-            'data'        => [
-                'booking_id'  => $booking->id,
-                'status'      => $booking->status,
-                'payment_url' => $paymentUrl,
-            ],
-        ]);
+            'success' => false,
+            'message' => 'This endpoint is deprecated. Bookings are now automatically confirmed when created. The client receives a payment URL immediately.',
+            'code'    => 'ENDPOINT_DEPRECATED',
+        ], 410);
     }
 
     // ---------------------------------------------------------------
@@ -822,44 +796,16 @@ class TrainerBookingController extends Controller
      *     @OA\Response(response=404, description="Booking not found")
      * )
      */
+    /**
+     * @deprecated Bookings are now auto-confirmed at creation. Use POST /api/trainer/bookings/{id}/cancel instead.
+     */
     public function rejectBooking(Request $request, int $id)
     {
-        $user    = JWTAuth::parseToken()->authenticate();
-        $trainer = Trainer::where('user_id', $user->id)->first();
-        $booking = TrainerBooking::with(['user', 'payment', 'location.city'])->find($id);
-
-        if (!$booking) {
-            return response()->json(['success' => false, 'message' => 'Booking not found'], 404);
-        }
-
-        if (!$trainer || $booking->trainer_id !== $trainer->id) {
-            return response()->json(['success' => false, 'message' => 'Not your booking'], 403);
-        }
-
-        if ($booking->status !== 'pending') {
-            return response()->json(['success' => false, 'message' => 'Only pending bookings can be rejected'], 400);
-        }
-
-        $reason = $request->input('reason', 'Trainer is unavailable for the requested time slot.');
-
-        $booking->update(['status' => 'cancelled']);
-
-        // Auto-refund if payment was already made
-        if ($booking->payment_status === 'paid' && $booking->payment && $booking->payment->tran_ref) {
-            $this->processTrainerRefund($booking->payment, $booking->id);
-        }
-
-        try {
-            $this->notifications->notifyTrainerBookingCancelledByAdmin($booking->user, $booking, $reason);
-        } catch (\Exception $e) {
-            Log::error('Reject booking notification failed', ['booking_id' => $id, 'error' => $e->getMessage()]);
-        }
-
         return response()->json([
-            'success' => true,
-            'message' => 'Booking rejected. Client has been notified.',
-            'data'    => ['booking_id' => $booking->id, 'status' => $booking->status],
-        ]);
+            'success' => false,
+            'message' => 'This endpoint is deprecated. Bookings are now automatically confirmed. To cancel a booking, use POST /api/trainer/bookings/{id}/cancel.',
+            'code'    => 'ENDPOINT_DEPRECATED',
+        ], 410);
     }
 
     public function startSession(int $id)

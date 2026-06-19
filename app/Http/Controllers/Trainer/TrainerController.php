@@ -75,16 +75,39 @@ class TrainerController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Trainer::with(['locations.city'])
+        $query = Trainer::with(['locations.city', 'specialties'])
             ->approved()
             ->available();
 
+        // Filter by specialty slug, id, or legacy enum value
         if ($request->filled('specialty')) {
             $query->bySpecialty($request->specialty);
         }
 
+        // Filter by specialty_id (new dynamic system)
+        if ($request->filled('specialty_id')) {
+            $query->whereHas('specialties', fn ($q) => $q->where('specialties.id', (int) $request->specialty_id));
+        }
+
         if ($request->filled('city_id')) {
             $query->whereHas('locations', fn ($q) => $q->where('city_id', $request->city_id)->where('is_available', true));
+        }
+
+        // Geo search — filter trainers within radius_km of lat/lng
+        if ($request->filled('lat') && $request->filled('lng')) {
+            $lat    = (float) $request->lat;
+            $lng    = (float) $request->lng;
+            $radius = (float) ($request->get('radius_km', 50));
+
+            $query->whereHas('locations', function ($q) use ($lat, $lng, $radius) {
+                $q->whereRaw("
+                    (6371 * acos(
+                        cos(radians(?)) * cos(radians(latitude)) *
+                        cos(radians(longitude) - radians(?)) +
+                        sin(radians(?)) * sin(radians(latitude))
+                    )) <= ?
+                ", [$lat, $lng, $lat, $radius])->where('is_available', true);
+            });
         }
 
         if ($request->filled('min_experience_years')) {
@@ -160,6 +183,8 @@ class TrainerController extends Controller
         $trainer = Trainer::with([
             'locations.city',
             'schedules',
+            'specialties',
+            'gallery',
             'reviews' => fn ($q) => $q->with('user:id,first_name,last_name,avatar')->latest()->limit(10),
         ])->approved()->find($id);
 
@@ -169,7 +194,7 @@ class TrainerController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $trainer->append(['photo_url', 'is_liked_by_auth', 'is_favorited_by_auth']),
+            'data'    => $trainer->append(['photo_url', 'cover_url', 'is_liked_by_auth', 'is_favorited_by_auth', 'specialties_list']),
             'message' => 'Trainer retrieved successfully',
         ]);
     }
@@ -227,6 +252,27 @@ class TrainerController extends Controller
 
         if ($request->filled('trainer_id')) {
             $query->where('trainer_id', $request->trainer_id);
+        }
+
+        // Geo proximity search
+        if ($request->filled('lat') && $request->filled('lng')) {
+            $lat    = (float) $request->lat;
+            $lng    = (float) $request->lng;
+            $radius = (float) ($request->get('radius_km', 50));
+
+            $query->whereRaw("
+                (6371 * acos(
+                    cos(radians(?)) * cos(radians(latitude)) *
+                    cos(radians(longitude) - radians(?)) +
+                    sin(radians(?)) * sin(radians(latitude))
+                )) <= ?
+            ", [$lat, $lng, $lat, $radius])
+            ->selectRaw("*, (6371 * acos(
+                cos(radians(?)) * cos(radians(latitude)) *
+                cos(radians(longitude) - radians(?)) +
+                sin(radians(?)) * sin(radians(latitude))
+            )) AS distance_km", [$lat, $lng, $lat])
+            ->orderBy('distance_km');
         }
 
         $locations = $query->get();
@@ -301,13 +347,16 @@ class TrainerController extends Controller
             'name_ar'               => 'nullable|string|max:255',
             'bio'                   => 'nullable|string|max:3000',
             'bio_ar'                => 'nullable|string|max:3000',
-            'specialty'             => 'required|in:coaching,competition,off-road,street,custom',
+            'specialty'             => 'nullable|string|max:50',
+            'specialty_ids'         => 'nullable|array',
+            'specialty_ids.*'       => 'integer|exists:specialties,id',
             'experience_years'      => 'required|integer|min:0|max:50',
             'price_per_hour'        => 'required|numeric|min:0',
             'certifications'        => 'nullable|string|max:3000',
             'photo'                 => 'nullable|image|max:2048',
             'cover'                 => 'nullable|image|max:5120',
-            // Certification file paths already uploaded via POST /api/trainer/upload-certificates
+            'photo_path'            => 'nullable|string|max:500',
+            'cover_path'            => 'nullable|string|max:500',
             'certification_files'   => 'nullable|array|max:10',
             'certification_files.*' => 'string|max:500',
         ]);
@@ -316,9 +365,13 @@ class TrainerController extends Controller
         try {
             if ($request->hasFile('photo')) {
                 $validated['photo'] = $request->file('photo')->store('trainers/photos', 'public');
+            } elseif (!empty($validated['photo_path'])) {
+                $validated['photo'] = $validated['photo_path'];
             }
             if ($request->hasFile('cover')) {
                 $validated['cover'] = $request->file('cover')->store('trainers/covers', 'public');
+            } elseif (!empty($validated['cover_path'])) {
+                $validated['cover'] = $validated['cover_path'];
             }
 
             $trainer = Trainer::create([
@@ -327,15 +380,21 @@ class TrainerController extends Controller
                 'name_ar'             => $validated['name_ar'] ?? null,
                 'bio'                 => $validated['bio'] ?? null,
                 'bio_ar'              => $validated['bio_ar'] ?? null,
-                'specialty'           => $validated['specialty'],
+                'specialty'           => $validated['specialty'] ?? 'custom',
                 'experience_years'    => $validated['experience_years'],
                 'price_per_hour'      => $validated['price_per_hour'],
                 'certifications'      => $validated['certifications'] ?? null,
                 'certification_files' => $validated['certification_files'] ?? [],
                 'photo'               => $validated['photo'] ?? null,
+                'cover'               => $validated['cover'] ?? null,
                 'status'              => 'pending',
                 'is_available'        => false,
             ]);
+
+            // Sync many-to-many specialties
+            if (!empty($validated['specialty_ids'])) {
+                $trainer->specialties()->sync($validated['specialty_ids']);
+            }
 
             DB::commit();
         } catch (\Exception $e) {
@@ -345,7 +404,7 @@ class TrainerController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $trainer,
+            'data'    => $trainer->load('specialties'),
             'message' => 'Your trainer profile has been submitted and is pending approval.',
         ], 201);
     }
@@ -404,18 +463,17 @@ class TrainerController extends Controller
             'name_ar'               => 'nullable|string|max:255',
             'bio'                   => 'nullable|string|max:3000',
             'bio_ar'                => 'nullable|string|max:3000',
-            'specialty'             => 'nullable|in:coaching,competition,off-road,street,custom',
+            'specialty'             => 'nullable|string|max:50',
+            'specialty_ids'         => 'nullable|array',
+            'specialty_ids.*'       => 'integer|exists:specialties,id',
             'experience_years'      => 'nullable|integer|min:0|max:50',
             'price_per_hour'        => 'nullable|numeric|min:0',
             'certifications'        => 'nullable|string|max:3000',
             'is_available'          => 'nullable|boolean',
-            // File upload (direct)
             'photo'                 => 'nullable|image|max:2048',
             'cover'                 => 'nullable|image|max:5120',
-            // Path returned by POST /api/trainer/upload-photo or /upload-cover
             'photo_path'            => 'nullable|string|max:500',
             'cover_path'            => 'nullable|string|max:500',
-            // Paths returned by POST /api/trainer/upload-certificates
             'certification_files'   => 'nullable|array|max:10',
             'certification_files.*' => 'string|max:500',
         ]);
@@ -438,16 +496,23 @@ class TrainerController extends Controller
         }
         unset($validated['cover_path']);
 
+        $specialtyIds = $validated['specialty_ids'] ?? null;
+        unset($validated['specialty_ids']);
+
         $updateData = array_filter($validated, fn ($v) => $v !== null);
-        // Allow explicitly clearing cert files when the flag is sent
         if ($request->boolean('certification_files_empty')) {
             $updateData['certification_files'] = [];
         }
         $trainer->update($updateData);
 
+        // Sync specialties if provided
+        if ($specialtyIds !== null) {
+            $trainer->specialties()->sync($specialtyIds);
+        }
+
         return response()->json([
             'success' => true,
-            'data'    => $trainer->fresh(),
+            'data'    => $trainer->fresh()->load('specialties'),
             'message' => 'Profile updated successfully',
         ]);
     }
@@ -584,7 +649,7 @@ class TrainerController extends Controller
     public function myProfile()
     {
         $user    = JWTAuth::parseToken()->authenticate();
-        $trainer = Trainer::with(['locations.city', 'schedules'])
+        $trainer = Trainer::with(['locations.city', 'schedules', 'specialties', 'gallery'])
             ->where('user_id', $user->id)
             ->first();
 

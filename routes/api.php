@@ -1759,6 +1759,10 @@ Route::middleware('auth:api')->prefix('provider')->group(function () {
 |--------------------------------------------------------------------------
 */
 
+// Public — Specialties
+Route::get('/specialties',       [\App\Http\Controllers\Trainer\SpecialtyController::class, 'index']);
+Route::get('/specialties/{id}',  [\App\Http\Controllers\Trainer\SpecialtyController::class, 'show']);
+
 // Public — Browse trainers
 Route::prefix('trainers')->group(function () {
     Route::get('/',                  [TrainerController::class, 'index']);
@@ -1766,6 +1770,7 @@ Route::prefix('trainers')->group(function () {
     Route::get('/{id}/availability', [TrainerBookingController::class, 'availability']);
     Route::get('/{id}/reviews',      [TrainerReviewController::class, 'index']);
     Route::get('/{id}/comments',     [TrainerCommentController::class, 'index']);
+    Route::get('/{id}/gallery',      [\App\Http\Controllers\Trainer\TrainerGalleryController::class, 'index']);
 });
 
 Route::get('/trainer-locations', [TrainerController::class, 'locations']);
@@ -1806,14 +1811,32 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/trainer/schedule',             [TrainerScheduleController::class, 'index']);
     Route::post('/trainer/schedule',            [TrainerScheduleController::class, 'upsert']);
     Route::get('/trainer/sessions',             [TrainerBookingController::class, 'mySessions']);
-    Route::post('/trainer/sessions/{id}/accept',   [TrainerBookingController::class, 'acceptBooking']);
-    Route::post('/trainer/sessions/{id}/reject',   [TrainerBookingController::class, 'rejectBooking']);
+    Route::post('/trainer/sessions/{id}/accept',   [TrainerBookingController::class, 'acceptBooking']);   // deprecated → 410
+    Route::post('/trainer/sessions/{id}/reject',   [TrainerBookingController::class, 'rejectBooking']);   // deprecated → 410
     Route::post('/trainer/sessions/{id}/start',    [TrainerBookingController::class, 'startSession']);
     Route::post('/trainer/sessions/{id}/complete', [TrainerBookingController::class, 'completeSession']);
+
+    // Gallery management
+    Route::post('/trainer/gallery',              [\App\Http\Controllers\Trainer\TrainerGalleryController::class, 'store']);
+    Route::patch('/trainer/gallery/{id}',        [\App\Http\Controllers\Trainer\TrainerGalleryController::class, 'update']);
+    Route::delete('/trainer/gallery/{id}',       [\App\Http\Controllers\Trainer\TrainerGalleryController::class, 'destroy']);
+    Route::post('/trainer/gallery/reorder',      [\App\Http\Controllers\Trainer\TrainerGalleryController::class, 'reorder']);
 });
 
 // Admin — Trainer management (full panel)
 Route::middleware('auth:api')->prefix('admin')->group(function () {
+
+    // ── Specialties Management ───────────────────────────────────────
+    Route::get('/specialties',                       [\App\Http\Controllers\Trainer\SpecialtyController::class, 'adminIndex']);
+    Route::post('/specialties',                      [\App\Http\Controllers\Trainer\SpecialtyController::class, 'store']);
+    Route::put('/specialties/{id}',                  [\App\Http\Controllers\Trainer\SpecialtyController::class, 'update']);
+    Route::delete('/specialties/{id}',               [\App\Http\Controllers\Trainer\SpecialtyController::class, 'destroy']);
+    Route::post('/specialties/{id}/icon',            [\App\Http\Controllers\Trainer\SpecialtyController::class, 'uploadIcon']);
+    Route::post('/specialties/reorder',              [\App\Http\Controllers\Trainer\SpecialtyController::class, 'reorder']);
+
+    // ── Gallery Admin ────────────────────────────────────────────────
+    Route::get('/trainers/{id}/gallery',             [\App\Http\Controllers\Trainer\TrainerGalleryController::class, 'index']);
+    Route::delete('/trainer-gallery/{id}',           [\App\Http\Controllers\Trainer\TrainerGalleryController::class, 'adminDestroy']);
 
     // ── Dashboard & Stats ────────────────────────────────────────────
     Route::get('/trainer-stats/dashboard',           [AdminTrainerStatsController::class, 'dashboard']);
