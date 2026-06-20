@@ -17,7 +17,6 @@ class DatabaseSeeder extends Seeder
 
 
         $this->call([
-
             AdminMenuSeeder::class,
             NotificationTemplateSeeder::class,
             ServiceCategorySeeder::class,
@@ -25,7 +24,7 @@ class DatabaseSeeder extends Seeder
             ServiceProviderSeeder::class,
             ServiceSeeder::class,
             ExpertiseTypeSeeder::class,
-            RidingInstructorSeeder::class,
+            SpecialtySeeder::class,  // Dynamic trainer specialties (Coaching, Competition, Off-Road, Street, Custom)
         ]);
     }
 }

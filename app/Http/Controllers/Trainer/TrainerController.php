@@ -351,28 +351,22 @@ class TrainerController extends Controller
             'specialty_ids'         => 'nullable|array',
             'specialty_ids.*'       => 'integer|exists:specialties,id',
             'experience_years'      => 'required|integer|min:0|max:50',
-            'price_per_hour'        => 'required|numeric|min:0',
+            'price_per_hour'        => 'nullable|numeric|min:0',
+            'price_per_mission'     => 'nullable|numeric|min:0',
             'certifications'        => 'nullable|string|max:3000',
-            'photo'                 => 'nullable|image|max:2048',
-            'cover'                 => 'nullable|image|max:5120',
-            'photo_path'            => 'nullable|string|max:500',
-            'cover_path'            => 'nullable|string|max:500',
+            // photo/cover accepted as string paths only (use /upload-photo & /upload-cover endpoints first)
+            'photo'                 => 'nullable|string|max:500',
+            'profile'               => 'nullable|string|max:500', // mobile alias for photo
+            'cover'                 => 'nullable|string|max:500',
             'certification_files'   => 'nullable|array|max:10',
             'certification_files.*' => 'string|max:500',
         ]);
 
         DB::beginTransaction();
         try {
-            if ($request->hasFile('photo')) {
-                $validated['photo'] = $request->file('photo')->store('trainers/photos', 'public');
-            } elseif (!empty($validated['photo_path'])) {
-                $validated['photo'] = $validated['photo_path'];
-            }
-            if ($request->hasFile('cover')) {
-                $validated['cover'] = $request->file('cover')->store('trainers/covers', 'public');
-            } elseif (!empty($validated['cover_path'])) {
-                $validated['cover'] = $validated['cover_path'];
-            }
+            // resolve photo: accept 'photo' or mobile alias 'profile'
+            $validated['photo'] = $validated['photo'] ?? $validated['profile'] ?? null;
+            unset($validated['profile']);
 
             $trainer = Trainer::create([
                 'user_id'             => $user->id,
@@ -382,7 +376,8 @@ class TrainerController extends Controller
                 'bio_ar'              => $validated['bio_ar'] ?? null,
                 'specialty'           => $validated['specialty'] ?? 'custom',
                 'experience_years'    => $validated['experience_years'],
-                'price_per_hour'      => $validated['price_per_hour'],
+                'price_per_hour'      => $validated['price_per_hour'] ?? null,
+                'price_per_mission'   => $validated['price_per_mission'] ?? null,
                 'certifications'      => $validated['certifications'] ?? null,
                 'certification_files' => $validated['certification_files'] ?? [],
                 'photo'               => $validated['photo'] ?? null,
@@ -468,33 +463,21 @@ class TrainerController extends Controller
             'specialty_ids.*'       => 'integer|exists:specialties,id',
             'experience_years'      => 'nullable|integer|min:0|max:50',
             'price_per_hour'        => 'nullable|numeric|min:0',
+            'price_per_mission'     => 'nullable|numeric|min:0',
             'certifications'        => 'nullable|string|max:3000',
             'is_available'          => 'nullable|boolean',
-            'photo'                 => 'nullable|image|max:2048',
-            'cover'                 => 'nullable|image|max:5120',
-            'photo_path'            => 'nullable|string|max:500',
-            'cover_path'            => 'nullable|string|max:500',
+            'photo'                 => 'nullable|string|max:500',
+            'profile'               => 'nullable|string|max:500', // mobile alias for photo
+            'cover'                 => 'nullable|string|max:500',
             'certification_files'   => 'nullable|array|max:10',
             'certification_files.*' => 'string|max:500',
         ]);
 
-        if ($request->hasFile('photo')) {
-            if ($trainer->photo) Storage::disk('public')->delete($trainer->photo);
-            $validated['photo'] = $request->file('photo')->store('trainers/photos', 'public');
-        } elseif (!empty($validated['photo_path'])) {
-            if ($trainer->photo) Storage::disk('public')->delete($trainer->photo);
-            $validated['photo'] = $validated['photo_path'];
+        // resolve photo: accept 'photo' or mobile alias 'profile'
+        if (!empty($validated['profile']) && empty($validated['photo'])) {
+            $validated['photo'] = $validated['profile'];
         }
-        unset($validated['photo_path']);
-
-        if ($request->hasFile('cover')) {
-            if ($trainer->cover) Storage::disk('public')->delete($trainer->cover);
-            $validated['cover'] = $request->file('cover')->store('trainers/covers', 'public');
-        } elseif (!empty($validated['cover_path'])) {
-            if ($trainer->cover) Storage::disk('public')->delete($trainer->cover);
-            $validated['cover'] = $validated['cover_path'];
-        }
-        unset($validated['cover_path']);
+        unset($validated['profile']);
 
         $specialtyIds = $validated['specialty_ids'] ?? null;
         unset($validated['specialty_ids']);
@@ -565,11 +548,13 @@ class TrainerController extends Controller
         }
 
         $validated = $request->validate([
-            'location_name'    => 'required|string|max:255',
-            'location_name_ar' => 'nullable|string|max:255',
-            'city_id'          => 'required|exists:cities,id',
-            'latitude'         => 'nullable|numeric|between:-90,90',
-            'longitude'        => 'nullable|numeric|between:-180,180',
+            'location_name'     => 'required|string|max:255',
+            'location_name_ar'  => 'nullable|string|max:255',
+            'city_id'           => 'required|exists:cities,id',
+            'latitude'          => 'nullable|numeric|between:-90,90',
+            'longitude'         => 'nullable|numeric|between:-180,180',
+            'price_per_hour'    => 'nullable|numeric|min:0',
+            'price_per_mission' => 'nullable|numeric|min:0',
         ]);
 
         $location = $trainer->locations()->create(array_merge($validated, ['is_available' => true]));

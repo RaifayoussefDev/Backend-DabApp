@@ -17,12 +17,16 @@ class TrainerLocation extends Model
         'latitude',
         'longitude',
         'is_available',
+        'price_per_hour',
+        'price_per_mission',
     ];
 
     protected $casts = [
-        'latitude'     => 'decimal:7',
-        'longitude'    => 'decimal:7',
-        'is_available' => 'boolean',
+        'latitude'          => 'decimal:7',
+        'longitude'         => 'decimal:7',
+        'is_available'      => 'boolean',
+        'price_per_hour'    => 'decimal:2',
+        'price_per_mission' => 'decimal:2',
     ];
 
     public function trainer()
