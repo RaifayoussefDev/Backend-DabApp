@@ -8,9 +8,6 @@ use App\Models\TrainerGallery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 /**
@@ -135,15 +132,16 @@ class TrainerGalleryController extends Controller
             return response()->json(['success' => false, 'message' => 'No trainer profile found'], 403);
         }
 
+        // images[] = array of string URLs/paths returned by POST /api/upload-image
         $request->validate([
-            'images'      => 'required|array|max:10',
-            'images.*'    => 'required|image|mimes:jpeg,jpg,png,webp|max:5120',
-            'caption'     => 'nullable|string|max:255',
-            'caption_ar'  => 'nullable|string|max:255',
+            'images'     => 'required|array|min:1|max:10',
+            'images.*'   => 'required|string|max:500',
+            'caption'    => 'nullable|string|max:255',
+            'caption_ar' => 'nullable|string|max:255',
         ]);
 
         $currentCount = TrainerGallery::where('trainer_id', $trainer->id)->count();
-        $incoming     = count($request->file('images'));
+        $incoming     = count($request->input('images'));
 
         if ($currentCount + $incoming > self::MAX_IMAGES) {
             return response()->json([
@@ -154,43 +152,17 @@ class TrainerGalleryController extends Controller
 
         $nextSort = TrainerGallery::where('trainer_id', $trainer->id)->max('sort_order') ?? -1;
         $uploaded = [];
-        $manager  = new ImageManager(new Driver());
 
-        foreach ($request->file('images') as $file) {
-            try {
-                $ext      = $file->getClientOriginalExtension();
-                $basename = Str::random(24);
-                $dir      = 'trainers/gallery';
-
-                // Process main image
-                $img = $manager->read($file->getRealPath());
-                $img->scaleDown(self::MAX_WIDTH, self::MAX_HEIGHT);
-                $encoded = $img->toJpeg(self::QUALITY);
-
-                $mainPath  = "{$dir}/{$basename}.jpg";
-                Storage::disk('public')->put($mainPath, (string) $encoded);
-
-                // Thumbnail
-                $thumb     = $manager->read($file->getRealPath());
-                $thumb->coverDown(self::THUMB_SIZE, self::THUMB_SIZE);
-                $thumbEncoded = $thumb->toJpeg(80);
-
-                $thumbPath = "{$dir}/{$basename}_thumb.jpg";
-                Storage::disk('public')->put($thumbPath, (string) $thumbEncoded);
-
-                $nextSort++;
-                $item = TrainerGallery::create([
-                    'trainer_id' => $trainer->id,
-                    'path'       => $mainPath,
-                    'caption'    => $request->input('caption'),
-                    'caption_ar' => $request->input('caption_ar'),
-                    'sort_order' => $nextSort,
-                ]);
-
-                $uploaded[] = $item;
-            } catch (\Exception $e) {
-                Log::error('Gallery upload failed', ['trainer_id' => $trainer->id, 'error' => $e->getMessage()]);
-            }
+        foreach ($request->input('images') as $imageUrl) {
+            $nextSort++;
+            $item = TrainerGallery::create([
+                'trainer_id' => $trainer->id,
+                'path'       => $imageUrl,  // full URL from /api/upload-image
+                'caption'    => $request->input('caption'),
+                'caption_ar' => $request->input('caption_ar'),
+                'sort_order' => $nextSort,
+            ]);
+            $uploaded[] = $item;
         }
 
         return response()->json([
