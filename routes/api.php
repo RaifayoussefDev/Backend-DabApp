@@ -1785,6 +1785,7 @@ Route::middleware('auth:api')->group(function () {
     // Booking
     Route::post('/trainers/{id}/book',          [TrainerBookingController::class, 'book']);
     Route::get('/trainer/bookings',             [TrainerBookingController::class, 'myBookings']);
+    Route::get('/trainer/bookings/{id}',        [TrainerBookingController::class, 'showBooking']);
     Route::post('/trainer/bookings/{id}/cancel',[TrainerBookingController::class, 'cancel']);
     Route::post('/trainer/bookings/{id}/pay',   [TrainerBookingController::class, 'initiatePayment']);
     Route::post('/trainer/bookings/{bookingId}/review', [TrainerReviewController::class, 'store']);
@@ -1810,7 +1811,8 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/trainer/locations/{locationId}', [TrainerController::class, 'deleteLocation']);
     Route::get('/trainer/schedule',             [TrainerScheduleController::class, 'index']);
     Route::post('/trainer/schedule',            [TrainerScheduleController::class, 'upsert']);
-    Route::get('/trainer/sessions',             [TrainerBookingController::class, 'mySessions']);
+    Route::get('/trainer/sessions',                [TrainerBookingController::class, 'mySessions']);
+    Route::get('/trainer/sessions/{id}',           [TrainerBookingController::class, 'showSession']);
     Route::post('/trainer/sessions/{id}/accept',   [TrainerBookingController::class, 'acceptBooking']);   // deprecated → 410
     Route::post('/trainer/sessions/{id}/reject',   [TrainerBookingController::class, 'rejectBooking']);   // deprecated → 410
     Route::post('/trainer/sessions/{id}/start',    [TrainerBookingController::class, 'startSession']);

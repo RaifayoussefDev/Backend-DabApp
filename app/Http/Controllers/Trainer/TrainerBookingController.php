@@ -694,6 +694,58 @@ class TrainerBookingController extends Controller
      *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
+    // ── Trainer: single session detail ────────────────
+    public function showSession(int $id)
+    {
+        $user    = JWTAuth::parseToken()->authenticate();
+        $trainer = Trainer::where('user_id', $user->id)->first();
+
+        if (!$trainer) {
+            return response()->json(['success' => false, 'message' => 'No trainer profile found'], 403);
+        }
+
+        $session = TrainerBooking::with([
+            'user:id,first_name,last_name,profile_picture,phone,email',
+            'location.city',
+            'review:id,booking_id,rating,comment,created_at',
+        ])->where('id', $id)->where('trainer_id', $trainer->id)->first();
+
+        if (!$session) {
+            return response()->json(['success' => false, 'message' => 'Session not found'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $session,
+            'message' => 'Session retrieved successfully',
+        ]);
+    }
+
+    // ── Client: single booking detail ─────────────────
+    public function showBooking(int $id)
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+
+        $booking = TrainerBooking::with([
+            'trainer:id,name,name_ar,photo,rating_average,experience_years',
+            'location.city',
+            'review:id,booking_id,rating,comment,created_at',
+        ])->where('id', $id)->where('user_id', $user->id)->first();
+
+        if (!$booking) {
+            return response()->json(['success' => false, 'message' => 'Booking not found'], 404);
+        }
+
+        $booking->can_review    = $booking->canBeReviewed();
+        $booking->trainer->photo_url = $booking->trainer->photo_url ?? null;
+
+        return response()->json([
+            'success' => true,
+            'data'    => $booking,
+            'message' => 'Booking retrieved successfully',
+        ]);
+    }
+
     public function mySessions(Request $request)
     {
         $user    = JWTAuth::parseToken()->authenticate();
