@@ -920,15 +920,66 @@ class TrainerBookingController extends Controller
             return response()->json(['success' => false, 'message' => 'Session must be in progress before completing'], 400);
         }
 
-        $booking->update(['status' => 'completed', 'completed_at' => now()]);
+        // Trainer signals done → awaiting client confirmation
+        $booking->update(['status' => 'awaiting_confirmation']);
 
         try {
-            $this->notifications->notifyTrainerSessionCompleted($booking->user, $booking, $trainer);
+            $this->notifications->notifyClientConfirmSession($booking->user, $booking, $trainer);
         } catch (\Exception $e) {
             Log::error('TrainerBookingController@completeSession notify failed: ' . $e->getMessage());
         }
 
-        return response()->json(['success' => true, 'message' => 'Session marked as completed']);
+        return response()->json(['success' => true, 'message' => 'Awaiting client confirmation']);
+    }
+
+    // ── CLIENT — Confirm session completed ──────────────────────────
+    public function clientConfirm(int $id)
+    {
+        $user    = JWTAuth::parseToken()->authenticate();
+        $booking = TrainerBooking::with('trainer')->find($id);
+
+        if (!$booking) {
+            return response()->json(['success' => false, 'message' => 'Booking not found'], 404);
+        }
+        if ($booking->user_id !== $user->id) {
+            return response()->json(['success' => false, 'message' => 'Not your booking'], 403);
+        }
+        if ($booking->status !== 'awaiting_confirmation') {
+            return response()->json(['success' => false, 'message' => 'Booking is not awaiting confirmation'], 400);
+        }
+
+        $booking->update(['status' => 'completed', 'completed_at' => now()]);
+        $booking->trainer->incrementTotalSessions();
+
+        return response()->json([
+            'success'    => true,
+            'message'    => 'Session confirmed as completed. You can now leave a review.',
+            'can_review' => true,
+        ]);
+    }
+
+    // ── CLIENT — Dispute session ─────────────────────────────────────
+    public function clientDispute(Request $request, int $id)
+    {
+        $user    = JWTAuth::parseToken()->authenticate();
+        $booking = TrainerBooking::find($id);
+
+        if (!$booking) {
+            return response()->json(['success' => false, 'message' => 'Booking not found'], 404);
+        }
+        if ($booking->user_id !== $user->id) {
+            return response()->json(['success' => false, 'message' => 'Not your booking'], 403);
+        }
+        if ($booking->status !== 'awaiting_confirmation') {
+            return response()->json(['success' => false, 'message' => 'Booking is not awaiting confirmation'], 400);
+        }
+
+        $reason = $request->input('reason', '');
+        $booking->update(['status' => 'disputed', 'notes' => ($booking->notes ? $booking->notes . "\n[DISPUTE] " : '[DISPUTE] ') . $reason]);
+
+        Log::warning('Trainer session disputed', ['booking_id' => $id, 'user_id' => $user->id, 'reason' => $reason]);
+
+        return response()->json(['success' => true, 'message' => 'Dispute submitted. Admin will review.']);
     }
 
     // ---------------------------------------------------------------

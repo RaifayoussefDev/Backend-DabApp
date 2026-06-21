@@ -1815,8 +1815,10 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/trainer/sessions/{id}',           [TrainerBookingController::class, 'showSession']);
     Route::post('/trainer/sessions/{id}/accept',   [TrainerBookingController::class, 'acceptBooking']);   // deprecated → 410
     Route::post('/trainer/sessions/{id}/reject',   [TrainerBookingController::class, 'rejectBooking']);   // deprecated → 410
-    Route::post('/trainer/sessions/{id}/start',    [TrainerBookingController::class, 'startSession']);
-    Route::post('/trainer/sessions/{id}/complete', [TrainerBookingController::class, 'completeSession']);
+    Route::post('/trainer/sessions/{id}/start',              [TrainerBookingController::class, 'startSession']);
+    Route::post('/trainer/sessions/{id}/complete',           [TrainerBookingController::class, 'completeSession']);
+    Route::post('/trainer/bookings/{id}/confirm-completion', [TrainerBookingController::class, 'clientConfirm']);
+    Route::post('/trainer/bookings/{id}/dispute',            [TrainerBookingController::class, 'clientDispute']);
 
     // Gallery management
     Route::post('/trainer/gallery',              [\App\Http\Controllers\Trainer\TrainerGalleryController::class, 'store']);
