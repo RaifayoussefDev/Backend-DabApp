@@ -995,8 +995,8 @@ class TrainerBookingController extends Controller
             'cart_currency'=> $config['currency'] ?? 'SAR',
             'cart_amount'  => (float) $payment->amount,
             'cart_description' => "DabApp — Training session with {$trainer->name} on {$booking->booking_date->format('Y-m-d')} at {$booking->start_time}",
-            'return'       => config('app.url') . '/api/trainer/payments/return',
-            'callback'     => config('app.url') . '/api/trainer/payments/callback',
+            'return'       => rtrim(env('FRONTEND_URL', 'http://localhost:4200'), '/') . '/trainers/booking-confirmation?booking_id=' . $booking->id . '&status=success',
+            'callback'     => rtrim(config('app.url'), '/') . '/api/trainer/payments/callback',
             'customer_details' => [
                 'name'   => $user->first_name . ' ' . $user->last_name,
                 'email'  => $user->email,
