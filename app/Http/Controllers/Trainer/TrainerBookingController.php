@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Trainer;
 use App\Http\Controllers\Controller;
 use App\Models\Trainer;
 use App\Models\TrainerBooking;
+use App\Models\TrainerCourse;
 use App\Models\TrainerLocation;
 use App\Models\TrainerPayment;
 use App\Models\PaymentSplit;
@@ -279,22 +280,51 @@ class TrainerBookingController extends Controller
         $validated = $request->validate([
             'booking_date'   => 'required|date|after:today',
             'start_time'     => 'required|date_format:H:i',
-            'duration_hours' => 'nullable|integer|min:1|max:4',
-            'location_id'    => 'required|exists:trainer_locations,id',
+            'duration_hours' => 'nullable|integer|min:1|max:8',
+            'location_id'    => 'nullable|exists:trainer_locations,id',
+            'course_id'      => 'nullable|exists:trainer_courses,id',
             'session_type'   => 'nullable|in:beginner,intermediate,advanced,custom',
             'notes'          => 'nullable|string|max:1000',
         ]);
 
-        $location = TrainerLocation::find($validated['location_id']);
-
-        if ($location->trainer_id !== $trainer->id) {
-            return response()->json(['success' => false, 'message' => 'Invalid location for this trainer'], 400);
+        // Resolve location — required unless trainer travels to client
+        $location = null;
+        if (!empty($validated['location_id'])) {
+            $location = TrainerLocation::find($validated['location_id']);
+            if ($location->trainer_id !== $trainer->id) {
+                return response()->json(['success' => false, 'message' => 'Invalid location for this trainer'], 400);
+            }
         }
 
+        // Resolve course — if provided, derive duration, price and level from it
+        $course        = null;
+        $levelId       = null;
+        $sessionType   = $validated['session_type'] ?? 'beginner';
         $durationHours = $validated['duration_hours'] ?? 1;
-        $startTime     = $validated['start_time'];
-        $endTime       = date('H:i', strtotime($startTime . " +{$durationHours} hours"));
-        $totalPrice    = $trainer->price_per_hour * $durationHours;
+        $pricePerHour  = $trainer->price_per_hour ?? 0;
+
+        if (!empty($validated['course_id'])) {
+            $course = TrainerCourse::where('id', $validated['course_id'])
+                ->where('trainer_id', $trainer->id)
+                ->where('status', 'published')
+                ->first();
+
+            if (!$course) {
+                return response()->json(['success' => false, 'message' => 'Course not found or not published'], 404);
+            }
+
+            $durationHours = $course->hours_per_session;
+            $levelId       = $course->level_id;
+            $pricePerHour  = ($course->promo_price ?? $course->original_price) / $durationHours;
+
+            // Map level slug to session_type for legacy compatibility
+            $levelSlug   = optional($course->level)->slug;
+            $sessionType = in_array($levelSlug, ['beginner','intermediate','advanced']) ? $levelSlug : 'custom';
+        }
+
+        $startTime  = $validated['start_time'];
+        $endTime    = date('H:i', strtotime($startTime . " +{$durationHours} hours"));
+        $totalPrice = $pricePerHour * $durationHours;
 
         // Strict bidirectional overlap check — slot is busy if any existing booking overlaps
         $conflict = TrainerBooking::where('trainer_id', $trainer->id)
@@ -324,14 +354,17 @@ class TrainerBookingController extends Controller
             $booking = TrainerBooking::create([
                 'trainer_id'     => $trainer->id,
                 'user_id'        => $user->id,
-                'location_id'    => $location->id,
+                'course_id'      => $course?->id,
+                'level_id'       => $levelId,
+                'location_id'    => $location?->id,
                 'booking_date'   => $validated['booking_date'],
                 'start_time'     => $startTime,
                 'end_time'       => $endTime,
                 'duration_hours' => $durationHours,
-                'session_type'   => $validated['session_type'] ?? 'beginner',
+                'session_type'   => $sessionType,
                 'status'         => 'confirmed',
                 'price'          => $totalPrice,
+                'price_per_hour' => $pricePerHour,
                 'payment_id'     => $payment->id,
                 'payment_status' => 'pending',
                 'notes'          => $validated['notes'] ?? null,
@@ -366,12 +399,13 @@ class TrainerBookingController extends Controller
                 'payment_url'    => $paymentUrl,
                 'total_price'    => $totalPrice,
                 'duration_hours' => $durationHours,
-                'price_per_hour' => $trainer->price_per_hour,
+                'price_per_hour' => $pricePerHour,
                 'session_type'   => $booking->session_type,
                 'booking_date'   => $booking->booking_date->format('Y-m-d'),
                 'start_time'     => $booking->start_time,
                 'end_time'       => $booking->end_time,
-                'location'       => $location->load('city'),
+                'course'         => $course ? ['id' => $course->id, 'title' => $course->title, 'level' => optional($course->level)->name_en] : null,
+                'location'       => $location ? $location->load('city') : null,
             ],
         ], 201);
     }

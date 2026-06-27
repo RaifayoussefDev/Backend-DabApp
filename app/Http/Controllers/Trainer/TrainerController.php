@@ -188,6 +188,7 @@ class TrainerController extends Controller
             'schedules',
             'specialties',
             'gallery',
+            'levelApprovals' => fn ($q) => $q->where('status', 'approved')->with('level'),
             'reviews' => fn ($q) => $q->with('user:id,first_name,last_name,avatar')->latest()->limit(10),
         ])->approved()->find($id);
 
@@ -678,9 +679,13 @@ class TrainerController extends Controller
     public function myProfile()
     {
         $user    = JWTAuth::parseToken()->authenticate();
-        $trainer = Trainer::with(['locations.city', 'schedules', 'specialties', 'gallery'])
-            ->where('user_id', $user->id)
-            ->first();
+        $trainer = Trainer::with([
+            'locations.city',
+            'schedules',
+            'specialties',
+            'gallery',
+            'levelApprovals.level',
+        ])->where('user_id', $user->id)->first();
 
         if (!$trainer) {
             return response()->json(['success' => false, 'message' => 'No trainer profile found'], 404);
@@ -693,9 +698,20 @@ class TrainerController extends Controller
             'pending_payout'   => $trainer->payouts()->where('status', 'pending')->sum('amount'),
         ];
 
+        // Group level approvals by status for easy frontend consumption
+        $levels = [
+            'approved'  => $trainer->levelApprovals->where('status', 'approved')->values(),
+            'proposed'  => $trainer->levelApprovals->where('status', 'proposed')->values(),
+            'rejected'  => $trainer->levelApprovals->where('status', 'rejected')->values(),
+        ];
+
         return response()->json([
             'success' => true,
-            'data'    => ['trainer' => $trainer->append('photo_url'), 'stats' => $stats],
+            'data'    => [
+                'trainer'  => $trainer->append(['photo_url', 'cover_url', 'specialties_list']),
+                'levels'   => $levels,
+                'stats'    => $stats,
+            ],
             'message' => 'Trainer profile retrieved successfully',
         ]);
     }

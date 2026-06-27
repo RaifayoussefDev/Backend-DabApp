@@ -12,6 +12,8 @@ class TrainerBooking extends Model
     protected $fillable = [
         'trainer_id',
         'user_id',
+        'course_id',
+        'level_id',
         'location_id',
         'booking_date',
         'start_time',
@@ -20,6 +22,7 @@ class TrainerBooking extends Model
         'session_type',
         'status',
         'price',
+        'price_per_hour',
         'payment_id',
         'payment_status',
         'notes',
@@ -49,6 +52,16 @@ class TrainerBooking extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function course()
+    {
+        return $this->belongsTo(TrainerCourse::class, 'course_id');
+    }
+
+    public function level()
+    {
+        return $this->belongsTo(TrainerLevel::class, 'level_id');
     }
 
     public function location()
