@@ -139,8 +139,8 @@
     },
 
     {
-      "name": "2 – Trainer Levels (Public)",
-      "description": "Public endpoint — no auth required. Returns active training levels managed by admin.",
+      "name": "2 – Levels & Specialties (Public)",
+      "description": "Public endpoints — no auth required. Used by mobile to populate dropdowns at registration.",
       "item": [
         {
           "name": "GET all active levels",
@@ -163,7 +163,30 @@
             "method": "GET",
             "header": [],
             "url": { "raw": "{{base_url}}/api/trainer-levels", "host": ["{{base_url}}"], "path": ["api","trainer-levels"] },
-            "description": "Returns Beginner / Intermediate / Advanced levels. Saves first level as `{{level_id}}`."
+            "description": "Returns active training levels (Beginner / Intermediate / Advanced). Saves first level as `{{level_id}}`."
+          }
+        },
+        {
+          "name": "GET all active specialties",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/specialties", "host": ["{{base_url}}"], "path": ["api","specialties"] },
+            "description": "Returns active specialties: Coaching (1), Competition (2), Off-Road (3), Street (4), Custom (5). Use IDs in `specialty_ids[]` at registration."
+          }
+        },
+        {
+          "name": "GET all specialties with trainer count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/specialties?with_count=true",
+              "host": ["{{base_url}}"],
+              "path": ["api","specialties"],
+              "query": [{ "key": "with_count", "value": "true" }]
+            },
+            "description": "Same as above but includes `trainers_count` per specialty (approved trainers only)."
           }
         }
       ]
