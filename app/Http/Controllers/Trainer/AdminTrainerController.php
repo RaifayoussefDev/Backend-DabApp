@@ -81,7 +81,11 @@ class AdminTrainerController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Trainer::with('user:id,first_name,last_name,email,phone');
+        $query = Trainer::with([
+            'user:id,first_name,last_name,email,phone',
+            'specialties',
+            'levelApprovals.level',
+        ]);
 
         if ($request->filled('status'))    { $query->where('status', $request->status); }
         if ($request->filled('specialty')) { $query->where('specialty', $request->specialty); }

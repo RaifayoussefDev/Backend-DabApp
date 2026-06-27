@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Trainer;
 
 use App\Http\Controllers\Controller;
+use App\Models\MyGarage;
 use App\Models\Trainer;
+use App\Models\TrainerLevelApproval;
 use App\Models\TrainerLocation;
+use App\Models\TrainerTrainingBike;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -343,23 +346,30 @@ class TrainerController extends Controller
         }
 
         $validated = $request->validate([
-            'name'                  => 'required|string|max:255',
-            'name_ar'               => 'nullable|string|max:255',
-            'bio'                   => 'nullable|string|max:3000',
-            'bio_ar'                => 'nullable|string|max:3000',
-            'specialty'             => 'nullable|string|max:50',
-            'specialty_ids'         => 'nullable|array',
-            'specialty_ids.*'       => 'integer|exists:specialties,id',
-            'experience_years'      => 'required|integer|min:0|max:50',
-            'price_per_hour'        => 'nullable|numeric|min:0',
-            'price_per_mission'     => 'nullable|numeric|min:0',
-            'certifications'        => 'nullable|string|max:3000',
+            'name'                    => 'required|string|max:255',
+            'name_ar'                 => 'nullable|string|max:255',
+            'bio'                     => 'nullable|string|max:3000',
+            'bio_ar'                  => 'nullable|string|max:3000',
+            'specialty'               => 'nullable|string|max:50',
+            'specialty_ids'           => 'nullable|array',
+            'specialty_ids.*'         => 'integer|exists:specialties,id',
+            'experience_years'        => 'required|integer|min:0|max:50',
+            'price_per_hour'          => 'nullable|numeric|min:0',
+            'price_per_mission'       => 'nullable|numeric|min:0',
+            'certifications'          => 'nullable|string|max:3000',
             // photo/cover accepted as string paths only (use /upload-photo & /upload-cover endpoints first)
-            'photo'                 => 'nullable|string|max:500',
-            'profile'               => 'nullable|string|max:500', // mobile alias for photo
-            'cover'                 => 'nullable|string|max:500',
-            'certification_files'   => 'nullable|array|max:10',
-            'certification_files.*' => 'string|max:500',
+            'photo'                   => 'nullable|string|max:500',
+            'profile'                 => 'nullable|string|max:500', // mobile alias for photo
+            'cover'                   => 'nullable|string|max:500',
+            'certification_files'     => 'nullable|array|max:10',
+            'certification_files.*'   => 'string|max:500',
+            // Training bikes — IDs from My Garage (must belong to the user)
+            'training_bike_ids'       => 'nullable|array',
+            'training_bike_ids.*'     => 'integer|exists:my_garage,id',
+            // Level price proposals [{level_id: 1, proposed_price: 150}, ...]
+            'level_prices'            => 'nullable|array',
+            'level_prices.*.level_id' => 'required_with:level_prices|integer|exists:trainer_levels,id',
+            'level_prices.*.price'    => 'required_with:level_prices|numeric|min:0',
         ]);
 
         DB::beginTransaction();
@@ -391,6 +401,33 @@ class TrainerController extends Controller
                 $trainer->specialties()->sync($validated['specialty_ids']);
             }
 
+            // Attach training bikes from My Garage (ownership already guaranteed by exists:my_garage,id)
+            if (!empty($validated['training_bike_ids'])) {
+                $garageIds = MyGarage::whereIn('id', $validated['training_bike_ids'])
+                    ->where('user_id', $user->id)
+                    ->pluck('id');
+
+                foreach ($garageIds as $i => $garageId) {
+                    TrainerTrainingBike::create([
+                        'trainer_id' => $trainer->id,
+                        'garage_id'  => $garageId,
+                        'is_primary' => $i === 0,
+                    ]);
+                }
+            }
+
+            // Store proposed prices per level
+            if (!empty($validated['level_prices'])) {
+                foreach ($validated['level_prices'] as $lp) {
+                    TrainerLevelApproval::create([
+                        'trainer_id'     => $trainer->id,
+                        'level_id'       => $lp['level_id'],
+                        'proposed_price' => $lp['price'],
+                        'status'         => 'proposed',
+                    ]);
+                }
+            }
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
@@ -399,7 +436,7 @@ class TrainerController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $trainer->load('specialties'),
+            'data'    => $trainer->load(['specialties', 'levelApprovals.level', 'trainingBikes.garage']),
             'message' => 'Your trainer profile has been submitted and is pending approval.',
         ], 201);
     }

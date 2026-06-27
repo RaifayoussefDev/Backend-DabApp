@@ -24,7 +24,8 @@ class DatabaseSeeder extends Seeder
             ServiceProviderSeeder::class,
             ServiceSeeder::class,
             ExpertiseTypeSeeder::class,
-            SpecialtySeeder::class,  // Dynamic trainer specialties (Coaching, Competition, Off-Road, Street, Custom)
+            SpecialtySeeder::class,     // Dynamic trainer specialties (Coaching, Competition, Off-Road, Street, Custom)
+            TrainerLevelSeeder::class,  // Trainer levels (Beginner, Intermediate, Advanced)
         ]);
     }
 }

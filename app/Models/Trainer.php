@@ -119,6 +119,26 @@ class Trainer extends Model
         return $this->belongsToMany(Specialty::class, 'trainer_specialty');
     }
 
+    public function levelApprovals()
+    {
+        return $this->hasMany(TrainerLevelApproval::class);
+    }
+
+    public function approvedLevels()
+    {
+        return $this->hasMany(TrainerLevelApproval::class)->where('status', 'approved')->with('level');
+    }
+
+    public function trainingBikes()
+    {
+        return $this->hasMany(TrainerTrainingBike::class);
+    }
+
+    public function courses()
+    {
+        return $this->hasMany(TrainerCourse::class);
+    }
+
     // ---------------------------------------------------------------
     // Scopes
     // ---------------------------------------------------------------

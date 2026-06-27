@@ -119,6 +119,10 @@ use App\Http\Controllers\Trainer\AdminPayoutController;
 use App\Http\Controllers\Trainer\AdminTrainerStatsController;
 use App\Http\Controllers\Trainer\AdminTrainerBookingController;
 use App\Http\Controllers\Trainer\AdminTrainerPaymentController;
+use App\Http\Controllers\Trainer\AdminTrainerLevelController;
+use App\Http\Controllers\Trainer\AdminTrainerCourseController;
+use App\Http\Controllers\Trainer\TrainerCourseController;
+use App\Http\Controllers\Trainer\TrainerTrainingBikeController;
 use App\Http\Controllers\Services\TowServiceController;
 use App\Http\Controllers\Services\TransportRouteController;
 use App\Http\Controllers\Services\ServiceSubscriptionController;
@@ -1104,12 +1108,14 @@ Route::middleware('auth:api')->group(function () {
     // ============================================
     Route::get('/my-garage', [MyGarageController::class, 'index']);
     Route::post('/my-garage', [MyGarageController::class, 'store']);
-    Route::get('/my-garage/default', [MyGarageController::class, 'getDefault']);
-    Route::get('/my-garage/{id}', [MyGarageController::class, 'show']);
-    Route::put('/my-garage/{id}', [MyGarageController::class, 'update']);
-    Route::patch('/my-garage/{id}', [MyGarageController::class, 'update']);
-    Route::delete('/my-garage/{id}', [MyGarageController::class, 'destroy']);
-    Route::post('/my-garage/{id}/set-default', [MyGarageController::class, 'setDefault']);
+    Route::get('/my-garage/default',                    [MyGarageController::class, 'getDefault']);
+    Route::get('/my-garage/training-completeness',      [MyGarageController::class, 'trainingCompleteness']);
+    Route::get('/my-garage/{id}',                       [MyGarageController::class, 'show']);
+    Route::put('/my-garage/{id}',                       [MyGarageController::class, 'update']);
+    Route::patch('/my-garage/{id}',                     [MyGarageController::class, 'update']);
+    Route::patch('/my-garage/{id}/training-info',       [MyGarageController::class, 'updateTrainingInfo']);
+    Route::delete('/my-garage/{id}',                    [MyGarageController::class, 'destroy']);
+    Route::post('/my-garage/{id}/set-default',          [MyGarageController::class, 'setDefault']);
     Route::get('motorcycle-data', [MyGarageController::class, 'getMotorcycleData']);
 
     // ============================================
@@ -1773,7 +1779,9 @@ Route::prefix('trainers')->group(function () {
     Route::get('/{id}/gallery',      [\App\Http\Controllers\Trainer\TrainerGalleryController::class, 'index']);
 });
 
-Route::get('/trainer-locations', [TrainerController::class, 'locations']);
+Route::get('/trainer-locations',                    [TrainerController::class, 'locations']);
+Route::get('/trainer-levels',                       [AdminTrainerLevelController::class, 'publicIndex']);
+Route::get('/trainers/{id}/courses',                [TrainerCourseController::class, 'publicIndex']);
 
 // PayTabs webhook — no auth (server-to-server)
 Route::post('/trainer/payments/callback', [TrainerBookingController::class, 'paymentCallback']);
@@ -1825,6 +1833,21 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('/trainer/gallery/{id}',        [\App\Http\Controllers\Trainer\TrainerGalleryController::class, 'update']);
     Route::delete('/trainer/gallery/{id}',       [\App\Http\Controllers\Trainer\TrainerGalleryController::class, 'destroy']);
     Route::post('/trainer/gallery/reorder',      [\App\Http\Controllers\Trainer\TrainerGalleryController::class, 'reorder']);
+
+    // Training bikes (My Garage → trainer)
+    Route::get('/trainer/training-bikes',                         [TrainerTrainingBikeController::class, 'index']);
+    Route::post('/trainer/training-bikes',                        [TrainerTrainingBikeController::class, 'store']);
+    Route::delete('/trainer/training-bikes/{garageId}',           [TrainerTrainingBikeController::class, 'destroy']);
+    Route::patch('/trainer/training-bikes/{garageId}/set-primary',[TrainerTrainingBikeController::class, 'setPrimary']);
+
+    // Trainer courses
+    Route::get('/trainer/courses',                [TrainerCourseController::class, 'index']);
+    Route::post('/trainer/courses',               [TrainerCourseController::class, 'store']);
+    Route::get('/trainer/courses/{id}',           [TrainerCourseController::class, 'show']);
+    Route::put('/trainer/courses/{id}',           [TrainerCourseController::class, 'update']);
+    Route::delete('/trainer/courses/{id}',        [TrainerCourseController::class, 'destroy']);
+    Route::post('/trainer/courses/{id}/publish',  [TrainerCourseController::class, 'publish']);
+    Route::post('/trainer/courses/{id}/archive',  [TrainerCourseController::class, 'archive']);
 });
 
 // Admin — Trainer management (full panel)
@@ -1857,6 +1880,20 @@ Route::middleware('auth:api')->prefix('admin')->group(function () {
     Route::delete('/trainers/{id}',                  [AdminTrainerController::class, 'destroy']);
 
     // ── Reviews moderation ───────────────────────────────────────────
+    // Trainer levels management
+    Route::get('/trainer-levels',                            [AdminTrainerLevelController::class, 'index']);
+    Route::post('/trainer-levels',                           [AdminTrainerLevelController::class, 'store']);
+    Route::put('/trainer-levels/{id}',                       [AdminTrainerLevelController::class, 'update']);
+    Route::delete('/trainer-levels/{id}',                    [AdminTrainerLevelController::class, 'destroy']);
+    Route::get('/trainers/{id}/levels',                      [AdminTrainerLevelController::class, 'trainerLevels']);
+    Route::post('/trainers/{id}/approve-levels',             [AdminTrainerLevelController::class, 'approveLevels']);
+    Route::post('/trainers/{id}/reject-level',               [AdminTrainerLevelController::class, 'rejectLevel']);
+
+    // Trainer courses (admin view)
+    Route::get('/trainer-courses',                           [AdminTrainerCourseController::class, 'index']);
+    Route::get('/trainer-courses/{id}',                      [AdminTrainerCourseController::class, 'show']);
+    Route::delete('/trainer-courses/{id}',                   [AdminTrainerCourseController::class, 'destroy']);
+
     Route::get('/trainer-reviews',                   [AdminTrainerController::class, 'reviews']);
     Route::post('/trainer-reviews/{id}/approve',     [AdminTrainerController::class, 'approveReview']);
     Route::delete('/trainer-reviews/{id}',           [AdminTrainerController::class, 'deleteReview']);

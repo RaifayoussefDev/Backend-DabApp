@@ -932,4 +932,131 @@ class MyGarageController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/my-garage/training-completeness",
+     *     tags={"My Garage"},
+     *     summary="Check which bikes are ready for trainer registration",
+     *     description="Returns all garage bikes with a flag indicating whether training-specific fields (plate_number, insurance_expiry, insurance_covers_training) are complete. Use this before selecting a bike as a training bike.",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Completeness status retrieved",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(type="object",
+     *                     @OA\Property(property="id",                        type="integer", example=1),
+     *                     @OA\Property(property="full_motorcycle_name",      type="string",  example="Yamaha YZF-R3 (2022)"),
+     *                     @OA\Property(property="plate_number",              type="string",  nullable=true, example="ABC 1234"),
+     *                     @OA\Property(property="insurance_expiry",          type="string",  format="date", nullable=true, example="2027-01-01"),
+     *                     @OA\Property(property="insurance_covers_training", type="boolean", nullable=true, example=true),
+     *                     @OA\Property(property="is_training_ready",         type="boolean", example=false,
+     *                         description="true when plate_number, insurance_expiry AND insurance_covers_training are all set"
+     *                     ),
+     *                     @OA\Property(property="missing_fields", type="array", @OA\Items(type="string"),
+     *                         example={"plate_number","insurance_covers_training"},
+     *                         description="List of fields still needed before this bike can be used for training"
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function trainingCompleteness(Request $request): JsonResponse
+    {
+        $userId = Auth::id();
+        if (!$userId) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $bikes = MyGarage::with(['brand', 'model', 'year'])
+            ->where('user_id', $userId)
+            ->get()
+            ->map(function ($bike) {
+                $missing = [];
+                if (!$bike->plate_number)              { $missing[] = 'plate_number'; }
+                if (!$bike->insurance_expiry)          { $missing[] = 'insurance_expiry'; }
+                if (!$bike->insurance_covers_training) { $missing[] = 'insurance_covers_training'; }
+
+                return [
+                    'id'                        => $bike->id,
+                    'full_motorcycle_name'       => $bike->full_motorcycle_name,
+                    'picture'                   => $bike->picture,
+                    'plate_number'              => $bike->plate_number,
+                    'insurance_expiry'          => $bike->insurance_expiry?->format('Y-m-d'),
+                    'insurance_covers_training' => $bike->insurance_covers_training,
+                    'is_training_ready'         => empty($missing),
+                    'missing_fields'            => $missing,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data'    => $bikes,
+            'message' => 'Training completeness retrieved successfully',
+        ]);
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/my-garage/{id}/training-info",
+     *     tags={"My Garage"},
+     *     summary="Update training-specific fields on a garage bike",
+     *     description="Adds or updates the plate number, insurance expiry, and training coverage flag on a garage bike. Required before using a bike for training sessions.",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="plate_number",              type="string",  example="ABC 1234"),
+     *             @OA\Property(property="insurance_expiry",          type="string",  format="date", example="2027-01-01"),
+     *             @OA\Property(property="insurance_covers_training", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Training info updated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success",          type="boolean", example=true),
+     *             @OA\Property(property="is_training_ready",type="boolean", example=true),
+     *             @OA\Property(property="data",             type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Garage item not found"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
+     */
+    public function updateTrainingInfo(Request $request, $id): JsonResponse
+    {
+        $userId = Auth::id();
+        if (!$userId) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $bike = MyGarage::where('user_id', $userId)->where('id', $id)->first();
+        if (!$bike) {
+            return response()->json(['success' => false, 'message' => 'Garage item not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'plate_number'              => 'nullable|string|max:20',
+            'insurance_expiry'          => 'nullable|date|after_or_equal:today',
+            'insurance_covers_training' => 'nullable|boolean',
+        ]);
+
+        $bike->update(array_filter($validated, fn ($v) => $v !== null));
+        $bike->refresh();
+
+        $isReady = $bike->plate_number && $bike->insurance_expiry && $bike->insurance_covers_training;
+
+        return response()->json([
+            'success'           => true,
+            'is_training_ready' => (bool) $isReady,
+            'data'              => $bike->load(['brand', 'model', 'year']),
+            'message'           => 'Training info updated successfully',
+        ]);
+    }
 }

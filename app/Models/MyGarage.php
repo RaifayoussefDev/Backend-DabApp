@@ -22,12 +22,17 @@ class MyGarage extends Model
         'description',
         'picture',
         'is_default',
+        'plate_number',
+        'insurance_expiry',
+        'insurance_covers_training',
     ];
 
     protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'is_default' => 'boolean',
+        'created_at'                => 'datetime',
+        'updated_at'                => 'datetime',
+        'is_default'                => 'boolean',
+        'insurance_expiry'          => 'date',
+        'insurance_covers_training' => 'boolean',
     ];
 
 
