@@ -13,7 +13,8 @@
     { "key": "garage_id",  "value": "1",                        "type": "string" },
     { "key": "level_id",   "value": "1",                        "type": "string" },
     { "key": "course_id",  "value": "1",                        "type": "string" },
-    { "key": "location_id","value": "1",                        "type": "string" }
+    { "key": "location_id", "value": "1",                       "type": "string" },
+    { "key": "gallery_id",  "value": "1",                       "type": "string" }
   ],
   "item": [
 
@@ -249,9 +250,9 @@
             "url": { "raw": "{{base_url}}/api/trainer/register", "host": ["{{base_url}}"], "path": ["api","trainer","register"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Youssef Benali\",\n  \"name_ar\": \"يوسف بنعلي\",\n\n  \"bio\": \"Professional motorcycle trainer with 8 years of competitive riding and coaching experience on circuits in UAE and KSA.\",\n  \"bio_ar\": \"مدرب دراجات نارية محترف مع 8 سنوات من الخبرة التنافسية على الحلبات في الإمارات والسعودية.\",\n\n  \"specialty\": \"coaching\",\n  \"specialty_ids\": [1, 2, 4],\n\n  \"experience_years\": 8,\n  \"price_per_hour\": 150,\n  \"price_per_mission\": 500,\n\n  \"certifications\": \"FIM Level 2, MSF Certified, UAE Motorsports Federation License\",\n\n  \"photo\": \"trainers/photos/photo.jpg\",\n  \"cover\": \"trainers/covers/cover.jpg\",\n  \"certification_files\": [\n    \"trainers/certs/fim_level2.pdf\",\n    \"trainers/certs/msf_cert.pdf\"\n  ],\n\n  \"training_bike_ids\": [{{garage_id}}],\n\n  \"level_prices\": [\n    { \"level_id\": 1, \"price\": 150 },\n    { \"level_id\": 2, \"price\": 220 },\n    { \"level_id\": 3, \"price\": 350 }\n  ]\n}"
+              "raw": "{\n  \"name\": \"Youssef Benali\",\n  \"name_ar\": \"يوسف بنعلي\",\n\n  \"bio\": \"Professional motorcycle trainer with 8 years of competitive riding and coaching experience on circuits in UAE and KSA.\",\n  \"bio_ar\": \"مدرب دراجات نارية محترف مع 8 سنوات من الخبرة التنافسية على الحلبات في الإمارات والسعودية.\",\n\n  \"specialty_ids\": [1, 2, 4],\n\n  \"experience_years\": 8,\n\n  \"certifications\": \"FIM Level 2, MSF Certified, UAE Motorsports Federation License\",\n\n  \"photo\": \"trainers/photos/photo.jpg\",\n  \"cover\": \"trainers/covers/cover.jpg\",\n  \"certification_files\": [\n    \"trainers/certs/fim_level2.pdf\",\n    \"trainers/certs/msf_cert.pdf\"\n  ],\n\n  \"training_bike_ids\": [1, 2, 3],\n\n  \"level_prices\": [\n    { \"level_id\": 1, \"price\": 150 },\n    { \"level_id\": 2, \"price\": 220 },\n    { \"level_id\": 3, \"price\": 350 }\n  ]\n}"
             },
-            "description": "Submit trainer registration. Status is `pending` until admin approves.\n\n**Fields:**\n- `specialty`: enum — `coaching` | `competition` | `off-road` | `street` | `custom`\n- `specialty_ids`: array of specialty IDs (1=Coaching, 2=Competition, 3=Off-Road, 4=Street)\n- `training_bike_ids`: garage bike IDs (must belong to the user)\n- `level_prices`: proposed price per level (admin may override at approval)\n- All file paths come from STEP 1 & 2 upload responses\n\nSaves `{{trainer_id}}` automatically."
+            "description": "Submit trainer registration. Status is `pending` until admin approves.\n\n**Fields:**\n- `specialty_ids`: IDs from GET /api/specialties (1=Coaching, 2=Competition, 3=Off-Road, 4=Street)\n- `training_bike_ids`: one or more garage bike IDs (must belong to the user) — first one becomes primary\n- `level_prices`: proposed price per level — admin sets the final approved price\n- File paths come from STEP 1 & 2 upload responses\n\nSaves `{{trainer_id}}` automatically."
           }
         },
         {
@@ -280,9 +281,9 @@
             "url": { "raw": "{{base_url}}/api/trainer/register", "host": ["{{base_url}}"], "path": ["api","trainer","register"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Trainer Name\",\n  \"experience_years\": 3,\n  \"price_per_hour\": 120\n}"
+              "raw": "{\n  \"name\": \"Trainer Name\",\n  \"experience_years\": 3\n}"
             },
-            "description": "Minimal registration — only required fields. Bikes and levels can be added later."
+            "description": "Minimal registration — only required fields. Bikes, levels and specialties can be added later."
           }
         }
       ]
@@ -548,7 +549,7 @@
 
     {
       "name": "7 – Trainer Profile Setup (post-approval)",
-      "description": "After admin approval, trainer completes their profile by adding locations and schedule.",
+      "description": "After admin approval, trainer completes their profile: locations, schedule, and gallery.",
       "item": [
         {
           "name": "GET my trainer profile",
@@ -574,6 +575,7 @@
             "description": "Get authenticated trainer's full profile. Saves `{{trainer_id}}`."
           }
         },
+
         {
           "name": "POST add training location",
           "event": [
@@ -598,11 +600,30 @@
             "url": { "raw": "{{base_url}}/api/trainer/locations", "host": ["{{base_url}}"], "path": ["api","trainer","locations"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"location_name\": \"Dubai Motor City Circuit\",\n  \"location_name_ar\": \"حلبة موتور سيتي دبي\",\n  \"city_id\": 1,\n  \"latitude\": 25.0416,\n  \"longitude\": 55.2407\n}"
+              "raw": "{\n  \"location_name\": \"Dubai Motor City Circuit\",\n  \"location_name_ar\": \"حلبة موتور سيتي دبي\",\n  \"city_id\": 1,\n  \"latitude\": 25.0416,\n  \"longitude\": 55.2407,\n  \"price_per_hour\": 150\n}"
             },
-            "description": "Add a training location. Saves `{{location_id}}` automatically."
+            "description": "Add a training location. Saves `{{location_id}}` automatically. `price_per_hour` optional — overrides default if set."
           }
         },
+        {
+          "name": "GET my locations (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainer-locations", "host": ["{{base_url}}"], "path": ["api","trainer-locations"] },
+            "description": "Public endpoint — returns all trainer locations."
+          }
+        },
+        {
+          "name": "DELETE a location",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/locations/{{location_id}}", "host": ["{{base_url}}"], "path": ["api","trainer","locations","{{location_id}}"] },
+            "description": "Delete one of the trainer's locations."
+          }
+        },
+
         {
           "name": "POST set weekly schedule",
           "request": {
@@ -617,6 +638,86 @@
               "raw": "{\n  \"schedule\": [\n    { \"day_of_week\": 5, \"start_time\": \"09:00\", \"end_time\": \"17:00\", \"is_available\": true },\n    { \"day_of_week\": 6, \"start_time\": \"09:00\", \"end_time\": \"14:00\", \"is_available\": true }\n  ]\n}"
             },
             "description": "`day_of_week`: 0=Sunday … 6=Saturday."
+          }
+        },
+
+        {
+          "name": "POST upload gallery image",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/upload-image", "host": ["{{base_url}}"], "path": ["api","upload-image"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "image", "type": "file", "src": "" }]
+            },
+            "description": "Upload an image file first. Returns a path string — use it in `images[]` of POST gallery."
+          }
+        },
+        {
+          "name": "POST add gallery photos",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/trainer/gallery", "host": ["{{base_url}}"], "path": ["api","trainer","gallery"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"images\": [\n    \"trainers/gallery/photo1.jpg\",\n    \"trainers/gallery/photo2.jpg\"\n  ],\n  \"caption\": \"Track day at Dubai Motor City\",\n  \"caption_ar\": \"يوم في الحلبة\"\n}"
+            },
+            "description": "Add 1–10 images to trainer gallery. `images[]` paths come from POST upload-image. `caption` is optional."
+          }
+        },
+        {
+          "name": "GET trainer gallery (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/gallery", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","gallery"] },
+            "description": "Public endpoint — returns all gallery photos for a trainer."
+          }
+        },
+        {
+          "name": "PATCH update gallery caption",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/trainer/gallery/{{gallery_id}}", "host": ["{{base_url}}"], "path": ["api","trainer","gallery","{{gallery_id}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"caption\": \"Updated caption\",\n  \"caption_ar\": \"تعليق محدّث\"\n}"
+            },
+            "description": "Update the caption of a gallery entry. Replace `{{gallery_id}}` with the gallery item ID."
+          }
+        },
+        {
+          "name": "DELETE gallery photo",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/gallery/{{gallery_id}}", "host": ["{{base_url}}"], "path": ["api","trainer","gallery","{{gallery_id}}"] },
+            "description": "Delete a gallery photo. Replace `{{gallery_id}}` with the gallery item ID."
+          }
+        },
+        {
+          "name": "POST reorder gallery",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/trainer/gallery/reorder", "host": ["{{base_url}}"], "path": ["api","trainer","gallery","reorder"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [3, 1, 2]\n}"
+            },
+            "description": "Reorder gallery photos. Send array of IDs in the desired display order."
           }
         }
       ]
