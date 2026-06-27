@@ -2199,3 +2199,17 @@ Route::prefix('assist')->middleware('auth:api')->group(function () {
         Route::patch('price-config',               [\App\Http\Controllers\Assist\Admin\AdminPriceConfigController::class, 'update']);
     });
 });
+
+// ============================================================
+// DEV / TEST ONLY — REMOVE BEFORE PRODUCTION
+// ============================================================
+Route::delete('/dev/trainers/reset-all', function () {
+    DB::statement('SET FOREIGN_KEY_CHECKS=0');
+    DB::table('trainers')->truncate();
+    DB::statement('SET FOREIGN_KEY_CHECKS=1');
+
+    return response()->json([
+        'success' => true,
+        'message' => 'All trainers deleted.',
+    ]);
+});
