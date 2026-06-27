@@ -341,7 +341,8 @@ class TrainerController extends Controller
     {
         $user = JWTAuth::parseToken()->authenticate();
 
-        if (Trainer::where('user_id', $user->id)->exists()) {
+        $existingTrainer = Trainer::where('user_id', $user->id)->first();
+        if ($existingTrainer && $existingTrainer->status !== 'rejected') {
             return response()->json(['success' => false, 'message' => 'You already have a trainer profile'], 409);
         }
 
@@ -357,16 +358,13 @@ class TrainerController extends Controller
             'price_per_hour'          => 'nullable|numeric|min:0',
             'price_per_mission'       => 'nullable|numeric|min:0',
             'certifications'          => 'nullable|string|max:3000',
-            // photo/cover accepted as string paths only (use /upload-photo & /upload-cover endpoints first)
             'photo'                   => 'nullable|string|max:500',
-            'profile'                 => 'nullable|string|max:500', // mobile alias for photo
+            'profile'                 => 'nullable|string|max:500',
             'cover'                   => 'nullable|string|max:500',
             'certification_files'     => 'nullable|array|max:10',
             'certification_files.*'   => 'string|max:500',
-            // Training bikes — IDs from My Garage (must belong to the user)
             'training_bike_ids'       => 'nullable|array',
             'training_bike_ids.*'     => 'integer|exists:my_garage,id',
-            // Level price proposals [{level_id: 1, proposed_price: 150}, ...]
             'level_prices'            => 'nullable|array',
             'level_prices.*.level_id' => 'required_with:level_prices|integer|exists:trainer_levels,id',
             'level_prices.*.price'    => 'required_with:level_prices|numeric|min:0',
@@ -374,12 +372,10 @@ class TrainerController extends Controller
 
         DB::beginTransaction();
         try {
-            // resolve photo: accept 'photo' or mobile alias 'profile'
             $validated['photo'] = $validated['photo'] ?? $validated['profile'] ?? null;
             unset($validated['profile']);
 
-            $trainer = Trainer::create([
-                'user_id'             => $user->id,
+            $profileData = [
                 'name'                => $validated['name'],
                 'name_ar'             => $validated['name_ar'] ?? null,
                 'bio'                 => $validated['bio'] ?? null,
@@ -394,14 +390,25 @@ class TrainerController extends Controller
                 'cover'               => $validated['cover'] ?? null,
                 'status'              => 'pending',
                 'is_available'        => false,
-            ]);
+            ];
 
-            // Sync many-to-many specialties
+            if ($existingTrainer) {
+                // Re-registration after rejection — update in place to keep history & traces
+                $existingTrainer->update($profileData);
+                $trainer = $existingTrainer;
+                // Clear previous training bikes and level proposals to start fresh
+                $trainer->trainingBikes()->delete();
+                $trainer->levelApprovals()->whereIn('status', ['proposed', 'rejected'])->delete();
+            } else {
+                $trainer = Trainer::create(array_merge(['user_id' => $user->id], $profileData));
+            }
+
+            // Sync specialties
             if (!empty($validated['specialty_ids'])) {
                 $trainer->specialties()->sync($validated['specialty_ids']);
             }
 
-            // Attach training bikes from My Garage (ownership already guaranteed by exists:my_garage,id)
+            // Attach training bikes
             if (!empty($validated['training_bike_ids'])) {
                 $garageIds = MyGarage::whereIn('id', $validated['training_bike_ids'])
                     ->where('user_id', $user->id)
@@ -416,7 +423,7 @@ class TrainerController extends Controller
                 }
             }
 
-            // Store proposed prices per level
+            // Store new level price proposals
             if (!empty($validated['level_prices'])) {
                 foreach ($validated['level_prices'] as $lp) {
                     TrainerLevelApproval::create([
