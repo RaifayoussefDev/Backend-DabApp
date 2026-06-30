@@ -15,7 +15,8 @@
       "Bash(Find \"d:\\\\PC youssef\\\\DabApp\\\\Backend\\\\DabApp-backend\" -type f -name \"*.json\")",
       "Bash(Find \"d:\\\\PC youssef\\\\DabApp\\\\Backend\\\\DabApp-backend\" -type f -name \"*Assist*\")",
       "Bash(Get-Content \"c:\\\\Works\\\\Projets\\\\DabApp\\\\Backend-DabApp\\\\routes\\\\api.php\")",
-      "Bash(Select-String \"SeekerProposal\")"
+      "Bash(Select-String \"SeekerProposal\")",
+      "PowerShell(cd \"d:\\\\PC youssef\\\\DabApp\\\\Backend\\\\DabApp-backend\"; php artisan tinker --execute=\"DB::table\\('equipment_types'\\)->get\\(['id','name','name_ar','icon','sort_order']\\)->each\\(fn\\(\\\\$r\\) => print_r\\(\\(array\\)\\\\$r\\)\\);\")"
     ]
   }
 }
