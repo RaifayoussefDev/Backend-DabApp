@@ -428,12 +428,10 @@ class TrainerController extends Controller
             // Store new level price proposals
             if (!empty($validated['level_prices'])) {
                 foreach ($validated['level_prices'] as $lp) {
-                    TrainerLevelApproval::create([
-                        'trainer_id'     => $trainer->id,
-                        'level_id'       => $lp['level_id'],
-                        'proposed_price' => $lp['price'],
-                        'status'         => 'proposed',
-                    ]);
+                    TrainerLevelApproval::updateOrCreate(
+                        ['trainer_id' => $trainer->id, 'level_id' => $lp['level_id']],
+                        ['proposed_price' => $lp['price'], 'status' => 'proposed']
+                    );
                 }
             }
 
