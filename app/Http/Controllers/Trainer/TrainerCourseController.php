@@ -230,6 +230,7 @@ class TrainerCourseController extends Controller
                 }
             ],
             'can_travel'        => 'nullable|boolean',
+            'price_per_km'      => 'nullable|numeric|min:0',
         ]);
 
         $course = TrainerCourse::create(array_merge($validated, [
@@ -311,6 +312,7 @@ class TrainerCourseController extends Controller
                 }
             ],
             'can_travel'        => 'nullable|boolean',
+            'price_per_km'      => 'nullable|numeric|min:0',
         ]);
 
         $course->update(array_filter($validated, fn ($v) => $v !== null));
@@ -348,8 +350,8 @@ class TrainerCourseController extends Controller
             return response()->json(['success' => false, 'message' => 'Course not found'], 404);
         }
 
-        if ($course->status !== 'draft') {
-            return response()->json(['success' => false, 'message' => 'Only draft courses can be deleted. Archive it first.'], 403);
+        if ($course->status === 'published') {
+            return response()->json(['success' => false, 'message' => 'Cannot delete a published course. Archive it first.'], 403);
         }
 
         $course->delete();
@@ -383,11 +385,11 @@ class TrainerCourseController extends Controller
             return response()->json(['success' => false, 'message' => 'Course not found'], 404);
         }
 
-        if ($course->status !== 'draft') {
-            return response()->json(['success' => false, 'message' => 'Only draft courses can be published'], 400);
+        if ($course->status === 'published') {
+            return response()->json(['success' => false, 'message' => 'Course is already published'], 400);
         }
 
-        $course->update(['status' => 'published']);
+        $course->update(['status' => 'published', 'is_active' => true]);
 
         return response()->json(['success' => true, 'data' => $course->fresh(), 'message' => 'Course published successfully']);
     }
@@ -422,8 +424,87 @@ class TrainerCourseController extends Controller
             return response()->json(['success' => false, 'message' => 'Only published courses can be archived'], 400);
         }
 
-        $course->update(['status' => 'archived']);
+        $course->update(['status' => 'archived', 'is_active' => false]);
 
         return response()->json(['success' => true, 'message' => 'Course archived successfully']);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/trainers/{id}/travel-price",
+     *     summary="Calculate travel price for a course",
+     *     description="Returns the travel surcharge and total price based on km distance. Only applicable when course.can_travel=true.",
+     *     operationId="calculateTravelPrice",
+     *     tags={"Trainer - Courses"},
+     *     @OA\Parameter(name="id",        in="path",  required=true, @OA\Schema(type="integer", example=1), description="Trainer ID"),
+     *     @OA\Parameter(name="course_id", in="query", required=true, @OA\Schema(type="integer", example=1)),
+     *     @OA\Parameter(name="km",        in="query", required=true, @OA\Schema(type="number",  example=30), description="Distance in km from trainer location to client"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Price breakdown",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="course_id",          type="integer", example=1),
+     *                 @OA\Property(property="course_title",       type="string",  example="Beginner Circuit Training"),
+     *                 @OA\Property(property="km",                 type="number",  example=30),
+     *                 @OA\Property(property="price_per_km",       type="number",  example=2.50),
+     *                 @OA\Property(property="travel_cost",        type="number",  example=75.00),
+     *                 @OA\Property(property="session_price",      type="number",  example=120.00, description="Effective course price per session"),
+     *                 @OA\Property(property="total_with_travel",  type="number",  example=195.00, description="session_price + travel_cost")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Course does not allow travel or price_per_km not set"),
+     *     @OA\Response(response=404, description="Trainer or course not found")
+     * )
+     */
+    public function travelPrice(Request $request, int $trainerId)
+    {
+        $request->validate([
+            'course_id' => 'required|integer|exists:trainer_courses,id',
+            'km'        => 'required|numeric|min:0',
+        ]);
+
+        $trainer = Trainer::approved()->find($trainerId);
+        if (!$trainer) {
+            return response()->json(['success' => false, 'message' => 'Trainer not found'], 404);
+        }
+
+        $course = TrainerCourse::where('id', $request->course_id)
+            ->where('trainer_id', $trainer->id)
+            ->published()
+            ->first();
+
+        if (!$course) {
+            return response()->json(['success' => false, 'message' => 'Course not found'], 404);
+        }
+
+        if (!$course->can_travel) {
+            return response()->json(['success' => false, 'message' => 'This course does not offer travel to client location'], 400);
+        }
+
+        if (!$course->price_per_km) {
+            return response()->json(['success' => false, 'message' => 'Travel price per km not set for this course'], 400);
+        }
+
+        $km          = (float) $request->km;
+        $pricePerKm  = (float) $course->price_per_km;
+        $travelCost  = round($km * $pricePerKm, 2);
+        $sessionPrice = (float) $course->effective_price;
+        $total       = round($sessionPrice + $travelCost, 2);
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'course_id'         => $course->id,
+                'course_title'      => $course->title,
+                'km'                => $km,
+                'price_per_km'      => $pricePerKm,
+                'travel_cost'       => $travelCost,
+                'session_price'     => $sessionPrice,
+                'total_with_travel' => $total,
+            ],
+        ]);
     }
 }

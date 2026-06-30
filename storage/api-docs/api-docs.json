@@ -18261,6 +18261,335 @@
                 }
             }
         },
+        "/api/trainer/upload-certificates": {
+            "post": {
+                "tags": [
+                    "Trainer"
+                ],
+                "summary": "Upload trainer certificate documents",
+                "description": "Upload up to 10 certificate files (PDF, JPG, PNG) for trainer verification by admin. Images are resized, PDFs are stored as-is. Returns stored file paths to use in registration or profile update.",
+                "operationId": "uploadTrainerCertificates",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "files[]"
+                                ],
+                                "properties": {
+                                    "files[]": {
+                                        "description": "Certificate files — PDF, JPG, JPEG, PNG. Max 5 MB each, up to 10 files.",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Files uploaded successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "3 file(s) uploaded successfully"
+                                        },
+                                        "paths": {
+                                            "description": "Stored paths — pass these in certification_files[] when registering",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string",
+                                                "example": "trainers/certifications/abc123.pdf"
+                                            }
+                                        },
+                                        "urls": {
+                                            "description": "Public URLs for preview",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string",
+                                                "example": "https://domain.com/storage/trainers/certifications/abc123.pdf"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "No files provided"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error — invalid file type or size"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainer/upload-certificates/{filename}": {
+            "delete": {
+                "tags": [
+                    "Trainer"
+                ],
+                "summary": "Delete a trainer certificate file",
+                "description": "Delete a previously uploaded trainer certificate file.",
+                "operationId": "deleteTrainerCertificate",
+                "parameters": [
+                    {
+                        "name": "filename",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "abc123.pdf"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File deleted"
+                    },
+                    "404": {
+                        "description": "File not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainer/upload-photo": {
+            "post": {
+                "tags": [
+                    "Trainer"
+                ],
+                "summary": "Upload trainer profile photo",
+                "description": "Upload a profile photo for the trainer. Returns the stored path to pass as photo_path in POST /trainer/profile.",
+                "operationId": "uploadTrainerPhoto",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "photo"
+                                ],
+                                "properties": {
+                                    "photo": {
+                                        "description": "JPG / PNG / WebP — max 2 MB",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Photo uploaded",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Photo uploaded successfully"
+                                        },
+                                        "path": {
+                                            "description": "Pass this value as photo_path in POST /trainer/profile",
+                                            "type": "string",
+                                            "example": "trainers/photos/abc123.jpg"
+                                        },
+                                        "url": {
+                                            "type": "string",
+                                            "example": "https://be.dabapp.co/storage/trainers/photos/abc123.jpg"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainer/upload-photo/{filename}": {
+            "delete": {
+                "tags": [
+                    "Trainer"
+                ],
+                "summary": "Delete trainer profile photo",
+                "operationId": "deleteTrainerPhoto",
+                "parameters": [
+                    {
+                        "name": "filename",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "abc123.jpg"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Photo deleted"
+                    },
+                    "404": {
+                        "description": "File not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainer/upload-cover": {
+            "post": {
+                "tags": [
+                    "Trainer"
+                ],
+                "summary": "Upload trainer cover photo",
+                "description": "Upload a cover / banner photo for the trainer. Returns the stored path to pass as cover_path in POST /trainer/profile.",
+                "operationId": "uploadTrainerCover",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "cover"
+                                ],
+                                "properties": {
+                                    "cover": {
+                                        "description": "JPG / PNG / WebP — max 5 MB",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cover uploaded",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cover uploaded successfully"
+                                        },
+                                        "path": {
+                                            "description": "Pass this value as cover_path in POST /trainer/profile",
+                                            "type": "string",
+                                            "example": "trainers/covers/xyz789.jpg"
+                                        },
+                                        "url": {
+                                            "type": "string",
+                                            "example": "https://be.dabapp.co/storage/trainers/covers/xyz789.jpg"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainer/upload-cover/{filename}": {
+            "delete": {
+                "tags": [
+                    "Trainer"
+                ],
+                "summary": "Delete trainer cover photo",
+                "operationId": "deleteTrainerCover",
+                "parameters": [
+                    {
+                        "name": "filename",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "xyz789.jpg"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cover deleted"
+                    },
+                    "404": {
+                        "description": "File not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/delete-image/{filename}": {
             "delete": {
                 "tags": [
@@ -26123,6 +26452,171 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/my-garage/training-completeness": {
+            "get": {
+                "tags": [
+                    "My Garage"
+                ],
+                "summary": "Check which bikes are ready for trainer registration",
+                "description": "Returns all garage bikes with a flag indicating whether training-specific fields (plate_number, insurance_expiry, insurance_covers_training) are complete. Use this before selecting a bike as a training bike.",
+                "operationId": "9d6d28a710a80877d88508628c6009b0",
+                "responses": {
+                    "200": {
+                        "description": "Completeness status retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "full_motorcycle_name": {
+                                                        "type": "string",
+                                                        "example": "Yamaha YZF-R3 (2022)"
+                                                    },
+                                                    "plate_number": {
+                                                        "type": "string",
+                                                        "example": "ABC 1234",
+                                                        "nullable": true
+                                                    },
+                                                    "insurance_expiry": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": "2027-01-01",
+                                                        "nullable": true
+                                                    },
+                                                    "insurance_covers_training": {
+                                                        "type": "boolean",
+                                                        "example": true,
+                                                        "nullable": true
+                                                    },
+                                                    "is_training_ready": {
+                                                        "description": "true when plate_number, insurance_expiry AND insurance_covers_training are all set",
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "missing_fields": {
+                                                        "description": "List of fields still needed before this bike can be used for training",
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        },
+                                                        "example": [
+                                                            "plate_number",
+                                                            "insurance_covers_training"
+                                                        ]
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/my-garage/{id}/training-info": {
+            "patch": {
+                "tags": [
+                    "My Garage"
+                ],
+                "summary": "Update training-specific fields on a garage bike",
+                "description": "Adds or updates the plate number, insurance expiry, and training coverage flag on a garage bike. Required before using a bike for training sessions.",
+                "operationId": "947f631c458221dbc97b097e2340baac",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "plate_number": {
+                                        "type": "string",
+                                        "example": "ABC 1234"
+                                    },
+                                    "insurance_expiry": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2027-01-01"
+                                    },
+                                    "insurance_covers_training": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Training info updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "is_training_ready": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Garage item not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 },
                 "security": [
@@ -42316,6 +42810,411 @@
                 }
             }
         },
+        "/api/specialties": {
+            "get": {
+                "tags": [
+                    "Specialties"
+                ],
+                "summary": "List all active specialties",
+                "description": "Returns all active specialties ordered by sort_order. Use for building filter chips and dropdown selectors.",
+                "operationId": "listSpecialties",
+                "parameters": [
+                    {
+                        "name": "with_count",
+                        "in": "query",
+                        "description": "If 1, include the number of approved trainers per specialty",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Specialties retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "libelle_en": {
+                                                        "type": "string",
+                                                        "example": "Coaching"
+                                                    },
+                                                    "libelle_ar": {
+                                                        "type": "string",
+                                                        "example": "تدريب"
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "example": "coaching"
+                                                    },
+                                                    "icon_url": {
+                                                        "type": "string",
+                                                        "example": "https://api.dabapp.com/storage/icons/coaching.svg"
+                                                    },
+                                                    "localized_label": {
+                                                        "description": "Automatically returns EN or AR based on Accept-Language header",
+                                                        "type": "string",
+                                                        "example": "Coaching"
+                                                    },
+                                                    "trainers_count": {
+                                                        "description": "Only present when with_count=1",
+                                                        "type": "integer",
+                                                        "example": 12
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/specialties/{id}": {
+            "get": {
+                "tags": [
+                    "Specialties"
+                ],
+                "summary": "Get specialty detail",
+                "operationId": "showSpecialty",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Specialty found"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/api/admin/specialties": {
+            "get": {
+                "tags": [
+                    "Admin — Specialties"
+                ],
+                "summary": "Admin: list all specialties",
+                "operationId": "adminListSpecialties",
+                "responses": {
+                    "200": {
+                        "description": "Specialties list (including inactive)"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin — Specialties"
+                ],
+                "summary": "Admin: create specialty",
+                "description": "Create a new specialty. Upload the icon separately via POST /api/admin/specialties/{id}/icon or include icon file in this request.",
+                "operationId": "adminCreateSpecialty",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "libelle_en",
+                                    "libelle_ar"
+                                ],
+                                "properties": {
+                                    "libelle_en": {
+                                        "type": "string",
+                                        "example": "Coaching"
+                                    },
+                                    "libelle_ar": {
+                                        "type": "string",
+                                        "example": "تدريب"
+                                    },
+                                    "slug": {
+                                        "type": "string",
+                                        "example": "coaching"
+                                    },
+                                    "sort_order": {
+                                        "type": "integer",
+                                        "example": 0
+                                    },
+                                    "is_active": {
+                                        "type": "integer",
+                                        "enum": [
+                                            0,
+                                            1
+                                        ],
+                                        "example": 1
+                                    },
+                                    "icon": {
+                                        "description": "SVG, PNG or WebP icon (max 2MB)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Specialty created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/specialties/{id}": {
+            "put": {
+                "tags": [
+                    "Admin — Specialties"
+                ],
+                "summary": "Admin: update specialty",
+                "operationId": "adminUpdateSpecialty",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "libelle_en": {
+                                        "type": "string"
+                                    },
+                                    "libelle_ar": {
+                                        "type": "string"
+                                    },
+                                    "sort_order": {
+                                        "type": "integer"
+                                    },
+                                    "is_active": {
+                                        "type": "integer",
+                                        "enum": [
+                                            0,
+                                            1
+                                        ]
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin — Specialties"
+                ],
+                "summary": "Admin: delete specialty",
+                "operationId": "adminDeleteSpecialty",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/specialties/{id}/icon": {
+            "post": {
+                "tags": [
+                    "Admin — Specialties"
+                ],
+                "summary": "Admin: upload/replace specialty icon",
+                "description": "Upload or replace the icon for a specialty. Accepts SVG, PNG, WebP, JPEG (max 2MB).",
+                "operationId": "uploadSpecialtyIcon",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "icon"
+                                ],
+                                "properties": {
+                                    "icon": {
+                                        "description": "SVG, PNG, WebP, or JPEG — max 2MB",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Icon uploaded",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "icon_url": {
+                                            "type": "string",
+                                            "example": "https://api.dabapp.com/storage/icons/coaching.svg"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Specialty not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/specialties/reorder": {
+            "post": {
+                "tags": [
+                    "Admin — Specialties"
+                ],
+                "summary": "Admin: reorder specialties",
+                "operationId": "reorderSpecialties",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "order"
+                                ],
+                                "properties": {
+                                    "order": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            3,
+                                            1,
+                                            2,
+                                            4
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Order updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/trainers/{id}/availability": {
             "get": {
                 "tags": [
@@ -43015,60 +43914,6 @@
                     },
                     "401": {
                         "description": "Unauthenticated"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/trainer/sessions/{id}/start": {
-            "post": {
-                "tags": [
-                    "Trainer Bookings"
-                ],
-                "summary": "Mark session as In Progress",
-                "description": "Trainer marks a confirmed session as in progress (session has started).",
-                "operationId": "startTrainerSession",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 42
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Session started",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Session marked as in progress"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Session is not in confirmed status"
-                    },
-                    "403": {
-                        "description": "Not your session"
                     }
                 },
                 "security": [
@@ -44262,6 +45107,1327 @@
                 ]
             }
         },
+        "/api/trainers/{id}/courses": {
+            "get": {
+                "tags": [
+                    "Trainer - Courses"
+                ],
+                "summary": "List a trainer's published courses",
+                "description": "Returns all published and active courses offered by the given trainer. Visible to everyone.",
+                "operationId": "listTrainerCourses",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "level_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Courses retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "Beginner Circuit Training"
+                                                    },
+                                                    "hours_per_session": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "total_sessions": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "session_date": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": "2026-07-10",
+                                                        "nullable": true
+                                                    },
+                                                    "session_time": {
+                                                        "type": "string",
+                                                        "format": "time",
+                                                        "example": "09:00:00",
+                                                        "nullable": true
+                                                    },
+                                                    "original_price": {
+                                                        "type": "number",
+                                                        "example": 150
+                                                    },
+                                                    "promo_price": {
+                                                        "type": "number",
+                                                        "example": 120,
+                                                        "nullable": true
+                                                    },
+                                                    "effective_price": {
+                                                        "type": "number",
+                                                        "example": 120
+                                                    },
+                                                    "total_price": {
+                                                        "type": "string",
+                                                        "example": "1200.00"
+                                                    },
+                                                    "can_travel": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "level": {
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    },
+                                                    "location": {
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Trainer not found"
+                    }
+                }
+            }
+        },
+        "/api/trainer/courses": {
+            "get": {
+                "tags": [
+                    "Trainer - Courses"
+                ],
+                "summary": "List my courses",
+                "description": "Returns all courses (all statuses) for the authenticated trainer.",
+                "operationId": "myTrainerCourses",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "published",
+                                "archived"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Courses retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No trainer profile found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Trainer - Courses"
+                ],
+                "summary": "Create a course",
+                "description": "Trainer creates a new course offering. Starts in 'draft' status. Publish it with the /publish endpoint.",
+                "operationId": "createTrainerCourse",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "hours_per_session",
+                                    "total_sessions",
+                                    "original_price"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Beginner Circuit Training"
+                                    },
+                                    "title_ar": {
+                                        "type": "string",
+                                        "example": "تدريب المبتدئين في الحلبة"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Learn the basics of motorcycle control"
+                                    },
+                                    "description_ar": {
+                                        "type": "string"
+                                    },
+                                    "level_id": {
+                                        "description": "ID of an approved level (optional)",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "hours_per_session": {
+                                        "description": "1 to 8 hours",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "total_sessions": {
+                                        "description": "Number of sessions in the package",
+                                        "type": "integer",
+                                        "example": 5
+                                    },
+                                    "session_date": {
+                                        "description": "Optional fixed date",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-07-10"
+                                    },
+                                    "session_time": {
+                                        "description": "Optional start time",
+                                        "type": "string",
+                                        "format": "time",
+                                        "example": "09:00"
+                                    },
+                                    "original_price": {
+                                        "description": "Price per hour in SAR",
+                                        "type": "number",
+                                        "example": 150
+                                    },
+                                    "promo_price": {
+                                        "description": "Optional promotional price per hour",
+                                        "type": "number",
+                                        "example": 120
+                                    },
+                                    "location_id": {
+                                        "description": "ID from trainer's locations (optional)",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "can_travel": {
+                                        "description": "Trainer can go to client's location",
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Course created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Beginner Circuit Training"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "draft"
+                                                },
+                                                "total_price": {
+                                                    "type": "string",
+                                                    "example": "1500.00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Course created successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No trainer profile found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainer/courses/{id}": {
+            "get": {
+                "tags": [
+                    "Trainer - Courses"
+                ],
+                "summary": "Get a single course",
+                "operationId": "showTrainerCourse",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Course retrieved"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Trainer - Courses"
+                ],
+                "summary": "Update a course",
+                "description": "Update any field of a draft or published course. Archived courses cannot be edited.",
+                "operationId": "updateTrainerCourse",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "title_ar": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "description_ar": {
+                                        "type": "string"
+                                    },
+                                    "level_id": {
+                                        "type": "integer"
+                                    },
+                                    "hours_per_session": {
+                                        "type": "integer"
+                                    },
+                                    "total_sessions": {
+                                        "type": "integer"
+                                    },
+                                    "session_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "session_time": {
+                                        "type": "string",
+                                        "format": "time"
+                                    },
+                                    "original_price": {
+                                        "type": "number"
+                                    },
+                                    "promo_price": {
+                                        "type": "number"
+                                    },
+                                    "location_id": {
+                                        "type": "integer"
+                                    },
+                                    "can_travel": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Course updated"
+                    },
+                    "403": {
+                        "description": "Cannot edit an archived course"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Trainer - Courses"
+                ],
+                "summary": "Delete a course",
+                "description": "Only draft courses can be deleted. Published courses must be archived first.",
+                "operationId": "deleteTrainerCourse",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Course deleted"
+                    },
+                    "403": {
+                        "description": "Only draft courses can be deleted"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainer/courses/{id}/publish": {
+            "post": {
+                "tags": [
+                    "Trainer - Courses"
+                ],
+                "summary": "Publish a course",
+                "description": "Moves a draft course to published status, making it visible to clients.",
+                "operationId": "publishTrainerCourse",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Course published"
+                    },
+                    "400": {
+                        "description": "Course is already published or archived"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainer/courses/{id}/archive": {
+            "post": {
+                "tags": [
+                    "Trainer - Courses"
+                ],
+                "summary": "Archive a course",
+                "description": "Moves a published course to archived status, hiding it from clients.",
+                "operationId": "archiveTrainerCourse",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Course archived"
+                    },
+                    "400": {
+                        "description": "Only published courses can be archived"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainers/{id}/travel-price": {
+            "get": {
+                "tags": [
+                    "Trainer - Courses"
+                ],
+                "summary": "Calculate travel price for a course",
+                "description": "Returns the travel surcharge and total price based on km distance. Only applicable when course.can_travel=true.",
+                "operationId": "calculateTravelPrice",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Trainer ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "course_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "km",
+                        "in": "query",
+                        "description": "Distance in km from trainer location to client",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "example": 30
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Price breakdown",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "course_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "course_title": {
+                                                    "type": "string",
+                                                    "example": "Beginner Circuit Training"
+                                                },
+                                                "km": {
+                                                    "type": "number",
+                                                    "example": 30
+                                                },
+                                                "price_per_km": {
+                                                    "type": "number",
+                                                    "example": 2.5
+                                                },
+                                                "travel_cost": {
+                                                    "type": "number",
+                                                    "example": 75
+                                                },
+                                                "session_price": {
+                                                    "description": "Effective course price per session",
+                                                    "type": "number",
+                                                    "example": 120
+                                                },
+                                                "total_with_travel": {
+                                                    "description": "session_price + travel_cost",
+                                                    "type": "number",
+                                                    "example": 195
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Course does not allow travel or price_per_km not set"
+                    },
+                    "404": {
+                        "description": "Trainer or course not found"
+                    }
+                }
+            }
+        },
+        "/api/trainer/courses/{courseId}/sessions": {
+            "get": {
+                "tags": [
+                    "Course Sessions"
+                ],
+                "summary": "Get session descriptions for a course (trainer)",
+                "operationId": "58900abb277ae40edee28bf0d2a403fc",
+                "parameters": [
+                    {
+                        "name": "courseId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sessions retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "course_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "total_sessions": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "sessions": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "session_number": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "title": {
+                                                                "type": "string",
+                                                                "example": "Introduction to bike controls"
+                                                            },
+                                                            "title_ar": {
+                                                                "type": "string",
+                                                                "example": "مقدمة في التحكم بالدراجة"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Safety gear, bike posture and basic throttle control"
+                                                            },
+                                                            "description_ar": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "duration_hours": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Course not found or not yours"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Course Sessions"
+                ],
+                "summary": "Save all session descriptions (upsert)",
+                "description": "Submit descriptions for all sessions at once. Existing sessions are updated, missing ones are created. Send all sessions you want to keep.",
+                "operationId": "8cbb49736bc024f349e220b2c20890f1",
+                "parameters": [
+                    {
+                        "name": "courseId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "sessions"
+                                ],
+                                "properties": {
+                                    "sessions": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "session_number"
+                                            ],
+                                            "properties": {
+                                                "session_number": {
+                                                    "description": "1-based index — must match total_sessions of the course",
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Introduction"
+                                                },
+                                                "title_ar": {
+                                                    "type": "string",
+                                                    "example": "مقدمة"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Safety gear, bike posture, basic throttle control on a flat surface."
+                                                },
+                                                "description_ar": {
+                                                    "type": "string",
+                                                    "example": "معدات السلامة والوضعية الصحيحة والتحكم في الدراجة."
+                                                },
+                                                "duration_hours": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Sessions saved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "5 session(s) saved."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Course not found or not yours"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainer/courses/{courseId}/sessions/{sessionNumber}": {
+            "patch": {
+                "tags": [
+                    "Course Sessions"
+                ],
+                "summary": "Update a single session description",
+                "description": "Update one session by its number. Creates the session if it doesn't exist yet.",
+                "operationId": "b5fa3ce8001b0ba975cb415215b371d5",
+                "parameters": [
+                    {
+                        "name": "courseId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "sessionNumber",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 3
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Cornering basics"
+                                    },
+                                    "title_ar": {
+                                        "type": "string",
+                                        "example": "أساسيات الانعطاف"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Entry point, apex and exit. Finding the ideal line."
+                                    },
+                                    "description_ar": {
+                                        "type": "string",
+                                        "example": "نقطة الدخول والذروة والخروج. إيجاد المسار المثالي."
+                                    },
+                                    "duration_hours": {
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Session updated"
+                    },
+                    "404": {
+                        "description": "Course not found or not yours"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainers/{id}/courses/{courseId}/sessions": {
+            "get": {
+                "tags": [
+                    "Course Sessions"
+                ],
+                "summary": "Get course session descriptions (public)",
+                "description": "Returns session-by-session breakdown of a published course. Shown to the client on the course detail page before booking.",
+                "operationId": "f7b63456e13e8a5621f2cfdd8afc6b29",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Trainer ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "courseId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sessions retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "course_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Beginner Circuit Training"
+                                                },
+                                                "total_sessions": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "sessions": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "session_number": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "title": {
+                                                                "type": "string",
+                                                                "example": "Introduction"
+                                                            },
+                                                            "title_ar": {
+                                                                "type": "string",
+                                                                "example": "مقدمة"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Safety gear, bike posture and basic throttle control."
+                                                            },
+                                                            "description_ar": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "duration_hours": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Course not found or not published"
+                    }
+                }
+            }
+        },
+        "/api/trainer/equipment": {
+            "get": {
+                "tags": [
+                    "Trainer Equipment"
+                ],
+                "summary": "List my equipment",
+                "operationId": "cf53b6b9229b10b9e98db9c828e1129e",
+                "responses": {
+                    "200": {
+                        "description": "Equipment list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Helmet"
+                                                    },
+                                                    "name_ar": {
+                                                        "type": "string",
+                                                        "example": "خوذة"
+                                                    },
+                                                    "icon": {
+                                                        "type": "string",
+                                                        "example": "helmet"
+                                                    },
+                                                    "is_available": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "sort_order": {
+                                                        "type": "integer",
+                                                        "example": 0
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Trainer Equipment"
+                ],
+                "summary": "Add equipment items",
+                "description": "Add one or multiple equipment items at once.",
+                "operationId": "6af8f52a448b4ebbafce8dbd6d51f264",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "items"
+                                ],
+                                "properties": {
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "name"
+                                            ],
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Helmet"
+                                                },
+                                                "name_ar": {
+                                                    "type": "string",
+                                                    "example": "خوذة"
+                                                },
+                                                "icon": {
+                                                    "description": "Icon identifier string used by the frontend (e.g. icon name, emoji, or SVG key)",
+                                                    "type": "string",
+                                                    "example": "helmet"
+                                                },
+                                                "is_available": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "sort_order": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Equipment added"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainer/equipment/{id}": {
+            "delete": {
+                "tags": [
+                    "Trainer Equipment"
+                ],
+                "summary": "Delete an equipment item",
+                "operationId": "12865bb8c0e380f7193c44d4770c232a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    },
+                    "404": {
+                        "description": "Not found or not yours"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Trainer Equipment"
+                ],
+                "summary": "Update an equipment item",
+                "operationId": "cc23b7aa4c95b52b13aacdcd7fb6598d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Full-face Helmet"
+                                    },
+                                    "name_ar": {
+                                        "type": "string",
+                                        "example": "خوذة كاملة"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "helmet-full"
+                                    },
+                                    "is_available": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "sort_order": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    },
+                    "404": {
+                        "description": "Not found or not yours"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainers/{id}/equipment": {
+            "get": {
+                "tags": [
+                    "Trainer Equipment"
+                ],
+                "summary": "Get trainer equipment (public)",
+                "description": "Returns available equipment for a trainer. Only items with is_available=true.",
+                "operationId": "c9dca8de6de1b43804ad44126c9832d0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Equipment list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Helmet"
+                                                    },
+                                                    "name_ar": {
+                                                        "type": "string",
+                                                        "example": "خوذة"
+                                                    },
+                                                    "icon": {
+                                                        "type": "string",
+                                                        "example": "helmet"
+                                                    },
+                                                    "sort_order": {
+                                                        "type": "integer",
+                                                        "example": 0
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Trainer not found"
+                    }
+                }
+            }
+        },
         "/api/trainers/{id}/favorite": {
             "post": {
                 "tags": [
@@ -44397,6 +46563,396 @@
                     },
                     "401": {
                         "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainers/{id}/gallery": {
+            "get": {
+                "tags": [
+                    "Trainer Gallery"
+                ],
+                "summary": "Trainer gallery images",
+                "description": "Returns the public gallery images of an approved trainer, ordered by sort_order.",
+                "operationId": "getTrainerGallery",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Gallery retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "url": {
+                                                        "type": "string",
+                                                        "example": "https://api.dabapp.com/storage/trainers/gallery/img.jpg"
+                                                    },
+                                                    "thumbnail_url": {
+                                                        "type": "string",
+                                                        "example": "https://api.dabapp.com/storage/trainers/gallery/img_thumb.jpg"
+                                                    },
+                                                    "caption": {
+                                                        "type": "string",
+                                                        "example": "Track day at Al-Naseem"
+                                                    },
+                                                    "caption_ar": {
+                                                        "type": "string",
+                                                        "example": "يوم الحلبة في النسيم"
+                                                    },
+                                                    "sort_order": {
+                                                        "type": "integer",
+                                                        "example": 0
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "count": {
+                                            "type": "integer",
+                                            "example": 6
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Trainer not found"
+                    }
+                }
+            }
+        },
+        "/api/trainer/gallery": {
+            "post": {
+                "tags": [
+                    "Trainer Gallery"
+                ],
+                "summary": "Upload gallery images",
+                "description": "Upload one or multiple images to the authenticated trainer's gallery. Images are automatically resized and watermarked. Maximum 20 images total per trainer.",
+                "operationId": "uploadTrainerGallery",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "images[]"
+                                ],
+                                "properties": {
+                                    "images[]": {
+                                        "description": "Image files (jpg/png/webp, max 5MB each, up to 10 at once)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    },
+                                    "caption": {
+                                        "type": "string",
+                                        "example": "Track day at Al-Naseem"
+                                    },
+                                    "caption_ar": {
+                                        "type": "string",
+                                        "example": "يوم الحلبة في النسيم"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Images uploaded",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "3 image(s) added to gallery"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "url": {
+                                                        "type": "string"
+                                                    },
+                                                    "thumbnail_url": {
+                                                        "type": "string"
+                                                    },
+                                                    "caption": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "sort_order": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Gallery limit reached or no images provided"
+                    },
+                    "403": {
+                        "description": "No trainer profile"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainer/gallery/{id}": {
+            "delete": {
+                "tags": [
+                    "Trainer Gallery"
+                ],
+                "summary": "Delete a gallery image",
+                "description": "Permanently deletes a gallery image and its thumbnail from storage.",
+                "operationId": "deleteTrainerGalleryItem",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Image deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Gallery image deleted"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Not your image"
+                    },
+                    "404": {
+                        "description": "Image not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Trainer Gallery"
+                ],
+                "summary": "Update gallery image caption",
+                "description": "Update the caption (EN/AR) of a gallery image.",
+                "operationId": "updateTrainerGalleryItem",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "caption": {
+                                        "type": "string",
+                                        "example": "Track day at Al-Naseem"
+                                    },
+                                    "caption_ar": {
+                                        "type": "string",
+                                        "example": "يوم الحلبة في النسيم"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Caption updated"
+                    },
+                    "403": {
+                        "description": "Not your image"
+                    },
+                    "404": {
+                        "description": "Image not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainer/gallery/reorder": {
+            "post": {
+                "tags": [
+                    "Trainer Gallery"
+                ],
+                "summary": "Reorder gallery images",
+                "description": "Set the display order of gallery images. Send an ordered array of image IDs.",
+                "operationId": "reorderTrainerGallery",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "order"
+                                ],
+                                "properties": {
+                                    "order": {
+                                        "description": "Array of gallery image IDs in the desired display order",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            5,
+                                            3,
+                                            7,
+                                            1
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Order updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Gallery order updated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No trainer profile"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-gallery/{id}": {
+            "delete": {
+                "tags": [
+                    "Admin — Trainers"
+                ],
+                "summary": "Admin: delete gallery image",
+                "description": "Admin can delete any trainer gallery image.",
+                "operationId": "adminDeleteTrainerGalleryItem",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    },
+                    "404": {
+                        "description": "Not found"
                     }
                 },
                 "security": [
@@ -44900,6 +47456,237 @@
                     },
                     "422": {
                         "description": "Validation error — invalid day, time format, or end_time before start_time"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainer/training-bikes": {
+            "get": {
+                "tags": [
+                    "Trainer - Training Bikes"
+                ],
+                "summary": "List my training bikes",
+                "description": "Returns all garage bikes the trainer has selected as training bikes.",
+                "operationId": "listTrainingBikes",
+                "responses": {
+                    "200": {
+                        "description": "Training bikes retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "garage_id": {
+                                                        "type": "integer",
+                                                        "example": 3
+                                                    },
+                                                    "is_primary": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "is_training_ready": {
+                                                        "description": "True if plate_number, insurance_expiry and insurance_covers_training are set",
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "garage": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "plate_number": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "insurance_expiry": {
+                                                                "type": "string",
+                                                                "format": "date",
+                                                                "nullable": true
+                                                            },
+                                                            "insurance_covers_training": {
+                                                                "type": "boolean",
+                                                                "nullable": true
+                                                            },
+                                                            "brand": {
+                                                                "type": "object"
+                                                            },
+                                                            "model": {
+                                                                "type": "object"
+                                                            },
+                                                            "year": {
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No trainer profile found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Trainer - Training Bikes"
+                ],
+                "summary": "Add a training bike",
+                "description": "Select a bike from My Garage as a training bike. The bike must belong to the authenticated user. You can mark it as primary.",
+                "operationId": "addTrainingBike",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "garage_id"
+                                ],
+                                "properties": {
+                                    "garage_id": {
+                                        "description": "ID from My Garage",
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "is_primary": {
+                                        "description": "Mark as primary training bike",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Training bike added",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Training bike added successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No trainer profile found or bike does not belong to you"
+                    },
+                    "409": {
+                        "description": "Bike already added as training bike"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainer/training-bikes/{garageId}": {
+            "delete": {
+                "tags": [
+                    "Trainer - Training Bikes"
+                ],
+                "summary": "Remove a training bike",
+                "description": "Remove a garage bike from the trainer's training bike list.",
+                "operationId": "removeTrainingBike",
+                "parameters": [
+                    {
+                        "name": "garageId",
+                        "in": "path",
+                        "description": "Garage bike ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 3
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Training bike removed"
+                    },
+                    "404": {
+                        "description": "Training bike not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainer/training-bikes/{garageId}/set-primary": {
+            "patch": {
+                "tags": [
+                    "Trainer - Training Bikes"
+                ],
+                "summary": "Set a training bike as primary",
+                "operationId": "setPrimaryTrainingBike",
+                "parameters": [
+                    {
+                        "name": "garageId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 3
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Primary bike updated"
+                    },
+                    "404": {
+                        "description": "Training bike not found"
                     }
                 },
                 "security": [
@@ -46949,6 +49736,10 @@
             "description": "API endpoints pour les routes de transport programmées de motos"
         },
         {
+            "name": "Specialties",
+            "description": "Dynamic trainer specialties — browse publicly, manage via admin"
+        },
+        {
             "name": "Trainer Bookings",
             "description": "Book sessions, check availability, manage booking lifecycle and payments"
         },
@@ -46961,8 +49752,24 @@
             "description": "Browse trainers, manage profiles, training locations"
         },
         {
+            "name": "Trainer - Courses",
+            "description": "Trainer creates and manages their course offerings"
+        },
+        {
+            "name": "Course Sessions",
+            "description": "Per-session descriptions for trainer courses. A course with total_sessions=5 has 5 session slots, each with its own title and description shown to the client before booking."
+        },
+        {
+            "name": "Trainer Equipment",
+            "description": "Manage equipment available per trainer (helmet, jacket, knee protector, ...)"
+        },
+        {
             "name": "Trainer Favorites",
             "description": "Save and manage favorite trainers"
+        },
+        {
+            "name": "Trainer Gallery",
+            "description": "Manage trainer image gallery — upload, reorder, and delete gallery images"
         },
         {
             "name": "Trainer Likes",
@@ -46975,6 +49782,10 @@
         {
             "name": "Trainer Schedule",
             "description": "Manage weekly working hours for trainers"
+        },
+        {
+            "name": "Trainer - Training Bikes",
+            "description": "Trainer selects bikes from My Garage to use for training sessions"
         },
         {
             "name": "Wishlist",
@@ -47085,6 +49896,10 @@
             "description": "Video Upload"
         },
         {
+            "name": "Trainer",
+            "description": "Trainer"
+        },
+        {
             "name": "Listings",
             "description": "Listings"
         },
@@ -47139,6 +49954,14 @@
         {
             "name": "SOOMs",
             "description": "SOOMs"
+        },
+        {
+            "name": "Admin — Specialties",
+            "description": "Admin — Specialties"
+        },
+        {
+            "name": "Admin — Trainers",
+            "description": "Admin — Trainers"
         }
     ],
     "security": [

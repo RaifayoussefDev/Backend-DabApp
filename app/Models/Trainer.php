@@ -119,6 +119,11 @@ class Trainer extends Model
         return $this->belongsToMany(Specialty::class, 'trainer_specialty');
     }
 
+    public function equipment()
+    {
+        return $this->hasMany(TrainerEquipment::class)->orderBy('sort_order')->orderBy('id');
+    }
+
     public function levelApprovals()
     {
         return $this->hasMany(TrainerLevelApproval::class);

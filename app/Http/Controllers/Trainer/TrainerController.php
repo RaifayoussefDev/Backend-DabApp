@@ -188,6 +188,7 @@ class TrainerController extends Controller
             'schedules',
             'specialties',
             'gallery',
+            'equipment',
             'levelApprovals' => fn ($q) => $q->where('status', 'approved')->with('level'),
             'reviews' => fn ($q) => $q->with('user:id,first_name,last_name,avatar')->latest()->limit(10),
         ])->approved()->find($id);

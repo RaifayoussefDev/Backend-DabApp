@@ -148,6 +148,7 @@ use App\Http\Controllers\Admin\GuideCategoryAdminController;
 use App\Http\Controllers\Admin\GuideTagAdminController;
 use App\Http\Controllers\Admin\GuideCommentAdminController;
 use App\Http\Controllers\Admin\PoiTagAdminController;
+use App\Http\Controllers\Admin\AdminEquipmentTypeController;
 
 use App\Http\Controllers\AdminPointOfInterestController;
 use App\Http\Controllers\AdminPoiReportController;
@@ -1779,9 +1780,14 @@ Route::prefix('trainers')->group(function () {
     Route::get('/{id}/gallery',      [\App\Http\Controllers\Trainer\TrainerGalleryController::class, 'index']);
 });
 
-Route::get('/trainer-locations',                    [TrainerController::class, 'locations']);
-Route::get('/trainer-levels',                       [AdminTrainerLevelController::class, 'publicIndex']);
-Route::get('/trainers/{id}/courses',                [TrainerCourseController::class, 'publicIndex']);
+Route::get('/trainer-locations',                              [TrainerController::class, 'locations']);
+Route::get('/trainer-levels',                                 [AdminTrainerLevelController::class, 'publicIndex']);
+Route::get('/equipment-types',                                [AdminEquipmentTypeController::class, 'index']);
+Route::get('/trainers/{id}/training-bikes',                       [TrainerTrainingBikeController::class, 'publicIndex']);
+Route::get('/trainers/{id}/courses',                              [TrainerCourseController::class, 'publicIndex']);
+Route::get('/trainers/{id}/travel-price',                         [TrainerCourseController::class, 'travelPrice']);
+Route::get('/trainers/{id}/equipment',                            [\App\Http\Controllers\Trainer\TrainerEquipmentController::class, 'publicIndex']);
+Route::get('/trainers/{trainerId}/courses/{courseId}/sessions',   [\App\Http\Controllers\Trainer\TrainerCourseSessionController::class, 'publicIndex']);
 
 // PayTabs webhook — no auth (server-to-server)
 Route::post('/trainer/payments/callback', [TrainerBookingController::class, 'paymentCallback']);
@@ -1848,6 +1854,17 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/trainer/courses/{id}',        [TrainerCourseController::class, 'destroy']);
     Route::post('/trainer/courses/{id}/publish',  [TrainerCourseController::class, 'publish']);
     Route::post('/trainer/courses/{id}/archive',  [TrainerCourseController::class, 'archive']);
+
+    // Course sessions (descriptions per session)
+    Route::get('/trainer/courses/{courseId}/sessions',                [\App\Http\Controllers\Trainer\TrainerCourseSessionController::class, 'index']);
+    Route::put('/trainer/courses/{courseId}/sessions',                [\App\Http\Controllers\Trainer\TrainerCourseSessionController::class, 'sync']);
+    Route::patch('/trainer/courses/{courseId}/sessions/{sessionNumber}', [\App\Http\Controllers\Trainer\TrainerCourseSessionController::class, 'update']);
+
+    // Equipment
+    Route::get('/trainer/equipment',              [\App\Http\Controllers\Trainer\TrainerEquipmentController::class, 'index']);
+    Route::post('/trainer/equipment',             [\App\Http\Controllers\Trainer\TrainerEquipmentController::class, 'store']);
+    Route::patch('/trainer/equipment/{id}',       [\App\Http\Controllers\Trainer\TrainerEquipmentController::class, 'update']);
+    Route::delete('/trainer/equipment/{id}',      [\App\Http\Controllers\Trainer\TrainerEquipmentController::class, 'destroy']);
 });
 
 // Admin — Trainer management (full panel)
@@ -1902,6 +1919,12 @@ Route::middleware('auth:api')->prefix('admin')->group(function () {
     Route::get('/trainer-comments',                  [AdminTrainerController::class, 'comments']);
     Route::post('/trainer-comments/{id}/approve',    [AdminTrainerController::class, 'approveComment']);
     Route::delete('/trainer-comments/{id}',          [AdminTrainerController::class, 'deleteComment']);
+
+    // ── Equipment catalog ─────────────────────────────────────────────
+    Route::get('/equipment-types',              [AdminEquipmentTypeController::class, 'index']);
+    Route::post('/equipment-types',             [AdminEquipmentTypeController::class, 'store']);
+    Route::put('/equipment-types/{id}',         [AdminEquipmentTypeController::class, 'update']);
+    Route::delete('/equipment-types/{id}',      [AdminEquipmentTypeController::class, 'destroy']);
 
     // ── Bookings ─────────────────────────────────────────────────────
     Route::get('/trainer-bookings/export',           [AdminTrainerBookingController::class, 'export']);
@@ -2205,11 +2228,28 @@ Route::prefix('assist')->middleware('auth:api')->group(function () {
 // ============================================================
 Route::delete('/dev/trainers/reset-all', function () {
     DB::statement('SET FOREIGN_KEY_CHECKS=0');
+    // Clear all trainer data — keep trainer_levels and specialties (seed data)
+    DB::table('trainer_bookings')->truncate();
+    DB::table('trainer_payments')->truncate();
+    DB::table('trainer_payouts')->truncate();
+    DB::table('trainer_reviews')->truncate();
+    DB::table('trainer_comments')->truncate();
+    DB::table('trainer_favorites')->truncate();
+    DB::table('trainer_likes')->truncate();
+    DB::table('trainer_gallery')->truncate();
+    DB::table('trainer_schedules')->truncate();
+    DB::table('trainer_locations')->truncate();
+    DB::table('trainer_course_sessions')->truncate();
+    DB::table('trainer_courses')->truncate();
+    DB::table('trainer_training_bikes')->truncate();
+    DB::table('trainer_level_approvals')->truncate();
+    DB::table('trainer_specialty')->truncate();
+    DB::table('trainer_equipment')->truncate();
     DB::table('trainers')->truncate();
     DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
     return response()->json([
         'success' => true,
-        'message' => 'All trainers deleted.',
+        'message' => 'All trainers and related data deleted. trainer_levels and specialties kept.',
     ]);
 });

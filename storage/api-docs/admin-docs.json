@@ -22797,6 +22797,3808 @@
                 ]
             }
         },
+        "/api/admin/commission": {
+            "get": {
+                "tags": [
+                    "Admin - Commission"
+                ],
+                "summary": "Get current commission settings",
+                "description": "Returns the active global commission rate and any trainer-specific overrides.",
+                "operationId": "adminGetCommission",
+                "responses": {
+                    "200": {
+                        "description": "Commission settings retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "global_rate": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "commission_percentage": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 20
+                                                        },
+                                                        "effective_from": {
+                                                            "type": "string",
+                                                            "format": "date"
+                                                        },
+                                                        "effective_until": {
+                                                            "type": "string",
+                                                            "format": "date",
+                                                            "nullable": true
+                                                        },
+                                                        "notes": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "trainer_overrides": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "trainer_id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "trainer_name": {
+                                                                "type": "string"
+                                                            },
+                                                            "commission_percentage": {
+                                                                "type": "number",
+                                                                "format": "float"
+                                                            },
+                                                            "effective_from": {
+                                                                "type": "string",
+                                                                "format": "date"
+                                                            },
+                                                            "effective_until": {
+                                                                "type": "string",
+                                                                "format": "date",
+                                                                "nullable": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/commission/global": {
+            "post": {
+                "tags": [
+                    "Admin - Commission"
+                ],
+                "summary": "Set global commission rate",
+                "description": "Creates or updates the global commission rate. The change is logged in commission_history. All new bookings after effective_from will use this rate. Existing confirmed bookings are not affected.",
+                "operationId": "adminSetGlobalCommission",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "commission_percentage",
+                                    "effective_from"
+                                ],
+                                "properties": {
+                                    "commission_percentage": {
+                                        "description": "DabApp commission percentage (0–100)",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 20
+                                    },
+                                    "effective_from": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-06-15"
+                                    },
+                                    "effective_until": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": null,
+                                        "nullable": true
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "New rate approved in board meeting 2026-06-12"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Global rate set",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Global commission rate updated to 20%"
+                                        },
+                                        "commission_percentage": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 20
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/commission/trainer/{trainerId}": {
+            "post": {
+                "tags": [
+                    "Admin - Commission"
+                ],
+                "summary": "Set trainer-specific commission rate",
+                "description": "Creates a commission override for a specific trainer. This takes priority over the global rate.",
+                "operationId": "adminSetTrainerCommission",
+                "parameters": [
+                    {
+                        "name": "trainerId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "commission_percentage",
+                                    "effective_from"
+                                ],
+                                "properties": {
+                                    "commission_percentage": {
+                                        "description": "Override rate for this trainer specifically",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 15
+                                    },
+                                    "effective_from": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-06-15"
+                                    },
+                                    "effective_until": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Special agreement with this trainer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Trainer rate set"
+                    },
+                    "404": {
+                        "description": "Trainer not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Commission"
+                ],
+                "summary": "Remove trainer commission override",
+                "description": "Deactivates the trainer-specific commission override. The trainer will fall back to the global rate for all future bookings.",
+                "operationId": "adminRemoveTrainerCommission",
+                "parameters": [
+                    {
+                        "name": "trainerId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Override removed — trainer now uses global rate",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Trainer commission override removed — will use global rate"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No active override found for this trainer"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/commission/history": {
+            "get": {
+                "tags": [
+                    "Admin - Commission"
+                ],
+                "summary": "Commission change history",
+                "description": "Returns the full history of commission rate changes.",
+                "operationId": "adminCommissionHistory",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "History retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "old_percentage": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 15
+                                                            },
+                                                            "new_percentage": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 20
+                                                            },
+                                                            "reason": {
+                                                                "type": "string"
+                                                            },
+                                                            "changed_at": {
+                                                                "type": "string",
+                                                                "format": "datetime"
+                                                            },
+                                                            "changed_by": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "first_name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "last_name": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/payouts": {
+            "get": {
+                "tags": [
+                    "Admin - Payouts"
+                ],
+                "summary": "List all payouts (Admin)",
+                "description": "Returns trainer payouts with optional status filter. Includes trainer info and split details.",
+                "operationId": "adminListPayouts",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "approved",
+                                "paid",
+                                "failed"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "trainer_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payouts retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "amount": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 120
+                                                            },
+                                                            "currency": {
+                                                                "type": "string",
+                                                                "example": "SAR"
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "pending"
+                                                            },
+                                                            "bank_name": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "iban": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "transfer_ref": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "transfer_proof_url": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "approved_at": {
+                                                                "type": "string",
+                                                                "format": "datetime",
+                                                                "nullable": true
+                                                            },
+                                                            "paid_at": {
+                                                                "type": "string",
+                                                                "format": "datetime",
+                                                                "nullable": true
+                                                            },
+                                                            "trainer": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "split": {
+                                                                "properties": {
+                                                                    "total_amount": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 150
+                                                                    },
+                                                                    "commission_percentage": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 20
+                                                                    },
+                                                                    "commission_amount": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 30
+                                                                    },
+                                                                    "trainer_amount": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 120
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "summary": {
+                                                    "properties": {
+                                                        "total_pending_amount": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 3600
+                                                        },
+                                                        "total_paid_amount": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 12000
+                                                        },
+                                                        "count_pending": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        },
+                                                        "count_paid": {
+                                                            "type": "integer",
+                                                            "example": 48
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/payouts/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Admin - Payouts"
+                ],
+                "summary": "Approve a payout",
+                "description": "Approves a pending payout. Optionally record bank details for the transfer. A push notification + email is sent to the trainer.",
+                "operationId": "adminApprovePayout",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "bank_name": {
+                                        "type": "string",
+                                        "example": "Al Rajhi Bank"
+                                    },
+                                    "iban": {
+                                        "type": "string",
+                                        "example": "SA0380000000608010167519"
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Ready for transfer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Payout approved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Payout approved"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Payout is not in pending status"
+                    },
+                    "404": {
+                        "description": "Payout not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/payouts/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Payouts"
+                ],
+                "summary": "Get payout details (Admin)",
+                "description": "Returns full details of a single payout including trainer info, linked payment split, booking, and transfer proof if uploaded.",
+                "operationId": "adminShowPayout",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payout details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 240
+                                                },
+                                                "currency": {
+                                                    "type": "string",
+                                                    "example": "SAR"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "approved"
+                                                },
+                                                "bank_name": {
+                                                    "type": "string",
+                                                    "example": "Al Rajhi Bank",
+                                                    "nullable": true
+                                                },
+                                                "iban": {
+                                                    "type": "string",
+                                                    "example": "SA0380000000608010167519",
+                                                    "nullable": true
+                                                },
+                                                "transfer_ref": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "transfer_proof_url": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "notes": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "approved_at": {
+                                                    "type": "string",
+                                                    "format": "datetime",
+                                                    "nullable": true
+                                                },
+                                                "paid_at": {
+                                                    "type": "string",
+                                                    "format": "datetime",
+                                                    "nullable": true
+                                                },
+                                                "trainer": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "specialty": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "split": {
+                                                    "properties": {
+                                                        "total_amount": {
+                                                            "type": "number",
+                                                            "format": "float"
+                                                        },
+                                                        "commission_percentage": {
+                                                            "type": "number",
+                                                            "format": "float"
+                                                        },
+                                                        "commission_amount": {
+                                                            "type": "number",
+                                                            "format": "float"
+                                                        },
+                                                        "trainer_amount": {
+                                                            "type": "number",
+                                                            "format": "float"
+                                                        },
+                                                        "status": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Payout not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/payouts/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Admin - Payouts"
+                ],
+                "summary": "Reject a payout",
+                "description": "Rejects a pending or approved payout. A reason is required. A push notification + email is sent to the trainer.",
+                "operationId": "adminRejectPayout",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Incorrect IBAN provided by trainer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Payout rejected",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Payout rejected"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Payout cannot be rejected — already paid"
+                    },
+                    "404": {
+                        "description": "Payout not found"
+                    },
+                    "422": {
+                        "description": "Validation error — reason is required"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-bookings": {
+            "get": {
+                "tags": [
+                    "Admin - Trainer Bookings"
+                ],
+                "summary": "List all trainer bookings (Admin)",
+                "description": "Returns all trainer bookings with rich filters: status, trainer, user, session type, date range. Includes trainer, user and payment info.",
+                "operationId": "adminListTrainerBookings",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "confirmed",
+                                "in_progress",
+                                "completed",
+                                "cancelled",
+                                "rejected"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "trainer_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    },
+                    {
+                        "name": "session_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "individual",
+                                "group",
+                                "track_day",
+                                "theory"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "payment_status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "paid",
+                                "failed",
+                                "refunded"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-06-01"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-06-30"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bookings retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "booking_date": {
+                                                                "type": "string",
+                                                                "format": "date",
+                                                                "example": "2026-06-20"
+                                                            },
+                                                            "start_time": {
+                                                                "type": "string",
+                                                                "format": "time",
+                                                                "example": "10:00:00"
+                                                            },
+                                                            "end_time": {
+                                                                "type": "string",
+                                                                "format": "time",
+                                                                "example": "12:00:00"
+                                                            },
+                                                            "duration_hours": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 2
+                                                            },
+                                                            "session_type": {
+                                                                "type": "string",
+                                                                "example": "individual"
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "confirmed"
+                                                            },
+                                                            "price": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 300
+                                                            },
+                                                            "payment_status": {
+                                                                "type": "string",
+                                                                "example": "paid"
+                                                            },
+                                                            "confirmed_at": {
+                                                                "type": "string",
+                                                                "format": "datetime",
+                                                                "nullable": true
+                                                            },
+                                                            "completed_at": {
+                                                                "type": "string",
+                                                                "format": "datetime",
+                                                                "nullable": true
+                                                            },
+                                                            "trainer": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Khalid Al-Mansouri"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "user": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 5
+                                                                    },
+                                                                    "first_name": {
+                                                                        "type": "string",
+                                                                        "example": "Ahmed"
+                                                                    },
+                                                                    "last_name": {
+                                                                        "type": "string",
+                                                                        "example": "Bouali"
+                                                                    },
+                                                                    "email": {
+                                                                        "type": "string",
+                                                                        "example": "ahmed@example.com"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "summary": {
+                                                    "properties": {
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 320
+                                                        },
+                                                        "filtered": {
+                                                            "type": "integer",
+                                                            "example": 34
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-bookings/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Trainer Bookings"
+                ],
+                "summary": "Get booking details (Admin)",
+                "description": "Returns full details of a trainer booking including trainer, client, location, payment split, payout and review if any.",
+                "operationId": "adminShowTrainerBooking",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Booking details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "booking_date": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2026-06-20"
+                                                },
+                                                "start_time": {
+                                                    "type": "string",
+                                                    "format": "time",
+                                                    "example": "10:00:00"
+                                                },
+                                                "end_time": {
+                                                    "type": "string",
+                                                    "format": "time",
+                                                    "example": "12:00:00"
+                                                },
+                                                "session_type": {
+                                                    "type": "string",
+                                                    "example": "individual"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "completed"
+                                                },
+                                                "price": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 300
+                                                },
+                                                "payment_status": {
+                                                    "type": "string",
+                                                    "example": "paid"
+                                                },
+                                                "notes": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "trainer": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "specialty": {
+                                                            "type": "string"
+                                                        },
+                                                        "rating_average": {
+                                                            "type": "number",
+                                                            "format": "float"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string"
+                                                        },
+                                                        "email": {
+                                                            "type": "string"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "location": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "location_name": {
+                                                            "type": "string"
+                                                        },
+                                                        "city_id": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "payment_split": {
+                                                    "properties": {
+                                                        "total_amount": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 300
+                                                        },
+                                                        "commission_percentage": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 20
+                                                        },
+                                                        "commission_amount": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 60
+                                                        },
+                                                        "trainer_amount": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 240
+                                                        },
+                                                        "status": {
+                                                            "type": "string",
+                                                            "example": "settled"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "review": {
+                                                    "properties": {
+                                                        "rating": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "comment": {
+                                                            "type": "string",
+                                                            "example": "Excellent session!"
+                                                        },
+                                                        "is_approved": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Booking not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-bookings/{id}/cancel": {
+            "post": {
+                "tags": [
+                    "Admin - Trainer Bookings"
+                ],
+                "summary": "Force-cancel a booking (Admin)",
+                "description": "Admin force-cancel of any active booking (pending, confirmed, in_progress). Requires a reason. A notification is sent to both the trainer and the client.",
+                "operationId": "adminCancelTrainerBooking",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "description": "Mandatory reason for admin cancellation — sent to both parties",
+                                        "type": "string",
+                                        "example": "Trainer suspended due to policy violation"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Booking cancelled",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Booking cancelled by admin"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Booking cannot be cancelled (already completed or cancelled)"
+                    },
+                    "404": {
+                        "description": "Booking not found"
+                    },
+                    "422": {
+                        "description": "Validation error — reason is required"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-bookings/{id}/confirm": {
+            "post": {
+                "tags": [
+                    "Admin - Trainer Bookings"
+                ],
+                "summary": "Manually confirm a booking (Admin)",
+                "description": "Admin can manually move a pending booking to confirmed status (e.g. when automatic payment confirmation was delayed).",
+                "operationId": "adminConfirmTrainerBooking",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Booking confirmed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Booking confirmed by admin"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Only pending bookings can be confirmed"
+                    },
+                    "404": {
+                        "description": "Booking not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainers": {
+            "get": {
+                "tags": [
+                    "Admin - Trainers"
+                ],
+                "summary": "List all trainers (Admin)",
+                "description": "Returns all trainers with optional status filter and search. Admin only.",
+                "operationId": "adminListTrainers",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "approved",
+                                "rejected",
+                                "suspended"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Khalid"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trainers retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Khalid Al-Mansouri"
+                                                            },
+                                                            "specialty": {
+                                                                "type": "string",
+                                                                "example": "coaching"
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "pending"
+                                                            },
+                                                            "experience_years": {
+                                                                "type": "integer",
+                                                                "example": 8
+                                                            },
+                                                            "total_sessions": {
+                                                                "type": "integer",
+                                                                "example": 0
+                                                            },
+                                                            "rating_average": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 0
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "datetime"
+                                                            },
+                                                            "user": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "first_name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "last_name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "email": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "phone": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "stats": {
+                                                    "properties": {
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 50
+                                                        },
+                                                        "pending": {
+                                                            "type": "integer",
+                                                            "example": 8
+                                                        },
+                                                        "approved": {
+                                                            "type": "integer",
+                                                            "example": 35
+                                                        },
+                                                        "rejected": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "suspended": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainers/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Admin - Trainers"
+                ],
+                "summary": "Approve a trainer",
+                "description": "Approves a pending trainer profile. The trainer's profile becomes visible to all users. A push notification + email is sent to the trainer.",
+                "operationId": "adminApproveTrainer",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trainer approved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Trainer approved successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Trainer not found"
+                    },
+                    "400": {
+                        "description": "Trainer is already approved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainers/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Admin - Trainers"
+                ],
+                "summary": "Reject a trainer",
+                "description": "Rejects a pending trainer profile. A push notification + email with the reason is sent to the trainer.",
+                "operationId": "adminRejectTrainer",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Certifications are missing or unverifiable"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Trainer rejected",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Trainer rejected"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Trainer not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainers/{id}/suspend": {
+            "post": {
+                "tags": [
+                    "Admin - Trainers"
+                ],
+                "summary": "Suspend a trainer",
+                "description": "Suspends an approved trainer. Profile hidden from public. Push notification + email sent.",
+                "operationId": "adminSuspendTrainer",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Multiple complaints received from clients"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Trainer suspended",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Trainer suspended"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Trainer not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-reviews": {
+            "get": {
+                "tags": [
+                    "Admin - Trainers"
+                ],
+                "summary": "Pending reviews (Admin)",
+                "description": "Returns trainer reviews pending admin approval.",
+                "operationId": "adminPendingTrainerReviews",
+                "parameters": [
+                    {
+                        "name": "approved",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reviews retrieved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-reviews/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Admin - Trainers"
+                ],
+                "summary": "Approve a review",
+                "description": "Approves a trainer review, making it visible on the trainer's profile. Triggers rating recalculation and sends a notification to the trainer.",
+                "operationId": "adminApproveTrainerReview",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review approved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Review approved"
+                                        },
+                                        "new_rating_avg": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 4.8
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-reviews/{id}": {
+            "delete": {
+                "tags": [
+                    "Admin - Trainers"
+                ],
+                "summary": "Delete a review",
+                "description": "Deletes a trainer review (rejected or spam). Triggers rating recalculation.",
+                "operationId": "adminDeleteTrainerReview",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review deleted"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-comments/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Admin - Trainers"
+                ],
+                "summary": "Approve a comment",
+                "description": "Approves a trainer comment, making it visible on the profile.",
+                "operationId": "adminApproveTrainerComment",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 3
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Comment approved"
+                    },
+                    "404": {
+                        "description": "Comment not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainers/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Trainers"
+                ],
+                "summary": "Get full trainer profile (Admin)",
+                "description": "Returns the complete trainer profile with user info, locations, schedules, last 5 bookings, rating details, payout summary and commission setting.",
+                "operationId": "adminShowTrainer",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trainer profile",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Khalid Al-Mansouri"
+                                                },
+                                                "name_ar": {
+                                                    "type": "string",
+                                                    "example": "خالد المنصوري"
+                                                },
+                                                "specialty": {
+                                                    "type": "string",
+                                                    "example": "coaching"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "approved"
+                                                },
+                                                "experience_years": {
+                                                    "type": "integer",
+                                                    "example": 8
+                                                },
+                                                "price_per_hour": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 150
+                                                },
+                                                "rating_average": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 4.8
+                                                },
+                                                "total_sessions": {
+                                                    "type": "integer",
+                                                    "example": 48
+                                                },
+                                                "likes_count": {
+                                                    "type": "integer",
+                                                    "example": 130
+                                                },
+                                                "is_available": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string"
+                                                        },
+                                                        "email": {
+                                                            "type": "string"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "stats": {
+                                                    "properties": {
+                                                        "total_bookings": {
+                                                            "type": "integer",
+                                                            "example": 52
+                                                        },
+                                                        "completed_bookings": {
+                                                            "type": "integer",
+                                                            "example": 48
+                                                        },
+                                                        "cancelled_bookings": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "total_revenue": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 7200
+                                                        },
+                                                        "total_commission": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 1440
+                                                        },
+                                                        "pending_payout": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 600
+                                                        },
+                                                        "pending_reviews": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Trainer not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Trainers"
+                ],
+                "summary": "Delete a trainer profile (Admin)",
+                "description": "Permanently removes a trainer profile. Only allowed for rejected trainers with no confirmed or completed bookings. This action is irreversible.",
+                "operationId": "adminDeleteTrainer",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trainer deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Trainer profile deleted"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Cannot delete — active bookings exist"
+                    },
+                    "404": {
+                        "description": "Trainer not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainers/{id}/reactivate": {
+            "post": {
+                "tags": [
+                    "Admin - Trainers"
+                ],
+                "summary": "Reactivate a suspended trainer",
+                "description": "Moves a suspended trainer back to approved status, restoring their public visibility. A push notification + email is sent.",
+                "operationId": "adminReactivateTrainer",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trainer reactivated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Trainer reactivated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Trainer is not suspended"
+                    },
+                    "404": {
+                        "description": "Trainer not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-comments": {
+            "get": {
+                "tags": [
+                    "Admin - Trainers"
+                ],
+                "summary": "List all trainer comments (Admin)",
+                "description": "Returns all trainer comments with optional filters: approved/pending, trainer, user.",
+                "operationId": "adminListTrainerComments",
+                "parameters": [
+                    {
+                        "name": "approved",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "description": "Filter by approval status. Omit to get all.",
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "trainer_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Comments retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "content": {
+                                                                "type": "string",
+                                                                "example": "Great trainer!"
+                                                            },
+                                                            "is_approved": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            },
+                                                            "parent_id": {
+                                                                "type": "integer",
+                                                                "nullable": true
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "datetime"
+                                                            },
+                                                            "trainer": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "user": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "first_name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "last_name": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-comments/{id}": {
+            "delete": {
+                "tags": [
+                    "Admin - Trainers"
+                ],
+                "summary": "Delete a trainer comment (Admin)",
+                "description": "Hard-deletes a trainer comment (spam, abusive, or flagged). Also removes all child replies.",
+                "operationId": "adminDeleteTrainerComment",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 3
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Comment deleted"
+                    },
+                    "404": {
+                        "description": "Comment not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-courses": {
+            "get": {
+                "tags": [
+                    "Admin - Trainer Courses"
+                ],
+                "summary": "List all trainer courses (Admin)",
+                "description": "Returns all courses across all trainers with optional filters. Admin only.",
+                "operationId": "adminListTrainerCourses",
+                "parameters": [
+                    {
+                        "name": "trainer_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "published",
+                                "archived"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "level_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Courses retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-courses/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Trainer Courses"
+                ],
+                "summary": "Get a single trainer course (Admin)",
+                "operationId": "adminShowTrainerCourse",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Course retrieved"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Trainer Courses"
+                ],
+                "summary": "Delete a trainer course (Admin)",
+                "description": "Admin can delete any course regardless of status.",
+                "operationId": "adminDeleteTrainerCourse",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Course deleted"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/trainer-levels": {
+            "get": {
+                "tags": [
+                    "Admin - Trainer Levels"
+                ],
+                "summary": "List training levels",
+                "description": "Returns all active training levels. Used by the mobile app when a trainer registers to propose level prices.",
+                "operationId": "listTrainerLevels",
+                "responses": {
+                    "200": {
+                        "description": "Levels retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name_en": {
+                                                        "type": "string",
+                                                        "example": "Beginner"
+                                                    },
+                                                    "name_ar": {
+                                                        "type": "string",
+                                                        "example": "مبتدئ"
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "example": "beginner"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "For first-time riders"
+                                                    },
+                                                    "required_certifications": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "sort_order": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/trainer-levels": {
+            "get": {
+                "tags": [
+                    "Admin - Trainer Levels"
+                ],
+                "summary": "List all training levels (Admin)",
+                "description": "Returns all training levels including inactive ones. Admin only.",
+                "operationId": "adminListTrainerLevels",
+                "responses": {
+                    "200": {
+                        "description": "Levels retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name_en": {
+                                                        "type": "string",
+                                                        "example": "Beginner"
+                                                    },
+                                                    "name_ar": {
+                                                        "type": "string",
+                                                        "example": "مبتدئ"
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "example": "beginner"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "required_certifications": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "sort_order": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "trainers_count": {
+                                                        "type": "integer",
+                                                        "example": 12
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Trainer Levels"
+                ],
+                "summary": "Create a training level (Admin)",
+                "description": "Create a new training level. The slug is auto-generated from name_en if not provided.",
+                "operationId": "adminCreateTrainerLevel",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name_en"
+                                ],
+                                "properties": {
+                                    "name_en": {
+                                        "type": "string",
+                                        "example": "Beginner"
+                                    },
+                                    "name_ar": {
+                                        "type": "string",
+                                        "example": "مبتدئ"
+                                    },
+                                    "slug": {
+                                        "description": "Auto-generated if omitted",
+                                        "type": "string",
+                                        "example": "beginner"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "For first-time riders"
+                                    },
+                                    "required_certifications": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "Basic riding license"
+                                        ]
+                                    },
+                                    "sort_order": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Level created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Training level created successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-levels/{id}": {
+            "put": {
+                "tags": [
+                    "Admin - Trainer Levels"
+                ],
+                "summary": "Update a training level (Admin)",
+                "operationId": "adminUpdateTrainerLevel",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name_en": {
+                                        "type": "string"
+                                    },
+                                    "name_ar": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "required_certifications": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "sort_order": {
+                                        "type": "integer"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Level updated"
+                    },
+                    "404": {
+                        "description": "Level not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Trainer Levels"
+                ],
+                "summary": "Delete a training level (Admin)",
+                "description": "Soft-deletes by setting is_active=false if trainers are assigned. Hard-deletes if no approvals exist.",
+                "operationId": "adminDeleteTrainerLevel",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Level deleted or deactivated"
+                    },
+                    "404": {
+                        "description": "Level not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainers/{id}/approve-levels": {
+            "post": {
+                "tags": [
+                    "Admin - Trainer Levels"
+                ],
+                "summary": "Approve training levels for a trainer (Admin)",
+                "description": "Approves specific levels for a trainer, setting the final price per hour for each. Also sets the trainer status to 'approved' if not already. You can approve one, two, or all available levels.",
+                "operationId": "adminApproveTrainerLevels",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Trainer ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "levels"
+                                ],
+                                "properties": {
+                                    "levels": {
+                                        "description": "Array of levels to approve with final prices",
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "level_id",
+                                                "approved_price"
+                                            ],
+                                            "properties": {
+                                                "level_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "approved_price": {
+                                                    "type": "number",
+                                                    "example": 150
+                                                },
+                                                "notes": {
+                                                    "type": "string",
+                                                    "example": "Good basic certifications"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "approve_trainer": {
+                                        "description": "Also set trainer status to approved (default true)",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Levels approved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "3 level(s) approved for this trainer"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "approved_levels": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "level_id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "level_name": {
+                                                                "type": "string"
+                                                            },
+                                                            "approved_price": {
+                                                                "type": "number"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Trainer not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainers/{id}/reject-level": {
+            "post": {
+                "tags": [
+                    "Admin - Trainer Levels"
+                ],
+                "summary": "Reject a specific level for a trainer (Admin)",
+                "description": "Rejects a single proposed level without affecting the trainer's overall status or other approved levels.",
+                "operationId": "adminRejectTrainerLevel",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Trainer ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "level_id"
+                                ],
+                                "properties": {
+                                    "level_id": {
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Advanced certification not verified"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Level rejected"
+                    },
+                    "404": {
+                        "description": "Trainer or level not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainers/{id}/levels": {
+            "get": {
+                "tags": [
+                    "Admin - Trainer Levels"
+                ],
+                "summary": "Get trainer level approvals (Admin)",
+                "description": "Returns all level proposals and their approval status for a specific trainer.",
+                "operationId": "adminGetTrainerLevels",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trainer levels retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "level_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "level_name": {
+                                                        "type": "string",
+                                                        "example": "Beginner"
+                                                    },
+                                                    "proposed_price": {
+                                                        "type": "number",
+                                                        "example": 150
+                                                    },
+                                                    "approved_price": {
+                                                        "type": "number",
+                                                        "example": 180
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "approved"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Trainer not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-payments": {
+            "get": {
+                "tags": [
+                    "Admin - Trainer Payments"
+                ],
+                "summary": "List all trainer payment transactions (Admin)",
+                "description": "Returns all PayTabs transactions initiated for trainer bookings. Filter by payment_status, date range, or user. Each payment includes its booking and commission split.",
+                "operationId": "adminListTrainerPayments",
+                "parameters": [
+                    {
+                        "name": "payment_status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "paid",
+                                "failed",
+                                "refunded"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-06-01"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-06-30"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payments list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "amount": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 300
+                                                            },
+                                                            "currency": {
+                                                                "type": "string",
+                                                                "example": "SAR"
+                                                            },
+                                                            "payment_status": {
+                                                                "type": "string",
+                                                                "example": "paid"
+                                                            },
+                                                            "tran_ref": {
+                                                                "type": "string",
+                                                                "example": "TST2212200065566"
+                                                            },
+                                                            "cart_id": {
+                                                                "type": "string",
+                                                                "example": "TRAINER_42"
+                                                            },
+                                                            "resp_code": {
+                                                                "type": "string",
+                                                                "example": "A"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "datetime"
+                                                            },
+                                                            "user": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "first_name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "last_name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "email": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "split": {
+                                                                "properties": {
+                                                                    "commission_percentage": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 20
+                                                                    },
+                                                                    "commission_amount": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 60
+                                                                    },
+                                                                    "trainer_amount": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 240
+                                                                    },
+                                                                    "status": {
+                                                                        "type": "string",
+                                                                        "example": "settled"
+                                                                    }
+                                                                },
+                                                                "type": "object",
+                                                                "nullable": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "summary": {
+                                                    "properties": {
+                                                        "total_transactions": {
+                                                            "type": "integer",
+                                                            "example": 260
+                                                        },
+                                                        "total_paid": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 48000
+                                                        },
+                                                        "total_failed": {
+                                                            "type": "integer",
+                                                            "example": 8
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-payments/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Trainer Payments"
+                ],
+                "summary": "Get payment transaction details (Admin)",
+                "description": "Returns full PayTabs transaction details including the raw PayTabs response, the linked booking, commission split, and payout status.",
+                "operationId": "adminShowTrainerPayment",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payment details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 300
+                                                },
+                                                "currency": {
+                                                    "type": "string",
+                                                    "example": "SAR"
+                                                },
+                                                "payment_status": {
+                                                    "type": "string",
+                                                    "example": "paid"
+                                                },
+                                                "tran_ref": {
+                                                    "type": "string",
+                                                    "example": "TST2212200065566"
+                                                },
+                                                "cart_id": {
+                                                    "type": "string",
+                                                    "example": "TRAINER_42"
+                                                },
+                                                "resp_code": {
+                                                    "type": "string",
+                                                    "example": "A"
+                                                },
+                                                "resp_message": {
+                                                    "type": "string",
+                                                    "example": "Authorised"
+                                                },
+                                                "paytabs_response": {
+                                                    "description": "Full raw JSON from PayTabs",
+                                                    "type": "object"
+                                                },
+                                                "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string"
+                                                        },
+                                                        "email": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "booking": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "booking_date": {
+                                                            "type": "string",
+                                                            "format": "date"
+                                                        },
+                                                        "status": {
+                                                            "type": "string"
+                                                        },
+                                                        "price": {
+                                                            "type": "number",
+                                                            "format": "float"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "split": {
+                                                    "properties": {
+                                                        "total_amount": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 300
+                                                        },
+                                                        "commission_percentage": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 20
+                                                        },
+                                                        "commission_amount": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 60
+                                                        },
+                                                        "trainer_amount": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 240
+                                                        },
+                                                        "status": {
+                                                            "type": "string",
+                                                            "example": "settled"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Payment not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-stats/dashboard": {
+            "get": {
+                "tags": [
+                    "Admin - Trainer Stats"
+                ],
+                "summary": "Trainer module dashboard (Admin)",
+                "description": "Returns a full overview of the Trainer module for the admin panel: trainer counts by status, booking counts by status, revenue / commission breakdown, moderation queues (pending reviews, comments, payouts), top 5 trainers by sessions, and a 7-day booking trend.",
+                "operationId": "adminTrainerDashboard",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard data retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "trainers": {
+                                                    "properties": {
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 52
+                                                        },
+                                                        "pending": {
+                                                            "type": "integer",
+                                                            "example": 6
+                                                        },
+                                                        "approved": {
+                                                            "type": "integer",
+                                                            "example": 40
+                                                        },
+                                                        "rejected": {
+                                                            "type": "integer",
+                                                            "example": 4
+                                                        },
+                                                        "suspended": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "bookings": {
+                                                    "properties": {
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 320
+                                                        },
+                                                        "pending": {
+                                                            "type": "integer",
+                                                            "example": 12
+                                                        },
+                                                        "confirmed": {
+                                                            "type": "integer",
+                                                            "example": 28
+                                                        },
+                                                        "in_progress": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "completed": {
+                                                            "type": "integer",
+                                                            "example": 260
+                                                        },
+                                                        "cancelled": {
+                                                            "type": "integer",
+                                                            "example": 14
+                                                        },
+                                                        "rejected": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "this_month": {
+                                                            "type": "integer",
+                                                            "example": 34
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "revenue": {
+                                                    "properties": {
+                                                        "total_revenue": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 48000
+                                                        },
+                                                        "total_commission": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 9600
+                                                        },
+                                                        "total_trainer_earnings": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 38400
+                                                        },
+                                                        "pending_payouts_amount": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 4200
+                                                        },
+                                                        "paid_payouts_amount": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 34200
+                                                        },
+                                                        "this_month_revenue": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 5100
+                                                        },
+                                                        "global_commission_pct": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 20
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "moderation": {
+                                                    "properties": {
+                                                        "pending_reviews": {
+                                                            "type": "integer",
+                                                            "example": 8
+                                                        },
+                                                        "pending_comments": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        },
+                                                        "pending_payouts": {
+                                                            "type": "integer",
+                                                            "example": 7
+                                                        },
+                                                        "approved_payouts": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "top_trainers": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Khalid Al-Mansouri"
+                                                            },
+                                                            "specialty": {
+                                                                "type": "string",
+                                                                "example": "coaching"
+                                                            },
+                                                            "total_sessions": {
+                                                                "type": "integer",
+                                                                "example": 48
+                                                            },
+                                                            "rating_average": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 4.9
+                                                            },
+                                                            "likes_count": {
+                                                                "type": "integer",
+                                                                "example": 130
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "bookings_trend_7d": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "date": {
+                                                                "type": "string",
+                                                                "format": "date",
+                                                                "example": "2026-06-06"
+                                                            },
+                                                            "count": {
+                                                                "type": "integer",
+                                                                "example": 7
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Trainer dashboard stats retrieved"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-stats/revenue": {
+            "get": {
+                "tags": [
+                    "Admin - Trainer Stats"
+                ],
+                "summary": "Revenue breakdown by period (Admin)",
+                "description": "Detailed revenue, commission and payout breakdown. Filter by month/year or custom date range.",
+                "operationId": "adminTrainerRevenue",
+                "parameters": [
+                    {
+                        "name": "year",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2026
+                        }
+                    },
+                    {
+                        "name": "month",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "description": "1–12",
+                            "type": "integer",
+                            "example": 6
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-01-01"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-06-30"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Revenue breakdown",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "period": {
+                                                    "type": "string",
+                                                    "example": "2026-06"
+                                                },
+                                                "total_revenue": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 5100
+                                                },
+                                                "total_commission": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 1020
+                                                },
+                                                "total_trainer_earnings": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 4080
+                                                },
+                                                "total_bookings": {
+                                                    "type": "integer",
+                                                    "example": 34
+                                                },
+                                                "completed_bookings": {
+                                                    "type": "integer",
+                                                    "example": 28
+                                                },
+                                                "avg_booking_value": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 150
+                                                },
+                                                "paid_out": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 3200
+                                                },
+                                                "pending_payout": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 880
+                                                },
+                                                "per_trainer": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "trainer_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "trainer_name": {
+                                                                "type": "string",
+                                                                "example": "Khalid"
+                                                            },
+                                                            "sessions": {
+                                                                "type": "integer",
+                                                                "example": 12
+                                                            },
+                                                            "total_earned": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 1800
+                                                            },
+                                                            "commission_paid": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 360
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/users": {
             "get": {
                 "tags": [
@@ -27798,6 +31600,38 @@
         {
             "name": "Admin Transport Routes",
             "description": "API endpoints for managing transport routes (Admin)"
+        },
+        {
+            "name": "Admin - Commission",
+            "description": "Manage DabApp commission rates for trainer bookings"
+        },
+        {
+            "name": "Admin - Payouts",
+            "description": "Manage trainer payouts — approve, mark as paid, upload transfer proof"
+        },
+        {
+            "name": "Admin - Trainer Bookings",
+            "description": "Admin view and management of all trainer bookings — list, detail, force-cancel, confirm"
+        },
+        {
+            "name": "Admin - Trainers",
+            "description": "Admin management of trainer profiles, reviews, and comments"
+        },
+        {
+            "name": "Admin - Trainer Courses",
+            "description": "Admin view and moderation of trainer courses"
+        },
+        {
+            "name": "Admin - Trainer Levels",
+            "description": "Admin management of dynamic training levels and per-trainer level approvals"
+        },
+        {
+            "name": "Admin - Trainer Payments",
+            "description": "Admin view of all trainer payment transactions and their commission splits"
+        },
+        {
+            "name": "Admin - Trainer Stats",
+            "description": "Global dashboard statistics for the Trainer module — counts, revenue, trends, moderation queues"
         },
         {
             "name": "Admin App Version",

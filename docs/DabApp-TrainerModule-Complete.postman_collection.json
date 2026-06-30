@@ -1,0 +1,1372 @@
+{
+  "info": {
+    "name": "DabApp – Trainer Module (Complete)",
+    "_postman_id": "dabapp-trainer-complete-v2",
+    "description": "## DabApp Trainer Module — Complete API Collection\n\nThree actors, one collection:\n- **Admin** — manage levels, review & approve trainers, oversee bookings\n- **Trainer** — register, build profile, manage courses & sessions\n- **Client** — discover trainers, book sessions, confirm completion, review\n\n### Quick start\n1. Run **Admin / Login** → `{{admin_token}}` saved\n2. Run **Trainer / Login** → `{{trainer_token}}` saved\n3. Run **Client / Login** → `{{token}}` saved\n4. Follow each folder top-to-bottom — variables are saved automatically\n\n### Credentials\n| Role | Email | Password |\n|---|---|---|\n| Admin | admin@dabapp.com | YourAdminPassword |\n| Trainer | trainer@dabapp.com | YourTrainerPassword |\n| Client | client@dabapp.com | YourClientPassword |\n\n### Variable reference\n| Variable | Set by |\n|---|---|\n| `token` | Client login |\n| `trainer_token` | Trainer login |\n| `admin_token` | Admin login |\n| `trainer_id` | Trainer register / GET trainers |\n| `location_id` | POST add location |\n| `course_id` | POST create course |\n| `booking_id` | POST book |\n| `equipment_id` | POST select equipment |\n| `equipment_type_id` | GET equipment catalog |\n| `gallery_id` | POST add gallery |\n| `level_id` | 1=Beginner 2=Intermediate 3=Advanced |\n| `payment_url` | POST book |\n| `garage_id` | POST add bike to garage |",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+
+  "variable": [
+    { "key": "base_url",          "value": "https://be.dabapp.co", "type": "string" },
+    { "key": "token",             "value": "", "type": "string" },
+    { "key": "trainer_token",     "value": "", "type": "string" },
+    { "key": "admin_token",       "value": "", "type": "string" },
+    { "key": "trainer_id",        "value": "1", "type": "string" },
+    { "key": "location_id",       "value": "1", "type": "string" },
+    { "key": "course_id",         "value": "1", "type": "string" },
+    { "key": "booking_id",        "value": "1", "type": "string" },
+    { "key": "equipment_id",      "value": "1", "type": "string" },
+    { "key": "equipment_type_id", "value": "1", "type": "string" },
+    { "key": "gallery_id",        "value": "1", "type": "string" },
+    { "key": "level_id",          "value": "1", "type": "string" },
+    { "key": "payment_url",       "value": "", "type": "string" },
+    { "key": "garage_id",         "value": "1", "type": "string" }
+  ],
+
+  "item": [
+
+    {
+      "name": "Admin",
+      "description": "Admin endpoints — requires `{{admin_token}}`.",
+      "item": [
+        {
+          "name": "Login",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var json = pm.response.json();",
+            "var tok = json.token || (json.data && json.data.token);",
+            "if (tok) { pm.collectionVariables.set('admin_token', tok); console.log('admin_token saved'); }",
+            "pm.test('Admin login OK', () => { pm.response.to.have.status(200); pm.expect(tok).to.be.a('string'); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/admin/login", "host": ["{{base_url}}"], "path": ["api","admin","login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"login\": \"admin@dabapp.com\",\n  \"password\": \"YourAdminPassword\"\n}" }
+          }
+        },
+
+        {
+          "name": "— Levels",
+          "item": [
+            {
+              "name": "GET all levels (public)",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var lvls = pm.response.json().data || [];",
+                "if (lvls.length) { pm.collectionVariables.set('level_id', String(lvls[0].id)); }",
+                "pm.test('Levels loaded', () => pm.response.to.have.status(200));"
+              ]}}],
+              "request": {
+                "method": "GET", "header": [],
+                "url": { "raw": "{{base_url}}/api/trainer-levels", "host": ["{{base_url}}"], "path": ["api","trainer-levels"] },
+                "description": "Public. Returns active levels (Beginner, Intermediate, Advanced). Saves `{{level_id}}`."
+              }
+            },
+            {
+              "name": "GET all levels (admin)",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-levels", "host": ["{{base_url}}"], "path": ["api","admin","trainer-levels"] },
+                "description": "Returns all levels including inactive ones."
+              }
+            },
+            {
+              "name": "POST create level",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var id = pm.response.json().data && pm.response.json().data.id;",
+                "if (id) { pm.collectionVariables.set('level_id', String(id)); }"
+              ]}}],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-levels", "host": ["{{base_url}}"], "path": ["api","admin","trainer-levels"] },
+                "body": { "mode": "raw", "raw": "{\n  \"name_en\": \"Expert\",\n  \"name_ar\": \"خبير\",\n  \"description\": \"Elite level for professional competitors.\",\n  \"required_certifications\": [\"FIM Level 3\"],\n  \"sort_order\": 4\n}" }
+              }
+            },
+            {
+              "name": "PUT update level",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-levels/{{level_id}}", "host": ["{{base_url}}"], "path": ["api","admin","trainer-levels","{{level_id}}"] },
+                "body": { "mode": "raw", "raw": "{\n  \"description\": \"Updated description.\",\n  \"is_active\": true\n}" }
+              }
+            },
+            {
+              "name": "DELETE level",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-levels/{{level_id}}", "host": ["{{base_url}}"], "path": ["api","admin","trainer-levels","{{level_id}}"] }
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— Equipment Catalog",
+          "description": "Admin manages the global equipment catalog. Trainers can only select from this list — they cannot add free-form items.",
+          "item": [
+            {
+              "name": "GET all equipment types",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var list = pm.response.json().data || [];",
+                "if (list.length) { pm.collectionVariables.set('equipment_type_id', String(list[0].id)); console.log('equipment_type_id:', list[0].id, list[0].name); }",
+                "pm.test('Types loaded', () => pm.response.to.have.status(200));"
+              ]}}],
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/equipment-types", "host": ["{{base_url}}"], "path": ["api","admin","equipment-types"] },
+                "description": "All types (active and inactive). Saves `{{equipment_type_id}}`.\n\nDefault seeded:\n- 1 = Helmet (خوذة)\n- 2 = Jacket (جاكيت)\n- 3 = Knee Protector (واقي الركبة)\n- 4 = Back Protector (واقي الظهر)\n- 5 = Gloves (قفازات)\n- 6 = Boots (أحذية)"
+              }
+            },
+            {
+              "name": "POST create equipment type",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var id = pm.response.json().data && pm.response.json().data.id;",
+                "if (id) { pm.collectionVariables.set('equipment_type_id', String(id)); }"
+              ]}}],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/admin/equipment-types", "host": ["{{base_url}}"], "path": ["api","admin","equipment-types"] },
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"Airbag Vest\",\n  \"name_ar\": \"سترة هوائية\",\n  \"icon\": \"airbag-vest\",\n  \"sort_order\": 7,\n  \"is_active\": true\n}" },
+                "description": "`name` must be unique. `icon` is the frontend key (SVG name or emoji key)."
+              }
+            },
+            {
+              "name": "PUT update equipment type",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/admin/equipment-types/{{equipment_type_id}}", "host": ["{{base_url}}"], "path": ["api","admin","equipment-types","{{equipment_type_id}}"] },
+                "body": { "mode": "raw", "raw": "{\n  \"is_active\": false\n}" },
+                "description": "Send only the fields to change. `is_active=false` hides it from trainer selection."
+              }
+            },
+            {
+              "name": "DELETE equipment type",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/equipment-types/{{equipment_type_id}}", "host": ["{{base_url}}"], "path": ["api","admin","equipment-types","{{equipment_type_id}}"] },
+                "description": "Hard delete. Linked trainer_equipment rows will have FK set to null."
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— Trainer Applications",
+          "item": [
+            {
+              "name": "GET pending trainers",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var json = pm.response.json();",
+                "var list = (json.data && json.data.data) || json.data || [];",
+                "if (Array.isArray(list) && list.length) { pm.collectionVariables.set('trainer_id', String(list[0].id)); }",
+                "pm.test('Response OK', () => pm.response.to.have.status(200));"
+              ]}}],
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainers?status=pending", "host": ["{{base_url}}"], "path": ["api","admin","trainers"], "query": [{ "key": "status", "value": "pending" }] }
+              }
+            },
+            {
+              "name": "GET all trainers",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainers", "host": ["{{base_url}}"], "path": ["api","admin","trainers"] }
+              }
+            },
+            {
+              "name": "GET trainer detail (admin)",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainers/{{trainer_id}}", "host": ["{{base_url}}"], "path": ["api","admin","trainers","{{trainer_id}}"] }
+              }
+            },
+            {
+              "name": "POST approve levels — All 3",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainers/{{trainer_id}}/approve-levels", "host": ["{{base_url}}"], "path": ["api","admin","trainers","{{trainer_id}}","approve-levels"] },
+                "body": { "mode": "raw", "raw": "{\n  \"levels\": [\n    { \"level_id\": 1, \"approved_price\": 150 },\n    { \"level_id\": 2, \"approved_price\": 220 },\n    { \"level_id\": 3, \"approved_price\": 350 }\n  ],\n  \"approve_trainer\": true\n}" }
+              }
+            },
+            {
+              "name": "POST approve levels — Beginner only",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainers/{{trainer_id}}/approve-levels", "host": ["{{base_url}}"], "path": ["api","admin","trainers","{{trainer_id}}","approve-levels"] },
+                "body": { "mode": "raw", "raw": "{\n  \"levels\": [\n    { \"level_id\": 1, \"approved_price\": 150, \"notes\": \"Certifications verified\" }\n  ],\n  \"approve_trainer\": true\n}" }
+              }
+            },
+            {
+              "name": "POST reject level",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainers/{{trainer_id}}/reject-level", "host": ["{{base_url}}"], "path": ["api","admin","trainers","{{trainer_id}}","reject-level"] },
+                "body": { "mode": "raw", "raw": "{\n  \"level_id\": 3,\n  \"notes\": \"Advanced certifications could not be verified.\"\n}" }
+              }
+            },
+            {
+              "name": "POST reject entire application",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainers/{{trainer_id}}/reject", "host": ["{{base_url}}"], "path": ["api","admin","trainers","{{trainer_id}}","reject"] },
+                "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Required certifications are missing.\"\n}" }
+              }
+            },
+            {
+              "name": "POST suspend trainer",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainers/{{trainer_id}}/suspend", "host": ["{{base_url}}"], "path": ["api","admin","trainers","{{trainer_id}}","suspend"] },
+                "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Repeated client complaints.\"\n}" }
+              }
+            },
+            {
+              "name": "POST reactivate trainer",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainers/{{trainer_id}}/reactivate", "host": ["{{base_url}}"], "path": ["api","admin","trainers","{{trainer_id}}","reactivate"] }
+              }
+            },
+            {
+              "name": "DELETE trainer (hard delete)",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainers/{{trainer_id}}", "host": ["{{base_url}}"], "path": ["api","admin","trainers","{{trainer_id}}"] }
+              }
+            },
+            {
+              "name": "GET export trainers (CSV)",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainers/export", "host": ["{{base_url}}"], "path": ["api","admin","trainers","export"] }
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— Bookings (Admin)",
+          "item": [
+            {
+              "name": "GET all bookings",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-bookings", "host": ["{{base_url}}"], "path": ["api","admin","trainer-bookings"] },
+                "description": "Filter: `?trainer_id=`, `?status=`, `?from_date=`, `?to_date=`."
+              }
+            },
+            {
+              "name": "GET booking detail",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-bookings/{{booking_id}}", "host": ["{{base_url}}"], "path": ["api","admin","trainer-bookings","{{booking_id}}"] }
+              }
+            },
+            {
+              "name": "POST confirm booking (admin)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-bookings/{{booking_id}}/confirm", "host": ["{{base_url}}"], "path": ["api","admin","trainer-bookings","{{booking_id}}","confirm"] }
+              }
+            },
+            {
+              "name": "POST cancel booking (admin)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-bookings/{{booking_id}}/cancel", "host": ["{{base_url}}"], "path": ["api","admin","trainer-bookings","{{booking_id}}","cancel"] },
+                "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Admin override.\"\n}" }
+              }
+            },
+            {
+              "name": "GET export bookings (CSV)",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-bookings/export", "host": ["{{base_url}}"], "path": ["api","admin","trainer-bookings","export"] }
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— Content Moderation",
+          "item": [
+            {
+              "name": "GET all courses (admin)",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-courses", "host": ["{{base_url}}"], "path": ["api","admin","trainer-courses"] }
+              }
+            },
+            {
+              "name": "DELETE course (admin)",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-courses/{{course_id}}", "host": ["{{base_url}}"], "path": ["api","admin","trainer-courses","{{course_id}}"] }
+              }
+            },
+            {
+              "name": "GET all reviews",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-reviews", "host": ["{{base_url}}"], "path": ["api","admin","trainer-reviews"] }
+              }
+            },
+            {
+              "name": "POST approve review",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-reviews/1/approve", "host": ["{{base_url}}"], "path": ["api","admin","trainer-reviews","1","approve"] }
+              }
+            },
+            {
+              "name": "DELETE review",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-reviews/1", "host": ["{{base_url}}"], "path": ["api","admin","trainer-reviews","1"] }
+              }
+            },
+            {
+              "name": "GET all comments",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-comments", "host": ["{{base_url}}"], "path": ["api","admin","trainer-comments"] }
+              }
+            },
+            {
+              "name": "DELETE comment",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-comments/1", "host": ["{{base_url}}"], "path": ["api","admin","trainer-comments","1"] }
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— Stats",
+          "item": [
+            {
+              "name": "GET dashboard stats",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-stats/dashboard", "host": ["{{base_url}}"], "path": ["api","admin","trainer-stats","dashboard"] }
+              }
+            },
+            {
+              "name": "GET revenue breakdown",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+                "url": { "raw": "{{base_url}}/api/admin/trainer-stats/revenue", "host": ["{{base_url}}"], "path": ["api","admin","trainer-stats","revenue"] }
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— DEV ONLY",
+          "item": [
+            {
+              "name": "DELETE reset all trainers ⚠️",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": { "raw": "{{base_url}}/api/dev/trainers/reset-all", "host": ["{{base_url}}"], "path": ["api","dev","trainers","reset-all"] },
+                "description": "TEST ONLY — Truncates all trainer tables. Keeps trainer_levels and specialties. **Remove before production.**"
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Trainer",
+      "description": "Trainer-side endpoints — requires `{{trainer_token}}`.\n\n## ⚠️ Full registration flow (run in order)\n\n### PHASE 1 — Trainer submits profile (admin has NOT approved yet)\n1. **Login**\n2. **Registration** → upload photos → `POST register`\n3. **My Garage** → GET brands → GET models → GET years → POST add bike → PATCH training info\n4. **Training Bikes** → POST select from garage\n5. **Equipment** → GET catalog → POST select from catalog\n\n> Admin can now view the complete profile (bikes + equipment) and decide on approval.\n\n### PHASE 2 — Admin verifies and approves\n→ Switch to **Admin / Trainer Applications** → `POST approve levels`\n\n### PHASE 3 — Trainer completes post-approval setup\n6. **Location & Schedule**\n7. **Courses** → create → publish\n8. **Session Descriptions**\n9. **Gallery**",
+      "item": [
+        {
+          "name": "Login",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var json = pm.response.json();",
+            "var tok = json.token || (json.data && json.data.token);",
+            "if (tok) { pm.collectionVariables.set('trainer_token', tok); console.log('trainer_token saved'); }",
+            "pm.test('Trainer login OK', () => { pm.response.to.have.status(200); pm.expect(tok).to.be.a('string'); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api","login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"login\": \"trainer@dabapp.com\",\n  \"password\": \"YourTrainerPassword\"\n}" }
+          }
+        },
+
+        {
+          "name": "— Registration",
+          "item": [
+            {
+              "name": "POST upload profile photo",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/upload-photo", "host": ["{{base_url}}"], "path": ["api","trainer","upload-photo"] },
+                "body": { "mode": "formdata", "formdata": [{ "key": "photo", "type": "file", "src": "" }] }
+              }
+            },
+            {
+              "name": "POST upload cover photo",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/upload-cover", "host": ["{{base_url}}"], "path": ["api","trainer","upload-cover"] },
+                "body": { "mode": "formdata", "formdata": [{ "key": "cover", "type": "file", "src": "" }] }
+              }
+            },
+            {
+              "name": "POST upload certificate",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/upload-certificates", "host": ["{{base_url}}"], "path": ["api","trainer","upload-certificates"] },
+                "body": { "mode": "formdata", "formdata": [{ "key": "file", "type": "file", "src": "" }] }
+              }
+            },
+            {
+              "name": "POST register as trainer",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var id = pm.response.json().data && pm.response.json().data.id;",
+                "if (id) { pm.collectionVariables.set('trainer_id', String(id)); console.log('trainer_id saved:', id); }",
+                "pm.test('Registration submitted', () => pm.response.to.have.status(201));"
+              ]}}],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/register", "host": ["{{base_url}}"], "path": ["api","trainer","register"] },
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"Youssef Benali\",\n  \"name_ar\": \"يوسف بنعلي\",\n  \"bio\": \"Professional motorcycle trainer with 8 years of experience.\",\n  \"bio_ar\": \"مدرب دراجات نارية محترف مع 8 سنوات من الخبرة.\",\n  \"specialty_ids\": [1, 2],\n  \"experience_years\": 8,\n  \"certifications\": \"FIM Level 2, MSF Certified\",\n  \"photo\": \"trainers/photos/photo.jpg\",\n  \"cover\": \"trainers/covers/cover.jpg\",\n  \"certification_files\": [\"trainers/certs/fim_level2.pdf\"],\n  \"level_prices\": [\n    { \"level_id\": 1, \"price\": 150 },\n    { \"level_id\": 2, \"price\": 220 },\n    { \"level_id\": 3, \"price\": 350 }\n  ]\n}" },
+                "description": "Status starts as `pending` until admin approves. Add bikes to My Garage after registering, then select them as training bikes."
+              }
+            },
+            {
+              "name": "POST register (minimal)",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var id = pm.response.json().data && pm.response.json().data.id;",
+                "if (id) { pm.collectionVariables.set('trainer_id', String(id)); }"
+              ]}}],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/register", "host": ["{{base_url}}"], "path": ["api","trainer","register"] },
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"Test Trainer\",\n  \"experience_years\": 3\n}" }
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— Profile",
+          "item": [
+            {
+              "name": "GET my trainer profile",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var t = pm.response.json().data && pm.response.json().data.trainer;",
+                "if (t && t.id) { pm.collectionVariables.set('trainer_id', String(t.id)); console.log('trainer_id:', t.id, '| status:', t.status); }",
+                "pm.test('Profile loaded', () => pm.response.to.have.status(200));"
+              ]}}],
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/me", "host": ["{{base_url}}"], "path": ["api","trainer","me"] }
+              }
+            },
+            {
+              "name": "POST update profile",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/profile", "host": ["{{base_url}}"], "path": ["api","trainer","profile"] },
+                "body": { "mode": "raw", "raw": "{\n  \"bio\": \"Updated bio.\",\n  \"experience_years\": 9\n}" }
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— My Garage  [STEP 1 – Add Bikes]",
+          "description": "Add motorcycles to your personal garage before selecting them as training bikes.\n\n**Complete bike setup flow:**\n1. GET brands → note `brand_id`\n2. GET models by brand_id → note `model_id`\n3. GET years by model_id → note `year_id`\n4. POST add bike to garage → saves `{{garage_id}}`\n5. PATCH add training info (plate + insurance) — required before selecting as training bike\n6. → Go to **Training Bikes** folder to complete setup",
+          "item": [
+            {
+              "name": "1 · GET motorcycle brands",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var brands = pm.response.json().data || pm.response.json() || [];",
+                "if (Array.isArray(brands) && brands.length) {",
+                "  console.log('Brands (first 5):', brands.slice(0,5).map(b => b.id + '=' + (b.name||b.name_en)).join(', '));",
+                "}",
+                "pm.test('Brands loaded', () => pm.response.to.have.status(200));"
+              ]}}],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": { "raw": "{{base_url}}/api/motorcycle/brands", "host": ["{{base_url}}"], "path": ["api","motorcycle","brands"] },
+                "description": "Public. Returns all motorcycle brands.\n\nCopy the `id` you want and use it in step 2.\n\nExample response:\n```json\n[{\"id\": 7, \"name\": \"BMW\"}, {\"id\": 12, \"name\": \"Honda\"}, ...]\n```"
+              }
+            },
+            {
+              "name": "2 · GET models by brand",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var list = pm.response.json().data || pm.response.json() || [];",
+                "if (Array.isArray(list) && list.length) {",
+                "  console.log('Models (first 5):', list.slice(0,5).map(m => m.id + '=' + (m.name||m.name_en)).join(', '));",
+                "}",
+                "pm.test('Models loaded', () => pm.response.to.have.status(200));"
+              ]}}],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": { "raw": "{{base_url}}/api/motorcycle/models/7", "host": ["{{base_url}}"], "path": ["api","motorcycle","models","7"] },
+                "description": "Public. **Replace `7`** with your brand ID from step 1.\n\nReturns all models for that brand. Copy the model `id` for step 3.\n\nExample: `/motorcycle/models/7` → BMW GS 1250, BMW R1250, ..."
+              }
+            },
+            {
+              "name": "3 · GET years by model",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var list = pm.response.json().data || pm.response.json() || [];",
+                "if (Array.isArray(list) && list.length) {",
+                "  console.log('Years:', list.map(y => y.id + '=' + y.year).join(', '));",
+                "}",
+                "pm.test('Years loaded', () => pm.response.to.have.status(200));"
+              ]}}],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": { "raw": "{{base_url}}/api/motorcycle/years/1", "host": ["{{base_url}}"], "path": ["api","motorcycle","years","1"] },
+                "description": "Public. **Replace `1`** with your model ID from step 2.\n\nReturns year variants for that model. Copy the year `id` for step 4.\n\nExample: `/motorcycle/years/1` → [{\"id\":3, \"year\":2024}, {\"id\":4, \"year\":2023}, ...]"
+              }
+            },
+            {
+              "name": "4 · GET my garage bikes",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var list = pm.response.json().data || [];",
+                "if (list.length) { pm.collectionVariables.set('garage_id', String(list[0].id)); console.log('garage_id:', list[0].id); }",
+                "pm.test('Garage loaded', () => pm.response.to.have.status(200));"
+              ]}}],
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/my-garage", "host": ["{{base_url}}"], "path": ["api","my-garage"] },
+                "description": "List all bikes in the trainer's garage. Saves first bike as `{{garage_id}}`."
+              }
+            },
+            {
+              "name": "5 · POST add bike to garage",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var id = pm.response.json().data && pm.response.json().data.id;",
+                "if (id) { pm.collectionVariables.set('garage_id', String(id)); console.log('garage_id saved:', id); }",
+                "pm.test('Bike added', () => pm.response.to.have.status(201));"
+              ]}}],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/my-garage", "host": ["{{base_url}}"], "path": ["api","my-garage"] },
+                "body": { "mode": "raw", "raw": "{\n  \"brand_id\": 7,\n  \"model_id\": 1,\n  \"year_id\": 1,\n  \"title\": \"My BMW GS\",\n  \"description\": \"Daily touring bike\"\n}" },
+                "description": "Add a motorcycle using IDs from steps 1-3.\n\n- `brand_id` = 7 (BMW — from step 1)\n- `model_id` = 1 (GS 1250 — from step 2, must belong to brand)\n- `year_id` = 1 (2025 — from step 3, must belong to model)\n- `title` optional nickname\n\nSaves `{{garage_id}}`."
+              }
+            },
+            {
+              "name": "6 · PATCH add training info  ← required before selecting as training bike",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/my-garage/{{garage_id}}/training-info", "host": ["{{base_url}}"], "path": ["api","my-garage","{{garage_id}}","training-info"] },
+                "body": { "mode": "raw", "raw": "{\n  \"plate_number\": \"ABC 1234\",\n  \"insurance_expiry\": \"2027-01-01\",\n  \"insurance_covers_training\": true\n}" },
+                "description": "All 3 fields required for `is_training_ready: true`.\n\nUntil this is filled, the bike won't show as training-ready in the Training Bikes list."
+              }
+            },
+            {
+              "name": "GET training completeness",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/my-garage/training-completeness", "host": ["{{base_url}}"], "path": ["api","my-garage","training-completeness"] },
+                "description": "Shows all garage bikes with `is_training_ready` flag and `missing_fields` list."
+              }
+            },
+            {
+              "name": "GET garage bike detail",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/my-garage/{{garage_id}}", "host": ["{{base_url}}"], "path": ["api","my-garage","{{garage_id}}"] }
+              }
+            },
+            {
+              "name": "PUT update garage bike",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/my-garage/{{garage_id}}", "host": ["{{base_url}}"], "path": ["api","my-garage","{{garage_id}}"] },
+                "body": { "mode": "raw", "raw": "{\n  \"title\": \"My Adventure BMW\",\n  \"description\": \"Updated\"\n}" }
+              }
+            },
+            {
+              "name": "GET default bike",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/my-garage/default", "host": ["{{base_url}}"], "path": ["api","my-garage","default"] }
+              }
+            },
+            {
+              "name": "POST set as default bike",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/my-garage/{{garage_id}}/set-default", "host": ["{{base_url}}"], "path": ["api","my-garage","{{garage_id}}","set-default"] }
+              }
+            },
+            {
+              "name": "DELETE remove bike from garage",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/my-garage/{{garage_id}}", "host": ["{{base_url}}"], "path": ["api","my-garage","{{garage_id}}"] },
+                "description": "Removes from garage entirely. Also removes from training bikes list if selected."
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— Training Bikes  [STEP 2 – Select from Garage]",
+          "description": "Select bikes from My Garage as training bikes.\n\n**Pre-requisite:** Bike must be in My Garage AND have `plate_number`, `insurance_expiry`, and `insurance_covers_training` set (step 6 in My Garage).\n\n**Flow:**\n1. POST select bike → use `garage_id` from My Garage\n2. PATCH set-primary if you have multiple bikes\n3. DELETE removes from training list only (bike stays in garage)",
+          "item": [
+            {
+              "name": "GET my training bikes",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var list = pm.response.json().data || [];",
+                "if (list.length) { pm.collectionVariables.set('garage_id', String(list[0].garage_id)); console.log('garage_id:', list[0].garage_id, '| ready:', list[0].is_training_ready); }",
+                "pm.test('Training bikes loaded', () => pm.response.to.have.status(200));"
+              ]}}],
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/training-bikes", "host": ["{{base_url}}"], "path": ["api","trainer","training-bikes"] },
+                "description": "Returns all garage bikes selected for training. Each includes `is_training_ready` flag showing if plate + insurance are filled."
+              }
+            },
+            {
+              "name": "POST select bike from garage",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var d = pm.response.json().data;",
+                "if (d && d.garage_id) { pm.collectionVariables.set('garage_id', String(d.garage_id)); console.log('garage_id:', d.garage_id); }",
+                "pm.test('Bike selected as training bike', () => pm.response.to.have.status(201));"
+              ]}}],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/training-bikes", "host": ["{{base_url}}"], "path": ["api","trainer","training-bikes"] },
+                "body": { "mode": "raw", "raw": "{\n  \"garage_id\": {{garage_id}},\n  \"is_primary\": true\n}" },
+                "description": "Select a garage bike as a training bike.\n\n- `garage_id` — from My Garage (saved as `{{garage_id}}`)\n- `is_primary` — set to true for the main training bike (auto-clears other primary)\n\nReturns 409 if bike already selected."
+              }
+            },
+            {
+              "name": "PATCH set primary training bike",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/training-bikes/{{garage_id}}/set-primary", "host": ["{{base_url}}"], "path": ["api","trainer","training-bikes","{{garage_id}}","set-primary"] },
+                "description": "Marks this bike as primary. All other training bikes are set to non-primary automatically."
+              }
+            },
+            {
+              "name": "DELETE remove from training list",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/training-bikes/{{garage_id}}", "host": ["{{base_url}}"], "path": ["api","trainer","training-bikes","{{garage_id}}"] },
+                "description": "Removes the bike from the training list only. The bike stays in My Garage."
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— Equipment  [STEP 3 – Select from Catalog]",
+          "description": "Select equipment from the admin-managed catalog.\n\n**Flow:**\n1. GET catalog (public) → see available types and their IDs\n2. POST select → send array of type IDs in one request\n3. GET my equipment → confirm selection\n4. PATCH toggle `is_available` anytime\n5. DELETE to remove from your selection",
+          "item": [
+            {
+              "name": "1 · GET equipment catalog (public)",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var list = pm.response.json().data || [];",
+                "if (list.length) { pm.collectionVariables.set('equipment_type_id', String(list[0].id)); console.log('Types:', list.map(t => t.id + '=' + t.name).join(', ')); }",
+                "pm.test('Catalog loaded', () => pm.response.to.have.status(200));"
+              ]}}],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": { "raw": "{{base_url}}/api/equipment-types", "host": ["{{base_url}}"], "path": ["api","equipment-types"] },
+                "description": "Public endpoint. Returns all active equipment types.\n\nDefault types:\n- id=1 → Helmet (خوذة)\n- id=2 → Jacket (جاكيت)\n- id=3 → Knee Protector (واقي الركبة)\n- id=4 → Back Protector (واقي الظهر)\n- id=5 → Gloves (قفازات)\n- id=6 → Boots (أحذية)\n\nSaves `{{equipment_type_id}}`."
+              }
+            },
+            {
+              "name": "2 · POST select equipment from catalog",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var items = pm.response.json().data || [];",
+                "if (items.length) { pm.collectionVariables.set('equipment_id', String(items[0].id)); console.log('equipment_id saved:', items[0].id); }",
+                "pm.test('Equipment selected', () => pm.response.to.have.status(201));"
+              ]}}],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/equipment", "host": ["{{base_url}}"], "path": ["api","trainer","equipment"] },
+                "body": { "mode": "raw", "raw": "{\n  \"equipment_type_ids\": [1, 2, 3, 4, 5, 6]\n}" },
+                "description": "Select equipment types by their catalog IDs.\n\nNames, Arabic translations, and icons are copied automatically from the catalog. Already-selected types are skipped (no duplicates).\n\nSaves `{{equipment_id}}` (first created item's row ID)."
+              }
+            },
+            {
+              "name": "GET my selected equipment",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/equipment", "host": ["{{base_url}}"], "path": ["api","trainer","equipment"] },
+                "description": "Returns all equipment types the trainer has selected, with `is_available` flag."
+              }
+            },
+            {
+              "name": "PATCH toggle availability",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/equipment/{{equipment_id}}", "host": ["{{base_url}}"], "path": ["api","trainer","equipment","{{equipment_id}}"] },
+                "body": { "mode": "raw", "raw": "{\n  \"is_available\": false\n}" },
+                "description": "`equipment_id` is the row ID in the trainer's selection (not the catalog type ID).\n\n`is_available=false` hides this item from clients."
+              }
+            },
+            {
+              "name": "DELETE remove equipment",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/equipment/{{equipment_id}}", "host": ["{{base_url}}"], "path": ["api","trainer","equipment","{{equipment_id}}"] },
+                "description": "Remove an equipment item from the trainer's selection. Does not affect the global catalog."
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— Location & Schedule",
+          "item": [
+            {
+              "name": "POST add training location",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var id = pm.response.json().data && pm.response.json().data.id;",
+                "if (id) { pm.collectionVariables.set('location_id', String(id)); console.log('location_id saved:', id); }",
+                "pm.test('Location added', () => pm.response.to.have.status(201));"
+              ]}}],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/locations", "host": ["{{base_url}}"], "path": ["api","trainer","locations"] },
+                "body": { "mode": "raw", "raw": "{\n  \"location_name\": \"Marrakech Circuit\",\n  \"location_name_ar\": \"حلبة مراكش\",\n  \"city_id\": 1,\n  \"latitude\": 31.6295,\n  \"longitude\": -7.9811,\n  \"price_per_hour\": 150\n}" }
+              }
+            },
+            {
+              "name": "DELETE location",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/locations/{{location_id}}", "host": ["{{base_url}}"], "path": ["api","trainer","locations","{{location_id}}"] }
+              }
+            },
+            {
+              "name": "GET weekly schedule",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/schedule", "host": ["{{base_url}}"], "path": ["api","trainer","schedule"] }
+              }
+            },
+            {
+              "name": "POST set weekly schedule",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/schedule", "host": ["{{base_url}}"], "path": ["api","trainer","schedule"] },
+                "body": { "mode": "raw", "raw": "{\n  \"schedule\": [\n    { \"day_of_week\": 5, \"start_time\": \"08:00\", \"end_time\": \"18:00\", \"is_available\": true },\n    { \"day_of_week\": 6, \"start_time\": \"08:00\", \"end_time\": \"14:00\", \"is_available\": true },\n    { \"day_of_week\": 0, \"start_time\": \"09:00\", \"end_time\": \"17:00\", \"is_available\": true }\n  ]\n}" },
+                "description": "`day_of_week`: 0=Sunday … 6=Saturday."
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— Courses",
+          "item": [
+            {
+              "name": "GET my courses",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/courses", "host": ["{{base_url}}"], "path": ["api","trainer","courses"] },
+                "description": "All courses (all statuses). Filter: `?status=draft|published|archived`."
+              }
+            },
+            {
+              "name": "POST create course — fixed location",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var id = pm.response.json().data && pm.response.json().data.id;",
+                "if (id) { pm.collectionVariables.set('course_id', String(id)); console.log('course_id saved:', id); }",
+                "pm.test('Course created', () => pm.response.to.have.status(201));"
+              ]}}],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/courses", "host": ["{{base_url}}"], "path": ["api","trainer","courses"] },
+                "body": { "mode": "raw", "raw": "{\n  \"title\": \"Beginner Circuit Training\",\n  \"title_ar\": \"تدريب المبتدئين في الحلبة\",\n  \"description\": \"Learn the fundamentals of motorcycle control.\",\n  \"description_ar\": \"تعلم أساسيات التحكم بالدراجة النارية.\",\n  \"level_id\": 1,\n  \"hours_per_session\": 2,\n  \"total_sessions\": 5,\n  \"original_price\": 150,\n  \"promo_price\": 120,\n  \"location_id\": {{location_id}},\n  \"can_travel\": false\n}" }
+              }
+            },
+            {
+              "name": "POST create course — with travel",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var id = pm.response.json().data && pm.response.json().data.id;",
+                "if (id) { pm.collectionVariables.set('course_id', String(id)); }"
+              ]}}],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/courses", "host": ["{{base_url}}"], "path": ["api","trainer","courses"] },
+                "body": { "mode": "raw", "raw": "{\n  \"title\": \"Home Visit — Beginner Training\",\n  \"title_ar\": \"زيارة منزلية — تدريب المبتدئين\",\n  \"description\": \"I come to your location.\",\n  \"level_id\": 1,\n  \"hours_per_session\": 2,\n  \"total_sessions\": 3,\n  \"original_price\": 200,\n  \"can_travel\": true,\n  \"price_per_km\": 2.50\n}" },
+                "description": "Trainer travels to client. `price_per_km` is required when `can_travel=true`."
+              }
+            },
+            {
+              "name": "PUT update course",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/courses/{{course_id}}", "host": ["{{base_url}}"], "path": ["api","trainer","courses","{{course_id}}"] },
+                "body": { "mode": "raw", "raw": "{\n  \"promo_price\": 100,\n  \"description\": \"Updated description.\"\n}" }
+              }
+            },
+            {
+              "name": "POST publish course",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/courses/{{course_id}}/publish", "host": ["{{base_url}}"], "path": ["api","trainer","courses","{{course_id}}","publish"] },
+                "description": "`draft` or `archived` → `published` + `is_active=true`. Course becomes visible to clients."
+              }
+            },
+            {
+              "name": "POST archive course",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/courses/{{course_id}}/archive", "host": ["{{base_url}}"], "path": ["api","trainer","courses","{{course_id}}","archive"] },
+                "description": "`published` → `archived` + `is_active=false`. Hidden from clients. Can be republished later."
+              }
+            },
+            {
+              "name": "DELETE course",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/courses/{{course_id}}", "host": ["{{base_url}}"], "path": ["api","trainer","courses","{{course_id}}"] },
+                "description": "Only `draft` or `archived` courses can be deleted. Published courses must be archived first."
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— Session Descriptions",
+          "item": [
+            {
+              "name": "GET course sessions (trainer)",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/courses/{{course_id}}/sessions", "host": ["{{base_url}}"], "path": ["api","trainer","courses","{{course_id}}","sessions"] }
+              }
+            },
+            {
+              "name": "PUT save all sessions (upsert)",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/courses/{{course_id}}/sessions", "host": ["{{base_url}}"], "path": ["api","trainer","courses","{{course_id}}","sessions"] },
+                "body": { "mode": "raw", "raw": "{\n  \"sessions\": [\n    {\n      \"session_number\": 1,\n      \"title\": \"Introduction & Safety\",\n      \"title_ar\": \"المقدمة والسلامة\",\n      \"description\": \"Getting familiar with the bike and safety gear check.\",\n      \"description_ar\": \"التعرف على الدراجة وفحص معدات السلامة.\",\n      \"duration_hours\": 2\n    },\n    {\n      \"session_number\": 2,\n      \"title\": \"Balance & Low-Speed Control\",\n      \"title_ar\": \"التوازن والتحكم بالسرعات المنخفضة\",\n      \"description\": \"Slow-speed maneuvers and figure-8 drills.\",\n      \"description_ar\": \"المناورات بالسرعات المنخفضة وتمارين الثماني.\",\n      \"duration_hours\": 2\n    },\n    {\n      \"session_number\": 3,\n      \"title\": \"Cornering Basics\",\n      \"title_ar\": \"أساسيات الانعطاف\",\n      \"description\": \"Entry point, apex, exit point.\",\n      \"description_ar\": \"نقطة الدخول والذروة والخروج.\",\n      \"duration_hours\": 2\n    },\n    {\n      \"session_number\": 4,\n      \"title\": \"Braking Techniques\",\n      \"title_ar\": \"تقنيات الكبح\",\n      \"description\": \"Progressive braking and emergency stops.\",\n      \"description_ar\": \"الكبح التدريجي والتوقف الطارئ.\",\n      \"duration_hours\": 2\n    },\n    {\n      \"session_number\": 5,\n      \"title\": \"Full Circuit Lap\",\n      \"title_ar\": \"جولة كاملة في الحلبة\",\n      \"description\": \"Combining all skills in a full supervised lap.\",\n      \"description_ar\": \"دمج جميع المهارات في جولة كاملة تحت الإشراف.\",\n      \"duration_hours\": 2\n    }\n  ]\n}" }
+              }
+            },
+            {
+              "name": "PATCH update single session",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/courses/{{course_id}}/sessions/1", "host": ["{{base_url}}"], "path": ["api","trainer","courses","{{course_id}}","sessions","1"] },
+                "body": { "mode": "raw", "raw": "{\n  \"title\": \"Introduction — Updated\",\n  \"description\": \"Revised session 1.\"\n}" }
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— Gallery",
+          "item": [
+            {
+              "name": "GET my gallery",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/gallery", "host": ["{{base_url}}"], "path": ["api","trainer","gallery"] }
+              }
+            },
+            {
+              "name": "POST add gallery photos",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var data = pm.response.json().data || [];",
+                "if (data.length) { pm.collectionVariables.set('gallery_id', String(data[0].id)); console.log('gallery_id saved:', data[0].id); }"
+              ]}}],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/gallery", "host": ["{{base_url}}"], "path": ["api","trainer","gallery"] },
+                "body": { "mode": "raw", "raw": "{\n  \"images\": [\n    \"trainers/gallery/photo1.jpg\",\n    \"trainers/gallery/photo2.jpg\"\n  ],\n  \"caption\": \"Track day at Marrakech Circuit\",\n  \"caption_ar\": \"يوم في حلبة مراكش\"\n}" }
+              }
+            },
+            {
+              "name": "PATCH update gallery caption",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/gallery/{{gallery_id}}", "host": ["{{base_url}}"], "path": ["api","trainer","gallery","{{gallery_id}}"] },
+                "body": { "mode": "raw", "raw": "{\n  \"caption\": \"Updated\",\n  \"caption_ar\": \"محدث\"\n}" }
+              }
+            },
+            {
+              "name": "POST reorder gallery",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/gallery/reorder", "host": ["{{base_url}}"], "path": ["api","trainer","gallery","reorder"] },
+                "body": { "mode": "raw", "raw": "{\n  \"ids\": [3, 1, 2]\n}" }
+              }
+            },
+            {
+              "name": "DELETE gallery photo",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/gallery/{{gallery_id}}", "host": ["{{base_url}}"], "path": ["api","trainer","gallery","{{gallery_id}}"] }
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— Incoming Sessions",
+          "item": [
+            {
+              "name": "GET my sessions",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/sessions", "host": ["{{base_url}}"], "path": ["api","trainer","sessions"] },
+                "description": "Filter: `?status=confirmed|in_progress|awaiting_confirmation|completed`."
+              }
+            },
+            {
+              "name": "GET session detail",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/sessions/{{booking_id}}", "host": ["{{base_url}}"], "path": ["api","trainer","sessions","{{booking_id}}"] }
+              }
+            },
+            {
+              "name": "POST start session",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/sessions/{{booking_id}}/start", "host": ["{{base_url}}"], "path": ["api","trainer","sessions","{{booking_id}}","start"] },
+                "description": "`confirmed` → `in_progress`. Requires `payment_status=paid`."
+              }
+            },
+            {
+              "name": "POST complete session",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/sessions/{{booking_id}}/complete", "host": ["{{base_url}}"], "path": ["api","trainer","sessions","{{booking_id}}","complete"] },
+                "description": "`in_progress` → `awaiting_confirmation`. Client is notified to confirm."
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Client",
+      "description": "Client endpoints — requires `{{token}}`.\n\nFlow: Login → Discover trainers → view bikes & equipment → browse courses → check availability → book → pay → confirm → review.",
+      "item": [
+        {
+          "name": "Login",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var json = pm.response.json();",
+            "var tok = json.token || (json.data && json.data.token);",
+            "if (tok) { pm.collectionVariables.set('token', tok); console.log('token saved'); }",
+            "pm.test('Client login OK', () => { pm.response.to.have.status(200); pm.expect(tok).to.be.a('string'); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api","login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"login\": \"admin@dabapp.com\",\n  \"password\": \"YourAdminPassword\"\n}" }
+          }
+        },
+
+        {
+          "name": "— Discover",
+          "item": [
+            {
+              "name": "GET active levels (public)",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var lvls = pm.response.json().data || [];",
+                "if (lvls.length) { pm.collectionVariables.set('level_id', String(lvls[0].id)); }",
+                "pm.test('Levels returned', () => pm.response.to.have.status(200));"
+              ]}}],
+              "request": {
+                "method": "GET", "header": [],
+                "url": { "raw": "{{base_url}}/api/trainer-levels", "host": ["{{base_url}}"], "path": ["api","trainer-levels"] }
+              }
+            },
+            {
+              "name": "GET all specialties (public)",
+              "request": {
+                "method": "GET", "header": [],
+                "url": { "raw": "{{base_url}}/api/specialties", "host": ["{{base_url}}"], "path": ["api","specialties"] }
+              }
+            },
+            {
+              "name": "GET all approved trainers",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var list = (pm.response.json().data && pm.response.json().data.data) || pm.response.json().data || [];",
+                "if (Array.isArray(list) && list.length) { pm.collectionVariables.set('trainer_id', String(list[0].id)); console.log('trainer_id:', list[0].id); }",
+                "pm.test('Trainers loaded', () => pm.response.to.have.status(200));"
+              ]}}],
+              "request": {
+                "method": "GET", "header": [],
+                "url": { "raw": "{{base_url}}/api/trainers", "host": ["{{base_url}}"], "path": ["api","trainers"] },
+                "description": "Filter: `?specialty_id=`, `?level_id=`, `?city_id=`, `?search=`."
+              }
+            },
+            {
+              "name": "GET trainer profile",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var t = pm.response.json().data || {};",
+                "if ((t.locations||[]).length) { pm.collectionVariables.set('location_id', String(t.locations[0].id)); }",
+                "if ((t.courses||[]).length) { pm.collectionVariables.set('course_id', String(t.courses[0].id)); }",
+                "pm.test('Profile loaded', () => pm.response.to.have.status(200));"
+              ]}}],
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}"] },
+                "description": "Full profile: specialties, approved levels with prices, locations, training bikes, equipment, gallery, reviews."
+              }
+            },
+            {
+              "name": "GET trainer training bikes (public)",
+              "request": {
+                "method": "GET", "header": [],
+                "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/training-bikes", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","training-bikes"] },
+                "description": "Returns bikes the trainer uses for training. Shows brand, model, year, title, is_primary.\n\nOnly returns data for approved trainers."
+              }
+            },
+            {
+              "name": "GET trainer equipment (public)",
+              "request": {
+                "method": "GET", "header": [],
+                "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/equipment", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","equipment"] },
+                "description": "Returns only available equipment (`is_available=true`). Includes name, name_ar, icon."
+              }
+            },
+            {
+              "name": "GET trainer published courses",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var list = (pm.response.json().data && pm.response.json().data.data) || pm.response.json().data || [];",
+                "if (list.length) { pm.collectionVariables.set('course_id', String(list[0].id)); console.log('course_id:', list[0].id); }"
+              ]}}],
+              "request": {
+                "method": "GET", "header": [],
+                "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/courses", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","courses"] },
+                "description": "Published courses only (`status=published` AND `is_active=true`). Filter: `?level_id=`."
+              }
+            },
+            {
+              "name": "GET course session descriptions (public)",
+              "request": {
+                "method": "GET", "header": [],
+                "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/courses/{{course_id}}/sessions", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","courses","{{course_id}}","sessions"] }
+              }
+            },
+            {
+              "name": "GET trainer gallery (public)",
+              "request": {
+                "method": "GET", "header": [],
+                "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/gallery", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","gallery"] }
+              }
+            },
+            {
+              "name": "GET trainer reviews (public)",
+              "request": {
+                "method": "GET", "header": [],
+                "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/reviews", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","reviews"] }
+              }
+            },
+            {
+              "name": "GET calculate travel price",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var d = pm.response.json().data || {};",
+                "if (d.total_with_travel !== undefined) { console.log('Session: ' + d.session_price + ' | Travel: ' + d.travel_cost + ' | TOTAL: ' + d.total_with_travel); }",
+                "pm.test('Price calculated', () => pm.response.to.have.status(200));"
+              ]}}],
+              "request": {
+                "method": "GET", "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/trainers/{{trainer_id}}/travel-price?course_id={{course_id}}&km=30",
+                  "host": ["{{base_url}}"],
+                  "path": ["api","trainers","{{trainer_id}}","travel-price"],
+                  "query": [
+                    { "key": "course_id", "value": "{{course_id}}" },
+                    { "key": "km", "value": "30" }
+                  ]
+                },
+                "description": "Only works when course has `can_travel=true` and `price_per_km` set."
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— Availability & Booking",
+          "item": [
+            {
+              "name": "GET trainer availability — this week",
+              "event": [
+                { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+                  "var today = new Date();",
+                  "pm.variables.set('week_from', today.toISOString().split('T')[0]);",
+                  "var to = new Date(today.getTime() + 7 * 86400000);",
+                  "pm.variables.set('week_to', to.toISOString().split('T')[0]);"
+                ]}},
+                { "listen": "test", "script": { "type": "text/javascript", "exec": [
+                  "pm.test('Availability returned', () => pm.response.to.have.status(200));"
+                ]}}
+              ],
+              "request": {
+                "method": "GET", "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/trainers/{{trainer_id}}/availability?from_date={{week_from}}&to_date={{week_to}}&location_id={{location_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api","trainers","{{trainer_id}}","availability"],
+                  "query": [
+                    { "key": "from_date", "value": "{{week_from}}" },
+                    { "key": "to_date", "value": "{{week_to}}" },
+                    { "key": "location_id", "value": "{{location_id}}" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "POST book a course session",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var data = pm.response.json().data || {};",
+                "if (data.booking_id) { pm.collectionVariables.set('booking_id', String(data.booking_id)); }",
+                "if (data.payment_url) { pm.collectionVariables.set('payment_url', data.payment_url); }",
+                "pm.test('Booking created', () => pm.response.to.have.status(201));"
+              ]}}],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/book", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","book"] },
+                "body": { "mode": "raw", "raw": "{\n  \"course_id\": {{course_id}},\n  \"booking_date\": \"2026-07-15\",\n  \"start_time\": \"09:00\",\n  \"location_id\": {{location_id}},\n  \"notes\": \"First session — beginner rider\"\n}" }
+              }
+            },
+            {
+              "name": "POST book without course (ad-hoc)",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var data = pm.response.json().data || {};",
+                "if (data.booking_id) { pm.collectionVariables.set('booking_id', String(data.booking_id)); }",
+                "if (data.payment_url) { pm.collectionVariables.set('payment_url', data.payment_url); }"
+              ]}}],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/book", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","book"] },
+                "body": { "mode": "raw", "raw": "{\n  \"booking_date\": \"2026-07-15\",\n  \"start_time\": \"09:00\",\n  \"duration_hours\": 2,\n  \"session_type\": \"beginner\",\n  \"location_id\": {{location_id}}\n}" }
+              }
+            },
+            {
+              "name": "POST re-initiate payment",
+              "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+                "var url = pm.response.json().data && pm.response.json().data.payment_url;",
+                "if (url) { pm.collectionVariables.set('payment_url', url); }"
+              ]}}],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/bookings/{{booking_id}}/pay", "host": ["{{base_url}}"], "path": ["api","trainer","bookings","{{booking_id}}","pay"] }
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— My Bookings",
+          "item": [
+            {
+              "name": "GET all my bookings",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/bookings", "host": ["{{base_url}}"], "path": ["api","trainer","bookings"] }
+              }
+            },
+            {
+              "name": "GET my upcoming bookings",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/bookings?upcoming=true", "host": ["{{base_url}}"], "path": ["api","trainer","bookings"], "query": [{ "key": "upcoming", "value": "true" }] }
+              }
+            },
+            {
+              "name": "GET booking detail",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/bookings/{{booking_id}}", "host": ["{{base_url}}"], "path": ["api","trainer","bookings","{{booking_id}}"] },
+                "description": "Includes `can_review` flag (true when completed and not yet reviewed)."
+              }
+            },
+            {
+              "name": "POST confirm session completion",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainer/bookings/{{booking_id}}/confirm-completion", "host": ["{{base_url}}"], "path": ["api","trainer","bookings","{{booking_id}}","confirm-completion"] },
+                "description": "`awaiting_confirmation` → `completed`."
+              }
+            },
+            {
+              "name": "POST leave a review",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/bookings/{{booking_id}}/review", "host": ["{{base_url}}"], "path": ["api","trainer","bookings","{{booking_id}}","review"] },
+                "body": { "mode": "raw", "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Excellent trainer! Very patient and professional.\",\n  \"comment_ar\": \"مدرب ممتاز! صبور ومحترف جداً.\"\n}" }
+              }
+            },
+            {
+              "name": "POST cancel booking",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/bookings/{{booking_id}}/cancel", "host": ["{{base_url}}"], "path": ["api","trainer","bookings","{{booking_id}}","cancel"] },
+                "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Schedule conflict.\"\n}" }
+              }
+            },
+            {
+              "name": "POST dispute session",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainer/bookings/{{booking_id}}/dispute", "host": ["{{base_url}}"], "path": ["api","trainer","bookings","{{booking_id}}","dispute"] },
+                "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Trainer did not show up.\"\n}" }
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "— Social",
+          "item": [
+            {
+              "name": "POST like trainer (toggle)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/like", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","like"] }
+              }
+            },
+            {
+              "name": "POST favorite trainer (toggle)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+                "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/favorite", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","favorite"] }
+              }
+            },
+            {
+              "name": "GET my favorite trainers",
+              "request": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+                "url": { "raw": "{{base_url}}/api/user/trainer-favorites", "host": ["{{base_url}}"], "path": ["api","user","trainer-favorites"] }
+              }
+            },
+            {
+              "name": "GET trainer comments (public)",
+              "request": {
+                "method": "GET", "header": [],
+                "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/comments", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","comments"] }
+              }
+            },
+            {
+              "name": "POST add comment",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+                "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/comments", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","comments"] },
+                "body": { "mode": "raw", "raw": "{\n  \"comment\": \"Great trainer, highly recommend!\"\n}" }
+              }
+            }
+          ]
+        }
+      ]
+    }
+
+  ]
+}

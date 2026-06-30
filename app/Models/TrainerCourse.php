@@ -24,6 +24,7 @@ class TrainerCourse extends Model
         'promo_price',
         'location_id',
         'can_travel',
+        'price_per_km',
         'status',
         'is_active',
     ];
@@ -34,8 +35,9 @@ class TrainerCourse extends Model
         'session_date'      => 'date',
         'original_price'    => 'decimal:2',
         'promo_price'       => 'decimal:2',
-        'can_travel'        => 'boolean',
-        'is_active'         => 'boolean',
+        'can_travel'    => 'boolean',
+        'price_per_km'  => 'decimal:2',
+        'is_active'     => 'boolean',
     ];
 
     protected $appends = ['effective_price', 'total_price', 'localized_title', 'localized_description'];
@@ -53,6 +55,11 @@ class TrainerCourse extends Model
     public function location()
     {
         return $this->belongsTo(TrainerLocation::class, 'location_id');
+    }
+
+    public function sessions()
+    {
+        return $this->hasMany(TrainerCourseSession::class, 'course_id')->orderBy('session_number');
     }
 
     public function scopePublished($query)

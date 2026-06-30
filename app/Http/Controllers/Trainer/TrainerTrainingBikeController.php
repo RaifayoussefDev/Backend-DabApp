@@ -214,4 +214,52 @@ class TrainerTrainingBikeController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Primary training bike updated']);
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/trainers/{id}/training-bikes",
+     *     summary="Get trainer training bikes (public)",
+     *     description="Returns the bikes a trainer uses for training sessions. Only bikes belonging to an approved trainer.",
+     *     operationId="publicTrainingBikes",
+     *     tags={"Trainer - Training Bikes"},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=4)),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Training bikes list",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(type="object",
+     *                     @OA\Property(property="is_primary", type="boolean"),
+     *                     @OA\Property(property="brand",      type="string", example="BMW"),
+     *                     @OA\Property(property="model",      type="string", example="GS 1250"),
+     *                     @OA\Property(property="year",       type="integer", example=2024),
+     *                     @OA\Property(property="title",      type="string", nullable=true)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Trainer not found")
+     * )
+     */
+    public function publicIndex(int $trainerId)
+    {
+        $trainer = Trainer::approved()->find($trainerId);
+        if (!$trainer) {
+            return response()->json(['success' => false, 'message' => 'Trainer not found'], 404);
+        }
+
+        $bikes = TrainerTrainingBike::with(['garage.brand', 'garage.model', 'garage.year'])
+            ->where('trainer_id', $trainer->id)
+            ->get()
+            ->map(fn ($b) => [
+                'is_primary' => $b->is_primary,
+                'brand'      => $b->garage?->brand?->name,
+                'model'      => $b->garage?->model?->name,
+                'year'       => $b->garage?->year?->year,
+                'title'      => $b->garage?->title,
+            ]);
+
+        return response()->json(['success' => true, 'data' => $bikes]);
+    }
 }
