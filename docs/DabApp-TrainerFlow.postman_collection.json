@@ -1,0 +1,753 @@
+{
+  "info": {
+    "name": "DabApp – Trainer Flow (Login → Courses → Booking)",
+    "description": "Linear flow: Trainer login → register → admin approval → create 2 courses (fixed + travel with sessions) → client books both → completion",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",      "value": "https://be.dabapp.co" },
+    { "key": "trainer_token", "value": "" },
+    { "key": "admin_token",   "value": "" },
+    { "key": "token",         "value": "" },
+    { "key": "trainer_id",    "value": "" },
+    { "key": "garage_id",     "value": "" },
+    { "key": "brand_id",      "value": "" },
+    { "key": "model_id",      "value": "" },
+    { "key": "year_id",       "value": "" },
+    { "key": "location_id",   "value": "" },
+    { "key": "course_a_id",   "value": "" },
+    { "key": "course_b_id",   "value": "" },
+    { "key": "booking_a_id",  "value": "" },
+    { "key": "booking_b_id",  "value": "" },
+    { "key": "payment_url_a", "value": "" },
+    { "key": "payment_url_b", "value": "" }
+  ],
+  "item": [
+
+    {
+      "name": "Phase 1 – Trainer Setup",
+      "item": [
+
+        {
+          "name": "01 – Trainer Login",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "if (json.data && json.data.token) {",
+                "  pm.collectionVariables.set('trainer_token', json.data.token);",
+                "  console.log('trainer_token saved:', json.data.token);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"trainer@dabapp.com\",\n  \"password\": \"Trainer@dabapp1\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api","login"] }
+          }
+        },
+
+        {
+          "name": "02 – Register Trainer Profile",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "if (json.data && json.data.trainer_id) {",
+                "  pm.collectionVariables.set('trainer_id', json.data.trainer_id);",
+                "  console.log('trainer_id saved:', json.data.trainer_id);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{trainer_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Professional motorcycle instructor with 8+ years of track experience.\",\n  \"bio_ar\": \"مدرب دراجات نارية محترف مع أكثر من 8 سنوات من خبرة الحلبة.\",\n  \"phone\": \"+971501234567\",\n  \"specialties\": [1, 2],\n  \"levels\": [\n    { \"level_id\": 1, \"requested_price\": 150 },\n    { \"level_id\": 2, \"requested_price\": 200 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainer/register", "host": ["{{base_url}}"], "path": ["api","trainer","register"] }
+          }
+        },
+
+        {
+          "name": "03 – Get Motorcycle Brands",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "var list = Array.isArray(json) ? json : (json.data || []);",
+                "if (list.length > 0) {",
+                "  pm.collectionVariables.set('brand_id', list[0].id);",
+                "  console.log('brand_id saved:', list[0].id, list[0].name);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/motorcycle/brands", "host": ["{{base_url}}"], "path": ["api","motorcycle","brands"] }
+          }
+        },
+
+        {
+          "name": "04 – Get Models by Brand",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "var list = Array.isArray(json) ? json : (json.data || []);",
+                "if (list.length > 0) {",
+                "  pm.collectionVariables.set('model_id', list[0].id);",
+                "  console.log('model_id saved:', list[0].id, list[0].name);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/motorcycle/models/{{brand_id}}", "host": ["{{base_url}}"], "path": ["api","motorcycle","models","{{brand_id}}"] }
+          }
+        },
+
+        {
+          "name": "05 – Get Years by Model",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "var list = Array.isArray(json) ? json : (json.data || []);",
+                "if (list.length > 0) {",
+                "  pm.collectionVariables.set('year_id', list[0].id);",
+                "  console.log('year_id saved:', list[0].id, list[0].year);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/motorcycle/years/{{model_id}}", "host": ["{{base_url}}"], "path": ["api","motorcycle","years","{{model_id}}"] }
+          }
+        },
+
+        {
+          "name": "06 – Add Bike to Garage",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "var id = json.data && (json.data.id || (json.data.garage && json.data.garage.id));",
+                "if (id) {",
+                "  pm.collectionVariables.set('garage_id', id);",
+                "  console.log('garage_id saved:', id);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{trainer_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"brand_id\": {{brand_id}},\n  \"model_id\": {{model_id}},\n  \"year_id\":  {{year_id}},\n  \"title\":    \"My Training Bike\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/my-garage", "host": ["{{base_url}}"], "path": ["api","my-garage"] }
+          }
+        },
+
+        {
+          "name": "07 – Add Training Info (plate + insurance)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "console.log('is_training_ready:', json.data && json.data.is_training_ready);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{trainer_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plate_number\":             \"DXB 12345\",\n  \"insurance_expiry\":         \"2027-12-31\",\n  \"insurance_covers_training\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/my-garage/{{garage_id}}/training-info", "host": ["{{base_url}}"], "path": ["api","my-garage","{{garage_id}}","training-info"] }
+          }
+        },
+
+        {
+          "name": "08 – Get Equipment Catalog",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "var list = json.data || [];",
+                "console.log('Equipment types:', list.map(function(e){ return e.id + ':' + e.name; }).join(', '));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/equipment-types", "host": ["{{base_url}}"], "path": ["api","equipment-types"] }
+          }
+        },
+
+        {
+          "name": "09 – Select Equipment from Catalog",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{trainer_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"equipment_type_ids\": [1, 2, 3, 4, 5, 6]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainer/equipment", "host": ["{{base_url}}"], "path": ["api","trainer","equipment"] }
+          }
+        },
+
+        {
+          "name": "10 – Select Training Bike",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{trainer_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"garage_id\":  {{garage_id}},\n  \"is_primary\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainer/training-bikes", "host": ["{{base_url}}"], "path": ["api","trainer","training-bikes"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "Phase 2 – Admin Approval",
+      "item": [
+
+        {
+          "name": "01 – Admin Login",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "if (json.data && json.data.token) {",
+                "  pm.collectionVariables.set('admin_token', json.data.token);",
+                "  console.log('admin_token saved');",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"admin@dabapp.com\",\n  \"password\": \"Admin@dabapp1\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/admin/login", "host": ["{{base_url}}"], "path": ["api","admin","login"] }
+          }
+        },
+
+        {
+          "name": "02 – Get Pending Trainers",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "var list = json.data || [];",
+                "if (list.length > 0) {",
+                "  pm.collectionVariables.set('trainer_id', list[0].id);",
+                "  console.log('trainer_id saved from pending list:', list[0].id);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/admin/trainers?status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["api","admin","trainers"],
+              "query": [{ "key": "status", "value": "pending" }]
+            }
+          }
+        },
+
+        {
+          "name": "03 – Approve Trainer + Levels",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "if (json.success) {",
+                "  console.log('Trainer approved. Status:', json.data && json.data.status);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"levels\": [\n    { \"level_id\": 1, \"approved_price\": 150 },\n    { \"level_id\": 2, \"approved_price\": 200 }\n  ],\n  \"approve_trainer\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/admin/trainers/{{trainer_id}}/approve-levels", "host": ["{{base_url}}"], "path": ["api","admin","trainers","{{trainer_id}}","approve-levels"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "Phase 3 – Post-Approval Setup",
+      "item": [
+
+        {
+          "name": "01 – Add Training Location",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "var id = json.data && json.data.id;",
+                "if (id) {",
+                "  pm.collectionVariables.set('location_id', id);",
+                "  console.log('location_id saved:', id);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{trainer_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location_name\":    \"Dubai Autodrome\",\n  \"location_name_ar\": \"أوتودروم دبي\",\n  \"city_id\":          1,\n  \"latitude\":         25.0486,\n  \"longitude\":        55.2381,\n  \"price_per_hour\":   200\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainer/locations", "host": ["{{base_url}}"], "path": ["api","trainer","locations"] }
+          }
+        },
+
+        {
+          "name": "02 – Create Course A (can_travel: false + sessions)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "var id = json.data && json.data.id;",
+                "if (id) {",
+                "  pm.collectionVariables.set('course_a_id', id);",
+                "  console.log('course_a_id saved:', id, '| sessions:', json.data.sessions && json.data.sessions.length);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{trainer_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\":             \"Beginner Circuit Training\",\n  \"title_ar\":          \"تدريب المبتدئين في الحلبة\",\n  \"description\":       \"Master the fundamentals of motorcycle control at the Dubai Autodrome.\",\n  \"description_ar\":    \"إتقان أساسيات التحكم بالدراجة في أوتودروم دبي.\",\n  \"level_id\":          1,\n  \"hours_per_session\": 2,\n  \"total_sessions\":    5,\n  \"original_price\":    150,\n  \"promo_price\":       120,\n  \"location_id\":       {{location_id}},\n  \"can_travel\":        false,\n  \"sessions\": [\n    {\n      \"session_number\": 1,\n      \"title\":          \"Introduction & Safety\",\n      \"title_ar\":       \"المقدمة والسلامة\",\n      \"description\":    \"Bike familiarization and full safety gear check.\",\n      \"description_ar\": \"التعرف على الدراجة وفحص معدات السلامة الكاملة.\",\n      \"duration_hours\": 2\n    },\n    {\n      \"session_number\": 2,\n      \"title\":          \"Balance & Low-Speed Control\",\n      \"title_ar\":       \"التوازن والتحكم بالسرعات المنخفضة\",\n      \"description\":    \"Slow-speed maneuvers, figure-8 drills and cone weaving.\",\n      \"description_ar\": \"المناورات البطيئة وتمارين الثماني.\",\n      \"duration_hours\": 2\n    },\n    {\n      \"session_number\": 3,\n      \"title\":          \"Cornering Basics\",\n      \"title_ar\":       \"أساسيات الانعطاف\",\n      \"description\":    \"Entry point, apex, exit — the three pillars of cornering.\",\n      \"description_ar\": \"نقطة الدخول والذروة والخروج.\",\n      \"duration_hours\": 2\n    },\n    {\n      \"session_number\": 4,\n      \"title\":          \"Braking Techniques\",\n      \"title_ar\":       \"تقنيات الكبح\",\n      \"description\":    \"Progressive braking and emergency stops under instructor supervision.\",\n      \"description_ar\": \"الكبح التدريجي والتوقف الطارئ تحت إشراف المدرب.\",\n      \"duration_hours\": 2\n    },\n    {\n      \"session_number\": 5,\n      \"title\":          \"Full Circuit Lap\",\n      \"title_ar\":       \"جولة كاملة في الحلبة\",\n      \"description\":    \"Apply all skills in a timed full-circuit supervised lap.\",\n      \"description_ar\": \"تطبيق جميع المهارات في جولة كاملة تحت الإشراف.\",\n      \"duration_hours\": 2\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainer/courses", "host": ["{{base_url}}"], "path": ["api","trainer","courses"] }
+          }
+        },
+
+        {
+          "name": "03 – Create Course B (can_travel: true + sessions)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "var id = json.data && json.data.id;",
+                "if (id) {",
+                "  pm.collectionVariables.set('course_b_id', id);",
+                "  console.log('course_b_id saved:', id, '| price_per_km:', json.data.price_per_km, '| sessions:', json.data.sessions && json.data.sessions.length);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{trainer_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\":             \"Mobile Coaching — I Come to You\",\n  \"title_ar\":          \"تدريب متنقل — أنا أأتي إليك\",\n  \"description\":       \"Private coaching session at your preferred location. Price includes travel.\",\n  \"description_ar\":    \"جلسة تدريب خاصة في موقعك المفضل. السعر يشمل التنقل.\",\n  \"level_id\":          1,\n  \"hours_per_session\": 2,\n  \"total_sessions\":    3,\n  \"original_price\":    200,\n  \"can_travel\":        true,\n  \"price_per_km\":      5,\n  \"sessions\": [\n    {\n      \"session_number\": 1,\n      \"title\":          \"Assessment & Planning\",\n      \"title_ar\":       \"التقييم والتخطيط\",\n      \"description\":    \"Evaluate current skill level and design a personalized training plan.\",\n      \"description_ar\": \"تقييم مستوى المهارة الحالي وتصميم خطة تدريب شخصية.\",\n      \"duration_hours\": 2\n    },\n    {\n      \"session_number\": 2,\n      \"title\":          \"Focused Skill Drills\",\n      \"title_ar\":       \"تمارين المهارات المركزة\",\n      \"description\":    \"Target specific weak points identified in session 1.\",\n      \"description_ar\": \"استهداف نقاط الضعف المحددة في الجلسة الأولى.\",\n      \"duration_hours\": 2\n    },\n    {\n      \"session_number\": 3,\n      \"title\":          \"Progress Review & Next Steps\",\n      \"title_ar\":       \"مراجعة التقدم والخطوات التالية\",\n      \"description\":    \"Evaluate progress and provide a personalized roadmap for continued improvement.\",\n      \"description_ar\": \"تقييم التقدم وتقديم خارطة طريق شخصية للتحسين المستمر.\",\n      \"duration_hours\": 2\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainer/courses", "host": ["{{base_url}}"], "path": ["api","trainer","courses"] }
+          }
+        },
+
+        {
+          "name": "04 – Publish Course A",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/courses/{{course_a_id}}/publish", "host": ["{{base_url}}"], "path": ["api","trainer","courses","{{course_a_id}}","publish"] }
+          }
+        },
+
+        {
+          "name": "05 – Publish Course B",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/courses/{{course_b_id}}/publish", "host": ["{{base_url}}"], "path": ["api","trainer","courses","{{course_b_id}}","publish"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "Phase 4 – Book Fixed Course (Course A)",
+      "item": [
+
+        {
+          "name": "01 – Client Login",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "if (json.data && json.data.token) {",
+                "  pm.collectionVariables.set('token', json.data.token);",
+                "  console.log('client token saved');",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"client@dabapp.com\",\n  \"password\": \"Client@dabapp1\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api","login"] }
+          }
+        },
+
+        {
+          "name": "02 – Browse Trainer Published Courses",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/courses", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","courses"] }
+          }
+        },
+
+        {
+          "name": "03 – Preview Course A Sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/courses/{{course_a_id}}/sessions", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","courses","{{course_a_id}}","sessions"] }
+          }
+        },
+
+        {
+          "name": "04 – Check Trainer Availability",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/trainers/{{trainer_id}}/availability?from_date=2026-07-10&to_date=2026-07-20&location_id={{location_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api","trainers","{{trainer_id}}","availability"],
+              "query": [
+                { "key": "from_date",    "value": "2026-07-10" },
+                { "key": "to_date",      "value": "2026-07-20" },
+                { "key": "location_id",  "value": "{{location_id}}" }
+              ]
+            }
+          }
+        },
+
+        {
+          "name": "05 – Book Course A (Fixed Price)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "var d = json.data || {};",
+                "var id = d.booking_id || d.id;",
+                "if (id) {",
+                "  pm.collectionVariables.set('booking_a_id', id);",
+                "  console.log('booking_a_id saved:', id, '| price:', d.total_price);",
+                "}",
+                "if (d.payment_url) {",
+                "  pm.collectionVariables.set('payment_url_a', d.payment_url);",
+                "  console.log('payment_url_a saved');",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course_id\":    {{course_a_id}},\n  \"booking_date\": \"2026-07-15\",\n  \"start_time\":   \"09:00\",\n  \"location_id\":  {{location_id}},\n  \"notes\":        \"First session — complete beginner\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/book", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","book"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "Phase 5 – Book Travel Course (Course B)",
+      "item": [
+
+        {
+          "name": "01 – Calculate Travel Price (km=20)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "var d = json.data || {};",
+                "console.log('Travel price breakdown:');",
+                "console.log('  km:', d.km, '| price_per_km:', d.price_per_km);",
+                "console.log('  session_price:', d.session_price, '| travel_cost:', d.travel_cost);",
+                "console.log('  total_with_travel:', d.total_with_travel);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/trainers/{{trainer_id}}/travel-price?course_id={{course_b_id}}&km=20",
+              "host": ["{{base_url}}"],
+              "path": ["api","trainers","{{trainer_id}}","travel-price"],
+              "query": [
+                { "key": "course_id", "value": "{{course_b_id}}" },
+                { "key": "km",        "value": "20" }
+              ]
+            }
+          }
+        },
+
+        {
+          "name": "02 – Preview Course B Sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/courses/{{course_b_id}}/sessions", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","courses","{{course_b_id}}","sessions"] }
+          }
+        },
+
+        {
+          "name": "03 – Book Course B (Travel Price)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "var d = json.data || {};",
+                "var id = d.booking_id || d.id;",
+                "if (id) {",
+                "  pm.collectionVariables.set('booking_b_id', id);",
+                "  console.log('booking_b_id saved:', id);",
+                "}",
+                "if (d.payment_url) {",
+                "  pm.collectionVariables.set('payment_url_b', d.payment_url);",
+                "  console.log('payment_url_b saved');",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course_id\":    {{course_b_id}},\n  \"booking_date\": \"2026-07-17\",\n  \"start_time\":   \"10:00\",\n  \"notes\":        \"Please come to Dubai Marina — 20 km from your location\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/book", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","book"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "Phase 6 – Completion & Review (Course A)",
+      "item": [
+
+        {
+          "name": "01 – Trainer: Start Session",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "console.log('Booking status:', json.data && json.data.status);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/sessions/{{booking_a_id}}/start", "host": ["{{base_url}}"], "path": ["api","trainer","sessions","{{booking_a_id}}","start"] }
+          }
+        },
+
+        {
+          "name": "02 – Trainer: Complete Session",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "console.log('Booking status:', json.data && json.data.status);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/sessions/{{booking_a_id}}/complete", "host": ["{{base_url}}"], "path": ["api","trainer","sessions","{{booking_a_id}}","complete"] }
+          }
+        },
+
+        {
+          "name": "03 – Client: Confirm Completion",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "var d = json.data || {};",
+                "console.log('Status:', d.status, '| can_review:', d.can_review);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/bookings/{{booking_a_id}}/confirm-completion", "host": ["{{base_url}}"], "path": ["api","trainer","bookings","{{booking_a_id}}","confirm-completion"] }
+          }
+        },
+
+        {
+          "name": "04 – Client: Leave Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\":     5,\n  \"comment\":    \"Excellent trainer! Patient and professional. Highly recommend.\",\n  \"comment_ar\": \"مدرب ممتاز! صبور ومحترف. أنصح به بشدة.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainer/bookings/{{booking_a_id}}/review", "host": ["{{base_url}}"], "path": ["api","trainer","bookings","{{booking_a_id}}","review"] }
+          }
+        }
+
+      ]
+    }
+
+  ]
+}

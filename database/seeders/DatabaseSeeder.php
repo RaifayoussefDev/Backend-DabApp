@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             ExpertiseTypeSeeder::class,
             SpecialtySeeder::class,     // Dynamic trainer specialties (Coaching, Competition, Off-Road, Street, Custom)
             TrainerLevelSeeder::class,  // Trainer levels (Beginner, Intermediate, Advanced)
+            EquipmentTypeSeeder::class, // Equipment catalog (Helmet, Jacket, Gloves, Boots, Knee/Back Protector)
         ]);
     }
 }

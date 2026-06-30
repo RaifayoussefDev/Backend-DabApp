@@ -162,7 +162,7 @@ class TrainerCourseController extends Controller
      * @OA\Post(
      *     path="/api/trainer/courses",
      *     summary="Create a course",
-     *     description="Trainer creates a new course offering. Starts in 'draft' status. Publish it with the /publish endpoint.",
+     *     description="Trainer creates a new course offering. Starts in 'draft' status. Optionally include 'sessions' array to create all session descriptions in one call. Publish it with the /publish endpoint.",
      *     operationId="createTrainerCourse",
      *     tags={"Trainer - Courses"},
      *     security={{"bearerAuth":{}}},
@@ -182,19 +182,30 @@ class TrainerCourseController extends Controller
      *             @OA\Property(property="original_price",    type="number",  example=150.00, description="Price per hour in SAR"),
      *             @OA\Property(property="promo_price",       type="number",  example=120.00, description="Optional promotional price per hour"),
      *             @OA\Property(property="location_id",       type="integer", example=2,     description="ID from trainer's locations (optional)"),
-     *             @OA\Property(property="can_travel",        type="boolean", example=false,  description="Trainer can go to client's location")
+     *             @OA\Property(property="can_travel",        type="boolean", example=false,  description="Trainer can go to client's location"),
+     *             @OA\Property(property="price_per_km",      type="number",  example=5.00,  description="Required when can_travel=true"),
+     *             @OA\Property(property="sessions",          type="array",   description="Optional — create session descriptions in the same request",
+     *                 @OA\Items(type="object",
+     *                     @OA\Property(property="session_number", type="integer", example=1),
+     *                     @OA\Property(property="title",          type="string",  example="Introduction & Safety"),
+     *                     @OA\Property(property="title_ar",       type="string",  example="المقدمة والسلامة"),
+     *                     @OA\Property(property="description",    type="string",  example="Getting familiar with the bike."),
+     *                     @OA\Property(property="description_ar", type="string",  example="التعرف على الدراجة."),
+     *                     @OA\Property(property="duration_hours", type="integer", example=2)
+     *                 )
+     *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Course created",
+     *         description="Course created (with sessions if provided)",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data",    type="object",
      *                 @OA\Property(property="id",            type="integer", example=1),
      *                 @OA\Property(property="title",         type="string",  example="Beginner Circuit Training"),
      *                 @OA\Property(property="status",        type="string",  example="draft"),
-     *                 @OA\Property(property="total_price",   type="string",  example="1500.00")
+     *                 @OA\Property(property="sessions",      type="array", @OA\Items(type="object"))
      *             ),
      *             @OA\Property(property="message", type="string", example="Course created successfully")
      *         )
@@ -229,18 +240,31 @@ class TrainerCourseController extends Controller
                     }
                 }
             ],
-            'can_travel'        => 'nullable|boolean',
-            'price_per_km'      => 'nullable|numeric|min:0',
+            'can_travel'                => 'nullable|boolean',
+            'price_per_km'              => 'nullable|numeric|min:0',
+            'sessions'                  => 'nullable|array',
+            'sessions.*.session_number' => 'required_with:sessions|integer|min:1',
+            'sessions.*.title'          => 'required_with:sessions|string|max:255',
+            'sessions.*.title_ar'       => 'nullable|string|max:255',
+            'sessions.*.description'    => 'nullable|string|max:3000',
+            'sessions.*.description_ar' => 'nullable|string|max:3000',
+            'sessions.*.duration_hours' => 'nullable|integer|min:1|max:24',
         ]);
 
-        $course = TrainerCourse::create(array_merge($validated, [
-            'trainer_id' => $trainer->id,
-            'status'     => 'draft',
-        ]));
+        $course = TrainerCourse::create(array_merge(
+            collect($validated)->except('sessions')->toArray(),
+            ['trainer_id' => $trainer->id, 'status' => 'draft']
+        ));
+
+        if (!empty($validated['sessions'])) {
+            foreach ($validated['sessions'] as $sessionData) {
+                $course->sessions()->create($sessionData);
+            }
+        }
 
         return response()->json([
             'success' => true,
-            'data'    => $course->load(['level', 'location.city']),
+            'data'    => $course->load(['level', 'location.city', 'sessions']),
             'message' => 'Course created successfully',
         ], 201);
     }

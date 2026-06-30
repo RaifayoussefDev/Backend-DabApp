@@ -3,208 +3,186 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DabApp – Trainer Module Testing Scenarios</title>
+  <title>DabApp – Trainer Module: Complete Step-by-Step Flow</title>
   <style>
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --surface2: #222636;
-      --border: #2e3248;
-      --text: #e2e8f0;
-      --muted: #8892a4;
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #222636;
+      --border: #2e3248; --text: #e2e8f0; --muted: #8892a4;
       --accent: #6c63ff;
-      --green: #22c55e;
-      --yellow: #f59e0b;
-      --red: #ef4444;
-      --blue: #3b82f6;
-      --orange: #f97316;
-      --teal: #14b8a6;
-      --pink: #ec4899;
-      --GET: #22c55e;
-      --POST: #3b82f6;
-      --PUT: #f59e0b;
-      --PATCH: #f97316;
-      --DELETE: #ef4444;
+      --green: #22c55e; --yellow: #f59e0b; --red: #ef4444;
+      --blue: #3b82f6; --orange: #f97316; --teal: #14b8a6;
+      --GET: #22c55e; --POST: #3b82f6; --PUT: #f59e0b;
+      --PATCH: #f97316; --DELETE: #ef4444;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: var(--bg);
-      color: var(--text);
+    body { background: var(--bg); color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 14px;
-      line-height: 1.6;
-    }
+      font-size: 14px; line-height: 1.65; }
     a { color: var(--accent); text-decoration: none; }
 
-    /* ── layout ── */
+    /* SIDEBAR */
     .sidebar {
-      position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+      position: fixed; top: 0; left: 0; width: 236px; height: 100vh;
       background: var(--surface); border-right: 1px solid var(--border);
-      overflow-y: auto; padding: 24px 0;
-      z-index: 100;
+      overflow-y: auto; padding: 0; z-index: 100;
     }
     .sidebar-logo {
-      padding: 0 20px 20px;
-      font-size: 16px; font-weight: 700; color: var(--text);
-      border-bottom: 1px solid var(--border); margin-bottom: 16px;
+      padding: 16px 18px; font-size: 15px; font-weight: 800;
+      border-bottom: 1px solid var(--border);
     }
     .sidebar-logo span { color: var(--accent); }
-    .sidebar-section { padding: 4px 20px; font-size: 10px; font-weight: 700;
-      letter-spacing: 1px; color: var(--muted); text-transform: uppercase;
-      margin-top: 16px; margin-bottom: 4px; }
+    .sidebar-section {
+      padding: 12px 18px 4px; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px; color: var(--muted);
+    }
     .sidebar a {
-      display: block; padding: 6px 20px;
-      color: var(--muted); font-size: 13px;
-      transition: color .15s, background .15s;
+      display: flex; align-items: center; gap: 7px;
+      padding: 4px 18px 4px 22px; color: var(--muted); font-size: 12px;
+      border-left: 2px solid transparent;
     }
     .sidebar a:hover { color: var(--text); background: var(--surface2); }
-    .sidebar a.active { color: var(--accent); font-weight: 600; }
-    .sidebar .phase-link { padding-left: 32px; font-size: 12px; }
-
-    main { margin-left: 240px; padding: 40px 48px; max-width: 960px; }
-
-    h1 { font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
-    h2 { font-size: 20px; font-weight: 700; color: var(--text); margin: 48px 0 16px;
-      padding-bottom: 10px; border-bottom: 1px solid var(--border); }
-    h3 { font-size: 15px; font-weight: 700; color: var(--text); margin: 28px 0 10px; }
-
-    .subtitle { color: var(--muted); font-size: 15px; margin-bottom: 32px; }
-
-    /* ── badge ── */
-    .badge {
-      display: inline-block; padding: 2px 8px; border-radius: 4px;
-      font-size: 11px; font-weight: 700; letter-spacing: .5px;
-      font-family: 'Courier New', monospace;
+    .sidebar a.active { color: var(--text); border-left-color: var(--accent); background: rgba(108,99,255,.08); }
+    .sidebar-phase {
+      padding: 8px 18px 3px; font-size: 11px; font-weight: 700;
+      color: var(--muted); margin-top: 6px;
     }
-    .GET    { background: rgba(34,197,94,.15);  color: var(--GET);    }
-    .POST   { background: rgba(59,130,246,.15); color: var(--POST);   }
-    .PUT    { background: rgba(245,158,11,.15); color: var(--PUT);    }
-    .PATCH  { background: rgba(249,115,22,.15); color: var(--PATCH);  }
-    .DELETE { background: rgba(239,68,68,.15);  color: var(--DELETE); }
-    .AUTH   { background: rgba(108,99,255,.15); color: var(--accent); }
-    .PUB    { background: rgba(20,184,166,.15); color: var(--teal);   }
+    .sb-num { font-size: 10px; background: var(--surface2); border-radius: 3px;
+      padding: 1px 5px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+    .sb-trainer .sb-num { background: rgba(108,99,255,.2); color: #a5b4fc; }
+    .sb-admin .sb-num   { background: rgba(245,158,11,.2); color: #fcd34d; }
+    .sb-client .sb-num  { background: rgba(34,197,94,.2);  color: #86efac; }
 
-    /* ── phase banner ── */
-    .phase-banner {
-      border-radius: 10px; padding: 16px 20px; margin-bottom: 24px;
-      border-left: 4px solid;
+    /* MAIN */
+    main { margin-left: 236px; padding: 40px 48px 60px; max-width: 980px; }
+    h1 { font-size: 26px; font-weight: 800; margin-bottom: 4px; }
+    .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 36px; }
+
+    /* PHASE HEADER */
+    .phase-header {
+      display: flex; align-items: center; gap: 14px;
+      margin: 44px 0 18px; padding-bottom: 14px;
+      border-bottom: 2px solid var(--border);
     }
-    .phase-banner.trainer { border-color: var(--accent); background: rgba(108,99,255,.08); }
-    .phase-banner.admin   { border-color: var(--yellow); background: rgba(245,158,11,.08); }
-    .phase-banner.client  { border-color: var(--green);  background: rgba(34,197,94,.08);  }
-    .phase-banner-title { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
-    .phase-banner.trainer .phase-banner-title { color: var(--accent); }
-    .phase-banner.admin   .phase-banner-title { color: var(--yellow); }
-    .phase-banner.client  .phase-banner-title { color: var(--green); }
-    .phase-banner p { color: var(--muted); font-size: 13px; }
+    .ph-icon {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0; font-weight: 900;
+    }
+    .ph-trainer { background: rgba(108,99,255,.2); color: #a5b4fc; }
+    .ph-admin   { background: rgba(245,158,11,.2); color: #fcd34d; }
+    .ph-client  { background: rgba(34,197,94,.2);  color: #86efac; }
+    .ph-title   { font-size: 17px; font-weight: 700; }
+    .ph-sub     { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-    /* ── step card ── */
+    /* STEP CARD */
     .step {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 10px; margin-bottom: 12px; overflow: hidden;
+      border-radius: 10px; margin: 10px 0; overflow: hidden;
     }
-    .step-header {
-      display: flex; align-items: center; gap: 12px;
-      padding: 14px 18px; cursor: pointer; user-select: none;
+    .step-hdr {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 15px; cursor: pointer; user-select: none;
     }
+    .step-hdr:hover { background: var(--surface2); }
+    .step.open .step-hdr { background: var(--surface2); }
     .step-num {
-      min-width: 28px; height: 28px; border-radius: 50%;
-      background: var(--surface2); border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 700; color: var(--muted);
+      width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
+      border: 1px solid var(--border); display: flex;
+      align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: var(--muted);
     }
-    .step-title { flex: 1; font-weight: 600; font-size: 14px; }
-    .step-url {
-      font-family: 'Courier New', monospace; font-size: 12px;
-      color: var(--muted); margin-left: auto;
-    }
+    .step-num.trainer { border-color: rgba(108,99,255,.4); color: #a5b4fc; }
+    .step-num.admin   { border-color: rgba(245,158,11,.4); color: #fcd34d; }
+    .step-num.client  { border-color: rgba(34,197,94,.4);  color: #86efac; }
+    .step-title { font-size: 13px; font-weight: 600; flex: 1; }
+    .step-url { font-size: 11px; color: var(--muted);
+      font-family: 'Courier New', monospace; }
     .step-body {
-      padding: 0 18px 16px; border-top: 1px solid var(--border);
-      display: none;
+      display: none; padding: 0 16px 16px;
+      border-top: 1px solid var(--border);
     }
     .step.open .step-body { display: block; }
-    .step.open .step-header { border-bottom: 1px solid var(--border); }
 
-    /* ── code block ── */
+    /* BADGES */
+    .badge {
+      font-size: 10px; font-weight: 800; padding: 2px 7px;
+      border-radius: 4px; font-family: 'Courier New', monospace; flex-shrink: 0;
+    }
+    .badge.GET    { background: rgba(34,197,94,.15);  color: var(--GET);    }
+    .badge.POST   { background: rgba(59,130,246,.15); color: var(--POST);   }
+    .badge.PUT    { background: rgba(245,158,11,.15); color: var(--PUT);    }
+    .badge.PATCH  { background: rgba(249,115,22,.15); color: var(--PATCH);  }
+    .badge.DELETE { background: rgba(239,68,68,.15);  color: var(--DELETE); }
+    .badge.PUB    { background: rgba(108,99,255,.15); color: #a5b4fc; }
+    .badge.ADMIN  { background: rgba(245,158,11,.15); color: #fcd34d; }
+    .badge.CLIENT { background: rgba(34,197,94,.15);  color: #86efac; }
+
+    /* INFO BOXES */
+    .box { border-radius: 8px; padding: 9px 13px; margin: 10px 0;
+      font-size: 12px; line-height: 1.6; }
+    .box.save  { background: rgba(34,197,94,.08);   border-left: 3px solid var(--green);  color: #86efac; }
+    .box.info  { background: rgba(59,130,246,.08);  border-left: 3px solid var(--blue);   color: #93c5fd; }
+    .box.warn  { background: rgba(245,158,11,.08);  border-left: 3px solid var(--yellow); color: #fcd34d; }
+    .box.error { background: rgba(239,68,68,.08);   border-left: 3px solid var(--red);    color: #fca5a5; }
+    .box strong { font-weight: 700; }
+
+    /* PRE / CODE */
     pre {
       background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; padding: 14px 16px; margin: 10px 0;
+      border-radius: 8px; padding: 12px 14px; margin: 10px 0;
       overflow-x: auto; font-family: 'Courier New', monospace;
-      font-size: 12px; line-height: 1.7; color: #a8b5c8;
+      font-size: 12px; line-height: 1.75; color: #a8b5c8;
     }
-    pre .key   { color: #7dd3fc; }
-    pre .str   { color: #86efac; }
-    pre .num   { color: #fbbf24; }
-    pre .bool  { color: #c084fc; }
-    pre .null  { color: var(--muted); }
-    pre .cmnt  { color: var(--muted); font-style: italic; }
-
-    /* ── info box ── */
-    .info-box {
-      border-radius: 8px; padding: 12px 16px; margin: 12px 0;
-      font-size: 13px;
-    }
-    .info-box.note   { background: rgba(59,130,246,.1); border-left: 3px solid var(--blue); color: #93c5fd; }
-    .info-box.warn   { background: rgba(245,158,11,.1); border-left: 3px solid var(--yellow); color: #fcd34d; }
-    .info-box.save   { background: rgba(34,197,94,.1); border-left: 3px solid var(--green); color: #86efac; }
-    .info-box.error  { background: rgba(239,68,68,.1); border-left: 3px solid var(--red); color: #fca5a5; }
-    .info-box strong { font-weight: 700; }
-
-    /* ── variable table ── */
-    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
-    th { background: var(--surface2); color: var(--muted); font-weight: 600;
-      padding: 8px 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
-    td { padding: 8px 12px; border-top: 1px solid var(--border); vertical-align: top; }
-    tr:hover td { background: var(--surface2); }
+    pre .k  { color: #7dd3fc; }  /* key */
+    pre .s  { color: #86efac; }  /* string */
+    pre .n  { color: #fbbf24; }  /* number */
+    pre .b  { color: #c084fc; }  /* bool */
+    pre .c  { color: #636e82; font-style: italic; } /* comment */
     code {
-      font-family: 'Courier New', monospace; font-size: 12px;
-      background: var(--surface2); padding: 1px 6px; border-radius: 3px;
-      color: var(--accent);
+      font-family: 'Courier New', monospace; font-size: 11px;
+      background: var(--surface2); padding: 1px 5px; border-radius: 3px;
+      color: #a5b4fc;
     }
 
-    /* ── flow diagram ── */
-    .flow {
-      display: flex; align-items: flex-start; gap: 0;
-      margin: 20px 0; flex-wrap: wrap;
-    }
-    .flow-item {
-      display: flex; flex-direction: column; align-items: center;
-    }
+    /* TABLES */
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+    th { background: var(--surface2); color: var(--muted); font-weight: 600;
+      padding: 7px 12px; text-align: left; font-size: 11px;
+      text-transform: uppercase; letter-spacing: .5px; }
+    td { padding: 7px 12px; border-top: 1px solid var(--border); vertical-align: top; }
+    tr:hover td { background: rgba(255,255,255,.02); }
+    td:first-child { font-family: 'Courier New', monospace; font-size: 11px; color: #7dd3fc; white-space: nowrap; }
+    td.req { color: #fca5a5; font-weight: 700; }
+    td.opt { color: var(--muted); }
+
+    /* FLOW DIAGRAM */
+    .flow { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0; margin: 16px 0; }
     .flow-box {
       background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; padding: 8px 14px; font-size: 12px;
-      font-weight: 600; text-align: center; min-width: 90px;
+      border-radius: 8px; padding: 7px 11px; font-size: 11px; font-weight: 600;
+      text-align: center; min-width: 80px;
     }
-    .flow-box.trainer { border-color: var(--accent); color: var(--accent); }
-    .flow-box.admin   { border-color: var(--yellow); color: var(--yellow); }
-    .flow-box.client  { border-color: var(--green); color: var(--green); }
-    .flow-box.system  { border-color: var(--teal); color: var(--teal); }
-    .flow-arrow {
-      font-size: 18px; color: var(--muted); padding: 0 6px;
-      display: flex; align-items: center; padding-top: 10px;
+    .flow-box.t { border-color: rgba(108,99,255,.5); color: #a5b4fc; }
+    .flow-box.a { border-color: rgba(245,158,11,.5); color: #fcd34d; }
+    .flow-box.c { border-color: rgba(34,197,94,.5);  color: #86efac; }
+    .flow-arr {
+      display: flex; align-items: center; padding: 0 3px;
+      color: var(--muted); font-size: 14px; padding-top: 6px;
     }
-    .flow-label { font-size: 10px; color: var(--muted); margin-top: 4px; }
+    .flow-item { display: flex; flex-direction: column; align-items: center; }
+    .flow-sub  { font-size: 9px; color: var(--muted); margin-top: 2px; text-align: center; }
 
-    /* ── scenario section divider ── */
-    .scenario-header {
-      display: flex; align-items: center; gap: 14px; margin: 40px 0 20px;
-    }
-    .scenario-num {
-      background: var(--accent); color: white; border-radius: 8px;
-      width: 36px; height: 36px; display: flex; align-items: center;
-      justify-content: center; font-size: 16px; font-weight: 800;
-      flex-shrink: 0;
-    }
-    .scenario-num.admin  { background: var(--yellow); color: #000; }
-    .scenario-num.client { background: var(--green); color: #000; }
-    .scenario-title { font-size: 18px; font-weight: 700; }
+    /* SECTION label */
+    h3 { font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--muted); margin: 14px 0 6px; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
 
-    footer { margin: 60px 0 40px; color: var(--muted); font-size: 12px;
-      border-top: 1px solid var(--border); padding-top: 20px; }
+    footer { color: var(--muted); font-size: 12px; margin-top: 60px;
+      border-top: 1px solid var(--border); padding-top: 16px; }
 
-    @media (max-width: 768px) {
+    @media (max-width: 800px) {
       .sidebar { display: none; }
-      main { margin-left: 0; padding: 20px 16px; }
+      main { margin-left: 0; padding: 20px 16px 40px; }
     }
   </style>
 </head>
@@ -212,2000 +190,1159 @@
 
 <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
 <nav class="sidebar">
-  <div class="sidebar-logo">Dab<span>App</span> API Guide</div>
+  <div class="sidebar-logo">Dab<span>App</span></div>
 
   <div class="sidebar-section">Overview</div>
-  <a href="#overview">Introduction</a>
-  <a href="#variables">Variables</a>
   <a href="#flow">Full Flow</a>
+  <a href="#vars">Variables</a>
 
-  <div class="sidebar-section">Trainer</div>
-  <a href="#s1">1 · Login &amp; Register</a>
-  <a href="#s2" class="phase-link">2 · Add Bikes (Garage)</a>
-  <a href="#s3" class="phase-link">3 · Select Training Bikes</a>
-  <a href="#s4" class="phase-link">4 · Select Equipment</a>
+  <div class="sidebar-phase">Phase 1 — Pre-Setup</div>
+  <a href="#s1-1" class="sb-trainer"><span class="sb-num">1</span>GET Levels</a>
+  <a href="#s1-2" class="sb-trainer"><span class="sb-num">2</span>GET Specialties</a>
+  <a href="#s1-3" class="sb-trainer"><span class="sb-num">3</span>GET Equipment</a>
+  <a href="#s1-4" class="sb-trainer"><span class="sb-num">4</span>GET Cities</a>
 
-  <div class="sidebar-section">Admin</div>
-  <a href="#s5">5 · Verify &amp; Approve</a>
+  <div class="sidebar-phase">Phase 2 — Register</div>
+  <a href="#s2-1" class="sb-trainer"><span class="sb-num">1</span>Login</a>
+  <a href="#s2-2" class="sb-trainer"><span class="sb-num">2</span>Upload Photo</a>
+  <a href="#s2-3" class="sb-trainer"><span class="sb-num">3</span>Upload Cover</a>
+  <a href="#s2-4" class="sb-trainer"><span class="sb-num">4</span>Upload Cert</a>
+  <a href="#s2-5" class="sb-trainer"><span class="sb-num">5</span>Register</a>
 
-  <div class="sidebar-section">Trainer (post-approval)</div>
-  <a href="#s6">6 · Location &amp; Schedule</a>
-  <a href="#s7">7 · Courses Lifecycle</a>
-  <a href="#s8">8 · Gallery</a>
+  <div class="sidebar-phase">Phase 3 — Bike</div>
+  <a href="#s3-1" class="sb-trainer"><span class="sb-num">1</span>GET Brands</a>
+  <a href="#s3-2" class="sb-trainer"><span class="sb-num">2</span>GET Models</a>
+  <a href="#s3-3" class="sb-trainer"><span class="sb-num">3</span>GET Years</a>
+  <a href="#s3-4" class="sb-trainer"><span class="sb-num">4</span>Add Bike</a>
+  <a href="#s3-5" class="sb-trainer"><span class="sb-num">5</span>Training Info ⚠</a>
+  <a href="#s3-6" class="sb-trainer"><span class="sb-num">6</span>Select Bike</a>
 
-  <div class="sidebar-section">Client</div>
-  <a href="#s9">9 · Discover Trainer</a>
-  <a href="#s10">10 · Book &amp; Pay</a>
-  <a href="#s11">11 · Complete &amp; Review</a>
-  <a href="#s12">12 · Social Features</a>
+  <div class="sidebar-phase">Phase 4 — Equipment</div>
+  <a href="#s4-1" class="sb-trainer"><span class="sb-num">1</span>GET Catalog</a>
+  <a href="#s4-2" class="sb-trainer"><span class="sb-num">2</span>Select Equipment</a>
 
-  <div class="sidebar-section">Admin (ongoing)</div>
-  <a href="#s13">13 · Bookings Panel</a>
-  <a href="#s14">14 · Moderation</a>
-  <a href="#s15">15 · Stats &amp; Payouts</a>
+  <div class="sidebar-phase">Phase 5 — Approval</div>
+  <a href="#s5-1" class="sb-admin"><span class="sb-num">1</span>Admin Login</a>
+  <a href="#s5-2" class="sb-admin"><span class="sb-num">2</span>Pending Trainers</a>
+  <a href="#s5-3" class="sb-admin"><span class="sb-num">3</span>Trainer Detail</a>
+  <a href="#s5-4" class="sb-admin"><span class="sb-num">4</span>Approve</a>
 
-  <div class="sidebar-section">Trainer (ongoing)</div>
-  <a href="#s16">16 · My Sessions</a>
+  <div class="sidebar-phase">Phase 6 — Post-Approval</div>
+  <a href="#s6-1" class="sb-trainer"><span class="sb-num">1</span>Add Location</a>
+  <a href="#s6-2" class="sb-trainer"><span class="sb-num">2</span>Schedule</a>
+  <a href="#s6-3" class="sb-trainer"><span class="sb-num">3</span>Add Gallery</a>
+  <a href="#s6-4" class="sb-trainer"><span class="sb-num">4</span>Edit Gallery</a>
+  <a href="#s6-5" class="sb-trainer"><span class="sb-num">5</span>Course A (fixed)</a>
+  <a href="#s6-6" class="sb-trainer"><span class="sb-num">6</span>Course B (travel)</a>
+  <a href="#s6-7" class="sb-trainer"><span class="sb-num">7</span>Publish A</a>
+  <a href="#s6-8" class="sb-trainer"><span class="sb-num">8</span>Publish B</a>
 
-  <div class="sidebar-section">Reference</div>
-  <a href="#course-lifecycle">Course Lifecycle</a>
-  <a href="#errors">Common Errors</a>
+  <div class="sidebar-phase">Phase 7 — Book Fixed</div>
+  <a href="#s7-1" class="sb-client"><span class="sb-num">1</span>Client Login</a>
+  <a href="#s7-2" class="sb-client"><span class="sb-num">2</span>Browse Trainers</a>
+  <a href="#s7-3" class="sb-client"><span class="sb-num">3</span>View Profile</a>
+  <a href="#s7-4" class="sb-client"><span class="sb-num">4</span>Sessions A</a>
+  <a href="#s7-5" class="sb-client"><span class="sb-num">5</span>Availability</a>
+  <a href="#s7-6" class="sb-client"><span class="sb-num">6</span>Book A</a>
+
+  <div class="sidebar-phase">Phase 8 — Book Travel</div>
+  <a href="#s8-1" class="sb-client"><span class="sb-num">1</span>Travel Price</a>
+  <a href="#s8-2" class="sb-client"><span class="sb-num">2</span>Sessions B</a>
+  <a href="#s8-3" class="sb-client"><span class="sb-num">3</span>Book B</a>
+
+  <div class="sidebar-phase">Phase 9 — Complete</div>
+  <a href="#s9-1" class="sb-trainer"><span class="sb-num">1</span>Start Session</a>
+  <a href="#s9-2" class="sb-trainer"><span class="sb-num">2</span>Complete Session</a>
+  <a href="#s9-3" class="sb-client"><span class="sb-num">3</span>Confirm</a>
+  <a href="#s9-4" class="sb-client"><span class="sb-num">4</span>Review</a>
 </nav>
 
 <!-- ═══════════════════ MAIN ═══════════════════ -->
 <main>
+  <h1>DabApp — Trainer Module: Complete Flow</h1>
+  <p class="subtitle">Follow each step top to bottom. Variables are saved automatically in Postman. Base URL: <code>https://be.dabapp.co</code></p>
 
-  <!-- ── Header ── -->
-  <h1>DabApp Trainer Module</h1>
-  <p class="subtitle">Complete Postman testing guide — covers all flows from first registration to client review.</p>
-
-  <!-- ── Overview ── -->
-  <h2 id="overview">Overview</h2>
-
-  <div style="display:grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 24px;">
-    <div class="phase-banner trainer">
-      <div class="phase-banner-title">Trainer</div>
-      <p>Registers, builds profile, manages courses &amp; sessions</p>
+  <!-- ── FULL FLOW DIAGRAM ── -->
+  <div id="flow">
+    <div class="flow">
+      <div class="flow-item"><div class="flow-box t">Pre-Setup</div><div class="flow-sub">Phase 1</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-item"><div class="flow-box t">Register</div><div class="flow-sub">Phase 2</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-item"><div class="flow-box t">Bike + Equip</div><div class="flow-sub">Phase 3-4</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-item"><div class="flow-box a">Admin OK</div><div class="flow-sub">Phase 5</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-item"><div class="flow-box t">Setup + Courses</div><div class="flow-sub">Phase 6</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-item"><div class="flow-box c">Book A + B</div><div class="flow-sub">Phase 7-8</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-item"><div class="flow-box c">Complete</div><div class="flow-sub">Phase 9</div></div>
     </div>
-    <div class="phase-banner admin">
-      <div class="phase-banner-title">Admin</div>
-      <p>Reviews applications, approves levels &amp; prices, oversees bookings</p>
+  </div>
+
+  <!-- ── VARIABLES ── -->
+  <div id="vars" style="margin: 28px 0 0;">
+    <h3>Variables saved automatically by Postman</h3>
+    <table>
+      <thead><tr><th>Variable</th><th>Saved by</th><th>Used in</th></tr></thead>
+      <tbody>
+        <tr><td>trainer_token</td><td>2-1 Login</td><td>All trainer requests</td></tr>
+        <tr><td>trainer_id</td><td>2-5 Register</td><td>Admin view, client booking</td></tr>
+        <tr><td>garage_id</td><td>3-4 Add bike</td><td>3-5 Training info, 3-6 Select bike</td></tr>
+        <tr><td>equipment_id</td><td>4-2 Select equipment</td><td>Reference</td></tr>
+        <tr><td>admin_token</td><td>5-1 Admin login</td><td>All admin requests</td></tr>
+        <tr><td>location_id</td><td>6-1 Add location</td><td>Course A creation, booking A</td></tr>
+        <tr><td>gallery_id</td><td>6-3 Add gallery</td><td>6-4 Edit caption</td></tr>
+        <tr><td>course_a_id</td><td>6-5 Create Course A</td><td>6-7 Publish, 7-4 Sessions, 7-6 Book</td></tr>
+        <tr><td>course_b_id</td><td>6-6 Create Course B</td><td>6-8 Publish, 8-1 Price, 8-2 Sessions, 8-3 Book</td></tr>
+        <tr><td>token</td><td>7-1 Client login</td><td>All client requests</td></tr>
+        <tr><td>booking_a_id</td><td>7-6 Book Course A</td><td>Phase 9 completion</td></tr>
+        <tr><td>payment_url_a</td><td>7-6 Book Course A</td><td>Open in browser to pay</td></tr>
+        <tr><td>booking_b_id</td><td>8-3 Book Course B</td><td>Phase 9 (optional)</td></tr>
+        <tr><td>payment_url_b</td><td>8-3 Book Course B</td><td>Open in browser to pay</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PHASE 1
+       ═══════════════════════════════════════ -->
+  <div class="phase-header">
+    <div class="ph-icon ph-trainer">1</div>
+    <div>
+      <div class="ph-title">Pre-Setup — Public Lookups</div>
+      <div class="ph-sub">No auth needed. Get IDs you'll use in registration and course creation.</div>
     </div>
-    <div class="phase-banner client">
-      <div class="phase-banner-title">Client</div>
-      <p>Discovers trainers, books sessions, confirms &amp; reviews</p>
+  </div>
+
+  <div class="step open" id="s1-1">
+    <div class="step-hdr">
+      <div class="step-num trainer">1-1</div>
+      <span class="badge GET">GET</span>
+      <div class="step-title">Trainer Levels</div>
+      <div class="step-url">/api/trainer-levels</div>
+    </div>
+    <div class="step-body">
+      <div class="box info">Returns active levels. Use the <code>id</code> values in <code>level_prices[].level_id</code> when registering.</div>
+      <h3>Response</h3>
+      <pre>{
+  <span class="k">"data"</span>: [
+    { <span class="k">"id"</span>: <span class="n">1</span>, <span class="k">"name_en"</span>: <span class="s">"Beginner"</span>,     <span class="k">"name_ar"</span>: <span class="s">"مبتدئ"</span>     },
+    { <span class="k">"id"</span>: <span class="n">2</span>, <span class="k">"name_en"</span>: <span class="s">"Intermediate"</span>, <span class="k">"name_ar"</span>: <span class="s">"متوسط"</span>     },
+    { <span class="k">"id"</span>: <span class="n">3</span>, <span class="k">"name_en"</span>: <span class="s">"Advanced"</span>,    <span class="k">"name_ar"</span>: <span class="s">"متقدم"</span>     }
+  ]
+}</pre>
     </div>
   </div>
 
-  <h3>Test credentials</h3>
-  <table>
-    <thead><tr><th>Role</th><th>Email</th><th>Password</th><th>Token variable</th></tr></thead>
-    <tbody>
-      <tr><td>Admin</td><td>admin@dabapp.com</td><td>YourAdminPassword</td><td><code>{{admin_token}}</code></td></tr>
-      <tr><td>Trainer</td><td>trainer@dabapp.com</td><td>YourTrainerPassword</td><td><code>{{trainer_token}}</code></td></tr>
-      <tr><td>Client</td><td>client@dabapp.com</td><td>YourClientPassword</td><td><code>{{token}}</code></td></tr>
-    </tbody>
-  </table>
-
-  <!-- ── Variables ── -->
-  <h2 id="variables">Postman Variables</h2>
-  <p style="color:var(--muted);margin-bottom:12px;">These are auto-saved by test scripts — you do not need to set them manually.</p>
-  <table>
-    <thead><tr><th>Variable</th><th>Set by</th><th>Used in</th></tr></thead>
-    <tbody>
-      <tr><td><code>{{base_url}}</code></td><td>Collection default: <code>http://localhost:8000</code></td><td>All requests</td></tr>
-      <tr><td><code>{{admin_token}}</code></td><td>Admin / Login</td><td>All Admin requests</td></tr>
-      <tr><td><code>{{trainer_token}}</code></td><td>Trainer / Login</td><td>All Trainer requests</td></tr>
-      <tr><td><code>{{token}}</code></td><td>Client / Login</td><td>All Client requests</td></tr>
-      <tr><td><code>{{trainer_id}}</code></td><td>POST register / GET all trainers</td><td>Admin approval, client profile</td></tr>
-      <tr><td><code>{{garage_id}}</code></td><td>POST add bike to garage</td><td>Training bike select, PATCH training info</td></tr>
-      <tr><td><code>{{equipment_type_id}}</code></td><td>GET equipment catalog</td><td>Reference for catalog IDs</td></tr>
-      <tr><td><code>{{equipment_id}}</code></td><td>POST select equipment</td><td>PATCH availability, DELETE</td></tr>
-      <tr><td><code>{{location_id}}</code></td><td>POST add location</td><td>Booking, availability check</td></tr>
-      <tr><td><code>{{course_id}}</code></td><td>POST create course</td><td>Sessions, booking, gallery</td></tr>
-      <tr><td><code>{{booking_id}}</code></td><td>POST book</td><td>Pay, confirm, review, cancel</td></tr>
-      <tr><td><code>{{level_id}}</code></td><td>GET levels</td><td>Course creation, approval</td></tr>
-      <tr><td><code>{{gallery_id}}</code></td><td>POST add gallery</td><td>PATCH caption, DELETE</td></tr>
-      <tr><td><code>{{payment_url}}</code></td><td>POST book</td><td>Open in browser to simulate payment</td></tr>
-    </tbody>
-  </table>
-
-  <!-- ── Full Flow Diagram ── -->
-  <h2 id="flow">Full Flow at a Glance</h2>
-  <div class="flow">
-    <div class="flow-item"><div class="flow-box trainer">Trainer<br>Login</div><div class="flow-label">Step 1</div></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-item"><div class="flow-box trainer">Register</div><div class="flow-label">Step 2</div></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-item"><div class="flow-box trainer">Add Bikes<br>to Garage</div><div class="flow-label">Step 3</div></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-item"><div class="flow-box trainer">Select<br>Training Bikes</div><div class="flow-label">Step 4</div></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-item"><div class="flow-box trainer">Select<br>Equipment</div><div class="flow-label">Step 5</div></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-item"><div class="flow-box admin">Admin<br>Approves</div><div class="flow-label">Step 6</div></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-item"><div class="flow-box trainer">Add Location<br>&amp; Courses</div><div class="flow-label">Step 7</div></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-item"><div class="flow-box client">Client<br>Books</div><div class="flow-label">Step 8</div></div>
-  </div>
-  <div class="info-box warn" style="margin-top:16px;">
-    <strong>Important:</strong> The trainer must complete Steps 3–5 (bikes + equipment) BEFORE admin approval so the admin can verify the full profile.
+  <div class="step" id="s1-2">
+    <div class="step-hdr">
+      <div class="step-num trainer">1-2</div>
+      <span class="badge GET">GET</span>
+      <div class="step-title">Specialties</div>
+      <div class="step-url">/api/specialties</div>
+    </div>
+    <div class="step-body">
+      <div class="box info">Use <code>id</code> values in <code>specialty_ids[]</code> during registration.</div>
+      <h3>Response example</h3>
+      <pre>{
+  <span class="k">"data"</span>: [
+    { <span class="k">"id"</span>: <span class="n">1</span>, <span class="k">"name_en"</span>: <span class="s">"Coaching"</span>     },
+    { <span class="k">"id"</span>: <span class="n">2</span>, <span class="k">"name_en"</span>: <span class="s">"Competition"</span>  },
+    { <span class="k">"id"</span>: <span class="n">3</span>, <span class="k">"name_en"</span>: <span class="s">"Off-Road"</span>     },
+    { <span class="k">"id"</span>: <span class="n">4</span>, <span class="k">"name_en"</span>: <span class="s">"Street"</span>       }
+  ]
+}</pre>
+    </div>
   </div>
 
-  <!-- ════════════════════════════════════════════════
-       SCENARIO 1 — TRAINER REGISTRATION
-       ════════════════════════════════════════════════ -->
-  <div class="scenario-header" id="s1">
-    <div class="scenario-num">1</div>
-    <div class="scenario-title">Trainer — Login &amp; Registration</div>
+  <div class="step" id="s1-3">
+    <div class="step-hdr">
+      <div class="step-num trainer">1-3</div>
+      <span class="badge GET">GET</span>
+      <div class="step-title">Equipment Catalog</div>
+      <div class="step-url">/api/equipment-types</div>
+    </div>
+    <div class="step-body">
+      <div class="box info">Admin-managed catalog. Use <code>id</code> values in <code>equipment_type_ids[]</code> during Phase 4.</div>
+      <h3>Default seeded items</h3>
+      <pre>{
+  <span class="k">"data"</span>: [
+    { <span class="k">"id"</span>: <span class="n">1</span>, <span class="k">"name"</span>: <span class="s">"Helmet"</span>,         <span class="k">"name_ar"</span>: <span class="s">"خوذة"</span>,          <span class="k">"icon"</span>: <span class="s">"helmet"</span>          },
+    { <span class="k">"id"</span>: <span class="n">2</span>, <span class="k">"name"</span>: <span class="s">"Jacket"</span>,         <span class="k">"name_ar"</span>: <span class="s">"جاكيت"</span>,         <span class="k">"icon"</span>: <span class="s">"jacket"</span>          },
+    { <span class="k">"id"</span>: <span class="n">3</span>, <span class="k">"name"</span>: <span class="s">"Knee Protector"</span>, <span class="k">"name_ar"</span>: <span class="s">"واقي الركبة"</span>,   <span class="k">"icon"</span>: <span class="s">"knee-protector"</span>  },
+    { <span class="k">"id"</span>: <span class="n">4</span>, <span class="k">"name"</span>: <span class="s">"Back Protector"</span>, <span class="k">"name_ar"</span>: <span class="s">"واقي الظهر"</span>,    <span class="k">"icon"</span>: <span class="s">"back-protector"</span>  },
+    { <span class="k">"id"</span>: <span class="n">5</span>, <span class="k">"name"</span>: <span class="s">"Gloves"</span>,         <span class="k">"name_ar"</span>: <span class="s">"قفازات"</span>,        <span class="k">"icon"</span>: <span class="s">"gloves"</span>          },
+    { <span class="k">"id"</span>: <span class="n">6</span>, <span class="k">"name"</span>: <span class="s">"Boots"</span>,          <span class="k">"name_ar"</span>: <span class="s">"أحذية"</span>,         <span class="k">"icon"</span>: <span class="s">"boots"</span>           }
+  ]
+}</pre>
+    </div>
   </div>
 
-  <div class="phase-banner trainer">
-    <div class="phase-banner-title">Trainer role · Folder: Trainer / Login + Registration</div>
-    <p>Start here. The trainer logs in and submits the registration form. Status will be <code>pending</code> until admin approves.</p>
+  <div class="step" id="s1-4">
+    <div class="step-hdr">
+      <div class="step-num trainer">1-4</div>
+      <span class="badge GET">GET</span>
+      <div class="step-title">Cities</div>
+      <div class="step-url">/api/cities</div>
+    </div>
+    <div class="step-body">
+      <div class="box info">Note the <code>id</code> of your city — used in Step 6-1 when adding a training location.</div>
+    </div>
   </div>
 
-  <div class="step open">
-    <div class="step-header">
-      <div class="step-num">1</div>
+  <!-- ═══════════════════════════════════════
+       PHASE 2
+       ═══════════════════════════════════════ -->
+  <div class="phase-header">
+    <div class="ph-icon ph-trainer">2</div>
+    <div>
+      <div class="ph-title">Trainer — Login &amp; Registration</div>
+      <div class="ph-sub">Upload photos and certificates first, then submit registration. Status = <code>pending</code> until admin approves.</div>
+    </div>
+  </div>
+
+  <div class="step open" id="s2-1">
+    <div class="step-hdr">
+      <div class="step-num trainer">2-1</div>
       <span class="badge POST">POST</span>
       <div class="step-title">Trainer Login</div>
       <div class="step-url">/api/login</div>
     </div>
     <div class="step-body">
-      <div class="info-box save"><strong>Saves:</strong> <code>{{trainer_token}}</code> automatically via test script.</div>
-      <h3>Request body</h3>
-      <pre><span class="cmnt">// POST /api/login</span>
-{
-  <span class="key">"login"</span>:    <span class="str">"trainer@dabapp.com"</span>,
-  <span class="key">"password"</span>: <span class="str">"YourTrainerPassword"</span>
-}</pre>
-      <h3>Success response <span style="color:var(--green)">200</span></h3>
+      <div class="box save"><strong>Saves:</strong> <code>{{trainer_token}}</code> — use as <code>Authorization: Bearer {{trainer_token}}</code> in every trainer request.</div>
+      <h3>Body</h3>
       <pre>{
-  <span class="key">"success"</span>: <span class="bool">true</span>,
-  <span class="key">"token"</span>:   <span class="str">"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."</span>
+  <span class="k">"login"</span>:    <span class="s">"trainer@dabapp.com"</span>,
+  <span class="k">"password"</span>: <span class="s">"YourTrainerPassword"</span>
 }</pre>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">2</div>
+  <div class="step" id="s2-2">
+    <div class="step-hdr">
+      <div class="step-num trainer">2-2</div>
       <span class="badge POST">POST</span>
-      <div class="step-title">Upload Profile Photo (optional)</div>
+      <div class="step-title">Upload Profile Photo</div>
       <div class="step-url">/api/trainer/upload-photo</div>
     </div>
     <div class="step-body">
-      <div class="info-box note">Use form-data. Key: <code>photo</code>, Type: File. Returns the storage path to use in the register body.</div>
-      <h3>Success response <span style="color:var(--green)">200</span></h3>
-      <pre>{ <span class="key">"path"</span>: <span class="str">"trainers/photos/abc123.jpg"</span> }</pre>
+      <div class="box info">Form-data with key <code>photo</code> → file. Response returns the file path string. Copy it into the <code>photo</code> field in Step 2-5.</div>
+      <h3>Form-data</h3>
+      <table>
+        <thead><tr><th>Key</th><th>Type</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>photo</td><td>file</td><td>profile image (JPG/PNG)</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">3</div>
+  <div class="step" id="s2-3">
+    <div class="step-hdr">
+      <div class="step-num trainer">2-3</div>
+      <span class="badge POST">POST</span>
+      <div class="step-title">Upload Cover Photo</div>
+      <div class="step-url">/api/trainer/upload-cover</div>
+    </div>
+    <div class="step-body">
+      <div class="box info">Form-data with key <code>cover</code> → file. Response returns file path. Copy into the <code>cover</code> field in Step 2-5.</div>
+      <h3>Form-data</h3>
+      <table>
+        <thead><tr><th>Key</th><th>Type</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>cover</td><td>file</td><td>cover/banner image (JPG/PNG)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="step" id="s2-4">
+    <div class="step-hdr">
+      <div class="step-num trainer">2-4</div>
+      <span class="badge POST">POST</span>
+      <div class="step-title">Upload Certificate</div>
+      <div class="step-url">/api/trainer/upload-certificates</div>
+    </div>
+    <div class="step-body">
+      <div class="box info">Form-data with key <code>file</code> → PDF or image. Call multiple times for multiple certificates. Collect all returned paths into <code>certification_files[]</code> in Step 2-5.</div>
+      <h3>Form-data</h3>
+      <table>
+        <thead><tr><th>Key</th><th>Type</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>file</td><td>file</td><td>certificate PDF or image</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="step open" id="s2-5">
+    <div class="step-hdr">
+      <div class="step-num trainer">2-5</div>
       <span class="badge POST">POST</span>
       <div class="step-title">Register as Trainer</div>
       <div class="step-url">/api/trainer/register</div>
     </div>
     <div class="step-body">
-      <div class="info-box save"><strong>Saves:</strong> <code>{{trainer_id}}</code> automatically.</div>
-      <div class="info-box note">Do NOT include <code>training_bike_ids</code> here — bikes are added in the next section after registration.</div>
-      <h3>Request body</h3>
+      <div class="box save"><strong>Saves:</strong> <code>{{trainer_id}}</code></div>
+      <div class="box warn"><strong>After this:</strong> Complete Phases 3 and 4 (bikes + equipment), then wait for admin approval (Phase 5). Cannot add location/courses until approved.</div>
+      <h3>Body — all fields</h3>
       <pre>{
-  <span class="key">"name"</span>:              <span class="str">"Youssef Benali"</span>,
-  <span class="key">"name_ar"</span>:           <span class="str">"يوسف بنعلي"</span>,
-  <span class="key">"bio"</span>:               <span class="str">"Professional motorcycle trainer, 8 years experience."</span>,
-  <span class="key">"bio_ar"</span>:            <span class="str">"مدرب دراجات نارية محترف."</span>,
-  <span class="key">"specialty_ids"</span>:    [<span class="num">1</span>, <span class="num">2</span>],
-  <span class="key">"experience_years"</span>: <span class="num">8</span>,
-  <span class="key">"certifications"</span>:   <span class="str">"FIM Level 2, MSF Certified"</span>,
-  <span class="key">"photo"</span>:             <span class="str">"trainers/photos/abc123.jpg"</span>,
-  <span class="key">"cover"</span>:             <span class="str">"trainers/covers/cover.jpg"</span>,
-  <span class="key">"certification_files"</span>: [<span class="str">"trainers/certs/fim_level2.pdf"</span>],
-  <span class="key">"level_prices"</span>: [
-    { <span class="key">"level_id"</span>: <span class="num">1</span>, <span class="key">"price"</span>: <span class="num">150</span> },
-    { <span class="key">"level_id"</span>: <span class="num">2</span>, <span class="key">"price"</span>: <span class="num">220</span> },
-    { <span class="key">"level_id"</span>: <span class="num">3</span>, <span class="key">"price"</span>: <span class="num">350</span> }
+  <span class="k">"name"</span>:               <span class="s">"Youssef Benali"</span>,
+  <span class="k">"name_ar"</span>:            <span class="s">"يوسف بنعلي"</span>,
+  <span class="k">"bio"</span>:                <span class="s">"Professional motorcycle instructor with 8 years of experience."</span>,
+  <span class="k">"bio_ar"</span>:             <span class="s">"مدرب دراجات نارية محترف مع 8 سنوات من الخبرة."</span>,
+  <span class="k">"specialty_ids"</span>:      [<span class="n">1</span>, <span class="n">2</span>],          <span class="c">// from Step 1-2</span>
+  <span class="k">"experience_years"</span>:   <span class="n">8</span>,
+  <span class="k">"certifications"</span>:     <span class="s">"FIM Level 2, MSF Certified"</span>,
+  <span class="k">"photo"</span>:              <span class="s">"trainers/photos/photo.jpg"</span>,    <span class="c">// from Step 2-2</span>
+  <span class="k">"cover"</span>:              <span class="s">"trainers/covers/cover.jpg"</span>,    <span class="c">// from Step 2-3</span>
+  <span class="k">"certification_files"</span>: [
+    <span class="s">"trainers/certs/fim_level2.pdf"</span>,                          <span class="c">// from Step 2-4</span>
+    <span class="s">"trainers/certs/msf_cert.pdf"</span>
+  ],
+  <span class="k">"level_prices"</span>: [     <span class="c">// your requested price per level</span>
+    { <span class="k">"level_id"</span>: <span class="n">1</span>, <span class="k">"price"</span>: <span class="n">150</span> },
+    { <span class="k">"level_id"</span>: <span class="n">2</span>, <span class="k">"price"</span>: <span class="n">220</span> },
+    { <span class="k">"level_id"</span>: <span class="n">3</span>, <span class="k">"price"</span>: <span class="n">350</span> }
   ]
 }</pre>
-      <h3>Success response <span style="color:var(--green)">201</span></h3>
-      <pre>{
-  <span class="key">"success"</span>: <span class="bool">true</span>,
-  <span class="key">"message"</span>: <span class="str">"Registration submitted successfully"</span>,
-  <span class="key">"data"</span>: {
-    <span class="key">"id"</span>:     <span class="num">4</span>,
-    <span class="key">"status"</span>: <span class="str">"pending"</span>   <span class="cmnt">// ← stays pending until admin approves</span>
-  }
-}</pre>
+      <h3>Field reference</h3>
+      <table>
+        <thead><tr><th>Field</th><th></th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>name / name_ar</td><td class="req">required</td><td>Display name</td></tr>
+          <tr><td>bio / bio_ar</td><td class="opt">optional</td><td>Profile description</td></tr>
+          <tr><td>specialty_ids</td><td class="req">required</td><td>Array of IDs from Step 1-2</td></tr>
+          <tr><td>experience_years</td><td class="req">required</td><td>Integer</td></tr>
+          <tr><td>certifications</td><td class="opt">optional</td><td>Free text summary</td></tr>
+          <tr><td>photo</td><td class="opt">optional</td><td>Path returned by Step 2-2</td></tr>
+          <tr><td>cover</td><td class="opt">optional</td><td>Path returned by Step 2-3</td></tr>
+          <tr><td>certification_files</td><td class="opt">optional</td><td>Paths returned by Step 2-4</td></tr>
+          <tr><td>level_prices[].level_id</td><td class="req">required</td><td>Level ID from Step 1-1</td></tr>
+          <tr><td>level_prices[].price</td><td class="req">required</td><td>Your requested price. Admin sets the final approved price.</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <!-- ════════════════════════════════════════════════
-       SCENARIO 2 — ADD BIKES TO GARAGE
-       ════════════════════════════════════════════════ -->
-  <div class="scenario-header" id="s2">
-    <div class="scenario-num">2</div>
-    <div class="scenario-title">Trainer — Add Bikes to Garage</div>
+  <!-- ═══════════════════════════════════════
+       PHASE 3
+       ═══════════════════════════════════════ -->
+  <div class="phase-header">
+    <div class="ph-icon ph-trainer">3</div>
+    <div>
+      <div class="ph-title">Trainer — Garage &amp; Training Bike Setup</div>
+      <div class="ph-sub">Add a motorcycle to your garage, fill in training info (plate + insurance), then select it as a training bike.</div>
+    </div>
   </div>
 
-  <div class="phase-banner trainer">
-    <div class="phase-banner-title">Trainer role · Folder: Trainer / My Garage [STEP 1 – Add Bikes]</div>
-    <p>Before selecting training bikes, the trainer must first add motorcycles to their personal garage. Run steps 1→2→3 to get valid IDs, then POST the bike.</p>
-  </div>
-
-  <div class="step open">
-    <div class="step-header">
-      <div class="step-num">1</div>
+  <div class="step" id="s3-1">
+    <div class="step-hdr">
+      <div class="step-num trainer">3-1</div>
       <span class="badge GET">GET</span>
-      <span class="badge PUB">PUBLIC</span>
-      <div class="step-title">Get Motorcycle Brands</div>
+      <div class="step-title">Motorcycle Brands</div>
       <div class="step-url">/api/motorcycle/brands</div>
     </div>
     <div class="step-body">
-      <div class="info-box note">No auth required. Check the console log for brand IDs.</div>
-      <h3>Example response</h3>
-      <pre>[
-  { <span class="key">"id"</span>: <span class="num">7</span>,  <span class="key">"name"</span>: <span class="str">"BMW"</span> },
-  { <span class="key">"id"</span>: <span class="num">12</span>, <span class="key">"name"</span>: <span class="str">"Honda"</span> },
-  { <span class="key">"id"</span>: <span class="num">3</span>,  <span class="key">"name"</span>: <span class="str">"Yamaha"</span> }
-]</pre>
-      <p style="color:var(--muted);font-size:12px;margin-top:8px;">📋 Note the <code>id</code> of the brand you want. Use it in step 2.</p>
+      <div class="box info">Public. Note the <code>id</code> of your brand. Used in Step 3-2 and Step 3-4.</div>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">2</div>
+  <div class="step" id="s3-2">
+    <div class="step-hdr">
+      <div class="step-num trainer">3-2</div>
       <span class="badge GET">GET</span>
-      <span class="badge PUB">PUBLIC</span>
-      <div class="step-title">Get Models by Brand</div>
-      <div class="step-url">/api/motorcycle/models/{brandId}</div>
+      <div class="step-title">Models by Brand</div>
+      <div class="step-url">/api/motorcycle/models/{brand_id}</div>
     </div>
     <div class="step-body">
-      <div class="info-box warn">Replace <code>7</code> in the URL with your brand ID from step 1.</div>
-      <h3>Example: <code>GET /api/motorcycle/models/7</code> (BMW)</h3>
-      <pre>[
-  { <span class="key">"id"</span>: <span class="num">1</span>, <span class="key">"name"</span>: <span class="str">"GS 1250"</span> },
-  { <span class="key">"id"</span>: <span class="num">2</span>, <span class="key">"name"</span>: <span class="str">"R 1250 RT"</span> }
-]</pre>
-      <p style="color:var(--muted);font-size:12px;margin-top:8px;">📋 Note the model <code>id</code>. Use it in step 3.</p>
+      <div class="box info">Replace <code>{brand_id}</code> with the ID from Step 3-1. Note the model <code>id</code> for Step 3-4.</div>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">3</div>
+  <div class="step" id="s3-3">
+    <div class="step-hdr">
+      <div class="step-num trainer">3-3</div>
       <span class="badge GET">GET</span>
-      <span class="badge PUB">PUBLIC</span>
-      <div class="step-title">Get Years by Model</div>
-      <div class="step-url">/api/motorcycle/years/{modelId}</div>
+      <div class="step-title">Years by Model</div>
+      <div class="step-url">/api/motorcycle/years/{model_id}</div>
     </div>
     <div class="step-body">
-      <div class="info-box warn">Replace <code>1</code> in the URL with your model ID from step 2.</div>
-      <h3>Example: <code>GET /api/motorcycle/years/1</code></h3>
-      <pre>[
-  { <span class="key">"id"</span>: <span class="num">3</span>, <span class="key">"year"</span>: <span class="num">2025</span> },
-  { <span class="key">"id"</span>: <span class="num">4</span>, <span class="key">"year"</span>: <span class="num">2024</span> }
-]</pre>
-      <p style="color:var(--muted);font-size:12px;margin-top:8px;">📋 Note the year <code>id</code>. Use it in step 4.</p>
+      <div class="box info">Replace <code>{model_id}</code> with the ID from Step 3-2. Note the year <code>id</code> for Step 3-4.</div>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">4</div>
+  <div class="step open" id="s3-4">
+    <div class="step-hdr">
+      <div class="step-num trainer">3-4</div>
       <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
       <div class="step-title">Add Bike to Garage</div>
       <div class="step-url">/api/my-garage</div>
     </div>
     <div class="step-body">
-      <div class="info-box save"><strong>Saves:</strong> <code>{{garage_id}}</code> automatically.</div>
-      <h3>Request body</h3>
+      <div class="box save"><strong>Saves:</strong> <code>{{garage_id}}</code></div>
+      <h3>Body</h3>
       <pre>{
-  <span class="key">"brand_id"</span>:   <span class="num">7</span>,   <span class="cmnt">// from step 1</span>
-  <span class="key">"model_id"</span>:   <span class="num">1</span>,   <span class="cmnt">// from step 2 (must belong to brand)</span>
-  <span class="key">"year_id"</span>:    <span class="num">3</span>,   <span class="cmnt">// from step 3 (must belong to model)</span>
-  <span class="key">"title"</span>:      <span class="str">"My BMW GS"</span>,    <span class="cmnt">// optional nickname</span>
-  <span class="key">"description"</span>: <span class="str">"Daily touring bike"</span>
-}</pre>
-      <h3>Success response <span style="color:var(--green)">201</span></h3>
-      <pre>{
-  <span class="key">"success"</span>: <span class="bool">true</span>,
-  <span class="key">"data"</span>: {
-    <span class="key">"id"</span>:    <span class="num">3</span>,              <span class="cmnt">// ← this is your {{garage_id}}</span>
-    <span class="key">"brand"</span>: { <span class="key">"name"</span>: <span class="str">"BMW"</span> },
-    <span class="key">"model"</span>: { <span class="key">"name"</span>: <span class="str">"GS 1250"</span> },
-    <span class="key">"year"</span>:  { <span class="key">"year"</span>: <span class="num">2025</span> },
-    <span class="key">"plate_number"</span>:              <span class="null">null</span>,
-    <span class="key">"insurance_expiry"</span>:          <span class="null">null</span>,
-    <span class="key">"insurance_covers_training"</span>:  <span class="null">null</span>
-  }
+  <span class="k">"brand_id"</span>:    <span class="n">7</span>,             <span class="c">// from Step 3-1</span>
+  <span class="k">"model_id"</span>:    <span class="n">1</span>,             <span class="c">// from Step 3-2</span>
+  <span class="k">"year_id"</span>:     <span class="n">1</span>,             <span class="c">// from Step 3-3</span>
+  <span class="k">"title"</span>:       <span class="s">"My BMW GS 1250"</span>,
+  <span class="k">"description"</span>: <span class="s">"Primary training bike"</span>
 }</pre>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">5</div>
+  <div class="step open" id="s3-5">
+    <div class="step-hdr">
+      <div class="step-num trainer">3-5</div>
       <span class="badge PATCH">PATCH</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Add Training Info (plate + insurance) ← REQUIRED</div>
+      <div class="step-title">Add Training Info — REQUIRED before Step 3-6</div>
       <div class="step-url">/api/my-garage/{{garage_id}}/training-info</div>
     </div>
     <div class="step-body">
-      <div class="info-box error"><strong>Required before step 6!</strong> Without all 3 fields, the bike shows <code>is_training_ready: false</code> and cannot be used for training sessions.</div>
-      <h3>Request body</h3>
+      <div class="box error"><strong>Mandatory.</strong> All 3 fields required. Without this the bike has <code>is_training_ready: false</code> and Step 3-6 returns <strong>403</strong>.</div>
+      <h3>Body</h3>
       <pre>{
-  <span class="key">"plate_number"</span>:             <span class="str">"ABC 1234"</span>,
-  <span class="key">"insurance_expiry"</span>:         <span class="str">"2027-01-01"</span>,
-  <span class="key">"insurance_covers_training"</span>: <span class="bool">true</span>
+  <span class="k">"plate_number"</span>:             <span class="s">"ABC 1234"</span>,
+  <span class="k">"insurance_expiry"</span>:         <span class="s">"2027-12-31"</span>,
+  <span class="k">"insurance_covers_training"</span>: <span class="b">true</span>
 }</pre>
-      <h3>Success response <span style="color:var(--green)">200</span></h3>
-      <pre>{
-  <span class="key">"success"</span>: <span class="bool">true</span>,
-  <span class="key">"data"</span>: {
-    <span class="key">"id"</span>:                         <span class="num">3</span>,
-    <span class="key">"plate_number"</span>:              <span class="str">"ABC 1234"</span>,
-    <span class="key">"insurance_expiry"</span>:          <span class="str">"2027-01-01"</span>,
-    <span class="key">"insurance_covers_training"</span>:  <span class="bool">true</span>,
-    <span class="key">"is_training_ready"</span>:          <span class="bool">true</span>   <span class="cmnt">// ← must be true</span>
-  }
-}</pre>
+      <h3>Field reference</h3>
+      <table>
+        <thead><tr><th>Field</th><th></th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>plate_number</td><td class="req">required</td><td>Vehicle registration plate</td></tr>
+          <tr><td>insurance_expiry</td><td class="req">required</td><td>Must be a future date (YYYY-MM-DD)</td></tr>
+          <tr><td>insurance_covers_training</td><td class="req">required</td><td>Must be <code>true</code></td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">6</div>
-      <span class="badge GET">GET</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">List My Garage</div>
-      <div class="step-url">/api/my-garage</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Returns all bikes owned by the authenticated user, with brand/model/year and training info.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">7</div>
-      <span class="badge GET">GET</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Get a Single Garage Bike</div>
-      <div class="step-url">/api/my-garage/{{garage_id}}</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Detail view of one bike. 404 if it doesn't belong to you.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">8</div>
-      <span class="badge GET">GET</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Get Default Garage Bike</div>
-      <div class="step-url">/api/my-garage/default</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Returns the bike marked as default (used as a fallback elsewhere in the app).</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">9</div>
+  <div class="step" id="s3-6">
+    <div class="step-hdr">
+      <div class="step-num trainer">3-6</div>
       <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Set Bike as Default</div>
-      <div class="step-url">/api/my-garage/{{garage_id}}/set-default</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Marks this bike as the default and unmarks any previous default. No body needed.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">10</div>
-      <span class="badge GET">GET</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Check Training Completeness</div>
-      <div class="step-url">/api/my-garage/training-completeness</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Quick summary across all your bikes of which ones are <code>is_training_ready</code> and which are missing plate/insurance fields.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">11</div>
-      <span class="badge PUT">PUT</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Update Garage Bike</div>
-      <div class="step-url">/api/my-garage/{{garage_id}}</div>
-    </div>
-    <div class="step-body">
-      <h3>Request body (any subset)</h3>
-      <pre>{
-  <span class="key">"title"</span>:       <span class="str">"My BMW GS (Track Setup)"</span>,
-  <span class="key">"description"</span>: <span class="str">"Updated for circuit use"</span>
-}</pre>
-      <div class="info-box note">Also accepts <code>PATCH</code> on the same URL for partial updates.</div>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">12</div>
-      <span class="badge DELETE">DELETE</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Delete Garage Bike</div>
-      <div class="step-url">/api/my-garage/{{garage_id}}</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box warn">If the bike is currently selected as a training bike, remove it from Training Bikes (Scenario 3) first.</div>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════════
-       SCENARIO 3 — SELECT TRAINING BIKES
-       ════════════════════════════════════════════════ -->
-  <div class="scenario-header" id="s3">
-    <div class="scenario-num">3</div>
-    <div class="scenario-title">Trainer — Select Training Bikes from Garage</div>
-  </div>
-
-  <div class="phase-banner trainer">
-    <div class="phase-banner-title">Trainer role · Folder: Trainer / Training Bikes [STEP 2]</div>
-    <p>Select which garage bikes will be used for training sessions. Requires the bike to have training info filled (previous section step 5).</p>
-  </div>
-
-  <div class="step open">
-    <div class="step-header">
-      <div class="step-num">1</div>
-      <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Select Bike as Training Bike</div>
+      <div class="step-title">Select Training Bike</div>
       <div class="step-url">/api/trainer/training-bikes</div>
     </div>
     <div class="step-body">
-      <h3>Request body</h3>
+      <h3>Body</h3>
       <pre>{
-  <span class="key">"garage_id"</span>:  <span class="num">3</span>,      <span class="cmnt">// {{garage_id}} from garage step</span>
-  <span class="key">"is_primary"</span>: <span class="bool">true</span>   <span class="cmnt">// first bike should be primary</span>
+  <span class="k">"garage_id"</span>:  <span class="n">{{garage_id}}</span>,
+  <span class="k">"is_primary"</span>: <span class="b">true</span>
 }</pre>
-      <h3>Success response <span style="color:var(--green)">201</span></h3>
-      <pre>{
-  <span class="key">"success"</span>: <span class="bool">true</span>,
-  <span class="key">"message"</span>: <span class="str">"Training bike added successfully"</span>,
-  <span class="key">"data"</span>: {
-    <span class="key">"trainer_id"</span>: <span class="num">4</span>,
-    <span class="key">"garage_id"</span>:  <span class="num">3</span>,
-    <span class="key">"is_primary"</span>: <span class="bool">true</span>
-  }
-}</pre>
-      <h3>Error responses</h3>
-      <pre><span class="cmnt">// 409 — bike already selected</span>
-{ <span class="key">"success"</span>: <span class="bool">false</span>, <span class="key">"message"</span>: <span class="str">"This bike is already added as a training bike"</span> }
-
-<span class="cmnt">// 403 — bike not in your garage</span>
-{ <span class="key">"success"</span>: <span class="bool">false</span>, <span class="key">"message"</span>: <span class="str">"Bike not found in your garage"</span> }</pre>
+      <div class="box info">
+        <strong>Returns 403</strong> if <code>is_training_ready: false</code> (Step 3-5 not done).<br>
+        <strong>Returns 409</strong> if this bike is already selected.
+      </div>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">2</div>
+  <!-- ═══════════════════════════════════════
+       PHASE 4
+       ═══════════════════════════════════════ -->
+  <div class="phase-header">
+    <div class="ph-icon ph-trainer">4</div>
+    <div>
+      <div class="ph-title">Trainer — Equipment Selection</div>
+      <div class="ph-sub">Select from the admin catalog which gear you provide to students. Names/icons are copied from catalog automatically.</div>
+    </div>
+  </div>
+
+  <div class="step" id="s4-1">
+    <div class="step-hdr">
+      <div class="step-num trainer">4-1</div>
       <span class="badge GET">GET</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Verify Training Bikes List</div>
-      <div class="step-url">/api/trainer/training-bikes</div>
-    </div>
-    <div class="step-body">
-      <h3>Expected response</h3>
-      <pre>{
-  <span class="key">"success"</span>: <span class="bool">true</span>,
-  <span class="key">"data"</span>: [
-    {
-      <span class="key">"id"</span>:               <span class="num">1</span>,
-      <span class="key">"garage_id"</span>:       <span class="num">3</span>,
-      <span class="key">"is_primary"</span>:      <span class="bool">true</span>,
-      <span class="key">"is_training_ready"</span>: <span class="bool">true</span>,   <span class="cmnt">// ← confirms plate+insurance filled</span>
-      <span class="key">"garage"</span>: {
-        <span class="key">"plate_number"</span>: <span class="str">"ABC 1234"</span>,
-        <span class="key">"brand"</span>:  { <span class="key">"name"</span>: <span class="str">"BMW"</span> },
-        <span class="key">"model"</span>:  { <span class="key">"name"</span>: <span class="str">"GS 1250"</span> },
-        <span class="key">"year"</span>:   { <span class="key">"year"</span>: <span class="num">2025</span> }
-      }
-    }
-  ]
-}</pre>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">3</div>
-      <span class="badge PATCH">PATCH</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Set Training Bike as Primary</div>
-      <div class="step-url">/api/trainer/training-bikes/{{garage_id}}/set-primary</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Marks this garage bike as the primary training bike and clears the flag on all others. No body needed.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">4</div>
-      <span class="badge DELETE">DELETE</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Remove Training Bike</div>
-      <div class="step-url">/api/trainer/training-bikes/{{garage_id}}</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box note">Only removes it from the training-bike list — the bike stays in My Garage.</div>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════════
-       SCENARIO 4 — SELECT EQUIPMENT
-       ════════════════════════════════════════════════ -->
-  <div class="scenario-header" id="s4">
-    <div class="scenario-num">4</div>
-    <div class="scenario-title">Trainer — Select Equipment from Catalog</div>
-  </div>
-
-  <div class="phase-banner trainer">
-    <div class="phase-banner-title">Trainer role · Folder: Trainer / Equipment [STEP 3 – Select from Catalog]</div>
-    <p>Equipment is selected from an admin-managed catalog. The trainer cannot add free-form items.</p>
-  </div>
-
-  <div class="step open">
-    <div class="step-header">
-      <div class="step-num">1</div>
-      <span class="badge GET">GET</span>
-      <span class="badge PUB">PUBLIC</span>
-      <div class="step-title">Get Equipment Catalog</div>
+      <div class="step-title">Equipment Catalog (verify IDs)</div>
       <div class="step-url">/api/equipment-types</div>
     </div>
     <div class="step-body">
-      <div class="info-box save"><strong>Saves:</strong> <code>{{equipment_type_id}}</code> (first item). Also logs all types to console.</div>
-      <h3>Default catalog</h3>
-      <pre>{
-  <span class="key">"success"</span>: <span class="bool">true</span>,
-  <span class="key">"data"</span>: [
-    { <span class="key">"id"</span>: <span class="num">1</span>, <span class="key">"name"</span>: <span class="str">"Helmet"</span>,         <span class="key">"name_ar"</span>: <span class="str">"خوذة"</span>,        <span class="key">"icon"</span>: <span class="str">"helmet"</span> },
-    { <span class="key">"id"</span>: <span class="num">2</span>, <span class="key">"name"</span>: <span class="str">"Jacket"</span>,         <span class="key">"name_ar"</span>: <span class="str">"جاكيت"</span>,       <span class="key">"icon"</span>: <span class="str">"jacket"</span> },
-    { <span class="key">"id"</span>: <span class="num">3</span>, <span class="key">"name"</span>: <span class="str">"Knee Protector"</span>,  <span class="key">"name_ar"</span>: <span class="str">"واقي الركبة"</span>,  <span class="key">"icon"</span>: <span class="str">"knee"</span> },
-    { <span class="key">"id"</span>: <span class="num">4</span>, <span class="key">"name"</span>: <span class="str">"Back Protector"</span>,  <span class="key">"name_ar"</span>: <span class="str">"واقي الظهر"</span>,   <span class="key">"icon"</span>: <span class="str">"back"</span> },
-    { <span class="key">"id"</span>: <span class="num">5</span>, <span class="key">"name"</span>: <span class="str">"Gloves"</span>,         <span class="key">"name_ar"</span>: <span class="str">"قفازات"</span>,      <span class="key">"icon"</span>: <span class="str">"gloves"</span> },
-    { <span class="key">"id"</span>: <span class="num">6</span>, <span class="key">"name"</span>: <span class="str">"Boots"</span>,          <span class="key">"name_ar"</span>: <span class="str">"أحذية"</span>,       <span class="key">"icon"</span>: <span class="str">"boots"</span> }
-  ]
-}</pre>
+      <div class="box info">Same as Step 1-3. Confirm the IDs you want to select.</div>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">2</div>
+  <div class="step open" id="s4-2">
+    <div class="step-hdr">
+      <div class="step-num trainer">4-2</div>
       <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
       <div class="step-title">Select Equipment from Catalog</div>
       <div class="step-url">/api/trainer/equipment</div>
     </div>
     <div class="step-body">
-      <div class="info-box save"><strong>Saves:</strong> <code>{{equipment_id}}</code> (first created row ID).</div>
-      <div class="info-box note">Names and Arabic translations are copied automatically. Already-selected types are skipped — no duplicates.</div>
-      <h3>Request body — select all 6</h3>
+      <div class="box save"><strong>Saves:</strong> <code>{{equipment_id}}</code></div>
+      <div class="box info">Already-selected types are skipped (idempotent). One call selects multiple items.</div>
+      <h3>Body</h3>
       <pre>{
-  <span class="key">"equipment_type_ids"</span>: [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>]
+  <span class="k">"equipment_type_ids"</span>: [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>, <span class="n">6</span>]   <span class="c">// from Step 1-3</span>
 }</pre>
-      <h3>Success response <span style="color:var(--green)">201</span></h3>
+      <h3>Response</h3>
       <pre>{
-  <span class="key">"success"</span>: <span class="bool">true</span>,
-  <span class="key">"message"</span>: <span class="str">"6 equipment item(s) selected."</span>,
-  <span class="key">"data"</span>: [
-    { <span class="key">"id"</span>: <span class="num">1</span>, <span class="key">"name"</span>: <span class="str">"Helmet"</span>, <span class="key">"name_ar"</span>: <span class="str">"خوذة"</span>, <span class="key">"icon"</span>: <span class="str">"helmet"</span>, <span class="key">"is_available"</span>: <span class="bool">true</span> },
-    <span class="cmnt">// ... 5 more items</span>
+  <span class="k">"success"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: [
+    { <span class="k">"id"</span>: <span class="n">1</span>, <span class="k">"name"</span>: <span class="s">"Helmet"</span>, <span class="k">"name_ar"</span>: <span class="s">"خوذة"</span>, <span class="k">"icon"</span>: <span class="s">"helmet"</span>, <span class="k">"is_available"</span>: <span class="b">true</span> },
+    <span class="c">// ... one entry per selected type</span>
   ]
 }</pre>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">3</div>
-      <span class="badge GET">GET</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">List My Equipment</div>
-      <div class="step-url">/api/trainer/equipment</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Returns every equipment row owned by this trainer, including unavailable ones.</p>
+  <!-- ═══════════════════════════════════════
+       PHASE 5
+       ═══════════════════════════════════════ -->
+  <div class="phase-header">
+    <div class="ph-icon ph-admin">5</div>
+    <div>
+      <div class="ph-title">Admin — Review &amp; Approve</div>
+      <div class="ph-sub">Admin reviews the full profile (bikes + equipment + certs) then approves with final prices per level.</div>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">4</div>
-      <span class="badge PATCH">PATCH</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Update an Equipment Item</div>
-      <div class="step-url">/api/trainer/equipment/{{equipment_id}}</div>
-    </div>
-    <div class="step-body">
-      <h3>Request body (any subset)</h3>
-      <pre>{
-  <span class="key">"name"</span>:         <span class="str">"Full-face Helmet"</span>,
-  <span class="key">"name_ar"</span>:      <span class="str">"خوذة كاملة"</span>,
-  <span class="key">"icon"</span>:         <span class="str">"helmet-full"</span>,
-  <span class="key">"is_available"</span>: <span class="bool">false</span>,
-  <span class="key">"sort_order"</span>:   <span class="num">1</span>
-}</pre>
-      <div class="info-box note">Toggle <code>is_available: false</code> to temporarily hide an item from the public profile without deleting it.</div>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">5</div>
-      <span class="badge DELETE">DELETE</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Delete an Equipment Item</div>
-      <div class="step-url">/api/trainer/equipment/{{equipment_id}}</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Permanently removes the item. 404 if it doesn't belong to you.</p>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════════
-       SCENARIO 5 — ADMIN APPROVAL
-       ════════════════════════════════════════════════ -->
-  <div class="scenario-header" id="s5">
-    <div class="scenario-num" class="admin">5</div>
-    <div class="scenario-title">Admin — Verify Profile &amp; Approve Levels</div>
-  </div>
-
-  <div class="phase-banner admin">
-    <div class="phase-banner-title">Admin role · Folder: Admin / Trainer Applications</div>
-    <p>Admin can now see the trainer's complete profile: bikes, equipment, certifications. Admin approves specific training levels with their prices.</p>
-  </div>
-
-  <div class="step open">
-    <div class="step-header">
-      <div class="step-num">1</div>
+  <div class="step open" id="s5-1">
+    <div class="step-hdr">
+      <div class="step-num admin">5-1</div>
       <span class="badge POST">POST</span>
+      <span class="badge ADMIN">ADMIN</span>
       <div class="step-title">Admin Login</div>
       <div class="step-url">/api/admin/login</div>
     </div>
     <div class="step-body">
-      <div class="info-box save"><strong>Saves:</strong> <code>{{admin_token}}</code> automatically.</div>
+      <div class="box save"><strong>Saves:</strong> <code>{{admin_token}}</code></div>
+      <h3>Body</h3>
       <pre>{
-  <span class="key">"login"</span>:    <span class="str">"admin@dabapp.com"</span>,
-  <span class="key">"password"</span>: <span class="str">"YourAdminPassword"</span>
+  <span class="k">"login"</span>:    <span class="s">"admin@dabapp.com"</span>,
+  <span class="k">"password"</span>: <span class="s">"YourAdminPassword"</span>
 }</pre>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">2</div>
+  <div class="step" id="s5-2">
+    <div class="step-hdr">
+      <div class="step-num admin">5-2</div>
       <span class="badge GET">GET</span>
+      <span class="badge ADMIN">ADMIN</span>
       <div class="step-title">Get Pending Trainers</div>
       <div class="step-url">/api/admin/trainers?status=pending</div>
     </div>
     <div class="step-body">
-      <div class="info-box save"><strong>Saves:</strong> <code>{{trainer_id}}</code> from the first pending trainer.</div>
-      <p style="color:var(--muted);font-size:13px;margin-top:8px;">Returns a paginated list of all trainers with status=pending. Includes their bikes and equipment.</p>
+      <div class="box save"><strong>Saves:</strong> <code>{{trainer_id}}</code> from first result.</div>
+      <div class="box info">Returns full profile including bikes, equipment, certificate files, and requested prices.</div>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">3</div>
+  <div class="step" id="s5-3">
+    <div class="step-hdr">
+      <div class="step-num admin">5-3</div>
       <span class="badge GET">GET</span>
-      <div class="step-title">View Full Trainer Profile (admin)</div>
+      <span class="badge ADMIN">ADMIN</span>
+      <div class="step-title">Get Trainer Detail</div>
       <div class="step-url">/api/admin/trainers/{{trainer_id}}</div>
     </div>
     <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Admin views full profile: certifications, bikes, equipment, requested level prices. Use this to decide which levels to approve.</p>
+      <div class="box info">Review bikes, equipment, certification files and requested prices before approving.</div>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">4</div>
+  <div class="step open" id="s5-4">
+    <div class="step-hdr">
+      <div class="step-num admin">5-4</div>
       <span class="badge POST">POST</span>
-      <div class="step-title">Approve Levels with Prices</div>
+      <span class="badge ADMIN">ADMIN</span>
+      <div class="step-title">Approve Trainer + Set Final Prices</div>
       <div class="step-url">/api/admin/trainers/{{trainer_id}}/approve-levels</div>
     </div>
     <div class="step-body">
-      <div class="info-box note"><code>approve_trainer: true</code> sets the trainer status to <code>approved</code>. Without it, the levels are saved but trainer stays pending.</div>
-      <h3>Approve all 3 levels</h3>
+      <div class="box save"><strong>After this:</strong> Trainer <code>status = approved</code>. Phase 6 can now run.</div>
+      <h3>Body</h3>
       <pre>{
-  <span class="key">"levels"</span>: [
-    { <span class="key">"level_id"</span>: <span class="num">1</span>, <span class="key">"approved_price"</span>: <span class="num">150</span> },
-    { <span class="key">"level_id"</span>: <span class="num">2</span>, <span class="key">"approved_price"</span>: <span class="num">220</span> },
-    { <span class="key">"level_id"</span>: <span class="num">3</span>, <span class="key">"approved_price"</span>: <span class="num">350</span> }
+  <span class="k">"levels"</span>: [
+    { <span class="k">"level_id"</span>: <span class="n">1</span>, <span class="k">"approved_price"</span>: <span class="n">150</span> },
+    { <span class="k">"level_id"</span>: <span class="n">2</span>, <span class="k">"approved_price"</span>: <span class="n">220</span> },
+    { <span class="k">"level_id"</span>: <span class="n">3</span>, <span class="k">"approved_price"</span>: <span class="n">350</span> }
   ],
-  <span class="key">"approve_trainer"</span>: <span class="bool">true</span>
+  <span class="k">"approve_trainer"</span>: <span class="b">true</span>
 }</pre>
-      <h3>Approve beginner level only</h3>
-      <pre>{
-  <span class="key">"levels"</span>: [
-    { <span class="key">"level_id"</span>: <span class="num">1</span>, <span class="key">"approved_price"</span>: <span class="num">150</span>, <span class="key">"notes"</span>: <span class="str">"Certifications verified"</span> }
-  ],
-  <span class="key">"approve_trainer"</span>: <span class="bool">true</span>
-}</pre>
-      <h3>Reject a specific level</h3>
-      <pre><span class="cmnt">// POST /api/admin/trainers/{{trainer_id}}/reject-level</span>
+      <div class="box info"><code>approved_price</code> is the price clients will see and pay. Trainer's <code>requested_price</code> is for admin reference only.</div>
+      <hr class="divider">
+      <h3>To reject instead</h3>
+      <pre><span class="c">// POST /api/admin/trainers/{{trainer_id}}/reject</span>
 {
-  <span class="key">"level_id"</span>: <span class="num">3</span>,
-  <span class="key">"notes"</span>: <span class="str">"Advanced certifications could not be verified."</span>
+  <span class="k">"reason"</span>: <span class="s">"Required certifications could not be verified."</span>
 }</pre>
     </div>
   </div>
 
-  <!-- ════════════════════════════════════════════════
-       SCENARIO 6 — LOCATION & SCHEDULE
-       ════════════════════════════════════════════════ -->
-  <div class="scenario-header" id="s6">
-    <div class="scenario-num">6</div>
-    <div class="scenario-title">Trainer — Add Location &amp; Schedule (post-approval)</div>
+  <!-- ═══════════════════════════════════════
+       PHASE 6
+       ═══════════════════════════════════════ -->
+  <div class="phase-header">
+    <div class="ph-icon ph-trainer">6</div>
+    <div>
+      <div class="ph-title">Trainer — Post-Approval Setup</div>
+      <div class="ph-sub">All steps require approved status. Run in order: location → schedule → gallery → courses (sessions included in the same POST).</div>
+    </div>
   </div>
 
-  <div class="phase-banner trainer">
-    <div class="phase-banner-title">Trainer role · Folder: Trainer / Location &amp; Schedule</div>
-    <p>After admin approval, trainer sets up training locations and weekly availability. Clients will see available slots based on this.</p>
-  </div>
-
-  <div class="step open">
-    <div class="step-header">
-      <div class="step-num">1</div>
+  <div class="step open" id="s6-1">
+    <div class="step-hdr">
+      <div class="step-num trainer">6-1</div>
       <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
       <div class="step-title">Add Training Location</div>
       <div class="step-url">/api/trainer/locations</div>
     </div>
     <div class="step-body">
-      <div class="info-box save"><strong>Saves:</strong> <code>{{location_id}}</code> automatically.</div>
+      <div class="box save"><strong>Saves:</strong> <code>{{location_id}}</code> — used in Course A and client booking.</div>
+      <h3>Body</h3>
       <pre>{
-  <span class="key">"location_name"</span>:    <span class="str">"Marrakech Circuit"</span>,
-  <span class="key">"location_name_ar"</span>: <span class="str">"حلبة مراكش"</span>,
-  <span class="key">"city_id"</span>:          <span class="num">1</span>,
-  <span class="key">"latitude"</span>:         <span class="num">31.6295</span>,
-  <span class="key">"longitude"</span>:        <span class="num">-7.9811</span>,
-  <span class="key">"price_per_hour"</span>:   <span class="num">150</span>
+  <span class="k">"location_name"</span>:    <span class="s">"Marrakech Circuit"</span>,
+  <span class="k">"location_name_ar"</span>: <span class="s">"حلبة مراكش"</span>,
+  <span class="k">"city_id"</span>:          <span class="n">1</span>,           <span class="c">// from Step 1-4</span>
+  <span class="k">"latitude"</span>:         <span class="n">31.6295</span>,
+  <span class="k">"longitude"</span>:        <span class="n">-7.9811</span>,
+  <span class="k">"price_per_hour"</span>:   <span class="n">150</span>
 }</pre>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">2</div>
+  <div class="step open" id="s6-2">
+    <div class="step-hdr">
+      <div class="step-num trainer">6-2</div>
       <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
       <div class="step-title">Set Weekly Schedule</div>
       <div class="step-url">/api/trainer/schedule</div>
     </div>
     <div class="step-body">
-      <div class="info-box note"><code>day_of_week</code>: 0=Sunday, 1=Monday … 5=Friday, 6=Saturday</div>
+      <h3>Body</h3>
       <pre>{
-  <span class="key">"schedule"</span>: [
-    { <span class="key">"day_of_week"</span>: <span class="num">5</span>, <span class="key">"start_time"</span>: <span class="str">"08:00"</span>, <span class="key">"end_time"</span>: <span class="str">"18:00"</span>, <span class="key">"is_available"</span>: <span class="bool">true</span> },
-    { <span class="key">"day_of_week"</span>: <span class="num">6</span>, <span class="key">"start_time"</span>: <span class="str">"08:00"</span>, <span class="key">"end_time"</span>: <span class="str">"14:00"</span>, <span class="key">"is_available"</span>: <span class="bool">true</span> },
-    { <span class="key">"day_of_week"</span>: <span class="num">0</span>, <span class="key">"start_time"</span>: <span class="str">"09:00"</span>, <span class="key">"end_time"</span>: <span class="str">"17:00"</span>, <span class="key">"is_available"</span>: <span class="bool">true</span> }
+  <span class="k">"schedule"</span>: [
+    { <span class="k">"day_of_week"</span>: <span class="n">0</span>, <span class="k">"start_time"</span>: <span class="s">"00:00"</span>, <span class="k">"end_time"</span>: <span class="s">"00:00"</span>, <span class="k">"is_available"</span>: <span class="b">false</span> },  <span class="c">// Sunday off</span>
+    { <span class="k">"day_of_week"</span>: <span class="n">1</span>, <span class="k">"start_time"</span>: <span class="s">"09:00"</span>, <span class="k">"end_time"</span>: <span class="s">"18:00"</span>, <span class="k">"is_available"</span>: <span class="b">true</span>  },  <span class="c">// Monday</span>
+    { <span class="k">"day_of_week"</span>: <span class="n">2</span>, <span class="k">"start_time"</span>: <span class="s">"09:00"</span>, <span class="k">"end_time"</span>: <span class="s">"18:00"</span>, <span class="k">"is_available"</span>: <span class="b">true</span>  },  <span class="c">// Tuesday</span>
+    { <span class="k">"day_of_week"</span>: <span class="n">3</span>, <span class="k">"start_time"</span>: <span class="s">"09:00"</span>, <span class="k">"end_time"</span>: <span class="s">"18:00"</span>, <span class="k">"is_available"</span>: <span class="b">true</span>  },  <span class="c">// Wednesday</span>
+    { <span class="k">"day_of_week"</span>: <span class="n">4</span>, <span class="k">"start_time"</span>: <span class="s">"09:00"</span>, <span class="k">"end_time"</span>: <span class="s">"18:00"</span>, <span class="k">"is_available"</span>: <span class="b">true</span>  },  <span class="c">// Thursday</span>
+    { <span class="k">"day_of_week"</span>: <span class="n">5</span>, <span class="k">"start_time"</span>: <span class="s">"08:00"</span>, <span class="k">"end_time"</span>: <span class="s">"14:00"</span>, <span class="k">"is_available"</span>: <span class="b">true</span>  },  <span class="c">// Friday</span>
+    { <span class="k">"day_of_week"</span>: <span class="n">6</span>, <span class="k">"start_time"</span>: <span class="s">"00:00"</span>, <span class="k">"end_time"</span>: <span class="s">"00:00"</span>, <span class="k">"is_available"</span>: <span class="b">false</span> }   <span class="c">// Saturday off</span>
   ]
 }</pre>
+      <div class="box info"><code>day_of_week</code>: 0=Sunday · 1=Monday · 2=Tuesday · 3=Wednesday · 4=Thursday · 5=Friday · 6=Saturday. Send all 7 days.</div>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">3</div>
-      <span class="badge GET">GET</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">View My Schedule</div>
-      <div class="step-url">/api/trainer/schedule</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Returns the weekly availability set in step 2.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">4</div>
-      <span class="badge DELETE">DELETE</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Delete a Training Location</div>
-      <div class="step-url">/api/trainer/locations/{{location_id}}</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box warn">Courses that reference this <code>location_id</code> will need to be updated to a different location first.</div>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════════
-       SCENARIO 7 — COURSES
-       ════════════════════════════════════════════════ -->
-  <div class="scenario-header" id="s7">
-    <div class="scenario-num">7</div>
-    <div class="scenario-title">Trainer — Course Lifecycle</div>
-  </div>
-
-  <div class="phase-banner trainer">
-    <div class="phase-banner-title">Trainer role · Folder: Trainer / Courses + Session Descriptions</div>
-    <p>Courses go through a lifecycle: <code>draft → published → archived</code>. Published courses are visible to clients. Archived courses can be republished.</p>
-  </div>
-
-  <div id="course-lifecycle" style="margin: 20px 0 24px;">
-    <div class="flow">
-      <div class="flow-item"><div class="flow-box" style="border-color:var(--muted);color:var(--muted)">draft</div><div class="flow-label">created</div></div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-item"><div class="flow-box trainer">published<br><small>is_active=true</small></div><div class="flow-label">visible to clients</div></div>
-      <div class="flow-arrow">⇄</div>
-      <div class="flow-item"><div class="flow-box" style="border-color:var(--yellow);color:var(--yellow)">archived<br><small>is_active=false</small></div><div class="flow-label">hidden from clients</div></div>
-    </div>
-    <div class="info-box warn" style="margin-top:12px;">
-      <strong>Delete rules:</strong> Only <code>draft</code> or <code>archived</code> courses can be deleted. Published courses must be archived first.
-    </div>
-  </div>
-
-  <div class="step open">
-    <div class="step-header">
-      <div class="step-num">1</div>
+  <div class="step open" id="s6-3">
+    <div class="step-hdr">
+      <div class="step-num trainer">6-3</div>
       <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Create Course (fixed location)</div>
-      <div class="step-url">/api/trainer/courses</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box save"><strong>Saves:</strong> <code>{{course_id}}</code> automatically. Status starts as <code>draft</code>.</div>
-      <pre>{
-  <span class="key">"title"</span>:           <span class="str">"Beginner Circuit Training"</span>,
-  <span class="key">"title_ar"</span>:        <span class="str">"تدريب المبتدئين في الحلبة"</span>,
-  <span class="key">"description"</span>:     <span class="str">"Learn fundamentals of motorcycle control."</span>,
-  <span class="key">"description_ar"</span>:  <span class="str">"تعلم أساسيات التحكم بالدراجة النارية."</span>,
-  <span class="key">"level_id"</span>:        <span class="num">1</span>,
-  <span class="key">"hours_per_session"</span>: <span class="num">2</span>,
-  <span class="key">"total_sessions"</span>:  <span class="num">5</span>,
-  <span class="key">"original_price"</span>:  <span class="num">150</span>,
-  <span class="key">"promo_price"</span>:     <span class="num">120</span>,
-  <span class="key">"location_id"</span>:    <span class="num">1</span>,   <span class="cmnt">// {{location_id}}</span>
-  <span class="key">"can_travel"</span>:     <span class="bool">false</span>
-}</pre>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">2</div>
-      <span class="badge PUT">PUT</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Add Session Descriptions</div>
-      <div class="step-url">/api/trainer/courses/{{course_id}}/sessions</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box note">Each session in the array gets its own <code>description</code>/<code>description_ar</code> — this is what the client sees per-session before booking (Scenario 9, step 9).</div>
-      <pre>{
-  <span class="key">"sessions"</span>: [
-    {
-      <span class="key">"session_number"</span>:  <span class="num">1</span>,
-      <span class="key">"title"</span>:           <span class="str">"Introduction & Safety"</span>,
-      <span class="key">"title_ar"</span>:        <span class="str">"المقدمة والسلامة"</span>,
-      <span class="key">"description"</span>:     <span class="str">"Getting familiar with the bike and safety gear check."</span>,
-      <span class="key">"description_ar"</span>:  <span class="str">"التعرف على الدراجة وفحص معدات السلامة."</span>,
-      <span class="key">"duration_hours"</span>:  <span class="num">2</span>
-    },
-    {
-      <span class="key">"session_number"</span>:  <span class="num">2</span>,
-      <span class="key">"title"</span>:           <span class="str">"Balance & Low-Speed Control"</span>,
-      <span class="key">"title_ar"</span>:        <span class="str">"التوازن والتحكم بالسرعات المنخفضة"</span>,
-      <span class="key">"description"</span>:     <span class="str">"Slow-speed maneuvers and figure-8 drills."</span>,
-      <span class="key">"description_ar"</span>:  <span class="str">"المناورات بالسرعات المنخفضة وتمارين الثماني."</span>,
-      <span class="key">"duration_hours"</span>:  <span class="num">2</span>
-    },
-    {
-      <span class="key">"session_number"</span>:  <span class="num">3</span>,
-      <span class="key">"title"</span>:           <span class="str">"Cornering Basics"</span>,
-      <span class="key">"title_ar"</span>:        <span class="str">"أساسيات الانعطاف"</span>,
-      <span class="key">"description"</span>:     <span class="str">"Entry point, apex, exit point."</span>,
-      <span class="key">"description_ar"</span>:  <span class="str">"نقطة الدخول والذروة والخروج."</span>,
-      <span class="key">"duration_hours"</span>:  <span class="num">2</span>
-    },
-    {
-      <span class="key">"session_number"</span>:  <span class="num">4</span>,
-      <span class="key">"title"</span>:           <span class="str">"Braking Techniques"</span>,
-      <span class="key">"title_ar"</span>:        <span class="str">"تقنيات الكبح"</span>,
-      <span class="key">"description"</span>:     <span class="str">"Progressive braking and emergency stops."</span>,
-      <span class="key">"description_ar"</span>:  <span class="str">"الكبح التدريجي والتوقف الطارئ."</span>,
-      <span class="key">"duration_hours"</span>:  <span class="num">2</span>
-    },
-    {
-      <span class="key">"session_number"</span>:  <span class="num">5</span>,
-      <span class="key">"title"</span>:           <span class="str">"Full Circuit Lap"</span>,
-      <span class="key">"title_ar"</span>:        <span class="str">"جولة كاملة في الحلبة"</span>,
-      <span class="key">"description"</span>:     <span class="str">"Combining all skills in a full supervised lap."</span>,
-      <span class="key">"description_ar"</span>:  <span class="str">"دمج جميع المهارات في جولة كاملة تحت الإشراف."</span>,
-      <span class="key">"duration_hours"</span>:  <span class="num">2</span>
-    }
-  ]
-}</pre>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">3</div>
-      <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Publish Course</div>
-      <div class="step-url">/api/trainer/courses/{{course_id}}/publish</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box note">Works from <code>draft</code> OR <code>archived</code> status. Sets <code>status=published</code> AND <code>is_active=true</code>.</div>
-      <p style="color:var(--muted);font-size:13px;margin-top:8px;">No request body needed. Returns the updated course.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">4</div>
-      <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Archive Course</div>
-      <div class="step-url">/api/trainer/courses/{{course_id}}/archive</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box note">Sets <code>status=archived</code> AND <code>is_active=false</code>. Course disappears from client search. Can be republished later.</div>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">5</div>
-      <span class="badge GET">GET</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">List My Courses</div>
-      <div class="step-url">/api/trainer/courses</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Returns all of the trainer's own courses regardless of status. Filter: <code>?status=draft</code> / <code>published</code> / <code>archived</code>.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">6</div>
-      <span class="badge GET">GET</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Get a Single Course</div>
-      <div class="step-url">/api/trainer/courses/{{course_id}}</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Full detail including session descriptions and location.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">7</div>
-      <span class="badge PUT">PUT</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Update Course</div>
-      <div class="step-url">/api/trainer/courses/{{course_id}}</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box error">Cannot update a course that is <code>archived</code>. Republish or recreate instead.</div>
-      <pre>{
-  <span class="key">"title"</span>:          <span class="str">"Beginner Circuit Training (Updated)"</span>,
-  <span class="key">"original_price"</span>: <span class="num">160</span>,
-  <span class="key">"promo_price"</span>:    <span class="num">130</span>
-}</pre>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">8</div>
-      <span class="badge DELETE">DELETE</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Delete Course</div>
-      <div class="step-url">/api/trainer/courses/{{course_id}}</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box error">Only allowed when status is <code>draft</code> or <code>archived</code>. Archive a published course first.</div>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">9</div>
-      <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Create Course with Travel Option</div>
-      <div class="step-url">/api/trainer/courses</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box note">Instead of a fixed <code>location_id</code>, the trainer travels to the client. Requires <code>can_travel=true</code> and <code>price_per_km</code>.</div>
-      <pre>{
-  <span class="key">"title"</span>:             <span class="str">"Mobile Coaching — I Come to You"</span>,
-  <span class="key">"hours_per_session"</span>: <span class="num">2</span>,
-  <span class="key">"total_sessions"</span>:    <span class="num">3</span>,
-  <span class="key">"original_price"</span>:    <span class="num">200</span>,
-  <span class="key">"can_travel"</span>:         <span class="bool">true</span>,
-  <span class="key">"price_per_km"</span>:       <span class="num">5</span>
-}</pre>
-      <div class="info-box save"><strong>Tip:</strong> save this course's id as <code>{{travel_course_id}}</code> (separate from <code>{{course_id}}</code>) so step 10 below always tests the right course.</div>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">10</div>
-      <span class="badge GET">GET</span>
-      <span class="badge PUB">PUBLIC</span>
-      <div class="step-title">Calculate Travel Price from Number of KM</div>
-      <div class="step-url">/api/trainers/{{trainer_id}}/travel-price</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box note">This is how the client (or trainer, to preview) gets the total price for a <code>can_travel=true</code> course: <code>total_price = original_price + (price_per_km × km)</code>. Works only on courses created with <code>can_travel=true</code> and <code>price_per_km</code> set — like step 9 above.</div>
-      <pre><span class="cmnt">// Query params</span>
-course_id = {{travel_course_id}}   <span class="cmnt">// the course from step 9 (price_per_km = 5)</span>
-km        = 12</pre>
-      <h3>Example response <span style="color:var(--green)">200</span></h3>
-      <pre>{
-  <span class="key">"success"</span>: <span class="bool">true</span>,
-  <span class="key">"data"</span>: {
-    <span class="key">"km"</span>:           <span class="num">12</span>,
-    <span class="key">"price_per_km"</span>: <span class="num">5</span>,
-    <span class="key">"travel_fee"</span>:   <span class="num">60</span>,    <span class="cmnt">// 12 × 5</span>
-    <span class="key">"base_price"</span>:   <span class="num">200</span>,   <span class="cmnt">// course original_price</span>
-    <span class="key">"total_price"</span>:  <span class="num">260</span>   <span class="cmnt">// base_price + travel_fee</span>
-  }
-}</pre>
-      <div class="info-box warn">403 <code>Travel price not available for this course</code> if you pass a <code>course_id</code> that has <code>can_travel=false</code> (e.g. the fixed-location course from step 1).</div>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">11</div>
-      <span class="badge GET">GET</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Get Course Sessions</div>
-      <div class="step-url">/api/trainer/courses/{{course_id}}/sessions</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">List of session descriptions added in step 2 of this scenario — each one with its <code>description</code>/<code>description_ar</code>.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">12</div>
-      <span class="badge PATCH">PATCH</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Update a Single Session</div>
-      <div class="step-url">/api/trainer/courses/{{course_id}}/sessions/1</div>
-    </div>
-    <div class="step-body">
-      <pre>{
-  <span class="key">"title"</span>:          <span class="str">"Introduction & Safety Briefing"</span>,
-  <span class="key">"description"</span>:    <span class="str">"Updated: includes a full gear inspection."</span>,
-  <span class="key">"duration_hours"</span>: <span class="num">3</span>
-}</pre>
-      <div class="info-box note">Use this for editing one session (title, description, or duration) without resending the entire <code>sessions</code> array via PUT.</div>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════════
-       SCENARIO 8 — GALLERY
-       ════════════════════════════════════════════════ -->
-  <div class="scenario-header" id="s8">
-    <div class="scenario-num">8</div>
-    <div class="scenario-title">Trainer — Gallery</div>
-  </div>
-
-  <div class="step open">
-    <div class="step-header">
-      <div class="step-num">1</div>
-      <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
       <div class="step-title">Add Gallery Photos</div>
       <div class="step-url">/api/trainer/gallery</div>
     </div>
     <div class="step-body">
-      <div class="info-box save"><strong>Saves:</strong> <code>{{gallery_id}}</code> (first photo).</div>
+      <div class="box save"><strong>Saves:</strong> <code>{{gallery_id}}</code></div>
+      <h3>Body</h3>
       <pre>{
-  <span class="key">"images"</span>: [
-    <span class="str">"trainers/gallery/photo1.jpg"</span>,
-    <span class="str">"trainers/gallery/photo2.jpg"</span>
+  <span class="k">"images"</span>: [
+    <span class="s">"trainers/gallery/action1.jpg"</span>,
+    <span class="s">"trainers/gallery/class1.jpg"</span>,
+    <span class="s">"trainers/gallery/circuit1.jpg"</span>
   ],
-  <span class="key">"caption"</span>:    <span class="str">"Track day at Marrakech Circuit"</span>,
-  <span class="key">"caption_ar"</span>: <span class="str">"يوم في حلبة مراكش"</span>
+  <span class="k">"caption"</span>:    <span class="s">"Training session at Marrakech Circuit"</span>,
+  <span class="k">"caption_ar"</span>: <span class="s">"جلسة تدريبية في حلبة مراكش"</span>
 }</pre>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">2</div>
-      <span class="badge GET">GET</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">List My Gallery</div>
-      <div class="step-url">/api/trainer/gallery</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Returns all photos ordered by <code>sort_order</code>.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">3</div>
+  <div class="step" id="s6-4">
+    <div class="step-hdr">
+      <div class="step-num trainer">6-4</div>
       <span class="badge PATCH">PATCH</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Update Photo Caption</div>
+      <div class="step-title">Edit Gallery Caption</div>
       <div class="step-url">/api/trainer/gallery/{{gallery_id}}</div>
     </div>
     <div class="step-body">
+      <h3>Body</h3>
       <pre>{
-  <span class="key">"caption"</span>:    <span class="str">"Sunset session at the track"</span>,
-  <span class="key">"caption_ar"</span>: <span class="str">"جلسة الغروب في الحلبة"</span>
+  <span class="k">"caption"</span>:    <span class="s">"Circuit day — beginner group session"</span>,
+  <span class="k">"caption_ar"</span>: <span class="s">"يوم الحلبة — جلسة مجموعة المبتدئين"</span>
 }</pre>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">4</div>
+  <div class="step open" id="s6-5">
+    <div class="step-hdr">
+      <div class="step-num trainer">6-5</div>
       <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Reorder Gallery Photos</div>
-      <div class="step-url">/api/trainer/gallery/reorder</div>
+      <div class="step-title">Create Course A — Fixed Location (can_travel: false)</div>
+      <div class="step-url">/api/trainer/courses</div>
     </div>
     <div class="step-body">
+      <div class="box save"><strong>Saves:</strong> <code>{{course_a_id}}</code></div>
+      <div class="box info"><strong>Bulk creation:</strong> Sessions are included in the same POST. No second API call needed. Status starts as <code>draft</code> — must publish (Step 6-7) to make visible.</div>
+      <h3>Body</h3>
       <pre>{
-  <span class="key">"order"</span>: [<span class="num">3</span>, <span class="num">1</span>, <span class="num">2</span>]   <span class="cmnt">// gallery IDs in desired display order</span>
-}</pre>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">5</div>
-      <span class="badge DELETE">DELETE</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Delete a Gallery Photo</div>
-      <div class="step-url">/api/trainer/gallery/{{gallery_id}}</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Removes the photo permanently.</p>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════════
-       SCENARIO 9 — CLIENT DISCOVER
-       ════════════════════════════════════════════════ -->
-  <div class="scenario-header" id="s9">
-    <div class="scenario-num" class="client">9</div>
-    <div class="scenario-title">Client — Discover Trainer Profile</div>
-  </div>
-
-  <div class="phase-banner client">
-    <div class="phase-banner-title">Client role · Folder: Client / Discover</div>
-    <p>Client browses trainers and views their full profile including bikes and equipment.</p>
-  </div>
-
-  <div class="step open">
-    <div class="step-header">
-      <div class="step-num">1</div>
-      <span class="badge POST">POST</span>
-      <div class="step-title">Client Login</div>
-      <div class="step-url">/api/login</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box save"><strong>Saves:</strong> <code>{{token}}</code> automatically.</div>
-      <pre>{ <span class="key">"login"</span>: <span class="str">"client@dabapp.com"</span>, <span class="key">"password"</span>: <span class="str">"YourClientPassword"</span> }</pre>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">2</div>
-      <span class="badge GET">GET</span>
-      <span class="badge PUB">PUBLIC</span>
-      <div class="step-title">Browse Approved Trainers</div>
-      <div class="step-url">/api/trainers</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box save"><strong>Saves:</strong> <code>{{trainer_id}}</code> from first result.</div>
-      <p style="color:var(--muted);font-size:13px;margin-top:8px;">Optional filters: <code>?specialty_id=1</code>, <code>?level_id=1</code>, <code>?city_id=1</code>, <code>?search=Youssef</code></p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">3</div>
-      <span class="badge GET">GET</span>
-      <span class="badge PUB">PUBLIC</span>
-      <div class="step-title">View Trainer Training Bikes</div>
-      <div class="step-url">/api/trainers/{{trainer_id}}/training-bikes</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box note">No auth required. Only returns bikes for approved trainers.</div>
-      <h3>Expected response</h3>
-      <pre>{
-  <span class="key">"success"</span>: <span class="bool">true</span>,
-  <span class="key">"data"</span>: [
+  <span class="k">"title"</span>:             <span class="s">"Beginner Circuit Training"</span>,
+  <span class="k">"title_ar"</span>:          <span class="s">"تدريب المبتدئين في الحلبة"</span>,
+  <span class="k">"description"</span>:       <span class="s">"Master motorcycle fundamentals at Marrakech Circuit."</span>,
+  <span class="k">"description_ar"</span>:    <span class="s">"إتقان أساسيات الدراجة النارية في حلبة مراكش."</span>,
+  <span class="k">"level_id"</span>:          <span class="n">1</span>,
+  <span class="k">"hours_per_session"</span>: <span class="n">2</span>,
+  <span class="k">"total_sessions"</span>:    <span class="n">5</span>,
+  <span class="k">"original_price"</span>:    <span class="n">150</span>,
+  <span class="k">"promo_price"</span>:       <span class="n">120</span>,        <span class="c">// optional — client pays this lower price</span>
+  <span class="k">"location_id"</span>:       <span class="n">{{location_id}}</span>,  <span class="c">// from Step 6-1</span>
+  <span class="k">"can_travel"</span>:        <span class="b">false</span>,      <span class="c">// client comes to the location</span>
+  <span class="k">"sessions"</span>: [
     {
-      <span class="key">"is_primary"</span>: <span class="bool">true</span>,
-      <span class="key">"brand"</span>: <span class="str">"BMW"</span>,
-      <span class="key">"model"</span>: <span class="str">"GS 1250"</span>,
-      <span class="key">"year"</span>:  <span class="num">2025</span>,
-      <span class="key">"title"</span>: <span class="str">"My BMW GS"</span>
+      <span class="k">"session_number"</span>: <span class="n">1</span>,
+      <span class="k">"title"</span>:          <span class="s">"Introduction &amp; Safety"</span>,
+      <span class="k">"title_ar"</span>:       <span class="s">"المقدمة والسلامة"</span>,
+      <span class="k">"description"</span>:    <span class="s">"Bike familiarization, safety gear inspection, and circuit rules briefing."</span>,
+      <span class="k">"description_ar"</span>: <span class="s">"التعرف على الدراجة وفحص معدات السلامة وإحاطة قواعد الحلبة."</span>,
+      <span class="k">"duration_hours"</span>: <span class="n">2</span>
+    },
+    {
+      <span class="k">"session_number"</span>: <span class="n">2</span>,
+      <span class="k">"title"</span>:          <span class="s">"Balance &amp; Low-Speed Control"</span>,
+      <span class="k">"title_ar"</span>:       <span class="s">"التوازن والتحكم بالسرعات المنخفضة"</span>,
+      <span class="k">"description"</span>:    <span class="s">"Slow-speed maneuvers, figure-8 drills, and cone weaving exercises."</span>,
+      <span class="k">"description_ar"</span>: <span class="s">"المناورات بالسرعة المنخفضة وتمارين الرقم 8 والتنقل بين المخاريط."</span>,
+      <span class="k">"duration_hours"</span>: <span class="n">2</span>
+    },
+    {
+      <span class="k">"session_number"</span>: <span class="n">3</span>,
+      <span class="k">"title"</span>:          <span class="s">"Cornering Basics"</span>,
+      <span class="k">"title_ar"</span>:       <span class="s">"أساسيات الانعطاف"</span>,
+      <span class="k">"description"</span>:    <span class="s">"Entry point, apex, and exit point — the three pillars of cornering."</span>,
+      <span class="k">"description_ar"</span>: <span class="s">"نقطة الدخول والذروة والخروج — ركائز الانعطاف الثلاث."</span>,
+      <span class="k">"duration_hours"</span>: <span class="n">2</span>
+    },
+    {
+      <span class="k">"session_number"</span>: <span class="n">4</span>,
+      <span class="k">"title"</span>:          <span class="s">"Braking Techniques"</span>,
+      <span class="k">"title_ar"</span>:       <span class="s">"تقنيات الكبح"</span>,
+      <span class="k">"description"</span>:    <span class="s">"Progressive braking, threshold braking, and emergency stop drills under supervision."</span>,
+      <span class="k">"description_ar"</span>: <span class="s">"الكبح التدريجي وكبح العتبة وتمارين التوقف الطارئ تحت الإشراف."</span>,
+      <span class="k">"duration_hours"</span>: <span class="n">2</span>
+    },
+    {
+      <span class="k">"session_number"</span>: <span class="n">5</span>,
+      <span class="k">"title"</span>:          <span class="s">"Full Circuit Lap"</span>,
+      <span class="k">"title_ar"</span>:       <span class="s">"جولة كاملة في الحلبة"</span>,
+      <span class="k">"description"</span>:    <span class="s">"Apply everything in a timed full-circuit supervised lap with post-session debrief."</span>,
+      <span class="k">"description_ar"</span>: <span class="s">"تطبيق كل شيء في جولة كاملة موقوتة في الحلبة تحت الإشراف مع إحاطة ما بعد الجلسة."</span>,
+      <span class="k">"duration_hours"</span>: <span class="n">2</span>
     }
   ]
 }</pre>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">4</div>
-      <span class="badge GET">GET</span>
-      <span class="badge PUB">PUBLIC</span>
-      <div class="step-title">View Trainer Equipment</div>
-      <div class="step-url">/api/trainers/{{trainer_id}}/equipment</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box note">Returns only items with <code>is_available=true</code>.</div>
-      <h3>Expected response</h3>
+      <h3>Course A — Field reference</h3>
+      <table>
+        <thead><tr><th>Field</th><th></th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>title / title_ar</td><td class="req">required</td><td></td></tr>
+          <tr><td>description / description_ar</td><td class="opt">optional</td><td></td></tr>
+          <tr><td>level_id</td><td class="req">required</td><td>From Step 1-1 (1=Beginner)</td></tr>
+          <tr><td>hours_per_session</td><td class="req">required</td><td>Duration of each session in hours</td></tr>
+          <tr><td>total_sessions</td><td class="req">required</td><td>Number of sessions in this course</td></tr>
+          <tr><td>original_price</td><td class="req">required</td><td>Base price — clients pay this unless promo applies</td></tr>
+          <tr><td>promo_price</td><td class="opt">optional</td><td>Discount price. If set, client pays this</td></tr>
+          <tr><td>location_id</td><td class="req">required (when can_travel=false)</td><td>From Step 6-1</td></tr>
+          <tr><td>can_travel</td><td class="req">required</td><td><code>false</code> = client comes to the location</td></tr>
+          <tr><td>sessions[].session_number</td><td class="req">required</td><td>Integer 1, 2, 3 … must be sequential</td></tr>
+          <tr><td>sessions[].title / title_ar</td><td class="req">required</td><td></td></tr>
+          <tr><td>sessions[].description / description_ar</td><td class="opt">optional</td><td>Shown to client before booking</td></tr>
+          <tr><td>sessions[].duration_hours</td><td class="opt">optional</td><td></td></tr>
+        </tbody>
+      </table>
+      <h3>Expected response (201)</h3>
       <pre>{
-  <span class="key">"success"</span>: <span class="bool">true</span>,
-  <span class="key">"data"</span>: [
-    { <span class="key">"id"</span>: <span class="num">1</span>, <span class="key">"name"</span>: <span class="str">"Helmet"</span>, <span class="key">"name_ar"</span>: <span class="str">"خوذة"</span>, <span class="key">"icon"</span>: <span class="str">"helmet"</span> },
-    { <span class="key">"id"</span>: <span class="num">2</span>, <span class="key">"name"</span>: <span class="str">"Jacket"</span>, <span class="key">"name_ar"</span>: <span class="str">"جاكيت"</span>, <span class="key">"icon"</span>: <span class="str">"jacket"</span> }
-  ]
-}</pre>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">5</div>
-      <span class="badge GET">GET</span>
-      <span class="badge PUB">PUBLIC</span>
-      <div class="step-title">View Published Courses</div>
-      <div class="step-url">/api/trainers/{{trainer_id}}/courses</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box save"><strong>Saves:</strong> <code>{{course_id}}</code> from first result.</div>
-      <p style="color:var(--muted);font-size:13px;margin-top:8px;">Returns only courses with <code>status=published</code> AND <code>is_active=true</code>. Filter: <code>?level_id=1</code></p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">6</div>
-      <span class="badge GET">GET</span>
-      <span class="badge PUB">PUBLIC</span>
-      <div class="step-title">View Trainer Gallery</div>
-      <div class="step-url">/api/trainers/{{trainer_id}}/gallery</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Returns gallery photos ordered by <code>sort_order</code>.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">7</div>
-      <span class="badge GET">GET</span>
-      <span class="badge PUB">PUBLIC</span>
-      <div class="step-title">View Trainer Reviews</div>
-      <div class="step-url">/api/trainers/{{trainer_id}}/reviews</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Returns approved reviews with rating, comment, and reviewer name.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">8</div>
-      <span class="badge GET">GET</span>
-      <span class="badge PUB">PUBLIC</span>
-      <div class="step-title">View Trainer Comments</div>
-      <div class="step-url">/api/trainers/{{trainer_id}}/comments</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Free-form comments left on the trainer's profile (separate from bookings reviews).</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">9</div>
-      <span class="badge GET">GET</span>
-      <span class="badge PUB">PUBLIC</span>
-      <div class="step-title">View Course Sessions (public)</div>
-      <div class="step-url">/api/trainers/{{trainer_id}}/courses/{{course_id}}/sessions</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Lets the client see the session-by-session breakdown before booking.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">10</div>
-      <span class="badge GET">GET</span>
-      <span class="badge PUB">PUBLIC</span>
-      <div class="step-title">Calculate Travel Price (client-facing)</div>
-      <div class="step-url">/api/trainers/{{trainer_id}}/travel-price</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box note">Same endpoint as <strong>Scenario 7 → step 10</strong>, where the trainer creates the <code>can_travel=true</code> course and the full request/response example lives. Here the client calls it with <code>course_id={{travel_course_id}}</code> and a <code>km</code> value before booking, to preview the total price.</div>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════════
-       SCENARIO 10 — BOOKING
-       ════════════════════════════════════════════════ -->
-  <div class="scenario-header" id="s10">
-    <div class="scenario-num" class="client">10</div>
-    <div class="scenario-title">Client — Book a Session</div>
-  </div>
-
-  <div class="phase-banner client">
-    <div class="phase-banner-title">Client role · Folder: Client / Availability &amp; Booking</div>
-    <p>Client checks availability then books a session. A payment URL is returned to simulate payment.</p>
-  </div>
-
-  <div class="step open">
-    <div class="step-header">
-      <div class="step-num">1</div>
-      <span class="badge GET">GET</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Check Trainer Availability</div>
-      <div class="step-url">/api/trainers/{{trainer_id}}/availability</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box note">Pre-request script auto-fills <code>from_date</code> and <code>to_date</code> for this week.</div>
-      <pre><span class="cmnt">// Query params</span>
-from_date = 2026-07-01
-to_date   = 2026-07-07
-location_id = {{location_id}}</pre>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">2</div>
-      <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Book a Course Session</div>
-      <div class="step-url">/api/trainers/{{trainer_id}}/book</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box save"><strong>Saves:</strong> <code>{{booking_id}}</code> and <code>{{payment_url}}</code>.</div>
-      <pre>{
-  <span class="key">"course_id"</span>:    <span class="num">1</span>,             <span class="cmnt">// {{course_id}}</span>
-  <span class="key">"booking_date"</span>: <span class="str">"2026-07-15"</span>,
-  <span class="key">"start_time"</span>:   <span class="str">"09:00"</span>,
-  <span class="key">"location_id"</span>:  <span class="num">1</span>,             <span class="cmnt">// {{location_id}}</span>
-  <span class="key">"notes"</span>:        <span class="str">"First session — beginner rider"</span>
-}</pre>
-      <h3>Success response <span style="color:var(--green)">201</span></h3>
-      <pre>{
-  <span class="key">"success"</span>: <span class="bool">true</span>,
-  <span class="key">"data"</span>: {
-    <span class="key">"booking_id"</span>:  <span class="num">7</span>,
-    <span class="key">"status"</span>:      <span class="str">"pending_payment"</span>,
-    <span class="key">"payment_url"</span>: <span class="str">"https://pay.cmi.co.ma/..."</span>   <span class="cmnt">// open in browser to simulate</span>
+  <span class="k">"success"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"id"</span>:       <span class="n">1</span>,      <span class="c">// ← course_a_id</span>
+    <span class="k">"title"</span>:   <span class="s">"Beginner Circuit Training"</span>,
+    <span class="k">"status"</span>:  <span class="s">"draft"</span>,
+    <span class="k">"can_travel"</span>: <span class="b">false</span>,
+    <span class="k">"sessions"</span>: [ <span class="c">/* 5 sessions returned */</span> ]
   }
 }</pre>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">3</div>
-      <span class="badge GET">GET</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">List My Bookings</div>
-      <div class="step-url">/api/trainer/bookings</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Returns all bookings made by the client. Filter: <code>?status=pending_payment</code>.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">4</div>
-      <span class="badge GET">GET</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Get a Single Booking</div>
-      <div class="step-url">/api/trainer/bookings/{{booking_id}}</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Full detail of one booking including course, trainer, location and payment status.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">5</div>
+  <div class="step open" id="s6-6">
+    <div class="step-hdr">
+      <div class="step-num trainer">6-6</div>
       <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Re-initiate Payment</div>
-      <div class="step-url">/api/trainer/bookings/{{booking_id}}/pay</div>
+      <div class="step-title">Create Course B — Trainer Travels to Client (can_travel: true)</div>
+      <div class="step-url">/api/trainer/courses</div>
     </div>
     <div class="step-body">
-      <div class="info-box note">Use this if the first <code>payment_url</code> expired or the client closed the payment page without finishing.</div>
-      <p style="color:var(--muted);font-size:13px;margin-top:8px;">Only works while <code>status=pending_payment</code>. Returns a fresh <code>payment_url</code>.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">6</div>
-      <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Cancel Booking</div>
-      <div class="step-url">/api/trainer/bookings/{{booking_id}}/cancel</div>
-    </div>
-    <div class="step-body">
+      <div class="box save"><strong>Saves:</strong> <code>{{course_b_id}}</code></div>
+      <div class="box info">No <code>location_id</code> — trainer goes to the client. <code>price_per_km</code> is added on top of <code>original_price</code>. Client previews total before booking (Step 8-1).</div>
+      <h3>Body</h3>
       <pre>{
-  <span class="key">"reason"</span>: <span class="str">"Schedule conflict"</span>
+  <span class="k">"title"</span>:             <span class="s">"Mobile Coaching — Trainer Comes to You"</span>,
+  <span class="k">"title_ar"</span>:          <span class="s">"تدريب متنقل — المدرب يأتي إليك"</span>,
+  <span class="k">"description"</span>:       <span class="s">"Private coaching at your location. Total price includes travel based on distance."</span>,
+  <span class="k">"description_ar"</span>:    <span class="s">"تدريب خاص في موقعك. السعر الإجمالي يشمل التنقل بناءً على المسافة."</span>,
+  <span class="k">"level_id"</span>:          <span class="n">1</span>,
+  <span class="k">"hours_per_session"</span>: <span class="n">2</span>,
+  <span class="k">"total_sessions"</span>:    <span class="n">3</span>,
+  <span class="k">"original_price"</span>:    <span class="n">200</span>,
+  <span class="k">"can_travel"</span>:        <span class="b">true</span>,
+  <span class="k">"price_per_km"</span>:      <span class="n">5</span>,          <span class="c">// 5 per km from trainer to client</span>
+  <span class="c">// no location_id needed</span>
+  <span class="k">"sessions"</span>: [
+    {
+      <span class="k">"session_number"</span>: <span class="n">1</span>,
+      <span class="k">"title"</span>:          <span class="s">"Assessment &amp; Personalized Plan"</span>,
+      <span class="k">"title_ar"</span>:       <span class="s">"التقييم والخطة الشخصية"</span>,
+      <span class="k">"description"</span>:    <span class="s">"Evaluate skill level and design a personalized 3-session training plan."</span>,
+      <span class="k">"description_ar"</span>: <span class="s">"تقييم مستوى المهارة وتصميم خطة تدريب شخصية من 3 جلسات."</span>,
+      <span class="k">"duration_hours"</span>: <span class="n">2</span>
+    },
+    {
+      <span class="k">"session_number"</span>: <span class="n">2</span>,
+      <span class="k">"title"</span>:          <span class="s">"Focused Skill Drills"</span>,
+      <span class="k">"title_ar"</span>:       <span class="s">"تمارين المهارات المركزة"</span>,
+      <span class="k">"description"</span>:    <span class="s">"Targeted exercises addressing specific weak points from session 1."</span>,
+      <span class="k">"description_ar"</span>: <span class="s">"تمارين موجهة تعالج نقاط الضعف المحددة من الجلسة الأولى."</span>,
+      <span class="k">"duration_hours"</span>: <span class="n">2</span>
+    },
+    {
+      <span class="k">"session_number"</span>: <span class="n">3</span>,
+      <span class="k">"title"</span>:          <span class="s">"Progress Review &amp; Next Steps"</span>,
+      <span class="k">"title_ar"</span>:       <span class="s">"مراجعة التقدم والخطوات التالية"</span>,
+      <span class="k">"description"</span>:    <span class="s">"Assess improvement and provide a roadmap for continued development."</span>,
+      <span class="k">"description_ar"</span>: <span class="s">"تقييم التحسن وتقديم خارطة طريق للتطوير المستمر."</span>,
+      <span class="k">"duration_hours"</span>: <span class="n">2</span>
+    }
+  ]
 }</pre>
-      <div class="info-box warn">Allowed before the session starts (<code>pending_payment</code>, <code>confirmed</code>). Cannot cancel once <code>in_progress</code> or later.</div>
+      <h3>Price formula</h3>
+      <pre><span class="c">// total = original_price + (km × price_per_km)</span>
+<span class="c">// Example with km=20: 200 + (20 × 5) = 300</span>
+<span class="c">// Client sees this before booking via GET /travel-price (Step 8-1)</span></pre>
     </div>
   </div>
 
-  <!-- ════════════════════════════════════════════════
-       SCENARIO 11 — COMPLETE & REVIEW
-       ════════════════════════════════════════════════ -->
-  <div class="scenario-header" id="s11">
-    <div class="scenario-num" class="client">11</div>
-    <div class="scenario-title">Client — Confirm Completion &amp; Leave Review</div>
+  <div class="step" id="s6-7">
+    <div class="step-hdr">
+      <div class="step-num trainer">6-7</div>
+      <span class="badge POST">POST</span>
+      <div class="step-title">Publish Course A</div>
+      <div class="step-url">/api/trainer/courses/{{course_a_id}}/publish</div>
+    </div>
+    <div class="step-body">
+      <p style="color:var(--muted);font-size:12px;margin-top:10px;">No body. Sets <code>status = published</code> + <code>is_active = true</code>. Course A is now visible to all clients.</p>
+    </div>
   </div>
 
-  <div class="phase-banner client">
-    <div class="phase-banner-title">Client role · Folder: Client / My Bookings</div>
-    <p>After the trainer marks the session complete, the client confirms it and can leave a review.</p>
+  <div class="step" id="s6-8">
+    <div class="step-hdr">
+      <div class="step-num trainer">6-8</div>
+      <span class="badge POST">POST</span>
+      <div class="step-title">Publish Course B</div>
+      <div class="step-url">/api/trainer/courses/{{course_b_id}}/publish</div>
+    </div>
+    <div class="step-body">
+      <p style="color:var(--muted);font-size:12px;margin-top:10px;">No body. Course B (travel) is now visible to all clients.</p>
+    </div>
   </div>
 
-  <div style="margin: 16px 0 20px;">
+  <!-- ═══════════════════════════════════════
+       PHASE 7
+       ═══════════════════════════════════════ -->
+  <div class="phase-header">
+    <div class="ph-icon ph-client">7</div>
+    <div>
+      <div class="ph-title">Client — Book Fixed Course (Course A)</div>
+      <div class="ph-sub">Login → browse → preview sessions → check availability → book → pay.</div>
+    </div>
+  </div>
+
+  <div class="step open" id="s7-1">
+    <div class="step-hdr">
+      <div class="step-num client">7-1</div>
+      <span class="badge POST">POST</span>
+      <span class="badge CLIENT">CLIENT</span>
+      <div class="step-title">Client Login</div>
+      <div class="step-url">/api/login</div>
+    </div>
+    <div class="step-body">
+      <div class="box save"><strong>Saves:</strong> <code>{{token}}</code> — use as <code>Authorization: Bearer {{token}}</code> in all client requests.</div>
+      <h3>Body</h3>
+      <pre>{
+  <span class="k">"login"</span>:    <span class="s">"client@dabapp.com"</span>,
+  <span class="k">"password"</span>: <span class="s">"YourClientPassword"</span>
+}</pre>
+    </div>
+  </div>
+
+  <div class="step" id="s7-2">
+    <div class="step-hdr">
+      <div class="step-num client">7-2</div>
+      <span class="badge GET">GET</span>
+      <div class="step-title">Browse All Approved Trainers</div>
+      <div class="step-url">/api/trainers</div>
+    </div>
+    <div class="step-body">
+      <div class="box info">Public. Filter params: <code>?specialty_id=</code> <code>?level_id=</code> <code>?city_id=</code> <code>?search=</code></div>
+    </div>
+  </div>
+
+  <div class="step" id="s7-3">
+    <div class="step-hdr">
+      <div class="step-num client">7-3</div>
+      <span class="badge GET">GET</span>
+      <div class="step-title">Trainer Full Profile</div>
+      <div class="step-url">/api/trainers/{{trainer_id}}</div>
+    </div>
+    <div class="step-body">
+      <div class="box info">Returns: specialties, approved levels + prices, locations, training bikes, equipment, gallery, reviews. Needs <code>Authorization</code> header for client-specific fields.</div>
+    </div>
+  </div>
+
+  <div class="step" id="s7-4">
+    <div class="step-hdr">
+      <div class="step-num client">7-4</div>
+      <span class="badge GET">GET</span>
+      <div class="step-title">Course A — Preview Sessions</div>
+      <div class="step-url">/api/trainers/{{trainer_id}}/courses/{{course_a_id}}/sessions</div>
+    </div>
+    <div class="step-body">
+      <div class="box info">Public. Client reads all 5 session descriptions before deciding to book.</div>
+    </div>
+  </div>
+
+  <div class="step" id="s7-5">
+    <div class="step-hdr">
+      <div class="step-num client">7-5</div>
+      <span class="badge GET">GET</span>
+      <div class="step-title">Check Trainer Availability</div>
+      <div class="step-url">/api/trainers/{{trainer_id}}/availability</div>
+    </div>
+    <div class="step-body">
+      <h3>Query params</h3>
+      <pre>from_date   = 2026-07-10
+to_date     = 2026-07-20
+location_id = {{location_id}}</pre>
+    </div>
+  </div>
+
+  <div class="step open" id="s7-6">
+    <div class="step-hdr">
+      <div class="step-num client">7-6</div>
+      <span class="badge POST">POST</span>
+      <span class="badge CLIENT">CLIENT</span>
+      <div class="step-title">Book Course A — Fixed Price</div>
+      <div class="step-url">/api/trainers/{{trainer_id}}/book</div>
+    </div>
+    <div class="step-body">
+      <div class="box save"><strong>Saves:</strong> <code>{{booking_a_id}}</code> and <code>{{payment_url_a}}</code></div>
+      <h3>Body</h3>
+      <pre>{
+  <span class="k">"course_id"</span>:    <span class="n">{{course_a_id}}</span>,
+  <span class="k">"booking_date"</span>: <span class="s">"2026-07-15"</span>,
+  <span class="k">"start_time"</span>:   <span class="s">"09:00"</span>,
+  <span class="k">"location_id"</span>:  <span class="n">{{location_id}}</span>,   <span class="c">// required for fixed-location courses</span>
+  <span class="k">"notes"</span>:        <span class="s">"Complete beginner — first time on a circuit"</span>
+}</pre>
+      <h3>Expected response (201)</h3>
+      <pre>{
+  <span class="k">"success"</span>: <span class="b">true</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"booking_id"</span>:  <span class="n">1</span>,
+    <span class="k">"status"</span>:      <span class="s">"pending_payment"</span>,
+    <span class="k">"total_price"</span>: <span class="n">120</span>,          <span class="c">// promo_price applies when set</span>
+    <span class="k">"payment_url"</span>: <span class="s">"https://pay.cmi.co.ma/..."</span>
+  }
+}</pre>
+      <div class="box warn"><strong>Next:</strong> Open <code>{{payment_url_a}}</code> in browser to complete payment. After the webhook fires, status changes from <code>pending_payment</code> to <code>confirmed</code>.</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PHASE 8
+       ═══════════════════════════════════════ -->
+  <div class="phase-header">
+    <div class="ph-icon ph-client">8</div>
+    <div>
+      <div class="ph-title">Client — Book Travel Course (Course B)</div>
+      <div class="ph-sub">Preview the total price including travel cost first, then book. No location needed — trainer comes to client.</div>
+    </div>
+  </div>
+
+  <div class="step open" id="s8-1">
+    <div class="step-hdr">
+      <div class="step-num client">8-1</div>
+      <span class="badge GET">GET</span>
+      <div class="step-title">Calculate Travel Price</div>
+      <div class="step-url">/api/trainers/{{trainer_id}}/travel-price</div>
+    </div>
+    <div class="step-body">
+      <div class="box info">Public. Run this before booking so the client sees the exact total. Only works on courses with <code>can_travel=true</code>.</div>
+      <h3>Query params</h3>
+      <pre>course_id = {{course_b_id}}
+km        = 20           <span class="c">// distance from trainer to client location</span></pre>
+      <h3>Expected response</h3>
+      <pre>{
+  <span class="k">"data"</span>: {
+    <span class="k">"km"</span>:                <span class="n">20</span>,
+    <span class="k">"price_per_km"</span>:      <span class="n">5</span>,
+    <span class="k">"travel_cost"</span>:       <span class="n">100</span>,    <span class="c">// 20 × 5</span>
+    <span class="k">"session_price"</span>:     <span class="n">200</span>,    <span class="c">// course original_price</span>
+    <span class="k">"total_with_travel"</span>: <span class="n">300</span>     <span class="c">// 200 + 100 ← client pays this</span>
+  }
+}</pre>
+      <div class="box info"><strong>Formula:</strong> <code>total = original_price + (km × price_per_km)</code></div>
+    </div>
+  </div>
+
+  <div class="step" id="s8-2">
+    <div class="step-hdr">
+      <div class="step-num client">8-2</div>
+      <span class="badge GET">GET</span>
+      <div class="step-title">Course B — Preview Sessions</div>
+      <div class="step-url">/api/trainers/{{trainer_id}}/courses/{{course_b_id}}/sessions</div>
+    </div>
+    <div class="step-body">
+      <div class="box info">Public. Client reads the 3-session breakdown before booking.</div>
+    </div>
+  </div>
+
+  <div class="step open" id="s8-3">
+    <div class="step-hdr">
+      <div class="step-num client">8-3</div>
+      <span class="badge POST">POST</span>
+      <span class="badge CLIENT">CLIENT</span>
+      <div class="step-title">Book Course B — Travel Price</div>
+      <div class="step-url">/api/trainers/{{trainer_id}}/book</div>
+    </div>
+    <div class="step-body">
+      <div class="box save"><strong>Saves:</strong> <code>{{booking_b_id}}</code> and <code>{{payment_url_b}}</code></div>
+      <div class="box info">No <code>location_id</code> in the body — trainer travels to client.</div>
+      <h3>Body</h3>
+      <pre>{
+  <span class="k">"course_id"</span>:    <span class="n">{{course_b_id}}</span>,
+  <span class="k">"booking_date"</span>: <span class="s">"2026-07-17"</span>,
+  <span class="k">"start_time"</span>:   <span class="s">"10:00"</span>,
+  <span class="k">"notes"</span>:        <span class="s">"I am in Casablanca — about 20 km from your location"</span>
+  <span class="c">// no location_id</span>
+}</pre>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PHASE 9
+       ═══════════════════════════════════════ -->
+  <div class="phase-header">
+    <div class="ph-icon ph-client">9</div>
+    <div>
+      <div class="ph-title">Session Completion &amp; Review (Course A)</div>
+      <div class="ph-sub">After payment is confirmed. Trainer starts → trainer completes → client confirms → client reviews.</div>
+    </div>
+  </div>
+
+  <div style="margin: 4px 0 20px;">
     <div class="flow">
-      <div class="flow-item"><div class="flow-box client">confirmed</div><div class="flow-label">payment paid</div></div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-item"><div class="flow-box trainer">in_progress</div><div class="flow-label">trainer starts</div></div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-item"><div class="flow-box trainer">awaiting_<br>confirmation</div><div class="flow-label">trainer completes</div></div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-item"><div class="flow-box client">completed</div><div class="flow-label">client confirms</div></div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-item"><div class="flow-box client">review</div><div class="flow-label">client reviews</div></div>
+      <div class="flow-item"><div class="flow-box c">confirmed</div><div class="flow-sub">payment done</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-item"><div class="flow-box t">in_progress</div><div class="flow-sub">trainer starts · 9-1</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-item"><div class="flow-box t">awaiting_<br>confirmation</div><div class="flow-sub">trainer completes · 9-2</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-item"><div class="flow-box c">completed</div><div class="flow-sub">client confirms · 9-3</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-item"><div class="flow-box c">reviewed</div><div class="flow-sub">optional · 9-4</div></div>
     </div>
   </div>
 
-  <div class="step open">
-    <div class="step-header">
-      <div class="step-num">1</div>
+  <div class="step open" id="s9-1">
+    <div class="step-hdr">
+      <div class="step-num trainer">9-1</div>
       <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH (Trainer)</span>
       <div class="step-title">Trainer: Start Session</div>
-      <div class="step-url">/api/trainer/sessions/{{booking_id}}/start</div>
+      <div class="step-url">/api/trainer/sessions/{{booking_a_id}}/start</div>
     </div>
     <div class="step-body">
-      <div class="info-box note">Requires <code>payment_status=paid</code>. Use <code>{{trainer_token}}</code> for this request.</div>
-      <p style="color:var(--muted);font-size:13px;margin-top:8px;">No body needed. Changes status: <code>confirmed → in_progress</code></p>
+      <div class="box warn">Use <code>{{trainer_token}}</code>. No body.</div>
+      <div class="box error">Returns 403 if <code>payment_status != paid</code> — client must pay first.</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:8px;"><code>confirmed</code> → <code>in_progress</code></p>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">2</div>
+  <div class="step" id="s9-2">
+    <div class="step-hdr">
+      <div class="step-num trainer">9-2</div>
       <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH (Trainer)</span>
       <div class="step-title">Trainer: Complete Session</div>
-      <div class="step-url">/api/trainer/sessions/{{booking_id}}/complete</div>
+      <div class="step-url">/api/trainer/sessions/{{booking_a_id}}/complete</div>
     </div>
     <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Changes status: <code>in_progress → awaiting_confirmation</code>. Client gets notified.</p>
+      <div class="box warn">Use <code>{{trainer_token}}</code>. No body. Client is notified to confirm.</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:8px;"><code>in_progress</code> → <code>awaiting_confirmation</code></p>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">3</div>
+  <div class="step" id="s9-3">
+    <div class="step-hdr">
+      <div class="step-num client">9-3</div>
       <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH (Client)</span>
-      <div class="step-title">Client: Confirm Completion</div>
-      <div class="step-url">/api/trainer/bookings/{{booking_id}}/confirm-completion</div>
+      <span class="badge CLIENT">CLIENT</span>
+      <div class="step-title">Client: Confirm Session Completion</div>
+      <div class="step-url">/api/trainer/bookings/{{booking_a_id}}/confirm-completion</div>
     </div>
     <div class="step-body">
-      <div class="info-box note">Switch back to <code>{{token}}</code> (client token).</div>
-      <p style="color:var(--muted);font-size:13px;margin-top:8px;">Changes status: <code>awaiting_confirmation → completed</code>. <code>can_review</code> becomes <code>true</code>.</p>
+      <div class="box warn">Switch back to <code>{{token}}</code>. No body.</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:8px;"><code>awaiting_confirmation</code> → <code>completed</code>. <code>can_review</code> becomes <code>true</code>.</p>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">4</div>
+  <div class="step open" id="s9-4">
+    <div class="step-hdr">
+      <div class="step-num client">9-4</div>
       <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH (Client)</span>
+      <span class="badge CLIENT">CLIENT</span>
       <div class="step-title">Client: Leave Review</div>
-      <div class="step-url">/api/trainer/bookings/{{booking_id}}/review</div>
+      <div class="step-url">/api/trainer/bookings/{{booking_a_id}}/review</div>
     </div>
     <div class="step-body">
+      <div class="box info">Only once per booking. Only after <code>status = completed</code>.</div>
+      <h3>Body</h3>
       <pre>{
-  <span class="key">"rating"</span>:      <span class="num">5</span>,
-  <span class="key">"comment"</span>:     <span class="str">"Excellent trainer! Very patient and professional."</span>,
-  <span class="key">"comment_ar"</span>:  <span class="str">"مدرب ممتاز! صبور ومحترف جداً."</span>
+  <span class="k">"rating"</span>:     <span class="n">5</span>,
+  <span class="k">"comment"</span>:    <span class="s">"Excellent trainer! Very patient, explains everything clearly."</span>,
+  <span class="k">"comment_ar"</span>: <span class="s">"مدرب ممتاز! صبور جداً ويشرح كل شيء بوضوح."</span>
 }</pre>
-      <div class="info-box note">Only works after <code>status=completed</code> and only once per booking.</div>
     </div>
   </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">5</div>
-      <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH (Client)</span>
-      <div class="step-title">Dispute a Session</div>
-      <div class="step-url">/api/trainer/bookings/{{booking_id}}/dispute</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box warn">Use instead of step 3 if the trainer marked the session complete but it didn't actually happen as described.</div>
-      <pre>{
-  <span class="key">"reason"</span>: <span class="str">"Trainer never showed up for the session"</span>
-}</pre>
-      <p style="color:var(--muted);font-size:13px;margin-top:8px;">Flags the booking for admin review instead of auto-completing. See Scenario 13 for the admin side.</p>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════════
-       SCENARIO 12 — SOCIAL FEATURES
-       ════════════════════════════════════════════════ -->
-  <div class="scenario-header" id="s12">
-    <div class="scenario-num" class="client">12</div>
-    <div class="scenario-title">Client — Social Features (Like, Favorite, Comment)</div>
-  </div>
-
-  <div class="phase-banner client">
-    <div class="phase-banner-title">Client role · Folder: Client / Social</div>
-    <p>Clients can like, favorite, and comment on trainer profiles independently of bookings.</p>
-  </div>
-
-  <div class="step open">
-    <div class="step-header">
-      <div class="step-num">1</div>
-      <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Toggle Like</div>
-      <div class="step-url">/api/trainers/{{trainer_id}}/like</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">No body needed. Calling it again removes the like (toggle behavior).</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">2</div>
-      <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Toggle Favorite</div>
-      <div class="step-url">/api/trainers/{{trainer_id}}/favorite</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Same toggle behavior as like, but tracked separately.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">3</div>
-      <span class="badge GET">GET</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">List My Favorite Trainers</div>
-      <div class="step-url">/api/user/trainer-favorites</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Returns every trainer the client has favorited.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">4</div>
-      <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Add a Comment</div>
-      <div class="step-url">/api/trainers/{{trainer_id}}/comments</div>
-    </div>
-    <div class="step-body">
-      <div class="info-box save"><strong>Saves:</strong> <code>{{comment_id}}</code> automatically.</div>
-      <pre>{
-  <span class="key">"comment"</span>: <span class="str">"Looking forward to booking a session!"</span>
-}</pre>
-      <div class="info-box note">New comments may require admin approval before becoming public — see Scenario 14.</div>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">5</div>
-      <span class="badge DELETE">DELETE</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Delete My Comment</div>
-      <div class="step-url">/api/trainer/comments/{{comment_id}}</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Clients can only delete their own comments.</p>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════════
-       SCENARIO 13 — ADMIN BOOKINGS PANEL
-       ════════════════════════════════════════════════ -->
-  <div class="scenario-header" id="s13">
-    <div class="scenario-num" class="admin">13</div>
-    <div class="scenario-title">Admin — Bookings Panel &amp; Dispute Resolution</div>
-  </div>
-
-  <div class="phase-banner admin">
-    <div class="phase-banner-title">Admin role · Folder: Admin / Bookings</div>
-    <p>Admin oversees all bookings across all trainers, and resolves disputes raised in Scenario 11.</p>
-  </div>
-
-  <div class="step open">
-    <div class="step-header">
-      <div class="step-num">1</div>
-      <span class="badge GET">GET</span>
-      <div class="step-title">List All Bookings</div>
-      <div class="step-url">/api/admin/trainer-bookings</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Filter: <code>?status=disputed</code>, <code>?trainer_id=4</code>.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">2</div>
-      <span class="badge GET">GET</span>
-      <div class="step-title">View Single Booking</div>
-      <div class="step-url">/api/admin/trainer-bookings/{{booking_id}}</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Full detail including dispute reason, payment status, and session history.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">3</div>
-      <span class="badge POST">POST</span>
-      <div class="step-title">Cancel Booking (admin override)</div>
-      <div class="step-url">/api/admin/trainer-bookings/{{booking_id}}/cancel</div>
-    </div>
-    <div class="step-body">
-      <pre>{ <span class="key">"reason"</span>: <span class="str">"Resolved in favor of client — refund issued"</span> }</pre>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">4</div>
-      <span class="badge POST">POST</span>
-      <div class="step-title">Confirm Booking (admin override)</div>
-      <div class="step-url">/api/admin/trainer-bookings/{{booking_id}}/confirm</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Use when resolving a dispute in favor of the trainer — forces the booking to <code>completed</code>.</p>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════════
-       SCENARIO 14 — ADMIN MODERATION
-       ════════════════════════════════════════════════ -->
-  <div class="scenario-header" id="s14">
-    <div class="scenario-num" class="admin">14</div>
-    <div class="scenario-title">Admin — Moderate Reviews &amp; Comments</div>
-  </div>
-
-  <div class="phase-banner admin">
-    <div class="phase-banner-title">Admin role · Folder: Admin / Moderation</div>
-    <p>Admin approves or removes client-submitted reviews and comments before they appear publicly.</p>
-  </div>
-
-  <div class="step open">
-    <div class="step-header">
-      <div class="step-num">1</div>
-      <span class="badge GET">GET</span>
-      <div class="step-title">List Reviews (pending moderation)</div>
-      <div class="step-url">/api/admin/trainer-reviews</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Filter: <code>?status=pending</code>.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">2</div>
-      <span class="badge POST">POST</span>
-      <div class="step-title">Approve a Review</div>
-      <div class="step-url">/api/admin/trainer-reviews/{{review_id}}/approve</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">No body needed. Makes the review visible on the public profile.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">3</div>
-      <span class="badge DELETE">DELETE</span>
-      <div class="step-title">Delete a Review</div>
-      <div class="step-url">/api/admin/trainer-reviews/{{review_id}}</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Use for reviews violating content policy.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">4</div>
-      <span class="badge GET">GET</span>
-      <div class="step-title">List Comments (pending moderation)</div>
-      <div class="step-url">/api/admin/trainer-comments</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Same shape as reviews moderation, for free-form profile comments.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">5</div>
-      <span class="badge POST">POST</span>
-      <div class="step-title">Approve a Comment</div>
-      <div class="step-url">/api/admin/trainer-comments/{{comment_id}}/approve</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">No body needed.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">6</div>
-      <span class="badge DELETE">DELETE</span>
-      <div class="step-title">Delete a Comment</div>
-      <div class="step-url">/api/admin/trainer-comments/{{comment_id}}</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Removes the comment permanently.</p>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════════
-       SCENARIO 15 — ADMIN STATS, PAYMENTS & PAYOUTS
-       ════════════════════════════════════════════════ -->
-  <div class="scenario-header" id="s15">
-    <div class="scenario-num" class="admin">15</div>
-    <div class="scenario-title">Admin — Stats, Payments &amp; Payouts</div>
-  </div>
-
-  <div class="phase-banner admin">
-    <div class="phase-banner-title">Admin role · Folder: Admin / Finance &amp; Dashboard</div>
-    <p>Financial oversight: commission rates, trainer payments, and payout approvals.</p>
-  </div>
-
-  <div class="step open">
-    <div class="step-header">
-      <div class="step-num">1</div>
-      <span class="badge GET">GET</span>
-      <div class="step-title">Trainer Module Dashboard Stats</div>
-      <div class="step-url">/api/admin/trainer-stats/dashboard</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Aggregate counts: total trainers, pending applications, bookings, revenue.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">2</div>
-      <span class="badge GET">GET</span>
-      <div class="step-title">List Trainer Payments</div>
-      <div class="step-url">/api/admin/trainer-payments</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">All payment transactions across bookings. Filter: <code>?trainer_id=4</code>.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">3</div>
-      <span class="badge GET">GET</span>
-      <div class="step-title">Get Global Commission Rate</div>
-      <div class="step-url">/api/admin/commission</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Percentage DabApp takes from each booking.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">4</div>
-      <span class="badge POST">POST</span>
-      <div class="step-title">Set Global Commission Rate</div>
-      <div class="step-url">/api/admin/commission/global</div>
-    </div>
-    <div class="step-body">
-      <pre>{ <span class="key">"rate"</span>: <span class="num">15</span> }   <span class="cmnt">// percent</span></pre>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">5</div>
-      <span class="badge GET">GET</span>
-      <div class="step-title">List Payouts</div>
-      <div class="step-url">/api/admin/payouts</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Pending and completed payouts owed to trainers. Filter: <code>?status=pending</code>.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">6</div>
-      <span class="badge POST">POST</span>
-      <div class="step-title">Approve a Payout</div>
-      <div class="step-url">/api/admin/payouts/{{payout_id}}/approve</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">No body needed.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">7</div>
-      <span class="badge POST">POST</span>
-      <div class="step-title">Mark Payout as Paid</div>
-      <div class="step-url">/api/admin/payouts/{{payout_id}}/mark-paid</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Use after the bank transfer to the trainer has actually been sent.</p>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════════
-       SCENARIO 16 — TRAINER SESSIONS VIEW
-       ════════════════════════════════════════════════ -->
-  <div class="scenario-header" id="s16">
-    <div class="scenario-num">16</div>
-    <div class="scenario-title">Trainer — My Sessions View</div>
-  </div>
-
-  <div class="phase-banner trainer">
-    <div class="phase-banner-title">Trainer role · Folder: Trainer / Sessions</div>
-    <p>The trainer's day-to-day worklist of upcoming and in-progress sessions (same start/complete actions used in Scenario 11).</p>
-  </div>
-
-  <div class="step open">
-    <div class="step-header">
-      <div class="step-num">1</div>
-      <span class="badge GET">GET</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">List My Sessions</div>
-      <div class="step-url">/api/trainer/sessions</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">All bookings assigned to this trainer, across all statuses. Filter: <code>?status=confirmed</code>, <code>?date=2026-07-15</code>.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">2</div>
-      <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Start a Session</div>
-      <div class="step-url">/api/trainer/sessions/{{booking_id}}/start</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Same endpoint used in Scenario 11, step 1 — listed here for the trainer's own worklist context.</p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-header">
-      <div class="step-num">3</div>
-      <span class="badge POST">POST</span>
-      <span class="badge AUTH">AUTH</span>
-      <div class="step-title">Complete a Session</div>
-      <div class="step-url">/api/trainer/sessions/{{booking_id}}/complete</div>
-    </div>
-    <div class="step-body">
-      <p style="color:var(--muted);font-size:13px;">Same endpoint used in Scenario 11, step 2.</p>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════════
-       COMMON ERRORS
-       ════════════════════════════════════════════════ -->
-  <h2 id="errors">Common Errors</h2>
-  <table>
-    <thead><tr><th>HTTP</th><th>Message</th><th>Cause &amp; Fix</th></tr></thead>
-    <tbody>
-      <tr><td>401</td><td>Unauthenticated</td><td>Token missing or expired. Re-run Login to refresh <code>{{trainer_token}}</code>.</td></tr>
-      <tr><td>403</td><td>No trainer profile found</td><td>The user has no trainer record. Run POST register first.</td></tr>
-      <tr><td>403</td><td>Bike not found in your garage</td><td>The <code>garage_id</code> doesn't belong to this user. Run GET my garage to get a valid ID.</td></tr>
-      <tr><td>400</td><td>Course is already published</td><td>Cannot publish an already-published course.</td></tr>
-      <tr><td>403</td><td>Cannot delete a published course. Archive it first.</td><td>Call <code>POST /archive</code> before deleting.</td></tr>
-      <tr><td>409</td><td>This bike is already added as a training bike</td><td>Bike already selected. Use GET training bikes to see current list.</td></tr>
-      <tr><td>422</td><td>Validation error</td><td>Check the <code>errors</code> object in the response for the specific field.</td></tr>
-      <tr><td>404</td><td>Trainer not found</td><td>The trainer ID doesn't exist or trainer is not approved. Check <code>{{trainer_id}}</code>.</td></tr>
-      <tr><td>403</td><td>Cannot update an archived course</td><td>Recreate the course or publish/restore it before editing.</td></tr>
-      <tr><td>403</td><td>Travel price not available for this course</td><td>The course was created without <code>can_travel=true</code> and <code>price_per_km</code>.</td></tr>
-      <tr><td>403</td><td>Cannot cancel booking after session has started</td><td>Once <code>status</code> is <code>in_progress</code> or later, use dispute instead of cancel.</td></tr>
-      <tr><td>409</td><td>Review already submitted for this booking</td><td>Each booking can only be reviewed once, and only after <code>status=completed</code>.</td></tr>
-      <tr><td>403</td><td>No trainer profile found</td><td>Endpoint requires a trainer record; this user only has a client account.</td></tr>
-    </tbody>
-  </table>
 
   <footer>
-    <p>DabApp Trainer Module — API Testing Guide · Generated 2026-06-29</p>
-    <p style="margin-top:4px;">Collection file: <code>docs/DabApp-TrainerModule-Complete.postman_collection.json</code></p>
+    <p>DabApp Trainer Module — Complete Flow · Updated 2026-07-01</p>
+    <p style="margin-top:4px;">Postman: <code>docs/DabApp-TrainerModule-Complete.postman_collection.json</code></p>
   </footer>
 
 </main>
 
 <script>
-  // Toggle step expand/collapse
-  document.querySelectorAll('.step-header').forEach(header => {
-    header.addEventListener('click', () => {
-      header.closest('.step').classList.toggle('open');
+  document.querySelectorAll('.step-hdr').forEach(function(h) {
+    h.addEventListener('click', function() {
+      h.closest('.step').classList.toggle('open');
     });
   });
-  // Sidebar active highlight
-  const links = document.querySelectorAll('.sidebar a');
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        links.forEach(l => l.classList.remove('active'));
-        const link = document.querySelector(`.sidebar a[href="#${e.target.id}"]`);
-        if (link) link.classList.add('active');
-      }
-    });
-  }, { threshold: 0.5 });
-  document.querySelectorAll('h2[id], .scenario-header[id]').forEach(el => observer.observe(el));
+  var links = document.querySelectorAll('.sidebar a[href^="#"]');
+  var sections = [];
+  links.forEach(function(l) {
+    var id = l.getAttribute('href').slice(1);
+    var el = document.getElementById(id);
+    if (el) sections.push({ link: l, el: el });
+  });
+  window.addEventListener('scroll', function() {
+    var y = window.scrollY + 80;
+    var active = sections[0];
+    sections.forEach(function(s) { if (s.el.offsetTop <= y) active = s; });
+    links.forEach(function(l) { l.classList.remove('active'); });
+    if (active) active.link.classList.add('active');
+  }, { passive: true });
 </script>
 </body>
 </html>
