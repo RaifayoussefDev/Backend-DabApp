@@ -10,6 +10,7 @@ class TrainerEquipment extends Model
 
     protected $fillable = [
         'trainer_id',
+        'equipment_type_id',
         'name',
         'name_ar',
         'icon',
