@@ -705,6 +705,7 @@ class TrainerController extends Controller
             'schedules',
             'specialties',
             'gallery',
+            'equipment',
             'levelApprovals.level',
         ])->where('user_id', $user->id)->first();
 

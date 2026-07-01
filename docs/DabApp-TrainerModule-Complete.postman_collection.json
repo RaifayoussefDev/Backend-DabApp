@@ -196,10 +196,30 @@
 
     {
       "name": "Phase 3 — Trainer: Garage & Training Bike Setup",
-      "description": "Add your motorcycle to the garage, fill in training-specific info (plate + insurance), then select it as a training bike.\n\n**Order matters:** PATCH training-info BEFORE selecting as training bike.",
+      "description": "First check existing garage bikes (Step 3-1). If a suitable bike already exists, skip to Step 3-6 (training info). If not, add a new bike (Steps 3-2 → 3-5).\n\n**Order matters:** PATCH training-info (Step 3-6) BEFORE selecting as training bike (Step 3-7).",
       "item": [
         {
-          "name": "Step 3-1 · GET Motorcycle Brands",
+          "name": "Step 3-1 · GET My Garage (see existing bikes)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var list = pm.response.json().data || [];",
+            "if (list.length) {",
+            "  pm.collectionVariables.set('garage_id', String(list[0].id));",
+            "  console.log('Garage bikes:', list.map(function(b){ return b.id + '=' + (b.title || b.brand_name); }).join(', '));",
+            "  console.log('garage_id set to first bike:', list[0].id, '| is_training_ready:', list[0].is_training_ready);",
+            "} else {",
+            "  console.log('No bikes in garage — run Steps 3-2 to 3-5 to add one');",
+            "}",
+            "pm.test('Garage loaded', function(){ pm.response.to.have.status(200); });"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "url": { "raw": "{{base_url}}/api/my-garage", "host": ["{{base_url}}"], "path": ["api","my-garage"] },
+            "description": "Returns all bikes in the trainer's garage.\n\nEach bike has:\n- `id` → use as `garage_id`\n- `title` / `brand_name` / `model_name` / `year`\n- `is_training_ready` → `true` only if plate_number + insurance_expiry + insurance_covers_training are all set\n\n**If bike exists AND `is_training_ready: true`** → skip to Step 3-7 (Select Training Bike).\n**If bike exists BUT `is_training_ready: false`** → go to Step 3-6 first (Add Training Info).\n**If no bikes** → run Steps 3-2 through 3-7 to add a new one."
+          }
+        },
+        {
+          "name": "Step 3-2 · GET Motorcycle Brands",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "var list = pm.response.json().data || pm.response.json() || [];",
             "console.log('Brands:', list.slice(0,8).map(function(b){ return b.id + '=' + (b.name||b.name_en); }).join(', '));",
@@ -209,11 +229,11 @@
             "method": "GET",
             "header": [],
             "url": { "raw": "{{base_url}}/api/motorcycle/brands", "host": ["{{base_url}}"], "path": ["api","motorcycle","brands"] },
-            "description": "Public. Note the `id` of your brand (e.g. BMW=7, Honda=12). Use it in Step 3-2."
+            "description": "Public. Note the `id` of your brand (e.g. BMW=7, Honda=12). Use it in Step 3-3."
           }
         },
         {
-          "name": "Step 3-2 · GET Models by Brand",
+          "name": "Step 3-3 · GET Models by Brand",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "var list = pm.response.json().data || pm.response.json() || [];",
             "console.log('Models:', list.slice(0,8).map(function(m){ return m.id + '=' + (m.name||m.name_en); }).join(', '));",
@@ -223,11 +243,11 @@
             "method": "GET",
             "header": [],
             "url": { "raw": "{{base_url}}/api/motorcycle/models/7", "host": ["{{base_url}}"], "path": ["api","motorcycle","models","7"] },
-            "description": "Public. **Replace `7`** with your brand ID from Step 3-1. Note the model `id` you want."
+            "description": "Public. **Replace `7`** with your brand ID from Step 3-2. Note the model `id` you want."
           }
         },
         {
-          "name": "Step 3-3 · GET Years by Model",
+          "name": "Step 3-4 · GET Years by Model",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "var list = pm.response.json().data || pm.response.json() || [];",
             "console.log('Years:', list.map(function(y){ return y.id + '=' + y.year; }).join(', '));",
@@ -237,11 +257,11 @@
             "method": "GET",
             "header": [],
             "url": { "raw": "{{base_url}}/api/motorcycle/years/1", "host": ["{{base_url}}"], "path": ["api","motorcycle","years","1"] },
-            "description": "Public. **Replace `1`** with your model ID from Step 3-2. Note the year `id` you want."
+            "description": "Public. **Replace `1`** with your model ID from Step 3-3. Note the year `id` you want."
           }
         },
         {
-          "name": "Step 3-4 · POST Add Bike to Garage",
+          "name": "Step 3-5 · POST Add Bike to Garage",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "var id = pm.response.json().data && pm.response.json().data.id;",
             "if (id) {",
@@ -262,11 +282,11 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": { "raw": "{{base_url}}/api/my-garage", "host": ["{{base_url}}"], "path": ["api","my-garage"] },
-            "description": "Use IDs from Steps 3-1 through 3-3.\n\nSaves `{{garage_id}}`."
+            "description": "Use IDs from Steps 3-2 through 3-4.\n\nSaves `{{garage_id}}`.\n\n**Skip this step if you already picked a bike from Step 3-1.**"
           }
         },
         {
-          "name": "Step 3-5 · PATCH Add Training Info ← REQUIRED",
+          "name": "Step 3-6 · PATCH Add Training Info ← REQUIRED",
           "request": {
             "method": "PATCH",
             "header": [
@@ -279,11 +299,11 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": { "raw": "{{base_url}}/api/my-garage/{{garage_id}}/training-info", "host": ["{{base_url}}"], "path": ["api","my-garage","{{garage_id}}","training-info"] },
-            "description": "⚠️ All 3 fields required. Without this the bike has `is_training_ready: false` and Step 3-6 will return 403.\n\n- `plate_number` — vehicle registration number\n- `insurance_expiry` — must be a future date\n- `insurance_covers_training` — must be true"
+            "description": "⚠️ All 3 fields required. Without this the bike has `is_training_ready: false` and Step 3-7 will return 403.\n\n- `plate_number` — vehicle registration number\n- `insurance_expiry` — must be a future date\n- `insurance_covers_training` — must be true\n\n**Skip if Step 3-1 showed `is_training_ready: true` for your bike.**"
           }
         },
         {
-          "name": "Step 3-6 · POST Select Training Bike",
+          "name": "Step 3-7 · POST Select Training Bike",
           "request": {
             "method": "POST",
             "header": [
@@ -296,7 +316,7 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": { "raw": "{{base_url}}/api/trainer/training-bikes", "host": ["{{base_url}}"], "path": ["api","trainer","training-bikes"] },
-            "description": "Selects the garage bike as a training bike.\n\n- `is_primary: true` → marks this as the main training bike\n- Returns 403 if bike has `is_training_ready: false` (run Step 3-5 first)\n- Returns 409 if bike was already selected"
+            "description": "Selects the chosen garage bike (`{{garage_id}}`) as a training bike.\n\n- `is_primary: true` → marks this as the main training bike\n- Returns 403 if bike has `is_training_ready: false` (run Step 3-6 first)\n- Returns 409 if bike was already selected as training bike"
           }
         }
       ]
